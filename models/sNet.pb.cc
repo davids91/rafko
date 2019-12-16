@@ -30,30 +30,30 @@ static void InitDefaultsscc_info_Neuron_sNet_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-  void* ptr = &::sparse_net_library::_Neuron_default_instance_;
-  new (ptr) ::sparse_net_library::Neuron();
-  ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+    void* ptr = &::sparse_net_library::_Neuron_default_instance_;
+    new (ptr) ::sparse_net_library::Neuron();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
   ::sparse_net_library::Neuron::InitAsDefaultInstance();
 }
 
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Neuron_sNet_2eproto =
-  {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsscc_info_Neuron_sNet_2eproto}, {}};
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsscc_info_Neuron_sNet_2eproto}, {}};
 
 static void InitDefaultsscc_info_SparseNet_sNet_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-  void* ptr = &::sparse_net_library::_SparseNet_default_instance_;
-  new (ptr) ::sparse_net_library::SparseNet();
-  ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+    void* ptr = &::sparse_net_library::_SparseNet_default_instance_;
+    new (ptr) ::sparse_net_library::SparseNet();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
   ::sparse_net_library::SparseNet::InitAsDefaultInstance();
 }
 
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_SparseNet_sNet_2eproto =
-  {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsscc_info_SparseNet_sNet_2eproto}, {
-    &scc_info_Neuron_sNet_2eproto.base,}};
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsscc_info_SparseNet_sNet_2eproto}, {
+      &scc_info_Neuron_sNet_2eproto.base,}};
 
 static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_sNet_2eproto[2];
 static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_sNet_2eproto[1];
@@ -101,11 +101,11 @@ const char descriptor_table_protodef_sNet_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "(\r\022\033\n\023input_neuron_number\030\002 \001(\r\022\034\n\024outpu"
   "t_neuron_number\030\003 \001(\r\0220\n\014neuron_array\030\004 "
   "\003(\0132\032.sparse_net_library.Neuron\022\024\n\014weigh"
-  "t_table\030\005 \003(\001*\223\001\n\022transfer_functions\022\032\n\026"
+  "t_table\030\005 \003(\001*\252\001\n\022transfer_functions\022\032\n\026"
   "TRANSFER_FUNC_IDENTITY\020\000\022\031\n\025TRANSFER_FUN"
-  "C_SIGMOID\020\001\022\026\n\022TRANSFER_FUNC_TANH\020\002\022\026\n\022T"
-  "RANSFER_FUNC_RELU\020\003\022\026\n\022TRANSFER_FUNC_SEL"
-  "U\020\004B\003\370\001\001b\006proto3"
+  "C_SIGMOID\020\001\022\026\n\022TRANSFER_FUNC_TANH\020\002\022\025\n\021T"
+  "RANSFER_FUNC_ELU\020\003\022\026\n\022TRANSFER_FUNC_RELU"
+  "\020\004\022\026\n\022TRANSFER_FUNC_SELU\020\005B\003\370\001\001b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_sNet_2eproto_deps[1] = {
 };
@@ -116,7 +116,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_sNe
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_sNet_2eproto_once;
 static bool descriptor_table_sNet_2eproto_initialized = false;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_sNet_2eproto = {
-  &descriptor_table_sNet_2eproto_initialized, descriptor_table_protodef_sNet_2eproto, "sNet.proto", 536,
+  &descriptor_table_sNet_2eproto_initialized, descriptor_table_protodef_sNet_2eproto, "sNet.proto", 559,
   &descriptor_table_sNet_2eproto_once, descriptor_table_sNet_2eproto_sccs, descriptor_table_sNet_2eproto_deps, 2, 0,
   schemas, file_default_instances, TableStruct_sNet_2eproto::offsets,
   file_level_metadata_sNet_2eproto, 2, file_level_enum_descriptors_sNet_2eproto, file_level_service_descriptors_sNet_2eproto,
@@ -131,14 +131,15 @@ const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* transfer_functions_descriptor() {
 }
 bool transfer_functions_IsValid(int value) {
   switch (value) {
-  case 0:
-  case 1:
-  case 2:
-  case 3:
-  case 4:
-    return true;
-  default:
-    return false;
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -167,20 +168,20 @@ Neuron::Neuron(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 }
 Neuron::Neuron(const Neuron& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
-    _internal_metadata_(nullptr),
-    input_weight_idx_(from.input_weight_idx_),
-    input_idx_(from.input_idx_) {
+      _internal_metadata_(nullptr),
+      input_weight_idx_(from.input_weight_idx_),
+      input_idx_(from.input_idx_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::memcpy(&memory_ratio_idx_, &from.memory_ratio_idx_,
-  static_cast<size_t>(reinterpret_cast<char*>(&transfer_function_idx_) -
-  reinterpret_cast<char*>(&memory_ratio_idx_)) + sizeof(transfer_function_idx_));
+    static_cast<size_t>(reinterpret_cast<char*>(&transfer_function_idx_) -
+    reinterpret_cast<char*>(&memory_ratio_idx_)) + sizeof(transfer_function_idx_));
   // @@protoc_insertion_point(copy_constructor:sparse_net_library.Neuron)
 }
 
 void Neuron::SharedCtor() {
   ::memset(&memory_ratio_idx_, 0, static_cast<size_t>(
-    reinterpret_cast<char*>(&transfer_function_idx_) -
-    reinterpret_cast<char*>(&memory_ratio_idx_)) + sizeof(transfer_function_idx_));
+      reinterpret_cast<char*>(&transfer_function_idx_) -
+      reinterpret_cast<char*>(&memory_ratio_idx_)) + sizeof(transfer_function_idx_));
 }
 
 Neuron::~Neuron() {
@@ -216,8 +217,8 @@ void Neuron::Clear() {
   input_weight_idx_.Clear();
   input_idx_.Clear();
   ::memset(&memory_ratio_idx_, 0, static_cast<size_t>(
-    reinterpret_cast<char*>(&transfer_function_idx_) -
-    reinterpret_cast<char*>(&memory_ratio_idx_)) + sizeof(transfer_function_idx_));
+      reinterpret_cast<char*>(&transfer_function_idx_) -
+      reinterpret_cast<char*>(&memory_ratio_idx_)) + sizeof(transfer_function_idx_));
   _internal_metadata_.Clear();
 }
 
@@ -226,63 +227,63 @@ const char* Neuron::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::int
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
   ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArenaNoVirtual(); (void)arena;
   while (!ctx->Done(&ptr)) {
-  ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-  ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-  CHK_(ptr);
-  switch (tag >> 3) {
-    // uint32 memory_ratio_idx = 1;
-    case 1:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
-      memory_ratio_idx_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
-      CHK_(ptr);
-    } else goto handle_unusual;
-    continue;
-    // uint32 bias_idx = 2;
-    case 2:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
-      bias_idx_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
-      CHK_(ptr);
-    } else goto handle_unusual;
-    continue;
-    // .sparse_net_library.transfer_functions transfer_function_idx = 3;
-    case 3:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
-      ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
-      CHK_(ptr);
-      set_transfer_function_idx(static_cast<::sparse_net_library::transfer_functions>(val));
-    } else goto handle_unusual;
-    continue;
-    // repeated uint32 input_weight_idx = 4;
-    case 4:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
-      ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_input_weight_idx(), ptr, ctx);
-      CHK_(ptr);
-    } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32) {
-      add_input_weight_idx(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
-      CHK_(ptr);
-    } else goto handle_unusual;
-    continue;
-    // repeated uint32 input_idx = 5;
-    case 5:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
-      ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_input_idx(), ptr, ctx);
-      CHK_(ptr);
-    } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 40) {
-      add_input_idx(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
-      CHK_(ptr);
-    } else goto handle_unusual;
-    continue;
-    default: {
-    handle_unusual:
-    if ((tag & 7) == 4 || tag == 0) {
-      ctx->SetLastTag(tag);
-      goto success;
-    }
-    ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
-    CHK_(ptr != nullptr);
-    continue;
-    }
-  }  // switch
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
+      // uint32 memory_ratio_idx = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          memory_ratio_idx_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // uint32 bias_idx = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          bias_idx_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // .sparse_net_library.transfer_functions transfer_function_idx = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
+          ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
+          CHK_(ptr);
+          set_transfer_function_idx(static_cast<::sparse_net_library::transfer_functions>(val));
+        } else goto handle_unusual;
+        continue;
+      // repeated uint32 input_weight_idx = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_input_weight_idx(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32) {
+          add_input_weight_idx(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated uint32 input_idx = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_input_idx(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 40) {
+          add_input_idx(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
   }  // while
 success:
   return ptr;
@@ -293,97 +294,97 @@ failure:
 }
 #else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 bool Neuron::MergePartialFromCodedStream(
-  ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
+    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
   ::PROTOBUF_NAMESPACE_ID::uint32 tag;
   // @@protoc_insertion_point(parse_start:sparse_net_library.Neuron)
   for (;;) {
-  ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-  tag = p.first;
-  if (!p.second) goto handle_unusual;
-  switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-    // uint32 memory_ratio_idx = 1;
-    case 1: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (8 & 0xFF)) {
+    ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // uint32 memory_ratio_idx = 1;
+      case 1: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (8 & 0xFF)) {
 
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
-           ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-         input, &memory_ratio_idx_)));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &memory_ratio_idx_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    // uint32 bias_idx = 2;
-    case 2: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (16 & 0xFF)) {
+      // uint32 bias_idx = 2;
+      case 2: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (16 & 0xFF)) {
 
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
-           ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-         input, &bias_idx_)));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &bias_idx_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    // .sparse_net_library.transfer_functions transfer_function_idx = 3;
-    case 3: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (24 & 0xFF)) {
-      int value = 0;
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
-           int, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_ENUM>(
-         input, &value)));
-      set_transfer_function_idx(static_cast< ::sparse_net_library::transfer_functions >(value));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+      // .sparse_net_library.transfer_functions transfer_function_idx = 3;
+      case 3: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (24 & 0xFF)) {
+          int value = 0;
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
+                   int, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_ENUM>(
+                 input, &value)));
+          set_transfer_function_idx(static_cast< ::sparse_net_library::transfer_functions >(value));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    // repeated uint32 input_weight_idx = 4;
-    case 4: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (34 & 0xFF)) {
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
-           ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-         input, this->mutable_input_weight_idx())));
-    } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (32 & 0xFF)) {
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
-           ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-         1, 34u, input, this->mutable_input_weight_idx())));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+      // repeated uint32 input_weight_idx = 4;
+      case 4: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (34 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_input_weight_idx())));
+        } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (32 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 34u, input, this->mutable_input_weight_idx())));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    // repeated uint32 input_idx = 5;
-    case 5: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (42 & 0xFF)) {
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
-           ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-         input, this->mutable_input_idx())));
-    } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (40 & 0xFF)) {
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
-           ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-         1, 42u, input, this->mutable_input_idx())));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+      // repeated uint32 input_idx = 5;
+      case 5: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (42 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_input_idx())));
+        } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (40 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 42u, input, this->mutable_input_idx())));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    default: {
-    handle_unusual:
-    if (tag == 0) {
-      goto success;
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
     }
-    DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
-        input, tag, _internal_metadata_.mutable_unknown_fields()));
-    break;
-    }
-  }
   }
 success:
   // @@protoc_insertion_point(parse_success:sparse_net_library.Neuron)
@@ -396,107 +397,107 @@ failure:
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
 void Neuron::SerializeWithCachedSizes(
-  ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
+    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:sparse_net_library.Neuron)
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   // uint32 memory_ratio_idx = 1;
   if (this->memory_ratio_idx() != 0) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(1, this->memory_ratio_idx(), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(1, this->memory_ratio_idx(), output);
   }
 
   // uint32 bias_idx = 2;
   if (this->bias_idx() != 0) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(2, this->bias_idx(), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(2, this->bias_idx(), output);
   }
 
   // .sparse_net_library.transfer_functions transfer_function_idx = 3;
   if (this->transfer_function_idx() != 0) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnum(
-    3, this->transfer_function_idx(), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnum(
+      3, this->transfer_function_idx(), output);
   }
 
   // repeated uint32 input_weight_idx = 4;
   if (this->input_weight_idx_size() > 0) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(4, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
-  output->WriteVarint32(_input_weight_idx_cached_byte_size_.load(
-    std::memory_order_relaxed));
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(4, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_input_weight_idx_cached_byte_size_.load(
+        std::memory_order_relaxed));
   }
   for (int i = 0, n = this->input_weight_idx_size(); i < n; i++) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
-    this->input_weight_idx(i), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->input_weight_idx(i), output);
   }
 
   // repeated uint32 input_idx = 5;
   if (this->input_idx_size() > 0) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(5, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
-  output->WriteVarint32(_input_idx_cached_byte_size_.load(
-    std::memory_order_relaxed));
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(5, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_input_idx_cached_byte_size_.load(
+        std::memory_order_relaxed));
   }
   for (int i = 0, n = this->input_idx_size(); i < n; i++) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
-    this->input_idx(i), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->input_idx(i), output);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
-    _internal_metadata_.unknown_fields(), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
+        _internal_metadata_.unknown_fields(), output);
   }
   // @@protoc_insertion_point(serialize_end:sparse_net_library.Neuron)
 }
 
 ::PROTOBUF_NAMESPACE_ID::uint8* Neuron::InternalSerializeWithCachedSizesToArray(
-  ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
+    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
   // @@protoc_insertion_point(serialize_to_array_start:sparse_net_library.Neuron)
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   // uint32 memory_ratio_idx = 1;
   if (this->memory_ratio_idx() != 0) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->memory_ratio_idx(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->memory_ratio_idx(), target);
   }
 
   // uint32 bias_idx = 2;
   if (this->bias_idx() != 0) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->bias_idx(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->bias_idx(), target);
   }
 
   // .sparse_net_library.transfer_functions transfer_function_idx = 3;
   if (this->transfer_function_idx() != 0) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
-    3, this->transfer_function_idx(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
+      3, this->transfer_function_idx(), target);
   }
 
   // repeated uint32 input_weight_idx = 4;
   if (this->input_weight_idx_size() > 0) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
-    4,
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-    target);
-  target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
-    _input_weight_idx_cached_byte_size_.load(std::memory_order_relaxed),
-     target);
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-    WriteUInt32NoTagToArray(this->input_weight_idx_, target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      4,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _input_weight_idx_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->input_weight_idx_, target);
   }
 
   // repeated uint32 input_idx = 5;
   if (this->input_idx_size() > 0) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
-    5,
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-    target);
-  target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
-    _input_idx_cached_byte_size_.load(std::memory_order_relaxed),
-     target);
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-    WriteUInt32NoTagToArray(this->input_idx_, target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      5,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _input_idx_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->input_idx_, target);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
-    _internal_metadata_.unknown_fields(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields(), target);
   }
   // @@protoc_insertion_point(serialize_to_array_end:sparse_net_library.Neuron)
   return target;
@@ -507,9 +508,9 @@ size_t Neuron::ByteSizeLong() const {
   size_t total_size = 0;
 
   if (_internal_metadata_.have_unknown_fields()) {
-  total_size +=
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
-    _internal_metadata_.unknown_fields());
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
+        _internal_metadata_.unknown_fields());
   }
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
@@ -517,52 +518,52 @@ size_t Neuron::ByteSizeLong() const {
 
   // repeated uint32 input_weight_idx = 4;
   {
-  size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-    UInt32Size(this->input_weight_idx_);
-  if (data_size > 0) {
-    total_size += 1 +
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
-      static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
-  _input_weight_idx_cached_byte_size_.store(cached_size,
-                  std::memory_order_relaxed);
-  total_size += data_size;
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      UInt32Size(this->input_weight_idx_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _input_weight_idx_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
   }
 
   // repeated uint32 input_idx = 5;
   {
-  size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-    UInt32Size(this->input_idx_);
-  if (data_size > 0) {
-    total_size += 1 +
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
-      static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
-  _input_idx_cached_byte_size_.store(cached_size,
-                  std::memory_order_relaxed);
-  total_size += data_size;
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      UInt32Size(this->input_idx_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _input_idx_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
   }
 
   // uint32 memory_ratio_idx = 1;
   if (this->memory_ratio_idx() != 0) {
-  total_size += 1 +
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
-    this->memory_ratio_idx());
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->memory_ratio_idx());
   }
 
   // uint32 bias_idx = 2;
   if (this->bias_idx() != 0) {
-  total_size += 1 +
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
-    this->bias_idx());
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->bias_idx());
   }
 
   // .sparse_net_library.transfer_functions transfer_function_idx = 3;
   if (this->transfer_function_idx() != 0) {
-  total_size += 1 +
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->transfer_function_idx());
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->transfer_function_idx());
   }
 
   int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
@@ -574,14 +575,14 @@ void Neuron::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:sparse_net_library.Neuron)
   GOOGLE_DCHECK_NE(&from, this);
   const Neuron* source =
-    ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Neuron>(
-      &from);
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Neuron>(
+          &from);
   if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:sparse_net_library.Neuron)
-  ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:sparse_net_library.Neuron)
-  MergeFrom(*source);
+    MergeFrom(*source);
   }
 }
 
@@ -595,13 +596,13 @@ void Neuron::MergeFrom(const Neuron& from) {
   input_weight_idx_.MergeFrom(from.input_weight_idx_);
   input_idx_.MergeFrom(from.input_idx_);
   if (from.memory_ratio_idx() != 0) {
-  set_memory_ratio_idx(from.memory_ratio_idx());
+    set_memory_ratio_idx(from.memory_ratio_idx());
   }
   if (from.bias_idx() != 0) {
-  set_bias_idx(from.bias_idx());
+    set_bias_idx(from.bias_idx());
   }
   if (from.transfer_function_idx() != 0) {
-  set_transfer_function_idx(from.transfer_function_idx());
+    set_transfer_function_idx(from.transfer_function_idx());
   }
 }
 
@@ -662,21 +663,21 @@ SparseNet::SparseNet(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 }
 SparseNet::SparseNet(const SparseNet& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
-    _internal_metadata_(nullptr),
-    neuron_array_(from.neuron_array_),
-    weight_table_(from.weight_table_) {
+      _internal_metadata_(nullptr),
+      neuron_array_(from.neuron_array_),
+      weight_table_(from.weight_table_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::memcpy(&input_data_size_, &from.input_data_size_,
-  static_cast<size_t>(reinterpret_cast<char*>(&output_neuron_number_) -
-  reinterpret_cast<char*>(&input_data_size_)) + sizeof(output_neuron_number_));
+    static_cast<size_t>(reinterpret_cast<char*>(&output_neuron_number_) -
+    reinterpret_cast<char*>(&input_data_size_)) + sizeof(output_neuron_number_));
   // @@protoc_insertion_point(copy_constructor:sparse_net_library.SparseNet)
 }
 
 void SparseNet::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_SparseNet_sNet_2eproto.base);
   ::memset(&input_data_size_, 0, static_cast<size_t>(
-    reinterpret_cast<char*>(&output_neuron_number_) -
-    reinterpret_cast<char*>(&input_data_size_)) + sizeof(output_neuron_number_));
+      reinterpret_cast<char*>(&output_neuron_number_) -
+      reinterpret_cast<char*>(&input_data_size_)) + sizeof(output_neuron_number_));
 }
 
 SparseNet::~SparseNet() {
@@ -712,8 +713,8 @@ void SparseNet::Clear() {
   neuron_array_.Clear();
   weight_table_.Clear();
   ::memset(&input_data_size_, 0, static_cast<size_t>(
-    reinterpret_cast<char*>(&output_neuron_number_) -
-    reinterpret_cast<char*>(&input_data_size_)) + sizeof(output_neuron_number_));
+      reinterpret_cast<char*>(&output_neuron_number_) -
+      reinterpret_cast<char*>(&input_data_size_)) + sizeof(output_neuron_number_));
   _internal_metadata_.Clear();
 }
 
@@ -722,64 +723,64 @@ const char* SparseNet::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
   ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArenaNoVirtual(); (void)arena;
   while (!ctx->Done(&ptr)) {
-  ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-  ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-  CHK_(ptr);
-  switch (tag >> 3) {
-    // uint32 input_data_size = 1;
-    case 1:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
-      input_data_size_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
-      CHK_(ptr);
-    } else goto handle_unusual;
-    continue;
-    // uint32 input_neuron_number = 2;
-    case 2:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
-      input_neuron_number_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
-      CHK_(ptr);
-    } else goto handle_unusual;
-    continue;
-    // uint32 output_neuron_number = 3;
-    case 3:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
-      output_neuron_number_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
-      CHK_(ptr);
-    } else goto handle_unusual;
-    continue;
-    // repeated .sparse_net_library.Neuron neuron_array = 4;
-    case 4:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
-      ptr -= 1;
-      do {
-      ptr += 1;
-      ptr = ctx->ParseMessage(add_neuron_array(), ptr);
-      CHK_(ptr);
-      if (!ctx->DataAvailable(ptr)) break;
-      } while (::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<::PROTOBUF_NAMESPACE_ID::uint8>(ptr) == 34);
-    } else goto handle_unusual;
-    continue;
-    // repeated double weight_table = 5;
-    case 5:
-    if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
-      ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedDoubleParser(mutable_weight_table(), ptr, ctx);
-      CHK_(ptr);
-    } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 41) {
-      add_weight_table(::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr));
-      ptr += sizeof(double);
-    } else goto handle_unusual;
-    continue;
-    default: {
-    handle_unusual:
-    if ((tag & 7) == 4 || tag == 0) {
-      ctx->SetLastTag(tag);
-      goto success;
-    }
-    ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
-    CHK_(ptr != nullptr);
-    continue;
-    }
-  }  // switch
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
+      // uint32 input_data_size = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          input_data_size_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // uint32 input_neuron_number = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          input_neuron_number_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // uint32 output_neuron_number = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
+          output_neuron_number_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated .sparse_net_library.Neuron neuron_array = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(add_neuron_array(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<::PROTOBUF_NAMESPACE_ID::uint8>(ptr) == 34);
+        } else goto handle_unusual;
+        continue;
+      // repeated double weight_table = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedDoubleParser(mutable_weight_table(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 41) {
+          add_weight_table(::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr));
+          ptr += sizeof(double);
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
   }  // while
 success:
   return ptr;
@@ -790,91 +791,91 @@ failure:
 }
 #else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 bool SparseNet::MergePartialFromCodedStream(
-  ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
+    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
   ::PROTOBUF_NAMESPACE_ID::uint32 tag;
   // @@protoc_insertion_point(parse_start:sparse_net_library.SparseNet)
   for (;;) {
-  ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-  tag = p.first;
-  if (!p.second) goto handle_unusual;
-  switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-    // uint32 input_data_size = 1;
-    case 1: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (8 & 0xFF)) {
+    ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // uint32 input_data_size = 1;
+      case 1: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (8 & 0xFF)) {
 
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
-           ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-         input, &input_data_size_)));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &input_data_size_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    // uint32 input_neuron_number = 2;
-    case 2: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (16 & 0xFF)) {
+      // uint32 input_neuron_number = 2;
+      case 2: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (16 & 0xFF)) {
 
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
-           ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-         input, &input_neuron_number_)));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &input_neuron_number_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    // uint32 output_neuron_number = 3;
-    case 3: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (24 & 0xFF)) {
+      // uint32 output_neuron_number = 3;
+      case 3: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (24 & 0xFF)) {
 
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
-           ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-         input, &output_neuron_number_)));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &output_neuron_number_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    // repeated .sparse_net_library.Neuron neuron_array = 4;
-    case 4: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (34 & 0xFF)) {
-      DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(
-        input, add_neuron_array()));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+      // repeated .sparse_net_library.Neuron neuron_array = 4;
+      case 4: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (34 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(
+                input, add_neuron_array()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    // repeated double weight_table = 5;
-    case 5: {
-    if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (42 & 0xFF)) {
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
-           double, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_DOUBLE>(
-         input, this->mutable_weight_table())));
-    } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (41 & 0xFF)) {
-      DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
-           double, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_DOUBLE>(
-         1, 42u, input, this->mutable_weight_table())));
-    } else {
-      goto handle_unusual;
-    }
-    break;
-    }
+      // repeated double weight_table = 5;
+      case 5: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (42 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
+                   double, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_DOUBLE>(
+                 input, this->mutable_weight_table())));
+        } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (41 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   double, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_DOUBLE>(
+                 1, 42u, input, this->mutable_weight_table())));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
 
-    default: {
-    handle_unusual:
-    if (tag == 0) {
-      goto success;
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
     }
-    DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
-        input, tag, _internal_metadata_.mutable_unknown_fields()));
-    break;
-    }
-  }
   }
 success:
   // @@protoc_insertion_point(parse_success:sparse_net_library.SparseNet)
@@ -887,96 +888,96 @@ failure:
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
 void SparseNet::SerializeWithCachedSizes(
-  ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
+    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:sparse_net_library.SparseNet)
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   // uint32 input_data_size = 1;
   if (this->input_data_size() != 0) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(1, this->input_data_size(), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(1, this->input_data_size(), output);
   }
 
   // uint32 input_neuron_number = 2;
   if (this->input_neuron_number() != 0) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(2, this->input_neuron_number(), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(2, this->input_neuron_number(), output);
   }
 
   // uint32 output_neuron_number = 3;
   if (this->output_neuron_number() != 0) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(3, this->output_neuron_number(), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(3, this->output_neuron_number(), output);
   }
 
   // repeated .sparse_net_library.Neuron neuron_array = 4;
   for (unsigned int i = 0,
-    n = static_cast<unsigned int>(this->neuron_array_size()); i < n; i++) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(
-    4,
-    this->neuron_array(static_cast<int>(i)),
-    output);
+      n = static_cast<unsigned int>(this->neuron_array_size()); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(
+      4,
+      this->neuron_array(static_cast<int>(i)),
+      output);
   }
 
   // repeated double weight_table = 5;
   if (this->weight_table_size() > 0) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(5, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
-  output->WriteVarint32(_weight_table_cached_byte_size_.load(
-    std::memory_order_relaxed));
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteDoubleArray(
-    this->weight_table().data(), this->weight_table_size(), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(5, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_weight_table_cached_byte_size_.load(
+        std::memory_order_relaxed));
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteDoubleArray(
+      this->weight_table().data(), this->weight_table_size(), output);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
-  ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
-    _internal_metadata_.unknown_fields(), output);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
+        _internal_metadata_.unknown_fields(), output);
   }
   // @@protoc_insertion_point(serialize_end:sparse_net_library.SparseNet)
 }
 
 ::PROTOBUF_NAMESPACE_ID::uint8* SparseNet::InternalSerializeWithCachedSizesToArray(
-  ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
+    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
   // @@protoc_insertion_point(serialize_to_array_start:sparse_net_library.SparseNet)
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   // uint32 input_data_size = 1;
   if (this->input_data_size() != 0) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->input_data_size(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->input_data_size(), target);
   }
 
   // uint32 input_neuron_number = 2;
   if (this->input_neuron_number() != 0) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->input_neuron_number(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->input_neuron_number(), target);
   }
 
   // uint32 output_neuron_number = 3;
   if (this->output_neuron_number() != 0) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(3, this->output_neuron_number(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(3, this->output_neuron_number(), target);
   }
 
   // repeated .sparse_net_library.Neuron neuron_array = 4;
   for (unsigned int i = 0,
-    n = static_cast<unsigned int>(this->neuron_array_size()); i < n; i++) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-    InternalWriteMessageToArray(
-    4, this->neuron_array(static_cast<int>(i)), target);
+      n = static_cast<unsigned int>(this->neuron_array_size()); i < n; i++) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        4, this->neuron_array(static_cast<int>(i)), target);
   }
 
   // repeated double weight_table = 5;
   if (this->weight_table_size() > 0) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
-    5,
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-    target);
-  target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
-    _weight_table_cached_byte_size_.load(std::memory_order_relaxed),
-     target);
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-    WriteDoubleNoTagToArray(this->weight_table_, target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      5,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _weight_table_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteDoubleNoTagToArray(this->weight_table_, target);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
-  target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
-    _internal_metadata_.unknown_fields(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields(), target);
   }
   // @@protoc_insertion_point(serialize_to_array_end:sparse_net_library.SparseNet)
   return target;
@@ -987,9 +988,9 @@ size_t SparseNet::ByteSizeLong() const {
   size_t total_size = 0;
 
   if (_internal_metadata_.have_unknown_fields()) {
-  total_size +=
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
-    _internal_metadata_.unknown_fields());
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
+        _internal_metadata_.unknown_fields());
   }
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
@@ -997,49 +998,49 @@ size_t SparseNet::ByteSizeLong() const {
 
   // repeated .sparse_net_library.Neuron neuron_array = 4;
   {
-  unsigned int count = static_cast<unsigned int>(this->neuron_array_size());
-  total_size += 1UL * count;
-  for (unsigned int i = 0; i < count; i++) {
-    total_size +=
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-      this->neuron_array(static_cast<int>(i)));
-  }
+    unsigned int count = static_cast<unsigned int>(this->neuron_array_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          this->neuron_array(static_cast<int>(i)));
+    }
   }
 
   // repeated double weight_table = 5;
   {
-  unsigned int count = static_cast<unsigned int>(this->weight_table_size());
-  size_t data_size = 8UL * count;
-  if (data_size > 0) {
-    total_size += 1 +
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
-      static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
-  _weight_table_cached_byte_size_.store(cached_size,
-                  std::memory_order_relaxed);
-  total_size += data_size;
+    unsigned int count = static_cast<unsigned int>(this->weight_table_size());
+    size_t data_size = 8UL * count;
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _weight_table_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
   }
 
   // uint32 input_data_size = 1;
   if (this->input_data_size() != 0) {
-  total_size += 1 +
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
-    this->input_data_size());
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->input_data_size());
   }
 
   // uint32 input_neuron_number = 2;
   if (this->input_neuron_number() != 0) {
-  total_size += 1 +
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
-    this->input_neuron_number());
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->input_neuron_number());
   }
 
   // uint32 output_neuron_number = 3;
   if (this->output_neuron_number() != 0) {
-  total_size += 1 +
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
-    this->output_neuron_number());
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->output_neuron_number());
   }
 
   int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
@@ -1051,14 +1052,14 @@ void SparseNet::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:sparse_net_library.SparseNet)
   GOOGLE_DCHECK_NE(&from, this);
   const SparseNet* source =
-    ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<SparseNet>(
-      &from);
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<SparseNet>(
+          &from);
   if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:sparse_net_library.SparseNet)
-  ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:sparse_net_library.SparseNet)
-  MergeFrom(*source);
+    MergeFrom(*source);
   }
 }
 
@@ -1072,13 +1073,13 @@ void SparseNet::MergeFrom(const SparseNet& from) {
   neuron_array_.MergeFrom(from.neuron_array_);
   weight_table_.MergeFrom(from.weight_table_);
   if (from.input_data_size() != 0) {
-  set_input_data_size(from.input_data_size());
+    set_input_data_size(from.input_data_size());
   }
   if (from.input_neuron_number() != 0) {
-  set_input_neuron_number(from.input_neuron_number());
+    set_input_neuron_number(from.input_neuron_number());
   }
   if (from.output_neuron_number() != 0) {
-  set_output_neuron_number(from.output_neuron_number());
+    set_output_neuron_number(from.output_neuron_number());
   }
 }
 

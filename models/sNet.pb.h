@@ -45,11 +45,11 @@ PROTOBUF_NAMESPACE_CLOSE
 // Internal implementation detail -- do not use these members.
 struct TableStruct_sNet_2eproto {
   static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTableField entries[]
-  PROTOBUF_SECTION_VARIABLE(protodesc_cold);
+    PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxillaryParseTableField aux[]
-  PROTOBUF_SECTION_VARIABLE(protodesc_cold);
+    PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[2]
-  PROTOBUF_SECTION_VARIABLE(protodesc_cold);
+    PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
   static const ::PROTOBUF_NAMESPACE_ID::uint32 offsets[];
@@ -73,8 +73,9 @@ enum transfer_functions : int {
   TRANSFER_FUNC_IDENTITY = 0,
   TRANSFER_FUNC_SIGMOID = 1,
   TRANSFER_FUNC_TANH = 2,
-  TRANSFER_FUNC_RELU = 3,
-  TRANSFER_FUNC_SELU = 4,
+  TRANSFER_FUNC_ELU = 3,
+  TRANSFER_FUNC_RELU = 4,
+  TRANSFER_FUNC_SELU = 5,
   transfer_functions_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   transfer_functions_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
@@ -87,93 +88,93 @@ const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* transfer_functions_descriptor();
 template<typename T>
 inline const std::string& transfer_functions_Name(T enum_t_value) {
   static_assert(::std::is_same<T, transfer_functions>::value ||
-  ::std::is_integral<T>::value,
-  "Incorrect type passed to function transfer_functions_Name.");
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function transfer_functions_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-  transfer_functions_descriptor(), enum_t_value);
+    transfer_functions_descriptor(), enum_t_value);
 }
 inline bool transfer_functions_Parse(
-  const std::string& name, transfer_functions* value) {
+    const std::string& name, transfer_functions* value) {
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<transfer_functions>(
-  transfer_functions_descriptor(), name, value);
+    transfer_functions_descriptor(), name, value);
 }
 // ===================================================================
 
 class Neuron :
-  public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:sparse_net_library.Neuron) */ {
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:sparse_net_library.Neuron) */ {
  public:
   Neuron();
   virtual ~Neuron();
 
   Neuron(const Neuron& from);
   Neuron(Neuron&& from) noexcept
-  : Neuron() {
-  *this = ::std::move(from);
+    : Neuron() {
+    *this = ::std::move(from);
   }
 
   inline Neuron& operator=(const Neuron& from) {
-  CopyFrom(from);
-  return *this;
+    CopyFrom(from);
+    return *this;
   }
   inline Neuron& operator=(Neuron&& from) noexcept {
-  if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-    if (this != &from) InternalSwap(&from);
-  } else {
-    CopyFrom(from);
-  }
-  return *this;
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
   }
 
   inline ::PROTOBUF_NAMESPACE_ID::Arena* GetArena() const final {
-  return GetArenaNoVirtual();
+    return GetArenaNoVirtual();
   }
   inline void* GetMaybeArenaPointer() const final {
-  return MaybeArenaPtr();
+    return MaybeArenaPtr();
   }
   static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
-  return GetDescriptor();
+    return GetDescriptor();
   }
   static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
-  return GetMetadataStatic().descriptor;
+    return GetMetadataStatic().descriptor;
   }
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
-  return GetMetadataStatic().reflection;
+    return GetMetadataStatic().reflection;
   }
   static const Neuron& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
   static inline const Neuron* internal_default_instance() {
-  return reinterpret_cast<const Neuron*>(
-         &_Neuron_default_instance_);
+    return reinterpret_cast<const Neuron*>(
+               &_Neuron_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-  0;
+    0;
 
   friend void swap(Neuron& a, Neuron& b) {
-  a.Swap(&b);
+    a.Swap(&b);
   }
   inline void Swap(Neuron* other) {
-  if (other == this) return;
-  if (GetArenaNoVirtual() == other->GetArenaNoVirtual()) {
-    InternalSwap(other);
-  } else {
-    ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
-  }
+    if (other == this) return;
+    if (GetArenaNoVirtual() == other->GetArenaNoVirtual()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
   }
   void UnsafeArenaSwap(Neuron* other) {
-  if (other == this) return;
-  GOOGLE_DCHECK(GetArenaNoVirtual() == other->GetArenaNoVirtual());
-  InternalSwap(other);
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArenaNoVirtual() == other->GetArenaNoVirtual());
+    InternalSwap(other);
   }
 
   // implements Message ----------------------------------------------
 
   inline Neuron* New() const final {
-  return CreateMaybeMessage<Neuron>(nullptr);
+    return CreateMaybeMessage<Neuron>(nullptr);
   }
 
   Neuron* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
-  return CreateMaybeMessage<Neuron>(arena);
+    return CreateMaybeMessage<Neuron>(arena);
   }
   void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
   void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
@@ -187,12 +188,12 @@ class Neuron :
   const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
   #else
   bool MergePartialFromCodedStream(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) final;
+      ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) final;
   #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
   void SerializeWithCachedSizes(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const final;
+      ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const final;
   ::PROTOBUF_NAMESPACE_ID::uint8* InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target) const final;
+      ::PROTOBUF_NAMESPACE_ID::uint8* target) const final;
   int GetCachedSize() const final { return _cached_size_.Get(); }
 
   private:
@@ -202,7 +203,7 @@ class Neuron :
   void InternalSwap(Neuron* other);
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-  return "sparse_net_library.Neuron";
+    return "sparse_net_library.Neuron";
   }
   protected:
   explicit Neuron(::PROTOBUF_NAMESPACE_ID::Arena* arena);
@@ -211,18 +212,18 @@ class Neuron :
   inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
   private:
   inline ::PROTOBUF_NAMESPACE_ID::Arena* GetArenaNoVirtual() const {
-  return _internal_metadata_.arena();
+    return _internal_metadata_.arena();
   }
   inline void* MaybeArenaPtr() const {
-  return _internal_metadata_.raw_arena_ptr();
+    return _internal_metadata_.raw_arena_ptr();
   }
   public:
 
   ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
   private:
   static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_sNet_2eproto);
-  return ::descriptor_table_sNet_2eproto.file_level_metadata[kIndexInFileMessages];
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_sNet_2eproto);
+    return ::descriptor_table_sNet_2eproto.file_level_metadata[kIndexInFileMessages];
   }
 
   public:
@@ -232,11 +233,11 @@ class Neuron :
   // accessors -------------------------------------------------------
 
   enum : int {
-  kInputWeightIdxFieldNumber = 4,
-  kInputIdxFieldNumber = 5,
-  kMemoryRatioIdxFieldNumber = 1,
-  kBiasIdxFieldNumber = 2,
-  kTransferFunctionIdxFieldNumber = 3,
+    kInputWeightIdxFieldNumber = 4,
+    kInputIdxFieldNumber = 5,
+    kMemoryRatioIdxFieldNumber = 1,
+    kBiasIdxFieldNumber = 2,
+    kTransferFunctionIdxFieldNumber = 3,
   };
   // repeated uint32 input_weight_idx = 4;
   int input_weight_idx_size() const;
@@ -245,9 +246,9 @@ class Neuron :
   void set_input_weight_idx(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
   void add_input_weight_idx(::PROTOBUF_NAMESPACE_ID::uint32 value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-    input_weight_idx() const;
+      input_weight_idx() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-    mutable_input_weight_idx();
+      mutable_input_weight_idx();
 
   // repeated uint32 input_idx = 5;
   int input_idx_size() const;
@@ -256,9 +257,9 @@ class Neuron :
   void set_input_idx(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
   void add_input_idx(::PROTOBUF_NAMESPACE_ID::uint32 value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-    input_idx() const;
+      input_idx() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-    mutable_input_idx();
+      mutable_input_idx();
 
   // uint32 memory_ratio_idx = 1;
   void clear_memory_ratio_idx();
@@ -296,80 +297,80 @@ class Neuron :
 // -------------------------------------------------------------------
 
 class SparseNet :
-  public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:sparse_net_library.SparseNet) */ {
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:sparse_net_library.SparseNet) */ {
  public:
   SparseNet();
   virtual ~SparseNet();
 
   SparseNet(const SparseNet& from);
   SparseNet(SparseNet&& from) noexcept
-  : SparseNet() {
-  *this = ::std::move(from);
+    : SparseNet() {
+    *this = ::std::move(from);
   }
 
   inline SparseNet& operator=(const SparseNet& from) {
-  CopyFrom(from);
-  return *this;
+    CopyFrom(from);
+    return *this;
   }
   inline SparseNet& operator=(SparseNet&& from) noexcept {
-  if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-    if (this != &from) InternalSwap(&from);
-  } else {
-    CopyFrom(from);
-  }
-  return *this;
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
   }
 
   inline ::PROTOBUF_NAMESPACE_ID::Arena* GetArena() const final {
-  return GetArenaNoVirtual();
+    return GetArenaNoVirtual();
   }
   inline void* GetMaybeArenaPointer() const final {
-  return MaybeArenaPtr();
+    return MaybeArenaPtr();
   }
   static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
-  return GetDescriptor();
+    return GetDescriptor();
   }
   static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
-  return GetMetadataStatic().descriptor;
+    return GetMetadataStatic().descriptor;
   }
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
-  return GetMetadataStatic().reflection;
+    return GetMetadataStatic().reflection;
   }
   static const SparseNet& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
   static inline const SparseNet* internal_default_instance() {
-  return reinterpret_cast<const SparseNet*>(
-         &_SparseNet_default_instance_);
+    return reinterpret_cast<const SparseNet*>(
+               &_SparseNet_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-  1;
+    1;
 
   friend void swap(SparseNet& a, SparseNet& b) {
-  a.Swap(&b);
+    a.Swap(&b);
   }
   inline void Swap(SparseNet* other) {
-  if (other == this) return;
-  if (GetArenaNoVirtual() == other->GetArenaNoVirtual()) {
-    InternalSwap(other);
-  } else {
-    ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
-  }
+    if (other == this) return;
+    if (GetArenaNoVirtual() == other->GetArenaNoVirtual()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
   }
   void UnsafeArenaSwap(SparseNet* other) {
-  if (other == this) return;
-  GOOGLE_DCHECK(GetArenaNoVirtual() == other->GetArenaNoVirtual());
-  InternalSwap(other);
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArenaNoVirtual() == other->GetArenaNoVirtual());
+    InternalSwap(other);
   }
 
   // implements Message ----------------------------------------------
 
   inline SparseNet* New() const final {
-  return CreateMaybeMessage<SparseNet>(nullptr);
+    return CreateMaybeMessage<SparseNet>(nullptr);
   }
 
   SparseNet* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
-  return CreateMaybeMessage<SparseNet>(arena);
+    return CreateMaybeMessage<SparseNet>(arena);
   }
   void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
   void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
@@ -383,12 +384,12 @@ class SparseNet :
   const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
   #else
   bool MergePartialFromCodedStream(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) final;
+      ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) final;
   #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
   void SerializeWithCachedSizes(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const final;
+      ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const final;
   ::PROTOBUF_NAMESPACE_ID::uint8* InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target) const final;
+      ::PROTOBUF_NAMESPACE_ID::uint8* target) const final;
   int GetCachedSize() const final { return _cached_size_.Get(); }
 
   private:
@@ -398,7 +399,7 @@ class SparseNet :
   void InternalSwap(SparseNet* other);
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-  return "sparse_net_library.SparseNet";
+    return "sparse_net_library.SparseNet";
   }
   protected:
   explicit SparseNet(::PROTOBUF_NAMESPACE_ID::Arena* arena);
@@ -407,18 +408,18 @@ class SparseNet :
   inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
   private:
   inline ::PROTOBUF_NAMESPACE_ID::Arena* GetArenaNoVirtual() const {
-  return _internal_metadata_.arena();
+    return _internal_metadata_.arena();
   }
   inline void* MaybeArenaPtr() const {
-  return _internal_metadata_.raw_arena_ptr();
+    return _internal_metadata_.raw_arena_ptr();
   }
   public:
 
   ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
   private:
   static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_sNet_2eproto);
-  return ::descriptor_table_sNet_2eproto.file_level_metadata[kIndexInFileMessages];
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_sNet_2eproto);
+    return ::descriptor_table_sNet_2eproto.file_level_metadata[kIndexInFileMessages];
   }
 
   public:
@@ -428,22 +429,22 @@ class SparseNet :
   // accessors -------------------------------------------------------
 
   enum : int {
-  kNeuronArrayFieldNumber = 4,
-  kWeightTableFieldNumber = 5,
-  kInputDataSizeFieldNumber = 1,
-  kInputNeuronNumberFieldNumber = 2,
-  kOutputNeuronNumberFieldNumber = 3,
+    kNeuronArrayFieldNumber = 4,
+    kWeightTableFieldNumber = 5,
+    kInputDataSizeFieldNumber = 1,
+    kInputNeuronNumberFieldNumber = 2,
+    kOutputNeuronNumberFieldNumber = 3,
   };
   // repeated .sparse_net_library.Neuron neuron_array = 4;
   int neuron_array_size() const;
   void clear_neuron_array();
   ::sparse_net_library::Neuron* mutable_neuron_array(int index);
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Neuron >*
-    mutable_neuron_array();
+      mutable_neuron_array();
   const ::sparse_net_library::Neuron& neuron_array(int index) const;
   ::sparse_net_library::Neuron* add_neuron_array();
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Neuron >&
-    neuron_array() const;
+      neuron_array() const;
 
   // repeated double weight_table = 5;
   int weight_table_size() const;
@@ -452,9 +453,9 @@ class SparseNet :
   void set_weight_table(int index, double value);
   void add_weight_table(double value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >&
-    weight_table() const;
+      weight_table() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >*
-    mutable_weight_table();
+      mutable_weight_table();
 
   // uint32 input_data_size = 1;
   void clear_input_data_size();

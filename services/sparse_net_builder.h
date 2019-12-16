@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "models/sNet.pb.h"
-#include "models/transferfunctioninfo.h"
+#include "models/transfer_function_info.h"
 #include "models/weight_initializer.h"
 #include "sparsenet_global.h"
 
@@ -75,21 +75,19 @@ public:
    * @brief    set the given neuron_array and transfer its ownership to the builder
    *
    * @param[in]  arr   The array of neurons to be transferred
-   * @param[in]  size  Number of neurons to be transferred
    *
    * @return   { description_of_the_return_value }
    */
-  SparseNetBuilder& neuron_array(std::shared_ptr<Neuron[]> arr, uint32 size);
+  SparseNetBuilder& neuron_array(std::vector<Neuron> arr);
 
   /**
    * @brief    set the given weight table and transfer ownership to the builder
    *
    * @param[in]  table  The table to be transferred
-   * @param[in]  size   Number of weights in the table
    *
    * @return   reference for chaining
    */
-  SparseNetBuilder& weight_table(std::shared_ptr<sdouble32[]> table, uint32 size);
+  SparseNetBuilder& weight_table(std::vector<sdouble32> table);
 
   /**
    * @brief    Sets the Google protobuffer arena reference in the builder, to 
@@ -128,6 +126,9 @@ public:
   SparseNet* build();
 
 private:
+  /**
+   * Helper variable to see if different required arguments are set inside the builder
+   */
   bool is_input_size_set = false;
   bool is_input_neuron_size_set = false;
   bool is_output_neuron_number_set = false;
@@ -136,23 +137,21 @@ private:
   bool is_weight_initializer_set = false;
   bool is_neuron_array_set = false;
   bool is_arena_ptr_set = false;
-  uint32 neuron_array_size = 0;
-  uint32 weight_table_size = 0;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
    */
-  sdouble32 arg_expected_input_range = TransferFunctionInfo::getAvgOutRange(TRANSFER_FUNC_IDENTITY);
+  sdouble32 arg_expected_input_range = Transfer_function_info::getAvgOutRange(TRANSFER_FUNC_IDENTITY);
 
   /**
    * The array containing the neurons while SparseNetBuilder::build is used
    */
-  std::shared_ptr<Neuron[]> arg_neuron_array;
+  std::vector<Neuron> arg_neuron_array;
 
   /**
    * The array containing the used weights in the network while SparseNetBuilder::build is used
    */
-  std::shared_ptr<sdouble32[]> arg_weight_table;
+  std::vector<sdouble32> arg_weight_table;
 
   /**
    * Weight Initializer argument, which guides the initial net Weights
@@ -203,18 +202,16 @@ private:
   /**
    * @brief SparseNetBuilder::set_neuron_array: moves the neuron_array argument into the SparseNet
    * @param arr: the neuron array to be added to the @SparseNet object net
-   * @param size: how many neurons are in that array
    * @param net: the new owner of the neuron_array
    */
-  void set_neuron_array(uint32 size, SparseNet* net);
+  void set_neuron_array(SparseNet* net);
 
   /**
    * @brief SparseNetBuilder::set_weight_table: moves the weightTable argument into the SparseNet
    * @param table: the array of floating point numbers to be added to the @SparseNet object net
-   * @param size: number of weights to be transferred
    * @param net: the new owner of the weightTable
    */
-  void set_weight_table(uint32 size, SparseNet* net);
+  void set_weight_table(SparseNet* net);
 
 };
 

@@ -1,12 +1,8 @@
-#include <iostream>
-
 #include "catch.hpp"
 
 #include "sparsenet_global.h"
 #include "models/sNet.pb.h"
-#include "services/snetbuilder.h"
-
-
+#include "services/sparse_net_builder.h"
 
 namespace sparse_net_library_test {
 
@@ -23,6 +19,7 @@ namespace sparse_net_library_test {
 	using sparse_net_library::INVALID_BUILDER_USAGE_EXCEPTION;
 	using sparse_net_library::NOT_IMPLEMENTED_EXCEPTION;
 
+/*!# 9 */
 bool is_neuron_valid(Neuron const * neuron)
 {
   if(nullptr != neuron){
@@ -37,7 +34,7 @@ bool is_neuron_valid(Neuron const * neuron)
 /*###############################################################################################
  * Testing Manual Net creation
  * Create 3 Neurons, each having the same weight
- * The 0th Neuron shall have the input, which is a number 
+ * The 0th Neuron shall have the input, which is a number
  * the last 2 shall be the outputs
  * 0th Neuron shall have 5 inputs
  * 1st and 2nd neurons will have the first as input both
@@ -46,31 +43,31 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 	/* Create the single Weight Table */
 	sdouble32 used_weight = 0.5;
 	transfer_functions used_transfer_function = TRANSFER_FUNC_SIGMOID;
-	std::shared_ptr<sdouble32[]> weight_table(new sdouble32[1]);
+	std::vector<sdouble32> weight_table(1);
 	weight_table[0] = used_weight;
 	REQUIRE( nullptr != &(weight_table[0]) );
 	REQUIRE( weight_table[0] == used_weight);
 
 	/* Create the Neuron Table */ /*! #7 */
-	std::shared_ptr<Neuron[]> neuron_table(new Neuron[3]);
+	std::vector<Neuron> neuron_table(3);
 
 	/* Neuron 0: Has Neurons 1 and 2 as inputs */
-	neuron_table[0].add_input_idx(0); 
+	neuron_table[0].add_input_idx(0);
 	neuron_table[0].add_input_weight_idx(0); /* Weight 0 in the weight_table */
 	neuron_table[0].set_memory_ratio_idx(0); /* Weight 0 in the weight_table */
-	neuron_table[0].set_transfer_function_idx(used_transfer_function); 
+	neuron_table[0].set_transfer_function_idx(used_transfer_function);
 	REQUIRE( true == is_neuron_valid(&(neuron_table[0])) );
 
-	neuron_table[1].add_input_idx(0); 
+	neuron_table[1].add_input_idx(0);
 	neuron_table[1].add_input_weight_idx(0);
 	neuron_table[1].set_memory_ratio_idx(0);
-	neuron_table[1].set_transfer_function_idx(used_transfer_function); 
+	neuron_table[1].set_transfer_function_idx(used_transfer_function);
 	REQUIRE( true == is_neuron_valid(&(neuron_table[1])) );
 
-	neuron_table[2].add_input_idx(0); 
-	neuron_table[2].add_input_weight_idx(0); 
+	neuron_table[2].add_input_idx(0);
+	neuron_table[2].add_input_weight_idx(0);
 	neuron_table[2].set_memory_ratio_idx(0);
-	neuron_table[2].set_transfer_function_idx(used_transfer_function); 
+	neuron_table[2].set_transfer_function_idx(used_transfer_function);
 	REQUIRE( true == is_neuron_valid(&(neuron_table[2])) );
 
   /* Pass the net into the builder */
@@ -80,8 +77,8 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 	  .expectedInputRange(1.0)
 	  .output_neuron_number(2)
 	  .arena_ptr(arena)
-	  .neuron_array(neuron_table,3)
-	  .weight_table(weight_table,1);
+	  .neuron_array(neuron_table)
+	  .weight_table(weight_table);
   try{
   	/* Build the net with the given parameters */
   	SparseNet* net(builder->build());
@@ -99,12 +96,12 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 		CHECK( 1 == net->neuron_array(0).input_idx_size() );
 		CHECK( 0 == net->neuron_array(0).input_idx(0) );
 		CHECK( 0 == net->neuron_array(0).input_weight_idx(0) );
-		CHECK( 
-			weight_table[net->neuron_array(0).input_weight_idx(0)] 
-			== net->weight_table(net->neuron_array(0).input_weight_idx(0)) 
+		CHECK(
+			weight_table[net->neuron_array(0).input_weight_idx(0)]
+			== net->weight_table(net->neuron_array(0).input_weight_idx(0))
 		);
 		CHECK(
-			used_transfer_function 
+			used_transfer_function
 			== net->neuron_array(0).transfer_function_idx()
 		);
 
@@ -113,12 +110,12 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 		CHECK( 1 == net->neuron_array(1).input_idx_size() );
 		CHECK( 0 == net->neuron_array(1).input_idx(0) );
 		CHECK( 0 == net->neuron_array(1).input_weight_idx(0) );
-		CHECK( 
-			weight_table[net->neuron_array(1).input_weight_idx(0)] 
-			== net->weight_table(net->neuron_array(1).input_weight_idx(0)) 
+		CHECK(
+			weight_table[net->neuron_array(1).input_weight_idx(0)]
+			== net->weight_table(net->neuron_array(1).input_weight_idx(0))
 		);
 		CHECK(
-			used_transfer_function 
+			used_transfer_function
 			== net->neuron_array(1).transfer_function_idx()
 		);
 
@@ -128,14 +125,14 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 
 		CHECK( 0 == net->neuron_array(2).input_idx(0) );
 		CHECK( 0 == net->neuron_array(2).input_weight_idx(0) );
-		CHECK( 
-			weight_table[net->neuron_array(2).input_weight_idx(0)] 
-			== net->weight_table(net->neuron_array(2).input_weight_idx(0)) 
+		CHECK(
+			weight_table[net->neuron_array(2).input_weight_idx(0)]
+			== net->weight_table(net->neuron_array(2).input_weight_idx(0))
 		);
 		CHECK(
-			used_transfer_function 
+			used_transfer_function
 			== net->neuron_array(2).transfer_function_idx()
-		);		
+		);
 	  return net;
   }catch(int e){
   	switch(e){
@@ -153,17 +150,17 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   }
 }
 
-TEST_CASE( "Constructing small net manually", "[build][small]" ) {
+TEST_CASE( "Constructing small net manually", "[build][small][manual]" ) {
 	SparseNet* net = test_net_builder_manually(nullptr);
 	REQUIRE( nullptr != net );
 	delete net;
 }
 
-TEST_CASE("Constructing small net manually using arena","[build][arena][small]"){
+TEST_CASE("Constructing small net manually using arena","[build][arena][small][manual]"){
 	google::protobuf::Arena arena;
 	SparseNet* net = test_net_builder_manually(&arena);
 	REQUIRE( nullptr != net );
-	arena.Reset(); 
+	arena.Reset();
 }
 
 /*###############################################################################################
@@ -259,7 +256,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
 
 	/* Output Neurons should have 1 input idx - because of easy partitioning in Fully connected Neurons */
 	CHECK( 1 == net->neuron_array(5).input_idx_size() );
-	CHECK( 2 == net->neuron_array(5).input_idx(0) ); 
+	CHECK( 2 == net->neuron_array(5).input_idx(0) );
 	CHECK( 1 == net->neuron_array(6).input_idx_size() );
 	CHECK( 2 == net->neuron_array(6).input_idx(0) );
 
@@ -286,7 +283,7 @@ TEST_CASE( "Builder to construct Fully Connected Net correctly through the inter
 	google::protobuf::Arena arena;
 	SparseNet* net(test_net_builder_fully_connected(&arena));
 	REQUIRE( nullptr != net );
-	arena.Reset(); 
+	arena.Reset();
 }
 
 } /* namespace sparse_net_library_test */

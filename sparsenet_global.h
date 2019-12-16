@@ -17,6 +17,7 @@ namespace sparse_net_library {
  *  - #3 Set Arena options for memory usage
  *  - #6 Use mutable, to add the whole array, don't use a cycle
  *  - #8 Extend testcases with biases
+ *  - #9 Test neuron valid interface in builder
  */
 /**
  * GLOBAL TYPES
@@ -41,6 +42,8 @@ typedef sdouble32 (*act_fnc_type)(sdouble32 bias, sdouble32 memory_rate, sdouble
 typedef enum {
   NOT_IMPLEMENTED_EXCEPTION,
   INVALID_BUILDER_USAGE_EXCEPTION,
+  NULL_DETAIL_EXCEPTION,
+  UNIDENTIFIED_OPERATION_EXCEPTION
 }sparse_net_library_exception;
 
 } /* namespace sparse_net_library */

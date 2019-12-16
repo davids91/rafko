@@ -10,11 +10,12 @@ enum transfer_functions{
   TRANSFER_FUNC_IDENTITY = 0;
   TRANSFER_FUNC_SIGMOID = 1;
   TRANSFER_FUNC_TANH = 2;
-  TRANSFER_FUNC_RELU = 3;
-  TRANSFER_FUNC_SELU = 4;
+  TRANSFER_FUNC_ELU = 3;
+  TRANSFER_FUNC_RELU = 4;
+  TRANSFER_FUNC_SELU = 5;
 }
 
-/** SNet: Takes input, assignes weights to them and processes 
+/** SNet: Takes input, assignes weights to them and processes
  *  the weigthed sums with a transfer function.
  */
 message Neuron{
@@ -26,7 +27,7 @@ message Neuron{
   repeated uint32 input_idx = 5; /* indexes the Neuron takes as input. Size is either 1 or @inputWeightIdx size */
 }
 
-/** SNet: a sparse net implementation containing the 
+/** SNet: a sparse net implementation containing the
  *  Neurons and optimization cache files
  */
 message SparseNet{
