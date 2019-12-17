@@ -4,12 +4,14 @@
 #include <vector>
 #include <memory>
 
-#include "models/sNet.pb.h"
+#include "models/gen/sparse_net.pb.h"
 #include "models/transfer_function_info.h"
 #include "models/weight_initializer.h"
-#include "sparsenet_global.h"
+#include "sparse_net_global.h"
 
 namespace sparse_net_library {
+
+using std::shared_ptr;
 
 /**
  * @brief SparseNetBuilder: Builder class to compile Sparse Neural Networks
@@ -26,34 +28,34 @@ public:
   SparseNetBuilder();
 
   /**
-   * @brief    SparseNetBuilder::input_size: sets the number of expected inputs for the SparseNet object to be built
+   * @brief      SparseNetBuilder::input_size: sets the number of expected inputs for the SparseNet object to be built
    *
    * @param[in]  size  The size
    *
-   * @return   builder reference for chaining
+   * @return     builder reference for chaining
    */
   SparseNetBuilder& input_size(uint32 size);
 
   /**
-   * @brief SparseNetBuilder::input_neuron_size  sets the number of observer neurons who only take their input from the outside of the net
+   * @brief      SparseNetBuilder::input_neuron_size  sets the number of observer neurons who only take their input from the outside of the net
    *
    * @param[in]  num the number of related neurons at the beginning of the Neuron array  
    *
-   * @return   builder reference for chaining
+   * @return     builder reference for chaining
    */
   SparseNetBuilder& input_neuron_size(uint32 num);
 
   /**
-   * @brief    sets the number of expected outputs for the SparseNet object to be built
+   * @brief      sets the number of expected outputs for the SparseNet object to be built
    *
    * @param[in]  size  The size
    *
-   * @return   builder reference for chaining
+   * @return     builder reference for chaining
    */
   SparseNetBuilder& output_neuron_number(uint32 size);
 
   /**
-   * @brief    Sets the expected range of inputs to the net
+   * @brief      Sets the expected range of inputs to the net
    *
    * @param[in]  range  The range
    *
@@ -62,32 +64,32 @@ public:
   SparseNetBuilder& expectedInputRange(sdouble32 range);
 
   /**
-   * @brief    Sets the Weight initializer to a manual one, overwriting the default weight
-   *       intialization assigned for any builder interface, except @SparseNetBuilder::build. 
+   * @brief      Sets the Weight initializer to a manual one, overwriting the default weight
+   *             intialization assigned for any builder interface, except @SparseNetBuilder::build. 
    *
    * @param[in]  initializer  The initializer
    *
-   * @return   builder reference for chaining
+   * @return     Builder reference for chaining
    */
-  SparseNetBuilder& weight_initializer(std::shared_ptr<Weight_initializer> initializer);
+  SparseNetBuilder& weight_initializer(shared_ptr<Weight_initializer> initializer);
 
   /**
-   * @brief    set the given neuron_array and transfer its ownership to the builder
+   * @brief      set the given neuron_array and transfer its ownership to the builder
    *
    * @param[in]  arr   The array of neurons to be transferred
    *
-   * @return   { description_of_the_return_value }
+   * @return     Builder reference for chaining
    */
-  SparseNetBuilder& neuron_array(std::vector<Neuron> arr);
+  SparseNetBuilder& neuron_array(vector<Neuron> arr);
 
   /**
-   * @brief    set the given weight table and transfer ownership to the builder
+   * @brief      set the given weight table and transfer ownership to the builder
    *
    * @param[in]  table  The table to be transferred
    *
-   * @return   reference for chaining
+   * @return     reference for chaining
    */
-  SparseNetBuilder& weight_table(std::vector<sdouble32> table);
+  SparseNetBuilder& weight_table(vector<sdouble32> table);
 
   /**
    * @brief    Sets the Google protobuffer arena reference in the builder, to 
@@ -101,7 +103,7 @@ public:
   SparseNetBuilder& arena_ptr(google::protobuf::Arena* arena);
 
   /**
-   * @brief    creates a Fully connected feedforward neural network based on the IO arguments and
+   * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
    *       and function arguments
    *
    * @param[in]  layerSizes         how many layers will there be in the result
@@ -110,7 +112,7 @@ public:
    *
    * @return   the built neural network
    */
-  SparseNet* denseLayers(std::vector<uint32> layerSizes, std::vector<std::vector<transfer_functions>> allowedTrFunctionsByLayer);
+  SparseNet* denseLayers(vector<uint32> layerSizes, vector<vector<transfer_functions>> allowedTrFunctionsByLayer);
 
   /**
    * @brief    creates a Neural network from the given Arguments. Requires the following
@@ -127,7 +129,7 @@ public:
 
 private:
   /**
-   * Helper variable to see if different required arguments are set inside the builder
+   * Helper variables to see if different required arguments are set inside the builder
    */
   bool is_input_size_set = false;
   bool is_input_neuron_size_set = false;
@@ -146,17 +148,17 @@ private:
   /**
    * The array containing the neurons while SparseNetBuilder::build is used
    */
-  std::vector<Neuron> arg_neuron_array;
+  vector<Neuron> arg_neuron_array;
 
   /**
    * The array containing the used weights in the network while SparseNetBuilder::build is used
    */
-  std::vector<sdouble32> arg_weight_table;
+  vector<sdouble32> arg_weight_table;
 
   /**
    * Weight Initializer argument, which guides the initial net Weights
    */
-  std::shared_ptr<Weight_initializer> arg_weight_initer;
+  shared_ptr<Weight_initializer> arg_weight_initer;
 
   /**
    * Number of inputs the net-to-be-built shall accept

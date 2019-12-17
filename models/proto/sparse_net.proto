@@ -3,8 +3,8 @@ option cc_enable_arenas = true;
 
 package sparse_net_library;
 
-/** TFnIdx: indexes of the transfer function a neuron is able to use
- * on the weigthed sum of its operation
+/** @brief      Indexes of the transfer function a neuron is able to use
+ *             on the weigthed sum of its operation
  */
 enum transfer_functions{
   TRANSFER_FUNC_IDENTITY = 0;
@@ -15,20 +15,20 @@ enum transfer_functions{
   TRANSFER_FUNC_SELU = 5;
 }
 
-/** SNet: Takes input, assignes weights to them and processes
- *  the weigthed sums with a transfer function.
+/** @brief      Takes input, assignes weights to them and processes
+ *              the weigthed sums with a transfer function.
  */
 message Neuron{
-  uint32 bias_idx = 2; /* a value the Neuron shall offset its output with */
+  uint32 bias_idx = 1; /* a value the Neuron shall offset its output with */
   /* index of the weight for the memory ratio. 1.0: keep its previous value instead of the newly calculated one */
-  uint32 memory_ratio_idx = 1;  /* Value pointed at should always be 0.0 <= memory_ratio < 1.0 default value is 0.0 <== as in zero memory of its previous value */
+  uint32 memory_ratio_idx = 2;  /* Value pointed at should always be 0.0 <= memory_ratio < 1.0 default value is 0.0 <== as in zero memory of its previous value */
   transfer_functions transfer_function_idx = 3; /* index of the transfer funtion this Neuron uses, empty means TRANSFER_FUNC_IDENTITY */
   repeated uint32 input_weight_idx = 4; /* weights the Neuron multiplies its input with, size is representative of how many inputs the neuron has */
   repeated uint32 input_idx = 5; /* indexes the Neuron takes as input. Size is either 1 or @inputWeightIdx size */
 }
 
-/** SNet: a sparse net implementation containing the
- *  Neurons and optimization cache files
+/** @brief      A sparse net implementation containing the
+ *              Neurons and optimization cache files
  */
 message SparseNet{
   uint32 input_data_size = 1; /* Number of inputs (floating point numbers) accepted by the Neural network */

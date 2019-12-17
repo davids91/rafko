@@ -4,12 +4,14 @@
 
 namespace sparse_net_library {
 
+using std::max;
+
 sdouble32 Transfer_function_info::lambda = 1.0507;
 sdouble32 Transfer_function_info::alpha = 1.0;
 
-transfer_functions Transfer_function_info::next(std::vector<transfer_functions> range){
+transfer_functions Transfer_function_info::next(vector<transfer_functions> range){
   transfer_functions candidate = static_cast<transfer_functions>(rand()%transfer_functions_ARRAYSIZE);
-  while(std::find(range.begin(), range.end(), candidate) == range.end()){
+  while(find(range.begin(), range.end(), candidate) == range.end()){
     candidate = static_cast<transfer_functions>(rand()%transfer_functions_ARRAYSIZE);
   }
   return candidate;
@@ -38,7 +40,7 @@ void Transfer_function_info::apply_to_data(transfer_functions function, sdouble3
     data = tanh(data);
     break;
   case TRANSFER_FUNC_RELU:
-    data = std::max(0.0,data);
+    data = max(0.0,data);
     break;
   case TRANSFER_FUNC_ELU:
     if(0 > data){

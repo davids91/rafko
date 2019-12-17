@@ -2,9 +2,9 @@
 #define weight_initializer_H
 
 
-#include "models/sNet.pb.h"
+#include "models/gen/sparse_net.pb.h"
 
-#include "sparsenet_global.h"
+#include "sparse_net_global.h"
 
 namespace sparse_net_library {
 

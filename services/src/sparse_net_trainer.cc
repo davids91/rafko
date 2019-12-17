@@ -1,4 +1,4 @@
-#include "services/snettrainer.h"
+#include "services/sparse_nettrainer.h"
 
 namespace sparse_net_library {
 

@@ -1,9 +1,11 @@
 #include <time.h>
 
-#include "sparse_net_builder.h"
+#include "services/sparse_net_builder.h"
 #include "models/dense_net_weight_initializer.h"
 
 namespace sparse_net_library {
+
+using std::shared_ptr;
 
 SparseNetBuilder::SparseNetBuilder(){}
 
@@ -31,7 +33,7 @@ SparseNetBuilder& SparseNetBuilder::expectedInputRange(sdouble32 range){
   return *this;
 }
 
-SparseNetBuilder& SparseNetBuilder::weight_initializer(std::shared_ptr<Weight_initializer> initializer){
+SparseNetBuilder& SparseNetBuilder::weight_initializer(shared_ptr<Weight_initializer> initializer){
   if(nullptr != initializer){
     arg_weight_initer = initializer;
     is_weight_initializer_set = true;
@@ -53,7 +55,7 @@ SparseNetBuilder& SparseNetBuilder::arena_ptr(google::protobuf::Arena* arena){
   return *this;
 }
 
-SparseNetBuilder& SparseNetBuilder::weight_table(std::vector<sdouble32> table){
+SparseNetBuilder& SparseNetBuilder::weight_table(vector<sdouble32> table){
   /*! #5 */
   if(0 < table.size()){
     arg_weight_table = table;
@@ -75,7 +77,7 @@ void SparseNetBuilder::set_weight_table(SparseNet* net){
   }
 }
 
-SparseNetBuilder& SparseNetBuilder::neuron_array(std::vector<Neuron> arr){
+SparseNetBuilder& SparseNetBuilder::neuron_array(vector<Neuron> arr){
   /*! #2 *//*! #5 */
   if((0 < arr.size())&&(neuronValid(&arr.back()))){
     arg_neuron_array = arr;
@@ -96,7 +98,7 @@ void SparseNetBuilder::set_neuron_array(SparseNet* net){
   }
 }
 
-SparseNet* SparseNetBuilder::denseLayers(std::vector<uint32> layerSizes, std::vector<std::vector<transfer_functions> > allowedTrFunctionsByLayer){
+SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layerSizes, vector<vector<transfer_functions> > allowedTrFunctionsByLayer){
   uint32 prevSize = 0;
   uint32 numNeurons = 0;
   /* Calculate number of weights needed overall
@@ -128,13 +130,13 @@ SparseNet* SparseNetBuilder::denseLayers(std::vector<uint32> layerSizes, std::ve
     prevSize = arg_input_size;
 
     if(!is_weight_initializer_set){
-      weight_initializer(std::shared_ptr<Dense_net_weight_initializer>(
+      weight_initializer(shared_ptr<Dense_net_weight_initializer>(
          new Dense_net_weight_initializer(static_cast<uint32>(time(nullptr)))
        ));
     }
 
-    arg_weight_table = std::vector<sdouble32>(numWeights);
-    arg_neuron_array = std::vector<Neuron>(numNeurons);
+    arg_weight_table = vector<sdouble32>(numWeights);
+    arg_neuron_array = vector<Neuron>(numNeurons);
 
     prevSize = arg_input_size;
     for(uint32 layerIt = 0; layerIt < layerSizes.size(); layerIt++)
@@ -188,7 +190,7 @@ SparseNet* SparseNetBuilder::denseLayers(std::vector<uint32> layerSizes, std::ve
     set_neuron_array(ret);
     return ret;
   }else{
-    throw INVALID_BUILDER_USAGE_EXCEPTION;
+    throw INVALID_USAGE_EXCEPTION;
   }
 }
 
@@ -206,7 +208,7 @@ SparseNet* SparseNetBuilder::build(void){
     set_weight_table(ret);
     set_neuron_array(ret);
     return ret;
-  }else throw INVALID_BUILDER_USAGE_EXCEPTION;
+  }else throw INVALID_USAGE_EXCEPTION;
 }
 
 bool SparseNetBuilder::neuronValid(Neuron const * neuron) const

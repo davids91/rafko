@@ -1,1 +1,3 @@
-protoc sNet.proto --proto_path="../models/proto/" --cpp_out="../models/"
+protoc sparse_net.proto --proto_path="../models/proto/" --cpp_out="../models/gen/"
+protoc solution.proto --proto_path="../models/proto/" --cpp_out="../models/gen/"
+mv ../models/gen/*.cc ../models/src/gen

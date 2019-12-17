@@ -7,14 +7,17 @@
 
 namespace sparse_net_library {
 
+using std::min;
+using std::max;
+
 Dense_net_weight_initializer::Dense_net_weight_initializer(){
   srand(static_cast<uint32>(time(nullptr))); /*! #1 */  
 }
 
 Dense_net_weight_initializer::Dense_net_weight_initializer(uint32 seed, sdouble32 memRatioMin, sdouble32 memRatioMax)
 {
-  memMin = std::max(1e-10, std::max(1.0, memRatioMin));
-  memMax = std::min(1.0, std::max(memMin,memRatioMax));
+  memMin = max(1e-10, max(1.0, memRatioMin));
+  memMax = min(1.0, max(memMin,memRatioMax));
   srand(seed); /*! #1 */
 }
 

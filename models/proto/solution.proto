@@ -1,0 +1,58 @@
+syntax = "proto3";
+option cc_enable_arenas = true;
+
+package sparse_net_library;
+
+import "sparse_net.proto";
+
+/**
+ * @brief      An intermediate solution as it calculates
+ *             a coherent part of a sparse neural network, where locality is maximized.
+ *             The arrays inside this structure all have their sizes defined by @internal_neuron_number
+ *             and/or the size of @data, which contains the data for the inputs and neurons as well.
+ */
+message Partial_solution{
+  /** ################################################################################################
+   * Solution data
+   */
+  uint32 input_data_size = 1; /* number of used inputs */
+  uint32 internal_neuron_number = 2; /* number of neurons used in this partial solution */
+  repeated double weight_table = 3; /* stores the weights paired to @inside_indexes for the inputs of the Neurons; Ranges [0.0,1.0) */
+
+  /** ################################################################################################
+   * A representation of the actual neuron to be used in this intermediate solution
+   * - sizes are of @internal_neuron_number
+   */
+  repeated uint32 actual_index = 4; /* Stores the actual index of the Neuron in the sparse_net it calculates the value for
+                                     * Indexes are global to @neuron_array under the @SparseNet to be solved */
+  repeated uint32 input_sizes = 5; /* stores how many inputs each neuron has */
+
+  /** Parameters each neuron have to post-process their inputs
+   */
+  repeated transfer_functions neuron_transfer_functions = 6;
+  repeated double memory_ratios = 7;
+  repeated double biases = 8;
+
+  /** ################################################################################################
+   * The inputs and their corresponding weights of the Neurons
+   * - sizes are both of the summary of @input_sizes
+   * - Since solving the detail is incremental, the start of each Neuron's
+   *   input is determined at runtime, so it doesn't need to be stored
+   */
+  repeated uint32 inside_indexes = 9; /* Indexes of inputs of the Neurons; value range [0 ; @data.size) */
+  repeated uint32 weight_indexes = 10; /* Indexes of weights of the above inputs;value range [0.0,1.0] */
+}
+
+/**
+ * @brief      A collection of dependent @Partial_solution messages in order of dependency
+ */
+message Solution_chain{
+  repeated Partial_solution partial_solutions = 1;
+}
+
+/**
+ * @brief      A collection of independent @Solution_chain messages to be executed in paralell
+ */
+message Solution{
+  repeated Solution_chain solution_chains = 1;
+}
