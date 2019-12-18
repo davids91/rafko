@@ -80,11 +80,12 @@ public class MainWindow {
     public void step() { /* this is where the magic will happen */
         /* Calculate sum of solution difference from dataset */
         double error = 0;
+        double improvement_rate;
         for (int i = 0; i < dataset_size_slider.getValue(); ++i) {
             error += Math.pow(dataset.get(i) - solution_trend.solve_for(i),2); /* Squared loss */
         }
         error /= dataset_size_slider.getValue();
-
+        improvement_rate = Math.max(0.0,Math.min(1.0, error/previous_error));
         /* Calculate the step size and step */
         double step_size =
             (previous_error - error) / (solution_trend.distance(previous_trend))
@@ -96,13 +97,14 @@ public class MainWindow {
         System.out.println("solution_trend.getC():" + solution_trend.getC());
         System.out.println("----");
         System.out.println("(error - previous_error):" + (error - previous_error));
+        System.out.println("gradient:" + (previous_error - error) / (solution_trend.distance(previous_trend)));
         System.out.println("(solution_trend.getC() - previous_trend.getC()):" + (solution_trend.getC() - previous_trend.getC()));
         System.out.println("step size:" + step_size);
         System.out.println("================");
 
         Polynomial tmp_prev = new Polynomial(solution_trend);
-        solution_trend.stepB((solution_trend.getB() - previous_trend.getB()) * step_size);
-        solution_trend.stepC((solution_trend.getC() - previous_trend.getC()) * step_size);
+        solution_trend.stepB((solution_trend.getB() - previous_trend.getB()) * step_size * improvement_rate);
+        solution_trend.stepC((solution_trend.getC() - previous_trend.getC()) * step_size * improvement_rate);
         previous_trend = tmp_prev;
         previous_error = error;
         displaySolutionTrend();

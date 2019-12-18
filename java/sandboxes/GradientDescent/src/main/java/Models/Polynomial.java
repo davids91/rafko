@@ -24,7 +24,7 @@ public class Polynomial {
     }
 
     public double solve_for(double x){
-        return (varB * x*0) + varC;
+        return (varB * x) + varC;
     }
     public double distance(Polynomial other){
         return Math.sqrt(

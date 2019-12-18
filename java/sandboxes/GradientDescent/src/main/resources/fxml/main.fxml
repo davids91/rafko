@@ -7,7 +7,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<SplitPane dividerPositions="0.8, 0.5" prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controls.MainWindow">
+<SplitPane dividerPositions="0.8" prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controls.MainWindow">
    <items>
       <LineChart fx:id="display_graph">
         <xAxis>
@@ -17,7 +17,6 @@
             <NumberAxis side="LEFT" />
         </yAxis>
       </LineChart>
-      <NumberAxis side="LEFT" />
       <VBox prefHeight="200.0" prefWidth="100.0">
          <children>
             <Button fx:id="fill_button" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#fill_chart" text="Reset" />
@@ -31,16 +30,16 @@
                   <Label fx:id="dataset_size_label" text="10" />
                </children>
             </HBox>
-            <Slider fx:id="dataset_size_slider" max="100.0" snapToTicks="true" value="10.0" />
+            <Slider fx:id="dataset_size_slider" max="100.0" snapToTicks="true" value="100.0" />
             <Label text="Entropy" />
             <Slider fx:id="entropy_slider" blockIncrement="0.2" max="10.0" value="2" />
             <HBox>
                <children>
                   <Label text="Learning rate:" />
-                  <Label fx:id="learning_rate_label" text="0.1" />
+                  <Label fx:id="learning_rate_label" text="0.01" />
                </children>
             </HBox>
-            <Slider fx:id="learning_rate_slider" max="0.5" min="1.0E-4" value="0.1" />
+            <Slider fx:id="learning_rate_slider" max="0.15" min="1.0E-10" value="0.01" />
          </children>
       </VBox>
    </items>
