@@ -4,50 +4,56 @@
 #include <time.h>
 
 #include "models/dense_net_weight_initializer.h"
+#include "models/transfer_function_info.h"
 
 namespace sparse_net_library {
 
 using std::min;
 using std::max;
 
-Dense_net_weight_initializer::Dense_net_weight_initializer(){
-  srand(static_cast<uint32>(time(nullptr))); /*! #1 */  
+Dense_net_weight_initializer::Dense_net_weight_initializer(bool seed){
+  if(seed)srand(static_cast<uint32>(time(nullptr)));
 }
 
-Dense_net_weight_initializer::Dense_net_weight_initializer(uint32 seed, sdouble32 memRatioMin, sdouble32 memRatioMax)
-{
-  memMin = max(1e-10, max(1.0, memRatioMin));
+Dense_net_weight_initializer::Dense_net_weight_initializer(sdouble32 memRatioMin, sdouble32 memRatioMax){
+  memMin = max(Transfer_function_info::epsilon, min(1.0, memRatioMin));
   memMax = min(1.0, max(memMin,memRatioMax));
-  srand(seed); /*! #1 */
 }
 
-sdouble32 Dense_net_weight_initializer::getWeightAmp(transfer_functions usedTransferFnc) const{
-  switch(usedTransferFnc){
-    case TRANSFER_FUNC_RELU:
-    return (sqrt(2 / (expInNum))); /* Kaiming initialization */
+Dense_net_weight_initializer::Dense_net_weight_initializer(uint32 seed, sdouble32 memRatioMin, sdouble32 memRatioMax){
+  Dense_net_weight_initializer(memRatioMin,memRatioMax);
+  srand(seed);
+}
+
+sdouble32 Dense_net_weight_initializer::get_weight_amplitude(transfer_functions used_transfer_function) const{
+  sdouble32 amplitude;
+  switch(used_transfer_function){
+    case TRANSFER_FUNCTION_RELU:
+    amplitude = (sqrt(2 / (expected_input_number))); /* Kaiming initialization */
   default:
-    return (sqrt(2 / (expInNum * expInMax)));
+    amplitude = (sqrt(2 / (expected_input_number * expected_input_maximum_value)));
   }
+  return max(Transfer_function_info::epsilon,amplitude);
 }
 
-sdouble32 Dense_net_weight_initializer::nextWeight() const{
-  return nextWeightFor(TRANSFER_FUNC_IDENTITY);
-}
-
-sdouble32 Dense_net_weight_initializer::nextWeightFor(transfer_functions usedTransferFnc) const{
-  return (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/getWeightAmp(usedTransferFnc))));
-}
-
-sdouble32 Dense_net_weight_initializer::nextMemRatio() const{
-  sdouble32 diff = memMax - memMin;
-  return (0.0 >= diff)?0:(
-     memMin + (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/diff)))
+sdouble32 Dense_net_weight_initializer::next_weight_for(transfer_functions used_transfer_function) const{
+  return ((rand()%2 == 0)?-1.0:1.0) * limit_weight( 
+    (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
   );
 }
 
-sdouble32 Dense_net_weight_initializer::nextBias() const{
-  return( (expInMax / -2.0) +
-    (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/expInMax)))
+sdouble32 Dense_net_weight_initializer::next_memory_ratio() const{
+  if(memMin <  memMax){
+    sdouble32 diff = memMax - memMin;
+    return (0.0 == diff)?0:(
+       memMin + (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/diff)))
+    );
+  } else return memMin;
+}
+
+sdouble32 Dense_net_weight_initializer::next_bias() const{
+  return ( (expected_input_maximum_value / -2.0) +
+    (static_cast<sdouble32>(rand()%static_cast<int>(expected_input_maximum_value)))
   );
 }
 

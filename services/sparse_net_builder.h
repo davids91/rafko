@@ -112,7 +112,7 @@ public:
    *
    * @return   the built neural network
    */
-  SparseNet* denseLayers(vector<uint32> layerSizes, vector<vector<transfer_functions>> allowedTrFunctionsByLayer);
+  SparseNet* denseLayers(vector<uint32> layer_sizes, vector<vector<transfer_functions>> allowedTrFunctionsByLayer);
 
   /**
    * @brief    creates a Neural network from the given Arguments. Requires the following
@@ -127,6 +127,15 @@ public:
    */
   SparseNet* build();
 
+  /**
+   * @brief SparseNetBuilder::is_neuron_valid:
+   *  checks if the required parameters exist and valid, but does
+   *  not take SparseNet integrity into account (eg.: it doesn't check index validities)
+   * @param neuron the pointer to the neuron
+   * @return if the Neuron is valid or not
+   */
+  bool static is_neuron_valid(Neuron const * neuron);
+
 private:
   /**
    * Helper variables to see if different required arguments are set inside the builder
@@ -138,12 +147,11 @@ private:
   bool is_weight_table_set = false;
   bool is_weight_initializer_set = false;
   bool is_neuron_array_set = false;
-  bool is_arena_ptr_set = false;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
    */
-  sdouble32 arg_expected_input_range = Transfer_function_info::getAvgOutRange(TRANSFER_FUNC_IDENTITY);
+  sdouble32 arg_expected_input_range = Transfer_function_info::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
 
   /**
    * The array containing the neurons while SparseNetBuilder::build is used
@@ -191,15 +199,6 @@ private:
    * @return   true if all the needed arguments for the Net Input and output operations are set
    */
   bool io_pre_requisites_set(void) const;
-
-  /**
-   * @brief SparseNetBuilder::neuronValid:
-   *  checks if the required parameters exist and valid, but does
-   *  not take SparseNet integrity into account (eg.: it doesn't check index validities)
-   * @param neuron the pointer to the neuron
-   * @return if the Neuron is valid or not
-   */
-  bool neuronValid(Neuron const * neuron) const;
 
   /**
    * @brief SparseNetBuilder::set_neuron_array: moves the neuron_array argument into the SparseNet

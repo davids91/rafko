@@ -1,7 +1,7 @@
 # Makefile
 LIBS = `pkg-config --cflags --libs protobuf` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
 
-CPPFLAGS = -Wall $(LIBS) -std=c++11 #-v
+CPPFLAGS = -Wall $(LIBS) -std=c++14 #-v
 CPPFLAGS_TEST = -L../lib/ -lsparsenetlib
 
 NET_SOURCES = ../models/src/gen/sparse_net.pb.cc ../models/src/gen/solution.pb.cc ../models/src/transfer_function_info.cc
@@ -42,12 +42,12 @@ clean:
 # Testing
 ##########################################################################################################
 
-TEST_SOURCES = ../test/main_test.cc ../test/builder_test.cc ../test/solver_test.cc
-TEST_OBJECTS = main_test.o builder_test.o solver_test.o
+TEST_SOURCES = ../test/main_test.cc ../test/net_builder_test.cc ../test/partial_solution_solver_test.cc
+TEST_OBJECTS = main_test.o net_builder_test.o partial_solution_solver_test.o
 TEST_INCLUDES = -I ../test/
 TEST_RESULT = test-result.out
 
-.PHONY: test build-tests
+.PHONY: test build-tests run-tests
 build-tests: $(TEST_OBJECTS) $(LIBRARY_OBJECTS)
 	@rm -f test-result.out
 	g++ $(TEST_OBJECTS) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
@@ -55,7 +55,7 @@ build-tests: $(TEST_OBJECTS) $(LIBRARY_OBJECTS)
 test: clean build_library build-tests
 	./$(TEST_RESULT) --use-colour yes
 
-test-only: $(TEST_RESULT)
+run-tests: $(TEST_RESULT)
 	./$(TEST_RESULT) --use-colour yes
 
 $(TEST_OBJECTS):

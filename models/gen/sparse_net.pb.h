@@ -70,18 +70,20 @@ PROTOBUF_NAMESPACE_CLOSE
 namespace sparse_net_library {
 
 enum transfer_functions : int {
-  TRANSFER_FUNC_IDENTITY = 0,
-  TRANSFER_FUNC_SIGMOID = 1,
-  TRANSFER_FUNC_TANH = 2,
-  TRANSFER_FUNC_ELU = 3,
-  TRANSFER_FUNC_RELU = 4,
-  TRANSFER_FUNC_SELU = 5,
+  TRANSFER_FUNCTION_UNKNOWN = 0,
+  TRANSFER_FUNCTION_IDENTITY = 1,
+  TRANSFER_FUNCTION_SIGMOID = 2,
+  TRANSFER_FUNCTION_TANH = 3,
+  TRANSFER_FUNCTION_ELU = 4,
+  TRANSFER_FUNCTION_SELU = 5,
+  TRANSFER_FUNCTION_RELU = 6,
+  TRANSFER_FUNCTION_END = 512,
   transfer_functions_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   transfer_functions_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
 bool transfer_functions_IsValid(int value);
-constexpr transfer_functions transfer_functions_MIN = TRANSFER_FUNC_IDENTITY;
-constexpr transfer_functions transfer_functions_MAX = TRANSFER_FUNC_SELU;
+constexpr transfer_functions transfer_functions_MIN = TRANSFER_FUNCTION_UNKNOWN;
+constexpr transfer_functions transfer_functions_MAX = TRANSFER_FUNCTION_END;
 constexpr int transfer_functions_ARRAYSIZE = transfer_functions_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* transfer_functions_descriptor();
@@ -190,10 +192,8 @@ class Neuron :
   bool MergePartialFromCodedStream(
       ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) final;
   #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-  void SerializeWithCachedSizes(
-      ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const final;
   ::PROTOBUF_NAMESPACE_ID::uint8* InternalSerializeWithCachedSizesToArray(
-      ::PROTOBUF_NAMESPACE_ID::uint8* target) const final;
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
   int GetCachedSize() const final { return _cached_size_.Get(); }
 
   private:
@@ -233,33 +233,57 @@ class Neuron :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kInputWeightIdxFieldNumber = 4,
-    kInputIdxFieldNumber = 5,
+    kWeightIndexSizesFieldNumber = 4,
+    kWeightIndexStartsFieldNumber = 5,
+    kInputIndexSizesFieldNumber = 6,
+    kInputIndexStartsFieldNumber = 7,
     kBiasIdxFieldNumber = 1,
     kMemoryRatioIdxFieldNumber = 2,
     kTransferFunctionIdxFieldNumber = 3,
   };
-  // repeated uint32 input_weight_idx = 4;
-  int input_weight_idx_size() const;
-  void clear_input_weight_idx();
-  ::PROTOBUF_NAMESPACE_ID::uint32 input_weight_idx(int index) const;
-  void set_input_weight_idx(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
-  void add_input_weight_idx(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  // repeated uint32 weight_index_sizes = 4;
+  int weight_index_sizes_size() const;
+  void clear_weight_index_sizes();
+  ::PROTOBUF_NAMESPACE_ID::uint32 weight_index_sizes(int index) const;
+  void set_weight_index_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_weight_index_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-      input_weight_idx() const;
+      weight_index_sizes() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-      mutable_input_weight_idx();
+      mutable_weight_index_sizes();
 
-  // repeated uint32 input_idx = 5;
-  int input_idx_size() const;
-  void clear_input_idx();
-  ::PROTOBUF_NAMESPACE_ID::uint32 input_idx(int index) const;
-  void set_input_idx(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
-  void add_input_idx(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  // repeated uint32 weight_index_starts = 5;
+  int weight_index_starts_size() const;
+  void clear_weight_index_starts();
+  ::PROTOBUF_NAMESPACE_ID::uint32 weight_index_starts(int index) const;
+  void set_weight_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_weight_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-      input_idx() const;
+      weight_index_starts() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-      mutable_input_idx();
+      mutable_weight_index_starts();
+
+  // repeated uint32 input_index_sizes = 6;
+  int input_index_sizes_size() const;
+  void clear_input_index_sizes();
+  ::PROTOBUF_NAMESPACE_ID::uint32 input_index_sizes(int index) const;
+  void set_input_index_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_input_index_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+      input_index_sizes() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+      mutable_input_index_sizes();
+
+  // repeated uint32 input_index_starts = 7;
+  int input_index_starts_size() const;
+  void clear_input_index_starts();
+  ::PROTOBUF_NAMESPACE_ID::uint32 input_index_starts(int index) const;
+  void set_input_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_input_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+      input_index_starts() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+      mutable_input_index_starts();
 
   // uint32 bias_idx = 1;
   void clear_bias_idx();
@@ -284,10 +308,14 @@ class Neuron :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > input_weight_idx_;
-  mutable std::atomic<int> _input_weight_idx_cached_byte_size_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > input_idx_;
-  mutable std::atomic<int> _input_idx_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > weight_index_sizes_;
+  mutable std::atomic<int> _weight_index_sizes_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > weight_index_starts_;
+  mutable std::atomic<int> _weight_index_starts_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > input_index_sizes_;
+  mutable std::atomic<int> _input_index_sizes_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > input_index_starts_;
+  mutable std::atomic<int> _input_index_starts_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::uint32 bias_idx_;
   ::PROTOBUF_NAMESPACE_ID::uint32 memory_ratio_idx_;
   int transfer_function_idx_;
@@ -386,10 +414,8 @@ class SparseNet :
   bool MergePartialFromCodedStream(
       ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) final;
   #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-  void SerializeWithCachedSizes(
-      ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const final;
   ::PROTOBUF_NAMESPACE_ID::uint8* InternalSerializeWithCachedSizesToArray(
-      ::PROTOBUF_NAMESPACE_ID::uint8* target) const final;
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
   int GetCachedSize() const final { return _cached_size_.Get(); }
 
   private:
@@ -542,64 +568,124 @@ inline void Neuron::set_transfer_function_idx(::sparse_net_library::transfer_fun
   // @@protoc_insertion_point(field_set:sparse_net_library.Neuron.transfer_function_idx)
 }
 
-// repeated uint32 input_weight_idx = 4;
-inline int Neuron::input_weight_idx_size() const {
-  return input_weight_idx_.size();
+// repeated uint32 weight_index_sizes = 4;
+inline int Neuron::weight_index_sizes_size() const {
+  return weight_index_sizes_.size();
 }
-inline void Neuron::clear_input_weight_idx() {
-  input_weight_idx_.Clear();
+inline void Neuron::clear_weight_index_sizes() {
+  weight_index_sizes_.Clear();
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint32 Neuron::input_weight_idx(int index) const {
-  // @@protoc_insertion_point(field_get:sparse_net_library.Neuron.input_weight_idx)
-  return input_weight_idx_.Get(index);
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Neuron::weight_index_sizes(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Neuron.weight_index_sizes)
+  return weight_index_sizes_.Get(index);
 }
-inline void Neuron::set_input_weight_idx(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  input_weight_idx_.Set(index, value);
-  // @@protoc_insertion_point(field_set:sparse_net_library.Neuron.input_weight_idx)
+inline void Neuron::set_weight_index_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_index_sizes_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Neuron.weight_index_sizes)
 }
-inline void Neuron::add_input_weight_idx(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  input_weight_idx_.Add(value);
-  // @@protoc_insertion_point(field_add:sparse_net_library.Neuron.input_weight_idx)
+inline void Neuron::add_weight_index_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_index_sizes_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Neuron.weight_index_sizes)
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-Neuron::input_weight_idx() const {
-  // @@protoc_insertion_point(field_list:sparse_net_library.Neuron.input_weight_idx)
-  return input_weight_idx_;
+Neuron::weight_index_sizes() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Neuron.weight_index_sizes)
+  return weight_index_sizes_;
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-Neuron::mutable_input_weight_idx() {
-  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Neuron.input_weight_idx)
-  return &input_weight_idx_;
+Neuron::mutable_weight_index_sizes() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Neuron.weight_index_sizes)
+  return &weight_index_sizes_;
 }
 
-// repeated uint32 input_idx = 5;
-inline int Neuron::input_idx_size() const {
-  return input_idx_.size();
+// repeated uint32 weight_index_starts = 5;
+inline int Neuron::weight_index_starts_size() const {
+  return weight_index_starts_.size();
 }
-inline void Neuron::clear_input_idx() {
-  input_idx_.Clear();
+inline void Neuron::clear_weight_index_starts() {
+  weight_index_starts_.Clear();
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint32 Neuron::input_idx(int index) const {
-  // @@protoc_insertion_point(field_get:sparse_net_library.Neuron.input_idx)
-  return input_idx_.Get(index);
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Neuron::weight_index_starts(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Neuron.weight_index_starts)
+  return weight_index_starts_.Get(index);
 }
-inline void Neuron::set_input_idx(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  input_idx_.Set(index, value);
-  // @@protoc_insertion_point(field_set:sparse_net_library.Neuron.input_idx)
+inline void Neuron::set_weight_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_index_starts_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Neuron.weight_index_starts)
 }
-inline void Neuron::add_input_idx(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  input_idx_.Add(value);
-  // @@protoc_insertion_point(field_add:sparse_net_library.Neuron.input_idx)
+inline void Neuron::add_weight_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_index_starts_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Neuron.weight_index_starts)
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-Neuron::input_idx() const {
-  // @@protoc_insertion_point(field_list:sparse_net_library.Neuron.input_idx)
-  return input_idx_;
+Neuron::weight_index_starts() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Neuron.weight_index_starts)
+  return weight_index_starts_;
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-Neuron::mutable_input_idx() {
-  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Neuron.input_idx)
-  return &input_idx_;
+Neuron::mutable_weight_index_starts() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Neuron.weight_index_starts)
+  return &weight_index_starts_;
+}
+
+// repeated uint32 input_index_sizes = 6;
+inline int Neuron::input_index_sizes_size() const {
+  return input_index_sizes_.size();
+}
+inline void Neuron::clear_input_index_sizes() {
+  input_index_sizes_.Clear();
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Neuron::input_index_sizes(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Neuron.input_index_sizes)
+  return input_index_sizes_.Get(index);
+}
+inline void Neuron::set_input_index_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  input_index_sizes_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Neuron.input_index_sizes)
+}
+inline void Neuron::add_input_index_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  input_index_sizes_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Neuron.input_index_sizes)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+Neuron::input_index_sizes() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Neuron.input_index_sizes)
+  return input_index_sizes_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+Neuron::mutable_input_index_sizes() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Neuron.input_index_sizes)
+  return &input_index_sizes_;
+}
+
+// repeated uint32 input_index_starts = 7;
+inline int Neuron::input_index_starts_size() const {
+  return input_index_starts_.size();
+}
+inline void Neuron::clear_input_index_starts() {
+  input_index_starts_.Clear();
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Neuron::input_index_starts(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Neuron.input_index_starts)
+  return input_index_starts_.Get(index);
+}
+inline void Neuron::set_input_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  input_index_starts_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Neuron.input_index_starts)
+}
+inline void Neuron::add_input_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  input_index_starts_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Neuron.input_index_starts)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+Neuron::input_index_starts() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Neuron.input_index_starts)
+  return input_index_starts_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+Neuron::mutable_input_index_starts() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Neuron.input_index_starts)
+  return &input_index_starts_;
 }
 
 // -------------------------------------------------------------------

@@ -56,20 +56,20 @@ struct TableStruct_solution_2eproto {
 };
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_solution_2eproto;
 namespace sparse_net_library {
+class Decoupled_solutions;
+class Decoupled_solutionsDefaultTypeInternal;
+extern Decoupled_solutionsDefaultTypeInternal _Decoupled_solutions_default_instance_;
 class Partial_solution;
 class Partial_solutionDefaultTypeInternal;
 extern Partial_solutionDefaultTypeInternal _Partial_solution_default_instance_;
 class Solution;
 class SolutionDefaultTypeInternal;
 extern SolutionDefaultTypeInternal _Solution_default_instance_;
-class Solution_chain;
-class Solution_chainDefaultTypeInternal;
-extern Solution_chainDefaultTypeInternal _Solution_chain_default_instance_;
 }  // namespace sparse_net_library
 PROTOBUF_NAMESPACE_OPEN
+template<> ::sparse_net_library::Decoupled_solutions* Arena::CreateMaybeMessage<::sparse_net_library::Decoupled_solutions>(Arena*);
 template<> ::sparse_net_library::Partial_solution* Arena::CreateMaybeMessage<::sparse_net_library::Partial_solution>(Arena*);
 template<> ::sparse_net_library::Solution* Arena::CreateMaybeMessage<::sparse_net_library::Solution>(Arena*);
-template<> ::sparse_net_library::Solution_chain* Arena::CreateMaybeMessage<::sparse_net_library::Solution_chain>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace sparse_net_library {
 
@@ -165,10 +165,8 @@ class Partial_solution :
   bool MergePartialFromCodedStream(
       ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) final;
   #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-  void SerializeWithCachedSizes(
-      ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const final;
   ::PROTOBUF_NAMESPACE_ID::uint8* InternalSerializeWithCachedSizesToArray(
-      ::PROTOBUF_NAMESPACE_ID::uint8* target) const final;
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
   int GetCachedSize() const final { return _cached_size_.Get(); }
 
   private:
@@ -209,13 +207,16 @@ class Partial_solution :
 
   enum : int {
     kWeightTableFieldNumber = 3,
-    kActualIndexFieldNumber = 4,
-    kInputSizesFieldNumber = 5,
-    kNeuronTransferFunctionsFieldNumber = 6,
-    kMemoryRatiosFieldNumber = 7,
-    kBiasesFieldNumber = 8,
-    kInsideIndexesFieldNumber = 9,
-    kWeightIndexesFieldNumber = 10,
+    kActualIndexFieldNumber = 10,
+    kNeuronTransferFunctionsFieldNumber = 11,
+    kMemoryRatioIndexFieldNumber = 12,
+    kBiasIndexFieldNumber = 13,
+    kIndexPartitionNumberFieldNumber = 14,
+    kWeightPartitionNumberFieldNumber = 15,
+    kInsideIndexSizesFieldNumber = 20,
+    kInsideIndexStartsFieldNumber = 21,
+    kWeightIndexSizesFieldNumber = 22,
+    kWeightIndexStartsFieldNumber = 23,
     kInputDataSizeFieldNumber = 1,
     kInternalNeuronNumberFieldNumber = 2,
   };
@@ -230,7 +231,7 @@ class Partial_solution :
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >*
       mutable_weight_table();
 
-  // repeated uint32 actual_index = 4;
+  // repeated uint32 actual_index = 10;
   int actual_index_size() const;
   void clear_actual_index();
   ::PROTOBUF_NAMESPACE_ID::uint32 actual_index(int index) const;
@@ -241,18 +242,7 @@ class Partial_solution :
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
       mutable_actual_index();
 
-  // repeated uint32 input_sizes = 5;
-  int input_sizes_size() const;
-  void clear_input_sizes();
-  ::PROTOBUF_NAMESPACE_ID::uint32 input_sizes(int index) const;
-  void set_input_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
-  void add_input_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value);
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-      input_sizes() const;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-      mutable_input_sizes();
-
-  // repeated .sparse_net_library.transfer_functions neuron_transfer_functions = 6;
+  // repeated .sparse_net_library.transfer_functions neuron_transfer_functions = 11;
   int neuron_transfer_functions_size() const;
   void clear_neuron_transfer_functions();
   ::sparse_net_library::transfer_functions neuron_transfer_functions(int index) const;
@@ -261,49 +251,93 @@ class Partial_solution :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>& neuron_transfer_functions() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>* mutable_neuron_transfer_functions();
 
-  // repeated double memory_ratios = 7;
-  int memory_ratios_size() const;
-  void clear_memory_ratios();
-  double memory_ratios(int index) const;
-  void set_memory_ratios(int index, double value);
-  void add_memory_ratios(double value);
+  // repeated double memory_ratio_index = 12;
+  int memory_ratio_index_size() const;
+  void clear_memory_ratio_index();
+  double memory_ratio_index(int index) const;
+  void set_memory_ratio_index(int index, double value);
+  void add_memory_ratio_index(double value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >&
-      memory_ratios() const;
+      memory_ratio_index() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >*
-      mutable_memory_ratios();
+      mutable_memory_ratio_index();
 
-  // repeated double biases = 8;
-  int biases_size() const;
-  void clear_biases();
-  double biases(int index) const;
-  void set_biases(int index, double value);
-  void add_biases(double value);
+  // repeated double bias_index = 13;
+  int bias_index_size() const;
+  void clear_bias_index();
+  double bias_index(int index) const;
+  void set_bias_index(int index, double value);
+  void add_bias_index(double value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >&
-      biases() const;
+      bias_index() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >*
-      mutable_biases();
+      mutable_bias_index();
 
-  // repeated uint32 inside_indexes = 9;
-  int inside_indexes_size() const;
-  void clear_inside_indexes();
-  ::PROTOBUF_NAMESPACE_ID::uint32 inside_indexes(int index) const;
-  void set_inside_indexes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
-  void add_inside_indexes(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  // repeated uint32 index_partition_number = 14;
+  int index_partition_number_size() const;
+  void clear_index_partition_number();
+  ::PROTOBUF_NAMESPACE_ID::uint32 index_partition_number(int index) const;
+  void set_index_partition_number(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_index_partition_number(::PROTOBUF_NAMESPACE_ID::uint32 value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-      inside_indexes() const;
+      index_partition_number() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-      mutable_inside_indexes();
+      mutable_index_partition_number();
 
-  // repeated uint32 weight_indexes = 10;
-  int weight_indexes_size() const;
-  void clear_weight_indexes();
-  ::PROTOBUF_NAMESPACE_ID::uint32 weight_indexes(int index) const;
-  void set_weight_indexes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
-  void add_weight_indexes(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  // repeated uint32 weight_partition_number = 15;
+  int weight_partition_number_size() const;
+  void clear_weight_partition_number();
+  ::PROTOBUF_NAMESPACE_ID::uint32 weight_partition_number(int index) const;
+  void set_weight_partition_number(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_weight_partition_number(::PROTOBUF_NAMESPACE_ID::uint32 value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-      weight_indexes() const;
+      weight_partition_number() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-      mutable_weight_indexes();
+      mutable_weight_partition_number();
+
+  // repeated uint32 inside_index_sizes = 20;
+  int inside_index_sizes_size() const;
+  void clear_inside_index_sizes();
+  ::PROTOBUF_NAMESPACE_ID::uint32 inside_index_sizes(int index) const;
+  void set_inside_index_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_inside_index_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+      inside_index_sizes() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+      mutable_inside_index_sizes();
+
+  // repeated uint32 inside_index_starts = 21;
+  int inside_index_starts_size() const;
+  void clear_inside_index_starts();
+  ::PROTOBUF_NAMESPACE_ID::uint32 inside_index_starts(int index) const;
+  void set_inside_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_inside_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+      inside_index_starts() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+      mutable_inside_index_starts();
+
+  // repeated uint32 weight_index_sizes = 22;
+  int weight_index_sizes_size() const;
+  void clear_weight_index_sizes();
+  ::PROTOBUF_NAMESPACE_ID::uint32 weight_index_sizes(int index) const;
+  void set_weight_index_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_weight_index_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+      weight_index_sizes() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+      mutable_weight_index_sizes();
+
+  // repeated uint32 weight_index_starts = 23;
+  int weight_index_starts_size() const;
+  void clear_weight_index_starts();
+  ::PROTOBUF_NAMESPACE_ID::uint32 weight_index_starts(int index) const;
+  void set_weight_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
+  void add_weight_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+      weight_index_starts() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+      mutable_weight_index_starts();
 
   // uint32 input_data_size = 1;
   void clear_input_data_size();
@@ -327,18 +361,24 @@ class Partial_solution :
   mutable std::atomic<int> _weight_table_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > actual_index_;
   mutable std::atomic<int> _actual_index_cached_byte_size_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > input_sizes_;
-  mutable std::atomic<int> _input_sizes_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField<int> neuron_transfer_functions_;
   mutable std::atomic<int> _neuron_transfer_functions_cached_byte_size_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< double > memory_ratios_;
-  mutable std::atomic<int> _memory_ratios_cached_byte_size_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< double > biases_;
-  mutable std::atomic<int> _biases_cached_byte_size_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > inside_indexes_;
-  mutable std::atomic<int> _inside_indexes_cached_byte_size_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > weight_indexes_;
-  mutable std::atomic<int> _weight_indexes_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< double > memory_ratio_index_;
+  mutable std::atomic<int> _memory_ratio_index_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< double > bias_index_;
+  mutable std::atomic<int> _bias_index_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > index_partition_number_;
+  mutable std::atomic<int> _index_partition_number_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > weight_partition_number_;
+  mutable std::atomic<int> _weight_partition_number_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > inside_index_sizes_;
+  mutable std::atomic<int> _inside_index_sizes_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > inside_index_starts_;
+  mutable std::atomic<int> _inside_index_starts_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > weight_index_sizes_;
+  mutable std::atomic<int> _weight_index_sizes_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > weight_index_starts_;
+  mutable std::atomic<int> _weight_index_starts_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::uint32 input_data_size_;
   ::PROTOBUF_NAMESPACE_ID::uint32 internal_neuron_number_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -346,23 +386,23 @@ class Partial_solution :
 };
 // -------------------------------------------------------------------
 
-class Solution_chain :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:sparse_net_library.Solution_chain) */ {
+class Decoupled_solutions :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:sparse_net_library.Decoupled_solutions) */ {
  public:
-  Solution_chain();
-  virtual ~Solution_chain();
+  Decoupled_solutions();
+  virtual ~Decoupled_solutions();
 
-  Solution_chain(const Solution_chain& from);
-  Solution_chain(Solution_chain&& from) noexcept
-    : Solution_chain() {
+  Decoupled_solutions(const Decoupled_solutions& from);
+  Decoupled_solutions(Decoupled_solutions&& from) noexcept
+    : Decoupled_solutions() {
     *this = ::std::move(from);
   }
 
-  inline Solution_chain& operator=(const Solution_chain& from) {
+  inline Decoupled_solutions& operator=(const Decoupled_solutions& from) {
     CopyFrom(from);
     return *this;
   }
-  inline Solution_chain& operator=(Solution_chain&& from) noexcept {
+  inline Decoupled_solutions& operator=(Decoupled_solutions&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -386,20 +426,20 @@ class Solution_chain :
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
     return GetMetadataStatic().reflection;
   }
-  static const Solution_chain& default_instance();
+  static const Decoupled_solutions& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const Solution_chain* internal_default_instance() {
-    return reinterpret_cast<const Solution_chain*>(
-               &_Solution_chain_default_instance_);
+  static inline const Decoupled_solutions* internal_default_instance() {
+    return reinterpret_cast<const Decoupled_solutions*>(
+               &_Decoupled_solutions_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     1;
 
-  friend void swap(Solution_chain& a, Solution_chain& b) {
+  friend void swap(Decoupled_solutions& a, Decoupled_solutions& b) {
     a.Swap(&b);
   }
-  inline void Swap(Solution_chain* other) {
+  inline void Swap(Decoupled_solutions* other) {
     if (other == this) return;
     if (GetArenaNoVirtual() == other->GetArenaNoVirtual()) {
       InternalSwap(other);
@@ -407,7 +447,7 @@ class Solution_chain :
       ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(Solution_chain* other) {
+  void UnsafeArenaSwap(Decoupled_solutions* other) {
     if (other == this) return;
     GOOGLE_DCHECK(GetArenaNoVirtual() == other->GetArenaNoVirtual());
     InternalSwap(other);
@@ -415,17 +455,17 @@ class Solution_chain :
 
   // implements Message ----------------------------------------------
 
-  inline Solution_chain* New() const final {
-    return CreateMaybeMessage<Solution_chain>(nullptr);
+  inline Decoupled_solutions* New() const final {
+    return CreateMaybeMessage<Decoupled_solutions>(nullptr);
   }
 
-  Solution_chain* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
-    return CreateMaybeMessage<Solution_chain>(arena);
+  Decoupled_solutions* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<Decoupled_solutions>(arena);
   }
   void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
   void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
-  void CopyFrom(const Solution_chain& from);
-  void MergeFrom(const Solution_chain& from);
+  void CopyFrom(const Decoupled_solutions& from);
+  void MergeFrom(const Decoupled_solutions& from);
   PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
   bool IsInitialized() const final;
 
@@ -436,23 +476,21 @@ class Solution_chain :
   bool MergePartialFromCodedStream(
       ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) final;
   #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-  void SerializeWithCachedSizes(
-      ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const final;
   ::PROTOBUF_NAMESPACE_ID::uint8* InternalSerializeWithCachedSizesToArray(
-      ::PROTOBUF_NAMESPACE_ID::uint8* target) const final;
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
   int GetCachedSize() const final { return _cached_size_.Get(); }
 
   private:
   inline void SharedCtor();
   inline void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(Solution_chain* other);
+  void InternalSwap(Decoupled_solutions* other);
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "sparse_net_library.Solution_chain";
+    return "sparse_net_library.Decoupled_solutions";
   }
   protected:
-  explicit Solution_chain(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  explicit Decoupled_solutions(::PROTOBUF_NAMESPACE_ID::Arena* arena);
   private:
   static void ArenaDtor(void* object);
   inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
@@ -492,7 +530,7 @@ class Solution_chain :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Partial_solution >&
       partial_solutions() const;
 
-  // @@protoc_insertion_point(class_scope:sparse_net_library.Solution_chain)
+  // @@protoc_insertion_point(class_scope:sparse_net_library.Decoupled_solutions)
  private:
   class _Internal;
 
@@ -596,10 +634,8 @@ class Solution :
   bool MergePartialFromCodedStream(
       ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) final;
   #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-  void SerializeWithCachedSizes(
-      ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const final;
   ::PROTOBUF_NAMESPACE_ID::uint8* InternalSerializeWithCachedSizesToArray(
-      ::PROTOBUF_NAMESPACE_ID::uint8* target) const final;
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
   int GetCachedSize() const final { return _cached_size_.Get(); }
 
   private:
@@ -639,18 +675,18 @@ class Solution :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kSolutionChainsFieldNumber = 1,
+    kSolutionChainFieldNumber = 1,
   };
-  // repeated .sparse_net_library.Solution_chain solution_chains = 1;
-  int solution_chains_size() const;
-  void clear_solution_chains();
-  ::sparse_net_library::Solution_chain* mutable_solution_chains(int index);
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Solution_chain >*
-      mutable_solution_chains();
-  const ::sparse_net_library::Solution_chain& solution_chains(int index) const;
-  ::sparse_net_library::Solution_chain* add_solution_chains();
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Solution_chain >&
-      solution_chains() const;
+  // repeated .sparse_net_library.Decoupled_solutions solution_chain = 1;
+  int solution_chain_size() const;
+  void clear_solution_chain();
+  ::sparse_net_library::Decoupled_solutions* mutable_solution_chain(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Decoupled_solutions >*
+      mutable_solution_chain();
+  const ::sparse_net_library::Decoupled_solutions& solution_chain(int index) const;
+  ::sparse_net_library::Decoupled_solutions* add_solution_chain();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Decoupled_solutions >&
+      solution_chain() const;
 
   // @@protoc_insertion_point(class_scope:sparse_net_library.Solution)
  private:
@@ -660,7 +696,7 @@ class Solution :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Solution_chain > solution_chains_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Decoupled_solutions > solution_chain_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_solution_2eproto;
 };
@@ -733,7 +769,7 @@ Partial_solution::mutable_weight_table() {
   return &weight_table_;
 }
 
-// repeated uint32 actual_index = 4;
+// repeated uint32 actual_index = 10;
 inline int Partial_solution::actual_index_size() const {
   return actual_index_.size();
 }
@@ -763,37 +799,7 @@ Partial_solution::mutable_actual_index() {
   return &actual_index_;
 }
 
-// repeated uint32 input_sizes = 5;
-inline int Partial_solution::input_sizes_size() const {
-  return input_sizes_.size();
-}
-inline void Partial_solution::clear_input_sizes() {
-  input_sizes_.Clear();
-}
-inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::input_sizes(int index) const {
-  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.input_sizes)
-  return input_sizes_.Get(index);
-}
-inline void Partial_solution::set_input_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  input_sizes_.Set(index, value);
-  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.input_sizes)
-}
-inline void Partial_solution::add_input_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  input_sizes_.Add(value);
-  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.input_sizes)
-}
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-Partial_solution::input_sizes() const {
-  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.input_sizes)
-  return input_sizes_;
-}
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-Partial_solution::mutable_input_sizes() {
-  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.input_sizes)
-  return &input_sizes_;
-}
-
-// repeated .sparse_net_library.transfer_functions neuron_transfer_functions = 6;
+// repeated .sparse_net_library.transfer_functions neuron_transfer_functions = 11;
 inline int Partial_solution::neuron_transfer_functions_size() const {
   return neuron_transfer_functions_.size();
 }
@@ -823,157 +829,277 @@ Partial_solution::mutable_neuron_transfer_functions() {
   return &neuron_transfer_functions_;
 }
 
-// repeated double memory_ratios = 7;
-inline int Partial_solution::memory_ratios_size() const {
-  return memory_ratios_.size();
+// repeated double memory_ratio_index = 12;
+inline int Partial_solution::memory_ratio_index_size() const {
+  return memory_ratio_index_.size();
 }
-inline void Partial_solution::clear_memory_ratios() {
-  memory_ratios_.Clear();
+inline void Partial_solution::clear_memory_ratio_index() {
+  memory_ratio_index_.Clear();
 }
-inline double Partial_solution::memory_ratios(int index) const {
-  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.memory_ratios)
-  return memory_ratios_.Get(index);
+inline double Partial_solution::memory_ratio_index(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.memory_ratio_index)
+  return memory_ratio_index_.Get(index);
 }
-inline void Partial_solution::set_memory_ratios(int index, double value) {
-  memory_ratios_.Set(index, value);
-  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.memory_ratios)
+inline void Partial_solution::set_memory_ratio_index(int index, double value) {
+  memory_ratio_index_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.memory_ratio_index)
 }
-inline void Partial_solution::add_memory_ratios(double value) {
-  memory_ratios_.Add(value);
-  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.memory_ratios)
-}
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >&
-Partial_solution::memory_ratios() const {
-  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.memory_ratios)
-  return memory_ratios_;
-}
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >*
-Partial_solution::mutable_memory_ratios() {
-  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.memory_ratios)
-  return &memory_ratios_;
-}
-
-// repeated double biases = 8;
-inline int Partial_solution::biases_size() const {
-  return biases_.size();
-}
-inline void Partial_solution::clear_biases() {
-  biases_.Clear();
-}
-inline double Partial_solution::biases(int index) const {
-  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.biases)
-  return biases_.Get(index);
-}
-inline void Partial_solution::set_biases(int index, double value) {
-  biases_.Set(index, value);
-  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.biases)
-}
-inline void Partial_solution::add_biases(double value) {
-  biases_.Add(value);
-  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.biases)
+inline void Partial_solution::add_memory_ratio_index(double value) {
+  memory_ratio_index_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.memory_ratio_index)
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >&
-Partial_solution::biases() const {
-  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.biases)
-  return biases_;
+Partial_solution::memory_ratio_index() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.memory_ratio_index)
+  return memory_ratio_index_;
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >*
-Partial_solution::mutable_biases() {
-  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.biases)
-  return &biases_;
+Partial_solution::mutable_memory_ratio_index() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.memory_ratio_index)
+  return &memory_ratio_index_;
 }
 
-// repeated uint32 inside_indexes = 9;
-inline int Partial_solution::inside_indexes_size() const {
-  return inside_indexes_.size();
+// repeated double bias_index = 13;
+inline int Partial_solution::bias_index_size() const {
+  return bias_index_.size();
 }
-inline void Partial_solution::clear_inside_indexes() {
-  inside_indexes_.Clear();
+inline void Partial_solution::clear_bias_index() {
+  bias_index_.Clear();
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::inside_indexes(int index) const {
-  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.inside_indexes)
-  return inside_indexes_.Get(index);
+inline double Partial_solution::bias_index(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.bias_index)
+  return bias_index_.Get(index);
 }
-inline void Partial_solution::set_inside_indexes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  inside_indexes_.Set(index, value);
-  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.inside_indexes)
+inline void Partial_solution::set_bias_index(int index, double value) {
+  bias_index_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.bias_index)
 }
-inline void Partial_solution::add_inside_indexes(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  inside_indexes_.Add(value);
-  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.inside_indexes)
+inline void Partial_solution::add_bias_index(double value) {
+  bias_index_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.bias_index)
 }
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-Partial_solution::inside_indexes() const {
-  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.inside_indexes)
-  return inside_indexes_;
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >&
+Partial_solution::bias_index() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.bias_index)
+  return bias_index_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-Partial_solution::mutable_inside_indexes() {
-  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.inside_indexes)
-  return &inside_indexes_;
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< double >*
+Partial_solution::mutable_bias_index() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.bias_index)
+  return &bias_index_;
 }
 
-// repeated uint32 weight_indexes = 10;
-inline int Partial_solution::weight_indexes_size() const {
-  return weight_indexes_.size();
+// repeated uint32 index_partition_number = 14;
+inline int Partial_solution::index_partition_number_size() const {
+  return index_partition_number_.size();
 }
-inline void Partial_solution::clear_weight_indexes() {
-  weight_indexes_.Clear();
+inline void Partial_solution::clear_index_partition_number() {
+  index_partition_number_.Clear();
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::weight_indexes(int index) const {
-  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.weight_indexes)
-  return weight_indexes_.Get(index);
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::index_partition_number(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.index_partition_number)
+  return index_partition_number_.Get(index);
 }
-inline void Partial_solution::set_weight_indexes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  weight_indexes_.Set(index, value);
-  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.weight_indexes)
+inline void Partial_solution::set_index_partition_number(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  index_partition_number_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.index_partition_number)
 }
-inline void Partial_solution::add_weight_indexes(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  weight_indexes_.Add(value);
-  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.weight_indexes)
+inline void Partial_solution::add_index_partition_number(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  index_partition_number_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.index_partition_number)
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
-Partial_solution::weight_indexes() const {
-  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.weight_indexes)
-  return weight_indexes_;
+Partial_solution::index_partition_number() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.index_partition_number)
+  return index_partition_number_;
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
-Partial_solution::mutable_weight_indexes() {
-  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.weight_indexes)
-  return &weight_indexes_;
+Partial_solution::mutable_index_partition_number() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.index_partition_number)
+  return &index_partition_number_;
+}
+
+// repeated uint32 weight_partition_number = 15;
+inline int Partial_solution::weight_partition_number_size() const {
+  return weight_partition_number_.size();
+}
+inline void Partial_solution::clear_weight_partition_number() {
+  weight_partition_number_.Clear();
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::weight_partition_number(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.weight_partition_number)
+  return weight_partition_number_.Get(index);
+}
+inline void Partial_solution::set_weight_partition_number(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_partition_number_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.weight_partition_number)
+}
+inline void Partial_solution::add_weight_partition_number(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_partition_number_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.weight_partition_number)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+Partial_solution::weight_partition_number() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.weight_partition_number)
+  return weight_partition_number_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+Partial_solution::mutable_weight_partition_number() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.weight_partition_number)
+  return &weight_partition_number_;
+}
+
+// repeated uint32 inside_index_sizes = 20;
+inline int Partial_solution::inside_index_sizes_size() const {
+  return inside_index_sizes_.size();
+}
+inline void Partial_solution::clear_inside_index_sizes() {
+  inside_index_sizes_.Clear();
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::inside_index_sizes(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.inside_index_sizes)
+  return inside_index_sizes_.Get(index);
+}
+inline void Partial_solution::set_inside_index_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  inside_index_sizes_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.inside_index_sizes)
+}
+inline void Partial_solution::add_inside_index_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  inside_index_sizes_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.inside_index_sizes)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+Partial_solution::inside_index_sizes() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.inside_index_sizes)
+  return inside_index_sizes_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+Partial_solution::mutable_inside_index_sizes() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.inside_index_sizes)
+  return &inside_index_sizes_;
+}
+
+// repeated uint32 inside_index_starts = 21;
+inline int Partial_solution::inside_index_starts_size() const {
+  return inside_index_starts_.size();
+}
+inline void Partial_solution::clear_inside_index_starts() {
+  inside_index_starts_.Clear();
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::inside_index_starts(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.inside_index_starts)
+  return inside_index_starts_.Get(index);
+}
+inline void Partial_solution::set_inside_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  inside_index_starts_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.inside_index_starts)
+}
+inline void Partial_solution::add_inside_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  inside_index_starts_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.inside_index_starts)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+Partial_solution::inside_index_starts() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.inside_index_starts)
+  return inside_index_starts_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+Partial_solution::mutable_inside_index_starts() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.inside_index_starts)
+  return &inside_index_starts_;
+}
+
+// repeated uint32 weight_index_sizes = 22;
+inline int Partial_solution::weight_index_sizes_size() const {
+  return weight_index_sizes_.size();
+}
+inline void Partial_solution::clear_weight_index_sizes() {
+  weight_index_sizes_.Clear();
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::weight_index_sizes(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.weight_index_sizes)
+  return weight_index_sizes_.Get(index);
+}
+inline void Partial_solution::set_weight_index_sizes(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_index_sizes_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.weight_index_sizes)
+}
+inline void Partial_solution::add_weight_index_sizes(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_index_sizes_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.weight_index_sizes)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+Partial_solution::weight_index_sizes() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.weight_index_sizes)
+  return weight_index_sizes_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+Partial_solution::mutable_weight_index_sizes() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.weight_index_sizes)
+  return &weight_index_sizes_;
+}
+
+// repeated uint32 weight_index_starts = 23;
+inline int Partial_solution::weight_index_starts_size() const {
+  return weight_index_starts_.size();
+}
+inline void Partial_solution::clear_weight_index_starts() {
+  weight_index_starts_.Clear();
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::weight_index_starts(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.weight_index_starts)
+  return weight_index_starts_.Get(index);
+}
+inline void Partial_solution::set_weight_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_index_starts_.Set(index, value);
+  // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.weight_index_starts)
+}
+inline void Partial_solution::add_weight_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  weight_index_starts_.Add(value);
+  // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.weight_index_starts)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+Partial_solution::weight_index_starts() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.weight_index_starts)
+  return weight_index_starts_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+Partial_solution::mutable_weight_index_starts() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.weight_index_starts)
+  return &weight_index_starts_;
 }
 
 // -------------------------------------------------------------------
 
-// Solution_chain
+// Decoupled_solutions
 
 // repeated .sparse_net_library.Partial_solution partial_solutions = 1;
-inline int Solution_chain::partial_solutions_size() const {
+inline int Decoupled_solutions::partial_solutions_size() const {
   return partial_solutions_.size();
 }
-inline void Solution_chain::clear_partial_solutions() {
+inline void Decoupled_solutions::clear_partial_solutions() {
   partial_solutions_.Clear();
 }
-inline ::sparse_net_library::Partial_solution* Solution_chain::mutable_partial_solutions(int index) {
-  // @@protoc_insertion_point(field_mutable:sparse_net_library.Solution_chain.partial_solutions)
+inline ::sparse_net_library::Partial_solution* Decoupled_solutions::mutable_partial_solutions(int index) {
+  // @@protoc_insertion_point(field_mutable:sparse_net_library.Decoupled_solutions.partial_solutions)
   return partial_solutions_.Mutable(index);
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Partial_solution >*
-Solution_chain::mutable_partial_solutions() {
-  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Solution_chain.partial_solutions)
+Decoupled_solutions::mutable_partial_solutions() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Decoupled_solutions.partial_solutions)
   return &partial_solutions_;
 }
-inline const ::sparse_net_library::Partial_solution& Solution_chain::partial_solutions(int index) const {
-  // @@protoc_insertion_point(field_get:sparse_net_library.Solution_chain.partial_solutions)
+inline const ::sparse_net_library::Partial_solution& Decoupled_solutions::partial_solutions(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Decoupled_solutions.partial_solutions)
   return partial_solutions_.Get(index);
 }
-inline ::sparse_net_library::Partial_solution* Solution_chain::add_partial_solutions() {
-  // @@protoc_insertion_point(field_add:sparse_net_library.Solution_chain.partial_solutions)
+inline ::sparse_net_library::Partial_solution* Decoupled_solutions::add_partial_solutions() {
+  // @@protoc_insertion_point(field_add:sparse_net_library.Decoupled_solutions.partial_solutions)
   return partial_solutions_.Add();
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Partial_solution >&
-Solution_chain::partial_solutions() const {
-  // @@protoc_insertion_point(field_list:sparse_net_library.Solution_chain.partial_solutions)
+Decoupled_solutions::partial_solutions() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Decoupled_solutions.partial_solutions)
   return partial_solutions_;
 }
 
@@ -981,34 +1107,34 @@ Solution_chain::partial_solutions() const {
 
 // Solution
 
-// repeated .sparse_net_library.Solution_chain solution_chains = 1;
-inline int Solution::solution_chains_size() const {
-  return solution_chains_.size();
+// repeated .sparse_net_library.Decoupled_solutions solution_chain = 1;
+inline int Solution::solution_chain_size() const {
+  return solution_chain_.size();
 }
-inline void Solution::clear_solution_chains() {
-  solution_chains_.Clear();
+inline void Solution::clear_solution_chain() {
+  solution_chain_.Clear();
 }
-inline ::sparse_net_library::Solution_chain* Solution::mutable_solution_chains(int index) {
-  // @@protoc_insertion_point(field_mutable:sparse_net_library.Solution.solution_chains)
-  return solution_chains_.Mutable(index);
+inline ::sparse_net_library::Decoupled_solutions* Solution::mutable_solution_chain(int index) {
+  // @@protoc_insertion_point(field_mutable:sparse_net_library.Solution.solution_chain)
+  return solution_chain_.Mutable(index);
 }
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Solution_chain >*
-Solution::mutable_solution_chains() {
-  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Solution.solution_chains)
-  return &solution_chains_;
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Decoupled_solutions >*
+Solution::mutable_solution_chain() {
+  // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Solution.solution_chain)
+  return &solution_chain_;
 }
-inline const ::sparse_net_library::Solution_chain& Solution::solution_chains(int index) const {
-  // @@protoc_insertion_point(field_get:sparse_net_library.Solution.solution_chains)
-  return solution_chains_.Get(index);
+inline const ::sparse_net_library::Decoupled_solutions& Solution::solution_chain(int index) const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Solution.solution_chain)
+  return solution_chain_.Get(index);
 }
-inline ::sparse_net_library::Solution_chain* Solution::add_solution_chains() {
-  // @@protoc_insertion_point(field_add:sparse_net_library.Solution.solution_chains)
-  return solution_chains_.Add();
+inline ::sparse_net_library::Decoupled_solutions* Solution::add_solution_chain() {
+  // @@protoc_insertion_point(field_add:sparse_net_library.Solution.solution_chain)
+  return solution_chain_.Add();
 }
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Solution_chain >&
-Solution::solution_chains() const {
-  // @@protoc_insertion_point(field_list:sparse_net_library.Solution.solution_chains)
-  return solution_chains_;
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Decoupled_solutions >&
+Solution::solution_chain() const {
+  // @@protoc_insertion_point(field_list:sparse_net_library.Solution.solution_chain)
+  return solution_chain_;
 }
 
 #ifdef __GNUC__

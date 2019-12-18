@@ -5,7 +5,6 @@
 
 #include <algorithm>
 
-#include <google/protobuf/stubs/common.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/extension_set.h>
 #include <google/protobuf/wire_format_lite.h>
@@ -38,7 +37,7 @@ static void InitDefaultsscc_info_Neuron_sparse_5fnet_2eproto() {
 }
 
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Neuron_sparse_5fnet_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsscc_info_Neuron_sparse_5fnet_2eproto}, {}};
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_Neuron_sparse_5fnet_2eproto}, {}};
 
 static void InitDefaultsscc_info_SparseNet_sparse_5fnet_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -52,7 +51,7 @@ static void InitDefaultsscc_info_SparseNet_sparse_5fnet_2eproto() {
 }
 
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_SparseNet_sparse_5fnet_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsscc_info_SparseNet_sparse_5fnet_2eproto}, {
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_SparseNet_sparse_5fnet_2eproto}, {
       &scc_info_Neuron_sparse_5fnet_2eproto.base,}};
 
 static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_sparse_5fnet_2eproto[2];
@@ -68,8 +67,10 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_sparse_5fnet_2eproto::offsets[
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Neuron, bias_idx_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Neuron, memory_ratio_idx_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Neuron, transfer_function_idx_),
-  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Neuron, input_weight_idx_),
-  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Neuron, input_idx_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Neuron, weight_index_sizes_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Neuron, weight_index_starts_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Neuron, input_index_sizes_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Neuron, input_index_starts_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::SparseNet, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -83,7 +84,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_sparse_5fnet_2eproto::offsets[
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::sparse_net_library::Neuron)},
-  { 10, -1, sizeof(::sparse_net_library::SparseNet)},
+  { 12, -1, sizeof(::sparse_net_library::SparseNet)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -92,21 +93,24 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 };
 
 const char descriptor_table_protodef_sparse_5fnet_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\020sparse_net.proto\022\022sparse_net_library\"\250"
+  "\n\020sparse_net.proto\022\022sparse_net_library\"\353"
   "\001\n\006Neuron\022\020\n\010bias_idx\030\001 \001(\r\022\030\n\020memory_ra"
   "tio_idx\030\002 \001(\r\022E\n\025transfer_function_idx\030\003"
   " \001(\0162&.sparse_net_library.transfer_funct"
-  "ions\022\030\n\020input_weight_idx\030\004 \003(\r\022\021\n\tinput_"
-  "idx\030\005 \003(\r\"\247\001\n\tSparseNet\022\027\n\017input_data_si"
-  "ze\030\001 \001(\r\022\033\n\023input_neuron_number\030\002 \001(\r\022\034\n"
-  "\024output_neuron_number\030\003 \001(\r\0220\n\014neuron_ar"
-  "ray\030\004 \003(\0132\032.sparse_net_library.Neuron\022\024\n"
-  "\014weight_table\030\005 \003(\001*\252\001\n\022transfer_functio"
-  "ns\022\032\n\026TRANSFER_FUNC_IDENTITY\020\000\022\031\n\025TRANSF"
-  "ER_FUNC_SIGMOID\020\001\022\026\n\022TRANSFER_FUNC_TANH\020"
-  "\002\022\025\n\021TRANSFER_FUNC_ELU\020\003\022\026\n\022TRANSFER_FUN"
-  "C_RELU\020\004\022\026\n\022TRANSFER_FUNC_SELU\020\005B\003\370\001\001b\006p"
-  "roto3"
+  "ions\022\032\n\022weight_index_sizes\030\004 \003(\r\022\033\n\023weig"
+  "ht_index_starts\030\005 \003(\r\022\031\n\021input_index_siz"
+  "es\030\006 \003(\r\022\032\n\022input_index_starts\030\007 \003(\r\"\247\001\n"
+  "\tSparseNet\022\027\n\017input_data_size\030\001 \001(\r\022\033\n\023i"
+  "nput_neuron_number\030\002 \001(\r\022\034\n\024output_neuro"
+  "n_number\030\003 \001(\r\0220\n\014neuron_array\030\004 \003(\0132\032.s"
+  "parse_net_library.Neuron\022\024\n\014weight_table"
+  "\030\005 \003(\001*\375\001\n\022transfer_functions\022\035\n\031TRANSFE"
+  "R_FUNCTION_UNKNOWN\020\000\022\036\n\032TRANSFER_FUNCTIO"
+  "N_IDENTITY\020\001\022\035\n\031TRANSFER_FUNCTION_SIGMOI"
+  "D\020\002\022\032\n\026TRANSFER_FUNCTION_TANH\020\003\022\031\n\025TRANS"
+  "FER_FUNCTION_ELU\020\004\022\032\n\026TRANSFER_FUNCTION_"
+  "SELU\020\005\022\032\n\026TRANSFER_FUNCTION_RELU\020\006\022\032\n\025TR"
+  "ANSFER_FUNCTION_END\020\200\004B\003\370\001\001b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_sparse_5fnet_2eproto_deps[1] = {
 };
@@ -117,7 +121,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_spa
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_sparse_5fnet_2eproto_once;
 static bool descriptor_table_sparse_5fnet_2eproto_initialized = false;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_sparse_5fnet_2eproto = {
-  &descriptor_table_sparse_5fnet_2eproto_initialized, descriptor_table_protodef_sparse_5fnet_2eproto, "sparse_net.proto", 565,
+  &descriptor_table_sparse_5fnet_2eproto_initialized, descriptor_table_protodef_sparse_5fnet_2eproto, "sparse_net.proto", 715,
   &descriptor_table_sparse_5fnet_2eproto_once, descriptor_table_sparse_5fnet_2eproto_sccs, descriptor_table_sparse_5fnet_2eproto_deps, 2, 0,
   schemas, file_default_instances, TableStruct_sparse_5fnet_2eproto::offsets,
   file_level_metadata_sparse_5fnet_2eproto, 2, file_level_enum_descriptors_sparse_5fnet_2eproto, file_level_service_descriptors_sparse_5fnet_2eproto,
@@ -138,6 +142,8 @@ bool transfer_functions_IsValid(int value) {
     case 3:
     case 4:
     case 5:
+    case 6:
+    case 512:
       return true;
     default:
       return false;
@@ -161,8 +167,10 @@ Neuron::Neuron()
 Neuron::Neuron(::PROTOBUF_NAMESPACE_ID::Arena* arena)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
   _internal_metadata_(arena),
-  input_weight_idx_(arena),
-  input_idx_(arena) {
+  weight_index_sizes_(arena),
+  weight_index_starts_(arena),
+  input_index_sizes_(arena),
+  input_index_starts_(arena) {
   SharedCtor();
   RegisterArenaDtor(arena);
   // @@protoc_insertion_point(arena_constructor:sparse_net_library.Neuron)
@@ -170,8 +178,10 @@ Neuron::Neuron(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 Neuron::Neuron(const Neuron& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
       _internal_metadata_(nullptr),
-      input_weight_idx_(from.input_weight_idx_),
-      input_idx_(from.input_idx_) {
+      weight_index_sizes_(from.weight_index_sizes_),
+      weight_index_starts_(from.weight_index_starts_),
+      input_index_sizes_(from.input_index_sizes_),
+      input_index_starts_(from.input_index_starts_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::memcpy(&bias_idx_, &from.bias_idx_,
     static_cast<size_t>(reinterpret_cast<char*>(&transfer_function_idx_) -
@@ -215,8 +225,10 @@ void Neuron::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  input_weight_idx_.Clear();
-  input_idx_.Clear();
+  weight_index_sizes_.Clear();
+  weight_index_starts_.Clear();
+  input_index_sizes_.Clear();
+  input_index_starts_.Clear();
   ::memset(&bias_idx_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&transfer_function_idx_) -
       reinterpret_cast<char*>(&bias_idx_)) + sizeof(transfer_function_idx_));
@@ -254,23 +266,43 @@ const char* Neuron::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::int
           set_transfer_function_idx(static_cast<::sparse_net_library::transfer_functions>(val));
         } else goto handle_unusual;
         continue;
-      // repeated uint32 input_weight_idx = 4;
+      // repeated uint32 weight_index_sizes = 4;
       case 4:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_input_weight_idx(), ptr, ctx);
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_weight_index_sizes(), ptr, ctx);
           CHK_(ptr);
         } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32) {
-          add_input_weight_idx(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
+          add_weight_index_sizes(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // repeated uint32 input_idx = 5;
+      // repeated uint32 weight_index_starts = 5;
       case 5:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_input_idx(), ptr, ctx);
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_weight_index_starts(), ptr, ctx);
           CHK_(ptr);
         } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 40) {
-          add_input_idx(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
+          add_weight_index_starts(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated uint32 input_index_sizes = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 50)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_input_index_sizes(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 48) {
+          add_input_index_sizes(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated uint32 input_index_starts = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 58)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_input_index_starts(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 56) {
+          add_input_index_starts(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -344,32 +376,64 @@ bool Neuron::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated uint32 input_weight_idx = 4;
+      // repeated uint32 weight_index_sizes = 4;
       case 4: {
         if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (34 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
                    ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-                 input, this->mutable_input_weight_idx())));
+                 input, this->mutable_weight_index_sizes())));
         } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (32 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-                 1, 34u, input, this->mutable_input_weight_idx())));
+                 1, 34u, input, this->mutable_weight_index_sizes())));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // repeated uint32 input_idx = 5;
+      // repeated uint32 weight_index_starts = 5;
       case 5: {
         if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (42 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
                    ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-                 input, this->mutable_input_idx())));
+                 input, this->mutable_weight_index_starts())));
         } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (40 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-                 1, 42u, input, this->mutable_input_idx())));
+                 1, 42u, input, this->mutable_weight_index_starts())));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated uint32 input_index_sizes = 6;
+      case 6: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (50 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_input_index_sizes())));
+        } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (48 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 50u, input, this->mutable_input_index_sizes())));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated uint32 input_index_starts = 7;
+      case 7: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (58 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_input_index_starts())));
+        } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (56 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 58u, input, this->mutable_input_index_starts())));
         } else {
           goto handle_unusual;
         }
@@ -397,108 +461,70 @@ failure:
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void Neuron::SerializeWithCachedSizes(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:sparse_net_library.Neuron)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // uint32 bias_idx = 1;
-  if (this->bias_idx() != 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(1, this->bias_idx(), output);
-  }
-
-  // uint32 memory_ratio_idx = 2;
-  if (this->memory_ratio_idx() != 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(2, this->memory_ratio_idx(), output);
-  }
-
-  // .sparse_net_library.transfer_functions transfer_function_idx = 3;
-  if (this->transfer_function_idx() != 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnum(
-      3, this->transfer_function_idx(), output);
-  }
-
-  // repeated uint32 input_weight_idx = 4;
-  if (this->input_weight_idx_size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(4, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
-    output->WriteVarint32(_input_weight_idx_cached_byte_size_.load(
-        std::memory_order_relaxed));
-  }
-  for (int i = 0, n = this->input_weight_idx_size(); i < n; i++) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
-      this->input_weight_idx(i), output);
-  }
-
-  // repeated uint32 input_idx = 5;
-  if (this->input_idx_size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(5, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
-    output->WriteVarint32(_input_idx_cached_byte_size_.load(
-        std::memory_order_relaxed));
-  }
-  for (int i = 0, n = this->input_idx_size(); i < n; i++) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
-      this->input_idx(i), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:sparse_net_library.Neuron)
-}
-
 ::PROTOBUF_NAMESPACE_ID::uint8* Neuron::InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:sparse_net_library.Neuron)
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   // uint32 bias_idx = 1;
   if (this->bias_idx() != 0) {
+    stream->EnsureSpace(&target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->bias_idx(), target);
   }
 
   // uint32 memory_ratio_idx = 2;
   if (this->memory_ratio_idx() != 0) {
+    stream->EnsureSpace(&target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->memory_ratio_idx(), target);
   }
 
   // .sparse_net_library.transfer_functions transfer_function_idx = 3;
   if (this->transfer_function_idx() != 0) {
+    stream->EnsureSpace(&target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
       3, this->transfer_function_idx(), target);
   }
 
-  // repeated uint32 input_weight_idx = 4;
-  if (this->input_weight_idx_size() > 0) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
-      4,
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-      target);
-    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
-        _input_weight_idx_cached_byte_size_.load(std::memory_order_relaxed),
-         target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      WriteUInt32NoTagToArray(this->input_weight_idx_, target);
+  // repeated uint32 weight_index_sizes = 4;
+  {
+    int byte_size = _weight_index_sizes_cached_byte_size_.load(std::memory_order_relaxed);
+    if (byte_size > 0) {
+      target = stream->WriteUInt32Packed(
+          4, weight_index_sizes_, byte_size, target);
+    }
   }
 
-  // repeated uint32 input_idx = 5;
-  if (this->input_idx_size() > 0) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
-      5,
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-      target);
-    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
-        _input_idx_cached_byte_size_.load(std::memory_order_relaxed),
-         target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      WriteUInt32NoTagToArray(this->input_idx_, target);
+  // repeated uint32 weight_index_starts = 5;
+  {
+    int byte_size = _weight_index_starts_cached_byte_size_.load(std::memory_order_relaxed);
+    if (byte_size > 0) {
+      target = stream->WriteUInt32Packed(
+          5, weight_index_starts_, byte_size, target);
+    }
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  // repeated uint32 input_index_sizes = 6;
+  {
+    int byte_size = _input_index_sizes_cached_byte_size_.load(std::memory_order_relaxed);
+    if (byte_size > 0) {
+      target = stream->WriteUInt32Packed(
+          6, input_index_sizes_, byte_size, target);
+    }
+  }
+
+  // repeated uint32 input_index_starts = 7;
+  {
+    int byte_size = _input_index_starts_cached_byte_size_.load(std::memory_order_relaxed);
+    if (byte_size > 0) {
+      target = stream->WriteUInt32Packed(
+          7, input_index_starts_, byte_size, target);
+    }
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields(), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:sparse_net_library.Neuron)
   return target;
@@ -508,41 +534,66 @@ size_t Neuron::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:sparse_net_library.Neuron)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated uint32 input_weight_idx = 4;
+  // repeated uint32 weight_index_sizes = 4;
   {
     size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      UInt32Size(this->input_weight_idx_);
+      UInt32Size(this->weight_index_sizes_);
     if (data_size > 0) {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
             static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
     }
     int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
-    _input_weight_idx_cached_byte_size_.store(cached_size,
+    _weight_index_sizes_cached_byte_size_.store(cached_size,
                                     std::memory_order_relaxed);
     total_size += data_size;
   }
 
-  // repeated uint32 input_idx = 5;
+  // repeated uint32 weight_index_starts = 5;
   {
     size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      UInt32Size(this->input_idx_);
+      UInt32Size(this->weight_index_starts_);
     if (data_size > 0) {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
             static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
     }
     int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
-    _input_idx_cached_byte_size_.store(cached_size,
+    _weight_index_starts_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
+  }
+
+  // repeated uint32 input_index_sizes = 6;
+  {
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      UInt32Size(this->input_index_sizes_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _input_index_sizes_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
+  }
+
+  // repeated uint32 input_index_starts = 7;
+  {
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      UInt32Size(this->input_index_starts_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _input_index_starts_cached_byte_size_.store(cached_size,
                                     std::memory_order_relaxed);
     total_size += data_size;
   }
@@ -567,6 +618,10 @@ size_t Neuron::ByteSizeLong() const {
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->transfer_function_idx());
   }
 
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
   int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
@@ -594,8 +649,10 @@ void Neuron::MergeFrom(const Neuron& from) {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  input_weight_idx_.MergeFrom(from.input_weight_idx_);
-  input_idx_.MergeFrom(from.input_idx_);
+  weight_index_sizes_.MergeFrom(from.weight_index_sizes_);
+  weight_index_starts_.MergeFrom(from.weight_index_starts_);
+  input_index_sizes_.MergeFrom(from.input_index_sizes_);
+  input_index_starts_.MergeFrom(from.input_index_starts_);
   if (from.bias_idx() != 0) {
     set_bias_idx(from.bias_idx());
   }
@@ -628,8 +685,10 @@ bool Neuron::IsInitialized() const {
 void Neuron::InternalSwap(Neuron* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  input_weight_idx_.InternalSwap(&other->input_weight_idx_);
-  input_idx_.InternalSwap(&other->input_idx_);
+  weight_index_sizes_.InternalSwap(&other->weight_index_sizes_);
+  weight_index_starts_.InternalSwap(&other->weight_index_starts_);
+  input_index_sizes_.InternalSwap(&other->input_index_sizes_);
+  input_index_starts_.InternalSwap(&other->input_index_starts_);
   swap(bias_idx_, other->bias_idx_);
   swap(memory_ratio_idx_, other->memory_ratio_idx_);
   swap(transfer_function_idx_, other->transfer_function_idx_);
@@ -758,7 +817,7 @@ const char* SparseNet::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::
             ptr = ctx->ParseMessage(add_neuron_array(), ptr);
             CHK_(ptr);
             if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<::PROTOBUF_NAMESPACE_ID::uint8>(ptr) == 34);
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<34>(ptr));
         } else goto handle_unusual;
         continue;
       // repeated double weight_table = 5;
@@ -888,97 +947,46 @@ failure:
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void SparseNet::SerializeWithCachedSizes(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:sparse_net_library.SparseNet)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // uint32 input_data_size = 1;
-  if (this->input_data_size() != 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(1, this->input_data_size(), output);
-  }
-
-  // uint32 input_neuron_number = 2;
-  if (this->input_neuron_number() != 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(2, this->input_neuron_number(), output);
-  }
-
-  // uint32 output_neuron_number = 3;
-  if (this->output_neuron_number() != 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(3, this->output_neuron_number(), output);
-  }
-
-  // repeated .sparse_net_library.Neuron neuron_array = 4;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->neuron_array_size()); i < n; i++) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(
-      4,
-      this->neuron_array(static_cast<int>(i)),
-      output);
-  }
-
-  // repeated double weight_table = 5;
-  if (this->weight_table_size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(5, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
-    output->WriteVarint32(_weight_table_cached_byte_size_.load(
-        std::memory_order_relaxed));
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteDoubleArray(
-      this->weight_table().data(), this->weight_table_size(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:sparse_net_library.SparseNet)
-}
-
 ::PROTOBUF_NAMESPACE_ID::uint8* SparseNet::InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:sparse_net_library.SparseNet)
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   // uint32 input_data_size = 1;
   if (this->input_data_size() != 0) {
+    stream->EnsureSpace(&target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->input_data_size(), target);
   }
 
   // uint32 input_neuron_number = 2;
   if (this->input_neuron_number() != 0) {
+    stream->EnsureSpace(&target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->input_neuron_number(), target);
   }
 
   // uint32 output_neuron_number = 3;
   if (this->output_neuron_number() != 0) {
+    stream->EnsureSpace(&target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(3, this->output_neuron_number(), target);
   }
 
   // repeated .sparse_net_library.Neuron neuron_array = 4;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->neuron_array_size()); i < n; i++) {
+  for (auto it = this->neuron_array_.pointer_begin(),
+            end = this->neuron_array_.pointer_end(); it < end; ++it) {
+    stream->EnsureSpace(&target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        4, this->neuron_array(static_cast<int>(i)), target);
+      InternalWriteMessageToArray(4, **it, target, stream);
   }
 
   // repeated double weight_table = 5;
   if (this->weight_table_size() > 0) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
-      5,
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-      target);
-    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
-        _weight_table_cached_byte_size_.load(std::memory_order_relaxed),
-         target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      WriteDoubleNoTagToArray(this->weight_table_, target);
+    target = stream->WriteFixedPacked(5, weight_table_, target);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields(), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:sparse_net_library.SparseNet)
   return target;
@@ -988,24 +996,15 @@ size_t SparseNet::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:sparse_net_library.SparseNet)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   // repeated .sparse_net_library.Neuron neuron_array = 4;
-  {
-    unsigned int count = static_cast<unsigned int>(this->neuron_array_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-          this->neuron_array(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->neuron_array_size();
+  for (const auto& msg : this->neuron_array_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
   // repeated double weight_table = 5;
@@ -1044,6 +1043,10 @@ size_t SparseNet::ByteSizeLong() const {
         this->output_neuron_number());
   }
 
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
   int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
@@ -1105,7 +1108,7 @@ bool SparseNet::IsInitialized() const {
 void SparseNet::InternalSwap(SparseNet* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  CastToBase(&neuron_array_)->InternalSwap(CastToBase(&other->neuron_array_));
+  neuron_array_.InternalSwap(&other->neuron_array_);
   weight_table_.InternalSwap(&other->weight_table_);
   swap(input_data_size_, other->input_data_size_);
   swap(input_neuron_number_, other->input_neuron_number_);

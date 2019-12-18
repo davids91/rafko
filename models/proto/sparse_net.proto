@@ -7,12 +7,14 @@ package sparse_net_library;
  *             on the weigthed sum of its operation
  */
 enum transfer_functions{
-  TRANSFER_FUNC_IDENTITY = 0;
-  TRANSFER_FUNC_SIGMOID = 1;
-  TRANSFER_FUNC_TANH = 2;
-  TRANSFER_FUNC_ELU = 3;
-  TRANSFER_FUNC_RELU = 4;
-  TRANSFER_FUNC_SELU = 5;
+  TRANSFER_FUNCTION_UNKNOWN = 0;
+  TRANSFER_FUNCTION_IDENTITY = 1;
+  TRANSFER_FUNCTION_SIGMOID = 2;
+  TRANSFER_FUNCTION_TANH = 3;
+  TRANSFER_FUNCTION_ELU = 4;
+  TRANSFER_FUNCTION_SELU = 5;
+  TRANSFER_FUNCTION_RELU = 6;
+  TRANSFER_FUNCTION_END = 512;
 }
 
 /** @brief      Takes input, assignes weights to them and processes
@@ -22,9 +24,23 @@ message Neuron{
   uint32 bias_idx = 1; /* a value the Neuron shall offset its output with */
   /* index of the weight for the memory ratio. 1.0: keep its previous value instead of the newly calculated one */
   uint32 memory_ratio_idx = 2;  /* Value pointed at should always be 0.0 <= memory_ratio < 1.0 default value is 0.0 <== as in zero memory of its previous value */
-  transfer_functions transfer_function_idx = 3; /* index of the transfer funtion this Neuron uses, empty means TRANSFER_FUNC_IDENTITY */
-  repeated uint32 input_weight_idx = 4; /* weights the Neuron multiplies its input with, size is representative of how many inputs the neuron has */
-  repeated uint32 input_idx = 5; /* indexes the Neuron takes as input. Size is either 1 or @inputWeightIdx size */
+  transfer_functions transfer_function_idx = 3; /* index of the transfer funtion this Neuron uses, empty means TRANSFER_FUNCTION_IDENTITY */
+
+  /** ################################################################################################
+   * Input weight Partition table
+   *  Input weights are read out in contigous arrays, which may or may not be optimized for cache coherence. 
+   *  The number of inputs the @Neuron takes equals to the summary of the values of @weight_index_sizes
+   *  Optimizing the Neurons for Cache coherence is not part of this library.
+   *  The Indexes are referencing the indexes of the Neurons inside the @SparseNet, the first @Neuron starting from 0.
+   */
+  repeated uint32 weight_index_sizes = 4; /* The sizes of the arrays */
+  repeated uint32 weight_index_starts = 5; /* Starting indexes in the weight table of the contigous array */
+
+  /** ################################################################################################
+   * Input index Partition table
+   */
+  repeated uint32 input_index_sizes = 6; /* Sizes of the contigous index arrays */
+  repeated uint32 input_index_starts = 7; /* Starting indexes the Neuron takes as input. Relative to the whole @Partial solution: input data, then internal neuron data */
 }
 
 /** @brief      A sparse net implementation containing the

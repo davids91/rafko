@@ -6,20 +6,20 @@ namespace sparse_net_library {
 /***
  * TODO:
  *  - Add Output Normalizer to Neuron (?)
- *  - SparseNet Transfer Function initialization
- *  - Include License information for every File
  *  - Store vanishing gradient / exploding gradient statistics based on indexes
  *  - Look out for https://stackoverflow.com/questions/26960906/protobuf-repeated-fields-deserialization
- *  - #1 srand is in effect for the whole application, this might not be safe
+ *  - #1 Include License information for every File
  *  - #2 in SparseNetBuilder::neuron_array validate the whole of the array if possible
  *  - #3 Set Arena options for memory usage
- *  - #4 eliminate local variable
- *  - #5 test vigorously, especially for memory leaks
- *  - #6 Use mutable, to add the whole array, don't use a cycle
- *  - #8 Extend testcases with biases
- *  - #9 Test neuron valid interface in builder
+ *  - #4 Finish Generating the solution chain from the SparseNet
+ *  - #5 use `make_unique` everywhere instead of `new`
+ *  - #6 use references instead of pointers where applicable
+ *  - #7 Switch Exception codes to Exception classes with debug data and messages
+ *  - #8 more complex Partial Solution test
+ *  - #9 Rule of Three: Destructor, Copy Constructor, Copy assignment operator should bedefined for every relevant class
  *  - #12 test transfer function info
  *  - #13 use the protobuffer version verifier
+ *  - #14 use [[deprecated("msg")]] - when applicable
  */
 /**
  * GLOBAL TYPES
@@ -42,6 +42,8 @@ typedef sdouble32* p_sdouble32;
 typedef enum {
   NOT_IMPLEMENTED_EXCEPTION,
   INVALID_USAGE_EXCEPTION,
+  INVALID_NEURON_EXCEPTION,
+  INVALID_NET_EXCEPTION,
   NULL_DETAIL_EXCEPTION,
   UNIDENTIFIED_OPERATION_EXCEPTION
 }sparse_net_library_exception;

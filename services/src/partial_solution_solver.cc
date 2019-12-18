@@ -1,4 +1,6 @@
 
+#include <algorithm>
+
 #include "services/partial_solution_solver.h"
 #include "models/transfer_function_info.h"
 
@@ -7,41 +9,76 @@ namespace sparse_net_library {
 vector<sdouble32> Partial_solution_solver::solve(const Partial_solution* detail, const vector<sdouble32>* input_data){
   if(
     (nullptr != detail)
-    &&(detail->input_data_size() == input_data->size())
+    &&(
+      (detail->input_data_size() == input_data->size())
+      ||(detail->input_data_size() + detail->internal_neuron_number() == input_data->size())
+    )
   ){
     vector<sdouble32> data;
-    sdouble32 new_neuron_data = 0;
     data.reserve(detail->input_data_size() + detail->internal_neuron_number());
     data.insert(data.begin(),input_data->begin(),input_data->end());
 
-    /* Go through the neurons */
-    uint32 neuron_inputs_start_index = 0;
-    for(uint8 neuron_iter = 0; neuron_iter < detail->internal_neuron_number(); neuron_iter++){
-      /* sum the inputs of the neuron together */
-      new_neuron_data = 0;
-      for(uint32 input_iter = 0; input_iter < detail->input_sizes(neuron_iter); input_iter++){
-        new_neuron_data += ( /* Weight of the input * data of the input */
-          detail->weight_table(detail->weight_indexes(neuron_inputs_start_index + input_iter))
-          * data[detail->inside_indexes(neuron_inputs_start_index + input_iter)]
-        );
+    if(detail->input_data_size() == input_data->size()){ /* Fill in values with 0 in case it's not given */
+      for(uint32 i = 0; i < detail->internal_neuron_number(); ++i){
+        data.push_back(0.0);
       }
-      neuron_inputs_start_index += detail->input_sizes(neuron_iter);
+    }
+
+    /* Go through the neurons */
+    sdouble32 new_neuron_data = 0;
+    uint32 index_partition_iterator_start = 0; /* Which is the first partition belonging to the neuron under @neuron_iterator */
+    uint32 weight_partition_iterator_index = 0; /* Which partition is being processed inside the Neuron */
+    uint32 weight_index = 0;
+    for(
+      uint8 neuron_iterator = 0; 
+      neuron_iterator < detail->internal_neuron_number(); 
+      ++neuron_iterator
+    ){
+      new_neuron_data = data[detail->input_data_size() + neuron_iterator]; /* Start with the Neurons previous data */
+      for(
+        uint32 index_partition_iterator = 0; 
+        index_partition_iterator < detail->index_partition_number(neuron_iterator); 
+        ++index_partition_iterator
+      ){
+        for(
+          uint32 input_iterator = 0;
+          input_iterator < detail->inside_index_sizes(index_partition_iterator_start + index_partition_iterator); 
+          input_iterator++
+        ){
+          new_neuron_data += ( /* Weight of the input * data of the input */
+            detail->weight_table(detail->weight_index_starts(weight_partition_iterator_index) + weight_index)
+            * data[detail->inside_index_starts(index_partition_iterator_start + index_partition_iterator) + input_iterator]
+          );
+
+          weight_index++; /* Step the Weight index forwards */
+          if(weight_index >= detail->weight_index_sizes(weight_partition_iterator_index)){
+            weight_index = 0; /* In case the next weight would ascend above the current patition, go to next one */
+            weight_partition_iterator_index++;
+
+            /*!Note: It is possible, in case of an incorrect configuration that the indexes and partitions
+             * don't match. It is possible to increase the @weight_partition_iterator_index above @detail->weight_partition_number(neuron_iterator)
+             * but that isn't chekced here, mainly for performance reasons.
+             **/
+          }
+        } /* For Every input inside a Partition */
+      } /* For every Partition inside a Neuron */
+      index_partition_iterator_start += detail->index_partition_number(neuron_iterator);
 
       /* Add bias */
-      new_neuron_data += detail->biases(neuron_iter);
+      new_neuron_data += detail->weight_table(detail->bias_index(neuron_iterator));
 
       /* Apply transfer function */
-      Transfer_function_info::apply_to_data(detail->neuron_transfer_functions(neuron_iter), new_neuron_data);
+      Transfer_function_info::apply_to_data(detail->neuron_transfer_functions(neuron_iterator), new_neuron_data);
 
       /* Apply memory ratio */
-      data[detail->input_data_size() + neuron_iter] = (
-        (data[detail->input_data_size() + neuron_iter] * detail->memory_ratios(neuron_iter))
-        + (new_neuron_data * (1.0-detail->memory_ratios(neuron_iter)))
+      data[detail->input_data_size() + neuron_iterator] = (
+        (data[detail->input_data_size() + neuron_iterator] * detail->weight_table(detail->memory_ratio_index(neuron_iterator)))
+        + (new_neuron_data * (1.0-detail->weight_table(detail->memory_ratio_index(neuron_iterator))))
       );
     }
 
     return vector<sdouble32>(
-      data.data() + detail->input_data_size(),
+      data.data() + detail->input_data_size() + 1,
       data.data() + detail->input_data_size() + detail->internal_neuron_number()
     );
   }else if(nullptr != detail){
@@ -55,35 +92,58 @@ bool Partial_solution_solver::is_valid(const Partial_solution* detail){
   if(
     (0 < detail->input_data_size())
     &&(0u < detail->internal_neuron_number())
-    &&(static_cast<int>(detail->internal_neuron_number()) == detail->input_sizes_size())
+    &&(static_cast<int>(detail->internal_neuron_number()) == detail->index_partition_number_size())
+    &&(static_cast<int>(detail->internal_neuron_number()) == detail->weight_partition_number_size())
     &&(static_cast<int>(detail->internal_neuron_number()) == detail->actual_index_size())
     &&(static_cast<int>(detail->internal_neuron_number()) == detail->neuron_transfer_functions_size())
-    &&(static_cast<int>(detail->internal_neuron_number()) == detail->memory_ratios_size())
-    &&(static_cast<int>(detail->internal_neuron_number()) == detail->biases_size())
+    &&(static_cast<int>(detail->internal_neuron_number()) == detail->memory_ratio_index_size())
+    &&(static_cast<int>(detail->internal_neuron_number()) == detail->bias_index_size())
   ){
-    int weight_array_size = 0;
-    uint32 weight_array_it = 0u;
+    int weight_partition_number = 0;
+    int index_partition_number = 0;
+
     for(uint16 neuron_iterator = 0u; neuron_iterator < detail->internal_neuron_number(); neuron_iterator++){
-      weight_array_size += detail->input_sizes(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
+      weight_partition_number += detail->weight_partition_number(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
+      index_partition_number += detail->index_partition_number(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
     }
 
-    if(0 < weight_array_size){
+    if((0 < index_partition_number)&&(0 < weight_partition_number)){
       /* Check if the inputs for every Neuron are before its index.
        * This will ensure that there are no unresolved dependencies are present at any Neuron
        **/
-      for(uint16 neuron_iterator = 0; neuron_iterator < detail->internal_neuron_number(); neuron_iterator++){
-        for(uint32 neuron_input_iterator = 0; neuron_input_iterator < detail->input_sizes(neuron_iterator); neuron_input_iterator++){
-          if(detail->inside_indexes(weight_array_it) > neuron_iterator){ /* Self-recurrence is simulated by adding the current data of a neuron as an input into the solution detail */
+      uint32 index_partition_iterator_start = 0;
+      uint32 count_of_input_indexes = 0;
+      uint32 weight_partition_iterator_start = 0;
+      uint32 count_of_input_weights = 0;
+      for(uint32 neuron_iterator = 0; neuron_iterator < detail->internal_neuron_number(); neuron_iterator++){
+        count_of_input_indexes = 0;
+        count_of_input_weights = 0;
+        for(uint32 partition_iterator = 0; partition_iterator < detail->index_partition_number(neuron_iterator); ++partition_iterator){
+          count_of_input_indexes += detail->inside_index_sizes(index_partition_iterator_start + partition_iterator);
+          if( /* If a partition input in a Neuron points after the neurons index */
+            (detail->inside_index_starts(index_partition_iterator_start + partition_iterator)
+             + detail->inside_index_sizes(index_partition_iterator_start + partition_iterator) ) >= neuron_iterator
+          ){ /* Self-recurrence is simulated by adding the current data of a neuron as an input into the solution detail */
             return false;
           }
-          weight_array_it++;
+
+          /* Check if the number of weights match the number of input indexes for every Neuron */
+          for(uint32 partition_iterator = 0; partition_iterator < detail->weight_partition_number(neuron_iterator); ++partition_iterator){
+            count_of_input_weights +=  detail->weight_index_sizes(weight_partition_iterator_start + partition_iterator);
+          }
+          weight_partition_iterator_start += detail->weight_partition_number(neuron_iterator);
+          index_partition_iterator_start += detail->index_partition_number(neuron_iterator);
+
+          if(count_of_input_indexes == count_of_input_weights){
+            return false;
+          }
         }
       }
     }else return false;
 
     return(
-      (weight_array_size == detail->inside_indexes_size())
-      &&(weight_array_size == detail->weight_indexes_size())
+      (index_partition_number == detail->inside_index_starts_size())
+      &&(weight_partition_number == detail->weight_index_starts_size())
     );
   }else return false;
 }
