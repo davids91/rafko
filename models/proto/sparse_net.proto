@@ -27,7 +27,7 @@ message Neuron{
   transfer_functions transfer_function_idx = 3; /* index of the transfer funtion this Neuron uses, empty means TRANSFER_FUNCTION_IDENTITY */
 
   /** ################################################################################################
-   * Input weight Partition table
+   * Input weight synapse table
    *  Input weights are read out in contigous arrays, which may or may not be optimized for cache coherence. 
    *  The number of inputs the @Neuron takes equals to the summary of the values of @weight_index_sizes
    *  Optimizing the Neurons for Cache coherence is not part of this library.
@@ -37,7 +37,7 @@ message Neuron{
   repeated uint32 weight_index_starts = 5; /* Starting indexes in the weight table of the contigous array */
 
   /** ################################################################################################
-   * Input index Partition table
+   * Input index synapse table
    */
   repeated uint32 input_index_sizes = 6; /* Sizes of the contigous index arrays */
   repeated uint32 input_index_starts = 7; /* Starting indexes the Neuron takes as input. Relative to the whole @Partial solution: input data, then internal neuron data */

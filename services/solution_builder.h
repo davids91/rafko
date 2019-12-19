@@ -7,26 +7,22 @@
 
 #include "models/gen/sparse_net.pb.h"
 #include "models/gen/solution.pb.h"
+#include "services/neuron_router.h"
 
 #include "sparse_net_global.h"
 
 namespace sparse_net_library {
 
-using std::unique_ptr;
-using std::vector;
-using std::deque;
-using std::atomic;
-
 /**
  * @brief      Front-end to create a @Soltuion to solve a @SparseNet. @max_solve_threads
  *             determines the maximum number of threads to be used inside the @build function.
- *             A @Solution_chain is built up by an array of @Decoupled_solutions. The first
- *             @Decoupled_solutions are independent because they are mostly processing only
- *             inputs to the Neural network. Any further @Partial_solution messages
- *             depend on the @Decoupled_solutions under the previous index.
+ *             A @Solution_chain is built up by a 2D array of @Partial_solutions. The first row
+ *             is independent because they are mostly processing only inputs to the Neural network
+ *             and Neurons driectly dependent on them.
+ *             Any further @Partial_solution messages depend on the @Partial_solution in thep previous row.
  *             In case there is only one used device for the net, which has insufficient internal
- *             memory for a whole @Decoupled_solutions item, the items in there can be executed
- *             sequentally.
+ *             memory for a big @Partial_solution, it can be divided into multiple smaller ones,
+ *             which are executed sequentially.
  *             The separation of the net into decoupled independent partial solutions enable
  *             distributed computing based on micro-services, as the elements inside @Decoupled_solutions
  *             can be solved in an independent manner. Dependencies inside the Neural network are represented
@@ -60,7 +56,7 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  Solution* build( SparseNet& net );
+  Solution* build(SparseNet& net);
 
 private:
   /**
@@ -72,70 +68,36 @@ private:
   sdouble32 arg_device_max_megabytes = 2.0 /* GB */ * 1024.0/* MB */;
 
   /**
-   * Number of already processed output layer Neurons
-   */
-  atomic<uint32> output_layer_iterator;
-
-  /**
-   * For each @Neuron in @SparseNet stores the processed state. Values:
-   *  - Number of processed children ( storing raw children number without partition information )
-   *  - Number of processed children + 1 in case the Neuron is reserved
-   *  - Number of processed children + 2 in case the Neuron is processed
-   */
-  vector<unique_ptr<atomic<uint32>>> neuron_states;
-
-  /**
-   * Number of inputs a Neuron has, based on the input index partition sizes
-   */
-  vector<uint32> neuron_number_of_inputs;
-
-  /**
-   * A subset of the net representing independent solutions
-   */
-  std::mutex net_subset_mutex;
-  std::atomic<sdouble32> net_subset_size; /* The size of the currently partial solution to be built in bytes */
-  deque<uint32> net_subset_index;
-  deque<uint32> net_subset; /*!#4 add transitively dependent neurons if memory allows it */
-
-  /**
-   * @brief      Builds a thread.
+   * @brief      Adds a neuron to partial solution.
    *
-   * @param      net           The net
-   * @param      result        The result
-   * @param[in]  thread_index  The thread index
+   * @param      net  The sparse net to read the neuron from
+   * @param      neuron_index  the index of the neuron inside the net
+   * @param      partial  the partial solution reference to add the Neuron into
+   *
+   * @return     Return true in case the Neuron could b added to the @Partial_Solution
    */
-  void collect_subset_thread( SparseNet& net, Solution& result, uint8 thread_index);
-
+  bool add_neuron_to_partial_solution(const SparseNet& net, uint32 neuron_index, Partial_solution& partial);
 
   /**
-   * @brief      Gets the partial solution from subset.
+   * @brief      Checks for duplicates in thegiven @Partial_Solution, eliminates duplicates,
+   *             and then corrects the indexes.
    *
-   * @param      net                      The net
+   * @param      partial The @Partial_solution to correct
+   *
+   * @return     Returns with the memory usage reduction in Megabytes
+   */
+  uint32 check_for_duplicates_in_partial_solution(Partial_solution& partial);
+
+  /**
+   * @brief      Generates or adds to a @Partial_solution according to the current net Subset;
+   *             Updates the states of the corresponding Neurons
+   *
+   * @param      net                      The Sparse net
    * @param      solution_neuron_indexes  The solution neuron indexes
    *
    * @return     The partial solution from subset.
    */
-  unique_ptr<Decoupled_solutions> get_partial_solution_from_subset( SparseNet& net, deque<uint32>& solution_neuron_indexes);
-
-  /**
-   * @brief      Inline functions to help build partial solutions
-   *
-   * @param[in]  neuron_index  The neuron index inside @neuron_number_of_inputs and @neuron_states
-   *
-   * @return     Information depending on the function
-   */
-  inline bool is_neuron_in_progress(uint32 neuron_index) const{
-    return (*neuron_states[neuron_index] < neuron_number_of_inputs[neuron_index] + 1);
-  }
-  inline bool is_neuron_reserved(uint32 neuron_index) const{
-    return (*neuron_states[neuron_index] < neuron_number_of_inputs[neuron_index] + 1);
-  }
-  inline bool is_neuron_solvable(uint32 neuron_index) const{
-    return (neuron_number_of_inputs[neuron_index] == *neuron_states[neuron_index]);
-  }
-  inline bool is_neuron_processed(uint32 neuron_index) const{
-    return (*neuron_states[neuron_index] < neuron_number_of_inputs[neuron_index] + 2);
-  }
+  void generate_partial_solution_from_subset(const SparseNet& net, Neuron_router& net_iterator, Partial_solution& current_partial);
 };
 
 } /* namespace sparse_net_library */

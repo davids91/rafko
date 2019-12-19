@@ -63,7 +63,7 @@ void Transfer_function_info::apply_to_data(transfer_functions function, sdouble3
     data = max(0.0,data);
     break;
   default: /* unidentified transfer function! */
-    throw UNIDENTIFIED_OPERATION_EXCEPTION;
+    throw "Unidentified transfer function queried for information!";
   }
 }
 

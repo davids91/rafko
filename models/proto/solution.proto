@@ -16,8 +16,10 @@ message Partial_solution{
    * Solution data
    */
   uint32 input_data_size = 1; /* number of used inputs */
-  uint32 internal_neuron_number = 2; /* number of neurons used in this partial solution */
-  repeated double weight_table = 3; /* stores the weights paired to @inside_indexes for the inputs of the Neurons; Ranges [0.0,1.0) */
+  repeated uint32 input_data_synapse_size = 2; /* Input Partition table(==synapse) sizes */
+  repeated sint32 input_data_synapse_starts = 3; /* Input partition table starting indexes; negative means input, positive means internal data */
+  uint32 internal_neuron_number = 4; /* number of neurons used in this partial solution */
+  repeated double weight_table = 5; /* stores the weights paired to @inside_indexes for the inputs of the Neurons; Ranges [0.0,1.0) */
 
   /** ################################################################################################
    * A representation of the actual neuron to be used in this intermediate solution
@@ -31,44 +33,39 @@ message Partial_solution{
   repeated transfer_functions neuron_transfer_functions = 11;
   repeated double memory_ratio_index = 12;
   repeated double bias_index = 13;
-  repeated uint32 index_partition_number = 14;
-  repeated uint32 weight_partition_number = 15;
+  repeated uint32 index_synapse_number = 14; /*!#4 remove this */
+  repeated uint32 weight_synapse_number = 15; /*!#4 remove this */
 
   /** ################################################################################################
-   * Partition table storing batches of input indexes for an inner neuron
-   * - Every Neuron can have a different number of partitions, their numbers are stored under @index_partition_number
-   * - Neuron partition tables are mapped into an array, in order of the Neurons
-   * - Since solving the detail is incremental, the start of each Neuron's input partition index
+   * Partition table(==synapse) storing batches of input indexes for an inner neuron
+   * - Every Neuron can have a different number of synapses, their numbers are stored under @index_synapse_number
+   * - Neuron synapse tables are mapped into an array, in order of the Neurons
+   * - Since solving the detail is incremental, the start of each Neuron's input synapse index
    *   is determined at runtime, so it doesn't need to be stored
    */
-  repeated uint32 inside_index_sizes = 20; /* The size of the inside index partitions. Size is of the summary of the elements in @input_sizes */
+  repeated uint32 inside_index_sizes = 20; /* The size of the inside index synapses. Size is of the summary of the elements in @input_sizes */
   repeated uint32 inside_index_starts = 21; /* Starting indexes of inputs of the Neurons; value range [0 ; @data.size). Size equals @inside_index_sizes */
 
   /** ################################################################################################
-   * Partition table storing batches of input weights for an inner neuron
-   * - Every Neuron can have a different number of partitions, their numbers are stored under @weight_partition_number
+   * Partition table(==synapse) storing batches of input weights for an inner neuron
+   * - Every Neuron can have a different number of synapses, their numbers are stored under @weight_synapse_number
    * - Solving the @Partial_solution is based on ondexes, every new index reads in a weight. In case the currently
-   *   used weight partition ends, another partition starts. 
-   * - The number of weights shall equal the number of indexes, so the two partitions should end at the 
-   *   same number of input-weight pairs. 
-   * - Although @weight_partition_number is not used while solving the @Partial_solution it can be
+   *   used weight synapse ends, another synapse starts.
+   * - The number of weights shall equal the number of indexes, so the two synapses should end at the
+   *   same number of input-weight pairs.
+   * - Although @weight_synapse_number is not used while solving the @Partial_solution it can be
    *   used to check wether the above statement holds true
-   * - Neuron partition tables are mapped into an array, in order of the Neurons
+   * - Neuron synapse tables are mapped into an array, in order of the Neurons
    */
-  repeated uint32 weight_index_sizes = 22; /* The Sizes of the used Weight Partitions for a Neuron. Size is of the summary of the elements in @input_sizes  */
+  repeated uint32 weight_index_sizes = 22; /* The Sizes of the used Weight synapses for a Neuron. Size is of the summary of the elements in @input_sizes  */
   repeated uint32 weight_index_starts = 23; /* Starting indexes of weights of the above inputs;value range [0.0,1.0]. Size equals @weight_index_sizes */
 }
 
 /**
  * @brief      A collection of independent @Partial_solution messages to be executed in parallel
  */
-message Decoupled_solutions{
-  repeated Partial_solution partial_solutions = 1;
-}
-
-/**
- * @brief      A collection of @Solution_chain messages in order of dependency
- */
 message Solution{
-  repeated Decoupled_solutions solution_chain = 1;
+  uint32 rows = 1;
+  uint32 cols = 2;
+  repeated Partial_solution partial_solutions = 3;
 }

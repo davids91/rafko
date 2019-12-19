@@ -51,6 +51,12 @@ SparseNetBuilder& SparseNetBuilder::arena_ptr(google::protobuf::Arena* arena){
   return *this;
 }
 
+SparseNetBuilder& SparseNetBuilder::allowed_transfer_functions_by_layer(vector<vector<transfer_functions> > filter){
+  arg_allowed_transfer_functions_by_layer = filter;
+  is_allowed_transfer_functions_by_layer_set = true;
+  return *this;
+}
+
 SparseNetBuilder& SparseNetBuilder::weight_table(vector<sdouble32> table){
   if(0 < table.size()){
     arg_weight_table = table;
@@ -64,9 +70,8 @@ SparseNetBuilder& SparseNetBuilder::weight_table(vector<sdouble32> table){
 
 void SparseNetBuilder::set_weight_table(SparseNet* net){
   if(0 < arg_weight_table.size()){
-    
     *net->mutable_weight_table() = {arg_weight_table.begin(), arg_weight_table.end()};
-  }else throw NULL_DETAIL_EXCEPTION;
+  }else throw "Unable to build net, weight table is of size 0!";
 }
 
 SparseNetBuilder& SparseNetBuilder::neuron_array(vector<Neuron> arr){
@@ -84,106 +89,113 @@ void SparseNetBuilder::set_neuron_array(SparseNet* net){
   /*! #2 */
   if(is_neuron_valid(&arg_neuron_array.back())){ /* If the last element is valid */
     *net->mutable_neuron_array() = {arg_neuron_array.begin(),arg_neuron_array.end()};
-  } else throw INVALID_NEURON_EXCEPTION;
+  } else throw "Unable to set Neuron Array into Sparse net as the last Neuron seems invalid!";
 }
 
-SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes, vector<vector<transfer_functions> > allowedTrFunctionsByLayer){
-  if(arg_output_neuron_number == layer_sizes.back()){ /* Last layer in the config should match the number of output Neurons */
-    uint32 prevSize = 0;
-    uint32 numNeurons = 0;
-    /* Calculate number of weights needed overall
-     * - Input Layer shall have a weight for every input for every neuron
-     * - Input Layer shall have a weight for every bias and memory_ratio for every neuron
-     */
-    uint64 numWeights = (arg_input_neuron_number * arg_input_size) + (2 * arg_input_neuron_number);
-    for(uint32 layerSize : layer_sizes){
-      numNeurons += layerSize; /* Calculate the number of elements needed */
-      numWeights += prevSize * layerSize; /* Calculate the number of weights needed */
-      numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_ratio amongst the weights */
-      prevSize = layerSize;
+SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes, vector<vector<transfer_functions> > filter){
+  (void)allowed_transfer_functions_by_layer(filter);
+  return denseLayers(layer_sizes);
+}
+
+SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
+  uint32 prevSize = 0;
+  uint32 numNeurons = 0;
+  /* Calculate number of weights needed overall
+   * - Input Layer shall have a weight for every input for every neuron
+   * - Input Layer shall have a weight for every bias and memory_ratio for every neuron
+   */
+  uint64 numWeights = (arg_input_neuron_number * arg_input_size) + (2 * arg_input_neuron_number);
+  for(uint32 layerSize : layer_sizes){
+    numNeurons += layerSize; /* Calculate the number of elements needed */
+    numWeights += prevSize * layerSize; /* Calculate the number of weights needed */
+    numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_ratio amongst the weights */
+    prevSize = layerSize;
+  }
+
+  if(
+    (io_pre_requisites_set() && is_expected_input_range_set ) /* needed arguments are set */
+    &&(arg_output_neuron_number<=numNeurons) /* Output size isn't too big  */
+  ){ /*! #3 */
+    SparseNet* ret(google::protobuf::Arena::CreateMessage<SparseNet>(arg_arena));
+    uint32 layerStart = 0;
+    uint64 weightIt = 0;
+    uint64 neurIt = 0;
+    sdouble32 expPrevLayerOutput = Transfer_function_info::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
+
+    ret->set_input_data_size(arg_input_size);
+    ret->set_input_neuron_number(arg_input_neuron_number);
+    ret->set_output_neuron_number(arg_output_neuron_number);
+
+    prevSize = arg_input_size;
+
+    if(!is_weight_initializer_set){
+      weight_initializer(shared_ptr<Dense_net_weight_initializer>(new Dense_net_weight_initializer()));
     }
 
-    if(
-      (io_pre_requisites_set() && is_expected_input_range_set ) /* needed arguments are set */
-      &&(arg_output_neuron_number<=numNeurons) /* Output size isn't too big  */
-    ){ /*! #3 */
-      SparseNet* ret(google::protobuf::Arena::CreateMessage<SparseNet>(arg_arena));
-      uint32 layerStart = 0;
-      uint64 weightIt = 0;
-      uint64 neurIt = 0;
-      sdouble32 expPrevLayerOutput = Transfer_function_info::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
+    arg_weight_table = vector<sdouble32>(numWeights);
+    arg_neuron_array = vector<Neuron>(numNeurons);
 
-      ret->set_input_data_size(arg_input_size);
-      ret->set_input_neuron_number(arg_input_neuron_number);
-      ret->set_output_neuron_number(arg_output_neuron_number);
+    prevSize = arg_input_size;
+    for(uint32 layerIt = 0; layerIt < layer_sizes.size(); layerIt++)
+    { /* Create the Dense Layers */
 
-      prevSize = arg_input_size;
+      /* Configuring the weight_initializerializer for this layer */
+      arg_weight_initer->set(
+        (0 == layerIt)?(arg_input_size):(layer_sizes[layerIt-1]),
+        expPrevLayerOutput
+      );
 
-      if(!is_weight_initializer_set){
-        weight_initializer(shared_ptr<Dense_net_weight_initializer>(new Dense_net_weight_initializer()));
-      }
+      expPrevLayerOutput = 0;
+      for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++)
+      { /* Add the Neurons */
+        arg_weight_table[weightIt] = arg_weight_initer->next_bias();
+        arg_weight_table[weightIt+1] = arg_weight_initer->next_memory_ratio();
+        arg_neuron_array[neurIt].set_bias_idx(weightIt);
+        arg_neuron_array[neurIt].set_memory_ratio_idx(weightIt+1);
+        weightIt += 2;
+        if(is_allowed_transfer_functions_by_layer_set){
+          arg_neuron_array[neurIt].set_transfer_function_idx(
+            Transfer_function_info::next(arg_allowed_transfer_functions_by_layer[layerIt])
+          );
+        }else{
+          arg_neuron_array[neurIt].set_transfer_function_idx(Transfer_function_info::next());
+        }
 
-      arg_weight_table = vector<sdouble32>(numWeights);
-      arg_neuron_array = vector<Neuron>(numNeurons);
-
-      prevSize = arg_input_size;
-      for(uint32 layerIt = 0; layerIt < layer_sizes.size(); layerIt++)
-      { /* Create the Dense Layers */
-
-        /* Configuring the weight_initializerializer for this layer */
-        arg_weight_initer->set(
-          (0 == layerIt)?(arg_input_size):(layer_sizes[layerIt-1]),
-          expPrevLayerOutput
+        /* Storing the expected output of this Net */
+        if(0 < layerIt)expPrevLayerOutput += Transfer_function_info::get_average_output_range(
+          arg_neuron_array[neurIt].transfer_function_idx()
         );
 
-        expPrevLayerOutput = 0;
-        for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++)
-        { /* Add the Neurons */
-          arg_weight_table[weightIt] = arg_weight_initer->next_bias();
-          arg_weight_table[weightIt+1] = arg_weight_initer->next_memory_ratio();
-          arg_neuron_array[neurIt].set_bias_idx(weightIt);
-          arg_neuron_array[neurIt].set_memory_ratio_idx(weightIt+1);
-          weightIt += 2;
-          arg_neuron_array[neurIt].set_transfer_function_idx(
-            Transfer_function_info::next(allowedTrFunctionsByLayer[layerIt])
-          );
-
-          /* Storing the expected output of this Net */
-          if(0 < layerIt)expPrevLayerOutput += Transfer_function_info::get_average_output_range(
+        /* Add the previous layer as an input synapse */
+        arg_neuron_array[neurIt].add_input_index_sizes(prevSize);
+        arg_neuron_array[neurIt].add_input_index_starts(layerStart);
+        for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < prevSize; neuron_weight_iterator++)
+        { /* Fill in some initial neuron input values */
+          arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
             arg_neuron_array[neurIt].transfer_function_idx()
           );
-
-          /* Add the previous layer as an input partition */
-          arg_neuron_array[neurIt].add_input_index_sizes(prevSize);
-          arg_neuron_array[neurIt].add_input_index_starts(layerStart);
-          for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < prevSize; neuron_weight_iterator++)
-          { /* Fill in some initial neuron input values */
-            arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
-              arg_neuron_array[neurIt].transfer_function_idx()
-            );
-          
-            arg_neuron_array[neurIt].add_weight_index_sizes(1);
-            arg_neuron_array[neurIt].add_weight_index_starts(weightIt);
-            weightIt++;
-          }
-          neurIt++; /* Step the neuron iterator forward */
+        
+          arg_neuron_array[neurIt].add_weight_index_sizes(1);
+          arg_neuron_array[neurIt].add_weight_index_starts(weightIt);
+          weightIt++;
         }
-
-        if(0 == layerIt){
-          expPrevLayerOutput = arg_expected_input_range;
-          layerStart = 0;
-        }else{
-          expPrevLayerOutput /= static_cast<sdouble32>(layer_sizes[layerIt]);
-          layerStart += prevSize;
-        }
-        prevSize = layer_sizes[layerIt];
+        neurIt++; /* Step the neuron iterator forward */
       }
 
-      set_weight_table(ret);
-      set_neuron_array(ret);
-      return ret;
-    }else throw INVALID_USAGE_EXCEPTION;
-  }else throw INVALID_USAGE_EXCEPTION;
+      if(0 == layerIt){
+        expPrevLayerOutput = arg_expected_input_range;
+        layerStart = 0;
+      }else{
+        expPrevLayerOutput /= static_cast<sdouble32>(layer_sizes[layerIt]);
+        layerStart += prevSize;
+      }
+      prevSize = layer_sizes[layerIt];
+    }
+
+    set_weight_table(ret);
+    set_neuron_array(ret);
+    return ret;
+  }else throw "Input Output Pre-requisites failed;Unable to determine Net Structure!";
 }
 
 SparseNet* SparseNetBuilder::build(void){
@@ -200,7 +212,7 @@ SparseNet* SparseNetBuilder::build(void){
     set_weight_table(ret);
     set_neuron_array(ret);
     return ret;
-  }else throw INVALID_USAGE_EXCEPTION;
+  }else throw "Inconsistent parameters given to Sparse Net Builder!";
 }
 
 bool SparseNetBuilder::is_neuron_valid(Neuron const * neuron)
@@ -210,16 +222,16 @@ bool SparseNetBuilder::is_neuron_valid(Neuron const * neuron)
       (transfer_functions_IsValid(neuron->transfer_function_idx())) /* Transfer Function ID is valid */
       &&(TRANSFER_FUNCTION_UNKNOWN < neuron->transfer_function_idx()) /* Transfer Function ID is known */
       &&(( /* Either the input is consistent */
-        (0 < neuron->input_index_sizes_size()) /* There are input index partitions */
-        &&(neuron->input_index_sizes_size() == neuron->input_index_starts_size()) /* Index Partition is consistent */
+        (0 < neuron->input_index_sizes_size()) /* There are input index synapses */
+        &&(neuron->input_index_sizes_size() == neuron->input_index_starts_size()) /* Index synapse is consistent */
         &&(0 < neuron->input_index_sizes(0)) /* Of non-null size */
-        &&(0 < neuron->weight_index_sizes_size()) /* There are some weight partitions */
-        &&(neuron->weight_index_sizes_size() == neuron->weight_index_starts_size()) /* Weight partition is consitent */
+        &&(0 < neuron->weight_index_sizes_size()) /* There are some weight synapses */
+        &&(neuron->weight_index_sizes_size() == neuron->weight_index_starts_size()) /* Weight synapse is consitent */
         &&(0 < neuron->weight_index_sizes(0)) /* Of non-null size */
       )||( /* Or there is no input. we won't judge. */
         (0 == neuron->input_index_sizes_size()) && (0 == neuron->weight_index_sizes_size()) 
       ))
-    ){ /*!Note: Only the first partition sizes are checked for non-zero size for perfomance purposes. 
+    ){ /*!Note: Only the first synapse sizes are checked for non-zero size for perfomance purposes. 
         * It is enough to determine if there is any input to the Neuron, because
         * if the first is non-zero then essentially there are more, than 0 inputs.
         */
@@ -234,7 +246,7 @@ bool SparseNetBuilder::is_neuron_valid(Neuron const * neuron)
         number_of_input_weights += neuron->weight_index_sizes(i);
       }
 
-      /* Check if inputs from partitions match */
+      /* Check if inputs from synapses match */
       return (number_of_input_indexes == number_of_input_weights);
     } else return false;
 

@@ -14,9 +14,10 @@ namespace sparse_net_library {
  *  - #4 Finish Generating the solution chain from the SparseNet
  *  - #5 use `make_unique` everywhere instead of `new`
  *  - #6 use references instead of pointers where applicable
- *  - #7 Switch Exception codes to Exception classes with debug data and messages
+ *  - #7 use Exception Class with String formatter  
  *  - #8 more complex Partial Solution test
  *  - #9 Rule of Three: Destructor, Copy Constructor, Copy assignment operator should bedefined for every relevant class
+ *  - #10 use uint64 where needed! ( especially because of the iteration logic )
  *  - #12 test transfer function info
  *  - #13 use the protobuffer version verifier
  *  - #14 use [[deprecated("msg")]] - when applicable
@@ -35,18 +36,6 @@ typedef signed char sint8;
 typedef double sdouble32;
 typedef uint16* p_uint16;
 typedef sdouble32* p_sdouble32;
-
-/**
- * Exceptions
- */
-typedef enum {
-  NOT_IMPLEMENTED_EXCEPTION,
-  INVALID_USAGE_EXCEPTION,
-  INVALID_NEURON_EXCEPTION,
-  INVALID_NET_EXCEPTION,
-  NULL_DETAIL_EXCEPTION,
-  UNIDENTIFIED_OPERATION_EXCEPTION
-}sparse_net_library_exception;
 
 } /* namespace sparse_net_library */
 #endif /* defined sparse_net_global_H */

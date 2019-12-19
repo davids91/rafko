@@ -5,6 +5,7 @@
 
 #include <algorithm>
 
+#include <google/protobuf/stubs/common.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/extension_set.h>
 #include <google/protobuf/wire_format_lite.h>
@@ -14,37 +15,17 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
-extern PROTOBUF_INTERNAL_EXPORT_solution_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_Decoupled_solutions_solution_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_solution_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Partial_solution_solution_2eproto;
 namespace sparse_net_library {
 class Partial_solutionDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Partial_solution> _instance;
 } _Partial_solution_default_instance_;
-class Decoupled_solutionsDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Decoupled_solutions> _instance;
-} _Decoupled_solutions_default_instance_;
 class SolutionDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Solution> _instance;
 } _Solution_default_instance_;
 }  // namespace sparse_net_library
-static void InitDefaultsscc_info_Decoupled_solutions_solution_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::sparse_net_library::_Decoupled_solutions_default_instance_;
-    new (ptr) ::sparse_net_library::Decoupled_solutions();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::sparse_net_library::Decoupled_solutions::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_Decoupled_solutions_solution_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_Decoupled_solutions_solution_2eproto}, {
-      &scc_info_Partial_solution_solution_2eproto.base,}};
-
 static void InitDefaultsscc_info_Partial_solution_solution_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -57,7 +38,7 @@ static void InitDefaultsscc_info_Partial_solution_solution_2eproto() {
 }
 
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Partial_solution_solution_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_Partial_solution_solution_2eproto}, {}};
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsscc_info_Partial_solution_solution_2eproto}, {}};
 
 static void InitDefaultsscc_info_Solution_solution_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -71,10 +52,10 @@ static void InitDefaultsscc_info_Solution_solution_2eproto() {
 }
 
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_Solution_solution_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_Solution_solution_2eproto}, {
-      &scc_info_Decoupled_solutions_solution_2eproto.base,}};
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsscc_info_Solution_solution_2eproto}, {
+      &scc_info_Partial_solution_solution_2eproto.base,}};
 
-static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_solution_2eproto[3];
+static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_solution_2eproto[2];
 static constexpr ::PROTOBUF_NAMESPACE_ID::EnumDescriptor const** file_level_enum_descriptors_solution_2eproto = nullptr;
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_solution_2eproto = nullptr;
 
@@ -85,77 +66,72 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_solution_2eproto::offsets[] PR
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, input_data_size_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, input_data_synapse_size_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, input_data_synapse_starts_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, internal_neuron_number_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, weight_table_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, actual_index_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, neuron_transfer_functions_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, memory_ratio_index_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, bias_index_),
-  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, index_partition_number_),
-  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, weight_partition_number_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, index_synapse_number_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, weight_synapse_number_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, inside_index_sizes_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, inside_index_starts_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, weight_index_sizes_),
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Partial_solution, weight_index_starts_),
   ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Decoupled_solutions, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Decoupled_solutions, partial_solutions_),
-  ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::sparse_net_library::Solution, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Solution, solution_chain_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Solution, rows_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Solution, cols_),
+  PROTOBUF_FIELD_OFFSET(::sparse_net_library::Solution, partial_solutions_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::sparse_net_library::Partial_solution)},
-  { 18, -1, sizeof(::sparse_net_library::Decoupled_solutions)},
-  { 24, -1, sizeof(::sparse_net_library::Solution)},
+  { 20, -1, sizeof(::sparse_net_library::Solution)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::sparse_net_library::_Partial_solution_default_instance_),
-  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::sparse_net_library::_Decoupled_solutions_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::sparse_net_library::_Solution_default_instance_),
 };
 
 const char descriptor_table_protodef_solution_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\016solution.proto\022\022sparse_net_library\032\020sp"
-  "arse_net.proto\"\245\003\n\020Partial_solution\022\027\n\017i"
-  "nput_data_size\030\001 \001(\r\022\036\n\026internal_neuron_"
-  "number\030\002 \001(\r\022\024\n\014weight_table\030\003 \003(\001\022\024\n\014ac"
-  "tual_index\030\n \003(\r\022I\n\031neuron_transfer_func"
-  "tions\030\013 \003(\0162&.sparse_net_library.transfe"
-  "r_functions\022\032\n\022memory_ratio_index\030\014 \003(\001\022"
-  "\022\n\nbias_index\030\r \003(\001\022\036\n\026index_partition_n"
-  "umber\030\016 \003(\r\022\037\n\027weight_partition_number\030\017"
-  " \003(\r\022\032\n\022inside_index_sizes\030\024 \003(\r\022\033\n\023insi"
-  "de_index_starts\030\025 \003(\r\022\032\n\022weight_index_si"
-  "zes\030\026 \003(\r\022\033\n\023weight_index_starts\030\027 \003(\r\"V"
-  "\n\023Decoupled_solutions\022\?\n\021partial_solutio"
-  "ns\030\001 \003(\0132$.sparse_net_library.Partial_so"
-  "lution\"K\n\010Solution\022\?\n\016solution_chain\030\001 \003"
-  "(\0132\'.sparse_net_library.Decoupled_soluti"
-  "onsB\003\370\001\001b\006proto3"
+  "arse_net.proto\"\345\003\n\020Partial_solution\022\027\n\017i"
+  "nput_data_size\030\001 \001(\r\022\037\n\027input_data_synap"
+  "se_size\030\002 \003(\r\022!\n\031input_data_synapse_star"
+  "ts\030\003 \003(\021\022\036\n\026internal_neuron_number\030\004 \001(\r"
+  "\022\024\n\014weight_table\030\005 \003(\001\022\024\n\014actual_index\030\n"
+  " \003(\r\022I\n\031neuron_transfer_functions\030\013 \003(\0162"
+  "&.sparse_net_library.transfer_functions\022"
+  "\032\n\022memory_ratio_index\030\014 \003(\001\022\022\n\nbias_inde"
+  "x\030\r \003(\001\022\034\n\024index_synapse_number\030\016 \003(\r\022\035\n"
+  "\025weight_synapse_number\030\017 \003(\r\022\032\n\022inside_i"
+  "ndex_sizes\030\024 \003(\r\022\033\n\023inside_index_starts\030"
+  "\025 \003(\r\022\032\n\022weight_index_sizes\030\026 \003(\r\022\033\n\023wei"
+  "ght_index_starts\030\027 \003(\r\"g\n\010Solution\022\014\n\004ro"
+  "ws\030\001 \001(\r\022\014\n\004cols\030\002 \001(\r\022\?\n\021partial_soluti"
+  "ons\030\003 \003(\0132$.sparse_net_library.Partial_s"
+  "olutionB\003\370\001\001b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_solution_2eproto_deps[1] = {
   &::descriptor_table_sparse_5fnet_2eproto,
 };
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_solution_2eproto_sccs[3] = {
-  &scc_info_Decoupled_solutions_solution_2eproto.base,
+static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_solution_2eproto_sccs[2] = {
   &scc_info_Partial_solution_solution_2eproto.base,
   &scc_info_Solution_solution_2eproto.base,
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_solution_2eproto_once;
 static bool descriptor_table_solution_2eproto_initialized = false;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_solution_2eproto = {
-  &descriptor_table_solution_2eproto_initialized, descriptor_table_protodef_solution_2eproto, "solution.proto", 656,
-  &descriptor_table_solution_2eproto_once, descriptor_table_solution_2eproto_sccs, descriptor_table_solution_2eproto_deps, 3, 1,
+  &descriptor_table_solution_2eproto_initialized, descriptor_table_protodef_solution_2eproto, "solution.proto", 660,
+  &descriptor_table_solution_2eproto_once, descriptor_table_solution_2eproto_sccs, descriptor_table_solution_2eproto_deps, 2, 1,
   schemas, file_default_instances, TableStruct_solution_2eproto::offsets,
-  file_level_metadata_solution_2eproto, 3, file_level_enum_descriptors_solution_2eproto, file_level_service_descriptors_solution_2eproto,
+  file_level_metadata_solution_2eproto, 2, file_level_enum_descriptors_solution_2eproto, file_level_service_descriptors_solution_2eproto,
 };
 
 // Force running AddDescriptors() at dynamic initialization time.
@@ -178,13 +154,15 @@ Partial_solution::Partial_solution()
 Partial_solution::Partial_solution(::PROTOBUF_NAMESPACE_ID::Arena* arena)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
   _internal_metadata_(arena),
+  input_data_synapse_size_(arena),
+  input_data_synapse_starts_(arena),
   weight_table_(arena),
   actual_index_(arena),
   neuron_transfer_functions_(arena),
   memory_ratio_index_(arena),
   bias_index_(arena),
-  index_partition_number_(arena),
-  weight_partition_number_(arena),
+  index_synapse_number_(arena),
+  weight_synapse_number_(arena),
   inside_index_sizes_(arena),
   inside_index_starts_(arena),
   weight_index_sizes_(arena),
@@ -196,13 +174,15 @@ Partial_solution::Partial_solution(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 Partial_solution::Partial_solution(const Partial_solution& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
       _internal_metadata_(nullptr),
+      input_data_synapse_size_(from.input_data_synapse_size_),
+      input_data_synapse_starts_(from.input_data_synapse_starts_),
       weight_table_(from.weight_table_),
       actual_index_(from.actual_index_),
       neuron_transfer_functions_(from.neuron_transfer_functions_),
       memory_ratio_index_(from.memory_ratio_index_),
       bias_index_(from.bias_index_),
-      index_partition_number_(from.index_partition_number_),
-      weight_partition_number_(from.weight_partition_number_),
+      index_synapse_number_(from.index_synapse_number_),
+      weight_synapse_number_(from.weight_synapse_number_),
       inside_index_sizes_(from.inside_index_sizes_),
       inside_index_starts_(from.inside_index_starts_),
       weight_index_sizes_(from.weight_index_sizes_),
@@ -250,13 +230,15 @@ void Partial_solution::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  input_data_synapse_size_.Clear();
+  input_data_synapse_starts_.Clear();
   weight_table_.Clear();
   actual_index_.Clear();
   neuron_transfer_functions_.Clear();
   memory_ratio_index_.Clear();
   bias_index_.Clear();
-  index_partition_number_.Clear();
-  weight_partition_number_.Clear();
+  index_synapse_number_.Clear();
+  weight_synapse_number_.Clear();
   inside_index_sizes_.Clear();
   inside_index_starts_.Clear();
   weight_index_sizes_.Clear();
@@ -283,19 +265,39 @@ const char* Partial_solution::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPA
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // uint32 internal_neuron_number = 2;
+      // repeated uint32 input_data_synapse_size = 2;
       case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_input_data_synapse_size(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16) {
+          add_input_data_synapse_size(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated sint32 input_data_synapse_starts = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedSInt32Parser(mutable_input_data_synapse_starts(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24) {
+          add_input_data_synapse_starts(::PROTOBUF_NAMESPACE_ID::internal::ReadVarintZigZag32(&ptr));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // uint32 internal_neuron_number = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
           internal_neuron_number_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // repeated double weight_table = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+      // repeated double weight_table = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedDoubleParser(mutable_weight_table(), ptr, ctx);
           CHK_(ptr);
-        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 25) {
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 41) {
           add_weight_table(::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr));
           ptr += sizeof(double);
         } else goto handle_unusual;
@@ -341,23 +343,23 @@ const char* Partial_solution::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPA
           ptr += sizeof(double);
         } else goto handle_unusual;
         continue;
-      // repeated uint32 index_partition_number = 14;
+      // repeated uint32 index_synapse_number = 14;
       case 14:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 114)) {
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_index_partition_number(), ptr, ctx);
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_index_synapse_number(), ptr, ctx);
           CHK_(ptr);
         } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 112) {
-          add_index_partition_number(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
+          add_index_synapse_number(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // repeated uint32 weight_partition_number = 15;
+      // repeated uint32 weight_synapse_number = 15;
       case 15:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 122)) {
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_weight_partition_number(), ptr, ctx);
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(mutable_weight_synapse_number(), ptr, ctx);
           CHK_(ptr);
         } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 120) {
-          add_weight_partition_number(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
+          add_weight_synapse_number(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -444,9 +446,41 @@ bool Partial_solution::MergePartialFromCodedStream(
         break;
       }
 
-      // uint32 internal_neuron_number = 2;
+      // repeated uint32 input_data_synapse_size = 2;
       case 2: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (16 & 0xFF)) {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (18 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_input_data_synapse_size())));
+        } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (16 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 18u, input, this->mutable_input_data_synapse_size())));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated sint32 input_data_synapse_starts = 3;
+      case 3: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (26 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::int32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_SINT32>(
+                 input, this->mutable_input_data_synapse_starts())));
+        } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (24 & 0xFF)) {
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::PROTOBUF_NAMESPACE_ID::int32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_SINT32>(
+                 1, 26u, input, this->mutable_input_data_synapse_starts())));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint32 internal_neuron_number = 4;
+      case 4: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (32 & 0xFF)) {
 
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
                    ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
@@ -457,16 +491,16 @@ bool Partial_solution::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated double weight_table = 3;
-      case 3: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (26 & 0xFF)) {
+      // repeated double weight_table = 5;
+      case 5: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (42 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
                    double, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_DOUBLE>(
                  input, this->mutable_weight_table())));
-        } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (25 & 0xFF)) {
+        } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (41 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    double, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_DOUBLE>(
-                 1, 26u, input, this->mutable_weight_table())));
+                 1, 42u, input, this->mutable_weight_table())));
         } else {
           goto handle_unusual;
         }
@@ -547,32 +581,32 @@ bool Partial_solution::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated uint32 index_partition_number = 14;
+      // repeated uint32 index_synapse_number = 14;
       case 14: {
         if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (114 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
                    ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-                 input, this->mutable_index_partition_number())));
+                 input, this->mutable_index_synapse_number())));
         } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (112 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-                 1, 114u, input, this->mutable_index_partition_number())));
+                 1, 114u, input, this->mutable_index_synapse_number())));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // repeated uint32 weight_partition_number = 15;
+      // repeated uint32 weight_synapse_number = 15;
       case 15: {
         if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (122 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPackedPrimitive<
                    ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-                 input, this->mutable_weight_partition_number())));
+                 input, this->mutable_weight_synapse_number())));
         } else if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (120 & 0xFF)) {
           DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
-                 1, 122u, input, this->mutable_weight_partition_number())));
+                 1, 122u, input, this->mutable_weight_synapse_number())));
         } else {
           goto handle_unusual;
         }
@@ -664,114 +698,356 @@ failure:
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
+void Partial_solution::SerializeWithCachedSizes(
+    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:sparse_net_library.Partial_solution)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // uint32 input_data_size = 1;
+  if (this->input_data_size() != 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(1, this->input_data_size(), output);
+  }
+
+  // repeated uint32 input_data_synapse_size = 2;
+  if (this->input_data_synapse_size_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(2, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_input_data_synapse_size_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->input_data_synapse_size_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->input_data_synapse_size(i), output);
+  }
+
+  // repeated sint32 input_data_synapse_starts = 3;
+  if (this->input_data_synapse_starts_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(3, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_input_data_synapse_starts_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->input_data_synapse_starts_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteSInt32NoTag(
+      this->input_data_synapse_starts(i), output);
+  }
+
+  // uint32 internal_neuron_number = 4;
+  if (this->internal_neuron_number() != 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(4, this->internal_neuron_number(), output);
+  }
+
+  // repeated double weight_table = 5;
+  if (this->weight_table_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(5, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_weight_table_cached_byte_size_.load(
+        std::memory_order_relaxed));
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteDoubleArray(
+      this->weight_table().data(), this->weight_table_size(), output);
+  }
+
+  // repeated uint32 actual_index = 10;
+  if (this->actual_index_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(10, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_actual_index_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->actual_index_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->actual_index(i), output);
+  }
+
+  // repeated .sparse_net_library.transfer_functions neuron_transfer_functions = 11;
+  if (this->neuron_transfer_functions_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(
+      11,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      output);
+    output->WriteVarint32(_neuron_transfer_functions_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->neuron_transfer_functions_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumNoTag(
+      this->neuron_transfer_functions(i), output);
+  }
+
+  // repeated double memory_ratio_index = 12;
+  if (this->memory_ratio_index_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(12, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_memory_ratio_index_cached_byte_size_.load(
+        std::memory_order_relaxed));
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteDoubleArray(
+      this->memory_ratio_index().data(), this->memory_ratio_index_size(), output);
+  }
+
+  // repeated double bias_index = 13;
+  if (this->bias_index_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(13, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_bias_index_cached_byte_size_.load(
+        std::memory_order_relaxed));
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteDoubleArray(
+      this->bias_index().data(), this->bias_index_size(), output);
+  }
+
+  // repeated uint32 index_synapse_number = 14;
+  if (this->index_synapse_number_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(14, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_index_synapse_number_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->index_synapse_number_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->index_synapse_number(i), output);
+  }
+
+  // repeated uint32 weight_synapse_number = 15;
+  if (this->weight_synapse_number_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(15, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_weight_synapse_number_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->weight_synapse_number_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->weight_synapse_number(i), output);
+  }
+
+  // repeated uint32 inside_index_sizes = 20;
+  if (this->inside_index_sizes_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(20, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_inside_index_sizes_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->inside_index_sizes_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->inside_index_sizes(i), output);
+  }
+
+  // repeated uint32 inside_index_starts = 21;
+  if (this->inside_index_starts_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(21, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_inside_index_starts_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->inside_index_starts_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->inside_index_starts(i), output);
+  }
+
+  // repeated uint32 weight_index_sizes = 22;
+  if (this->weight_index_sizes_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(22, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_weight_index_sizes_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->weight_index_sizes_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->weight_index_sizes(i), output);
+  }
+
+  // repeated uint32 weight_index_starts = 23;
+  if (this->weight_index_starts_size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTag(23, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_weight_index_starts_cached_byte_size_.load(
+        std::memory_order_relaxed));
+  }
+  for (int i = 0, n = this->weight_index_starts_size(); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32NoTag(
+      this->weight_index_starts(i), output);
+  }
+
+  if (_internal_metadata_.have_unknown_fields()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
+        _internal_metadata_.unknown_fields(), output);
+  }
+  // @@protoc_insertion_point(serialize_end:sparse_net_library.Partial_solution)
+}
+
 ::PROTOBUF_NAMESPACE_ID::uint8* Partial_solution::InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
   // @@protoc_insertion_point(serialize_to_array_start:sparse_net_library.Partial_solution)
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   // uint32 input_data_size = 1;
   if (this->input_data_size() != 0) {
-    stream->EnsureSpace(&target);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->input_data_size(), target);
   }
 
-  // uint32 internal_neuron_number = 2;
-  if (this->internal_neuron_number() != 0) {
-    stream->EnsureSpace(&target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->internal_neuron_number(), target);
+  // repeated uint32 input_data_synapse_size = 2;
+  if (this->input_data_synapse_size_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      2,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _input_data_synapse_size_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->input_data_synapse_size_, target);
   }
 
-  // repeated double weight_table = 3;
+  // repeated sint32 input_data_synapse_starts = 3;
+  if (this->input_data_synapse_starts_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      3,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _input_data_synapse_starts_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteSInt32NoTagToArray(this->input_data_synapse_starts_, target);
+  }
+
+  // uint32 internal_neuron_number = 4;
+  if (this->internal_neuron_number() != 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(4, this->internal_neuron_number(), target);
+  }
+
+  // repeated double weight_table = 5;
   if (this->weight_table_size() > 0) {
-    target = stream->WriteFixedPacked(3, weight_table_, target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      5,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _weight_table_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteDoubleNoTagToArray(this->weight_table_, target);
   }
 
   // repeated uint32 actual_index = 10;
-  {
-    int byte_size = _actual_index_cached_byte_size_.load(std::memory_order_relaxed);
-    if (byte_size > 0) {
-      target = stream->WriteUInt32Packed(
-          10, actual_index_, byte_size, target);
-    }
+  if (this->actual_index_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      10,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _actual_index_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->actual_index_, target);
   }
 
   // repeated .sparse_net_library.transfer_functions neuron_transfer_functions = 11;
-  {
-    int byte_size = _neuron_transfer_functions_cached_byte_size_.load(std::memory_order_relaxed);
-    if (byte_size > 0) {
-      target = stream->WriteEnumPacked(
-          11, neuron_transfer_functions_, byte_size, target);
-    }
+  if (this->neuron_transfer_functions_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      11,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(      _neuron_transfer_functions_cached_byte_size_.load(std::memory_order_relaxed),
+        target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumNoTagToArray(
+      this->neuron_transfer_functions_, target);
   }
 
   // repeated double memory_ratio_index = 12;
   if (this->memory_ratio_index_size() > 0) {
-    target = stream->WriteFixedPacked(12, memory_ratio_index_, target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      12,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _memory_ratio_index_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteDoubleNoTagToArray(this->memory_ratio_index_, target);
   }
 
   // repeated double bias_index = 13;
   if (this->bias_index_size() > 0) {
-    target = stream->WriteFixedPacked(13, bias_index_, target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      13,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _bias_index_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteDoubleNoTagToArray(this->bias_index_, target);
   }
 
-  // repeated uint32 index_partition_number = 14;
-  {
-    int byte_size = _index_partition_number_cached_byte_size_.load(std::memory_order_relaxed);
-    if (byte_size > 0) {
-      target = stream->WriteUInt32Packed(
-          14, index_partition_number_, byte_size, target);
-    }
+  // repeated uint32 index_synapse_number = 14;
+  if (this->index_synapse_number_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      14,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _index_synapse_number_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->index_synapse_number_, target);
   }
 
-  // repeated uint32 weight_partition_number = 15;
-  {
-    int byte_size = _weight_partition_number_cached_byte_size_.load(std::memory_order_relaxed);
-    if (byte_size > 0) {
-      target = stream->WriteUInt32Packed(
-          15, weight_partition_number_, byte_size, target);
-    }
+  // repeated uint32 weight_synapse_number = 15;
+  if (this->weight_synapse_number_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      15,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _weight_synapse_number_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->weight_synapse_number_, target);
   }
 
   // repeated uint32 inside_index_sizes = 20;
-  {
-    int byte_size = _inside_index_sizes_cached_byte_size_.load(std::memory_order_relaxed);
-    if (byte_size > 0) {
-      target = stream->WriteUInt32Packed(
-          20, inside_index_sizes_, byte_size, target);
-    }
+  if (this->inside_index_sizes_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      20,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _inside_index_sizes_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->inside_index_sizes_, target);
   }
 
   // repeated uint32 inside_index_starts = 21;
-  {
-    int byte_size = _inside_index_starts_cached_byte_size_.load(std::memory_order_relaxed);
-    if (byte_size > 0) {
-      target = stream->WriteUInt32Packed(
-          21, inside_index_starts_, byte_size, target);
-    }
+  if (this->inside_index_starts_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      21,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _inside_index_starts_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->inside_index_starts_, target);
   }
 
   // repeated uint32 weight_index_sizes = 22;
-  {
-    int byte_size = _weight_index_sizes_cached_byte_size_.load(std::memory_order_relaxed);
-    if (byte_size > 0) {
-      target = stream->WriteUInt32Packed(
-          22, weight_index_sizes_, byte_size, target);
-    }
+  if (this->weight_index_sizes_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      22,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _weight_index_sizes_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->weight_index_sizes_, target);
   }
 
   // repeated uint32 weight_index_starts = 23;
-  {
-    int byte_size = _weight_index_starts_cached_byte_size_.load(std::memory_order_relaxed);
-    if (byte_size > 0) {
-      target = stream->WriteUInt32Packed(
-          23, weight_index_starts_, byte_size, target);
-    }
+  if (this->weight_index_starts_size() > 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteTagToArray(
+      23,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream::WriteVarint32ToArray(
+        _weight_index_starts_cached_byte_size_.load(std::memory_order_relaxed),
+         target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      WriteUInt32NoTagToArray(this->weight_index_starts_, target);
   }
 
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target, stream);
+  if (_internal_metadata_.have_unknown_fields()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields(), target);
   }
   // @@protoc_insertion_point(serialize_to_array_end:sparse_net_library.Partial_solution)
   return target;
@@ -781,11 +1057,46 @@ size_t Partial_solution::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:sparse_net_library.Partial_solution)
   size_t total_size = 0;
 
+  if (_internal_metadata_.have_unknown_fields()) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
+        _internal_metadata_.unknown_fields());
+  }
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated double weight_table = 3;
+  // repeated uint32 input_data_synapse_size = 2;
+  {
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      UInt32Size(this->input_data_synapse_size_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _input_data_synapse_size_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
+  }
+
+  // repeated sint32 input_data_synapse_starts = 3;
+  {
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      SInt32Size(this->input_data_synapse_starts_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _input_data_synapse_starts_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
+  }
+
+  // repeated double weight_table = 5;
   {
     unsigned int count = static_cast<unsigned int>(this->weight_table_size());
     size_t data_size = 8UL * count;
@@ -863,32 +1174,32 @@ size_t Partial_solution::ByteSizeLong() const {
     total_size += data_size;
   }
 
-  // repeated uint32 index_partition_number = 14;
+  // repeated uint32 index_synapse_number = 14;
   {
     size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      UInt32Size(this->index_partition_number_);
+      UInt32Size(this->index_synapse_number_);
     if (data_size > 0) {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
             static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
     }
     int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
-    _index_partition_number_cached_byte_size_.store(cached_size,
+    _index_synapse_number_cached_byte_size_.store(cached_size,
                                     std::memory_order_relaxed);
     total_size += data_size;
   }
 
-  // repeated uint32 weight_partition_number = 15;
+  // repeated uint32 weight_synapse_number = 15;
   {
     size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      UInt32Size(this->weight_partition_number_);
+      UInt32Size(this->weight_synapse_number_);
     if (data_size > 0) {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
             static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
     }
     int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
-    _weight_partition_number_cached_byte_size_.store(cached_size,
+    _weight_synapse_number_cached_byte_size_.store(cached_size,
                                     std::memory_order_relaxed);
     total_size += data_size;
   }
@@ -960,17 +1271,13 @@ size_t Partial_solution::ByteSizeLong() const {
         this->input_data_size());
   }
 
-  // uint32 internal_neuron_number = 2;
+  // uint32 internal_neuron_number = 4;
   if (this->internal_neuron_number() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
         this->internal_neuron_number());
   }
 
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
-        _internal_metadata_, total_size, &_cached_size_);
-  }
   int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
@@ -998,13 +1305,15 @@ void Partial_solution::MergeFrom(const Partial_solution& from) {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  input_data_synapse_size_.MergeFrom(from.input_data_synapse_size_);
+  input_data_synapse_starts_.MergeFrom(from.input_data_synapse_starts_);
   weight_table_.MergeFrom(from.weight_table_);
   actual_index_.MergeFrom(from.actual_index_);
   neuron_transfer_functions_.MergeFrom(from.neuron_transfer_functions_);
   memory_ratio_index_.MergeFrom(from.memory_ratio_index_);
   bias_index_.MergeFrom(from.bias_index_);
-  index_partition_number_.MergeFrom(from.index_partition_number_);
-  weight_partition_number_.MergeFrom(from.weight_partition_number_);
+  index_synapse_number_.MergeFrom(from.index_synapse_number_);
+  weight_synapse_number_.MergeFrom(from.weight_synapse_number_);
   inside_index_sizes_.MergeFrom(from.inside_index_sizes_);
   inside_index_starts_.MergeFrom(from.inside_index_starts_);
   weight_index_sizes_.MergeFrom(from.weight_index_sizes_);
@@ -1038,13 +1347,15 @@ bool Partial_solution::IsInitialized() const {
 void Partial_solution::InternalSwap(Partial_solution* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
+  input_data_synapse_size_.InternalSwap(&other->input_data_synapse_size_);
+  input_data_synapse_starts_.InternalSwap(&other->input_data_synapse_starts_);
   weight_table_.InternalSwap(&other->weight_table_);
   actual_index_.InternalSwap(&other->actual_index_);
   neuron_transfer_functions_.InternalSwap(&other->neuron_transfer_functions_);
   memory_ratio_index_.InternalSwap(&other->memory_ratio_index_);
   bias_index_.InternalSwap(&other->bias_index_);
-  index_partition_number_.InternalSwap(&other->index_partition_number_);
-  weight_partition_number_.InternalSwap(&other->weight_partition_number_);
+  index_synapse_number_.InternalSwap(&other->index_synapse_number_);
+  weight_synapse_number_.InternalSwap(&other->weight_synapse_number_);
   inside_index_sizes_.InternalSwap(&other->inside_index_sizes_);
   inside_index_starts_.InternalSwap(&other->inside_index_starts_);
   weight_index_sizes_.InternalSwap(&other->weight_index_sizes_);
@@ -1054,256 +1365,6 @@ void Partial_solution::InternalSwap(Partial_solution* other) {
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata Partial_solution::GetMetadata() const {
-  return GetMetadataStatic();
-}
-
-
-// ===================================================================
-
-void Decoupled_solutions::InitAsDefaultInstance() {
-}
-class Decoupled_solutions::_Internal {
- public:
-};
-
-Decoupled_solutions::Decoupled_solutions()
-  : ::PROTOBUF_NAMESPACE_ID::Message(), _internal_metadata_(nullptr) {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:sparse_net_library.Decoupled_solutions)
-}
-Decoupled_solutions::Decoupled_solutions(::PROTOBUF_NAMESPACE_ID::Arena* arena)
-  : ::PROTOBUF_NAMESPACE_ID::Message(),
-  _internal_metadata_(arena),
-  partial_solutions_(arena) {
-  SharedCtor();
-  RegisterArenaDtor(arena);
-  // @@protoc_insertion_point(arena_constructor:sparse_net_library.Decoupled_solutions)
-}
-Decoupled_solutions::Decoupled_solutions(const Decoupled_solutions& from)
-  : ::PROTOBUF_NAMESPACE_ID::Message(),
-      _internal_metadata_(nullptr),
-      partial_solutions_(from.partial_solutions_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  // @@protoc_insertion_point(copy_constructor:sparse_net_library.Decoupled_solutions)
-}
-
-void Decoupled_solutions::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Decoupled_solutions_solution_2eproto.base);
-}
-
-Decoupled_solutions::~Decoupled_solutions() {
-  // @@protoc_insertion_point(destructor:sparse_net_library.Decoupled_solutions)
-  SharedDtor();
-}
-
-void Decoupled_solutions::SharedDtor() {
-  GOOGLE_DCHECK(GetArenaNoVirtual() == nullptr);
-}
-
-void Decoupled_solutions::ArenaDtor(void* object) {
-  Decoupled_solutions* _this = reinterpret_cast< Decoupled_solutions* >(object);
-  (void)_this;
-}
-void Decoupled_solutions::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
-}
-void Decoupled_solutions::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
-}
-const Decoupled_solutions& Decoupled_solutions::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Decoupled_solutions_solution_2eproto.base);
-  return *internal_default_instance();
-}
-
-
-void Decoupled_solutions::Clear() {
-// @@protoc_insertion_point(message_clear_start:sparse_net_library.Decoupled_solutions)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  partial_solutions_.Clear();
-  _internal_metadata_.Clear();
-}
-
-#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* Decoupled_solutions::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
-#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArenaNoVirtual(); (void)arena;
-  while (!ctx->Done(&ptr)) {
-    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
-    switch (tag >> 3) {
-      // repeated .sparse_net_library.Partial_solution partial_solutions = 1;
-      case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
-          ptr -= 1;
-          do {
-            ptr += 1;
-            ptr = ctx->ParseMessage(add_partial_solutions(), ptr);
-            CHK_(ptr);
-            if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<10>(ptr));
-        } else goto handle_unusual;
-        continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
-    }  // switch
-  }  // while
-success:
-  return ptr;
-failure:
-  ptr = nullptr;
-  goto success;
-#undef CHK_
-}
-#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool Decoupled_solutions::MergePartialFromCodedStream(
-    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-  // @@protoc_insertion_point(parse_start:sparse_net_library.Decoupled_solutions)
-  for (;;) {
-    ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .sparse_net_library.Partial_solution partial_solutions = 1;
-      case 1: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(
-                input, add_partial_solutions()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
-    }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:sparse_net_library.Decoupled_solutions)
-  return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:sparse_net_library.Decoupled_solutions)
-  return false;
-#undef DO_
-}
-#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-
-::PROTOBUF_NAMESPACE_ID::uint8* Decoupled_solutions::InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
-  // @@protoc_insertion_point(serialize_to_array_start:sparse_net_library.Decoupled_solutions)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // repeated .sparse_net_library.Partial_solution partial_solutions = 1;
-  for (auto it = this->partial_solutions_.pointer_begin(),
-            end = this->partial_solutions_.pointer_end(); it < end; ++it) {
-    stream->EnsureSpace(&target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessageToArray(1, **it, target, stream);
-  }
-
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target, stream);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:sparse_net_library.Decoupled_solutions)
-  return target;
-}
-
-size_t Decoupled_solutions::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:sparse_net_library.Decoupled_solutions)
-  size_t total_size = 0;
-
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  // repeated .sparse_net_library.Partial_solution partial_solutions = 1;
-  total_size += 1UL * this->partial_solutions_size();
-  for (const auto& msg : this->partial_solutions_) {
-    total_size +=
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
-  }
-
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
-        _internal_metadata_, total_size, &_cached_size_);
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
-}
-
-void Decoupled_solutions::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:sparse_net_library.Decoupled_solutions)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Decoupled_solutions* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Decoupled_solutions>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:sparse_net_library.Decoupled_solutions)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:sparse_net_library.Decoupled_solutions)
-    MergeFrom(*source);
-  }
-}
-
-void Decoupled_solutions::MergeFrom(const Decoupled_solutions& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:sparse_net_library.Decoupled_solutions)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  partial_solutions_.MergeFrom(from.partial_solutions_);
-}
-
-void Decoupled_solutions::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:sparse_net_library.Decoupled_solutions)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void Decoupled_solutions::CopyFrom(const Decoupled_solutions& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:sparse_net_library.Decoupled_solutions)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool Decoupled_solutions::IsInitialized() const {
-  return true;
-}
-
-void Decoupled_solutions::InternalSwap(Decoupled_solutions* other) {
-  using std::swap;
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-  partial_solutions_.InternalSwap(&other->partial_solutions_);
-}
-
-::PROTOBUF_NAMESPACE_ID::Metadata Decoupled_solutions::GetMetadata() const {
   return GetMetadataStatic();
 }
 
@@ -1324,7 +1385,7 @@ Solution::Solution()
 Solution::Solution(::PROTOBUF_NAMESPACE_ID::Arena* arena)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
   _internal_metadata_(arena),
-  solution_chain_(arena) {
+  partial_solutions_(arena) {
   SharedCtor();
   RegisterArenaDtor(arena);
   // @@protoc_insertion_point(arena_constructor:sparse_net_library.Solution)
@@ -1332,13 +1393,19 @@ Solution::Solution(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 Solution::Solution(const Solution& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
       _internal_metadata_(nullptr),
-      solution_chain_(from.solution_chain_) {
+      partial_solutions_(from.partial_solutions_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::memcpy(&rows_, &from.rows_,
+    static_cast<size_t>(reinterpret_cast<char*>(&cols_) -
+    reinterpret_cast<char*>(&rows_)) + sizeof(cols_));
   // @@protoc_insertion_point(copy_constructor:sparse_net_library.Solution)
 }
 
 void Solution::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Solution_solution_2eproto.base);
+  ::memset(&rows_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&cols_) -
+      reinterpret_cast<char*>(&rows_)) + sizeof(cols_));
 }
 
 Solution::~Solution() {
@@ -1371,7 +1438,10 @@ void Solution::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  solution_chain_.Clear();
+  partial_solutions_.Clear();
+  ::memset(&rows_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&cols_) -
+      reinterpret_cast<char*>(&rows_)) + sizeof(cols_));
   _internal_metadata_.Clear();
 }
 
@@ -1384,16 +1454,30 @@ const char* Solution::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::i
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // repeated .sparse_net_library.Decoupled_solutions solution_chain = 1;
+      // uint32 rows = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          rows_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // uint32 cols = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          cols_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated .sparse_net_library.Partial_solution partial_solutions = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
           ptr -= 1;
           do {
             ptr += 1;
-            ptr = ctx->ParseMessage(add_solution_chain(), ptr);
+            ptr = ctx->ParseMessage(add_partial_solutions(), ptr);
             CHK_(ptr);
             if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<10>(ptr));
+          } while (::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<::PROTOBUF_NAMESPACE_ID::uint8>(ptr) == 26);
         } else goto handle_unusual;
         continue;
       default: {
@@ -1426,11 +1510,37 @@ bool Solution::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .sparse_net_library.Decoupled_solutions solution_chain = 1;
+      // uint32 rows = 1;
       case 1: {
-        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (10 & 0xFF)) {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (8 & 0xFF)) {
+
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &rows_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint32 cols = 2;
+      case 2: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (16 & 0xFF)) {
+
+          DO_((::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadPrimitive<
+                   ::PROTOBUF_NAMESPACE_ID::uint32, ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &cols_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .sparse_net_library.Partial_solution partial_solutions = 3;
+      case 3: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (26 & 0xFF)) {
           DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(
-                input, add_solution_chain()));
+                input, add_partial_solutions()));
         } else {
           goto handle_unusual;
         }
@@ -1458,23 +1568,65 @@ failure:
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
+void Solution::SerializeWithCachedSizes(
+    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:sparse_net_library.Solution)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // uint32 rows = 1;
+  if (this->rows() != 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(1, this->rows(), output);
+  }
+
+  // uint32 cols = 2;
+  if (this->cols() != 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32(2, this->cols(), output);
+  }
+
+  // repeated .sparse_net_library.Partial_solution partial_solutions = 3;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->partial_solutions_size()); i < n; i++) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3,
+      this->partial_solutions(static_cast<int>(i)),
+      output);
+  }
+
+  if (_internal_metadata_.have_unknown_fields()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFields(
+        _internal_metadata_.unknown_fields(), output);
+  }
+  // @@protoc_insertion_point(serialize_end:sparse_net_library.Solution)
+}
+
 ::PROTOBUF_NAMESPACE_ID::uint8* Solution::InternalSerializeWithCachedSizesToArray(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+    ::PROTOBUF_NAMESPACE_ID::uint8* target) const {
   // @@protoc_insertion_point(serialize_to_array_start:sparse_net_library.Solution)
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // repeated .sparse_net_library.Decoupled_solutions solution_chain = 1;
-  for (auto it = this->solution_chain_.pointer_begin(),
-            end = this->solution_chain_.pointer_end(); it < end; ++it) {
-    stream->EnsureSpace(&target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessageToArray(1, **it, target, stream);
+  // uint32 rows = 1;
+  if (this->rows() != 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->rows(), target);
   }
 
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target, stream);
+  // uint32 cols = 2;
+  if (this->cols() != 0) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->cols(), target);
+  }
+
+  // repeated .sparse_net_library.Partial_solution partial_solutions = 3;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->partial_solutions_size()); i < n; i++) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        3, this->partial_solutions(static_cast<int>(i)), target);
+  }
+
+  if (_internal_metadata_.have_unknown_fields()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::SerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields(), target);
   }
   // @@protoc_insertion_point(serialize_to_array_end:sparse_net_library.Solution)
   return target;
@@ -1484,21 +1636,40 @@ size_t Solution::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:sparse_net_library.Solution)
   size_t total_size = 0;
 
+  if (_internal_metadata_.have_unknown_fields()) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::ComputeUnknownFieldsSize(
+        _internal_metadata_.unknown_fields());
+  }
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated .sparse_net_library.Decoupled_solutions solution_chain = 1;
-  total_size += 1UL * this->solution_chain_size();
-  for (const auto& msg : this->solution_chain_) {
-    total_size +=
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
+  // repeated .sparse_net_library.Partial_solution partial_solutions = 3;
+  {
+    unsigned int count = static_cast<unsigned int>(this->partial_solutions_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          this->partial_solutions(static_cast<int>(i)));
+    }
   }
 
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
-        _internal_metadata_, total_size, &_cached_size_);
+  // uint32 rows = 1;
+  if (this->rows() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->rows());
   }
+
+  // uint32 cols = 2;
+  if (this->cols() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->cols());
+  }
+
   int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
@@ -1526,7 +1697,13 @@ void Solution::MergeFrom(const Solution& from) {
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  solution_chain_.MergeFrom(from.solution_chain_);
+  partial_solutions_.MergeFrom(from.partial_solutions_);
+  if (from.rows() != 0) {
+    set_rows(from.rows());
+  }
+  if (from.cols() != 0) {
+    set_cols(from.cols());
+  }
 }
 
 void Solution::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
@@ -1550,7 +1727,9 @@ bool Solution::IsInitialized() const {
 void Solution::InternalSwap(Solution* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  solution_chain_.InternalSwap(&other->solution_chain_);
+  CastToBase(&partial_solutions_)->InternalSwap(CastToBase(&other->partial_solutions_));
+  swap(rows_, other->rows_);
+  swap(cols_, other->cols_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata Solution::GetMetadata() const {
@@ -1563,9 +1742,6 @@ void Solution::InternalSwap(Solution* other) {
 PROTOBUF_NAMESPACE_OPEN
 template<> PROTOBUF_NOINLINE ::sparse_net_library::Partial_solution* Arena::CreateMaybeMessage< ::sparse_net_library::Partial_solution >(Arena* arena) {
   return Arena::CreateMessageInternal< ::sparse_net_library::Partial_solution >(arena);
-}
-template<> PROTOBUF_NOINLINE ::sparse_net_library::Decoupled_solutions* Arena::CreateMaybeMessage< ::sparse_net_library::Decoupled_solutions >(Arena* arena) {
-  return Arena::CreateMessageInternal< ::sparse_net_library::Decoupled_solutions >(arena);
 }
 template<> PROTOBUF_NOINLINE ::sparse_net_library::Solution* Arena::CreateMaybeMessage< ::sparse_net_library::Solution >(Arena* arena) {
   return Arena::CreateMessageInternal< ::sparse_net_library::Solution >(arena);

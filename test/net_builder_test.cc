@@ -1,6 +1,6 @@
 #include <memory>
 
-#include "catch.hpp"
+#include "test/catch.hpp"
 
 #include "sparse_net_global.h"
 #include "models/gen/sparse_net.pb.h"
@@ -24,8 +24,6 @@ namespace sparse_net_library_test {
   using sparse_net_library::TRANSFER_FUNCTION_TANH;
   using sparse_net_library::TRANSFER_FUNCTION_RELU;
   using sparse_net_library::TRANSFER_FUNCTION_SELU;
-  using sparse_net_library::INVALID_USAGE_EXCEPTION;
-  using sparse_net_library::NOT_IMPLEMENTED_EXCEPTION;
 
 /*###############################################################################################
  * Testing Neuron Validation
@@ -73,7 +71,7 @@ TEST_CASE( "Constructing a Neuron Manually", "[Neuron][small][manual]" ) {
   neuron->add_input_index_sizes(0);
   CHECK( false == SparseNetBuilder::is_neuron_valid(neuron.get()) );
 
-  neuron->add_input_index_starts(0); /* Only the first partition size is checked for non-zero */
+  neuron->add_input_index_starts(0); /* Only the first synapse size is checked for non-zero */
   CHECK( true == SparseNetBuilder::is_neuron_valid(neuron.get()) );
 }
 
@@ -212,18 +210,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
       == net->neuron_array(2).transfer_function_idx()
     );
     return net;
-  }catch(int e){
-    switch(e){
-    case INVALID_USAGE_EXCEPTION:{
-      INFO("Invalid Builder usage!");
-      }break;
-    case NOT_IMPLEMENTED_EXCEPTION:{
-      INFO("Something is not implemented inside the Builder!");
-      }break;
-    default:{
-      INFO("Unknown Exception!" << e);
-      }break;
-    }
+  }catch(const char* e){
     return nullptr;
   }
 }
@@ -258,9 +245,12 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     .arena_ptr(arena);
 
   SparseNet* net(builder->denseLayers(
-    {2,3,2},
-    {{TRANSFER_FUNCTION_IDENTITY},{TRANSFER_FUNCTION_SELU,TRANSFER_FUNCTION_RELU},{TRANSFER_FUNCTION_TANH,TRANSFER_FUNCTION_SIGMOID}
-  }));
+    {2,3,2},{
+      {TRANSFER_FUNCTION_IDENTITY},
+      {TRANSFER_FUNCTION_SELU,TRANSFER_FUNCTION_RELU},
+      {TRANSFER_FUNCTION_TANH,TRANSFER_FUNCTION_SIGMOID}
+    }
+  ));
 
   /* Check net validity in general */
   REQUIRE( 0 < net->weight_table_size() );
@@ -279,15 +269,15 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     /* Check the indexing */
     REQUIRE( 0 < net->neuron_array(i).input_index_sizes_size() );
     REQUIRE( net->neuron_array(i).input_index_sizes_size() == net->neuron_array(i).input_index_starts_size() );
-    CHECK( 1 == net->neuron_array(i).input_index_sizes_size() ); /* One partition ==> the previous layer */
+    CHECK( 1 == net->neuron_array(i).input_index_sizes_size() ); /* One synapse ==> the previous layer */
     number_of_input_indexes = 0;
-    for(int index_partition_iterator = 0; index_partition_iterator < net->neuron_array(i).input_index_sizes_size(); ++index_partition_iterator){
-      REQUIRE( /* Every index Partition element has to point inside the neuron array */
+    for(int index_synapse_iterator = 0; index_synapse_iterator < net->neuron_array(i).input_index_sizes_size(); ++index_synapse_iterator){
+      REQUIRE( /* Every index synapse element has to point inside the neuron array */
         net->neuron_array_size() > 
-        ( net->neuron_array(i).input_index_starts(index_partition_iterator) 
-          + net->neuron_array(i).input_index_sizes(index_partition_iterator) ) 
+        ( net->neuron_array(i).input_index_starts(index_synapse_iterator) 
+          + net->neuron_array(i).input_index_sizes(index_synapse_iterator) ) 
       );
-      number_of_input_indexes += net->neuron_array(i).input_index_sizes(index_partition_iterator);
+      number_of_input_indexes += net->neuron_array(i).input_index_sizes(index_synapse_iterator);
     }
 
 
@@ -295,30 +285,30 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     number_of_input_weights = 0;
     REQUIRE( 0 < net->neuron_array(i).weight_index_sizes_size() );
     REQUIRE( net->neuron_array(i).weight_index_sizes_size() == net->neuron_array(i).weight_index_starts_size() );
-    for(int weight_partition_iterator = 0; weight_partition_iterator < net->neuron_array(i).weight_index_starts_size(); ++weight_partition_iterator){
+    for(int weight_synapse_iterator = 0; weight_synapse_iterator < net->neuron_array(i).weight_index_starts_size(); ++weight_synapse_iterator){
       /* Bias and memory ratio index has to point inside the weight table array*/
       REQUIRE( net->weight_table_size() > net->neuron_array(i).bias_idx() );
       REQUIRE( net->weight_table_size() > net->neuron_array(i).memory_ratio_idx() );
 
       /* Weights */
-      REQUIRE( /* Every weight Partition element has to point inside the weight table array */
+      REQUIRE( /* Every weight synapse element has to point inside the weight table array */
         net->weight_table_size() > 
-        ( net->neuron_array(i).weight_index_starts(weight_partition_iterator) 
-          + net->neuron_array(i).weight_index_sizes(weight_partition_iterator) ) 
+        ( net->neuron_array(i).weight_index_starts(weight_synapse_iterator) 
+          + net->neuron_array(i).weight_index_sizes(weight_synapse_iterator) ) 
       );
-      for(int weight_iterator = 0; weight_iterator < net->neuron_array(i).weight_index_sizes(weight_partition_iterator); ++weight_iterator){
+      for(uint32 weight_iterator = 0; weight_iterator < net->neuron_array(i).weight_index_sizes(weight_synapse_iterator); ++weight_iterator){
         CHECK( /* The weights of the Neuron has to be inbetween (-1;1) */
           -1.0 <= net->weight_table(
-            net->neuron_array(i).weight_index_starts(weight_partition_iterator) + weight_iterator
+            net->neuron_array(i).weight_index_starts(weight_synapse_iterator) + weight_iterator
           ) 
         );
         CHECK( 
           1.0 >= net->weight_table(
-            net->neuron_array(i).weight_index_starts(weight_partition_iterator) + weight_iterator
+            net->neuron_array(i).weight_index_starts(weight_synapse_iterator) + weight_iterator
           ) 
         );
       }
-      number_of_input_weights += net->neuron_array(i).weight_index_sizes(weight_partition_iterator);
+      number_of_input_weights += net->neuron_array(i).weight_index_sizes(weight_synapse_iterator);
     }
 
     /* See if number on inputs are the same for indexes and weights */
@@ -332,7 +322,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( 5 == net->neuron_array(1).weight_index_sizes_size() );
   CHECK( 5 == net->neuron_array(1).weight_index_starts_size() );
 
-  /* Input Neurons should have their partition starting from 0 */
+  /* Input Neurons should have their synapse starting from 0 */
   CHECK( 0 == net->neuron_array(0).input_index_starts(0) ); /* 0th Input, because neuron index < net->input_neuron_number() */
   CHECK( 0 == net->neuron_array(1).input_index_starts(0) );
 
@@ -349,7 +339,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( 2 == net->neuron_array(4).weight_index_sizes_size() );
   CHECK( 2 == net->neuron_array(4).weight_index_starts_size() );
 
-  /* Input Neurons should have their partition starting from 0 as well */
+  /* Input Neurons should have their synapse starting from 0 as well */
   CHECK( 0 == net->neuron_array(2).input_index_starts(0) ); /* 0th Neuron, because neuron index >= net->input_neuron_number() */
   CHECK( 0 == net->neuron_array(3).input_index_starts(0) ); 
   CHECK( 0 == net->neuron_array(4).input_index_starts(0) ); 
@@ -377,7 +367,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( 3 == net->neuron_array(6).weight_index_sizes_size() );
   CHECK( 3 == net->neuron_array(6).weight_index_starts_size() );
 
-  /* Output Neurons should have should have their partition start at the 2nd Neuron (Previous layer start) */
+  /* Output Neurons should have should have their synapse start at the 2nd Neuron (Previous layer start) */
   CHECK( 2 == net->neuron_array(5).input_index_starts(0) ); 
   CHECK( 2 == net->neuron_array(6).input_index_starts(0) );
 

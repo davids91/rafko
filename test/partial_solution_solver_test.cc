@@ -1,7 +1,7 @@
 #include <random>
 
-#include "catch.hpp"
-#include "test_mockups.h"
+#include "test/catch.hpp"
+#include "test/test_mockups.h"
 
 #include "sparse_net_global.h"
 #include "models/gen/sparse_net.pb.h"
@@ -82,13 +82,13 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][small][manu
   partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
   partial_solution.add_memory_ratio_index(3);
   partial_solution.add_bias_index(5);
-  partial_solution.add_index_partition_number(1); /* 1 Partition for indexes and 1 for weights*/
-  partial_solution.add_weight_partition_number(1);
+  partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights*/
+  partial_solution.add_weight_synapse_number(1);
 
   /* input 1 and 2 goes to neuron1 */
-  partial_solution.add_inside_index_sizes(2); /* Neuron 1 has an input index partition of 2 indexes ( first 2 inputs ) */
-  partial_solution.add_inside_index_starts(0); /* Input index partition starts at the beginning of the data */
-  partial_solution.add_weight_index_sizes(2); /* Neuron 1 has the first two weights in its only weight partition */
+  partial_solution.add_inside_index_sizes(2); /* Neuron 1 has an input index synapse of 2 indexes ( first 2 inputs ) */
+  partial_solution.add_inside_index_starts(0); /* Input index synapse starts at the beginning of the data */
+  partial_solution.add_weight_index_sizes(2); /* Neuron 1 has the first two weights in its only weight synapse */
   partial_solution.add_weight_index_starts(0);
 
   /**###################################################################################################
@@ -97,14 +97,14 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][small][manu
   partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
   partial_solution.add_memory_ratio_index(4);
   partial_solution.add_bias_index(6);
-  partial_solution.add_index_partition_number(1); /* 1 Partition for indexes and 1 for weights*/
-  partial_solution.add_weight_partition_number(1);
+  partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights*/
+  partial_solution.add_weight_synapse_number(1);
 
   /* neuron1 goes to neuron2;  that is the output which isn't in the inside indexes */
-  partial_solution.add_inside_index_sizes(1); /* Neuron 2 has an input partition of size 1*/
-  partial_solution.add_inside_index_starts(partial_solution.input_data_size()); /* The input partition starts at the 2nd index of the data array */
-  partial_solution.add_weight_index_sizes(1); /* Neuron 2 has a an weight partition of size 1 */
-  partial_solution.add_weight_index_starts(2); /* The weight partition starts at index 2 of the weight table */
+  partial_solution.add_inside_index_sizes(1); /* Neuron 2 has an input synapse of size 1*/
+  partial_solution.add_inside_index_starts(partial_solution.input_data_size()); /* The input synapse starts at the 2nd index of the data array */
+  partial_solution.add_weight_index_sizes(1); /* Neuron 2 has a an weight synapse of size 1 */
+  partial_solution.add_weight_index_starts(2); /* The weight synapse starts at index 2 of the weight table */
 
   /* Run the partial_solution */
   Partial_solution_solver solver;

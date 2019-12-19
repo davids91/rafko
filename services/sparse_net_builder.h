@@ -93,8 +93,8 @@ public:
 
   /**
    * @brief    Sets the Google protobuffer arena reference in the builder, to 
-   *       make allocation more effective, assign built net ownership automatically.
-   *       It's an optional parameter
+   *           make allocation more effective, assign built net ownership automatically.
+   *           It's an optional parameter
    *
    * @param    arena  The pointer to a protobuf arena
    *
@@ -103,16 +103,34 @@ public:
   SparseNetBuilder& arena_ptr(google::protobuf::Arena* arena);
 
   /**
+   * @brief      Sets an optional argument which restricts transfer functions by layer ( usable with @denseLayers )
+   *
+   * @param[in]  allowed_transfer_functions_by_layer  The allowed transfer functions by layer
+   *
+   * @return     { description_of_the_return_value }
+   */
+  SparseNetBuilder& allowed_transfer_functions_by_layer(vector<vector<transfer_functions> > filter);
+
+  /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
-   *       and function arguments
+   *             and function arguments
    *
    * @param[in]  layerSizes         how many layers will there be in the result
    *                    and how big are those layers going to be
-   * @param[in]  allowedTrFunctionsByLayer  The allowed transfer functions per layer
+   * @param[in]  allowed_transfer_functions_by_layer  The allowed transfer functions per layer
    *
    * @return   the built neural network
    */
-  SparseNet* denseLayers(vector<uint32> layer_sizes, vector<vector<transfer_functions>> allowedTrFunctionsByLayer);
+  SparseNet* denseLayers(vector<uint32> layer_sizes, vector<vector<transfer_functions>> allowed_transfer_functions_by_layer);
+
+  /**
+   * @brief      Same as above, but without any Transfer function restrictions
+   *
+   * @param[in]  layer_sizes  The layer sizes
+   *
+   * @return     the built neural network
+   */
+  SparseNet* denseLayers(vector<uint32> layer_sizes);
 
   /**
    * @brief    creates a Neural network from the given Arguments. Requires the following
@@ -147,6 +165,7 @@ private:
   bool is_weight_table_set = false;
   bool is_weight_initializer_set = false;
   bool is_neuron_array_set = false;
+  bool is_allowed_transfer_functions_by_layer_set = false;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
@@ -182,6 +201,8 @@ private:
    * Number of Neurons the net-to-be-built shall have as output
    */
   uint32 arg_output_neuron_number = 0;
+
+  vector<vector<transfer_functions> > arg_allowed_transfer_functions_by_layer;
 
 
   /**
