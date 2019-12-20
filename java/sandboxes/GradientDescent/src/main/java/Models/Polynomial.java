@@ -19,17 +19,13 @@ public class Polynomial {
     }
 
     public Polynomial(Random rnd, double scale){
+        varA = (0.5 - rnd.nextDouble()) * scale;
         varB = (0.5 - rnd.nextDouble()) * scale;
         varC = (0.5 - rnd.nextDouble()) * scale * 10;
     }
 
     public double solve_for(double x){
-        return (varB * x) + varC;
-    }
-    public double distance(Polynomial other){
-        return Math.sqrt(
-            Math.pow(varA - other.varA,2) + Math.pow(varB - other.varB,2) + Math.pow(varC - other.varC,2)
-        );
+        return varA * x*x + varB * x + varC;
     }
 
     private double varA = 0;
@@ -69,9 +65,5 @@ public class Polynomial {
     }
     public void stepC(double step) {
         this.varC += step;
-    }
-
-    public double length(){
-        return varA + varB + varC;
     }
 }

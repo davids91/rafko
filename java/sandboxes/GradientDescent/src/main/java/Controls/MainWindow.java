@@ -1,5 +1,6 @@
 package Controls;
 
+import Models.ErrorFunction;
 import Models.Polynomial;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -32,12 +33,12 @@ public class MainWindow {
     public Button step_button;
     public Label learning_rate_label;
     public Slider learning_rate_slider;
+    public LineChart error_graph;
 
     private Random rnd = new Random();
-    private Polynomial previous_trend;
     private Polynomial solution_trend;
+    private Polynomial dataset_trend;
     private ArrayList<Double> dataset;
-    private double previous_error;
     private Timeline timeline;
 
     public void initialize(){
@@ -46,7 +47,7 @@ public class MainWindow {
             dataset_size_label.setText(Integer.toString(newValue.intValue()));
         });
         learning_rate_slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            learning_rate_label.setText(String.format("%.3f", newValue));
+                learning_rate_label.setText(String.format("%.10f", newValue));
         });
         timeline = new Timeline(new KeyFrame(Duration.millis(250), ae -> step()));
         fill_chart();
@@ -56,62 +57,61 @@ public class MainWindow {
     public  void fill_chart(){
         dataset = new ArrayList((int) dataset_size_slider.getValue());
         display_graph.setData(FXCollections.observableArrayList());
-        Polynomial dataset_trend = new Polynomial(rnd,dataset_size_slider.getValue());
-        previous_trend = new Polynomial(rnd,dataset_size_slider.getValue());
-        solution_trend = new Polynomial(previous_trend, 1.1);
-        previous_error = 0;
+        error_graph.setData(FXCollections.observableArrayList());
+        dataset_trend = new Polynomial(rnd,dataset_size_slider.getValue());
+        solution_trend = new Polynomial(rnd, dataset_size_slider.getValue());
         XYChart.Series dataset_series = new XYChart.Series();
-        XYChart.Series regression_line = new XYChart.Series();
         dataset_series.setName("Data points");
-        regression_line.setName("Regression trend");
-        regression_line.getData().add( new XYChart.Data(0,previous_trend.solve_for(0)));
+
         for (int i = 0; i < dataset_size_slider.getValue(); ++i) {
             dataset.add(dataset_trend.solve_for(i) + (rnd.nextDouble() - 0.5) * entropy_slider.getValue() * dataset_size_slider.getValue());
             dataset_series.getData().add( new XYChart.Data(i, dataset.get(i)));
-            regression_line.getData().add( new XYChart.Data(i,previous_trend.solve_for(i)));
-            previous_error += Math.pow(dataset.get(i) - previous_trend.solve_for(i),2); /* Squared loss */
         }
-        previous_error /= dataset_size_slider.getValue();
         display_graph.getData().add(0, dataset_series);
-        display_graph.getData().add(1, regression_line);
-    }
-
-    @FXML
-    public void step() { /* this is where the magic will happen */
-        /* Calculate sum of solution difference from dataset */
-        double error = 0;
-        double improvement_rate;
-        for (int i = 0; i < dataset_size_slider.getValue(); ++i) {
-            error += Math.pow(dataset.get(i) - solution_trend.solve_for(i),2); /* Squared loss */
-        }
-        error /= dataset_size_slider.getValue();
-        improvement_rate = Math.max(0.0,Math.min(1.0, error/previous_error));
-        /* Calculate the step size and step */
-        double step_size =
-            (previous_error - error) / (solution_trend.distance(previous_trend))
-            * learning_rate_slider.getValue();
-        System.out.println("previous_error:" + previous_error);
-        System.out.println("previous_trend.getC():" + previous_trend.getC());
-        System.out.println("----");
-        System.out.println("error:" + error);
-        System.out.println("solution_trend.getC():" + solution_trend.getC());
-        System.out.println("----");
-        System.out.println("(error - previous_error):" + (error - previous_error));
-        System.out.println("gradient:" + (previous_error - error) / (solution_trend.distance(previous_trend)));
-        System.out.println("(solution_trend.getC() - previous_trend.getC()):" + (solution_trend.getC() - previous_trend.getC()));
-        System.out.println("step size:" + step_size);
-        System.out.println("================");
-
-        Polynomial tmp_prev = new Polynomial(solution_trend);
-        solution_trend.stepB((solution_trend.getB() - previous_trend.getB()) * step_size * improvement_rate);
-        solution_trend.stepC((solution_trend.getC() - previous_trend.getC()) * step_size * improvement_rate);
-        previous_trend = tmp_prev;
-        previous_error = error;
+        display_graph.getData().add(1, new XYChart.Series());
+        error_graph.getData().add(0,new XYChart.Series()); /* B error */
+        error_graph.getData().add(1,new XYChart.Series()); /* C error */
         displaySolutionTrend();
     }
 
     @FXML
-    public void play_stop(ActionEvent actionEvent) {
+    public void step() { /* this is where the magic will happen */
+        /* Calculate the gradient using every sample in the dataset */
+        double gradientA = 0;
+        double gradientB = 0;
+        double gradientC = 0;
+        for (int x = 0; x < dataset.size(); x++) {
+            gradientA += -2*x*x*(dataset.get(x) - solution_trend.solve_for(x));
+            gradientB += -2*x*(dataset.get(x) - solution_trend.solve_for(x));
+            gradientC += -2*(dataset.get(x) - solution_trend.solve_for(x));
+        }
+        gradientA /= dataset.size();
+        gradientB /= dataset.size();
+        gradientC /= dataset.size();
+        System.out.println("Gradient for A: " +  gradientA);
+        System.out.println("Gradient for B: " +  gradientB);
+        System.out.println("Gradient for C: " +  gradientC);
+        solution_trend.stepA(-gradientA * learning_rate_slider.getValue());
+        solution_trend.stepB(-gradientB * learning_rate_slider.getValue());
+        solution_trend.stepC(-gradientC * learning_rate_slider.getValue());
+        System.out.println("solution_trend.getC()" + solution_trend.getC() + "<>" + dataset_trend.getA());
+        System.out.println("solution_trend.getB()" + solution_trend.getB() + "<>" + dataset_trend.getB());
+        System.out.println("solution_trend.getC()" + solution_trend.getC() + "<>" + dataset_trend.getC());
+        System.out.println("====================");
+        displaySolutionTrend();
+        if(
+            (
+                (Math.abs(gradientC) < learning_rate_slider.getValue())
+                &&(Math.abs(gradientB) < learning_rate_slider.getValue())
+            )&&!(
+                (Animation.Status.STOPPED == timeline.getStatus())
+                ||(Animation.Status.PAUSED == timeline.getStatus())
+            )
+        )play_stop();
+    }
+
+    @FXML
+    public void play_stop() {
         /* this is where the magic will step  */
         if(
             (Animation.Status.STOPPED == timeline.getStatus())
@@ -128,10 +128,28 @@ public class MainWindow {
 
     public void displaySolutionTrend(){
         XYChart.Series solution_display = new XYChart.Series();
+        solution_display.setName("Regression trend");
         solution_display.setData(FXCollections.observableArrayList());
         for (int i = 0; i < dataset_size_slider.getValue(); ++i) {
             solution_display.getData().add( new XYChart.Data(i, solution_trend.solve_for(i)));
         }
         display_graph.getData().set(1,solution_display);
+
+//        XYChart.Series error_line_b = new XYChart.Series();
+//        XYChart.Series error_line_c = new XYChart.Series();
+//        error_line_b.setName("B");
+//        error_line_c.setName("C");
+//        Polynomial test = new Polynomial(solution_trend);
+//        for(double b = -Math.abs(solution_trend.getB()); b < Math.abs(solution_trend.getB()); ++b){
+//            test.setC(b);
+//            error_line_b.getData().add(new XYChart.Data(b, ErrorFunction.getErrorValue(dataset,test)));
+//        }
+//        test.setB(solution_trend.getB());
+//        for(double c = -Math.abs(solution_trend.getC()); c < Math.abs(solution_trend.getC()); ++c){
+//            test.setC(c);
+//            error_line_c.getData().add(new XYChart.Data(c, ErrorFunction.getErrorValue(dataset,test)));
+//        }
+//        error_graph.getData().set(0, error_line_b);
+//        error_graph.getData().set(1, error_line_c);
     }
 }
