@@ -134,22 +134,5 @@ public class MainWindow {
             solution_display.getData().add( new XYChart.Data(i, solution_trend.solve_for(i)));
         }
         display_graph.getData().set(1,solution_display);
-
-//        XYChart.Series error_line_b = new XYChart.Series();
-//        XYChart.Series error_line_c = new XYChart.Series();
-//        error_line_b.setName("B");
-//        error_line_c.setName("C");
-//        Polynomial test = new Polynomial(solution_trend);
-//        for(double b = -Math.abs(solution_trend.getB()); b < Math.abs(solution_trend.getB()); ++b){
-//            test.setC(b);
-//            error_line_b.getData().add(new XYChart.Data(b, ErrorFunction.getErrorValue(dataset,test)));
-//        }
-//        test.setB(solution_trend.getB());
-//        for(double c = -Math.abs(solution_trend.getC()); c < Math.abs(solution_trend.getC()); ++c){
-//            test.setC(c);
-//            error_line_c.getData().add(new XYChart.Data(c, ErrorFunction.getErrorValue(dataset,test)));
-//        }
-//        error_graph.getData().set(0, error_line_b);
-//        error_graph.getData().set(1, error_line_c);
     }
 }
