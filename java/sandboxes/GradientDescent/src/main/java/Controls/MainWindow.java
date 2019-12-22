@@ -33,7 +33,6 @@ public class MainWindow {
     public Button step_button;
     public Label learning_rate_label;
     public Slider learning_rate_slider;
-    public LineChart error_graph;
 
     private Random rnd = new Random();
     private Polynomial solution_trend;
@@ -57,7 +56,6 @@ public class MainWindow {
     public  void fill_chart(){
         dataset = new ArrayList((int) dataset_size_slider.getValue());
         display_graph.setData(FXCollections.observableArrayList());
-        error_graph.setData(FXCollections.observableArrayList());
         dataset_trend = new Polynomial(rnd,dataset_size_slider.getValue());
         solution_trend = new Polynomial(rnd, dataset_size_slider.getValue());
         XYChart.Series dataset_series = new XYChart.Series();
@@ -69,8 +67,6 @@ public class MainWindow {
         }
         display_graph.getData().add(0, dataset_series);
         display_graph.getData().add(1, new XYChart.Series());
-        error_graph.getData().add(0,new XYChart.Series()); /* B error */
-        error_graph.getData().add(1,new XYChart.Series()); /* C error */
         displaySolutionTrend();
     }
 

@@ -39,7 +39,7 @@
                   <Label fx:id="learning_rate_label" text="0.01" />
                </children>
             </HBox>
-            <Slider fx:id="learning_rate_slider" value="5.0E-10" min="1.0E-10" max="1.0E-8" />
+            <Slider fx:id="learning_rate_slider" value="5.0E-10" min="1.0E-10" max="1.0E-2" />
          </children>
       </VBox>
    </items>
