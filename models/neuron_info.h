@@ -4,7 +4,6 @@
 #include "sparse_net_global.h"
 #include "models/gen/sparse_net.pb.h"
 
-
 namespace sparse_net_library{
 
 class Neuron_info{

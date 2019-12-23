@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "models/neuron_info.h"
+#include "services/synapse_iterator.h"
 
 namespace sparse_net_library{
 
@@ -23,8 +24,6 @@ Neuron_router::Neuron_router(SparseNet& sparse_net) : net(sparse_net){
       ) neuron_number_of_inputs[neuron_iterator] += net.neuron_array(neuron_iterator).input_index_sizes(synapse_iterator);
 
       neuron_states.push_back(std::make_unique<atomic<uint32>>());
-      if(neuron_iterator < static_cast<int>(net.input_neuron_number())) /* Neuron connected to the input directly */
-        *neuron_states[neuron_iterator] = neuron_number_of_inputs[neuron_iterator]; /* The inputs already count as "solvable" */
   } /* Calculating how many children one Neuron has */
   net_subset_size = 0.0;
   net_subset = std::deque<uint32>();
@@ -114,7 +113,6 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, uint16& iteratio
   uint32 number_of_processed_inputs = 0;
   uint32 expected_number_of_processed_inputs = 0;
   uint32 visiting_next = 0;
-  uint32 tmp_index = 0;
 
   visiting_next = visiting.back();
   while(/* Checking current Neuron and its inputs */
@@ -122,47 +120,39 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, uint16& iteratio
     &&(number_of_processed_inputs < neuron_number_of_inputs[visiting.back()]) /* Neuron has some unprocessed and not reserved inputs */
     &&(visiting.back() == visiting_next)  /* no children are found to move on to */
   ){
-    if(visiting.back() >= net.input_neuron_number()){ /* Neuron not connected to the input directly */
-      number_of_processed_inputs = 0;
-      expected_number_of_processed_inputs = *neuron_states[visiting.back()];
-      /*!#4 Number of processed inputs could be used to not start the iteration from the beginning */
-      for(
-        int synapse_iterator = 0; /* iterate through the Neuron synapses */
-        synapse_iterator < net.neuron_array(visiting.back()).input_index_sizes_size();
-        ++synapse_iterator
+    number_of_processed_inputs = 0;
+    expected_number_of_processed_inputs = *neuron_states[visiting.back()];
+    /*!#4 Number of processed inputs could be used to not start the iteration from the beginning */
+    Synapse_iterator iter(net.neuron_array(visiting.back()).input_index_starts(),net.neuron_array(visiting.back()).input_index_sizes());
+    iter.iterate([&](int synapse_input_index){
+      if(
+        (Synapse_iterator::is_index_input(synapse_input_index))
+        ||(is_neuron_processed(synapse_input_index))
       ){
-        for(
-          uint32 input_interator = 0; /* iterate through the synapse inputs */
-          input_interator < net.neuron_array(visiting.back()).input_index_sizes(synapse_iterator);
-          ++input_interator
-        ){
-          tmp_index = net.neuron_array(visiting.back()).input_index_starts(synapse_iterator) + input_interator;
-          if(is_neuron_processed(tmp_index)){
-            ++number_of_processed_inputs;
-          }else if(is_neuron_subset_candidate(tmp_index, iteration)){
-            visiting_next = tmp_index;
-            goto end_of_neuron_input_loop; /* don't judge */
-          }
-        }/* iterate through the synapse inputs */
-      } /* iterate through the Neuron synapses */
-      end_of_neuron_input_loop:
-      if( /* Some inputs are still unprocessed */
-        (number_of_processed_inputs < neuron_number_of_inputs[visiting.back()])
-        &&(visiting_next == visiting.back()) /* There are no next input to iterate to */
+        ++number_of_processed_inputs;
+      }else if(
+        (!Synapse_iterator::is_index_input(synapse_input_index))
+        &&(is_neuron_subset_candidate(synapse_input_index, iteration))
       ){
-        (void)neuron_states[visiting.back()]->compare_exchange_strong(
-          expected_number_of_processed_inputs,
-          neuron_state_next_iteration_value(visiting.back(),iteration)
-        ); /* If another thread updated the Neuron status before this one, that's fine too */
-      }else{ /* Neuron has unprocessed inputs still, iteration shall continue with one of them */
-        (void)neuron_states[visiting.back()]->compare_exchange_strong(
-          expected_number_of_processed_inputs,
-          number_of_processed_inputs
-        ); /* If another thread updated the Neuron status before this one, that's fine too */
+        visiting_next = synapse_input_index;
+        return  false;
       }
-    }else{ /* Neuron connected to the input directly */
-      number_of_processed_inputs = neuron_number_of_inputs[visiting.back()];
-    } /*!Note:  at pre-processing the neuron_states are set to all children processed in the input layer */
+      return true;
+    });
+    if( /* Some inputs are still unprocessed */
+      (number_of_processed_inputs < neuron_number_of_inputs[visiting.back()])
+      &&(visiting_next == visiting.back()) /* There are no next input to iterate to */
+    ){
+      (void)neuron_states[visiting.back()]->compare_exchange_strong(
+        expected_number_of_processed_inputs,
+        neuron_state_next_iteration_value(visiting.back(),iteration)
+      ); /* If another thread updated the Neuron status before this one, that's fine too */
+    }else{ /* Neuron has unprocessed inputs still, iteration shall continue with one of them */
+      (void)neuron_states[visiting.back()]->compare_exchange_strong(
+        expected_number_of_processed_inputs,
+        number_of_processed_inputs
+      ); /* If another thread updated the Neuron status before this one, that's fine too */
+    }
   } /* Checking current Neuron and its inputs */
   return visiting_next;
 }
@@ -199,7 +189,6 @@ void Neuron_router::step(vector<uint32>& visiting, uint32& visiting_next, uint16
     }else if(1 < visiting.size()){ /* haven't found another Neuron to iterate to, try with parent Neuron, if there is any */
       visiting.pop_back(); /* remove latest Neuron from the queue, go to its parent in the next iteration */
     }
-
     if(1 == visiting.size()){ /* The Visiting vector is down to it's last element, which is the visit-starting output layer neuron */
       tmp_index = visiting.back();
       if((!is_neuron_in_progress(tmp_index))&&(!is_neuron_subset_candidate(tmp_index, iteration)))

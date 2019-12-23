@@ -30,17 +30,18 @@ message Neuron{
    * Input weight synapse table
    *  Input weights are read out in contigous arrays, which may or may not be optimized for cache coherence. 
    *  The number of inputs the @Neuron takes equals to the summary of the values of @weight_index_sizes
-   *  Optimizing the Neurons for Cache coherence is not part of this library.
+   *  Optimizing the Neuron arrangement for Cache coherence is not part of this library.
    *  The Indexes are referencing the indexes of the Neurons inside the @SparseNet, the first @Neuron starting from 0.
+   *  In case @input_index_starts is below zero, it points to the input data of the @SparseNet under [input_index_starts + 1]
    */
   repeated uint32 weight_index_sizes = 4; /* The sizes of the arrays */
-  repeated uint32 weight_index_starts = 5; /* Starting indexes in the weight table of the contigous array */
+  repeated sint32 weight_index_starts = 5; /* Starting indexes in the weight table of the contigous array */
 
   /** ################################################################################################
    * Input index synapse table
    */
   repeated uint32 input_index_sizes = 6; /* Sizes of the contigous index arrays */
-  repeated uint32 input_index_starts = 7; /* Starting indexes the Neuron takes as input. Relative to the whole @Partial solution: input data, then internal neuron data */
+  repeated sint32 input_index_starts = 7; /* Starting indexes the Neuron takes as input. Relative to the whole @Partial solution: input data, then internal neuron data */
 }
 
 /** @brief      A sparse net implementation containing the
@@ -48,7 +49,6 @@ message Neuron{
  */
 message SparseNet{
   uint32 input_data_size = 1; /* Number of inputs (floating point numbers) accepted by the Neural network */
-  uint32 input_neuron_number = 2; /* Number of neurons the Neural Network has that accept data only from the inputs */
   uint32 output_neuron_number = 3; /* Number of outputs the Neural network has */
   repeated Neuron neuron_array = 4; /* Array of Neurons the network has */
   repeated double weight_table = 5; /* Stores induvidual weights used by the Neurons */

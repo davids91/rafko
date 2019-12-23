@@ -4,19 +4,22 @@ LIBS = `pkg-config --cflags --libs protobuf` #-pthread -IC:/msys64/mingw64/inclu
 CPPFLAGS = -Wall $(LIBS) -std=c++14 -DNDEBUG #-v
 CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib
 
-NET_SOURCES = ../models/src/gen/sparse_net.pb.cc ../models/src/gen/solution.pb.cc
+NET_SOURCES = ../models/gen/sparse_net.pb.cc ../models/gen/solution.pb.cc
 NET_OBJECTS = sparse_net.pb.o solution.pb.o
 
 BUILDER_SOURCES = ../services/src/sparse_net_builder.cc ../services/src/solution_builder.cc
 BUILDER_OBJECTS = sparse_net_builder.o solution_builder.o
 
-SOLVER_SOURCES = ../services/src/sparse_net_solver.cc ../services/src/partial_solution_solver.cc
-SOLVER_OBJECTS = sparse_net_solver.o partial_solution_solver.o
+SOLVER_SOURCES = ../services/src/sparse_net_solver.cc
+SOLVER_SOURCES += ../services/src/partial_solution_solver.cc ../services/src/solution_solver.cc
+SOLVER_OBJECTS = sparse_net_solver.o partial_solution_solver.o solution_solver.o
 
 HELPER_SOURCES = ../models/src/transfer_function_info.cc ../services/src/synapse_iterator.cc
 HELPER_SOURCES += ../models/src/weight_initializer.cc ../models/src/dense_net_weight_initializer.cc
 HELPER_SOURCES +=  ../services/src/neuron_router.cc ../models/src/neuron_info.cc
-HELPER_OBJECTS = transfer_function_info.o synapse_iterator.o neuron_router.o weight_initializer.o dense_net_weight_initializer.o neuron_info.o
+HELPER_OBJECTS = transfer_function_info.o synapse_iterator.o
+HELPER_OBJECTS += weight_initializer.o dense_net_weight_initializer.o
+HELPER_OBJECTS += neuron_router.o  neuron_info.o
 
 LIBRARY_OBJECTS = $(NET_OBJECTS) $(BUILDER_OBJECTS) $(SOLVER_OBJECTS) $(HELPER_OBJECTS)
 
@@ -54,8 +57,12 @@ clean:
 ##########################################################################################################
 
 TEST_BASE = ../test/main_test.cc
-TEST_SOURCES = $(TEST_BASE) ../test/net_builder_test.cc ../test/partial_solution_solver_test.cc ../test/solution_builder_test.cc ../test/neuron_router_test.cc
-TEST_OBJECTS = main_test.o net_builder_test.o partial_solution_solver_test.o solution_builder_test.o neuron_router_test.o
+TEST_SOURCES = $(TEST_BASE) ../test/net_builder_test.cc ../test/solution_builder_test.cc
+TEST_SOURCES += ../test/partial_solution_solver_test.cc ../test/neuron_router_test.cc
+TEST_SOURCES += ../test/synapse_iterator_test.cc
+TEST_OBJECTS = main_test.o net_builder_test.o solution_builder_test.o
+TEST_OBJECTS += partial_solution_solver_test.o neuron_router_test.o
+TEST_OBJECTS += synapse_iterator_test.o
 TEST_INCLUDES = -I ../test/
 TEST_RESULT = test-result.out
 

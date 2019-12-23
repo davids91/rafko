@@ -5,6 +5,8 @@
 #include "sparse_net_global.h"
 #include "models/gen/sparse_net.pb.h"
 #include "services/sparse_net_builder.h"
+#include "services/synapse_iterator.h"
+
 
 namespace sparse_net_library_test {
 
@@ -24,6 +26,7 @@ namespace sparse_net_library_test {
   using sparse_net_library::TRANSFER_FUNCTION_TANH;
   using sparse_net_library::TRANSFER_FUNCTION_RELU;
   using sparse_net_library::TRANSFER_FUNCTION_SELU;
+  using sparse_net_library::Synapse_iterator;
 
 /*###############################################################################################
  * Testing Neuron Validation
@@ -128,7 +131,6 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   /* Pass the net into the builder */
   shared_ptr<SparseNetBuilder> builder(new SparseNetBuilder());
   builder->input_size(1)
-    .input_neuron_size(1)
     .expectedInputRange(1.0)
     .output_neuron_number(2)
     .arena_ptr(arena)
@@ -239,7 +241,6 @@ TEST_CASE("Constructing small net manually using arena","[build][arena][small][m
 SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   unique_ptr<SparseNetBuilder> builder(new SparseNetBuilder());
   builder->input_size(5)
-    .input_neuron_size(2)
     .output_neuron_number(2)
     .expectedInputRange(5.0)
     .arena_ptr(arena);
@@ -257,7 +258,6 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   REQUIRE( 0 < net->neuron_array_size() );
   CHECK( 7 == net->neuron_array_size() );
   CHECK( 5 == net->input_data_size() );
-  CHECK( 2 == net->input_neuron_number() );
   CHECK( 2 == net->output_neuron_number() );
 
   /* Check Neuron validity in general */
@@ -322,9 +322,9 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( 5 == net->neuron_array(1).weight_index_sizes_size() );
   CHECK( 5 == net->neuron_array(1).weight_index_starts_size() );
 
-  /* Input Neurons should have their synapse starting from 0 */
-  CHECK( 0 == net->neuron_array(0).input_index_starts(0) ); /* 0th Input, because neuron index < net->input_neuron_number() */
-  CHECK( 0 == net->neuron_array(1).input_index_starts(0) );
+  /* Input Neurons should have their synapse starting from the 0th input */
+  CHECK( Synapse_iterator::synapse_index_from_input_index(0) == net->neuron_array(0).input_index_starts(0) ); /* 0th Input, translated using Synapse_iterator */
+  CHECK( Synapse_iterator::synapse_index_from_input_index(0) == net->neuron_array(1).input_index_starts(0) );
 
   /* The input Layer should have Identity transfer function according to configuration */
   CHECK( TRANSFER_FUNCTION_IDENTITY == net->neuron_array(0).transfer_function_idx() );

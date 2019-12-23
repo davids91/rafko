@@ -29,9 +29,8 @@ Solution* Solution_builder::build( SparseNet& net ){
 
   while(!net_iterator.finished()){ /* Until the whole output layer is processed */
     net_iterator.collect_subset(iteration,arg_max_solve_threads,arg_device_max_megabytes);
-
     generate_partial_solution_from_subset(net,net_iterator,*current_partial);
-     ++iteration;
+    ++iteration;
   }
 
   /* #######################################################################################################

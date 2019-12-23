@@ -23,9 +23,7 @@ using sparse_net_library::Solution;
 Solution* test_solution_builder_manually(google::protobuf::Arena* arena){
   /* Build a net */
   unique_ptr<SparseNetBuilder> net_builder = make_unique<SparseNetBuilder>();
-  net_builder->input_size(5)
-    .input_neuron_size(2).output_neuron_number(2).expectedInputRange(5.0)
-    .arena_ptr(arena);
+  net_builder->input_size(5).output_neuron_number(2).expectedInputRange(5.0).arena_ptr(arena);
   SparseNet* net(net_builder->denseLayers({2,3,2}));
   net_builder.reset();
 

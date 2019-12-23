@@ -38,19 +38,19 @@ using sparse_net_library::Transfer_function_info;
 /** @brief Calculates the result of the partial partial_solution manually based on the given inputs,
 * in case the structure of the partial partial_solution equals with the one described above in the testcase
 */
-sdouble32 partial_solution_result(vector<sdouble32> network_inputs, const Partial_solution * partial_solution){
+sdouble32 partial_solution_result(vector<sdouble32>& network_inputs, const Partial_solution& partial_solution){
   sdouble32 neuron1_result = ( /* Neuron 1 = transfer_function( ( input0 * weight0 + input1 * weight1 ) + bias0 )*/
-    (network_inputs[0] * partial_solution->weight_table(0)) + (network_inputs[1] * partial_solution->weight_table(1))
-    + partial_solution->weight_table(partial_solution->bias_index(0))
+    (network_inputs[0] * partial_solution.weight_table(0)) + (network_inputs[1] * partial_solution.weight_table(1))
+    + partial_solution.weight_table(partial_solution.bias_index(0))
   );
-  Transfer_function_info::apply_to_data(partial_solution->neuron_transfer_functions(0),neuron1_result);
-  neuron1_result *= (1.0 - partial_solution->weight_table(partial_solution->memory_ratio_index(0)));
+  Transfer_function_info::apply_to_data(partial_solution.neuron_transfer_functions(0),neuron1_result);
+  neuron1_result *= (1.0 - partial_solution.weight_table(partial_solution.memory_ratio_index(0)));
 
   /* Neuron 2 = transfer_function( (Neuron1 * weight2) + bias1 ) */
-  sdouble32 neuron2_result = (neuron1_result * partial_solution->weight_table(2))
-   + partial_solution->weight_table(partial_solution->bias_index(1));
-  Transfer_function_info::apply_to_data(partial_solution->neuron_transfer_functions(1),neuron2_result);
-  neuron2_result *= (1.0 - partial_solution->weight_table(partial_solution->memory_ratio_index(1)));
+  sdouble32 neuron2_result = (neuron1_result * partial_solution.weight_table(2))
+   + partial_solution.weight_table(partial_solution.bias_index(1));
+  Transfer_function_info::apply_to_data(partial_solution.neuron_transfer_functions(1),neuron2_result);
+  neuron2_result *= (1.0 - partial_solution.weight_table(partial_solution.memory_ratio_index(1)));
 
   return neuron2_result;
 }
@@ -77,7 +77,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][small][manu
   partial_solution.add_actual_index(1u); /* It will matter only when multiple partial partial_solutions are joind together */
 
   /**###################################################################################################
-   * The first neuron shall have the inputs 
+   * The first neuron shall have the inputs
    */
   partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
   partial_solution.add_memory_ratio_index(3);
@@ -110,7 +110,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][small][manu
   Partial_solution_solver solver;
 
   /* The result should be according to the calculations */
-  CHECK( solver.solve(&partial_solution,&network_inputs)[0] == partial_solution_result(network_inputs, &partial_solution) );
+  CHECK( solver.solve(partial_solution,network_inputs)[0] == partial_solution_result(network_inputs, partial_solution) );
 
   /* The result should change in accordance with the parameters */
   srand (time(nullptr));
@@ -118,18 +118,18 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][small][manu
     partial_solution.set_weight_table(0,static_cast<sdouble32>(rand()%11) / 10.0);
     partial_solution.set_weight_table(1,static_cast<sdouble32>(rand()%11) / 10.0);
     partial_solution.set_weight_table(2,static_cast<sdouble32>(rand()%11) / 10.0);
-    CHECK( solver.solve(&partial_solution,&network_inputs)[0] == partial_solution_result(network_inputs, &partial_solution) );
+    CHECK( solver.solve(partial_solution,network_inputs)[0] == partial_solution_result(network_inputs, partial_solution) );
 
     partial_solution.set_weight_table(partial_solution.bias_index(0),static_cast<sdouble32>(rand()%110) / 10.0);
     partial_solution.set_weight_table(partial_solution.bias_index(1),static_cast<sdouble32>(rand()%110) / 10.0);
-    CHECK( solver.solve(&partial_solution,&network_inputs)[0] == partial_solution_result(network_inputs, &partial_solution) );
+    CHECK( solver.solve(partial_solution,network_inputs)[0] == partial_solution_result(network_inputs, partial_solution) );
 
     partial_solution.set_weight_table(partial_solution.memory_ratio_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
     partial_solution.set_weight_table(partial_solution.memory_ratio_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
-    CHECK( solver.solve(&partial_solution,&network_inputs)[0] == partial_solution_result(network_inputs, &partial_solution) );
+    CHECK( solver.solve(partial_solution,network_inputs)[0] == partial_solution_result(network_inputs, partial_solution) );
 
     partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),Transfer_function_info::next());
-    CHECK( solver.solve(&partial_solution,&network_inputs)[0] == partial_solution_result(network_inputs, &partial_solution) );
+    CHECK( solver.solve(partial_solution,network_inputs)[0] == partial_solution_result(network_inputs, partial_solution) );
   }
 
   /*!#8 */

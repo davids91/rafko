@@ -33,18 +33,19 @@ message Partial_solution{
   repeated transfer_functions neuron_transfer_functions = 11;
   repeated double memory_ratio_index = 12;
   repeated double bias_index = 13;
-  repeated uint32 index_synapse_number = 14; /*!#4 remove this */
-  repeated uint32 weight_synapse_number = 15; /*!#4 remove this */
+  repeated uint32 index_synapse_number = 14;
+  repeated uint32 weight_synapse_number = 15;
 
   /** ################################################################################################
    * Partition table(==synapse) storing batches of input indexes for an inner neuron
    * - Every Neuron can have a different number of synapses, their numbers are stored under @index_synapse_number
-   * - Neuron synapse tables are mapped into an array, in order of the Neurons
+   * - Positive Neuron synapse inputs are mapped to the order of the Neurons
+   * - Negative Neuron Synapse inputs are mapped to the Partial solution input
    * - Since solving the detail is incremental, the start of each Neuron's input synapse index
    *   is determined at runtime, so it doesn't need to be stored
    */
   repeated uint32 inside_index_sizes = 20; /* The size of the inside index synapses. Size is of the summary of the elements in @input_sizes */
-  repeated uint32 inside_index_starts = 21; /* Starting indexes of inputs of the Neurons; value range [0 ; @data.size). Size equals @inside_index_sizes */
+  repeated sint32 inside_index_starts = 21; /* Starting indexes of inputs of the Neurons; value range [0 ; @data.size). Size equals @inside_index_sizes */
 
   /** ################################################################################################
    * Partition table(==synapse) storing batches of input weights for an inner neuron
@@ -58,14 +59,17 @@ message Partial_solution{
    * - Neuron synapse tables are mapped into an array, in order of the Neurons
    */
   repeated uint32 weight_index_sizes = 22; /* The Sizes of the used Weight synapses for a Neuron. Size is of the summary of the elements in @input_sizes  */
-  repeated uint32 weight_index_starts = 23; /* Starting indexes of weights of the above inputs;value range [0.0,1.0]. Size equals @weight_index_sizes */
+  repeated sint32 weight_index_starts = 23; /* Starting indexes of weights of the above inputs;value range [0.0,1.0]. Size equals @weight_index_sizes */
 }
 
 /**
- * @brief      A collection of independent @Partial_solution messages to be executed in parallel
+ * @brief      A collection of independent @Partial_solution messages to be executed in parallel.
+ *             Each row depends on the previous one, but partial solutions in one row can be solved
+ *             in paralell.
  */
 message Solution{
-  uint32 rows = 1;
-  uint32 cols = 2;
-  repeated Partial_solution partial_solutions = 3;
+  uint32 output_number = 1; /* The number of outputs this solution has */
+  uint32 rows = 2;
+  uint32 cols = 3;
+  repeated Partial_solution partial_solutions = 4;
 }

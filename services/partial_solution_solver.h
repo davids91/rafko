@@ -19,7 +19,7 @@ public:
    *
    * @return     The result datas of the internal neurons
    */
-  vector<sdouble32> solve(const Partial_solution* detail, const vector<sdouble32>* input_data);
+  vector<sdouble32> solve(const Partial_solution& detail, const vector<sdouble32>& input_data);
 
   /**
    * @brief      Determines if given Solution Detail is valid. Due to performance reasons
@@ -27,7 +27,7 @@ public:
    *
    * @return     True if detail is valid, False otherwise.
    */
-  bool is_valid(const Partial_solution* detail);
+  static bool is_valid(const Partial_solution& detail);
 
 private:
   vector<sdouble32> data; /* size of @internal_neuron_number + @input_data_size  */

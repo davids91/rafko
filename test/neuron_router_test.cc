@@ -31,7 +31,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
   /* Build a net */
   vector<uint32> layer_structure = {2,3,3,5};
   unique_ptr<SparseNetBuilder> net_builder = make_unique<SparseNetBuilder>();
-  net_builder->input_size(5).input_neuron_size(2).output_neuron_number(5).expectedInputRange(5.0);
+  net_builder->input_size(5).output_neuron_number(5).expectedInputRange(5.0);
   SparseNet* net(net_builder->denseLayers(layer_structure));
   net_builder.reset();
 
@@ -41,6 +41,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
 
   uint32 layer_start = 0;
   uint32 tmp_index;
+  bool last_run = false;
   CHECK( false == net_iterator.finished() );
   while(!net_iterator.finished()){ /* Until the whole output layer is processed */
     net_iterator.collect_subset(iteration,1,500.0);
@@ -50,11 +51,17 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
       subset.push_back(tmp_index);
       net_iterator.confirm_first_subset_element_processed(tmp_index);
     }
-    REQUIRE(( (iteration <= layer_structure.size())||(0 == subset.size()) )); /* Has to finish sooner, than there are layers */
+    REQUIRE(( 
+      (iteration <= layer_structure.size()) /* Has to finish sooner, than there are layers */
+      ||((0 == subset.size())&&(!last_run)) /* With the exception of the last iteration */
+    )); /* ..where only the output_layer_iterator  is updated to the end */
     /*!Note: Iteration starts from 1! so equality is needed here */
-    if(0 < subset.size())
-    for(uint32 i = 0; i < layer_structure[iteration-1]; ++i){ /* Find all indexes inside the layer in the current subset */
-      CHECK( std::find(subset.begin(), subset.end(), layer_start + i) != subset.end() );
+    if(0 < subset.size()){
+      for(uint32 i = 0; i < layer_structure[iteration-1]; ++i){ /* Find all indexes inside the layer in the current subset */
+        CHECK( std::find(subset.begin(), subset.end(), layer_start + i) != subset.end() );
+      }
+    }else{
+      last_run = true; 
     }
     layer_start += layer_structure[iteration-1];
 
@@ -62,6 +69,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
 
      ++iteration;
   }
+
 }
 
 } /* namespace sparse_net_library_test */

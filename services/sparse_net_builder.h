@@ -37,15 +37,6 @@ public:
   SparseNetBuilder& input_size(uint32 size);
 
   /**
-   * @brief      SparseNetBuilder::input_neuron_size  sets the number of observer neurons who only take their input from the outside of the net
-   *
-   * @param[in]  num the number of related neurons at the beginning of the Neuron array  
-   *
-   * @return     builder reference for chaining
-   */
-  SparseNetBuilder& input_neuron_size(uint32 num);
-
-  /**
    * @brief      sets the number of expected outputs for the SparseNet object to be built
    *
    * @param[in]  size  The size
@@ -159,7 +150,6 @@ private:
    * Helper variables to see if different required arguments are set inside the builder
    */
   bool is_input_size_set = false;
-  bool is_input_neuron_size_set = false;
   bool is_output_neuron_number_set = false;
   bool is_expected_input_range_set = false;
   bool is_weight_table_set = false;
@@ -191,11 +181,6 @@ private:
    * Number of inputs the net-to-be-built shall accept
    */
   uint32 arg_input_size = 0;
-
-  /**
-   * number of neurons the net-to-be-built shall use for accepting thei nput
-   */
-  uint32 arg_input_neuron_number = 0;
 
   /**
    * Number of Neurons the net-to-be-built shall have as output

@@ -3,7 +3,9 @@
 #include <iostream>
 
 #include "services/sparse_net_builder.h"
+
 #include "models/dense_net_weight_initializer.h"
+#include "services/synapse_iterator.h"
 
 namespace sparse_net_library {
 
@@ -14,12 +16,6 @@ SparseNetBuilder::SparseNetBuilder(){}
 SparseNetBuilder& SparseNetBuilder::input_size(uint32 size){
   arg_input_size = size;
   is_input_size_set = true;
-  return *this;
-}
-
-SparseNetBuilder& SparseNetBuilder::input_neuron_size(uint32 num){
-  arg_input_neuron_number = num;
-  is_input_neuron_size_set = true;
   return *this;
 }
 
@@ -104,7 +100,7 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
    * - Input Layer shall have a weight for every input for every neuron
    * - Input Layer shall have a weight for every bias and memory_ratio for every neuron
    */
-  uint64 numWeights = (arg_input_neuron_number * arg_input_size) + (2 * arg_input_neuron_number);
+  uint64 numWeights = (layer_sizes[0] * arg_input_size) + (2 * layer_sizes[0]); /* The first layer only takes input from the @SparseNet input data */
   for(uint32 layerSize : layer_sizes){
     numNeurons += layerSize; /* Calculate the number of elements needed */
     numWeights += prevSize * layerSize; /* Calculate the number of weights needed */
@@ -123,7 +119,6 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
     sdouble32 expPrevLayerOutput = Transfer_function_info::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
 
     ret->set_input_data_size(arg_input_size);
-    ret->set_input_neuron_number(arg_input_neuron_number);
     ret->set_output_neuron_number(arg_output_neuron_number);
 
     prevSize = arg_input_size;
@@ -145,9 +140,9 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
         expPrevLayerOutput
       );
 
+      /* Add the Neurons */
       expPrevLayerOutput = 0;
-      for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++)
-      { /* Add the Neurons */
+      for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++){ 
         arg_weight_table[weightIt] = arg_weight_initer->next_bias();
         arg_weight_table[weightIt+1] = arg_weight_initer->next_memory_ratio();
         arg_neuron_array[neurIt].set_bias_idx(weightIt);
@@ -168,7 +163,8 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
 
         /* Add the previous layer as an input synapse */
         arg_neuron_array[neurIt].add_input_index_sizes(prevSize);
-        arg_neuron_array[neurIt].add_input_index_starts(layerStart);
+        if(0 == layerIt)arg_neuron_array[neurIt].add_input_index_starts(Synapse_iterator::synapse_index_from_input_index(0));
+          else arg_neuron_array[neurIt].add_input_index_starts(layerStart);
         for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < prevSize; neuron_weight_iterator++)
         { /* Fill in some initial neuron input values */
           arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
@@ -190,7 +186,7 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
         layerStart += prevSize;
       }
       prevSize = layer_sizes[layerIt];
-    }
+    } /* Itearte through all of the layers */ 
 
     set_weight_table(ret);
     set_neuron_array(ret);
@@ -207,7 +203,6 @@ SparseNet* SparseNetBuilder::build(void){
   ){
     SparseNet* ret = google::protobuf::Arena::CreateMessage<SparseNet>(arg_arena);
     ret->set_input_data_size(arg_input_size);
-    ret->set_input_neuron_number(arg_input_neuron_number);
     ret->set_output_neuron_number(arg_output_neuron_number);
     set_weight_table(ret);
     set_neuron_array(ret);
@@ -254,7 +249,7 @@ bool SparseNetBuilder::is_neuron_valid(Neuron const * neuron)
 }
 
 bool SparseNetBuilder::io_pre_requisites_set(void) const{
-   return  (is_input_size_set && is_input_neuron_size_set && is_output_neuron_number_set);
+   return  (is_input_size_set && is_output_neuron_number_set);
 }
 
 } /* namespace sparse_net_library */

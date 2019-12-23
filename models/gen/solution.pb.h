@@ -328,15 +328,15 @@ class Partial_solution :
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
       mutable_inside_index_sizes();
 
-  // repeated uint32 inside_index_starts = 21;
+  // repeated sint32 inside_index_starts = 21;
   int inside_index_starts_size() const;
   void clear_inside_index_starts();
-  ::PROTOBUF_NAMESPACE_ID::uint32 inside_index_starts(int index) const;
-  void set_inside_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
-  void add_inside_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value);
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+  ::PROTOBUF_NAMESPACE_ID::int32 inside_index_starts(int index) const;
+  void set_inside_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::int32 value);
+  void add_inside_index_starts(::PROTOBUF_NAMESPACE_ID::int32 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
       inside_index_starts() const;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
       mutable_inside_index_starts();
 
   // repeated uint32 weight_index_sizes = 22;
@@ -350,15 +350,15 @@ class Partial_solution :
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
       mutable_weight_index_sizes();
 
-  // repeated uint32 weight_index_starts = 23;
+  // repeated sint32 weight_index_starts = 23;
   int weight_index_starts_size() const;
   void clear_weight_index_starts();
-  ::PROTOBUF_NAMESPACE_ID::uint32 weight_index_starts(int index) const;
-  void set_weight_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value);
-  void add_weight_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value);
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+  ::PROTOBUF_NAMESPACE_ID::int32 weight_index_starts(int index) const;
+  void set_weight_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::int32 value);
+  void add_weight_index_starts(::PROTOBUF_NAMESPACE_ID::int32 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
       weight_index_starts() const;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
       mutable_weight_index_starts();
 
   // uint32 input_data_size = 1;
@@ -399,11 +399,11 @@ class Partial_solution :
   mutable std::atomic<int> _weight_synapse_number_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > inside_index_sizes_;
   mutable std::atomic<int> _inside_index_sizes_cached_byte_size_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > inside_index_starts_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 > inside_index_starts_;
   mutable std::atomic<int> _inside_index_starts_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > weight_index_sizes_;
   mutable std::atomic<int> _weight_index_sizes_cached_byte_size_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 > weight_index_starts_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 > weight_index_starts_;
   mutable std::atomic<int> _weight_index_starts_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::uint32 input_data_size_;
   ::PROTOBUF_NAMESPACE_ID::uint32 internal_neuron_number_;
@@ -545,11 +545,12 @@ class Solution :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kPartialSolutionsFieldNumber = 3,
-    kRowsFieldNumber = 1,
-    kColsFieldNumber = 2,
+    kPartialSolutionsFieldNumber = 4,
+    kOutputNumberFieldNumber = 1,
+    kRowsFieldNumber = 2,
+    kColsFieldNumber = 3,
   };
-  // repeated .sparse_net_library.Partial_solution partial_solutions = 3;
+  // repeated .sparse_net_library.Partial_solution partial_solutions = 4;
   int partial_solutions_size() const;
   void clear_partial_solutions();
   ::sparse_net_library::Partial_solution* mutable_partial_solutions(int index);
@@ -560,12 +561,17 @@ class Solution :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Partial_solution >&
       partial_solutions() const;
 
-  // uint32 rows = 1;
+  // uint32 output_number = 1;
+  void clear_output_number();
+  ::PROTOBUF_NAMESPACE_ID::uint32 output_number() const;
+  void set_output_number(::PROTOBUF_NAMESPACE_ID::uint32 value);
+
+  // uint32 rows = 2;
   void clear_rows();
   ::PROTOBUF_NAMESPACE_ID::uint32 rows() const;
   void set_rows(::PROTOBUF_NAMESPACE_ID::uint32 value);
 
-  // uint32 cols = 2;
+  // uint32 cols = 3;
   void clear_cols();
   ::PROTOBUF_NAMESPACE_ID::uint32 cols() const;
   void set_cols(::PROTOBUF_NAMESPACE_ID::uint32 value);
@@ -579,6 +585,7 @@ class Solution :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::sparse_net_library::Partial_solution > partial_solutions_;
+  ::PROTOBUF_NAMESPACE_ID::uint32 output_number_;
   ::PROTOBUF_NAMESPACE_ID::uint32 rows_;
   ::PROTOBUF_NAMESPACE_ID::uint32 cols_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -923,31 +930,31 @@ Partial_solution::mutable_inside_index_sizes() {
   return &inside_index_sizes_;
 }
 
-// repeated uint32 inside_index_starts = 21;
+// repeated sint32 inside_index_starts = 21;
 inline int Partial_solution::inside_index_starts_size() const {
   return inside_index_starts_.size();
 }
 inline void Partial_solution::clear_inside_index_starts() {
   inside_index_starts_.Clear();
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::inside_index_starts(int index) const {
+inline ::PROTOBUF_NAMESPACE_ID::int32 Partial_solution::inside_index_starts(int index) const {
   // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.inside_index_starts)
   return inside_index_starts_.Get(index);
 }
-inline void Partial_solution::set_inside_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+inline void Partial_solution::set_inside_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::int32 value) {
   inside_index_starts_.Set(index, value);
   // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.inside_index_starts)
 }
-inline void Partial_solution::add_inside_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+inline void Partial_solution::add_inside_index_starts(::PROTOBUF_NAMESPACE_ID::int32 value) {
   inside_index_starts_.Add(value);
   // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.inside_index_starts)
 }
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
 Partial_solution::inside_index_starts() const {
   // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.inside_index_starts)
   return inside_index_starts_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
 Partial_solution::mutable_inside_index_starts() {
   // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.inside_index_starts)
   return &inside_index_starts_;
@@ -983,31 +990,31 @@ Partial_solution::mutable_weight_index_sizes() {
   return &weight_index_sizes_;
 }
 
-// repeated uint32 weight_index_starts = 23;
+// repeated sint32 weight_index_starts = 23;
 inline int Partial_solution::weight_index_starts_size() const {
   return weight_index_starts_.size();
 }
 inline void Partial_solution::clear_weight_index_starts() {
   weight_index_starts_.Clear();
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint32 Partial_solution::weight_index_starts(int index) const {
+inline ::PROTOBUF_NAMESPACE_ID::int32 Partial_solution::weight_index_starts(int index) const {
   // @@protoc_insertion_point(field_get:sparse_net_library.Partial_solution.weight_index_starts)
   return weight_index_starts_.Get(index);
 }
-inline void Partial_solution::set_weight_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::uint32 value) {
+inline void Partial_solution::set_weight_index_starts(int index, ::PROTOBUF_NAMESPACE_ID::int32 value) {
   weight_index_starts_.Set(index, value);
   // @@protoc_insertion_point(field_set:sparse_net_library.Partial_solution.weight_index_starts)
 }
-inline void Partial_solution::add_weight_index_starts(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+inline void Partial_solution::add_weight_index_starts(::PROTOBUF_NAMESPACE_ID::int32 value) {
   weight_index_starts_.Add(value);
   // @@protoc_insertion_point(field_add:sparse_net_library.Partial_solution.weight_index_starts)
 }
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >&
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
 Partial_solution::weight_index_starts() const {
   // @@protoc_insertion_point(field_list:sparse_net_library.Partial_solution.weight_index_starts)
   return weight_index_starts_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::uint32 >*
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
 Partial_solution::mutable_weight_index_starts() {
   // @@protoc_insertion_point(field_mutable_list:sparse_net_library.Partial_solution.weight_index_starts)
   return &weight_index_starts_;
@@ -1017,7 +1024,21 @@ Partial_solution::mutable_weight_index_starts() {
 
 // Solution
 
-// uint32 rows = 1;
+// uint32 output_number = 1;
+inline void Solution::clear_output_number() {
+  output_number_ = 0u;
+}
+inline ::PROTOBUF_NAMESPACE_ID::uint32 Solution::output_number() const {
+  // @@protoc_insertion_point(field_get:sparse_net_library.Solution.output_number)
+  return output_number_;
+}
+inline void Solution::set_output_number(::PROTOBUF_NAMESPACE_ID::uint32 value) {
+  
+  output_number_ = value;
+  // @@protoc_insertion_point(field_set:sparse_net_library.Solution.output_number)
+}
+
+// uint32 rows = 2;
 inline void Solution::clear_rows() {
   rows_ = 0u;
 }
@@ -1031,7 +1052,7 @@ inline void Solution::set_rows(::PROTOBUF_NAMESPACE_ID::uint32 value) {
   // @@protoc_insertion_point(field_set:sparse_net_library.Solution.rows)
 }
 
-// uint32 cols = 2;
+// uint32 cols = 3;
 inline void Solution::clear_cols() {
   cols_ = 0u;
 }
@@ -1045,7 +1066,7 @@ inline void Solution::set_cols(::PROTOBUF_NAMESPACE_ID::uint32 value) {
   // @@protoc_insertion_point(field_set:sparse_net_library.Solution.cols)
 }
 
-// repeated .sparse_net_library.Partial_solution partial_solutions = 3;
+// repeated .sparse_net_library.Partial_solution partial_solutions = 4;
 inline int Solution::partial_solutions_size() const {
   return partial_solutions_.size();
 }
