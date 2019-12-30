@@ -1,0 +1,78 @@
+syntax = "proto3";
+option cc_enable_arenas = true;
+
+package sparse_net_library;
+
+import "common.proto";
+
+/**
+ * @brief      An intermediate solution as it calculates
+ *             a coherent part of a sparse neural network, where locality is maximized.
+ *             The arrays inside this structure all have their sizes defined by @internal_neuron_number
+ *             and/or the size of @data, which contains the data for the inputs and neurons as well.
+ */
+message Partial_solution{
+  /** ################################################################################################
+   * Solution data
+   */
+  uint32 internal_neuron_number = 1; /* number of neurons used in this partial solution */
+  repeated double weight_table = 2; /* stores the weights paired to @inside_indexes for the inputs of the Neurons; Ranges [0.0,1.0) */
+  repeated Synapse_interval input_data = 3; /* @Partial_solution input: negative intervals are network inputs, positives are inner neuron data */
+  repeated Synapse_interval output_data = 4; /* @Partial_solution output; The inner Neurons mapped to Neuron indices in the @SparseNet */
+
+  /** ################################################################################################
+   * A representation of the actual neuron to be used in this intermediate solution
+   * - sizes are of @internal_neuron_number
+   */
+  repeated uint32 actual_index = 10; /* Stores the actual index of the Neuron in the sparse_net it calculates the value for
+                                     * Indexes are global to @neuron_array under the @SparseNet to be solved */
+
+  /** Parameters each neuron have to post-process their inputs
+   */
+  repeated transfer_functions neuron_transfer_functions = 11;
+  repeated double memory_ratio_index = 12;
+  repeated double bias_index = 13;
+
+  /** ################################################################################################
+   * Synapse information
+   * - Positive Neuron synapse inputs are mapped to the previous Partial solution output
+   * - Negative Synapse inputs are not mapped to the actual @SparseNet input
+   */
+  repeated uint32 index_synapse_number = 14; /* Number of input index synapses. Every Neuron can have a different number of them. */
+  repeated uint32 weight_synapse_number = 15; /* Number of weight index synapses. Every Neuron can have a different number of them. */
+
+  /**
+   * Inner neuron input index intervals
+   * - Positive intervals are mapped to inner neuron datas
+   * - Negative intervals are mapped to the Partial solution input
+   * - Since solving the detail is incremental, the start of each Neuron's input synapse index
+   *   is determined at runtime, so it doesn't need to be stored    */
+  repeated Synapse_interval inside_indices = 20;
+
+  /**
+   * Inner Neuron weight intervals corresponding to the @weight_table in the @Partial_solution
+   * - Solving the @Partial_solution is based on indexes, every new index reads in a weight. In case the currently
+   *   used weight synapse ends, another synapse starts.
+   * - The number of weights shall equal the number of indexes, so the two synapses should end at the
+   *   same number of input-weight pairs.
+   * - Although @weight_synapse_number is not used while solving the @Partial_solution it can be
+   *   used to check wether the above statement holds true
+   */
+  repeated Synapse_interval weight_indices = 30;
+}
+
+/**
+ * @brief      A collection of independent @Partial_solution messages to be executed in parallel.
+ *             Each row depends on the previous one, but partial solutions in one row can be solved
+ *             in paralell.
+ *             Since rows are usually next to one another, this entity suggest the Neural Network
+ *             structure resembles a top-down image (where the input is at the top, the output is at the bottom),
+ *             rather than the more classical left-right image (where the input is on the left, and the output is on the right side of the net).
+ */
+message Solution{
+  uint32 neuron_number = 1; /* Number of Neurons the @Solution has */
+  uint32 output_neuron_number = 2; /* Number of outputs the @Solution has */
+
+  repeated uint32 cols = 10; /* How many columns each row has, size gives back number of rows */
+  repeated Partial_solution partial_solutions = 11; /* The number of outputs this solution has is the summary of the last rows internal Neuron */
+}
