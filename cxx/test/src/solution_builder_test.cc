@@ -80,23 +80,22 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
         if(neuron_iterator == static_cast<int>(
           solution->partial_solutions(partial_solution_iterator).actual_index(inner_neuron_iterator)
         )){ /* If the current neuron being checked is the one in the partial solution under inner_neuron_iterator */
-          /* Test if all of the neurons weights are equal to the ones in the net */
           neuron_synapse_element_iterator = 0;
-          /* Test iterates over the Neurons inputs, to see if they point to the network inputs */
+          /* Test iterates over the Neurons input weights, to see if they match with the wights in the Network */
           Synapse_iterator inner_neuron_weight_iterator(solution->partial_solutions(partial_solution_iterator).weight_indices());
           Synapse_iterator neuron_weight_iterator(net->neuron_array(neuron_iterator).input_weights());
-          inner_neuron_weight_iterator.iterate([&](int input_index){ /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input s true ) */
+          inner_neuron_weight_iterator.iterate([&](int input_index){ /* Inner Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input is true ) */
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
             CHECK( 
-              solution->partial_solutions(partial_solution_iterator).weight_table(input_index) 
-              == net->weight_table(neuron_weight_iterator[neuron_synapse_element_iterator]) 
+              solution->partial_solutions(partial_solution_iterator).weight_table(input_index)
+              == net->weight_table(neuron_weight_iterator[neuron_synapse_element_iterator])
             );
             ++neuron_synapse_element_iterator;
-          },input_synapse_offset,solution->partial_solutions(partial_solution_iterator).index_synapse_number(inner_neuron_iterator));
+          },weight_synapse_offset,solution->partial_solutions(partial_solution_iterator).weight_synapse_number(inner_neuron_iterator));
 
           /* Test if all of the neurons inputs are are the same as the ones in the net */
           neuron_synapse_element_iterator = 0;
-          /* Test iterates over the inner neurons synapse to see if it matchen the Neuron synapse */
+          /* Test iterates over the inner neurons synapse to see if it matches the Neuron synapse */
           Synapse_iterator inner_neuron_input_iterator(solution->partial_solutions(partial_solution_iterator).inside_indices());
           Synapse_iterator neuron_input_iterator(net->neuron_array(neuron_iterator).input_indices());
           inner_neuron_input_iterator.iterate([&](int input_index){ /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input s true ) */
@@ -127,7 +126,7 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
   } /*(uint32 neuron_iterator = 0; neuron_iterator < net_structure.front(); ++neuron_iterator)*/
 
   /* TODO: Test if all of the neuron is present in all of the partial solutions outputs */
-
+    
   return solution;
 }
 
@@ -142,7 +141,6 @@ TEST_CASE( "Building a solution from a net", "[build][small][build-only]" ){
   solution = test_solution_builder_manually(nullptr,space_used_megabytes/5.0);
   REQUIRE( nullptr != solution );
   delete solution;
-
 }
 
 } /* namespace sparse_net_library_test */

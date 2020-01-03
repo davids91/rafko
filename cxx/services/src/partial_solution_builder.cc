@@ -18,6 +18,7 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
     partial.get().add_weight_table(net.get().weight_table(neuron.memory_ratio_idx()));
     partial.get().add_bias_index(partial.get().weight_table_size());
     partial.get().add_weight_table(net.get().weight_table(neuron.bias_idx()));
+
     /* Copy in weights from the net */
     partial.get().add_weight_synapse_number(neuron.input_weights_size());
     weight_iterator.iterate([&](unsigned int weight_synapse_size){
@@ -48,6 +49,14 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
           ){
             partial_input_synapse_count = 0; /* Close synapse! */
           }
+          if(0 < neuron_synapse_count){
+            if(
+              (neuron_input_external != previous_neuron_input_source)
+              ||(static_cast<int>(input_synapse.size()-1) != previous_neuron_input_index)
+            )neuron_synapse_count = 0; /* Close synapse! */
+          }
+          previous_neuron_input_index = input_synapse.size(); /* Update previous neuron input source as well */
+          previous_neuron_input_source = neuron_input_external;/* since the input was added to be taken from the @Partial_solution inputs */
           add_to_synapse( /* Neural input shall be added from the input of the @Partial_solution */
             Synapse_iterator::synapse_index_from_input_index(input_synapse.size()),
             neuron_synapse_count, partial.get().mutable_inside_indices()
@@ -56,7 +65,7 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
             neuron_input_index, partial_input_synapse_count,
             partial.get().mutable_input_data()
           );
-        } /* Neuron input was found internally in the @Partial_solution */
+        }/* Neuron input was found internally in the @Partial_solution */
       }/* Neuron input was found in the @Partial_solution inputs, continue to look for it.. */
     });
 
@@ -86,17 +95,12 @@ bool Partial_solution_builder::look_for_neuron_input(int neuron_input_index){
   if(candidate_synapse_index < input_synapse.size()){ /* Found the neuron input in the candidate synapse inputs */
     /* Check if the newly added Neuron synapse can be continued based on value, or a new Synapse needs to be added */
     if(0 < neuron_synapse_count){
-      if((
-          (neuron_input_external != previous_neuron_input_source)
-        )||(
-          (Synapse_iterator::is_index_input(input_synapse[candidate_synapse_index]))
-          &&(input_synapse[candidate_synapse_index]+1 != previous_neuron_input_index)
-        )||(
-          (!Synapse_iterator::is_index_input(input_synapse[candidate_synapse_index]))
-          &&(input_synapse[candidate_synapse_index]-1 != previous_neuron_input_index)
-      ))neuron_synapse_count = 0; /* Close synapse! */
+      if(
+        (neuron_input_external != previous_neuron_input_source)
+        ||(static_cast<int>(candidate_synapse_index-1) != previous_neuron_input_index)
+      )neuron_synapse_count = 0; /* Close synapse! */
     }
-    previous_neuron_input_index = input_synapse[candidate_synapse_index];
+    previous_neuron_input_index = candidate_synapse_index;
     previous_neuron_input_source = neuron_input_external;
     add_to_synapse(
       Synapse_iterator::synapse_index_from_input_index(candidate_synapse_index), neuron_synapse_count,
@@ -110,22 +114,22 @@ bool Partial_solution_builder::look_for_neuron_input_internally(uint32 neuron_in
 
   using std::for_each;
 
-  uint32 partial_solution_index = 0;
+  uint32 inner_neuron_index = 0;
   for(uint32 i = 0; i < partial.get().internal_neuron_number(); ++i){
-    if(neuron_input_index != partial.get().actual_index(i))++partial_solution_index;
+    if(neuron_input_index != partial.get().actual_index(i))++inner_neuron_index;
     else{
       if(0 < neuron_synapse_count){
         if(
           (neuron_input_internal != previous_neuron_input_source)
-          ||(static_cast<int>(neuron_input_index)-1 != previous_neuron_input_index)
+          ||(static_cast<int>(inner_neuron_index)-1 != previous_neuron_input_index)
         ){
           neuron_synapse_count = 0; /* Close synapse! */
         }
       }
-      previous_neuron_input_index = neuron_input_index;
+      previous_neuron_input_index = inner_neuron_index;
       previous_neuron_input_source = neuron_input_internal;
-      add_to_synapse( /* The Neuron input point to an internal Neuron (no conversion to input synapse index) */
-        partial_solution_index, neuron_synapse_count,
+      add_to_synapse( /* The Neuron input points to an internal Neuron (no conversion to input synapse index) */
+        inner_neuron_index, neuron_synapse_count,
         partial.get().mutable_inside_indices()
       );
       return true;

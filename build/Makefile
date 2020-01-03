@@ -33,7 +33,7 @@ LIB_OUTPUT = ../lib/libsparsenetlib.a
 build_library: clean $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
 
-gen: #as in generate models; Can't be bothered to type something like `make generate-protocol-buffer-files` every time../cxx.
+gen: #as in generate models; Can't be bothered to type something like `make generate-protocol-buffer-files` every time...
 	./gen_models.bat
 
 $(NET_OBJECTS):
@@ -87,6 +87,7 @@ run-tests: $(TEST_RESULT)
 	./$(TEST_RESULT) --use-colour yes
 
 loop-tests:
+	@clear
 	for ((i=1; i <= ${TEST_LOOPS}; ++i)) do ./$(TEST_RESULT) --use-colour yes | grep FAILED: -A 5; done
 
 test-solution-builder: clean build_library
