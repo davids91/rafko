@@ -87,7 +87,6 @@ run-tests: $(TEST_RESULT)
 	./$(TEST_RESULT) --use-colour yes
 
 loop-tests:
-	@clear
 	for ((i=1; i <= ${TEST_LOOPS}; ++i)) do ./$(TEST_RESULT) --use-colour yes | grep FAILED: -A 5; done
 
 test-solution-builder: clean build_library

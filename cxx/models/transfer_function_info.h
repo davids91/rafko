@@ -1,22 +1,20 @@
-#ifndef Transfer_function_info_H
-#define Transfer_function_info_H
+#ifndef TRANSFER_FUNCTION_INFO_H
+#define TRANSFER_FUNCTION_INFO_H
 
 #include <vector>
 
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
 
-namespace sparse_net_library {
+namespace sparse_net_library{
 
 using std::vector;
 
-class Transfer_function_info
-{
+/**
+ * @brief      Transfer function handling and utilities
+ */
+class Transfer_function_info{
 public:
-  static sdouble32 epsilon; /* very small positive value almost greater, than 0.0 */
-  static sdouble32 alpha; 
-  static sdouble32 lambda;
-
   /**
    * @brief      Gives a random Transfer Function
    *
@@ -41,8 +39,25 @@ public:
    * @return     The average output range.
    */
   static sdouble32 get_average_output_range(transfer_functions function);
+
+  /**
+   * @brief      Apply the given transfer function to the given data
+   *
+   * @param[in]  function  The function to apply
+   * @param      data      The data to apply it to
+   */
   static void apply_to_data(transfer_functions function, sdouble32& data);
+
+  /**
+   * @brief      Gets a functions derivative calculated form the given data
+   *
+   * @param[in]  function  The function to use
+   * @param      data      The data to use
+   *
+   * @return     The derivative from data.
+   */
+  static sdouble32 get_derivative_from_data(transfer_functions function, sdouble32& data);
 };
 
 } /* namespace sparse_net_library */
-#endif // Transfer_function_info_H
+#endif /* TRANSFER_FUNCTION_INFO_H */

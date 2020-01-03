@@ -16,7 +16,7 @@ Dense_net_weight_initializer::Dense_net_weight_initializer(bool seed){
 }
 
 Dense_net_weight_initializer::Dense_net_weight_initializer(sdouble32 memRatioMin, sdouble32 memRatioMax){
-  memMin = max(Transfer_function_info::epsilon, min(1.0, memRatioMin));
+  memMin = max(epsilon, min(1.0, memRatioMin));
   memMax = min(1.0, max(memMin,memRatioMax));
 }
 
@@ -33,7 +33,7 @@ sdouble32 Dense_net_weight_initializer::get_weight_amplitude(transfer_functions 
   default:
     amplitude = (sqrt(2 / (expected_input_number * expected_input_maximum_value)));
   }
-  return max(Transfer_function_info::epsilon,amplitude);
+  return max(epsilon,amplitude);
 }
 
 sdouble32 Dense_net_weight_initializer::next_weight_for(transfer_functions used_transfer_function) const{

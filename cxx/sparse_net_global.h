@@ -14,18 +14,19 @@ namespace sparse_net_library {
  *  - #2 in SparseNetBuilder::neuron_array validate the whole of the array if possible
  *  - #3 Set Arena options for memory usage
  *  - #4 Remove actual_index from @Partial solution, substitue with @output_data synapse
- *  - #5 Implement weight sharing in @Partial_solution_builder
- *  - #6 
+ *  - #5 Implement weight sharing in @Partial_solution_builder (?)
+ *  - #6 Implement Softmax activation function
  *  - #7 use Exception Class with String formatter
  *  - #8 Add Partial Solution tests to more complex structures as well
- *  - #9 
- *  - #10 
+ *  - #9 Implement and test Gradient calculation
+ *  - #10 Implement the protocol buffer server
  *  - #11 
  *  - #12 test transfer function info
  *  - #13 use the protobuffer version verifier
  *  - #14 make make paralell by -j
  *  - #15 
  */
+
 /**
  * GLOBAL TYPES
  */
@@ -40,6 +41,13 @@ typedef signed char sint8;
 typedef double sdouble32;
 typedef uint16* p_uint16;
 typedef sdouble32* p_sdouble32;
+
+/**
+ * GLOBAL PARAMETERS
+ *//* Later to be migrated to the server implementation.. */
+extern sdouble32 epsilon; /* very small positive value almost greater, than 0.0 */
+extern sdouble32 lambda; 
+extern sdouble32 alpha; 
 
 } /* namespace sparse_net_library */
 #endif /* defined sparse_net_global_H */

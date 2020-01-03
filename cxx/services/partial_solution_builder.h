@@ -32,6 +32,13 @@ public:
    */
   void add_neuron_to_partial_solution(uint32 neuron_index);
 
+  /**
+   * @brief      Adds the given index to teh given synapse
+   *
+   * @param[in]  index                  The Neuron or Weight index
+   * @param      current_synapse_count  The number of elements currently present in the synapse
+   * @param      synapse_intervals      The array of synapses to add the index to
+   */
   static void add_to_synapse(int index, uint32& current_synapse_count, RepeatedPtrField<Synapse_interval>* synapse_intervals){
     if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
       ++current_synapse_count;
@@ -46,11 +53,38 @@ public:
   }
 
 private:
+
+  /**
+   * @brief      Looks for the given Neuron index in the @Partial_solution input,
+   *             and adds the input to it if found
+   *
+   * @param[in]  neuron_input_index  The neuron input index to look for
+   *
+   * @return     returns true if the neuron index was found in the @Partial_solution input
+   */
   bool look_for_neuron_input(int neuron_input_index);
+
+  /**
+   * @brief      Looks for the given Neuron index in the @Partial_solution internally,
+   *             and adds the input to it if found
+   *
+   * @param[in]  neuron_input_index  The neuron input index to look for
+   *
+   * @return     returns true if the neuron index was found in the @Partial_solution Inner Neurons
+   */
   bool look_for_neuron_input_internally(uint32 neuron_input_index);
+
+  /**
+   * Global references to help build the solution
+   */
   reference_wrapper<const SparseNet> net;
   reference_wrapper<Partial_solution> partial;
   Synapse_iterator input_synapse;
+
+  /**
+   * Temporary helper variables used only during Neuron mapping which is started by @add_neuron_to_partial_solution
+   * but used additionally in @look_for_neuron_input_internally and @look_for_neuron_input
+   */
   uint32 neuron_synapse_count = 0;
   uint32 partial_input_synapse_count = 0;
   int previous_neuron_input_index;
