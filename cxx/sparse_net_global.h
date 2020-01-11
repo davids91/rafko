@@ -25,7 +25,8 @@ namespace sparse_net_library {
  *  - #13 use the protobuffer version verifier
  *  - #14 make make paralell by -j
  *  - #15 Implement Disentanglement
- *  - #16  Implement Calcium excitation: A value is added for each Neuron input: the difference from the average inputs ( ? )
+ *  - #16  Implement Calcium excitation: A value is added for each Neuron input: the difference from the other inputs ( ? simulate XOR with 1 Neuron somehow? )
+ *  - #17 - neuron memory Spike function: f(prev, curr, neuron_param) = prev + (prev - curr)* neuron_param
  */
 
 /**

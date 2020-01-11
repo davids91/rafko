@@ -1,12 +1,10 @@
-#include <time.h>
-
-#include <iostream>
-
 #include "services/sparse_net_builder.h"
 
 #include "models/dense_net_weight_initializer.h"
 #include "models/neuron_info.h"
 #include "services/synapse_iterator.h"
+
+#include <time.h>
 
 namespace sparse_net_library {
 
@@ -93,7 +91,7 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes, vector<vect
 }
 
 SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
-  
+
   using std::make_shared;
 
   uint32 previous_size = 0;
@@ -148,7 +146,7 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
 
       /* Add the Neurons */
       expPrevLayerOutput = 0;
-      for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++){ 
+      for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++){
         arg_weight_table[weightIt] = arg_weight_initer->next_bias();
         arg_weight_table[weightIt+1] = arg_weight_initer->next_memory_filter();
         arg_neuron_array[neurIt].set_bias_idx(weightIt);
@@ -198,7 +196,7 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
         layerStart += previous_size;
       }
       previous_size = layer_sizes[layerIt];
-    } /* Itearte through all of the layers */ 
+    } /* Itearte through all of the layers */
 
     set_weight_table(ret);
     set_neuron_array(ret);

@@ -15,13 +15,13 @@ message Neuron{
   transfer_functions transfer_function_idx = 3; /* index of the transfer funtion this Neuron uses, empty is invalid */
 
   /**
-   * Input weights shall only contain positive intervals, 
+   * Input weights shall only contain positive intervals,
    * each interval corresponding to an index in the @weight_table in the @SparseNet
    */
   repeated Synapse_interval input_weights = 4;
 
   /**
-   * Input indices describes intervals denoting the neurons inputs. 
+   * Input indices describes intervals denoting the neurons inputs.
    * Each positive interval corresponds to indices in the internal data of a @Neuron stored in the @Solution_solver
    * Each negative interval corresponds to indices in the input data given to the @Solution_solver
    */
@@ -32,8 +32,6 @@ message Neuron{
  *              Neurons and optimization cache files
  */
 message SparseNet{
-  error_functions error_function = 1;
-
   uint32 input_data_size = 10; /* Number of inputs (floating point numbers) accepted by the Neural network */
   uint32 output_neuron_number = 11; /* Number of outputs the Neural network has */
 
