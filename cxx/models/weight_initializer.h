@@ -8,13 +8,17 @@
 
 namespace sparse_net_library {
 
+  using std::min;
+  using std::max;
+  using std::numeric_limits;
+
 class Weight_initializer
 {
 public:
   /**
    * @brief      Constructs the object.
    */
-  Weight_initializer() noexcept;
+  Weight_initializer() noexcept{};
 
   /**
    * @brief      Calculate a weight which fits the Neuron the most based on the configuration parameters
@@ -34,7 +38,7 @@ public:
   virtual sdouble32 next_memory_filter() const = 0;
 
   /**
-   * @brief      Calculate a bias which fits the Neuron the most based on the configuration parameters 
+   * @brief      Calculate a bias which fits the Neuron the most based on the configuration parameters
    *
    * @return     The Calculated Bias value
    */
@@ -46,7 +50,19 @@ public:
    * @param[in]  expected_input_number             The exponent input number
    * @param[in]  expected_input_maximum_value_     The exponent input maximum
    */
-  void set(uint32 expected_input_number, sdouble32 expected_input_maximum_value_);
+  void set(uint32 expected_input_number_, sdouble32 expected_input_maximum_value_){
+    expected_input_number = max(1u,expected_input_number_);
+
+    if( /* Primitive check if the given number causes overflow or not */
+      (numeric_limits<sdouble32>::max() > (expected_input_number_ * abs(expected_input_maximum_value_)))
+    ){
+      expected_input_maximum_value = expected_input_maximum_value_;
+    }else if(0.0 == expected_input_maximum_value_){
+      expected_input_maximum_value = numeric_limits<sdouble32>::epsilon();
+    }else{ /* Overflow! Use maximum value */
+      expected_input_maximum_value = numeric_limits<sdouble32>::max() / expected_input_number_;
+    }
+  }
 
   /**
    * @brief      Calculate a weight which fits the Neuron the most based on the configuration parameters
@@ -54,7 +70,9 @@ public:
    *
    * @return     The Calculated Weight value
    */
-  sdouble32 next_weight() const;
+  sdouble32 next_weight() const{
+    return next_weight_for(TRANSFER_FUNCTION_IDENTITY);
+  }
 protected:
 
   /**
@@ -64,10 +82,12 @@ protected:
    *
    * @return     Limited value
    */
-  sdouble32 limit_weight(sdouble32 weight) const;
+  sdouble32 limit_weight(sdouble32 weight) const{
+    return min(1.0,max(-1.0,weight));
+  }
 
   /**
-   * Number of estimated @Neuron inputs expected 
+   * Number of estimated @Neuron inputs expected
    */
   uint32 expected_input_number = 0;
 

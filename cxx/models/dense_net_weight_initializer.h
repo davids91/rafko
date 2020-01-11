@@ -6,17 +6,16 @@
 namespace sparse_net_library {
 
 /**
- * @brief      Class for dense net weight initializer. The member functions of the class are documented 
+ * @brief      Class for dense net weight initializer. The member functions of the class are documented
  *             under @Weight_initializer. The Aim of this specialization is to provide correct weight,
- *             bias and memory filter initalization to Fully Connected(Dense) Feedforward Neural networks. 
+ *             bias and memory filter initalization to Fully Connected(Dense) Feedforward Neural networks.
  */
-class Dense_net_weight_initializer : public Weight_initializer
-{
+class Dense_net_weight_initializer : public Weight_initializer{
 public:
 
   /**
    * @brief      Constructs the object and calls the srand function with the given arguments.
-   *             To srand with time(nullptr), the constructor needs to be called with 
+   *             To srand with time(nullptr), the constructor needs to be called with
    *             a true boolean argument or given a seed value.
    */
   Dense_net_weight_initializer(bool seed);
@@ -36,13 +35,13 @@ private:
   sdouble32 memMax = 1.0;
 
   /**
-   * @brief      Gets the expected amplitude for a weight with the given transfer function 
-   *             and configured parameters. Should always be a positive number above 
+   * @brief      Gets the expected amplitude for a weight with the given transfer function
+   *             and configured parameters. Should always be a positive number above
    *             @Transfer_function::epsilon
    *
    * @param[in]  used_transfer_function  The basis transfer function
    *
-   * @return     Expected weight amplitude 
+   * @return     Expected weight amplitude
    */
   sdouble32 get_weight_amplitude(transfer_functions used_transfer_function) const;
 

@@ -20,11 +20,12 @@ namespace sparse_net_library {
  *  - #8 Add Partial Solution tests to more complex structures as well
  *  - #9 Implement and test Gradient calculation
  *  - #10 Implement the protocol buffer server
- *  - #11 
+ *  - #11 Implement Regularization ( L1, L2 )
  *  - #12 test transfer function info
  *  - #13 use the protobuffer version verifier
  *  - #14 make make paralell by -j
- *  - #15 
+ *  - #15 Implement Disentanglement
+ *  - #16  Implement Calcium excitation: A value is added for each Neuron input: the difference from the average inputs ( ? )
  */
 
 /**
@@ -46,8 +47,8 @@ typedef sdouble32* p_sdouble32;
  * GLOBAL PARAMETERS
  *//* Later to be migrated to the server implementation.. */
 extern sdouble32 epsilon; /* very small positive value almost greater, than 0.0 */
-extern sdouble32 lambda; 
-extern sdouble32 alpha; 
+extern sdouble32 lambda;
+extern sdouble32 alpha;
 
 } /* namespace sparse_net_library */
 #endif /* defined sparse_net_global_H */

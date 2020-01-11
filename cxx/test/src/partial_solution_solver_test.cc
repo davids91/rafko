@@ -8,7 +8,6 @@
 #include "gen/solution.pb.h"
 #include "models/transfer_function.h"
 #include "services/partial_solution_solver.h"
-#include "services/sparse_net_solver.h"
 #include "services/synapse_iterator.h"
 
 namespace sparse_net_library_test {
@@ -52,12 +51,12 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial_sol
 
   /* Prepare a partial_solution */
   manual_2_neuron_partial_solution(partial_solution, network_inputs.size());
-  
+
   /* Add relevant Partial solution input (the input of the first @Neuron) */
   temp_synapse_interval.set_starts(Synapse_iterator::synapse_index_from_input_index(0));
   temp_synapse_interval.set_interval_size(network_inputs.size());
   *partial_solution.add_input_data() = temp_synapse_interval;
-  
+
   /* Test the partial_solution */
   Partial_solution_solver solver(partial_solution);
   solver.collect_input_data(network_inputs,{});
@@ -115,7 +114,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial_solution][in
   partial_solution.set_internal_neuron_number(network_inputs.size());
   partial_solution.add_weight_table(0.0);  /* A weight for the biases and memory filters */
   for(uint32 i = 0; i < network_inputs.size(); ++i){
-    partial_solution.add_weight_table(1.0); 
+    partial_solution.add_weight_table(1.0);
     partial_solution.add_actual_index(i);
     partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
     partial_solution.add_memory_filter_index(0);
@@ -130,7 +129,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial_solution][in
     temp_synapse_interval.set_starts(1u);
     temp_synapse_interval.set_interval_size(1u); /* weight of 1 here */
     *partial_solution.add_weight_indices() = temp_synapse_interval;
-  } 
+  }
 
   /**###################################################################################################
    * Add the partial solution inputs
