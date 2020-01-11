@@ -3,13 +3,13 @@
 #include "test/catch.hpp"
 
 #include "test/test_mockups.h"
-#include "models/transfer_function_info.h"
+#include "models/transfer_function.h"
 #include "services/synapse_iterator.h"
 
 namespace sparse_net_library_test{
 
 using sparse_net_library::sdouble32;
-using sparse_net_library::Transfer_function_info;
+using sparse_net_library::Transfer_function;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Synapse_interval;
@@ -43,8 +43,8 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
    * The first neuron shall have the inputs
    */
   partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
-  partial_solution.add_memory_ratio_index(number_of_inputs + 1); /* input weights + first neuron weight + first index */
-  partial_solution.add_bias_index(number_of_inputs + 2 + 1); /* input weights + first neuron weight + memory ratios + first index*/
+  partial_solution.add_memory_filter_index(number_of_inputs + 1); /* input weights + first neuron weight + first index */
+  partial_solution.add_bias_index(number_of_inputs + 2 + 1); /* input weights + first neuron weight + memory filters + first index*/
 
   /* inputs go to neuron1 */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights */
@@ -61,8 +61,8 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
    * The second Neuron shall only have the first neuron as input
    */
   partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
-  partial_solution.add_memory_ratio_index(number_of_inputs + 2u); /* input weights + first neuron weight + second index */
-  partial_solution.add_bias_index(number_of_inputs + 2u + 2u); /* input weights + first neuron weight + memory ratios + second index*/
+  partial_solution.add_memory_filter_index(number_of_inputs + 2u); /* input weights + first neuron weight + second index */
+  partial_solution.add_bias_index(number_of_inputs + 2u + 2u); /* input weights + first neuron weight + memory filters + second index*/
 
   /* neuron1 goes to neuron2;  that is the output which isn't in the inside indexes */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights*/
@@ -84,17 +84,17 @@ void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdou
   }
 
   neuron1_result += partial_solution.weight_table(partial_solution.bias_index(0));
-  Transfer_function_info::apply_to_data(partial_solution.neuron_transfer_functions(0),neuron1_result);
-  prev_neuron_output[neuron_offset + 0] = prev_neuron_output[neuron_offset + 0] * partial_solution.weight_table(partial_solution.memory_ratio_index(0))
-   + neuron1_result * (1.0 - partial_solution.weight_table(partial_solution.memory_ratio_index(0)));
+  Transfer_function::apply_to_data(partial_solution.neuron_transfer_functions(0),neuron1_result);
+  prev_neuron_output[neuron_offset + 0] = prev_neuron_output[neuron_offset + 0] * partial_solution.weight_table(partial_solution.memory_filter_index(0))
+   + neuron1_result * (1.0 - partial_solution.weight_table(partial_solution.memory_filter_index(0)));
 
   /* Neuron 2 = transfer_function( (Neuron1 * weight[inputs + 1]) + bias1 ) */
   sdouble32 neuron2_result = (prev_neuron_output[neuron_offset + 0] * partial_solution.weight_table(partial_inputs.size()))
    + partial_solution.weight_table(partial_solution.bias_index(1));
 
-  Transfer_function_info::apply_to_data(partial_solution.neuron_transfer_functions(1),neuron2_result);
-  prev_neuron_output[neuron_offset + 1] = prev_neuron_output[neuron_offset + 1] * partial_solution.weight_table(partial_solution.memory_ratio_index(1))
-   + neuron2_result * (1.0 - partial_solution.weight_table(partial_solution.memory_ratio_index(1)));
+  Transfer_function::apply_to_data(partial_solution.neuron_transfer_functions(1),neuron2_result);
+  prev_neuron_output[neuron_offset + 1] = prev_neuron_output[neuron_offset + 1] * partial_solution.weight_table(partial_solution.memory_filter_index(1))
+   + neuron2_result * (1.0 - partial_solution.weight_table(partial_solution.memory_filter_index(1)));
 }
 
 void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdouble32>& neuron_data, 
@@ -133,10 +133,10 @@ void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdo
       }
     }); /* For every input in the Neuron sum the weigthed input*/
     new_neuron_data += network.weight_table(neuron.bias_idx()); /* add bias */
-    Transfer_function_info::apply_to_data(neuron.transfer_function_idx(),new_neuron_data); /* apply transfer function */
-    neuron_data[neuron_iterator] = /* Apply memory ratio and save output to Neuron data */
-      neuron_data[neuron_iterator] * (network.weight_table(neuron.memory_ratio_idx())) 
-      + new_neuron_data * (1.0 - network.weight_table(neuron.memory_ratio_idx()));
+    Transfer_function::apply_to_data(neuron.transfer_function_idx(),new_neuron_data); /* apply transfer function */
+    neuron_data[neuron_iterator] = /* Apply memory filter and save output to Neuron data */
+      neuron_data[neuron_iterator] * (network.weight_table(neuron.memory_filter_idx())) 
+      + new_neuron_data * (1.0 - network.weight_table(neuron.memory_filter_idx()));
   } /* For every Neuron */
 }
 

@@ -1,4 +1,4 @@
-#include "models/Transfer_function_info.h"
+#include "models/transfer_function.h"
 
 #include <cmath>
 
@@ -10,7 +10,7 @@ sdouble32 epsilon = 1e-15;
 sdouble32 lambda = 1.0507;
 sdouble32 alpha = 1.6732;
 
-transfer_functions Transfer_function_info::next(){
+transfer_functions Transfer_function::next(){
   return next({
     TRANSFER_FUNCTION_IDENTITY,
     TRANSFER_FUNCTION_SIGMOID,
@@ -21,14 +21,14 @@ transfer_functions Transfer_function_info::next(){
   });
 }
 
-transfer_functions Transfer_function_info::next(vector<transfer_functions> range){
+transfer_functions Transfer_function::next(vector<transfer_functions> range){
   transfer_functions candidate = static_cast<transfer_functions>(rand()%transfer_functions_ARRAYSIZE);
   while(find(range.begin(), range.end(), candidate) == range.end())
     candidate = static_cast<transfer_functions>(rand()%transfer_functions_ARRAYSIZE);
   return candidate;
 }
 
-sdouble32 Transfer_function_info::get_average_output_range(transfer_functions function){
+sdouble32 Transfer_function::get_average_output_range(transfer_functions function){
   switch(function){
   case TRANSFER_FUNCTION_SIGMOID:
   case TRANSFER_FUNCTION_TANH:
@@ -42,7 +42,7 @@ sdouble32 Transfer_function_info::get_average_output_range(transfer_functions fu
   }
 }
 
-void Transfer_function_info::apply_to_data(transfer_functions function, sdouble32& data){
+void Transfer_function::apply_to_data(transfer_functions function, sdouble32& data){
   switch(function){
     case TRANSFER_FUNCTION_IDENTITY: break; /* Identity means f(x) = x */
     case TRANSFER_FUNCTION_SIGMOID: data = 1/(1+exp(-data)); break;
@@ -54,7 +54,7 @@ void Transfer_function_info::apply_to_data(transfer_functions function, sdouble3
   }
 }
 
-sdouble32 Transfer_function_info::get_derivative_from_data(transfer_functions function, sdouble32& data){
+sdouble32 Transfer_function::apply_derivative(transfer_functions function, sdouble32& data){
   switch(function){
     case TRANSFER_FUNCTION_IDENTITY: return 1; /* Identity means f(x) = x */
     case TRANSFER_FUNCTION_SIGMOID: return exp(data)/pow((exp(data) + 1),2);

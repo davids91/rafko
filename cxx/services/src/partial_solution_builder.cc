@@ -14,8 +14,8 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
 
     /* Copy in Neuron parameters */
     partial.get().add_neuron_transfer_functions(neuron.transfer_function_idx());
-    partial.get().add_memory_ratio_index(partial.get().weight_table_size());
-    partial.get().add_weight_table(net.get().weight_table(neuron.memory_ratio_idx()));
+    partial.get().add_memory_filter_index(partial.get().weight_table_size());
+    partial.get().add_weight_table(net.get().weight_table(neuron.memory_filter_idx()));
     partial.get().add_bias_index(partial.get().weight_table_size());
     partial.get().add_weight_table(net.get().weight_table(neuron.bias_idx()));
 

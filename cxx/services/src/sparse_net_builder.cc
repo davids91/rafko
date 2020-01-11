@@ -101,13 +101,13 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
   Synapse_interval temp_synapse_interval;
   /* Calculate number of weights needed overall
    * - Input Layer shall have a weight for every input for every neuron
-   * - Input Layer shall have a weight for every bias and memory_ratio for every neuron
+   * - Input Layer shall have a weight for every bias and memory_filter for every neuron
    */
   uint64 numWeights = (layer_sizes[0] * arg_input_size) + (2 * layer_sizes[0]); /* The first layer only takes input from the @SparseNet input data */
   for(uint32 layerSize : layer_sizes){
     numNeurons += layerSize; /* Calculate the number of elements needed */
     numWeights += previous_size * layerSize; /* Calculate the number of weights needed */
-    numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_ratio amongst the weights */
+    numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_filter amongst the weights */
     previous_size = layerSize;
   }
 
@@ -122,7 +122,7 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
     uint32 layerStart = 0;
     uint64 weightIt = 0;
     uint64 neurIt = 0;
-    sdouble32 expPrevLayerOutput = Transfer_function_info::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
+    sdouble32 expPrevLayerOutput = Transfer_function::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
 
     ret->set_input_data_size(arg_input_size);
     ret->set_output_neuron_number(layer_sizes.back());
@@ -150,20 +150,20 @@ SparseNet* SparseNetBuilder::denseLayers(vector<uint32> layer_sizes){
       expPrevLayerOutput = 0;
       for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++){ 
         arg_weight_table[weightIt] = arg_weight_initer->next_bias();
-        arg_weight_table[weightIt+1] = arg_weight_initer->next_memory_ratio();
+        arg_weight_table[weightIt+1] = arg_weight_initer->next_memory_filter();
         arg_neuron_array[neurIt].set_bias_idx(weightIt);
-        arg_neuron_array[neurIt].set_memory_ratio_idx(weightIt+1);
+        arg_neuron_array[neurIt].set_memory_filter_idx(weightIt+1);
         weightIt += 2;
         if(is_allowed_transfer_functions_by_layer_set){
           arg_neuron_array[neurIt].set_transfer_function_idx(
-            Transfer_function_info::next(arg_allowed_transfer_functions_by_layer[layerIt])
+            Transfer_function::next(arg_allowed_transfer_functions_by_layer[layerIt])
           );
         }else{
-          arg_neuron_array[neurIt].set_transfer_function_idx(Transfer_function_info::next());
+          arg_neuron_array[neurIt].set_transfer_function_idx(Transfer_function::next());
         }
 
         /* Storing the expected output of this Net */
-        if(0 < layerIt)expPrevLayerOutput += Transfer_function_info::get_average_output_range(
+        if(0 < layerIt)expPrevLayerOutput += Transfer_function::get_average_output_range(
           arg_neuron_array[neurIt].transfer_function_idx()
         );
 

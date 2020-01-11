@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "models/transfer_function_info.h"
+#include "models/Transfer_function.h"
 
 namespace sparse_net_library {
 
@@ -68,11 +68,11 @@ vector<sdouble32> Partial_solution_solver::solve(){
     new_neuron_data += detail.get().weight_table(detail.get().bias_index(neuron_iterator));
 
     /* Apply transfer function */
-    Transfer_function_info::apply_to_data(detail.get().neuron_transfer_functions(neuron_iterator), new_neuron_data);
-    /* Apply memory ratio */
+    Transfer_function::apply_to_data(detail.get().neuron_transfer_functions(neuron_iterator), new_neuron_data);
+    /* Apply memory filter */
     neuron_output[neuron_iterator] = (
-      (neuron_output[neuron_iterator] * detail.get().weight_table(detail.get().memory_ratio_index(neuron_iterator)))
-      + (new_neuron_data * (1.0-detail.get().weight_table(detail.get().memory_ratio_index(neuron_iterator))))
+      (neuron_output[neuron_iterator] * detail.get().weight_table(detail.get().memory_filter_index(neuron_iterator)))
+      + (new_neuron_data * (1.0-detail.get().weight_table(detail.get().memory_filter_index(neuron_iterator))))
     );
   } /* Go through the neurons */
   return neuron_output;
@@ -89,7 +89,7 @@ bool Partial_solution_solver::is_valid(void){
     &&(static_cast<int>(detail.get().internal_neuron_number()) == detail.get().weight_synapse_number_size())
     &&(static_cast<int>(detail.get().internal_neuron_number()) == detail.get().actual_index_size())
     &&(static_cast<int>(detail.get().internal_neuron_number()) == detail.get().neuron_transfer_functions_size())
-    &&(static_cast<int>(detail.get().internal_neuron_number()) == detail.get().memory_ratio_index_size())
+    &&(static_cast<int>(detail.get().internal_neuron_number()) == detail.get().memory_filter_index_size())
     &&(static_cast<int>(detail.get().internal_neuron_number()) == detail.get().bias_index_size())
   ){
     int weight_synapse_number = 0;

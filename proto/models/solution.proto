@@ -30,7 +30,7 @@ message Partial_solution{
   /** Parameters each neuron have to post-process their inputs
    */
   repeated transfer_functions neuron_transfer_functions = 11;
-  repeated double memory_ratio_index = 12;
+  repeated double memory_filter_index = 12;
   repeated double bias_index = 13;
 
   /** ################################################################################################

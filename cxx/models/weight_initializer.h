@@ -31,7 +31,7 @@ public:
    *
    * @return     The Calculated Memory ratio
    */
-  virtual sdouble32 next_memory_ratio() const = 0;
+  virtual sdouble32 next_memory_filter() const = 0;
 
   /**
    * @brief      Calculate a bias which fits the Neuron the most based on the configuration parameters 
@@ -50,7 +50,7 @@ public:
 
   /**
    * @brief      Calculate a weight which fits the Neuron the most based on the configuration parameters
-   *             The basis of the number is the Transfer_function_info::TRANSFER_FUNCTION_IDENTITY
+   *             The basis of the number is the Transfer_function::TRANSFER_FUNCTION_IDENTITY
    *
    * @return     The Calculated Weight value
    */

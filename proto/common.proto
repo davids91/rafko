@@ -21,18 +21,18 @@ enum transfer_functions{
  *             The number of @starts and @sizes should always be equal. Each pair of them describes
  *             an index interval where @starts[x] states where the interval x is starting, and @sizes[x]
  *             denotes the number of indices present in taht interval. The intervals are free to overlap
- *             or coincide. 
+ *             or coincide.
  *             The element @starts can be of negative number. The sign of it denotes a different kind of iteration
- *             on the given interval. In case the sign is negative for that element, the interval it describes grows 
- *             in the negative direction. This way two kinds of intervals can be stored in the same synapse. 
+ *             on the given interval. In case the sign is negative for that element, the interval it describes grows
+ *             in the negative direction. This way two kinds of intervals can be stored in the same synapse.
  *             Positive interval starts at 0, goes on indefinitely: [0,+inf]
  *             -Positive intervals usually denote enclosed relationships (e.g.: internal neurons in a @Partial_solution)
  *             Negative interval starts at -1, goes backwards indefinitely: [-1,-inf]
  *             - Negative intervals usually denote external relationships (e.g.: input data of the Neurons in the @Net
  *               or inputs of an Inner Neuron, taken from the @Partial_solution input synapses )
- *             In the class @Synapse_iterator there are methods to map negative intervals into positive array numbers. 
- *             The -1 becomes index 0, -2 ==> 1 and so on... This is needed to be able to use negative intervals as 
- *             indexes in arrays. 
+ *             In the class @Synapse_iterator there are methods to map negative intervals into positive array numbers.
+ *             The -1 becomes index 0, -2 ==> 1 and so on... This is needed to be able to use negative intervals as
+ *             indexes in arrays.
  */
 message Synapse_interval{
   sint32 starts = 10; /* Starting indexes of intervals */

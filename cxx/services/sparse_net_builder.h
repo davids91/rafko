@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "gen/sparse_net.pb.h"
-#include "models/transfer_function_info.h"
+#include "models/transfer_function.h"
 #include "models/weight_initializer.h"
 #include "sparse_net_global.h"
 
@@ -150,7 +150,7 @@ private:
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
    */
-  sdouble32 arg_expected_input_range = Transfer_function_info::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
+  sdouble32 arg_expected_input_range = Transfer_function::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
 
   /**
    * The array containing the neurons while SparseNetBuilder::build is used

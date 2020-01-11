@@ -4,7 +4,7 @@
 #include <time.h>
 
 #include "models/dense_net_weight_initializer.h"
-#include "models/transfer_function_info.h"
+#include "models/transfer_function.h"
 
 namespace sparse_net_library {
 
@@ -42,7 +42,7 @@ sdouble32 Dense_net_weight_initializer::next_weight_for(transfer_functions used_
   );
 }
 
-sdouble32 Dense_net_weight_initializer::next_memory_ratio() const{
+sdouble32 Dense_net_weight_initializer::next_memory_filter() const{
   if(memMin <  memMax){
     sdouble32 diff = memMax - memMin;
     return (0.0 == diff)?0:(

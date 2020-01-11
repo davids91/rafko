@@ -7,7 +7,7 @@
 
 #include "gen/solution.pb.h"
 #include "gen/sparse_net.pb.h"
-#include "models/transfer_function_info.h"
+#include "models/transfer_function.h"
 #include "services/solution_solver.h"
 #include "services/partial_solution_solver.h"
 #include "services/synapse_iterator.h"
@@ -28,7 +28,7 @@ using sparse_net_library::Solution_solver;
 using sparse_net_library::Solution;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Synapse_interval;
-using sparse_net_library::Transfer_function_info;
+using sparse_net_library::Transfer_function;
 
 /*###############################################################################################
  * Testing if the solution solver produces a correct output, given a manually constructed 
@@ -113,30 +113,30 @@ void test_solution_solver_multithread(uint16 threads){
         partial_solutions[1][1].get().set_weight_table(i,static_cast<sdouble32>(rand()%11) / 10.0);
       } /* Modify weights */
 
-      /* Modify Biases, memory ratios and transfer functions */
+      /* Modify Biases, memory filters and transfer functions */
       partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().bias_index(0),static_cast<sdouble32>(rand()%110) / 10.0);
       partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().bias_index(1),static_cast<sdouble32>(rand()%110) / 10.0);
-      partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().memory_ratio_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
-      partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().memory_ratio_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
-      partial_solutions[0][0].get().set_neuron_transfer_functions(rand()%(partial_solutions[0][0].get().neuron_transfer_functions_size()),Transfer_function_info::next());
+      partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
+      partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
+      partial_solutions[0][0].get().set_neuron_transfer_functions(rand()%(partial_solutions[0][0].get().neuron_transfer_functions_size()),Transfer_function::next());
 
       partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().bias_index(0),static_cast<sdouble32>(rand()%110) / 10.0);
       partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().bias_index(1),static_cast<sdouble32>(rand()%110) / 10.0);
-      partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().memory_ratio_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
-      partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().memory_ratio_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
-      partial_solutions[0][1].get().set_neuron_transfer_functions(rand()%(partial_solutions[0][1].get().neuron_transfer_functions_size()),Transfer_function_info::next());
+      partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
+      partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
+      partial_solutions[0][1].get().set_neuron_transfer_functions(rand()%(partial_solutions[0][1].get().neuron_transfer_functions_size()),Transfer_function::next());
 
       partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().bias_index(0),static_cast<sdouble32>(rand()%110) / 10.0);
       partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().bias_index(1),static_cast<sdouble32>(rand()%110) / 10.0);
-      partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().memory_ratio_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
-      partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().memory_ratio_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
-      partial_solutions[1][0].get().set_neuron_transfer_functions(rand()%(partial_solutions[1][0].get().neuron_transfer_functions_size()),Transfer_function_info::next());
+      partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
+      partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
+      partial_solutions[1][0].get().set_neuron_transfer_functions(rand()%(partial_solutions[1][0].get().neuron_transfer_functions_size()),Transfer_function::next());
 
       partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().bias_index(0),static_cast<sdouble32>(rand()%110) / 10.0);
       partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().bias_index(1),static_cast<sdouble32>(rand()%110) / 10.0);
-      partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().memory_ratio_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
-      partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().memory_ratio_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
-      partial_solutions[1][1].get().set_neuron_transfer_functions(rand()%(partial_solutions[1][1].get().neuron_transfer_functions_size()),Transfer_function_info::next());
+      partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
+      partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
+      partial_solutions[1][1].get().set_neuron_transfer_functions(rand()%(partial_solutions[1][1].get().neuron_transfer_functions_size()),Transfer_function::next());
     }
     /* Calculate the expected output */
     manual_2_neuron_result(

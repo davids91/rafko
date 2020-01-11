@@ -1,5 +1,5 @@
-#ifndef TRANSFER_FUNCTION_INFO_H
-#define TRANSFER_FUNCTION_INFO_H
+#ifndef TRANSFER_FUNCTION_H
+#define TRANSFER_FUNCTION_H
 
 #include <vector>
 
@@ -13,7 +13,7 @@ using std::vector;
 /**
  * @brief      Transfer function handling and utilities
  */
-class Transfer_function_info{
+class Transfer_function{
 public:
   /**
    * @brief      Gives a random Transfer Function
@@ -56,8 +56,8 @@ public:
    *
    * @return     The derivative from data.
    */
-  static sdouble32 get_derivative_from_data(transfer_functions function, sdouble32& data);
+  static sdouble32 apply_derivative(transfer_functions function, sdouble32& data);
 };
 
 } /* namespace sparse_net_library */
-#endif /* TRANSFER_FUNCTION_INFO_H */
+#endif /* TRANSFER_FUNCTION_H */

@@ -8,7 +8,7 @@ namespace sparse_net_library {
 /**
  * @brief      Class for dense net weight initializer. The member functions of the class are documented 
  *             under @Weight_initializer. The Aim of this specialization is to provide correct weight,
- *             bias and memory ratio initalization to Fully Connected(Dense) Feedforward Neural networks. 
+ *             bias and memory filter initalization to Fully Connected(Dense) Feedforward Neural networks. 
  */
 class Dense_net_weight_initializer : public Weight_initializer
 {
@@ -28,7 +28,7 @@ public:
    */
   void set(uint32 expected_input_number, sdouble32 expected_input_maximum_value_);
   sdouble32 next_weight_for(transfer_functions used_transfer_function) const;
-  sdouble32 next_memory_ratio() const;
+  sdouble32 next_memory_filter() const;
   sdouble32 next_bias() const;
 
 private:
@@ -38,7 +38,7 @@ private:
   /**
    * @brief      Gets the expected amplitude for a weight with the given transfer function 
    *             and configured parameters. Should always be a positive number above 
-   *             @Transfer_function_info::epsilon
+   *             @Transfer_function::epsilon
    *
    * @param[in]  used_transfer_function  The basis transfer function
    *

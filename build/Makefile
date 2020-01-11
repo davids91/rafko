@@ -15,10 +15,10 @@ SOLVER_SOURCES = ../cxx/services/src/sparse_net_solver.cc
 SOLVER_SOURCES += ../cxx/services/src/partial_solution_solver.cc ../cxx/services/src/solution_solver.cc
 SOLVER_OBJECTS = sparse_net_solver.o partial_solution_solver.o solution_solver.o
 
-HELPER_SOURCES = ../cxx/models/src/transfer_function_info.cc ../cxx/services/src/synapse_iterator.cc
+HELPER_SOURCES = ../cxx/models/src/Transfer_function.cc ../cxx/services/src/synapse_iterator.cc
 HELPER_SOURCES += ../cxx/models/src/weight_initializer.cc ../cxx/models/src/dense_net_weight_initializer.cc
 HELPER_SOURCES += ../cxx/services/src/neuron_router.cc ../cxx/models/src/neuron_info.cc
-HELPER_OBJECTS = transfer_function_info.o synapse_iterator.o
+HELPER_OBJECTS = Transfer_function.o synapse_iterator.o
 HELPER_OBJECTS += weight_initializer.o dense_net_weight_initializer.o
 HELPER_OBJECTS += neuron_router.o  neuron_info.o
 

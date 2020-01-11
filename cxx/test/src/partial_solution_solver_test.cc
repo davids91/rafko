@@ -6,7 +6,7 @@
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
-#include "models/transfer_function_info.h"
+#include "models/transfer_function.h"
 #include "services/partial_solution_solver.h"
 #include "services/sparse_net_solver.h"
 #include "services/synapse_iterator.h"
@@ -23,7 +23,7 @@ using sparse_net_library::transfer_functions;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Partial_solution_solver;
-using sparse_net_library::Transfer_function_info;
+using sparse_net_library::Transfer_function;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Synapse_interval;
 
@@ -86,13 +86,13 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial_sol
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_output[1]).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
-    partial_solution.set_weight_table(partial_solution.memory_ratio_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
-    partial_solution.set_weight_table(partial_solution.memory_ratio_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
+    partial_solution.set_weight_table(partial_solution.memory_filter_index(0),static_cast<sdouble32>(rand()%11) / 10.0);
+    partial_solution.set_weight_table(partial_solution.memory_filter_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
     neuron_output = solver.solve();
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_output[1]).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
-    partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),Transfer_function_info::next());
+    partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),Transfer_function::next());
     neuron_output = solver.solve();
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_output[1]).epsilon(0.00000000000001) == expected_neuron_output[1] );
@@ -113,12 +113,12 @@ TEST_CASE("Test Partial solution input collection","[solve][partial_solution][in
   Synapse_interval temp_synapse_interval;
 
   partial_solution.set_internal_neuron_number(network_inputs.size());
-  partial_solution.add_weight_table(0.0);  /* A weight for the biases and memory ratios */
+  partial_solution.add_weight_table(0.0);  /* A weight for the biases and memory filters */
   for(uint32 i = 0; i < network_inputs.size(); ++i){
     partial_solution.add_weight_table(1.0); 
     partial_solution.add_actual_index(i);
     partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
-    partial_solution.add_memory_ratio_index(0);
+    partial_solution.add_memory_filter_index(0);
     partial_solution.add_bias_index(0);
 
     partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights */

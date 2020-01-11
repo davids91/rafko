@@ -57,7 +57,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 
   /* Neuron 0 Has an input of 1 */
   neuron_table[0].set_transfer_function_idx(used_transfer_function);
-  neuron_table[0].set_memory_ratio_idx(0); /* Weight 0 in the weight_table */
+  neuron_table[0].set_memory_filter_idx(0); /* Weight 0 in the weight_table */
   neuron_table[0].set_bias_idx(0); /* Weight 0 in the weight_table */
   temp_synapse_interval.set_starts(0); /* Input Starting from 0 */
   temp_synapse_interval.set_interval_size(1); /* 1 Input */
@@ -69,7 +69,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 
   /* Neuron 1 Has Neuron 0 as input */
   neuron_table[1].set_transfer_function_idx(used_transfer_function);
-  neuron_table[1].set_memory_ratio_idx(0);
+  neuron_table[1].set_memory_filter_idx(0);
   neuron_table[1].set_bias_idx(0);
   temp_synapse_interval.set_starts(0);
   temp_synapse_interval.set_interval_size(1);
@@ -81,7 +81,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 
   /* Neuron 2 Also has Neuron 0 as input */
   neuron_table[2].set_transfer_function_idx(used_transfer_function);
-  neuron_table[2].set_memory_ratio_idx(0);
+  neuron_table[2].set_memory_filter_idx(0);
   neuron_table[2].set_bias_idx(0);
   temp_synapse_interval.set_starts(0);
   temp_synapse_interval.set_interval_size(1);
@@ -236,9 +236,9 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     number_of_input_weights = 0;
     REQUIRE( 0 < net->neuron_array(i).input_weights_size() );
     for(int weight_synapse_iterator = 0; weight_synapse_iterator < net->neuron_array(i).input_weights_size(); ++weight_synapse_iterator){
-      /* Bias and memory ratio index has to point inside the weight table array*/
+      /* Bias and memory filter index has to point inside the weight table array*/
       REQUIRE( net->weight_table_size() > net->neuron_array(i).bias_idx() );
-      REQUIRE( net->weight_table_size() > net->neuron_array(i).memory_ratio_idx() );
+      REQUIRE( net->weight_table_size() > net->neuron_array(i).memory_filter_idx() );
 
       /* Weights */
       REQUIRE( /* Every weight synapse element has to point inside the weight table array */
