@@ -1,11 +1,30 @@
+buildscript {
+    dependencies {
+        classpath group: 'de.dynamicfiles.projects.gradle.plugins', name: 'javafx-gradle-plugin', version: '8.8.2'
+    }
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
 plugins {
     id 'java'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.7'
 }
 
-javafx {
-    modules = [ 'javafx.controls' , 'javafx.fxml', 'javafx.swing' ]
+apply plugin: 'javafx-gradle-plugin'
+
+//javafx {
+//    modules = [ 'javafx.controls' , 'javafx.fxml', 'javafx.swing' ]
+//}
+
+jfx {
+    // Minimal requirement for jfxJar-task
+    mainClass = 'Controls.Main'
+
+    // Minimal requirement for jfxNative-task
+    vendor = 'tothd2'
 }
 
 group 'org.example'

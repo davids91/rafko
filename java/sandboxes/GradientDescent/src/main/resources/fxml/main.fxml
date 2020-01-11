@@ -27,7 +27,7 @@
             <HBox>
                <children>
                   <Label text="Dataset size:" />
-                  <Label fx:id="dataset_size_label" text="10" />
+                  <Label fx:id="dataset_size_label" text="100" />
                </children>
             </HBox>
             <Slider fx:id="dataset_size_slider" max="100.0" snapToTicks="true" value="100.0" />
@@ -39,7 +39,7 @@
                   <Label fx:id="learning_rate_label" text="0.01" />
                </children>
             </HBox>
-            <Slider fx:id="learning_rate_slider" value="5.0E-10" min="1.0E-10" max="1.0E-2" />
+            <Slider fx:id="learning_rate_slider" value="5.0E-10" min="1.0E-10" max="1.0E-1" />
          </children>
       </VBox>
    </items>

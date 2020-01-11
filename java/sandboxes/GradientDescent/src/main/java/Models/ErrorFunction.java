@@ -8,6 +8,8 @@ public class ErrorFunction {
         for (int i = 0; i < dataset.size(); ++i) {
             error += Math.pow(dataset.get(i) - function.solve_for(i),2); /* Squared loss */
         }
+        error /= dataset.size();
+        error = Math.sqrt(error);
         return error;
     }
 
