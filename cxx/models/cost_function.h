@@ -13,6 +13,7 @@ using std::vector;
  * @brief      Error function handling and utilities
  */
 class Cost_function{
+public:
   Cost_function(uint8 maximum_threads, vector<vector<sdouble32>>& feature_samples, vector<vector<sdouble32>>& label_samples)
   : max_threads(maximum_threads), features(feature_samples), labels(label_samples){};
 
