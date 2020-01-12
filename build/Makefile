@@ -10,10 +10,11 @@ BUILDER_SOURCES = ../cxx/services/src/sparse_net_builder.cc
 BUILDER_SOURCES += ../cxx/services/src/solution_builder.cc ../cxx/services/src/partial_solution_builder.cc
 
 SOLVER_SOURCES = ../cxx/services/src/partial_solution_solver.cc ../cxx/services/src/solution_solver.cc
+
 HELPER_SOURCES = ../cxx/services/src/synapse_iterator.cc
 HELPER_SOURCES += ../cxx/models/src/dense_net_weight_initializer.cc
 HELPER_SOURCES += ../cxx/services/src/neuron_router.cc ../cxx/models/src/neuron_info.cc
-HELPER_SOURCES += ../cxx/models/src/transfer_function.cc
+HELPER_SOURCES += ../cxx/models/src/transfer_function.cc ../cxx/models/src/cost_function_quadratic.cc
 
 LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst ../cxx/gen/,,$(GENERATED_SOURCES:.cc=.o))
@@ -49,7 +50,7 @@ TEST_SOURCES = ../cxx/test/src/main_test.cc
 TEST_SOURCES += ../cxx/test/src/net_builder_test.cc ../cxx/test/src/solution_builder_test.cc
 TEST_SOURCES += ../cxx/test/src/partial_solution_solver_test.cc ../cxx/test/src/solution_solver_test.cc
 TEST_SOURCES += ../cxx/test/src/synapse_iterator_test.cc ../cxx/test/src/neuron_router_test.cc
-TEST_SOURCES += ../cxx/test/src/neuron_info_test.cc
+TEST_SOURCES += ../cxx/test/src/neuron_info_test.cc ../cxx/test/src/error_function_quadratic_test.cc
 TEST_OBJECTS = $(subst ../cxx/test/src/,,$(TEST_SOURCES:.cc=.o))
 TEST_INCLUDES = -I ../cxx/test/
 TEST_RESULT = test-results.out

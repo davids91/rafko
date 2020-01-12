@@ -16,6 +16,14 @@ enum transfer_functions{
   TRANSFER_FUNCTION_END = 512;
 }
 
+/** @brief      Indexes of the error functions a Neural Network is able to use
+ *              to calculate the gradient of the weights
+ */
+enum cost_functions{
+  COST_FUNCTION_UNKNOWN = 0;
+  COST_FUNCTION_QUADRATIC = 1; /* 0.5*(expected-calculated)^2 */
+}
+
 /**
  * @brief      This class describes a synapse. A synapse corresponds with a table of intervals.
  *             The number of @starts and @sizes should always be equal. Each pair of them describes
