@@ -1,5 +1,5 @@
-#ifndef SparseNetBUILDER_H
-#define SparseNetBUILDER_H
+#ifndef SPARSE_NET_BUILDER_H
+#define SPARSE_NET_BUILDER_H
 
 #include <vector>
 #include <memory>
@@ -14,26 +14,26 @@ namespace sparse_net_library {
 using std::shared_ptr;
 
 /**
- * @brief SparseNetBuilder: Builder class to compile Sparse Neural Networks
- * There are Two ways to use this class. One is to add the required building blocks of a Network 
- * manually. The Other is to use one of the higher level construction functions like @SparseNetBuilder::denseLayers.
- * Some parameters needed to be added unconditionally, which is checked by @SparseNetBuilder::io_pre_requisites_set.
+ * @brief Sparse_net_builder: Builder class to compile Sparse Neural Networks
+ * There are Two ways to use this class. One is to add the required building blocks of a Network
+ * manually. The Other is to use one of the higher level construction functions like @Sparse_net_builder::dense_layers.
+ * Some parameters needed to be added unconditionally, which is checked by @Sparse_net_builder::io_pre_requisites_set.
  * Ownership of the returned built SparseNet depends on the arena argument value:
  * - In case the arena is a nullptr, the ownership is of the caller of the function
  * - In case the arena is valid, it has the ownership
  */
-class SparseNetBuilder
-{  
+class Sparse_net_builder
+{
 public:
-  
+
   /**
-   * @brief      SparseNetBuilder::input_size: sets the number of expected inputs for the SparseNet object to be built
+   * @brief      Sparse_net_builder::input_size: sets the number of expected inputs for the SparseNet object to be built
    *
    * @param[in]  size  The size
    *
    * @return     builder reference for chaining
    */
-  SparseNetBuilder& input_size(uint32 size);
+  Sparse_net_builder& input_size(uint32 size);
 
   /**
    * @brief      sets the number of expected outputs for the SparseNet object to be built
@@ -42,26 +42,26 @@ public:
    *
    * @return     builder reference for chaining
    */
-  SparseNetBuilder& output_neuron_number(uint32 size);
+  Sparse_net_builder& output_neuron_number(uint32 size);
 
   /**
    * @brief      Sets the expected range of inputs to the net
    *
    * @param[in]  range  The range
    *
-   * @return   
+   * @return
    */
-  SparseNetBuilder& expectedInputRange(sdouble32 range);
+  Sparse_net_builder& expected_input_range(sdouble32 range);
 
   /**
    * @brief      Sets the Weight initializer to a manual one, overwriting the default weight
-   *             intialization assigned for any builder interface, except @SparseNetBuilder::build. 
+   *             intialization assigned for any builder interface, except @Sparse_net_builder::build.
    *
    * @param[in]  initializer  The initializer
    *
    * @return     Builder reference for chaining
    */
-  SparseNetBuilder& weight_initializer(shared_ptr<Weight_initializer> initializer);
+  Sparse_net_builder& weight_initializer(shared_ptr<Weight_initializer> initializer);
 
   /**
    * @brief      set the given neuron_array and transfer its ownership to the builder
@@ -70,7 +70,7 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  SparseNetBuilder& neuron_array(vector<Neuron> arr);
+  Sparse_net_builder& neuron_array(vector<Neuron> arr);
 
   /**
    * @brief      set the given weight table and transfer ownership to the builder
@@ -79,10 +79,10 @@ public:
    *
    * @return     reference for chaining
    */
-  SparseNetBuilder& weight_table(vector<sdouble32> table);
+  Sparse_net_builder& weight_table(vector<sdouble32> table);
 
   /**
-   * @brief    Sets the Google protobuffer arena reference in the builder, to 
+   * @brief    Sets the Google protobuffer arena reference in the builder, to
    *           make allocation more effective, assign built net ownership automatically.
    *           It's an optional parameter
    *
@@ -90,16 +90,18 @@ public:
    *
    * @return   builder reference for chaining
    */
-  SparseNetBuilder& arena_ptr(google::protobuf::Arena* arena);
+  Sparse_net_builder& arena_ptr(google::protobuf::Arena* arena);
 
   /**
-   * @brief      Sets an optional argument which restricts transfer functions by layer ( usable with @denseLayers )
+   * @brief      Sets an optional argument which restricts transfer functions by layer ( usable with @dense_layers )
    *
    * @param[in]  allowed_transfer_functions_by_layer  The allowed transfer functions by layer
    *
    * @return     { description_of_the_return_value }
    */
-  SparseNetBuilder& allowed_transfer_functions_by_layer(vector<vector<transfer_functions> > filter);
+  Sparse_net_builder& allowed_transfer_functions_by_layer(vector<vector<transfer_functions> > filter);
+
+  Sparse_net_builder& cost_function(cost_functions cost_function);
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
@@ -111,7 +113,7 @@ public:
    *
    * @return   the built neural network
    */
-  SparseNet* denseLayers(vector<uint32> layer_sizes, vector<vector<transfer_functions>> allowed_transfer_functions_by_layer);
+  SparseNet* dense_layers(vector<uint32> layer_sizes, vector<vector<transfer_functions>> allowed_transfer_functions_by_layer);
 
   /**
    * @brief      Same as above, but without any Transfer function restrictions
@@ -120,15 +122,15 @@ public:
    *
    * @return     the built neural network
    */
-  SparseNet* denseLayers(vector<uint32> layer_sizes);
+  SparseNet* dense_layers(vector<uint32> layer_sizes);
 
   /**
    * @brief    creates a Neural network from the given Arguments. Requires the following
-   *       components to be set:  
-   *       - The Neuron Array contains in an array the initialized Neuron 
+   *       components to be set:
+   *       - The Neuron Array contains in an array the initialized Neuron
    *       - The Weight Table containing the weights used by the Neural network
-   *       Building Networks like this is very dangerous, as the integrity of the components are not 
-   *       checked, therefore the user of this interface should be responsible for the behavior of the 
+   *       Building Networks like this is very dangerous, as the integrity of the components are not
+   *       checked, therefore the user of this interface should be responsible for the behavior of the
    *       resulted Neural Network.
    *
    * @return   the built neural network
@@ -146,6 +148,7 @@ private:
   bool is_weight_initializer_set = false;
   bool is_neuron_array_set = false;
   bool is_allowed_transfer_functions_by_layer_set = false;
+  bool is_cost_function_set = false;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
@@ -153,12 +156,12 @@ private:
   sdouble32 arg_expected_input_range = Transfer_function::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
 
   /**
-   * The array containing the neurons while SparseNetBuilder::build is used
+   * The array containing the neurons while Sparse_net_builder::build is used
    */
   vector<Neuron> arg_neuron_array;
 
   /**
-   * The array containing the used weights in the network while SparseNetBuilder::build is used
+   * The array containing the used weights in the network while Sparse_net_builder::build is used
    */
   vector<sdouble32> arg_weight_table;
 
@@ -179,22 +182,23 @@ private:
 
   vector<vector<transfer_functions> > arg_allowed_transfer_functions_by_layer;
 
-
   /**
-   * Points to the Arena which may be optionally given to the builder for 
+   * Points to the Arena which may be optionally given to the builder for
    * a more effective net allocation.
    */
   google::protobuf::Arena* arg_arena = nullptr;
 
+  cost_functions arg_cost_function = COST_FUNCTION_UNKNOWN;
+
   /**
-   * @brief SparseNetBuilder::set_neuron_array: moves the neuron_array argument into the SparseNet
+   * @brief Sparse_net_builder::set_neuron_array: moves the neuron_array argument into the SparseNet
    * @param arr: the neuron array to be added to the @SparseNet object net
    * @param net: the new owner of the neuron_array
    */
   void set_neuron_array(SparseNet* net);
 
   /**
-   * @brief SparseNetBuilder::set_weight_table: moves the weightTable argument into the SparseNet
+   * @brief Sparse_net_builder::set_weight_table: moves the weightTable argument into the SparseNet
    * @param table: the array of floating point numbers to be added to the @SparseNet object net
    * @param net: the new owner of the weightTable
    */
@@ -203,4 +207,4 @@ private:
 };
 
 } /* namespace sparse_net_library */
-#endif // SparseNetBUILDER_H
+#endif /* SPARSE_NET_BUILDER_H */

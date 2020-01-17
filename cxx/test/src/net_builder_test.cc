@@ -21,7 +21,7 @@ namespace sparse_net_library_test {
   using sparse_net_library::Neuron;
   using sparse_net_library::SparseNet;
   using sparse_net_library::transfer_functions;
-  using sparse_net_library::SparseNetBuilder;
+  using sparse_net_library::Sparse_net_builder;
   using sparse_net_library::Neuron_info;
   using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
   using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
@@ -30,6 +30,7 @@ namespace sparse_net_library_test {
   using sparse_net_library::TRANSFER_FUNCTION_SELU;
   using sparse_net_library::Synapse_iterator;
   using sparse_net_library::Synapse_interval;
+  using sparse_net_library::COST_FUNCTION_QUADRATIC;
 
 /*###############################################################################################
  * Testing Manual Net creation
@@ -52,7 +53,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   REQUIRE( nullptr != &(weight_table[0]) );
   REQUIRE( weight_table[0] == used_weight);
 
-  /* Create the Neuron Table */ /*! #7 */
+  /* Create the Neuron Table */
   vector<Neuron> neuron_table(3);
 
   /* Neuron 0 Has an input of 1 */
@@ -92,11 +93,12 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   REQUIRE( true == Neuron_info::is_neuron_valid(neuron_table[2]) );
 
   /* Pass the net into the builder */
-  shared_ptr<SparseNetBuilder> builder(make_shared<SparseNetBuilder>());
+  shared_ptr<Sparse_net_builder> builder(make_shared<Sparse_net_builder>());
   builder->input_size(1)
-    .expectedInputRange(1.0)
+    .expected_input_range(1.0)
     .output_neuron_number(2)
     .arena_ptr(arena)
+    .cost_function(COST_FUNCTION_QUADRATIC)
     .neuron_array(neuron_table)
     .weight_table(weight_table);
   try{
@@ -191,13 +193,14 @@ TEST_CASE("Constructing small net manually using arena","[build][arena][small][m
  * And check manually the connections
  */
 SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
-  unique_ptr<SparseNetBuilder> builder(make_unique<SparseNetBuilder>());
+  unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>());
   builder->input_size(5)
     .output_neuron_number(2)
-    .expectedInputRange(5.0)
+    .expected_input_range(5.0)
+    .cost_function(COST_FUNCTION_QUADRATIC)
     .arena_ptr(arena);
 
-  SparseNet* net(builder->denseLayers(
+  SparseNet* net(builder->dense_layers(
     {2,3,2},{
       {TRANSFER_FUNCTION_IDENTITY},
       {TRANSFER_FUNCTION_SELU,TRANSFER_FUNCTION_RELU},
@@ -224,7 +227,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     number_of_input_indexes = 0;
     for(int index_synapse_iterator = 0; index_synapse_iterator < net->neuron_array(i).input_indices_size(); ++index_synapse_iterator){
       REQUIRE( /* Every index synapse element has to point inside the neuron array */
-        net->neuron_array_size() > 
+        net->neuron_array_size() >
         ( net->neuron_array(i).input_indices(index_synapse_iterator).starts()
           + net->neuron_array(i).input_indices(index_synapse_iterator).interval_size() )
       );
@@ -242,7 +245,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
 
       /* Weights */
       REQUIRE( /* Every weight synapse element has to point inside the weight table array */
-        net->weight_table_size() > 
+        net->weight_table_size() >
         ( net->neuron_array(i).input_weights(weight_synapse_iterator).starts()
           + net->neuron_array(i).input_weights(weight_synapse_iterator).interval_size() )
       );
@@ -250,12 +253,12 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
         CHECK( /* The weights of the Neuron has to be inbetween (-1;1) */
           -1.0 <= net->weight_table(
             net->neuron_array(i).input_weights(weight_synapse_iterator).starts() + weight_iterator
-          ) 
+          )
         );
-        CHECK( 
+        CHECK(
           1.0 >= net->weight_table(
             net->neuron_array(i).input_weights(weight_synapse_iterator).starts() + weight_iterator
-          ) 
+          )
         );
       }
       number_of_input_weights += net->neuron_array(i).input_weights(weight_synapse_iterator).interval_size();
@@ -286,8 +289,8 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
 
   /* Input Neurons should have their synapse starting from 0 as well */
   CHECK( 0 == net->neuron_array(2).input_indices(0).starts() ); /* 0th Neuron, because neuron index >= net->input_neuron_number() */
-  CHECK( 0 == net->neuron_array(3).input_indices(0).starts() ); 
-  CHECK( 0 == net->neuron_array(4).input_indices(0).starts() ); 
+  CHECK( 0 == net->neuron_array(3).input_indices(0).starts() );
+  CHECK( 0 == net->neuron_array(4).input_indices(0).starts() );
 
   /* The Hidden Layer should have either TRANSFER_FUNCTION_RELU or TRANSFER_FUNCTION_SELU according to the configuration */
   CHECK((
@@ -311,7 +314,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( 1 == net->neuron_array(6).input_weights_size() );
 
   /* Output Neurons should have should have their synapse start at the 2nd Neuron (Previous layer start) */
-  CHECK( 2 == net->neuron_array(5).input_indices(0).starts() ); 
+  CHECK( 2 == net->neuron_array(5).input_indices(0).starts() );
   CHECK( 2 == net->neuron_array(6).input_indices(0).starts() );
 
   /* The Output Layer should have either TRANSFER_FUNCTION_SIGMOID or TRANSFER_FUNCTION_TANH according to the configuration */

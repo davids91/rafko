@@ -29,11 +29,12 @@ using sparse_net_library::Solution;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Synapse_interval;
 using sparse_net_library::Transfer_function;
+using sparse_net_library::COST_FUNCTION_QUADRATIC;
 
 /*###############################################################################################
- * Testing if the solution solver produces a correct output, given a manually constructed 
+ * Testing if the solution solver produces a correct output, given a manually constructed
  * @Solution.
- * - 2 rows and two columns shall be constructed. 
+ * - 2 rows and two columns shall be constructed.
  * - @Partial_solution [0][0]: takes the whole of the input
  * - @Partial_solution [0][1]: takes half of the input
  * - @Partial_solution [1][0]: takes the whole of the previous row
@@ -54,7 +55,7 @@ void test_solution_solver_multithread(uint16 threads){
   *solution.add_partial_solutions() = Partial_solution();
   *solution.add_partial_solutions() = Partial_solution();
 
-  vector<vector<reference_wrapper<Partial_solution>>> partial_solutions= { 
+  vector<vector<reference_wrapper<Partial_solution>>> partial_solutions= {
     {*solution.mutable_partial_solutions(0),*solution.mutable_partial_solutions(1)},
     {*solution.mutable_partial_solutions(2),*solution.mutable_partial_solutions(3)}
   };
@@ -170,7 +171,7 @@ void test_solution_solver_multithread(uint16 threads){
     collected_output = partial_solution_solver_1_0.solve();
     REQUIRE( 2 == collected_output.size() );
     copy(collected_output.begin(),collected_output.end(),neuron_data.begin() + 4u);
-    
+
     /* row 1, column 1 */
     partial_solution_solver_1_1.collect_input_data(network_inputs,neuron_data);
     collected_output = partial_solution_solver_1_1.solve();
@@ -182,11 +183,11 @@ void test_solution_solver_multithread(uint16 threads){
     for(uint32 i = 0; i < network_output.size(); ++i){
       CHECK(
         Approx(neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]).epsilon(0.00000000000001)
-        == expected_neuron_data[solution.neuron_number() - solution.output_neuron_number() + i] 
+        == expected_neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]
       );
       CHECK(
-        Approx(network_output[i]).epsilon(0.00000000000001) 
-        == expected_neuron_data[solution.neuron_number() - solution.output_neuron_number() + i] 
+        Approx(network_output[i]).epsilon(0.00000000000001)
+        == expected_neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]
       );
     }
   }
@@ -204,17 +205,18 @@ TEST_CASE("Solution solver manual testing","[solve][small][manual-solve]"){
 void testing_solution_solver_manually(google::protobuf::Arena* arena){
   using std::unique_ptr;
   using std::make_unique;
-  using sparse_net_library::SparseNetBuilder;
+  using sparse_net_library::Sparse_net_builder;
   using sparse_net_library::Solution_builder;
   using sparse_net_library::SparseNet;
-  
+
   vector<uint32> net_structure = {2,4,3,10,20};
   vector<sdouble32> net_input = {10.0,20.0,30.0,40.0,50.0};
 
   /* Build the described net */
-  unique_ptr<SparseNetBuilder> net_builder = make_unique<SparseNetBuilder>();
-  net_builder->input_size(5).expectedInputRange(5.0).arena_ptr(arena);
-  SparseNet* net(net_builder->denseLayers(net_structure));
+  unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
+  net_builder->input_size(5).expected_input_range(5.0)
+  .cost_function(COST_FUNCTION_QUADRATIC).arena_ptr(arena);
+  SparseNet* net(net_builder->dense_layers(net_structure));
   net_builder.reset();
 
   /* Generate solution from Net */

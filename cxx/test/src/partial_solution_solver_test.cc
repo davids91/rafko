@@ -36,7 +36,7 @@ using sparse_net_library::Synapse_interval;
  *   - different input numbers
  *   - different weights
  *   - different biases
- *//*!#8 */
+ */
 
 TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial_solution][manual]" ){
   Partial_solution partial_solution;

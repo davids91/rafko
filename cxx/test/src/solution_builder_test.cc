@@ -15,12 +15,13 @@ using std::vector;
 
 using sparse_net_library::uint32;
 using sparse_net_library::sdouble32;
-using sparse_net_library::SparseNetBuilder;
+using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::Solution;
 using sparse_net_library::Solution_solver;
 using sparse_net_library::Synapse_iterator;
+using sparse_net_library::COST_FUNCTION_QUADRATIC;
 
 /*###############################################################################################
  * Testing Solution generation using the @Sparse_net_builder and the @Solution_builder
@@ -28,9 +29,10 @@ using sparse_net_library::Synapse_iterator;
 Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes){
   /* Build a net */
   vector<uint32> net_structure = {20,10,30,10,2};
-  unique_ptr<SparseNetBuilder> net_builder = make_unique<SparseNetBuilder>();
-  net_builder->input_size(50).output_neuron_number(2).expectedInputRange(5.0).arena_ptr(arena);
-  SparseNet* net(net_builder->denseLayers(net_structure));
+  unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
+  net_builder->input_size(50).output_neuron_number(2)
+  .expected_input_range(5.0).arena_ptr(arena).cost_function(COST_FUNCTION_QUADRATIC);
+  SparseNet* net(net_builder->dense_layers(net_structure));
   net_builder.reset();
 
   /* Generate solution from Net */
@@ -63,7 +65,7 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
   uint32 neuron_synapse_element_iterator;
   for(int neuron_iterator = 0; neuron_iterator < net->neuron_array_size(); ++neuron_iterator){ /* For the input Neurons */
     for(
-      int partial_solution_iterator = 0; 
+      int partial_solution_iterator = 0;
       partial_solution_iterator < solution->partial_solutions_size();
       ++partial_solution_iterator
     ){ /* Search trough the partial solutions, looking for the neuron_iterator'th Neuron */
@@ -86,7 +88,7 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
           Synapse_iterator neuron_weight_iterator(net->neuron_array(neuron_iterator).input_weights());
           inner_neuron_weight_iterator.iterate([&](int input_index){ /* Inner Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input is true ) */
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
-            CHECK( 
+            CHECK(
               solution->partial_solutions(partial_solution_iterator).weight_table(input_index)
               == net->weight_table(neuron_weight_iterator[neuron_synapse_element_iterator])
             );
@@ -101,13 +103,13 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
           inner_neuron_input_iterator.iterate([&](int input_index){ /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input s true ) */
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!Synapse_iterator::is_index_input(input_index)){ /* Inner neuron takes its input internally */
-              CHECK( 
-                solution->partial_solutions(partial_solution_iterator).actual_index(input_index) 
+              CHECK(
+                solution->partial_solutions(partial_solution_iterator).actual_index(input_index)
                 == neuron_input_iterator[neuron_synapse_element_iterator]
               );
             }else{ /* Inner Neuron takes its input from the partial solution input */
-              CHECK( 
-                partial_input_iterator[Synapse_iterator::input_index_from_synapse_index(input_index)] 
+              CHECK(
+                partial_input_iterator[Synapse_iterator::input_index_from_synapse_index(input_index)]
                 == neuron_input_iterator[neuron_synapse_element_iterator]
               );
             }
@@ -126,7 +128,7 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
   } /*(uint32 neuron_iterator = 0; neuron_iterator < net_structure.front(); ++neuron_iterator)*/
 
   /* TODO: Test if all of the neuron is present in all of the partial solutions outputs */
-    
+
   return solution;
 }
 

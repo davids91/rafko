@@ -17,9 +17,10 @@ using std::vector;
 
 using sparse_net_library::uint16;
 using sparse_net_library::uint32;
-using sparse_net_library::SparseNetBuilder;
+using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Neuron_router;
+using sparse_net_library::COST_FUNCTION_QUADRATIC;
 
 /*###############################################################################################
  * Testing if the iteration is correctly processing the Sparse net
@@ -30,9 +31,10 @@ using sparse_net_library::Neuron_router;
 TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small]" ){
   /* Build a net */
   vector<uint32> layer_structure = {2,3,3,5};
-  unique_ptr<SparseNetBuilder> net_builder = make_unique<SparseNetBuilder>();
-  net_builder->input_size(5).output_neuron_number(5).expectedInputRange(5.0);
-  SparseNet* net(net_builder->denseLayers(layer_structure));
+  unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
+  net_builder->input_size(5).output_neuron_number(5)
+  .cost_function(COST_FUNCTION_QUADRATIC).expected_input_range(5.0);
+  SparseNet* net(net_builder->dense_layers(layer_structure));
   net_builder.reset();
 
   /* Testing the collected subset in each iteration in the net */
