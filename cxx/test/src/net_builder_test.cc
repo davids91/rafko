@@ -1,5 +1,3 @@
-#include <memory>
-
 #include "test/catch.hpp"
 
 #include "sparse_net_global.h"
@@ -8,6 +6,8 @@
 #include "models/neuron_info.h"
 #include "services/sparse_net_builder.h"
 #include "services/synapse_iterator.h"
+
+#include <memory>
 
 namespace sparse_net_library_test {
 

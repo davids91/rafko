@@ -1,7 +1,6 @@
 #include "services/sparse_net_builder.h"
 
 #include "models/dense_net_weight_initializer.h"
-#include "models/neuron_info.h"
 #include "services/synapse_iterator.h"
 
 #include <time.h>
@@ -9,92 +8,6 @@
 namespace sparse_net_library {
 
 using std::shared_ptr;
-
-Sparse_net_builder& Sparse_net_builder::input_size(uint32 size){
-  arg_input_size = size;
-  is_input_size_set = true;
-  return *this;
-}
-
-Sparse_net_builder& Sparse_net_builder::output_neuron_number(uint32 size){
-  arg_output_neuron_number = size;
-  is_output_neuron_number_set = true;
-  return *this;
-}
-
-Sparse_net_builder& Sparse_net_builder::expected_input_range(sdouble32 range){
-  arg_expected_input_range = range;
-  is_expected_input_range_set = true;
-  return *this;
-}
-
-Sparse_net_builder& Sparse_net_builder::weight_initializer(shared_ptr<Weight_initializer> initializer){
-  if(nullptr != initializer){
-    arg_weight_initer = initializer;
-    is_weight_initializer_set = true;
-  }else{
-    is_weight_initializer_set = false;
-  }
-
-  return *this;
-}
-
-Sparse_net_builder& Sparse_net_builder::arena_ptr(google::protobuf::Arena* arena){
-  arg_arena = arena;
-  return *this;
-}
-
-Sparse_net_builder& Sparse_net_builder::allowed_transfer_functions_by_layer(vector<vector<transfer_functions> > filter){
-  arg_allowed_transfer_functions_by_layer = filter;
-  is_allowed_transfer_functions_by_layer_set = true;
-  return *this;
-}
-
-Sparse_net_builder& Sparse_net_builder::cost_function(cost_functions cost_function){
-  if(COST_FUNCTION_UNKNOWN != cost_function){
-    arg_cost_function = cost_function;
-    is_cost_function_set = true;
-  }
-  return *this;
-}
-
-Sparse_net_builder& Sparse_net_builder::weight_table(vector<sdouble32> table){
-  if(0 < table.size()){
-    arg_weight_table = table;
-    is_weight_table_set = true;
-  }else{
-    is_weight_table_set = false;
-  }
-  return *this;
-
-}
-
-void Sparse_net_builder::set_weight_table(SparseNet* net){
-  if(0 < arg_weight_table.size()){
-    *net->mutable_weight_table() = {arg_weight_table.begin(), arg_weight_table.end()};
-  }else throw "Unable to build net, weight table is of size 0!";
-}
-
-Sparse_net_builder& Sparse_net_builder::neuron_array(vector<Neuron> arr){
-  if((0 < arr.size())&&(Neuron_info::is_neuron_valid(arr.back()))){
-    arg_neuron_array = arr;
-    is_neuron_array_set = true;
-  }else{
-    is_neuron_array_set = false;
-  }
-  return *this;
-}
-
-void Sparse_net_builder::set_neuron_array(SparseNet* net){
-  if(Neuron_info::is_neuron_valid(arg_neuron_array.back())){ /* If the last element is valid */
-    *net->mutable_neuron_array() = {arg_neuron_array.begin(),arg_neuron_array.end()};
-  } else throw "Unable to set Neuron Array into Sparse net as the last Neuron seems invalid!";
-}
-
-SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes, vector<vector<transfer_functions> > filter){
-  (void)allowed_transfer_functions_by_layer(filter);
-  return dense_layers(layer_sizes);
-}
 
 SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
 

@@ -1,13 +1,14 @@
 #ifndef SPARSE_NET_BUILDER_H
 #define SPARSE_NET_BUILDER_H
 
-#include <vector>
-#include <memory>
-
+#include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
 #include "models/transfer_function.h"
 #include "models/weight_initializer.h"
-#include "sparse_net_global.h"
+#include "models/neuron_info.h"
+
+#include <vector>
+#include <memory>
 
 namespace sparse_net_library {
 
@@ -33,7 +34,11 @@ public:
    *
    * @return     builder reference for chaining
    */
-  Sparse_net_builder& input_size(uint32 size);
+  Sparse_net_builder& input_size(uint32 size){
+    arg_input_size = size;
+    is_input_size_set = true;
+    return *this;
+  }
 
   /**
    * @brief      sets the number of expected outputs for the SparseNet object to be built
@@ -42,7 +47,11 @@ public:
    *
    * @return     builder reference for chaining
    */
-  Sparse_net_builder& output_neuron_number(uint32 size);
+  Sparse_net_builder& output_neuron_number(uint32 size){
+    arg_output_neuron_number = size;
+    is_output_neuron_number_set = true;
+    return *this;
+  }
 
   /**
    * @brief      Sets the expected range of inputs to the net
@@ -51,7 +60,11 @@ public:
    *
    * @return
    */
-  Sparse_net_builder& expected_input_range(sdouble32 range);
+  Sparse_net_builder& expected_input_range(sdouble32 range){
+    arg_expected_input_range = range;
+    is_expected_input_range_set = true;
+    return *this;
+  }
 
   /**
    * @brief      Sets the Weight initializer to a manual one, overwriting the default weight
@@ -61,7 +74,13 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  Sparse_net_builder& weight_initializer(shared_ptr<Weight_initializer> initializer);
+  Sparse_net_builder& weight_initializer(shared_ptr<Weight_initializer> initializer){
+    if(nullptr != initializer){
+      arg_weight_initer = initializer;
+      is_weight_initializer_set = true;
+    }else is_weight_initializer_set = false;
+    return *this;
+  }
 
   /**
    * @brief      set the given neuron_array and transfer its ownership to the builder
@@ -70,7 +89,13 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  Sparse_net_builder& neuron_array(vector<Neuron> arr);
+  Sparse_net_builder& neuron_array(vector<Neuron> arr){
+    if((0 < arr.size())&&(Neuron_info::is_neuron_valid(arr.back()))){
+      arg_neuron_array = arr;
+      is_neuron_array_set = true;
+    }else is_neuron_array_set = false;
+    return *this;
+  }
 
   /**
    * @brief      set the given weight table and transfer ownership to the builder
@@ -79,7 +104,13 @@ public:
    *
    * @return     reference for chaining
    */
-  Sparse_net_builder& weight_table(vector<sdouble32> table);
+  Sparse_net_builder& weight_table(vector<sdouble32> table){
+    if(0 < table.size()){
+      arg_weight_table = table;
+      is_weight_table_set = true;
+    }else is_weight_table_set = false;
+    return *this;
+  }
 
   /**
    * @brief    Sets the Google protobuffer arena reference in the builder, to
@@ -90,7 +121,10 @@ public:
    *
    * @return   builder reference for chaining
    */
-  Sparse_net_builder& arena_ptr(google::protobuf::Arena* arena);
+  Sparse_net_builder& arena_ptr(google::protobuf::Arena* arena){
+    arg_arena = arena;
+    return *this;
+  }
 
   /**
    * @brief      Sets an optional argument which restricts transfer functions by layer ( usable with @dense_layers )
@@ -99,9 +133,19 @@ public:
    *
    * @return     { description_of_the_return_value }
    */
-  Sparse_net_builder& allowed_transfer_functions_by_layer(vector<vector<transfer_functions> > filter);
+  Sparse_net_builder& allowed_transfer_functions_by_layer(vector<vector<transfer_functions> > filter){
+    arg_allowed_transfer_functions_by_layer = filter;
+    is_allowed_transfer_functions_by_layer_set = true;
+    return *this;
+  }
 
-  Sparse_net_builder& cost_function(cost_functions cost_function);
+  Sparse_net_builder& cost_function(cost_functions cost_function){
+    if(COST_FUNCTION_UNKNOWN != cost_function){
+      arg_cost_function = cost_function;
+      is_cost_function_set = true;
+    }
+    return *this;
+  }
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
@@ -109,11 +153,14 @@ public:
    *
    * @param[in]  layerSizes         how many layers will there be in the result
    *                    and how big are those layers going to be
-   * @param[in]  allowed_transfer_functions_by_layer  The allowed transfer functions per layer
+   * @param[in]  transfer_function_filter  The allowed transfer functions per layer
    *
    * @return   the built neural network
    */
-  SparseNet* dense_layers(vector<uint32> layer_sizes, vector<vector<transfer_functions>> allowed_transfer_functions_by_layer);
+  SparseNet* dense_layers(vector<uint32> layer_sizes, vector<vector<transfer_functions>> transfer_function_filter){
+    (void)allowed_transfer_functions_by_layer(transfer_function_filter);
+    return dense_layers(layer_sizes);
+  }
 
   /**
    * @brief      Same as above, but without any Transfer function restrictions
@@ -195,14 +242,22 @@ private:
    * @param arr: the neuron array to be added to the @SparseNet object net
    * @param net: the new owner of the neuron_array
    */
-  void set_neuron_array(SparseNet* net);
+  void set_neuron_array(SparseNet* net){
+    if(Neuron_info::is_neuron_valid(arg_neuron_array.back())){ /* If the last element is valid */
+      *net->mutable_neuron_array() = {arg_neuron_array.begin(),arg_neuron_array.end()};
+    } else throw "Unable to set Neuron Array into Sparse net as the last Neuron seems invalid!";
+  }
 
   /**
    * @brief Sparse_net_builder::set_weight_table: moves the weightTable argument into the SparseNet
    * @param table: the array of floating point numbers to be added to the @SparseNet object net
    * @param net: the new owner of the weightTable
    */
-  void set_weight_table(SparseNet* net);
+  void set_weight_table(SparseNet* net){
+    if(0 < arg_weight_table.size()){
+      *net->mutable_weight_table() = {arg_weight_table.begin(), arg_weight_table.end()};
+    }else throw "Unable to build net, weight table is of size 0!";
+  }
 
 };
 
