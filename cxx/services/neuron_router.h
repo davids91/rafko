@@ -2,9 +2,12 @@
 #define NEURON_ROUTER_H
 
 #include <deque>
+#include <functional>
 
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
+#include "services/synapse_iterator.h"
+
 namespace sparse_net_library {
 
 using std::unique_ptr;
@@ -31,6 +34,19 @@ public:
 
   uint32 operator[](int index){
     return get_neuron_index_from_subset(index);
+  }
+
+  /**
+   * @brief      Runs the given function with every index of the input of the Neuron
+   *
+   * @param[in]  neuron_index  The neuron index
+   * @param[in]  to_run        THe function to run
+   */
+  void run_for_neuron_inputs(uint32 neuron_index, std::function< void(int) > to_run){
+    if(net.neuron_array_size() > static_cast<int>(neuron_index)){
+      Synapse_iterator iter(net.neuron_array(neuron_index).input_indices());
+      iter.iterate(to_run);
+    }else throw "Neuron index out of bounds!";
   }
 
   /**

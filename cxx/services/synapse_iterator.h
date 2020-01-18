@@ -81,7 +81,7 @@ public:
   void iterate(std::function< void(unsigned int) > do_for_each_synapse, std::function< void(int) > do_for_each_index) const{
     iterate_unsafe(do_for_each_synapse, do_for_each_index, 0, synapse_interval.get().size());
   }
-  void iterate_terminatable(std::function< bool(int) > do_for_each_index){
+  void iterate_terminatable(std::function< bool(int) > do_for_each_index) const{
     iterate_unsafe_terminatable(do_for_each_index, 0, synapse_interval.get().size());
   }
   void iterate_terminatable(std::function< bool(unsigned int) > do_for_each_synapse, std::function< bool(int) > do_for_each_index) const{
@@ -102,14 +102,14 @@ public:
    *
    * @return     The Synapse index under the @index-th step into the iteration
    */
-  int operator[](int index);
+  int operator[](int index) const;
 
   /**
    * @brief      Returns the overall number of inputs
    *
    * @return     Returns the overall number of inputs
    */
-  uint32 size(void){
+  uint32 size(void) const{
     uint32 number_of_inputs = 0;
     iterate([&](unsigned int synapse_size){
       number_of_inputs += synapse_size;
@@ -122,7 +122,7 @@ public:
    *
    * @return     the last index of the synapse
    */
-  int back(void){
+  int back(void) const{
     if(0 < synapse_interval.get().size()){
       int last_index = synapse_interval.get().Get(synapse_interval.get().size()-1).starts();
       if(is_index_input(last_index)) last_index -= synapse_interval.get().Get(synapse_interval.get().size()-1).interval_size() - 1;

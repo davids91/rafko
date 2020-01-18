@@ -2,7 +2,7 @@
 
 namespace sparse_net_library{
 
-int Synapse_iterator::operator[](int index){
+int Synapse_iterator::operator[](int index) const{
   int result_index;
   int iteration_helper = 0;
 

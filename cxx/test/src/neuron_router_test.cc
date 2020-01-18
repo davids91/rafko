@@ -21,6 +21,7 @@ using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Neuron_router;
 using sparse_net_library::COST_FUNCTION_QUADRATIC;
+using sparse_net_library::Synapse_iterator;
 
 /*###############################################################################################
  * Testing if the iteration is correctly processing the Sparse net
@@ -36,10 +37,21 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
   .cost_function(COST_FUNCTION_QUADRATIC).expected_input_range(5.0);
   SparseNet* net(net_builder->dense_layers(layer_structure));
   net_builder.reset();
+  Neuron_router net_iterator = Neuron_router(*net);
+
+  /* Testing if a function can be run a @Neuron s inputs */
+  for(uint32 neuron_iterator = 0; static_cast<int>(neuron_iterator) < net->neuron_array_size(); ++neuron_iterator){
+    Synapse_iterator input_iterator(net->neuron_array(neuron_iterator).input_indices());
+    uint32 input_synapse_index = 0;
+    net_iterator.run_for_neuron_inputs(neuron_iterator, [&](int input_index){
+      REQUIRE( input_iterator.size() > input_synapse_index );
+      CHECK( input_index == input_iterator[input_synapse_index] );
+      ++input_synapse_index;
+    });
+  }
 
   /* Testing the collected subset in each iteration in the net */
   uint16 iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
-  Neuron_router net_iterator = Neuron_router(*net);
 
   uint32 layer_start = 0;
   uint32 tmp_index;
