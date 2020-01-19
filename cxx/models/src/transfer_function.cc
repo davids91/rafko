@@ -42,19 +42,23 @@ sdouble32 Transfer_function::get_average_output_range(transfer_functions functio
   }
 }
 
-void Transfer_function::apply_to_data(transfer_functions function, sdouble32& data){
+sdouble32 Transfer_function::get_value(transfer_functions function, sdouble32 data){
   switch(function){
-    case TRANSFER_FUNCTION_IDENTITY: break; /* Identity means f(x) = x */
-    case TRANSFER_FUNCTION_SIGMOID: data = 1/(1+exp(-data)); break;
-    case TRANSFER_FUNCTION_TANH: data = tanh(data); break;
-    case TRANSFER_FUNCTION_ELU: if(0 > data) data = alpha * (exp(data) -1);
-    case TRANSFER_FUNCTION_SELU: data *= lambda; break;
-    case TRANSFER_FUNCTION_RELU: data = max(0.0,data); break;
+    case TRANSFER_FUNCTION_IDENTITY: return data; /* Identity means f(x) = x */
+    case TRANSFER_FUNCTION_SIGMOID: return 1/(1+exp(-data));
+    case TRANSFER_FUNCTION_TANH: return tanh(data);
+    case TRANSFER_FUNCTION_ELU:
+      if(0 > data) return alpha * (exp(data) -1);
+      else return data;
+    case TRANSFER_FUNCTION_SELU:
+      if(0 > data) return alpha * (exp(data) -1) * lambda;
+      else return data;
+    case TRANSFER_FUNCTION_RELU: return max(0.0,data);
     default: throw "Unidentified transfer function queried for information!";
   }
 }
 
-sdouble32 Transfer_function::apply_derivative(transfer_functions function, sdouble32& data){
+sdouble32 Transfer_function::apply_derivative(transfer_functions function, sdouble32 data){
   switch(function){
     case TRANSFER_FUNCTION_IDENTITY: return 1; /* Identity means f(x) = x */
     case TRANSFER_FUNCTION_SIGMOID: return exp(data)/pow((exp(data) + 1),2);

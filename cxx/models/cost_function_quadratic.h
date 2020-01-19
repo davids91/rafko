@@ -5,17 +5,10 @@
 
 #include <cmath>
 #include <vector>
-#include <thread>
-#include <mutex>
-#include <future>
 
 namespace sparse_net_library{
 
 using std::vector;
-using std::atomic;
-using std::mutex;
-using std::future;
-using std::lock_guard;
 
 /**
  * @brief      Error function handling and utilities
@@ -29,26 +22,7 @@ public:
 
   sdouble32 get_error() const;
   sdouble32 get_error(uint32 feature_index) const;
-
-private:
-  void collect_promises(vector<future<sdouble32>>& promises,
-      atomic<sdouble32>& score, mutex& promises_mutex, bool& in_progress) const{
-    sdouble32 temp;
-    sdouble32 buffer;
-    while(in_progress){
-      lock_guard<mutex> my_lock(promises_mutex);
-      if(0 < promises.size()){
-        temp = score + promises.front().get();
-        buffer = score;
-        while(!score.compare_exchange_weak(buffer, temp))buffer = score;
-        promises.erase(promises.begin());
-      }
-    }
-  }
-  sdouble32 feature_distance_squared_sum(uint32 feature_index) const;
-  sdouble32 sample_distance_squared(uint32 feature_index, uint32 sample_index) const{
-    return pow((features[sample_index][feature_index] - labels[sample_index][feature_index]),2.0);
-  }
+  sdouble32 get_d_cost_over_d_feature(uint32 feature_index) const;
 };
 
 } /* namespace sparse_net_library */

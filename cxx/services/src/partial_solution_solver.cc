@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
-#include "models/Transfer_function.h"
+#include "models/transfer_function.h"
+#include "models/spike_function.h"
 
 namespace sparse_net_library {
 
@@ -68,11 +69,15 @@ vector<sdouble32> Partial_solution_solver::solve(){
     new_neuron_data += detail.get().weight_table(detail.get().bias_index(neuron_iterator));
 
     /* Apply transfer function */
-    Transfer_function::apply_to_data(detail.get().neuron_transfer_functions(neuron_iterator), new_neuron_data);
+    new_neuron_data = Transfer_function::get_value(
+      detail.get().neuron_transfer_functions(neuron_iterator), new_neuron_data
+    );
+
     /* Apply memory filter */
-    neuron_output[neuron_iterator] = (
-      (neuron_output[neuron_iterator] * detail.get().weight_table(detail.get().memory_filter_index(neuron_iterator)))
-      + (new_neuron_data * (1.0-detail.get().weight_table(detail.get().memory_filter_index(neuron_iterator))))
+    neuron_output[neuron_iterator] = Spike_function::get_value(
+      detail.get().weight_table(detail.get().memory_filter_index(neuron_iterator)),
+      new_neuron_data,
+      neuron_output[neuron_iterator]
     );
   } /* Go through the neurons */
   return neuron_output;

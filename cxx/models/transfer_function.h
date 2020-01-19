@@ -44,19 +44,21 @@ public:
    * @brief      Apply the given transfer function to the given data
    *
    * @param[in]  function  The function to apply
-   * @param      data      The data to apply it to
+   * @param[in]  data      The data to apply it to
+   *
+   * @return     The result of data.
    */
-  static void apply_to_data(transfer_functions function, sdouble32& data);
+  static sdouble32 get_value(transfer_functions function, sdouble32 data);
 
   /**
    * @brief      Gets a functions derivative calculated form the given data
    *
    * @param[in]  function  The function to use
-   * @param      data      The data to use
+   * @param[in]  data      The data to use
    *
    * @return     The derivative from data.
    */
-  static sdouble32 apply_derivative(transfer_functions function, sdouble32& data);
+  static sdouble32 apply_derivative(transfer_functions function, sdouble32 data);
 };
 
 } /* namespace sparse_net_library */
