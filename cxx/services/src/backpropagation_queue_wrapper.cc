@@ -7,7 +7,7 @@
 
 namespace sparse_net_library{
 
-Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net){
+Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net, Service_context context){
   
   using std::vector;
   using std::deque;
@@ -25,7 +25,7 @@ Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net){
 
   while(net.neuron_array_size() > static_cast<int>(neurons_done)){
     /* Collect a strict subset from the net */
-    neuron_router.collect_subset(16,4096,true);
+    neuron_router.collect_subset(context.get_max_solve_threads(),context.get_device_max_megabytes(),true);
     while(neuron_router.get_first_neuron_index_from_subset(neuron_index)){
       neuron_queue.back().push_back(neuron_index);
       ++neurons_done;

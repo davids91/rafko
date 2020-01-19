@@ -22,8 +22,11 @@ using std::lock_guard;
  */
 class Cost_function_quadratic : public Cost_function{
 public:
- Cost_function_quadratic(uint8 maximum_threads, vector<vector<sdouble32>>& feature_samples, vector<vector<sdouble32>>& label_samples)
- : Cost_function(maximum_threads, feature_samples, label_samples){}
+  Cost_function_quadratic(
+    vector<vector<sdouble32>>& feature_samples, vector<vector<sdouble32>>& label_samples, 
+    Service_context context = Service_context()
+  ) : Cost_function(feature_samples, label_samples, context){};
+
   sdouble32 get_error() const;
   sdouble32 get_error(uint32 feature_index) const;
 

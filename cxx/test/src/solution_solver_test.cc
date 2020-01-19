@@ -8,6 +8,7 @@
 #include "gen/solution.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "models/transfer_function.h"
+#include "models/service_context.h"
 #include "services/solution_solver.h"
 #include "services/partial_solution_solver.h"
 #include "services/synapse_iterator.h"
@@ -30,6 +31,7 @@ using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Synapse_interval;
 using sparse_net_library::Transfer_function;
 using sparse_net_library::COST_FUNCTION_QUADRATIC;
+using sparse_net_library::Service_context;
 
 /*###############################################################################################
  * Testing if the solution solver produces a correct output, given a manually constructed
@@ -45,6 +47,7 @@ void test_solution_solver_multithread(uint16 threads){
   using std::copy;
 
   /* Define the input, @Solution and partial solution table */
+  Service_context context = Service_context().set_max_solve_threads(threads);
   Solution solution;
   solution.set_neuron_number(8);
   solution.set_output_neuron_number(4);
@@ -97,7 +100,7 @@ void test_solution_solver_multithread(uint16 threads){
   vector<sdouble32> network_output;
 
   /* Solve the compiled Solution */
-  Solution_solver solution_solver(solution);
+  Solution_solver solution_solver(solution,context);
   srand (time(nullptr));
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights and stuff */
@@ -178,7 +181,7 @@ void test_solution_solver_multithread(uint16 threads){
     REQUIRE( 2 == collected_output.size() );
     copy(collected_output.begin(),collected_output.end(),neuron_data.begin() + 6u);
 
-    network_output = solution_solver.solve(network_inputs,threads);
+    network_output = solution_solver.solve(network_inputs);
     REQUIRE( network_output.size() == solution.output_neuron_number() );
     for(uint32 i = 0; i < network_output.size(); ++i){
       CHECK(

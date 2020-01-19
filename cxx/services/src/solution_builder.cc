@@ -5,22 +5,6 @@
 
 namespace sparse_net_library{
 
-Solution_builder& Solution_builder::max_solve_threads(uint8 number){
-  arg_max_solve_threads = number;
-  is_max_solve_threads_set = true;
-  return *this;
-}
-
-Solution_builder& Solution_builder::device_max_megabytes(sdouble32 megabytes){
-  arg_device_max_megabytes = megabytes;
-  return *this;
-}
-
-Solution_builder& Solution_builder::arena_ptr(google::protobuf::Arena* arena){
-  arg_arena_ptr = arena;
-  return *this;
-}
-
 Solution* Solution_builder::build(const SparseNet& net ){
 
   using std::ref;

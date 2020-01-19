@@ -1,14 +1,16 @@
 #include "services/solution_solver.h"
+#include "services/synapse_iterator.h"
 
 #include <thread>
-
-#include "services/synapse_iterator.h"
 
 namespace sparse_net_library{
 
 using std::swap_ranges;
 
-Solution_solver::Solution_solver(const Solution& to_solve) : solution(to_solve){
+Solution_solver::Solution_solver(
+  const Solution& to_solve, Service_context context
+): solution(to_solve){
+  number_of_threads = context.get_max_solve_threads();
   partial_solvers = vector<vector<Partial_solution_solver>>(solution.cols_size());
   partial_solver_output_maps = vector<vector<Synapse_iterator>>(solution.cols_size());
   neuron_data = vector<sdouble32>(solution.neuron_number());
@@ -27,7 +29,7 @@ Solution_solver::Solution_solver(const Solution& to_solve) : solution(to_solve){
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
 
-vector<sdouble32> Solution_solver::solve(vector<sdouble32> input, uint32 number_of_threads){
+vector<sdouble32> Solution_solver::solve(vector<sdouble32> input){
 
   using std::thread;
   using std::ref;

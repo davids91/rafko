@@ -7,6 +7,7 @@
 #include <atomic>
 
 #include "gen/solution.pb.h"
+#include "models/service_context.h"
 #include "services/partial_solution_solver.h"
 
 namespace sparse_net_library{
@@ -19,7 +20,7 @@ using std::vector;
  */
 class Solution_solver{
 public:
-  Solution_solver(const Solution& to_solve);
+  Solution_solver(const Solution& to_solve, Service_context context = Service_context());
 
   /**
    * @brief      Solves the Solution given in the constructor, considering the previous runs
@@ -28,7 +29,7 @@ public:
    *
    * @return     The resulting output of the SparseNet.
    */
-  vector<sdouble32> solve(vector<sdouble32> input, uint32 number_of_threads = 1);
+  vector<sdouble32> solve(vector<sdouble32> input);
 
 private:
 
@@ -54,6 +55,7 @@ private:
   vector<vector<Partial_solution_solver>> partial_solvers;
   vector<vector<Synapse_iterator>> partial_solver_output_maps;  /* Maps each output of the partial solvers into an index in @neuron_data */
   vector<sdouble32> neuron_data;  /* The internal Data of each Neuron */
+  uint16 number_of_threads = 1;
 };
 
 } /* namespace sparse_net_library */

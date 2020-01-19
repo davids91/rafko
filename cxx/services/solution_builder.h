@@ -10,6 +10,7 @@
 
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+#include "models/service_context.h"
 #include "services/neuron_router.h"
 #include "services/synapse_iterator.h"
 
@@ -41,8 +42,16 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  Solution_builder& max_solve_threads(uint8 number);
-  Solution_builder& device_max_megabytes(sdouble32 megabytes);
+  Solution_builder& max_solve_threads(uint8 number){
+    arg_max_solve_threads = number;
+    is_max_solve_threads_set = true;
+    return *this;
+  }
+
+  Solution_builder& device_max_megabytes(sdouble32 megabytes){
+    arg_device_max_megabytes = megabytes;
+    return *this;
+  }
 
   /**
    * @brief      Set the used arena pointer
@@ -51,7 +60,23 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  Solution_builder& arena_ptr(google::protobuf::Arena* arena);
+  Solution_builder& arena_ptr(google::protobuf::Arena* arena){
+    arg_arena_ptr = arena;
+    return *this;
+  }
+
+  /**
+   * @brief      Sets parameters providable from a service context
+   *
+   * @param[in]  context  The context
+   *
+   * @return     Builder reference for chaining
+   */
+  Solution_builder& service_context(Service_context context){
+    return max_solve_threads(context.get_max_solve_threads())
+    .device_max_megabytes(context.get_device_max_megabytes())
+    .arena_ptr(context.get_arena_ptr());
+  }
 
   /**
    * @brief      Build the Solution to be solved by @Solution_solver
