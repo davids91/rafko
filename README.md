@@ -27,4 +27,4 @@ such as solving a network, calculating gradients and updating a network, etc..
  - **/proto:**
    - **models:** The building blocks of the framework 
    - **services:** Defines the commands available for the client libraries ( missing )
-
+ - **/res:** miscellaneous resources
