@@ -5,7 +5,7 @@ The Framework is of a server-client architecture, in which  a deep learning serv
 calculation slots for different clients. The calculations are neural network related, 
 such as solving a network, calculating gradients and updating a network, etc.. 
 
-## Supported languages:
+## Supported languages: <img align="right" src="res/logo_framed.png">
 ### Deep learning server
 - cxx14
 
