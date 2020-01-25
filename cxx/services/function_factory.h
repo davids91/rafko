@@ -15,17 +15,17 @@ using std::unique_ptr;
 class Function_factory{
 public:
   static unique_ptr<Cost_function> build_cost_function(
-    const SparseNet& net, vector<vector<sdouble32>>& feature_samples, vector<vector<sdouble32>>& label_samples,
+    const SparseNet& net, vector<vector<sdouble32>>& label_samples,
     Service_context context = Service_context()
   ){
-    return build_cost_function(net.cost_function(), feature_samples, label_samples, context);
+    return build_cost_function(net.cost_function(), label_samples, context);
   }
   static unique_ptr<Cost_function> build_cost_function(
-    cost_functions the_function, vector<vector<sdouble32>>& feature_samples, vector<vector<sdouble32>>& label_samples,
+    cost_functions the_function, vector<vector<sdouble32>>& label_samples,
     Service_context context = Service_context()
   ){
     switch(the_function){
-      case COST_FUNCTION_QUADRATIC: return std::make_unique<Cost_function_quadratic>(feature_samples, label_samples, context);
+      case COST_FUNCTION_QUADRATIC: return std::make_unique<Cost_function_quadratic>(label_samples, context);
       default: throw "Unknown cost function requested from builder!";
     }
   }

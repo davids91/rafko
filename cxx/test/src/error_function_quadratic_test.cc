@@ -40,9 +40,9 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   }
 
   /* one feature distance should be (0.5 * (distance)^2 ) */
-  Cost_function_quadratic cost = Cost_function_quadratic(featureset,dataset);
+  Cost_function_quadratic cost = Cost_function_quadratic(dataset);
   for(uint16 feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){
-    CHECK( cost.get_error(feature_iterator) ==  (0.5 * pow(distance,2)) );
+    CHECK( cost.get_error(feature_iterator, featureset) ==  (0.5 * pow(distance,2)) );
   }
 
   /* overall feature ditance should be  */
