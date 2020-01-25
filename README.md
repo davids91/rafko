@@ -1,6 +1,4 @@
-# Rafko
-
-[![Join the chat at https://gitter.im/rafko_deep_learning/community](https://badges.gitter.im/rafko_deep_learning/community.svg)](https://gitter.im/rafko_deep_learning/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+# Rafko [![Join the chat at https://gitter.im/rafko_deep_learning/community](https://badges.gitter.im/rafko_deep_learning/community.svg)](https://gitter.im/rafko_deep_learning/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 A deep learning Framework extended wtih per Neuron memory capabilities with focus on 
 architecture search through training.
