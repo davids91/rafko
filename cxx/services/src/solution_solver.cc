@@ -7,9 +7,9 @@ namespace sparse_net_library{
 
 using std::swap_ranges;
 
-Solution_solver::Solution_solver(
-  const Solution& to_solve, Service_context context
-): solution(to_solve){
+Solution_solver::Solution_solver(const Solution& to_solve, Service_context context)
+: solution(to_solve)
+{
   number_of_threads = context.get_max_solve_threads();
   partial_solvers = vector<vector<Partial_solution_solver>>(solution.cols_size());
   partial_solver_output_maps = vector<vector<Synapse_iterator>>(solution.cols_size());

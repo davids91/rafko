@@ -25,9 +25,10 @@ using std::function;
  */
 class Cost_function{
 public:
-  Cost_function(
-    vector<vector<sdouble32>>& label_samples, Service_context context = Service_context()
-  ): max_threads(context.get_max_processing_threads()), labels(label_samples){};
+  Cost_function(vector<vector<sdouble32>>& label_samples, Service_context context = Service_context())
+  : max_threads(context.get_max_processing_threads())
+  , labels(label_samples)
+  { };
 
   /**
    * @brief      Gets the overall error for a given feature and labelset

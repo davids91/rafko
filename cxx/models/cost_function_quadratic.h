@@ -23,9 +23,9 @@ static inline sdouble32 sample_distance(sdouble32 feature_data, sdouble32 label_
  */
 class Cost_function_quadratic : public Cost_function{
 public:
-  Cost_function_quadratic(
-    vector<vector<sdouble32>>& label_samples, Service_context context = Service_context()
-  ) : Cost_function(label_samples, context){};
+  Cost_function_quadratic(vector<vector<sdouble32>>& label_samples, Service_context context = Service_context())
+  : Cost_function(label_samples, context)
+  { };
 
   sdouble32 get_error(vector<vector<sdouble32>>& features) const{
     verify_sizes(features);

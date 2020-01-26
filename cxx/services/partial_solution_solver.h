@@ -18,10 +18,10 @@ class Partial_solution_solver{
 
 public:
   Partial_solution_solver(const Partial_solution& partial_solution)
-  : detail(partial_solution), internal_iterator(detail.get().inside_indices()),input_iterator(partial_solution.input_data())
-  {
-    reset();
-  }
+  : detail(partial_solution)
+  , internal_iterator(detail.get().inside_indices())
+  , input_iterator(partial_solution.input_data())
+  { reset(); }
 
   /**
    * @brief      Gets the size of the elements taken by the configurad Patial solution.

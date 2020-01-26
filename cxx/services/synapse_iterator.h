@@ -38,7 +38,8 @@ using google::protobuf::RepeatedPtrField;
 class Synapse_iterator{
 public:
    Synapse_iterator(const RepeatedPtrField<Synapse_interval>& arg_synapse_interval)
-  : synapse_interval(arg_synapse_interval){};
+  : synapse_interval(arg_synapse_interval)
+  { };
 
   void iterate(std::function< void(int) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
     if((0 == interval_size)&&(synapse_interval.get().size() > static_cast<int>(interval_start)))

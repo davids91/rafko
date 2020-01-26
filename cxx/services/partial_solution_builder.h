@@ -20,9 +20,11 @@ class Partial_solution_builder{
 
 public:
   Partial_solution_builder(const SparseNet& net, Partial_solution& partial_ref)
-  : net(net), partial(partial_ref), input_synapse(partial_ref.input_data()){
-    previous_neuron_input_source = neuron_input_none;
-  };
+  : net(net)
+  , partial(partial_ref)
+  , input_synapse(partial_ref.input_data())
+  , previous_neuron_input_source(neuron_input_none)
+  { };
 
   /**
    * @brief      Adds a neuron to partial solution.
