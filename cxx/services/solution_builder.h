@@ -35,6 +35,16 @@ using std::vector;
  */
 class Solution_builder{
 public:
+
+  /**
+   * @brief      Constructs a new instance.
+   *
+   * @param[in]  context  The Service context
+   */
+  Solution_builder(Service_context context = Service_context()){
+    (void)service_context(context);
+  }
+
   /**
    * @brief      Set the number of threads to be used while generating the solution to the given @SparseNet
    *

@@ -58,7 +58,7 @@ sdouble32 Transfer_function::get_value(transfer_functions function, sdouble32 da
   }
 }
 
-sdouble32 Transfer_function::apply_derivative(transfer_functions function, sdouble32 data){
+sdouble32 Transfer_function::get_derivative(transfer_functions function, sdouble32 data){
   switch(function){
     case TRANSFER_FUNCTION_IDENTITY: return 1; /* Identity means f(x) = x */
     case TRANSFER_FUNCTION_SIGMOID: return exp(data)/pow((exp(data) + 1),2);
