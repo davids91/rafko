@@ -10,17 +10,8 @@ namespace sparse_net_library{
 
 using std::vector;
 
-static inline sdouble32 sample_distance_squared(sdouble32 feature_data, sdouble32 label_data){
-  return pow((feature_data - label_data),2.0);
-}
-
-static inline sdouble32 sample_distance(sdouble32 feature_data, sdouble32 label_data){
-  return (feature_data - label_data);
-}
-
 /**
- * @brief      Error function handling and utilities
- */
+ * @brief      Error function handling and utilities for MSE: C0 = 1/2n(y-y')^2 */
 class Cost_function_quadratic : public Cost_function{
 public:
   Cost_function_quadratic(vector<vector<sdouble32>>& label_samples, Service_context context = Service_context())
@@ -28,25 +19,34 @@ public:
   { };
 
   sdouble32 get_error(vector<vector<sdouble32>>& features) const{
-    verify_sizes(features);
     sdouble32 score = 0;
-    uint32 feature_iterator = 0;
-    uint32 feature_size = features[0].size();
-    while(feature_iterator < feature_size){ /* evaluate a feature(Neuron output) on all samples */
-      score += get_error(feature_iterator, features);
-      ++feature_iterator;
+    uint32 sample_iterator = 0;
+    for(vector<sdouble32>& feature_sample : features){ /* evaluate features(Neuron output) on all samples */
+      if(feature_sample.size() != labels[sample_iterator].size())
+        throw "Incompatible Feature and Label sizes!";
+      score += get_error(sample_iterator, feature_sample);
+      ++sample_iterator;
     }
-    return (0.5 * score)/features.size();
+    return score;
   }
 
-  sdouble32 get_error(uint32 feature_index, vector<vector<sdouble32>>& features) const{
-    verify_sizes(feature_index, features);
-    return (0.5 * calculate_for_feature(feature_index, features, &sample_distance_squared))/features.size();
+  sdouble32 get_error(uint32 label_index, vector<sdouble32>& features) const{
+    verify_sizes(label_index, features);
+    sdouble32 score = 0;
+    uint32 feature_iterator = 0;
+    while(feature_iterator < features.size()){ /* evaluate a feature(Neuron output) on the given sample */
+      score += get_error(label_index, feature_iterator, features);
+      ++feature_iterator;
+    }
+    return score;
+  }
+
+  sdouble32 get_error(uint32 label_index, uint32 feature_index, vector<sdouble32>& features) const{
+    return ( 0.5 * pow((features[feature_index] - labels[label_index][feature_index]),2) / static_cast<sdouble32>(features.size()) );
   }
   
-  sdouble32 get_d_cost_over_d_feature(uint32 feature_index, vector<vector<sdouble32>>& features) const{
-    verify_sizes(feature_index, features);
-    return -2.0*(calculate_for_feature(feature_index, features, &sample_distance))/features.size();
+  sdouble32 get_d_cost_over_d_feature(uint32 label_index, uint32 feature_index, vector<sdouble32>& features) const{
+    return ( -(features[feature_index] - labels[label_index][feature_index]) / static_cast<sdouble32>(features.size()) );
   }
 };
 
