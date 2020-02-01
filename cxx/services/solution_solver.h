@@ -49,36 +49,6 @@ public:
     return transfer_function_output;
   }
 
-  /**
-   * @brief      Gets the neuron data.
-   *
-   * @return     The neuron data.
-   */
-  const vector<sdouble32>& get_neuron_data(void) const{
-    return neuron_data;
-  }
-
-  /**
-   * @brief      Resets Neuron data in the solver and in the partial solutions
-   */
-  void reset(void){
-    for(sdouble32& neuron_data_element : neuron_data)neuron_data_element = 0;
-    for(vector<Partial_solution_solver>& solver_row : partial_solvers)
-      for(Partial_solution_solver& solver : solver_row)solver.reset();
-  }
-
-  /**
-   * @brief      Gets the neuron data at the given neuron index
-   *
-   * @param[in]  index  Neuron index
-   *
-   * @return     The neuron data.
-   */
-  sdouble32 get_neuron_data(uint32 index) const{
-    if(neuron_data.size() > index)return neuron_data[index];
-     else throw "Neuron index out of bounds!";
-  }
-
 private:
 
   /**
@@ -97,12 +67,22 @@ private:
     return solution.partial_solutions(index + col);
   }
 
-  void solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator, uint32 partial_solution_start);
+  /**
+   * @brief      Utility to help solve a @Partial_solution
+   *
+   * @param      input                   The input
+   * @param[in]  row_iterator            The row iterator
+   * @param[in]  col_iterator            The col iterator
+   */
+  void solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator, uint32 extended_info_start);
 
   const Solution& solution;
   vector<vector<Partial_solution_solver>> partial_solvers;
   vector<vector<Synapse_iterator>> partial_solver_output_maps;  /* Maps each output of the partial solvers into an index in @neuron_data */
   vector<sdouble32> neuron_data;  /* The internal Data of each Neuron */
+  vector<sdouble32> transfer_function_input; /* Extended data required for output layer error */
+  vector<sdouble32> transfer_function_output;
+
   uint16 number_of_threads = 1;
 };
 

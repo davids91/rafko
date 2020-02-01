@@ -8,17 +8,6 @@
 
 namespace sparse_net_library {
 
-void Partial_solution_solver::reset(void){
-  neuron_output = vector<sdouble32>(detail.get().internal_neuron_number());
-  input_iterator = Synapse_iterator(detail.get().input_data());
-  internal_iterator = Synapse_iterator(detail.get().inside_indices());
-  uint32 input_size = 0;
-  input_iterator.iterate([&](unsigned int synapse_size){
-    input_size += synapse_size;
-  },[&](int synapse_index){});
-  collected_input_data = vector<sdouble32>(input_size);
-}
-
 void Partial_solution_solver::collect_input_data(vector<sdouble32>& input_data, vector<sdouble32> neuron_data){
   uint32 input_index = 0;
   input_iterator.iterate([&](int synapse_index){
@@ -68,12 +57,26 @@ vector<sdouble32> Partial_solution_solver::solve(){
     /* Add bias */
     new_neuron_data += detail.get().weight_table(detail.get().bias_index(neuron_iterator));
 
+    if(
+      (0 < num_of_transitional_data)
+      &&(detail.get().internal_neuron_number() - num_of_transitional_data) <= neuron_iterator
+    ){
+      transfer_function_input[neuron_iterator - num_of_non_transitional_data] = new_neuron_data;
+    }
+
     /* Apply transfer function */
     new_neuron_data = Transfer_function::get_value(
       detail.get().neuron_transfer_functions(neuron_iterator), new_neuron_data
     );
 
-    /* Apply memory filter */
+    if(
+      (0 < num_of_transitional_data)
+      &&(detail.get().internal_neuron_number() - num_of_transitional_data) <= neuron_iterator
+    ){
+      transfer_function_output[neuron_iterator - num_of_non_transitional_data] = new_neuron_data;
+    }
+
+    /* Apply spike function */
     neuron_output[neuron_iterator] = Spike_function::get_value(
       detail.get().weight_table(detail.get().memory_filter_index(neuron_iterator)),
       new_neuron_data,
@@ -87,7 +90,7 @@ uint32 Partial_solution_solver::get_input_size(void) const{
   return collected_input_data.size();
 }
 
-bool Partial_solution_solver::is_valid(void){
+bool Partial_solution_solver::is_valid(void) const{
   if(
     (0u < detail.get().internal_neuron_number())
     &&(static_cast<int>(detail.get().internal_neuron_number()) == detail.get().index_synapse_number_size())

@@ -112,9 +112,9 @@ public:
    */
   uint32 size(void) const{
     uint32 number_of_inputs = 0;
-    iterate([&](unsigned int synapse_size){
+    skim([&](int synapse_starts, unsigned int synapse_size){
       number_of_inputs += synapse_size;
-    },[](int synapse_index){});
+    });
     return number_of_inputs;
   }
 

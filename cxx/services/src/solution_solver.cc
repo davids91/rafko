@@ -9,19 +9,30 @@ using std::swap_ranges;
 
 Solution_solver::Solution_solver(const Solution& to_solve, Service_context context)
 : solution(to_solve)
+, partial_solvers(solution.cols_size())
+, partial_solver_output_maps(solution.cols_size())
+, neuron_data(solution.neuron_number())
+, transfer_function_input(solution.output_neuron_number())
+, transfer_function_output(solution.output_neuron_number())
+, number_of_threads(context.get_max_solve_threads())
 {
-  number_of_threads = context.get_max_solve_threads();
-  partial_solvers = vector<vector<Partial_solution_solver>>(solution.cols_size());
-  partial_solver_output_maps = vector<vector<Synapse_iterator>>(solution.cols_size());
-  neuron_data = vector<sdouble32>(solution.neuron_number());
+  int partial_solution_end_plus1 = 0;
+  int first_output_neuron_index = solution.neuron_number() - solution.output_neuron_number();
   for(int row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
     partial_solvers[row_iterator] = vector<Partial_solution_solver>(
       solution.cols(row_iterator), Partial_solution_solver(get_partial(0,0,solution))
     );
     for(uint32 column_index = 0; column_index < solution.cols(row_iterator); ++column_index){
+      partial_solution_end_plus1 += get_partial(row_iterator,column_index,solution).internal_neuron_number();
+
       partial_solvers[row_iterator][column_index] = Partial_solution_solver(
-        get_partial(row_iterator,column_index,solution)
+        get_partial(row_iterator,column_index,solution),
+        std::min( /* Transfer function data to be monitored for the output Neurons only */
+          std::max(0,(partial_solution_end_plus1 - first_output_neuron_index + 1)),
+          static_cast<int>(get_partial(row_iterator,column_index,solution).internal_neuron_number())
+        )
       ); /* Initialize a solver for this partial solution element */
+
       partial_solver_output_maps[row_iterator].push_back(Synapse_iterator(
         get_partial(row_iterator,column_index,solution).output_data()
       )); /* Initialize a solver and output map for this partial @Partial_solution element */
@@ -36,21 +47,20 @@ vector<sdouble32> Solution_solver::solve(vector<sdouble32> input){
   using std::min;
 
   if(0 < solution.cols_size()){
-    uint32 partial_solution_start;
+    uint32 gradient_data_start = 0;
     vector<thread> solve_threads;
     uint32 col_iterator;
 
     for(int row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
-      partial_solution_start = 0;
       col_iterator = 0;
       if(0 == solution.cols(row_iterator)) throw "A solution row of 0 columns!";
       while(col_iterator < solution.cols(row_iterator)){
         for(uint16 i = 0; i < number_of_threads; ++i){
           if(col_iterator < solution.cols(row_iterator)){
             solve_threads.push_back(thread(&Solution_solver::solve_a_partial,
-              this, ref(input), row_iterator, col_iterator, partial_solution_start
+              this, ref(input), row_iterator, col_iterator, gradient_data_start
             ));
-            partial_solution_start += get_partial(row_iterator,col_iterator,solution).internal_neuron_number();
+            gradient_data_start += partial_solvers[row_iterator][col_iterator].get_gradient_data_size();
             ++col_iterator;
           }else break;
         }
@@ -64,7 +74,8 @@ vector<sdouble32> Solution_solver::solve(vector<sdouble32> input){
   }else throw "A solution of 0 rows!";
 }
 
-void Solution_solver::solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator, uint32 partial_solution_start){
+
+void Solution_solver::solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator, uint32 gradient_data_start){
 
   using std::min;
   using std::max;
@@ -82,6 +93,19 @@ void Solution_solver::solve_a_partial(vector<sdouble32>& input, uint32 row_itera
     );
     output_iterator += partial_output_synapse_size;
   });
+
+  if(0 < partial_solvers[row_iterator][col_iterator].get_gradient_data_size()){
+    swap_ranges( /* In case it's applicable save data required for gradient calculation as well */
+      transfer_function_input.begin() + gradient_data_start,
+      transfer_function_input.begin() + gradient_data_start + partial_solvers[row_iterator][col_iterator].get_gradient_data_size(),
+      partial_solvers[row_iterator][col_iterator].get_transfer_function_input().begin()
+    );
+    swap_ranges(
+      transfer_function_output.begin() + gradient_data_start,
+      transfer_function_output.begin() + gradient_data_start + partial_solvers[row_iterator][col_iterator].get_gradient_data_size(),
+      partial_solvers[row_iterator][col_iterator].get_transfer_function_output().begin()
+    );
+  }
 }
 
 } /* namespace sparse_net_library */

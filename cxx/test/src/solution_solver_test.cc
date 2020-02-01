@@ -19,6 +19,11 @@ namespace sparse_net_library_test{
 
 using std::reference_wrapper;
 
+using std::unique_ptr;
+using std::make_unique;
+using sparse_net_library::Sparse_net_builder;
+using sparse_net_library::Solution_builder;
+using sparse_net_library::SparseNet;
 using sparse_net_library::uint8;
 using sparse_net_library::uint16;
 using sparse_net_library::uint32;
@@ -206,12 +211,6 @@ TEST_CASE("Solution solver manual testing","[solve][small][manual-solve]"){
  * Testing if the solution solver produces a correct output, given a built @SparseNet
  */
 void testing_solution_solver_manually(google::protobuf::Arena* arena){
-  using std::unique_ptr;
-  using std::make_unique;
-  using sparse_net_library::Sparse_net_builder;
-  using sparse_net_library::Solution_builder;
-  using sparse_net_library::SparseNet;
-
   vector<uint32> net_structure = {2,4,3,10,20};
   vector<sdouble32> net_input = {10.0,20.0,30.0,40.0,50.0};
 
@@ -252,6 +251,31 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
 
 TEST_CASE("Solution Solver test based on Fully Connected Dense Net", "[solve][build-solve]"){
   testing_solution_solver_manually(nullptr);
+}
+
+/*###############################################################################################
+ * Testing if the solution solver produces correct data for gradient calculations
+ */
+TEST_CASE("Solution Solver test for gradients", "[solve][build-solve][gradient]"){
+  vector<uint32> net_structure = {2,4,3,10,20};
+  vector<sdouble32> net_input = {10.0,20.0,30.0,40.0,50.0};
+
+  /* Build the above described net */
+  unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
+  net_builder->input_size(5).expected_input_range(5.0)
+  .cost_function(COST_FUNCTION_QUADRATIC);
+  SparseNet* net(net_builder->dense_layers(net_structure));
+  net_builder.reset();
+
+  /* Generate solution from Net */
+  Solution_solver solver(
+    *Solution_builder().service_context().build(*net)
+  );
+  vector<sdouble32> result = solver.solve(net_input);
+
+  REQUIRE( net_structure.back() == solver.get_transfer_function_input().size());
+  REQUIRE( net_structure.back() == solver.get_transfer_function_output().size());
+
 }
 
 } /* namespace sparse_net_library_test */
