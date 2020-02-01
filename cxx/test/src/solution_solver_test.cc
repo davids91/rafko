@@ -99,14 +99,12 @@ void test_solution_solver_multithread(uint16 threads){
   *partial_solutions[1][1].get().add_input_data() = temp_synapse_interval;
   Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(partial_solutions[1][1]);
 
-  vector<sdouble32> neuron_data = vector<sdouble32>(solution.neuron_number());
-  vector<sdouble32> expected_neuron_data = vector<sdouble32>(solution.neuron_number());
-  vector<sdouble32> collected_output(2);
-  vector<sdouble32> network_output;
-
   /* Solve the compiled Solution */
-  Solution_solver solution_solver(solution,context);
   srand (time(nullptr));
+  Solution_solver solution_solver(solution,context);
+  vector<sdouble32> expected_neuron_data = vector<sdouble32>(solution.neuron_number());
+  vector<sdouble32> neuron_data = vector<sdouble32>(solution.neuron_number());
+  vector<sdouble32> network_output;
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights and stuff */
       for(int i = 0; i < partial_solutions[0][0].get().weight_table_size(); ++i){
@@ -147,6 +145,7 @@ void test_solution_solver_multithread(uint16 threads){
       partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / 10.0);
       partial_solutions[1][1].get().set_neuron_transfer_functions(rand()%(partial_solutions[1][1].get().neuron_transfer_functions_size()),Transfer_function::next());
     }
+
     /* Calculate the expected output */
     manual_2_neuron_result(
       network_inputs,expected_neuron_data,partial_solutions[0][0],0
@@ -164,27 +163,23 @@ void test_solution_solver_multithread(uint16 threads){
     /* Solve the net */
     /* row 0, column 0 */
     partial_solution_solver_0_0.collect_input_data(network_inputs,neuron_data);
-    collected_output = partial_solution_solver_0_0.solve();
-    REQUIRE( 2 == collected_output.size() );
-    copy(collected_output.begin(),collected_output.end(),neuron_data.begin() + 0u);
+    partial_solution_solver_0_0.solve();
+    partial_solution_solver_0_0.provide_output_data(neuron_data);
 
     /* row 0, column 1 */
     partial_solution_solver_0_1.collect_input_data(network_inputs,neuron_data);
-    collected_output = partial_solution_solver_0_1.solve();
-    REQUIRE( 2 == collected_output.size() );
-    copy(collected_output.begin(),collected_output.end(),neuron_data.begin() + 2u);
+    partial_solution_solver_0_1.solve();
+    partial_solution_solver_0_1.provide_output_data(neuron_data);
 
     /* row 1, column 0 */
     partial_solution_solver_1_0.collect_input_data(network_inputs,neuron_data);
-    collected_output = partial_solution_solver_1_0.solve();
-    REQUIRE( 2 == collected_output.size() );
-    copy(collected_output.begin(),collected_output.end(),neuron_data.begin() + 4u);
+    partial_solution_solver_1_0.solve();
+    partial_solution_solver_1_0.provide_output_data(neuron_data);
 
     /* row 1, column 1 */
     partial_solution_solver_1_1.collect_input_data(network_inputs,neuron_data);
-    collected_output = partial_solution_solver_1_1.solve();
-    REQUIRE( 2 == collected_output.size() );
-    copy(collected_output.begin(),collected_output.end(),neuron_data.begin() + 6u);
+    partial_solution_solver_1_1.solve();
+    partial_solution_solver_1_1.provide_output_data(neuron_data);
 
     network_output = solution_solver.solve(network_inputs);
     REQUIRE( network_output.size() == solution.output_neuron_number() );
@@ -218,17 +213,19 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
   net_builder->input_size(5).expected_input_range(5.0)
   .cost_function(COST_FUNCTION_QUADRATIC).arena_ptr(arena);
-  SparseNet* net(net_builder->dense_layers(net_structure));
+  SparseNet net = *net_builder->dense_layers(net_structure);
   net_builder.reset();
 
   /* Generate solution from Net */
   unique_ptr<Solution_builder> solution_builder = make_unique<Solution_builder>();
-  Solution* solution = solution_builder->max_solve_threads(4).device_max_megabytes(2048).arena_ptr(arena).build(*net);
-  Solution_solver solver(*solution);
+  Solution solution = *solution_builder->max_solve_threads(4).device_max_megabytes(2048).arena_ptr(arena).build(net);
+
+  Solution_solver solver(solution);
   vector<sdouble32> result = solver.solve(net_input);
-  vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size());
-  manaual_fully_connected_network_result(net_input, expected_neuron_data, net_structure,*net);
-  vector<sdouble32> expected_result = {expected_neuron_data.end() - net->output_neuron_number(),expected_neuron_data.end()};
+  vector<sdouble32> expected_neuron_data = vector<sdouble32>(net.neuron_array_size());
+  manaual_fully_connected_network_result(net_input, expected_neuron_data, net_structure,net);
+  vector<sdouble32> expected_result = {expected_neuron_data.end() - net.output_neuron_number(),expected_neuron_data.end()};
+  
   /* Verify if the calculated values match the expected ones */
   REQUIRE( net_structure.back() == result.size() );
   REQUIRE( expected_result.size() == result.size() );
@@ -237,10 +234,9 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   }
 
   /* Re-veriy with guaranted multiple partial solutions */
-  sdouble32 solution_size = solution->SpaceUsedLong() /* Bytes *// 1024.0 /* KB *// 1024.0 /* MB */;
-  if(nullptr == arena) delete solution;
-  solution = solution_builder->max_solve_threads(4).device_max_megabytes(solution_size/4.0).arena_ptr(arena).build(*net);
-  Solution_solver solver2 = Solution_solver(*solution);
+  sdouble32 solution_size = solution.SpaceUsedLong() /* Bytes *// 1024.0 /* KB *// 1024.0 /* MB */;
+  Solution solution2 = *solution_builder->max_solve_threads(4).device_max_megabytes(solution_size/4.0).arena_ptr(arena).build(net);
+  Solution_solver solver2 = Solution_solver(solution2);
   result = solver2.solve(net_input);
 
   /* Verify once more if the calculated values match the expected ones */
@@ -264,13 +260,11 @@ TEST_CASE("Solution Solver test for gradients", "[solve][build-solve][gradient]"
   unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
   net_builder->input_size(5).expected_input_range(5.0)
   .cost_function(COST_FUNCTION_QUADRATIC);
-  SparseNet* net(net_builder->dense_layers(net_structure));
+  unique_ptr<SparseNet> net(net_builder->dense_layers(net_structure));
   net_builder.reset();
 
   /* Generate solution from Net */
-  Solution_solver solver(
-    *Solution_builder().service_context().build(*net)
-  );
+  Solution_solver solver(*Solution_builder().service_context().build(*net));
   vector<sdouble32> result = solver.solve(net_input);
 
   REQUIRE( net_structure.back() == solver.get_transfer_function_input().size());

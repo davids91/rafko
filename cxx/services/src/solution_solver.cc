@@ -9,34 +9,21 @@ using std::swap_ranges;
 
 Solution_solver::Solution_solver(const Solution& to_solve, Service_context context)
 : solution(to_solve)
-, partial_solvers(solution.cols_size())
-, partial_solver_output_maps(solution.cols_size())
 , neuron_data(solution.neuron_number())
-, transfer_function_input(solution.output_neuron_number())
-, transfer_function_output(solution.output_neuron_number())
+, transfer_function_input(solution.output_neuron_number(),0.0)
+, transfer_function_output(solution.output_neuron_number(),0.0)
 , number_of_threads(context.get_max_solve_threads())
 {
   int partial_solution_end_plus1 = 0;
   int first_output_neuron_index = solution.neuron_number() - solution.output_neuron_number();
+  partial_solvers = vector<vector<Partial_solution_solver>>();
   for(int row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
-    partial_solvers[row_iterator] = vector<Partial_solution_solver>(
-      solution.cols(row_iterator), Partial_solution_solver(get_partial(0,0,solution))
-    );
+    partial_solvers.push_back(vector<Partial_solution_solver>());
     for(uint32 column_index = 0; column_index < solution.cols(row_iterator); ++column_index){
       partial_solution_end_plus1 += get_partial(row_iterator,column_index,solution).internal_neuron_number();
-
-      partial_solvers[row_iterator][column_index] = Partial_solution_solver(
-        get_partial(row_iterator,column_index,solution),
-        std::min( /* Transfer function data to be monitored for the output Neurons only */
-          std::max(0,(partial_solution_end_plus1 - first_output_neuron_index + 1)),
-          static_cast<int>(get_partial(row_iterator,column_index,solution).internal_neuron_number())
-        ),
-        context /* The session configuration */
-      ); /* Initialize a solver for this partial solution element */
-
-      partial_solver_output_maps[row_iterator].push_back(Synapse_iterator(
-        get_partial(row_iterator,column_index,solution).output_data()
-      )); /* Initialize a solver and output map for this partial @Partial_solution element */
+      partial_solvers[row_iterator].push_back( Partial_solution_solver(
+        get_partial(row_iterator,column_index,solution),first_output_neuron_index
+      )); /* Initialize a solver for this partial solution element */
     }
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
@@ -71,42 +58,10 @@ vector<sdouble32> Solution_solver::solve(vector<sdouble32> input){
         solve_threads.clear();
       }
     }
-    return {neuron_data.end() - solution.output_neuron_number(),neuron_data.end()}; /* Return with the data of the last row */
+
+    /* Return with the data of the output neurons */
+    return {neuron_data.end() - solution.output_neuron_number(),neuron_data.end()};
   }else throw "A solution of 0 rows!";
-}
-
-
-void Solution_solver::solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator, uint32 gradient_data_start){
-
-  using std::min;
-  using std::max;
-
-  vector<sdouble32> collected_output;
-  uint32 output_iterator = 0;
-  partial_solvers[row_iterator][col_iterator].collect_input_data(input,neuron_data); /* Collect the input for the partial solution solver */
-  collected_output = partial_solvers[row_iterator][col_iterator].solve(); /* Run the partial solution solver */
-
-  partial_solver_output_maps[row_iterator][col_iterator].skim([&](int partial_output_synapse_starts, unsigned int partial_output_synapse_size){
-    swap_ranges( /* Save output into the internal neuron memory */
-      collected_output.begin() + output_iterator,
-      collected_output.begin() + output_iterator + partial_output_synapse_size,
-      neuron_data.begin() + partial_output_synapse_starts
-    );
-    output_iterator += partial_output_synapse_size;
-  });
-
-  if(0 < partial_solvers[row_iterator][col_iterator].get_gradient_data_size()){
-    swap_ranges( /* In case it's applicable save data required for gradient calculation as well */
-      transfer_function_input.begin() + gradient_data_start,
-      transfer_function_input.begin() + gradient_data_start + partial_solvers[row_iterator][col_iterator].get_gradient_data_size(),
-      partial_solvers[row_iterator][col_iterator].get_transfer_function_input().begin()
-    );
-    swap_ranges(
-      transfer_function_output.begin() + gradient_data_start,
-      transfer_function_output.begin() + gradient_data_start + partial_solvers[row_iterator][col_iterator].get_gradient_data_size(),
-      partial_solvers[row_iterator][col_iterator].get_transfer_function_output().begin()
-    );
-  }
 }
 
 } /* namespace sparse_net_library */

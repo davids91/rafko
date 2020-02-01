@@ -20,15 +20,14 @@ class Partial_solution_solver{
 public:
   Partial_solution_solver(
     const Partial_solution& partial_solution, 
-    uint32 num_of_transition_data = 0, Service_context service_context = Service_context()
+    uint32 output_layer_first_index_ = UINT32_MAX, 
+    Service_context service_context = Service_context()
   ): detail(partial_solution)
-  , internal_iterator(detail.get().inside_indices())
-  , input_iterator(detail.get().input_data())
-  , num_of_transitional_data(num_of_transition_data)
-  , num_of_non_transitional_data(detail.get().internal_neuron_number() - num_of_transitional_data)
-  , transfer_function_input(vector<sdouble32>(num_of_transition_data))
-  , transfer_function_output(vector<sdouble32>(num_of_transition_data))
-  , neuron_output(detail.get().internal_neuron_number())
+  , internal_iterator(detail.inside_indices())
+  , input_iterator(detail.input_data())
+  , output_iterator(detail.output_data())
+  , output_layer_first_index(output_layer_first_index_)
+  , neuron_output(detail.internal_neuron_number())
   , collected_input_data(input_iterator.size())
   , transfer_function(service_context)
   { reset(); }
@@ -39,24 +38,6 @@ public:
    * @return     The input size in number of elements ( @sdouble32 ).
    */
   uint32 get_input_size(void) const;
-
-  /**
-   * @brief      Gets the raw input added into the transfer function, provided the @Partial_solution monitors for it
-   *
-   * @return     The array for the input values for the neurons.
-   */
-  vector<sdouble32> get_transfer_function_input(void) const{
-     return transfer_function_input;
-  }
-
-  /**
-   * @brief      Gets the output from to the transfer function, provided the @Partial_solution monitors for it
-   *
-   * @return     The array for the input values for the neurons.
-   */
-  vector<sdouble32> get_transfer_function_output(void) const{
-    return transfer_function_output;
-  }
 
   /**
    * @brief      Gives back the size of the array the required Gradient data is stored in.
@@ -77,20 +58,73 @@ public:
    * @param      input_data   The input data
    * @param[in]  neuron_data  The neuron data
    */
-  void collect_input_data(vector<sdouble32>& input_data, vector<sdouble32> neuron_data);
+  void collect_input_data(vector<sdouble32>& input_data, vector<sdouble32>& neuron_data);
 
   /**
-   * @brief      Solves the detail given in the argument, then cleans it up and returns the solution
+   * @brief      Provides output data into the given reference
    *
-   * @return     The result data of the internal neurons
+   * @param      neuron_data  The reference to the neuron data
    */
-  vector<sdouble32> solve();
+  void provide_output_data(vector<sdouble32>& neuron_data){
+    uint32 output_index_start = 0;
+    vector<sdouble32> neuron_output_copy(neuron_output);
+    output_iterator.skim([&](int synapse_starts, unsigned int synapse_size){
+      if(neuron_data.size() < (synapse_starts + synapse_size))
+        throw "Neuron data out of Bounds!";
+      swap_ranges( /* Save output into the internal neuron memory */
+        neuron_output_copy.begin() + output_index_start,
+        neuron_output_copy.begin() + output_index_start + synapse_size,
+        neuron_data.begin() + synapse_starts
+      );
+      output_index_start += synapse_size;
+    });
+  }
+
+  /**
+   * @brief      Provides the gradient data to the given references
+   *
+   * @param      transfer_function_input_   The reference to transfer function input
+   * @param      transfer_function_output_  The reference to transfer function output
+   */
+  void provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_){
+    if(transfer_function_input.size() != transfer_function_output.size()) throw "Neuron gradient data Incompatible!";
+    uint32 copy_num = 0, offset = 0;
+    output_iterator.skim([&](int synapse_starts, unsigned int synapse_size){
+      copy_num = std::min( synapse_size,
+        std::max(output_layer_first_index,(synapse_starts + synapse_size)) - output_layer_first_index
+      );
+      if(0 < copy_num){
+        std::copy(
+          transfer_function_input.begin() + offset, transfer_function_input.begin() + offset + copy_num,
+          transfer_function_input_.begin() + offset
+        );
+        std::copy(
+          transfer_function_output.begin() + offset, transfer_function_output.begin() + offset + copy_num,
+          transfer_function_output_.begin() + offset
+        );
+        offset += copy_num;
+      }
+    });
+  }
+
+  /**
+   * @brief      Solves the partial solution in the given argument
+   *             to be later supplied through @provide_output_data and @provide_gradient_data
+   */
+  void solve();
 
   /**
    * @brief      Resets the data of the included Neurons.
    */
   void reset(void){
     for(sdouble32& neuron_data : neuron_output) neuron_data = 0;
+    uint32 index = 1;
+    output_iterator.iterate([&](int synapse_index){
+      if(static_cast<int>(output_layer_first_index) < synapse_index)
+        ++index;
+    });
+    transfer_function_input = vector<sdouble32>(index,0);
+    transfer_function_output = vector<sdouble32>(index,0);
   }
 
   /**
@@ -105,7 +139,7 @@ private:
   /**
    * The Partial solution to solve
    */
-  reference_wrapper<const Partial_solution> detail;
+  const Partial_solution& detail;
 
   /**
    * The iterator to go through the Neurons while solving the detail
@@ -113,17 +147,17 @@ private:
   Synapse_iterator internal_iterator;
 
   /**
-   * THe iterator to go through the inputs of the detail
+   * The iterator to go through the I/O of the detail
    */
   Synapse_iterator input_iterator;
+  Synapse_iterator output_iterator;
 
   /**
    * For Gradient information, intermeidate results are required to be stored.
    * The Partial solution solver shall store the last num_of_transitional_data 
    * of intermediate results in @transfer_function_input and @transfer_function_output
    */
-  uint32 num_of_transitional_data;
-  uint32 num_of_non_transitional_data;
+  uint32 output_layer_first_index;
   vector<sdouble32> transfer_function_input;
   vector<sdouble32> transfer_function_output;
 

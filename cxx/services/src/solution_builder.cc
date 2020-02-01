@@ -100,8 +100,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
       *solution->add_partial_solutions() = *cell;
     }
   } /* Build the @Solution from the @Partial_Solution matrix */
-
-return solution;
+  return solution;
 }
 
 } /* namespace sparse_net_library */

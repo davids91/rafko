@@ -23,6 +23,10 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
    * Neuron global parameters in partial
    */
   partial_solution.set_internal_neuron_number(2);
+  temp_synapse_interval.set_starts(neuron_offset + 0u);
+  temp_synapse_interval.set_interval_size(2);
+  *partial_solution.add_output_data() = temp_synapse_interval;
+
   for(uint32 i = 0; i < number_of_inputs; ++i){
     partial_solution.add_weight_table(1.0); /* weight for the inputs coming to the first Neuron */
   } /* Every weight shall be modified in this example, so they'll all have thir own weight table entry */
@@ -33,9 +37,6 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
   partial_solution.add_weight_table(10.0);
 
   /* Add internal Neuron IDs */
-  temp_synapse_interval.set_starts(neuron_offset + 0u);
-  temp_synapse_interval.set_interval_size(2);
-  *partial_solution.add_output_data() = temp_synapse_interval;
   partial_solution.add_actual_index(neuron_offset + 0u); /* Really doesn't matter that much in this testcase */
   partial_solution.add_actual_index(neuron_offset + 1u); /* It will matter only when multiple partial partial_solutions are joind together */
 

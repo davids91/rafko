@@ -1,7 +1,7 @@
 # Makefile
-LIBS = `pkg-config --cflags --libs protobuf` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
+LIBS = `pkg-config --cflags --libs protobuf` -g#-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
 
-CPPFLAGS = -Wall $(LIBS) -std=c++14 -DNDEBUG -g #-v
+CPPFLAGS = -Wall $(LIBS) -std=c++14 -DNDEBUG #-v
 CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib -g
 
 GENERATED_SOURCES = ../cxx/gen/common.pb.cc ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc

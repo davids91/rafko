@@ -115,7 +115,6 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
             }
             ++neuron_synapse_element_iterator;
           },input_synapse_offset,solution->partial_solutions(partial_solution_iterator).index_synapse_number(inner_neuron_iterator));
-
           goto Neuron_found_in_partial;
         }else{ /* neuron_iterator is not under inner_neuron_iterator in the partial solutio.. adjust synapse offsets */
           input_synapse_offset += solution->partial_solutions(partial_solution_iterator).index_synapse_number(inner_neuron_iterator);
