@@ -6,10 +6,6 @@ namespace sparse_net_library {
 
 using std::max;
 
-sdouble32 epsilon = 1e-15;
-sdouble32 lambda = 1.0507;
-sdouble32 alpha = 1.6732;
-
 transfer_functions Transfer_function::next(){
   return next({
     TRANSFER_FUNCTION_IDENTITY,
@@ -48,10 +44,10 @@ sdouble32 Transfer_function::get_value(transfer_functions function, sdouble32 da
     case TRANSFER_FUNCTION_SIGMOID: return 1/(1+exp(-data));
     case TRANSFER_FUNCTION_TANH: return tanh(data);
     case TRANSFER_FUNCTION_ELU:
-      if(0 > data) return alpha * (exp(data) -1);
+      if(0 > data) return context.get_alpha() * (exp(data) -1);
       else return data;
     case TRANSFER_FUNCTION_SELU:
-      if(0 > data) return alpha * (exp(data) -1) * lambda;
+      if(0 > data) return context.get_alpha() * (exp(data) -1) * context.get_lambda();
       else return data;
     case TRANSFER_FUNCTION_RELU: return max(0.0,data);
     default: throw "Unidentified transfer function queried for information!";
@@ -65,7 +61,7 @@ sdouble32 Transfer_function::get_derivative(transfer_functions function, sdouble
     case TRANSFER_FUNCTION_TANH: return 1/cosh(data);
     case TRANSFER_FUNCTION_ELU:
     case TRANSFER_FUNCTION_SELU:
-      if(0 > data) return alpha * exp(data);
+      if(0 > data) return context.get_alpha() * exp(data);
       else return 1;
     case TRANSFER_FUNCTION_RELU:
       if(0 > data) return 0;

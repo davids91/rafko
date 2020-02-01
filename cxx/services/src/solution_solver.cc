@@ -30,7 +30,8 @@ Solution_solver::Solution_solver(const Solution& to_solve, Service_context conte
         std::min( /* Transfer function data to be monitored for the output Neurons only */
           std::max(0,(partial_solution_end_plus1 - first_output_neuron_index + 1)),
           static_cast<int>(get_partial(row_iterator,column_index,solution).internal_neuron_number())
-        )
+        ),
+        context /* The session configuration */
       ); /* Initialize a solver for this partial solution element */
 
       partial_solver_output_maps[row_iterator].push_back(Synapse_iterator(

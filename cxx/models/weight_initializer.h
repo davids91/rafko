@@ -2,9 +2,9 @@
 #define weight_initializer_H
 
 
-#include "gen/sparse_net.pb.h"
-
 #include "sparse_net_global.h"
+#include "gen/sparse_net.pb.h"
+#include "models/service_context.h"
 
 namespace sparse_net_library {
 
@@ -18,7 +18,9 @@ public:
   /**
    * @brief      Constructs the object.
    */
-  Weight_initializer() noexcept{};
+  Weight_initializer(Service_context service_context = Service_context()) noexcept
+  : context(service_context)
+  { };
 
   /**
    * @brief      Calculate a weight which fits the Neuron the most based on the configuration parameters
@@ -74,6 +76,8 @@ public:
     return next_weight_for(TRANSFER_FUNCTION_IDENTITY);
   }
 protected:
+
+  Service_context context;
 
   /**
    * @brief      Limits the given weight into the limits used in the Neural Network

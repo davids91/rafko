@@ -65,7 +65,7 @@ vector<sdouble32> Partial_solution_solver::solve(){
     }
 
     /* Apply transfer function */
-    new_neuron_data = Transfer_function::get_value(
+    new_neuron_data = transfer_function.get_value(
       detail.get().neuron_transfer_functions(neuron_iterator), new_neuron_data
     );
 

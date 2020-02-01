@@ -5,6 +5,7 @@
 
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
+#include "models/service_context.h"
 
 namespace sparse_net_library{
 
@@ -15,6 +16,10 @@ using std::vector;
  */
 class Transfer_function{
 public:
+  Transfer_function(Service_context service_context = Service_context())
+  : context(service_context)
+  { }
+
   /**
    * @brief      Gives a random Transfer Function
    *
@@ -48,7 +53,7 @@ public:
    *
    * @return     The result of data.
    */
-  static sdouble32 get_value(transfer_functions function, sdouble32 data);
+  sdouble32 get_value(transfer_functions function, sdouble32 data);
 
   /**
    * @brief      Gets a functions derivative calculated form the given data
@@ -58,7 +63,9 @@ public:
    *
    * @return     The derivative from data.
    */
-  static sdouble32 get_derivative(transfer_functions function, sdouble32 data);
+  sdouble32 get_derivative(transfer_functions function, sdouble32 data);
+private:
+  Service_context context;
 };
 
 } /* namespace sparse_net_library */

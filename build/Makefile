@@ -63,8 +63,8 @@ build-tests: $(TEST_OBJECTS)
 	@rm -f $(TEST_RESULT)
 	g++ $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 
-test: clean build_library build-tests
-	./$(TEST_RESULT) --use-colour yes
+test: build_library build-tests
+	./$(TEST_RESULT)
 
 test-only: $(TEST_OBJECTS)
 	@clear

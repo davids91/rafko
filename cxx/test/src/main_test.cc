@@ -77,6 +77,8 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
 }
 
 void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdouble32>& prev_neuron_output, const Partial_solution& partial_solution, uint32 neuron_offset){
+  Transfer_function trasfer_function;
+
   /* Neuron 1 = transfer_function( ( input0 * weight0 + input1 * weight1 ... inputN * weightN ) + bias0 )*/
   sdouble32 neuron1_result = 0;
   for(uint32 weight_iterator = 0; weight_iterator < partial_inputs.size(); ++weight_iterator){
@@ -84,7 +86,7 @@ void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdou
   }
 
   neuron1_result += partial_solution.weight_table(partial_solution.bias_index(0));
-  neuron1_result = Transfer_function::get_value(partial_solution.neuron_transfer_functions(0),neuron1_result);
+  neuron1_result = trasfer_function.get_value(partial_solution.neuron_transfer_functions(0),neuron1_result);
   prev_neuron_output[neuron_offset + 0] = prev_neuron_output[neuron_offset + 0] * partial_solution.weight_table(partial_solution.memory_filter_index(0))
    + neuron1_result * (1.0 - partial_solution.weight_table(partial_solution.memory_filter_index(0)));
 
@@ -92,14 +94,16 @@ void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdou
   sdouble32 neuron2_result = (prev_neuron_output[neuron_offset + 0] * partial_solution.weight_table(partial_inputs.size()))
    + partial_solution.weight_table(partial_solution.bias_index(1));
 
-  neuron2_result = Transfer_function::get_value(partial_solution.neuron_transfer_functions(1),neuron2_result);
+  neuron2_result = trasfer_function.get_value(partial_solution.neuron_transfer_functions(1),neuron2_result);
   prev_neuron_output[neuron_offset + 1] = prev_neuron_output[neuron_offset + 1] * partial_solution.weight_table(partial_solution.memory_filter_index(1))
    + neuron2_result * (1.0 - partial_solution.weight_table(partial_solution.memory_filter_index(1)));
 }
 
 void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdouble32>& neuron_data,
     vector<uint32> layer_structure, SparseNet network){
+  Transfer_function trasfer_function;
   uint32 neuron_number = 0;
+
   for(uint32 layer_iterator = 0; layer_iterator < layer_structure.size(); ++layer_iterator){ /* Go through all of the layers, count the number of Neurons */
     neuron_number += layer_structure[layer_iterator]; /* Sum the number of neurons accoding to the given layer structure */
   }
@@ -133,7 +137,7 @@ void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdo
       }
     }); /* For every input in the Neuron sum the weigthed input*/
     new_neuron_data += network.weight_table(neuron.bias_idx()); /* add bias */
-    new_neuron_data = Transfer_function::get_value(neuron.transfer_function_idx(),new_neuron_data); /* apply transfer function */
+    new_neuron_data = trasfer_function.get_value(neuron.transfer_function_idx(),new_neuron_data); /* apply transfer function */
     neuron_data[neuron_iterator] = /* Apply memory filter and save output to Neuron data */
       neuron_data[neuron_iterator] * (network.weight_table(neuron.memory_filter_idx()))
       + new_neuron_data * (1.0 - network.weight_table(neuron.memory_filter_idx()));

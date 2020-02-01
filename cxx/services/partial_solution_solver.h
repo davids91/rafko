@@ -7,6 +7,7 @@
 
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+#include "models/transfer_function.h"
 #include "services/synapse_iterator.h"
 
 namespace sparse_net_library {
@@ -17,8 +18,10 @@ using std::reference_wrapper;
 class Partial_solution_solver{
 
 public:
-  Partial_solution_solver(const Partial_solution& partial_solution, uint32 num_of_transition_data = 0)
-  : detail(partial_solution)
+  Partial_solution_solver(
+    const Partial_solution& partial_solution, 
+    uint32 num_of_transition_data = 0, Service_context service_context = Service_context()
+  ): detail(partial_solution)
   , internal_iterator(detail.get().inside_indices())
   , input_iterator(detail.get().input_data())
   , num_of_transitional_data(num_of_transition_data)
@@ -27,6 +30,7 @@ public:
   , transfer_function_output(vector<sdouble32>(num_of_transition_data))
   , neuron_output(detail.get().internal_neuron_number())
   , collected_input_data(input_iterator.size())
+  , transfer_function(service_context)
   { reset(); }
 
   /**
@@ -132,6 +136,11 @@ private:
    * The data collected from the @Partial_solution input
    */
   vector<sdouble32> collected_input_data;
+
+  /**
+   * The transfer function set configured for the current session
+   */
+  Transfer_function transfer_function;
 
 };
 
