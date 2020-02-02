@@ -60,13 +60,11 @@ public:
   );
 
   /**
-   * @brief      Gives back the error of the configured Network based on the given samples
-   *
-   * @param      input_samples  The input samples
+   * @brief      Gives back the error of the configured Network based on the previous optimization step
    *
    * @return     Error value
    */
-  sdouble32 error(vector<vector<sdouble32>>& input_samples);
+  sdouble32 last_error();
 
 private:
   Service_context context;
@@ -86,11 +84,11 @@ private:
   vector<sdouble32> gradient_values;
   sdouble32 step_size;
 
-  void calculate_weight_gradients(uint32 neuron_index);
+  void calculate_weight_gradients(uint32 neuron_index, vector<sdouble32>& input_sample);
 
   void update_weights_with_gradients(uint32 weight_index){
     net.set_weight_table( weight_index,
-      net.weight_table(weight_index) - *weight_gradients[weight_index] * step_size
+      net.weight_table(weight_index) + *weight_gradients[weight_index] * step_size
     );
   }
 
@@ -99,19 +97,23 @@ private:
     const Neuron& neuron = net.neuron_array(neuron_index);
     uint32 weight_index = 0;
     uint32 weight_synapse_index = 0;
+    //std::cout << "|---Propagating the errors of Neuron["<< neuron_index <<"]" << std::endl;
     neuron_router.run_for_neuron_inputs(neuron_index,[&](sint32 child_index){
-      buffer = *error_values[child_index];
-      while(!error_values[child_index]->compare_exchange_weak(
-        buffer, 
-        (buffer + *error_values[neuron_index] 
-          * net.weight_table(neuron.input_weights(weight_synapse_index).starts() + weight_index))
-      ))buffer = *error_values[child_index];
+      if(!Synapse_iterator::is_index_input(child_index)){
+        buffer = *error_values[child_index];
+        while(!error_values[child_index]->compare_exchange_weak(
+          buffer, 
+          (buffer + *error_values[neuron_index] 
+            * net.weight_table(neuron.input_weights(weight_synapse_index).starts() + weight_index))
+        ))buffer = *error_values[child_index];
+      }
       ++weight_index; 
       if(weight_index >= neuron.input_weights(weight_synapse_index).interval_size()){
         weight_index = 0; 
         ++weight_synapse_index;
       }
     });
+    //std::cout << "|---Propagated the errors of Neuron["<< neuron_index <<"]!" << std::endl;
   }
 };
 
