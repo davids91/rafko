@@ -19,7 +19,7 @@ public:
    *             a true boolean argument or given a seed value.
    */
   Dense_net_weight_initializer(bool seed);
-  Dense_net_weight_initializer(sdouble32 memRatioMin = 0.0, sdouble32 memRatioMax = 1.0);
+  Dense_net_weight_initializer(sdouble32 memRatioMin = 0.0, sdouble32 memRatioMax = 0.0);
   Dense_net_weight_initializer(uint32 seed, sdouble32 memRatioMin = 0.0, sdouble32 memRatioMax = 1.0);
 
   /**

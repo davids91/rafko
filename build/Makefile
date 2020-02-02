@@ -10,6 +10,7 @@ BUILDER_SOURCES = ../cxx/services/src/sparse_net_builder.cc
 BUILDER_SOURCES += ../cxx/services/src/solution_builder.cc ../cxx/services/src/partial_solution_builder.cc
 
 SOLVER_SOURCES = ../cxx/services/src/partial_solution_solver.cc ../cxx/services/src/solution_solver.cc
+SOLVER_SOURCES += ../cxx/services/src/sparse_net_optimizer.cc
 
 HELPER_SOURCES = ../cxx/services/src/synapse_iterator.cc
 HELPER_SOURCES += ../cxx/models/src/dense_net_weight_initializer.cc
@@ -59,12 +60,11 @@ TEST_RESULT = test-results.out
 TEST_LOOPS = 100
 
 .PHONY: test build-tests run-tests test-solution-builder test-only loop-tests
-build-tests: $(TEST_OBJECTS)
+$(TEST_RESULT): $(TEST_OBJECTS)
 	@rm -f $(TEST_RESULT)
 	g++ $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 
-test: build_library build-tests
-	./$(TEST_RESULT)
+test: build_library run-tests
 
 test-only: $(TEST_OBJECTS)
 	@clear
@@ -72,7 +72,7 @@ test-only: $(TEST_OBJECTS)
 	make run-tests
 
 run-tests: $(TEST_RESULT)
-	./$(TEST_RESULT) --use-colour yes
+	./$< --use-colour yes
 
 loop-tests:
 	for ((i=1; i <= ${TEST_LOOPS}; ++i)) do ./$(TEST_RESULT) --use-colour yes | grep FAILED: -A 5; done

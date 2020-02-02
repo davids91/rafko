@@ -30,8 +30,8 @@ public:
    *
    * @return     The derivative from data.
    */
-  static sdouble32 get_derivative(sdouble32 parameter, sdouble32 input_derivative){
-    return (input_derivative - parameter) * input_derivative;
+  static sdouble32 get_derivative(sdouble32 parameter){
+    return (1 - parameter);
   }
 };
 } /* namespace sparse_net_library */
