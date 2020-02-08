@@ -209,7 +209,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   ));
 
   /* Check net validity in general */
-  REQUIRE( 0 < net->weight_table_size() );
+  REQUIRE( ((5*2+2*2) + (2*3+3*2) + (2*3+2*2)) == net->weight_table_size() );
   REQUIRE( 0 < net->neuron_array_size() );
   CHECK( 7 == net->neuron_array_size() );
   CHECK( 5 == net->input_data_size() );
@@ -245,7 +245,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
 
       /* Weights */
       REQUIRE( /* Every weight synapse element has to point inside the weight table array */
-        net->weight_table_size() >
+        net->weight_table_size() >= /* Equality is permitted here, because the interval iterates from (start) to (start + size - 1) */
         ( net->neuron_array(i).input_weights(weight_synapse_iterator).starts()
           + net->neuron_array(i).input_weights(weight_synapse_iterator).interval_size() )
       );

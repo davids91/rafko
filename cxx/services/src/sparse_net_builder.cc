@@ -22,10 +22,12 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
    */
   uint64 numWeights = (layer_sizes[0] * arg_input_size) + (2 * layer_sizes[0]); /* The first layer only takes input from the @SparseNet input data */
   for(uint32 layerSize : layer_sizes){
-    numNeurons += layerSize; /* Calculate the number of elements needed */
-    numWeights += previous_size * layerSize; /* Calculate the number of weights needed */
-    numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_filter amongst the weights */
+    if(0 != numNeurons){ /* The first layer is already included in numWeights */
+      numWeights += previous_size * layerSize; /* Calculate the number of weights needed */
+      numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_filter amongst the weights */
+    }
     previous_size = layerSize;
+    numNeurons += layerSize; /* Calculate the number of elements needed */
   }
 
   if( /* Required arguments are set */

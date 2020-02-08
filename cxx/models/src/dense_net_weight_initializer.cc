@@ -16,7 +16,7 @@ Dense_net_weight_initializer::Dense_net_weight_initializer(bool seed){
 }
 
 Dense_net_weight_initializer::Dense_net_weight_initializer(sdouble32 memRatioMin, sdouble32 memRatioMax){
-  memMin = max(context.get_epsilon(), min(1.0, memRatioMin));
+  memMin = max(0.0, min(1.0, memRatioMin));
   memMax = min(1.0, max(memMin,memRatioMax));
 }
 

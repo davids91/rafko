@@ -30,7 +30,7 @@ SOURCES_INCLUDE_DIR = -I ../cxx
 LIB_OUTPUT = ../lib/libsparsenetlib.a
 
 .PHONY: build_library clean gen
-build_library: $(LIBRARY_OBJECTS)
+build_library: clean $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
 
 gen: #as in generate models; Can't be bothered to type something like `make generate-protocol-buffer-files` every time...

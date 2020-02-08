@@ -42,11 +42,15 @@ public:
   }
 
   sdouble32 get_error(uint32 label_index, uint32 feature_index, vector<sdouble32>& features) const{
-    return ( 0.5 * pow((features[feature_index] - labels[label_index][feature_index]),2) / static_cast<sdouble32>(features.size()) );
+    return ( 0.5 * 
+      pow((features[feature_index] - labels[label_index][feature_index]),2) / static_cast<sdouble32>(features.size()) 
+    );
   }
   
   sdouble32 get_d_cost_over_d_feature(uint32 label_index, uint32 feature_index, vector<sdouble32>& features) const{
-    return ( -(features[feature_index] - labels[label_index][feature_index]) / static_cast<sdouble32>(features.size()) );
+    return ( 
+      -(features[feature_index] - labels[label_index][feature_index]) / static_cast<sdouble32>(features.size()) 
+    );
   }
 };
 
