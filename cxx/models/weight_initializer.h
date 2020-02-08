@@ -1,6 +1,7 @@
 #ifndef weight_initializer_H
 #define weight_initializer_H
 
+#include <cmath>
 
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
@@ -56,7 +57,7 @@ public:
     expected_input_number = max(1u,expected_input_number_);
 
     if( /* Primitive check if the given number causes overflow or not */
-      (numeric_limits<sdouble32>::max() > (expected_input_number_ * abs(expected_input_maximum_value_)))
+      (numeric_limits<sdouble32>::max() > (expected_input_number_ * std::abs(expected_input_maximum_value_)))
     ){
       expected_input_maximum_value = expected_input_maximum_value_;
     }else if(0.0 == expected_input_maximum_value_){

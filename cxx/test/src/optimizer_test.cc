@@ -10,6 +10,8 @@
 #include <cstdlib>
 #include <time.h>
 #include <vector>
+#include <float.h>
+#include <cmath>
 
 namespace sparse_net_library_test{
 
@@ -44,10 +46,20 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   vector<vector<sdouble32>> square_x_dataset(500);
   vector<vector<sdouble32>> square_y_dataset(500);
 
-  srand(time(nullptr)); //srand(static_cast<uint32>(time(nullptr)));
+  srand(time(nullptr));
+  sdouble32 max_x = DBL_MIN;
+  sdouble32 max_y = DBL_MIN;
   for(uint32 i = 0;i < 500;++i){
     net_inputs[i].push_back(static_cast<sdouble32>(rand()%100));
     net_inputs[i].push_back(static_cast<sdouble32>(rand()%100));
+    if(net_inputs[i][0] > max_x)max_x = net_inputs[i][0];
+    if(net_inputs[i][1] > max_y)max_y = net_inputs[i][1];
+  }
+
+  for(uint32 i = 0;i < 500;++i){ /* Normalize the inputs */
+    net_inputs[i][0] /= max_x;
+    net_inputs[i][1] /= max_y;
+
     addition_dataset[i].push_back(net_inputs[i][0] + net_inputs[i][1]);
     substraction_dataset[i].push_back(net_inputs[i][0] - net_inputs[i][1]);
     square_x_dataset[i].push_back(pow(net_inputs[i][0],2));
@@ -56,7 +68,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   vector<SparseNet> nets = vector<SparseNet>();
   nets.push_back(*Sparse_net_builder()
-    .input_size(2).expected_input_range(100.0)
+    .input_size(2).expected_input_range(1.0)
     .cost_function(COST_FUNCTION_QUADRATIC)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY}}
@@ -64,7 +76,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   );
 
   nets.push_back(*Sparse_net_builder()
-    .input_size(2).expected_input_range(100.0)
+    .input_size(2).expected_input_range(1.0)
     .cost_function(COST_FUNCTION_QUADRATIC)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},{TRANSFER_FUNCTION_IDENTITY}}
@@ -72,7 +84,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   );
 
   nets.push_back(*Sparse_net_builder()
-    .input_size(2).expected_input_range(100.0)
+    .input_size(2).expected_input_range(1.0)
     .cost_function(COST_FUNCTION_QUADRATIC)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},
@@ -82,11 +94,34 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   );
 
   /* Optimize net */
+  sdouble32 last_error = 5;
   Sparse_net_optimizer optimizer = Sparse_net_optimizer(nets[0],addition_dataset);
   std::cout << "Optimizing net.." << std::endl;
-  while(true){
+  while(abs(last_error) > 1e-10){
     optimizer.step(net_inputs,1e-10);
-    cout << "\r\t\t Error: \t [" << optimizer.last_error() << "]\t\t";
+    cout << "\r Error: [" << optimizer.last_error() << "]" << std::endl;
+    last_error = optimizer.last_error();
+  }
+  cout << endl;
+
+  Sparse_net_optimizer optimizer2(nets[1],addition_dataset); /* Add sparse_net_library::Service_context().set_max_processing_threads(1)) for single-threaded tests */
+  std::cout << "Optimizing bigger net.." << std::endl;
+  last_error = 5;
+  while(abs(last_error) > 1e-10){
+    optimizer2.step(net_inputs,1e-10);
+    cout << "\r Error: [" << optimizer2.last_error() << "]" << std::endl;
+    last_error = optimizer2.last_error();
+  }
+  cout << std::endl;
+
+  Sparse_net_optimizer optimizer3(nets[1],addition_dataset
+    );//,sparse_net_library::Service_context().set_max_processing_threads(1));
+  std::cout << "Optimizing biggest net.." << std::endl;
+  last_error = 5;
+  while(abs(last_error) > 1e-15){
+    optimizer3.step(net_inputs,1e-15);
+    cout << "\r Error: [" << optimizer3.last_error() << "]" << std::endl;
+    last_error = optimizer3.last_error();
   }
   cout << endl;
 }

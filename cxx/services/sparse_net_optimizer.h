@@ -92,6 +92,13 @@ private:
     );
   }
 
+  void copy_weight_to_solution(
+    uint32 inner_neuron_index,
+    Partial_solution& partial,
+    uint32 neuron_weight_synapse_starts,
+    uint32 inner_neuron_weight_index_starts 
+  );
+  
   void propagate_errors_back(uint32 neuron_index){
     sdouble32 buffer;
     const Neuron& neuron = net.neuron_array(neuron_index);
