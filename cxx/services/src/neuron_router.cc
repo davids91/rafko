@@ -13,7 +13,7 @@ Neuron_router::Neuron_router(const SparseNet& sparse_net) : net(sparse_net){
   neuron_states = vector<unique_ptr<atomic<uint32>>>(); /* Every Neuron has 0 child processed at first */
   neuron_number_of_inputs = vector<uint32>(net.neuron_array_size(),0);
   iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
-  for(int neuron_iterator; neuron_iterator < net.neuron_array_size(); ++neuron_iterator){
+  for(int neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator){
       for(int synapse_iterator = 0;
         synapse_iterator < net.neuron_array(neuron_iterator).input_indices_size();
         ++synapse_iterator
@@ -26,23 +26,10 @@ Neuron_router::Neuron_router(const SparseNet& sparse_net) : net(sparse_net){
   collection_running = false;
 }
 
-Neuron_router::Neuron_router(const Neuron_router& other): net(other.net){
-  output_layer_iterator = other.output_layer_iterator.load();
-  neuron_number_of_inputs = other.neuron_number_of_inputs;
-  neuron_states = vector<unique_ptr<atomic<uint32>>>();
-  for(uint32 i = 0; i < other.neuron_states.size(); ++i){
-    neuron_states.push_back(std::make_unique<atomic<uint32>>());
-    *neuron_states[i] = other.neuron_states[i]->load();
-  }
-  net_subset = other.net_subset;
-  net_subset_index = other.net_subset_index;
-  collection_running = false;
-}
-
 void Neuron_router::collect_subset(uint8 arg_max_solve_threads, sdouble32 arg_device_max_megabytes, bool strict){
 
   using std::thread;
-  
+
   collection_running = true;
   vector<thread> processing_threads;
   for(uint8 thread_iterator = 0; thread_iterator < arg_max_solve_threads; thread_iterator++){
@@ -168,7 +155,7 @@ void Neuron_router::add_neuron_into_subset(uint32 neuron_index){
     while(!net_subset_size_bytes.compare_exchange_weak(
       tmp_size,tmp_size + static_cast<sdouble32>(tmp_number)/(1024.0 * 1024.0)
     ))tmp_size = net_subset_size_bytes;
-  } 
+  }
 }
 
 void Neuron_router::step(vector<uint32>& visiting, uint32 visiting_next){

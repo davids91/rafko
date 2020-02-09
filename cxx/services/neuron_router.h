@@ -30,7 +30,6 @@ using std::atomic;
 class Neuron_router{
 public:
   Neuron_router(const SparseNet& sparse_net);
-  Neuron_router(const Neuron_router& other);
 
   uint32 operator[](int index){
     return get_neuron_index_from_subset(index);
@@ -78,7 +77,7 @@ public:
       return true;
     }else return false;
   }
-  
+
   bool confirm_first_subset_element_ommitted(uint32 neuron_index){
     bool ret = false;
     if((0 < net_subset.size())&&(neuron_index == net_subset.front())){

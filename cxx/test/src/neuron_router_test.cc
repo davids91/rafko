@@ -37,7 +37,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
   .cost_function(COST_FUNCTION_QUADRATIC).expected_input_range(5.0);
   SparseNet* net(net_builder->dense_layers(layer_structure));
   net_builder.reset();
-  Neuron_router net_iterator = Neuron_router(*net);
+  Neuron_router net_iterator(*net);
 
   /* Testing if a function can be run a @Neuron s inputs */
   for(uint32 neuron_iterator = 0; static_cast<int>(neuron_iterator) < net->neuron_array_size(); ++neuron_iterator){
@@ -77,7 +77,9 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
     }else{
       last_run = true;
     }
-    layer_start += layer_structure[iteration-1];
+    if( layer_structure.size() > iteration ) /* iteration needs to run an additional round, */
+      layer_start += layer_structure[iteration-1]; /* so this way OOB can be avoided */
+
     subset.clear();
 
      ++iteration;

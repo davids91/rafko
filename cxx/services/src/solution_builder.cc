@@ -8,6 +8,7 @@ namespace sparse_net_library{
 Solution* Solution_builder::build(const SparseNet& net ){
 
   using std::ref;
+
   Partial_solution* current_partial = google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
   Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(arg_arena_ptr);
   vector<vector<Partial_solution*>> partial_matrix = vector<vector<Partial_solution*>>(
@@ -17,7 +18,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
   vector<uint32> neurons_in_row = vector<uint32>();
   uint32 neuron_index;
   uint32 row_iterator = 0;
-  Neuron_router net_iterator = Neuron_router(net);
+  Neuron_router net_iterator(net);
   uint32 placed_neurons_in_partial = 0;
   uint32 placed_neurons_in_row = 0;
   uint32 partial_output_synapse_count = 0;
@@ -36,7 +37,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
       while( /* Put all collected Neurons into the current @Partial_solution */
         ((current_partial->SpaceUsedLong() /* Bytes */ / 1024.0 /* KB *// 1024.0 /* MB */) <= arg_device_max_megabytes)
         &&(placed_neurons_in_row < net_iterator.get_subset_size())
-      ){ 
+      ){
         neuron_index = net_iterator[placed_neurons_in_row];
         partial_builder.add_neuron_to_partial_solution(neuron_index);
         ++placed_neurons_in_row;
@@ -50,7 +51,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
         }
         latest_placed_neuron_index = neuron_index;
         Partial_solution_builder::add_to_synapse( /* Neural input shall be added from the input of the @Partial_solution */
-          neuron_index, partial_output_synapse_count, 
+          neuron_index, partial_output_synapse_count,
           current_partial->mutable_output_data()
         );
       }
