@@ -66,12 +66,12 @@ void Sparse_net_optimizer::step(
         net.weight_table(net.neuron_array(neuron_iterator).memory_filter_idx()),
         transfer_function.get_derivative(
           net.neuron_array(neuron_iterator).transfer_function_idx(),
-          transfer_function_input[neuron_iterator]
+          transfer_function_input[neuron_iterator+net.output_neuron_number()-net.neuron_array_size()]
         )
       );
       buffer *= transfer_function.get_derivative(
         net.neuron_array(neuron_iterator).transfer_function_idx(),
-        transfer_function_input[neuron_iterator]
+        transfer_function_input[neuron_iterator+net.output_neuron_number()-net.neuron_array_size()]
       );
       *error_values[neuron_iterator] = buffer;
       ++output_layer_iterator;
@@ -135,11 +135,11 @@ void Sparse_net_optimizer::step(
   }
   #if 0
   std::cout << "Error["<< *error_values[0] 
-  <<"]";//<<"] ==>("
+  <<"] ==>("
   <<"Gradient["<< *weight_gradients[0]
   <<"]; Gradient["<< *weight_gradients[2]
   <<"]; Gradient["<< *weight_gradients[3] <<"]"
-  ")                                            ";
+  ")";
   std::cout << std::endl;
   //std::cin.get();
   #endif
@@ -205,11 +205,11 @@ void Sparse_net_optimizer::step(
   std::cout << std::endl;
   #endif
   #if 0
-  std::cout << "\t\t";
+  std::cout << "Weights:";
   for(sint32 weight_index = 0; weight_index < net_solution.partial_solutions(0).weight_table_size(); ++weight_index){
-    std::cout << "["<< net_solution.partial_solutions(0).weight_table(weight_index) << "]                             ";
+    std::cout << "["<< net_solution.partial_solutions(0).weight_table(weight_index) << "]";
   }
-  //std::cout << std::endl;
+  std::cout << std::endl << "===================================" << std::endl;
   #endif
 }
 
