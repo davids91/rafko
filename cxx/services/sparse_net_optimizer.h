@@ -15,9 +15,11 @@
 
 #include <vector>
 #include <memory>
+#include <mutex>
 
 namespace sparse_net_library{
 
+using std::mutex;
 using std::vector;
 using std::unique_ptr;
 using google::protobuf::Arena;
@@ -36,12 +38,17 @@ public:
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
   ,  cost_function(Function_factory::build_cost_function(net,label_samples))
   ,  neuron_router(net)
+  ,  error_values(context.get_max_solve_threads())
+  ,  weight_gradients(context.get_max_solve_threads())
+  ,  feature_buffers(context.get_max_solve_threads())
   , step_size(1e-3)
   { 
-    for(sint32 i = 0; i < net.neuron_array_size(); ++i)
-      error_values.push_back(std::make_unique<atomic<sdouble32>>());
-    for(sint32 i = 0; i < net.weight_table_size(); ++i)
-      weight_gradients.push_back(std::make_unique<atomic<sdouble32>>());
+    for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
+      for(sint32 i = 0; i < net.neuron_array_size(); ++i)
+        error_values[threads].push_back(std::make_unique<atomic<sdouble32>>());
+      for(sint32 i = 0; i < net.weight_table_size(); ++i)
+        weight_gradients[threads].push_back(std::make_unique<atomic<sdouble32>>());
+    }
   };
 
    /**
@@ -64,7 +71,9 @@ public:
    *
    * @return     Error value
    */
-  sdouble32 last_error();
+  sdouble32 get_last_error(){
+   return last_error;
+  }
 
 private:
   Service_context context;
@@ -74,21 +83,30 @@ private:
 
   Solution net_solution;
   Solution_solver solver; 
+  mutex solver_mutex;
 
   Backpropagation_queue gradient_step;
   unique_ptr<Cost_function> cost_function;
   Neuron_router neuron_router;
 
-  vector<unique_ptr<atomic<sdouble32>>> error_values;
-  vector<unique_ptr<atomic<sdouble32>>> weight_gradients;
+  vector<vector<unique_ptr<atomic<sdouble32>>>> error_values;
+  vector<vector<unique_ptr<atomic<sdouble32>>>> weight_gradients;
   vector<sdouble32> gradient_values;
+  vector<vector<sdouble32>> feature_buffers;
   sdouble32 step_size;
+  atomic<sdouble32> last_error;
 
-  void calculate_weight_gradients(uint32 neuron_index, vector<sdouble32>& input_sample);
+  void calculate_gradient(
+    vector<sdouble32>& input_sample, uint32 sample_iterator, uint32 solve_thread_index
+  );
+  
+  void calculate_weight_gradients(
+    uint32 neuron_index, vector<sdouble32>& input_sample, uint32 solve_thread_index
+  );
 
-  void update_weights_with_gradients(uint32 weight_index){
+  void update_weights_with_gradients(uint32 weight_index, uint32 solve_thread_index){
     net.set_weight_table( weight_index,
-      net.weight_table(weight_index) + *weight_gradients[weight_index] * step_size
+      net.weight_table(weight_index) + *weight_gradients[solve_thread_index][weight_index] * step_size
     );
   }
 
@@ -99,20 +117,19 @@ private:
     uint32 inner_neuron_weight_index_starts 
   );
   
-  void propagate_errors_back(uint32 neuron_index){
+  void propagate_errors_back(uint32 neuron_index, uint32 solve_thread_index){
     sdouble32 buffer;
     const Neuron& neuron = net.neuron_array(neuron_index);
     uint32 weight_index = 0;
     uint32 weight_synapse_index = 0;
-    //std::cout << "|---Propagating the errors of Neuron["<< neuron_index <<"]" << std::endl;
     neuron_router.run_for_neuron_inputs(neuron_index,[&](sint32 child_index){
       if(!Synapse_iterator::is_index_input(child_index)){
-        buffer = *error_values[child_index];
-        while(!error_values[child_index]->compare_exchange_weak(
+        buffer = *error_values[solve_thread_index][child_index];
+        while(!error_values[solve_thread_index][child_index]->compare_exchange_weak(
           buffer, 
-          (buffer + *error_values[neuron_index] 
+          (buffer + *error_values[solve_thread_index][neuron_index] 
             * net.weight_table(neuron.input_weights(weight_synapse_index).starts() + weight_index))
-        ))buffer = *error_values[child_index];
+        ))buffer = *error_values[solve_thread_index][child_index];
       }
       ++weight_index; 
       if(weight_index >= neuron.input_weights(weight_synapse_index).interval_size()){
@@ -120,7 +137,6 @@ private:
         ++weight_synapse_index;
       }
     });
-    //std::cout << "|---Propagated the errors of Neuron["<< neuron_index <<"]!" << std::endl;
   }
 };
 

@@ -74,8 +74,8 @@ public:
   }
 
 private:
-  uint16 max_solve_threads = 16;
-  uint16 max_processing_threads = 32;
+  uint16 max_solve_threads = 2;
+  uint16 max_processing_threads = 4;
   sdouble32 device_max_megabytes = 2048.0;
   Arena* arena_ptr = nullptr;
 

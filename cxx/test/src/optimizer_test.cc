@@ -97,36 +97,33 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   /* Optimize net */
   sdouble32 last_error;
-  sdouble32 learning_rate = 1e-2;
-
   last_error = 5;
   Sparse_net_optimizer optimizer(*nets[0],addition_dataset);
   std::cout << "Optimizing net.." << std::endl;
-  while(abs(last_error) > learning_rate){
-    optimizer.step(net_inputs, learning_rate);
-    cout << "\r Error: [" << optimizer.last_error() << "]                    ";
-    last_error = optimizer.last_error();
+  while(abs(last_error) > 1e-2){
+    optimizer.step(net_inputs, 1e-2);
+    cout << "\r Error: [" << optimizer.get_last_error() << "]                    " << std::flush;
+    last_error = optimizer.get_last_error();
   }
   cout << endl;
 
   Sparse_net_optimizer optimizer2(*nets[1],addition_dataset); /* Add sparse_net_library::Service_context().set_max_processing_threads(1)) for single-threaded tests */
   std::cout << "Optimizing bigger net.." << std::endl;
   last_error = 5;
-  while(abs(last_error) > learning_rate){
-    optimizer2.step(net_inputs, learning_rate);
-    cout << "\r Error: [" << optimizer2.last_error() << "]                    ";
-    last_error = optimizer2.last_error();
+  while(abs(last_error) > 1e-5){
+    optimizer2.step(net_inputs, 1e-5);
+    cout << "\r Error: [" << optimizer2.get_last_error() << "]                    " << std::flush;
+    last_error = optimizer2.get_last_error();
   }
   cout << std::endl;
 
-  Sparse_net_optimizer optimizer3(*nets[1],addition_dataset
-    );//,sparse_net_library::Service_context().set_max_processing_threads(1));
+  Sparse_net_optimizer optimizer3(*nets[1],addition_dataset);
   std::cout << "Optimizing biggest net.." << std::endl;
   last_error = 5;
-  while(abs(last_error) > learning_rate){
-    optimizer3.step(net_inputs, learning_rate);
-    cout << "\r Error: [" << optimizer3.last_error() << "]                    ";
-    last_error = optimizer3.last_error();
+  while(abs(last_error) > 1e-4){
+    optimizer3.step(net_inputs, 1e-4);
+    cout << "\r Error: [" << optimizer3.get_last_error() << "]                    " << std::flush;
+    last_error = optimizer3.get_last_error();
   }
   cout << endl;
 }
