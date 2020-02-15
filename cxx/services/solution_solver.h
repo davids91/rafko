@@ -76,10 +76,7 @@ public:
    */
   sdouble32 get_neuron_data(uint32 index) const{
     if(neuron_data.size() > index)return neuron_data[index];
-     else{
-      std::cout << neuron_data.size() << ">" << index << std::endl;
-      throw "Neuron index out of bounds!";
-    }
+     else throw "Neuron index out of bounds!";
   }
 
 private:

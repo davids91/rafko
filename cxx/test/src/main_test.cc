@@ -1,10 +1,23 @@
-#define CATCH_CONFIG_MAIN  /* This tells Catch to provide a main() - only do this in one cpp file */
+#define CATCH_CONFIG_RUNNER
 
 #include "test/catch.hpp"
 
 #include "test/test_mockups.h"
 #include "models/transfer_function.h"
 #include "services/synapse_iterator.h"
+
+int main( int argc, char* argv[] ) {
+
+  Catch::cout() << "Catch version " 
+  << CATCH_VERSION_MAJOR << "." << CATCH_VERSION_MINOR << "."
+  << CATCH_VERSION_PATCH <<std::endl;
+  
+  int result = Catch::Session().run( argc, argv );
+
+  google::protobuf::ShutdownProtobufLibrary();
+
+  return result;
+}
 
 namespace sparse_net_library_test{
 
