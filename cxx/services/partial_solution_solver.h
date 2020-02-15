@@ -13,7 +13,6 @@
 namespace sparse_net_library {
 
 using std::vector;
-using std::reference_wrapper;
 
 class Partial_solution_solver{
 

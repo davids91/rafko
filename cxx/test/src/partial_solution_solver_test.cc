@@ -13,6 +13,7 @@
 namespace sparse_net_library_test {
 
 using std::vector;
+using std::reference_wrapper;
 
 using sparse_net_library::sdouble32;
 using sparse_net_library::uint8;

@@ -10,7 +10,6 @@
 
 namespace sparse_net_library{
 
-using std::reference_wrapper;
 using google::protobuf::RepeatedPtrField;
 
 /**
@@ -79,8 +78,8 @@ private:
   /**
    * Global references to help build the solution
    */
-  reference_wrapper<const SparseNet> net;
-  reference_wrapper<Partial_solution> partial;
+  const SparseNet& net;
+  Partial_solution& partial;
   Synapse_iterator input_synapse;
 
   /**

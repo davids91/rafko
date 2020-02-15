@@ -3,18 +3,22 @@
 #include "models/neuron_info.h"
 #include "services/partial_solution_builder.h"
 
+#include <memory>
+
 namespace sparse_net_library{
 
 Solution* Solution_builder::build(const SparseNet& net ){
 
   using std::ref;
+  using std::unique_ptr;
 
   Partial_solution* current_partial = google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
   Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(arg_arena_ptr);
   vector<vector<Partial_solution*>> partial_matrix = vector<vector<Partial_solution*>>(
     1, vector<Partial_solution*>(1,current_partial)
   );
-  Partial_solution_builder partial_builder = Partial_solution_builder(net, *current_partial);
+  unique_ptr<Partial_solution_builder> partial_builder = 
+    std::make_unique<Partial_solution_builder>(net, *current_partial);
   vector<uint32> neurons_in_row = vector<uint32>();
   uint32 neuron_index;
   uint32 row_iterator = 0;
@@ -39,7 +43,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
         &&(placed_neurons_in_row < net_iterator.get_subset_size())
       ){
         neuron_index = net_iterator[placed_neurons_in_row];
-        partial_builder.add_neuron_to_partial_solution(neuron_index);
+        partial_builder->add_neuron_to_partial_solution(neuron_index);
         ++placed_neurons_in_row;
         neurons_in_row.push_back(neuron_index);
         if(
@@ -66,7 +70,8 @@ Solution* Solution_builder::build(const SparseNet& net ){
 
       if(0 == partial_matrix.back().size()) partial_matrix.pop_back(); /* The last @Partial_solution row has zero elements */
       partial_matrix.push_back(vector<Partial_solution*>(1,current_partial));
-      partial_builder = Partial_solution_builder(net, *current_partial);
+      partial_builder.reset();
+      partial_builder = std::make_unique<Partial_solution_builder>(net, *current_partial);
       strict_mode = false;
       for(uint32 neuron_index_in_row : neurons_in_row){
         net_iterator.confirm_first_subset_element_processed(neuron_index_in_row);
@@ -78,7 +83,8 @@ Solution* Solution_builder::build(const SparseNet& net ){
       /* Put a new Partial_solution into the current row if the memory limit is reached */
       current_partial = google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
       partial_matrix[row_iterator].push_back(current_partial); /* In case the @Partial_solution reached the size limit, push in a new one */
-      partial_builder = Partial_solution_builder(net, *current_partial);
+      partial_builder.reset();
+      partial_builder = std::make_unique<Partial_solution_builder>(net, *current_partial);
       net_iterator.reset_remaining_subset();
       strict_mode = true;
     }
