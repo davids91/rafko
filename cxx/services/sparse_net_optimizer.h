@@ -15,11 +15,9 @@
 
 #include <vector>
 #include <memory>
-#include <mutex>
 
 namespace sparse_net_library{
 
-using std::mutex;
 using std::vector;
 using std::unique_ptr;
 using google::protobuf::Arena;
@@ -34,7 +32,7 @@ public:
   ,  net(neural_network)
   ,  transfer_function(context)
   ,  net_solution(*Solution_builder().service_context(context).build(net))
-  ,  solver(net_solution, service_context)
+  ,  solver(context.get_max_solve_threads(), Solution_solver(net_solution, service_context))
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
   ,  cost_function(Function_factory::build_cost_function(net,label_samples))
   ,  neuron_router(net)
@@ -82,8 +80,7 @@ private:
   Transfer_function transfer_function;
 
   Solution net_solution;
-  Solution_solver solver; 
-  mutex solver_mutex;
+  vector<Solution_solver> solver; 
 
   Backpropagation_queue gradient_step;
   unique_ptr<Cost_function> cost_function;
@@ -96,13 +93,9 @@ private:
   sdouble32 step_size;
   atomic<sdouble32> last_error;
 
-  void calculate_gradient(
-    vector<sdouble32>& input_sample, uint32 sample_iterator, uint32 solve_thread_index
-  );
-  
-  void calculate_weight_gradients(
-    uint32 neuron_index, vector<sdouble32>& input_sample, uint32 solve_thread_index
-  );
+  void calculate_gradient(vector<sdouble32>& input_sample, uint32 sample_iterator, uint32 solve_thread_index);
+
+  void calculate_weight_gradients(vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
 
   void update_weights_with_gradients(uint32 weight_index, uint32 solve_thread_index){
     net.set_weight_table( weight_index,
