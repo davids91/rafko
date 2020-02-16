@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #include "services/solution_builder.h"
 
 #include "models/neuron_info.h"
@@ -17,7 +34,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
   vector<vector<Partial_solution*>> partial_matrix = vector<vector<Partial_solution*>>(
     1, vector<Partial_solution*>(1,current_partial)
   );
-  unique_ptr<Partial_solution_builder> partial_builder = 
+  unique_ptr<Partial_solution_builder> partial_builder =
     std::make_unique<Partial_solution_builder>(net, *current_partial);
   vector<uint32> neurons_in_row = vector<uint32>();
   uint32 neuron_index;

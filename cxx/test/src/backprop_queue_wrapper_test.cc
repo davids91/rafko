@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #include "test/catch.hpp"
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
@@ -38,7 +55,7 @@ TEST_CASE( "Testing backpropagation queue", "" ) {
 
   SparseNet* net(builder->dense_layers({20,10,3,5,5}));
   Neuron_router router(*net);
-  
+
   /* Create a backrpop queue */
   Backpropagation_queue_wrapper queue_wrapper(*net);
   Backpropagation_queue queue = queue_wrapper();
@@ -67,7 +84,7 @@ TEST_CASE( "Testing backpropagation queue", "" ) {
   for(int num_cols = 0; num_cols < queue.cols_size(); ++num_cols){
     num_neurons += queue.cols(num_cols);
   }
-  CHECK( net->neuron_array_size() == num_neurons ); /* Neuron column numbers shall add up the number of Neurons */  
+  CHECK( net->neuron_array_size() == num_neurons ); /* Neuron column numbers shall add up the number of Neurons */
 
   Synapse_iterator(queue.neuron_synapses()).iterate([&](int neuron_index){
     router.run_for_neuron_inputs(neuron_index,[=](int input_index){

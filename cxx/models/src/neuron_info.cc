@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #include "models/neuron_info.h"
 
 namespace sparse_net_library{
@@ -18,13 +35,13 @@ bool Neuron_info::is_neuron_valid(const Neuron& neuron)
       (0 < neuron.input_indices_size()) /* There are any inputs */
       &&(0 < neuron.input_weights_size()) /* and weights */
     )||( /* Or there is no input. we won't judge. */
-      (0 == neuron.input_indices_size()) && (0 == neuron.input_weights_size()) 
+      (0 == neuron.input_indices_size()) && (0 == neuron.input_weights_size())
     ))
-  ){ /*!Note: Only the first synapse sizes are checked for non-zero size for perfomance purposes. 
+  ){ /*!Note: Only the first synapse sizes are checked for non-zero size for perfomance purposes.
       * It is enough to determine if there is any input to the Neuron, because
       * if the first is non-zero then essentially there are more, than 0 inputs.
       */
-    
+
     uint32 number_of_input_indexes = 0;
     for(int i = 0; i<neuron.input_indices_size(); ++i){
       number_of_input_indexes += neuron.input_indices(i).interval_size();

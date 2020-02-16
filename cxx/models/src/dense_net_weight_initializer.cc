@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
@@ -37,7 +54,7 @@ sdouble32 Dense_net_weight_initializer::get_weight_amplitude(transfer_functions 
 }
 
 sdouble32 Dense_net_weight_initializer::next_weight_for(transfer_functions used_transfer_function) const{
-  return ((rand()%2 == 0)?-1.0:1.0) * limit_weight( 
+  return ((rand()%2 == 0)?-1.0:1.0) * limit_weight(
     (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
   );
 }

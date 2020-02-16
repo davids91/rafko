@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #ifndef SPARSE_NET_OPTIMIZER_H
 #define SPARSE_NET_OPTIMIZER_H
 
@@ -49,13 +66,13 @@ public:
   };
 
    /**
-    * @brief      Step the net in the opposite direction of the gradient slope 
+    * @brief      Step the net in the opposite direction of the gradient slope
     *
     * @param      input_samples  The input samples to base the error function on
     * @param[in]  sample_size    The number of feature-label pairs considered to be 1 sample
-    *                            this is important for recurrent Networks, ans the sample size 
+    *                            this is important for recurrent Networks, ans the sample size
     *                            shall set how deep shall the Back propagation through time go,
-    *                            and it also considers @smaple_size number of samples in the array 
+    *                            and it also considers @smaple_size number of samples in the array
     *                            as 1 actual sample.
     */
   void step(
@@ -79,7 +96,7 @@ private:
   Transfer_function transfer_function;
 
   Solution net_solution;
-  vector<Solution_solver> solver; 
+  vector<Solution_solver> solver;
 
   Backpropagation_queue gradient_step;
   unique_ptr<Cost_function> cost_function;
@@ -106,9 +123,9 @@ private:
     uint32 inner_neuron_index,
     Partial_solution& partial,
     uint32 neuron_weight_synapse_starts,
-    uint32 inner_neuron_weight_index_starts 
+    uint32 inner_neuron_weight_index_starts
   );
-  
+
   void propagate_errors_back(uint32 neuron_index, uint32 solve_thread_index){
     sdouble32 buffer;
     const Neuron& neuron = net.neuron_array(neuron_index);
@@ -118,14 +135,14 @@ private:
       if(!Synapse_iterator::is_index_input(child_index)){
         buffer = *error_values[solve_thread_index][child_index];
         while(!error_values[solve_thread_index][child_index]->compare_exchange_weak(
-          buffer, 
-          (buffer + *error_values[solve_thread_index][neuron_index] 
+          buffer,
+          (buffer + *error_values[solve_thread_index][neuron_index]
             * net.weight_table(neuron.input_weights(weight_synapse_index).starts() + weight_index))
         ))buffer = *error_values[solve_thread_index][child_index];
       }
-      ++weight_index; 
+      ++weight_index;
       if(weight_index >= neuron.input_weights(weight_synapse_index).interval_size()){
-        weight_index = 0; 
+        weight_index = 0;
         ++weight_synapse_index;
       }
     });

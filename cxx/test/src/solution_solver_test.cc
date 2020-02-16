@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #include "test/catch.hpp"
 
 #include <vector>
@@ -224,7 +241,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net.neuron_array_size());
   manaual_fully_connected_network_result(net_input, expected_neuron_data, net_structure,net);
   vector<sdouble32> expected_result = {expected_neuron_data.end() - net.output_neuron_number(),expected_neuron_data.end()};
-  
+
   /* Verify if the calculated values match the expected ones */
   REQUIRE( net_structure.back() == result.size() );
   REQUIRE( expected_result.size() == result.size() );

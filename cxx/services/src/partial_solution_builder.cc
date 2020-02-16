@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #include "services/partial_solution_builder.h"
 
 namespace sparse_net_library{
@@ -31,7 +48,7 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
 
     /* Copy in input data references */
     neuron_synapse_count = 0;
-    previous_neuron_input_source = neuron_input_none; 
+    previous_neuron_input_source = neuron_input_none;
     previous_neuron_input_index = input_synapse.size(); /* Input value to point above the size of the input */
     uint32 index_synapse_previous_size = partial.inside_indices_size();
     index_iterator.iterate([&](int neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
@@ -76,7 +93,7 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
       (0 < partial.input_data_size())
       &&(0 == partial.input_data(partial.input_data_size()-1).interval_size())
     )partial.mutable_input_data()->RemoveLast();
-   
+
   }else throw "Neuron index is out of bounds from net neuron array!";
 }
 

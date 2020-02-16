@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #ifndef SYNAPSE_ITERATOR_H
 #define SYNAPSE_ITERATOR_H
 
@@ -21,17 +38,17 @@ using google::protobuf::RepeatedPtrField;
  *             @param[in]  do_for_each_synapse  A lambda function to process the synapses in each start of the synapse iteration.
  *                                Lambda parameter is the Synapse size
  *                                It shall return true if the iteration can continue.
- *                                
+ *
  *             @param[in]  do_for_each_index  A lambda function to process the indexes in each step of the synapse iteration.
  *                                Lambda parameter is the current Synapse index
  *                                It shall return true if the iteration can continue.
- *                                
+ *
  *             @param[in] interval_start  Defines the range the iteration shall visit
- *             
+ *
  *             @param[in] interval_start  Defines the range the iteration shall visit
- *             
+ *
  *             Default range is the whole of the synapses and the @do_for_each_synapse lambda is optional.
- *             Example: To iterate through a synapse set, a lambda for each synapse start, and for each element in that synapse: 
+ *             Example: To iterate through a synapse set, a lambda for each synapse start, and for each element in that synapse:
  *             synapse_iterator.iterate([&](int synapse_start){},[&](int index){});
  */
 class Synapse_iterator{
@@ -44,7 +61,7 @@ public:
     if((0 == interval_size)&&(synapse_interval.size() > static_cast<int>(interval_start)))
       interval_size = synapse_interval.size() - interval_start;
     else if(0 == interval_size) throw "Incorrect synapse range start!";
-    if(static_cast<int>(interval_start + interval_size) <= synapse_interval.size()){ 
+    if(static_cast<int>(interval_start + interval_size) <= synapse_interval.size()){
       iterate_unsafe(do_for_each_index,interval_start,interval_size);
     }else throw "Incorrect Synapse range!";
   }
@@ -52,7 +69,7 @@ public:
     if((0 == interval_size)&&(synapse_interval.size() > static_cast<int>(interval_start)))
       interval_size = synapse_interval.size() - interval_start;
     else if(0 == interval_size) throw "Incorrect synapse range start!";
-    if(static_cast<int>(interval_start + interval_size) <= synapse_interval.size()){ 
+    if(static_cast<int>(interval_start + interval_size) <= synapse_interval.size()){
       iterate_unsafe(do_for_each_synapse,do_for_each_index,interval_start,interval_size);
     }else throw "Incorrect Synapse range!";
   }
@@ -60,7 +77,7 @@ public:
     if((0 == interval_size)&&(synapse_interval.size() > static_cast<int>(interval_start)))
       interval_size = synapse_interval.size() - interval_start;
     else if(0 == interval_size) throw "Incorrect synapse range start!";
-    if(static_cast<int>(interval_start + interval_size) <= synapse_interval.size()){ 
+    if(static_cast<int>(interval_start + interval_size) <= synapse_interval.size()){
       iterate_unsafe_terminatable(do_for_each_index,interval_start,interval_size);
     }else throw "Incorrect Synapse range!";
   }
@@ -68,7 +85,7 @@ public:
     if((0 == interval_size)&&(synapse_interval.size() > static_cast<int>(interval_start)))
       interval_size = synapse_interval.size() - interval_start;
     else if(0 == interval_size) throw "Incorrect synapse range start!";
-    if(static_cast<int>(interval_start + interval_size) <= synapse_interval.size()){ 
+    if(static_cast<int>(interval_start + interval_size) <= synapse_interval.size()){
       iterate_unsafe_terminatable(do_for_each_synapse,do_for_each_index,interval_start,interval_size);
     }else throw "Incorrect Synapse range!";
   }

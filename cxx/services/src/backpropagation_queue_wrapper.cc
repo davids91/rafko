@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #include "services/backpropagation_queue_wrapper.h"
 #include "services/neuron_router.h"
 
@@ -8,7 +25,7 @@
 namespace sparse_net_library{
 
 Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net, Service_context context){
-  
+
   using std::vector;
   using std::deque;
   using std::atomic;
@@ -62,7 +79,7 @@ Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net, Ser
         tmp_interval.set_interval_size(1);
         *gradient_step.add_neuron_synapses() = tmp_interval;
       }else{ /* Extend the latest synapse */
-        gradient_step.mutable_neuron_synapses(gradient_step.neuron_synapses_size()-1)->set_interval_size( 
+        gradient_step.mutable_neuron_synapses(gradient_step.neuron_synapses_size()-1)->set_interval_size(
         gradient_step.neuron_synapses(gradient_step.neuron_synapses_size()-1).interval_size() + 1);
       }
       ++number_of_neurons_in_depth;

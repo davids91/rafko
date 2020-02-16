@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #include "services/sparse_net_optimizer.h"
 #include "models/spike_function.h"
 #include "services/neuron_router.h"
@@ -25,7 +42,7 @@ void Sparse_net_optimizer::step(
   vector<thread> calculate_threads;
   uint32 process_thread_iterator;
   uint32 sample_index = 0;
-  
+
   for(unique_ptr<atomic<sdouble32>>& weight_gradient : weight_gradients) *weight_gradient = 0;
   for(uint32 minibatch_iterator = 0; minibatch_iterator < input_samples.size();++minibatch_iterator){ /* For every provided sample */
     process_thread_iterator = 0;
@@ -268,7 +285,7 @@ void Sparse_net_optimizer::calculate_weight_gradients(vector<sdouble32>& input_s
     while(!weight_gradients[neuron.input_weights(weight_synapse_index).starts() + weight_index]->compare_exchange_weak(
       buffer, buffer + addition
     ))buffer = *weight_gradients[neuron.input_weights(weight_synapse_index).starts() + weight_index];
-    ++weight_index; 
+    ++weight_index;
     if(weight_index >= neuron.input_weights(weight_synapse_index).interval_size()){
       weight_index = 0;
       ++weight_synapse_index;

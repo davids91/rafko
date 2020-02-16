@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #ifndef Partial_solution_H
 #define Partial_solution_H
 
@@ -18,8 +35,8 @@ class Partial_solution_solver{
 
 public:
   Partial_solution_solver(
-    const Partial_solution& partial_solution, 
-    uint32 output_layer_first_index_ = UINT32_MAX, 
+    const Partial_solution& partial_solution,
+    uint32 output_layer_first_index_ = UINT32_MAX,
     Service_context service_context = Service_context()
   ): detail(partial_solution)
   , internal_iterator(detail.inside_indices())
@@ -40,7 +57,7 @@ public:
 
   /**
    * @brief      Gives back the size of the array the required Gradient data is stored in.
-   *             the gradient data contains intermediate calculations of the output layer neurons, 
+   *             the gradient data contains intermediate calculations of the output layer neurons,
    *             which is required to calcualte gradient information.
    *
    * @return     The gradient data array size.
@@ -153,7 +170,7 @@ private:
 
   /**
    * For Gradient information, intermeidate results are required to be stored.
-   * The Partial solution solver shall store the last num_of_transitional_data 
+   * The Partial solution solver shall store the last num_of_transitional_data
    * of intermediate results in @transfer_function_input and @transfer_function_output
    */
   uint32 output_layer_first_index;

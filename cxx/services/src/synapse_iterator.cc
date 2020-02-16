@@ -1,3 +1,20 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
 #include "services/synapse_iterator.h"
 
 namespace sparse_net_library{
@@ -88,7 +105,7 @@ void Synapse_iterator::iterate_unsafe_terminatable(std::function< bool(unsigned 
     if(!do_for_each_synapse(synapse_interval.Get(synapse_iterator).interval_size())){
       return;
     }
-    if(!is_index_input(synapse_interval.Get(synapse_iterator).starts())){      
+    if(!is_index_input(synapse_interval.Get(synapse_iterator).starts())){
       for(uint32 input_iterator = 0; input_iterator < synapse_interval.Get(synapse_iterator).interval_size();++input_iterator){
         if(!do_for_each_index(synapse_interval.Get(synapse_iterator).starts() + input_iterator)){
           return;
