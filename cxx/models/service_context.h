@@ -10,32 +10,36 @@ using google::protobuf::Arena;
 
 class Service_context{
 public:
-  uint16 get_max_solve_threads() const{
+  uint16 get_max_solve_threads(void) const{
     return max_solve_threads;
   }
 
-  uint16 get_max_processing_threads() const{
+  uint16 get_max_processing_threads(void) const{
     return max_processing_threads;
   }
 
-  sdouble32 get_device_max_megabytes() const{
+  sdouble32 get_device_max_megabytes(void) const{
     return device_max_megabytes;
   }
 
-  Arena* get_arena_ptr() const{
+  Arena* get_arena_ptr(void) const{
     return arena_ptr;
   }
 
-  sdouble32 get_epsilon() const{
+  sdouble32 get_alpha(void) const{
+    return alpha;
+  }
+
+  sdouble32 get_gamma(void) const{
+    return gamma;
+  }
+
+  sdouble32 get_epsilon(void) const{
     return epsilon;
   }
 
-  sdouble32 get_lambda() const{
+  sdouble32 get_lambda(void) const{
     return lambda;
-  }
-
-  sdouble32 get_alpha() const{
-    return alpha;
   }
 
   Service_context& set_max_solve_threads(sdouble32 max_solve_threads_){
@@ -58,6 +62,16 @@ public:
     return *this;
   }
 
+  Service_context& set_alpha(sdouble32 alpha_){
+    epsilon = alpha_;
+    return *this;
+  }
+
+  Service_context& set_gamma(sdouble32 gamma_){
+    gamma = gamma_;
+    return *this;
+  }
+  
   Service_context& set_epsilon(sdouble32 epsilon_){
     epsilon = epsilon_;
     return *this;
@@ -68,20 +82,16 @@ public:
     return *this;
   }
 
-  Service_context& set_alpha(sdouble32 alpha_){
-    epsilon = alpha_;
-    return *this;
-  }
-
 private:
   uint16 max_solve_threads = 2;
   uint16 max_processing_threads = 4;
   sdouble32 device_max_megabytes = 2048.0;
   Arena* arena_ptr = nullptr;
 
+  sdouble32 alpha = 1.6732;
+  sdouble32 gamma = 0.9;
   sdouble32 epsilon = 1e-15; /* very small positive value almost greater, than 0.0 */
   sdouble32 lambda = 1.0507;
-  sdouble32 alpha = 1.6732;
 };
 
 } /* namespace sparse_net_library */
