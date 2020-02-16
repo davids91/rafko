@@ -60,7 +60,7 @@ public:
     *                            as 1 actual sample.
     */
   void step(
-    vector<vector<sdouble32>>& input_samples, 
+    vector<vector<sdouble32>>& input_samples, uint32 batch_size,
     sdouble32 step_size_ = 0, uint32 sequence_size = 1
   );
 
@@ -93,7 +93,7 @@ private:
   sdouble32 step_size;
   atomic<sdouble32> last_error;
 
-  void calculate_gradient(vector<sdouble32>& input_sample, uint32 sample_iterator, uint32 solve_thread_index);
+  void calculate_gradient(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index);
 
   void calculate_weight_gradients(vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
 

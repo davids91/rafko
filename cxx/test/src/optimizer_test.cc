@@ -13,6 +13,7 @@
 #include <float.h>
 #include <cmath>
 #include <memory>
+#include <limits>
 
 namespace sparse_net_library_test{
 
@@ -97,13 +98,20 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   /* Optimize net */
   sdouble32 last_error;
+  sdouble32 minimum_error = std::numeric_limits<sdouble32>::max();
+  sdouble32 moving_average_error = 0;
   last_error = 5;
   Sparse_net_optimizer optimizer(*nets[0],addition_dataset);
   std::cout << "Optimizing net.." << std::endl;
   while(abs(last_error) > 1e-2){
-    optimizer.step(net_inputs, 1e-2);
-    cout << "\r Error: [" << optimizer.get_last_error() << "]                    " << std::flush;
+    optimizer.step(net_inputs, 50, 1e-2);
     last_error = optimizer.get_last_error();
+    if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
+    moving_average_error = (moving_average_error + last_error)/2;
+    cout << "\r Error: [" << last_error << "]; "
+    << "Average: ["<< moving_average_error <<"]; "
+    << "Minimum: ["<< minimum_error <<"]; "
+    << "                    " << std::flush;
   }
   cout << endl;
 
@@ -111,9 +119,14 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   std::cout << "Optimizing bigger net.." << std::endl;
   last_error = 5;
   while(abs(last_error) > 1e-5){
-    optimizer2.step(net_inputs, 1e-5);
-    cout << "\r Error: [" << optimizer2.get_last_error() << "]                    " << std::flush;
+    optimizer2.step(net_inputs, 50, 1e-5);
     last_error = optimizer2.get_last_error();
+    if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
+    moving_average_error = (moving_average_error + last_error)/2;
+    cout << "\r Error: [" << last_error << "]; "
+    << "Minimum: ["<< minimum_error <<"]; "
+    << "Average: ["<< moving_average_error <<"]; "
+    << "                    " << std::flush;
   }
   cout << std::endl;
 
@@ -121,9 +134,14 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   std::cout << "Optimizing biggest net.." << std::endl;
   last_error = 5;
   while(abs(last_error) > 1e-4){
-    optimizer3.step(net_inputs, 1e-4);
-    cout << "\r Error: [" << optimizer3.get_last_error() << "]                    " << std::flush;
+    optimizer3.step(net_inputs, 50, 1e-4);
     last_error = optimizer3.get_last_error();
+    if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
+    moving_average_error = (moving_average_error + last_error)/2;
+    cout << "\r Error: [" << last_error << "]; "
+    << "Average: ["<< moving_average_error <<"]; "
+    << "Minimum: ["<< minimum_error <<"]; "
+    << "                    " << std::flush;
   }
   cout << endl;
 }

@@ -12,7 +12,7 @@ using std::thread;
 using std::ref;
 
 void Sparse_net_optimizer::step(
-  vector<vector<sdouble32>>& input_samples,
+  vector<vector<sdouble32>>& input_samples, uint32 minibatch_size,
   sdouble32 step_size_, uint32 sequence_size
 ){
   if(0 != (input_samples.size() % sequence_size))
@@ -24,18 +24,19 @@ void Sparse_net_optimizer::step(
   /* Calculate features for every input */
   vector<thread> calculate_threads;
   uint32 process_thread_iterator;
+  uint32 sample_index = 0;
 
   for(unique_ptr<atomic<sdouble32>>& weight_gradient : weight_gradients[0]) *weight_gradient = 0;
-  for(uint32 sample_iterator = 0; sample_iterator < input_samples.size();sample_iterator += context.get_max_solve_threads()){ /* For every provided sample */
+  for(uint32 minibatch_iterator = 0; minibatch_iterator < input_samples.size();++minibatch_iterator){ /* For every provided sample */
     process_thread_iterator = 0;
     while(
       (context.get_max_solve_threads() > calculate_threads.size())
       &&(error_values.size() > process_thread_iterator)
-      &&((sample_iterator + process_thread_iterator) < input_samples.size())
     ){
+      sample_index = rand()%input_samples.size();
       calculate_threads.push_back(thread(
         &Sparse_net_optimizer::calculate_gradient, this,
-        ref(input_samples[sample_iterator]), (sample_iterator + process_thread_iterator), process_thread_iterator
+        ref(input_samples[sample_index]), sample_index, process_thread_iterator
       ));
       ++process_thread_iterator;
     }/* while(context.get_max_processing_threads() > calculate_threads.size()) */
@@ -105,13 +106,13 @@ void Sparse_net_optimizer::step(
   } /* for(uint32 partial_index = 0;partial_index < net_solution.partial_solutions_size(); ++partial_index) */
 }
 
-void Sparse_net_optimizer::calculate_gradient(vector<sdouble32>& input_sample, uint32 sample_iterator, uint32 solve_thread_index){
+void Sparse_net_optimizer::calculate_gradient(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index){
 
   /* Solve the network for the given input */
-  feature_buffers[solve_thread_index].reserve(label_samples[sample_iterator].size());
+  feature_buffers[solve_thread_index].reserve(label_samples[sample_index].size());
   feature_buffers[solve_thread_index].clear();
   feature_buffers[solve_thread_index] = solver[solve_thread_index].solve(input_sample);
-  if(label_samples[sample_iterator].size() != feature_buffers[solve_thread_index].size())
+  if(label_samples[sample_index].size() != feature_buffers[solve_thread_index].size())
     throw "Network output size doesn't match size of provided labels!";
 
   vector<thread> calculate_threads;
@@ -132,7 +133,7 @@ void Sparse_net_optimizer::calculate_gradient(vector<sdouble32>& input_sample, u
      * transfer_function_derivative(transfer_function_input)
      */
     buffer = cost_function->get_d_cost_over_d_feature(
-      sample_iterator, output_layer_iterator, feature_buffers[solve_thread_index]
+      sample_index, output_layer_iterator, feature_buffers[solve_thread_index]
     );
     buffer *= Spike_function::get_derivative(
       net.weight_table(net.neuron_array(neuron_iterator).memory_filter_idx()),
