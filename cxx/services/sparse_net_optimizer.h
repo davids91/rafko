@@ -37,16 +37,15 @@ public:
   ,  cost_function(Function_factory::build_cost_function(net,label_samples))
   ,  neuron_router(net)
   ,  error_values(context.get_max_solve_threads())
-  ,  weight_gradients(context.get_max_solve_threads())
+  ,  weight_gradients(0)
   ,  feature_buffers(context.get_max_solve_threads())
   , step_size(1e-3)
-  { 
-    for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
+  {
+    for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads)
       for(sint32 i = 0; i < net.neuron_array_size(); ++i)
         error_values[threads].push_back(std::make_unique<atomic<sdouble32>>());
-      for(sint32 i = 0; i < net.weight_table_size(); ++i)
-        weight_gradients[threads].push_back(std::make_unique<atomic<sdouble32>>());
-    }
+    for(sint32 i = 0; i < net.weight_table_size(); ++i)
+      weight_gradients.push_back(std::make_unique<atomic<sdouble32>>());
   };
 
    /**
@@ -87,7 +86,7 @@ private:
   Neuron_router neuron_router;
 
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values;
-  vector<vector<unique_ptr<atomic<sdouble32>>>> weight_gradients;
+  vector<unique_ptr<atomic<sdouble32>>> weight_gradients;
   vector<sdouble32> gradient_values;
   vector<vector<sdouble32>> feature_buffers;
   sdouble32 step_size;
@@ -97,9 +96,9 @@ private:
 
   void calculate_weight_gradients(vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
 
-  void update_weights_with_gradients(uint32 weight_index, uint32 solve_thread_index){
+  void update_weights_with_gradients(uint32 weight_index){
     net.set_weight_table( weight_index,
-      net.weight_table(weight_index) + *weight_gradients[solve_thread_index][weight_index] * step_size
+      net.weight_table(weight_index) + *weight_gradients[weight_index] * step_size
     );
   }
 

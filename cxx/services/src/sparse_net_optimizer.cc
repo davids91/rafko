@@ -25,8 +25,8 @@ void Sparse_net_optimizer::step(
   vector<thread> calculate_threads;
   uint32 process_thread_iterator;
   uint32 sample_index = 0;
-
-  for(unique_ptr<atomic<sdouble32>>& weight_gradient : weight_gradients[0]) *weight_gradient = 0;
+  
+  for(unique_ptr<atomic<sdouble32>>& weight_gradient : weight_gradients) *weight_gradient = 0;
   for(uint32 minibatch_iterator = 0; minibatch_iterator < input_samples.size();++minibatch_iterator){ /* For every provided sample */
     process_thread_iterator = 0;
     while(
@@ -57,10 +57,9 @@ void Sparse_net_optimizer::step(
       (context.get_max_processing_threads() > calculate_threads.size())
       &&(net.weight_table_size() > static_cast<int>(process_thread_iterator))
     ){
-      calculate_threads.push_back(thread(
-        &Sparse_net_optimizer::update_weights_with_gradients, this,
-        process_thread_iterator, 0
-      ));
+      calculate_threads.push_back(
+        thread(&Sparse_net_optimizer::update_weights_with_gradients, this, process_thread_iterator)
+      );
       ++process_thread_iterator;
     }/* while(context.get_max_processing_threads() > calculate_threads.size()) */
 
@@ -247,10 +246,10 @@ void Sparse_net_optimizer::calculate_weight_gradients(vector<sdouble32>& input_s
 
   /* Calculate gradient for Bias (error * 1) */
   index = net.neuron_array(neuron_index).bias_idx();
-  buffer = *weight_gradients[solve_thread_index][index];
+  buffer = *weight_gradients[index];
   addition = (*error_values[solve_thread_index][neuron_index]) * step_size;
-  while(!weight_gradients[solve_thread_index][index]->compare_exchange_weak(buffer, buffer + addition))
-    buffer = *weight_gradients[solve_thread_index][index];
+  while(!weight_gradients[index]->compare_exchange_weak(buffer, buffer + addition))
+    buffer = *weight_gradients[index];
 
   /* Calculate gradient for Memory filter (error * (1-memory_filter)) */
   /* maybe next time.. ? */
@@ -264,12 +263,12 @@ void Sparse_net_optimizer::calculate_weight_gradients(vector<sdouble32>& input_s
     if(Synapse_iterator::is_index_input(child_index))
       neuron_input = input_sample[Synapse_iterator::input_index_from_synapse_index(child_index)];
       else neuron_input = solver[solve_thread_index].get_neuron_data(child_index);
-    buffer = *weight_gradients[solve_thread_index][neuron.input_weights(weight_synapse_index).starts() + weight_index];
+    buffer = *weight_gradients[neuron.input_weights(weight_synapse_index).starts() + weight_index];
     addition = neuron_input * *error_values[solve_thread_index][neuron_index] * step_size;
-    while(!weight_gradients[solve_thread_index][neuron.input_weights(weight_synapse_index).starts() + weight_index]->compare_exchange_weak(
+    while(!weight_gradients[neuron.input_weights(weight_synapse_index).starts() + weight_index]->compare_exchange_weak(
       buffer, buffer + addition
-    ))buffer = *weight_gradients[solve_thread_index][neuron.input_weights(weight_synapse_index).starts() + weight_index];
-    ++weight_index;
+    ))buffer = *weight_gradients[neuron.input_weights(weight_synapse_index).starts() + weight_index];
+    ++weight_index; 
     if(weight_index >= neuron.input_weights(weight_synapse_index).interval_size()){
       weight_index = 0;
       ++weight_synapse_index;
