@@ -56,10 +56,16 @@ public:
   ,  error_values(context.get_max_solve_threads())
   ,  weight_gradients(0)
   ,  feature_buffers(context.get_max_solve_threads())
+  ,  transfer_function_input_buffers(context.get_max_solve_threads())
+  ,  transfer_function_output_buffers(context.get_max_solve_threads())
   {
-    for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads)
+    for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
       for(sint32 i = 0; i < net.neuron_array_size(); ++i)
         error_values[threads].push_back(std::make_unique<atomic<sdouble32>>());
+      feature_buffers[threads].reserve(label_samples[0].size());
+      transfer_function_input_buffers[threads].reserve(label_samples[0].size());
+      transfer_function_output_buffers[threads].reserve(label_samples[0].size());
+    }
     for(sint32 i = 0; i < net.weight_table_size(); ++i)
       weight_gradients.push_back(std::make_unique<atomic<sdouble32>>());
     weight_updater = Updater_factory::build_weight_updater(net,weight_gradients,weight_updater_,context);
@@ -104,6 +110,8 @@ private:
   vector<unique_ptr<atomic<sdouble32>>> weight_gradients;
   vector<sdouble32> gradient_values;
   vector<vector<sdouble32>> feature_buffers;
+  vector<vector<sdouble32>> transfer_function_input_buffers;
+  vector<vector<sdouble32>> transfer_function_output_buffers;
   atomic<sdouble32> last_error;
 
   void calculate_gradient(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index);
