@@ -121,6 +121,7 @@ void test_solution_solver_multithread(uint16 threads){
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(solution.neuron_number());
   vector<sdouble32> neuron_data = vector<sdouble32>(solution.neuron_number());
   vector<sdouble32> network_output;
+
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights and stuff */
       for(int i = 0; i < partial_solutions[0][0].get().weight_table_size(); ++i){
@@ -197,8 +198,14 @@ void test_solution_solver_multithread(uint16 threads){
     partial_solution_solver_1_1.solve();
     partial_solution_solver_1_1.provide_output_data(neuron_data);
 
-    network_output = solution_solver.solve(network_inputs);
+    solution_solver.solve(network_inputs);
+
+    network_output = solution_solver.get_neuron_data();
+    REQUIRE( solution_solver.get_output_size() <= solution_solver.get_neuron_data().size());
+
+    network_output = {network_output.end() - solution_solver.get_output_size(),network_output.end()};
     REQUIRE( network_output.size() == solution.output_neuron_number() );
+
     for(uint32 i = 0; i < network_output.size(); ++i){
       CHECK(
         Approx(neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]).epsilon(0.00000000000001)
@@ -237,7 +244,9 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   Solution solution = *solution_builder->max_solve_threads(4).device_max_megabytes(2048).arena_ptr(arena).build(net);
 
   Solution_solver solver(solution);
-  vector<sdouble32> result = solver.solve(net_input);
+  solver.solve(net_input);
+  vector<sdouble32> result = solver.get_neuron_data();
+  result = {result.end() - solver.get_output_size(),result.end()};
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net.neuron_array_size());
   manaual_fully_connected_network_result(net_input, expected_neuron_data, net_structure,net);
   vector<sdouble32> expected_result = {expected_neuron_data.end() - net.output_neuron_number(),expected_neuron_data.end()};
@@ -253,8 +262,10 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   sdouble32 solution_size = solution.SpaceUsedLong() /* Bytes *// 1024.0 /* KB *// 1024.0 /* MB */;
   Solution solution2 = *solution_builder->max_solve_threads(4).device_max_megabytes(solution_size/4.0).arena_ptr(arena).build(net);
   Solution_solver solver2 = Solution_solver(solution2);
-  result = solver2.solve(net_input);
-
+  solver2.solve(net_input);
+  result = solver2.get_neuron_data();
+  result = {result.end() - solver2.get_output_size(),result.end()};
+  
   /* Verify once more if the calculated values match the expected ones */
   for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator){
     CHECK( Approx(result[result_iterator]).epsilon(0.00000000000001) == expected_result[result_iterator]);
@@ -281,7 +292,8 @@ TEST_CASE("Solution Solver test for gradients", "[solve][build-solve][gradient]"
 
   /* Generate solution from Net */
   Solution_solver solver(*Solution_builder().service_context().build(*net));
-  vector<sdouble32> result = solver.solve(net_input);
+  vector<sdouble32> result = solver.get_neuron_data();
+  result = {result.end() - solver.get_output_size(),result.end()};
 
   REQUIRE( net->neuron_array_size() == solver.get_transfer_function_input().size());
   REQUIRE( net->neuron_array_size() == solver.get_transfer_function_output().size());

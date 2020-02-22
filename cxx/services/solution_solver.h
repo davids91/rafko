@@ -43,10 +43,18 @@ public:
    * @brief      Solves the Solution given in the constructor, considering the previous runs
    *
    * @param[in]  input  The input data to be taken
-   *
-   * @return     The resulting output of the SparseNet.
    */
-  vector<sdouble32> solve(vector<sdouble32> input);
+  void solve(vector<sdouble32> input);
+
+  /**
+   * @brief      Gets the output size of the solution. Th solution output is defined as the last 
+   *             Neurons in the solution. Cardinality is given by this function.
+   *
+   * @return     Number of output Neurons
+   */
+  sdouble32 get_output_size(void){
+    return solution.output_neuron_number();
+  }
 
   /**
    * @brief      Gets the raw input added into the transfer function, provided the @Partial_solution monitors for it
@@ -82,6 +90,30 @@ public:
     for(sdouble32& neuron_data_element : neuron_data)neuron_data_element = 0;
     for(vector<Partial_solution_solver>& solver_row : partial_solvers)
       for(Partial_solution_solver& solver : solver_row)solver.reset();
+  }
+
+  /**
+   * @brief      Gets the raw input added into the transfer function, provided the @Partial_solution monitors for it
+   *
+   * @param[in]  neuron_index  The neuron index
+   *
+   * @return     The array for the input values for the neurons.
+   */
+  sdouble32 get_transfer_function_input(uint32 neuron_index) const{
+    if(solution.neuron_number() > neuron_index)return transfer_function_input[neuron_index];
+      else throw "Neuron index out of bounds!";
+  }
+
+  /**
+   * @brief      Gets the output from to the transfer function, provided the @Partial_solution monitors for it
+   *
+   * @param[in]  neuron_index  The neuron index
+   *
+   * @return     The array for the input values for the neurons.
+   */
+  sdouble32 get_transfer_function_output(uint32 neuron_index) const{
+    if(solution.neuron_number() > neuron_index)return transfer_function_output[neuron_index];
+      else throw "Neuron index out of bounds!";
   }
 
   /**

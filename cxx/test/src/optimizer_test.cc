@@ -119,10 +119,12 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   /* Optimize nets */
   sdouble32 last_error;
-  sdouble32 minimum_error = std::numeric_limits<sdouble32>::max();
-  uint32 number_of_steps = 0;
+  sdouble32 minimum_error;
+  uint32 number_of_steps;
 
   last_error = 5;
+  number_of_steps = 0;
+  minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
     *nets[0],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-1)
   );
@@ -143,6 +145,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   std::cout << "Optimizing bigger net.." << std::endl;
   last_error = 5;
   number_of_steps = 0;
+  minimum_error = std::numeric_limits<sdouble32>::max();
   while(abs(last_error) > 1e-2){
     optimizer2.step(net_inputs,50);
     ++number_of_steps;
@@ -154,12 +157,13 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   cout << endl << "Optimum reached in " << number_of_steps << " steps!" << endl;
 
   Sparse_net_optimizer optimizer3(
-    *nets[2],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-3)
+    *nets[2],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-4)
   );
   cout << "Optimizing biggest net.." << std::endl;
   last_error = 5;
   number_of_steps = 0;
-  while(abs(last_error) > 1e-3){
+  minimum_error = std::numeric_limits<sdouble32>::max();
+  while(abs(last_error) > 1e-4){
     optimizer3.step(net_inputs,50);
     ++number_of_steps;
     last_error = optimizer3.get_last_error();

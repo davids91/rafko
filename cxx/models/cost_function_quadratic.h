@@ -47,26 +47,26 @@ public:
     return score;
   }
 
-  sdouble32 get_error(uint32 label_index, vector<sdouble32>& features) const{
-    verify_sizes(label_index, features);
+  sdouble32 get_error(uint32 sample_index, vector<sdouble32>& features) const{
+    verify_sizes(sample_index, features);
     sdouble32 score = 0;
     uint32 feature_iterator = 0;
     while(feature_iterator < features.size()){ /* evaluate a feature(Neuron output) on the given sample */
-      score += get_error(label_index, feature_iterator, features);
+      score += get_error(sample_index, feature_iterator, features[feature_iterator]);
       ++feature_iterator;
     }
     return score;
   }
 
-  sdouble32 get_error(uint32 label_index, uint32 feature_index, vector<sdouble32>& features) const{
-    return ( 0.5 *
-      pow((features[feature_index] - labels[label_index][feature_index]),2) / static_cast<sdouble32>(features.size())
+  sdouble32 get_error(uint32 sample_index, uint32 label_index, sdouble32 feature_value) const{
+    return ( 0.5 * 
+      pow((feature_value - labels[sample_index][label_index]),2) / static_cast<sdouble32>(labels[sample_index].size()) 
     );
   }
-
-  sdouble32 get_d_cost_over_d_feature(uint32 label_index, uint32 feature_index, vector<sdouble32>& features) const{
-    return (
-      -(features[feature_index] - labels[label_index][feature_index]) / static_cast<sdouble32>(features.size())
+  
+  sdouble32 get_d_cost_over_d_feature(uint32 sample_index, uint32 label_index, sdouble32 feature_value) const{
+    return ( 
+      -(feature_value - labels[sample_index][label_index]) / static_cast<sdouble32>(labels[sample_index].size()) 
     );
   }
 };

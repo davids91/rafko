@@ -59,27 +59,29 @@ public:
    *
    * @return     The error.
    */
-  virtual sdouble32 get_error(uint32 label_index, vector<sdouble32>& features) const = 0;
+  virtual sdouble32 get_error(uint32 sample_index, vector<sdouble32>& features) const = 0;
 
   /**
    * @brief      Gets the error for a feature for a label set under the given index
    *
-   * @param[in]  label_index  The index of the label to compare to
-   * @param[in]  feature_index  The feature index
+   * @param[in]  sample_index   The index of the sample in the dataset
+   * @param[in]  label_index    The index of the datapoint inside the sample
+   * @param[in]  feature_value  The value of the datapoint to compare to
    *
    * @return     The error.
    */
-  virtual sdouble32 get_error(uint32 label_index, uint32 feature_index, vector<sdouble32>& features) const = 0;
+  virtual sdouble32 get_error(uint32 sample_index, uint32 label_index, sdouble32 feature_value) const = 0;
 
   /**
    * @brief      Gets the the Cost function function derivative for a feature compared to a selected label set
    *
-   * @param[in]  label_index  The index of the label to compare to
-   * @param[in]  feature_index  The feature index
+   * @param[in]  sample_index   The index of the sample in the dataset
+   * @param[in]  label_index    The index of the datapoint inside the sample
+   * @param[in]  feature_value  The value of the datapoint to compare to
    *
    * @return     The d cost over d feature.
    */
-  virtual sdouble32 get_d_cost_over_d_feature(uint32 label_index, uint32 feature_index, vector<sdouble32>& features) const = 0;
+  virtual sdouble32 get_d_cost_over_d_feature(uint32 sample_index, uint32 label_index, sdouble32 feature_value) const = 0;
 
 protected:
   uint8 max_threads;

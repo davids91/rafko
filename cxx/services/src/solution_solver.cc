@@ -44,7 +44,7 @@ Solution_solver::Solution_solver(const Solution& to_solve, Service_context conte
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
 
-vector<sdouble32> Solution_solver::solve(vector<sdouble32> input){
+void Solution_solver::solve(vector<sdouble32> input){
 
   using std::thread;
   using std::ref;
@@ -72,9 +72,6 @@ vector<sdouble32> Solution_solver::solve(vector<sdouble32> input){
         solve_threads.clear();
       }
     }
-
-    /* Return with the data of the output neurons */
-    return {neuron_data.end() - solution.output_neuron_number(),neuron_data.end()};
   }else throw "A solution of 0 rows!";
 }
 
