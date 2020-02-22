@@ -113,8 +113,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY},
+       {TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY}}
-    ).dense_layers({3,2,1})
+    ).dense_layers({5,3,2,1})
   ));
 
   /* Optimize nets */

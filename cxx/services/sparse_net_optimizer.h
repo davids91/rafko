@@ -53,12 +53,16 @@ public:
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
   ,  cost_function(Function_factory::build_cost_function(net,label_samples))
   ,  neuron_router(net)
+  ,  solve_threads(0)
+  ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
   ,  error_values(context.get_max_solve_threads())
   ,  weight_gradients(0)
   {
+    solve_threads.reserve(context.get_max_solve_threads());
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
       for(sint32 i = 0; i < net.neuron_array_size(); ++i)
         error_values[threads].push_back(std::make_unique<atomic<sdouble32>>());
+      process_threads[threads].reserve(context.get_max_processing_threads());
     }
     for(sint32 i = 0; i < net.weight_table_size(); ++i)
       weight_gradients.push_back(std::make_unique<atomic<sdouble32>>());
@@ -100,23 +104,35 @@ private:
   unique_ptr<Weight_updater> weight_updater;
   Neuron_router neuron_router;
 
+  vector<thread> solve_threads;
+  vector<vector<thread>> process_threads;
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values;
   vector<unique_ptr<atomic<sdouble32>>> weight_gradients;
   vector<sdouble32> gradient_values;
   atomic<sdouble32> last_error;
 
-  void calculate_gradient(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index);
+  void step_thread(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index);
+  void calculate_output_errors(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index);
+  void propagate_output_errors_back(uint32 solve_thread_index);
+  void calculate_weight_gradients(vector<sdouble32>& input_sample, uint32 solve_thread_index);
 
-  void calculate_weight_gradients(vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
-
+  void backpropagation_thread(uint32 neuron_index, uint32 solve_thread_index);
+  void calculate_weight_gradients_thread(vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
   void copy_weight_to_solution(
     uint32 inner_neuron_index,
     Partial_solution& partial,
     uint32 neuron_weight_synapse_starts,
     uint32 inner_neuron_weight_index_starts
   );
-  
-  void propagate_errors_back(uint32 neuron_index, uint32 solve_thread_index);
+
+  void wait_for_threads(vector<thread>& calculate_threads){
+    while(0 < calculate_threads.size()){
+      if(calculate_threads.back().joinable()){
+        calculate_threads.back().join();
+        calculate_threads.pop_back();
+      }
+    }
+  }
 };
 
 } /* namespace sparse_net_library */
