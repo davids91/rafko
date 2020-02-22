@@ -43,7 +43,6 @@ void Partial_solution_solver::solve(){
   uint32 index_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   uint32 weight_synapse_index = 0; /* Which synapse is being processed inside the Neuron */
   uint32 weight_index = 0;
-  uint32 collected_gradient_data_index = 0;
 
   for(uint16 neuron_iterator = 0; neuron_iterator < detail.internal_neuron_number(); ++neuron_iterator){
     new_neuron_data = 0;
@@ -74,20 +73,15 @@ void Partial_solution_solver::solve(){
 
     /* Add bias */
     new_neuron_data += detail.weight_table(detail.bias_index(neuron_iterator));
-
-    if(output_layer_first_index <= neuron_iterator){
-      transfer_function_input[collected_gradient_data_index] = new_neuron_data;
-    }
+      
+    transfer_function_input[neuron_iterator] = new_neuron_data;
 
     /* Apply transfer function */
     new_neuron_data = transfer_function.get_value(
       detail.neuron_transfer_functions(neuron_iterator), new_neuron_data
     );
 
-    if(output_layer_first_index <= neuron_iterator){
-      transfer_function_output[collected_gradient_data_index] = new_neuron_data;
-      ++collected_gradient_data_index;
-    }
+    transfer_function_output[neuron_iterator] = new_neuron_data;
 
     /* Apply spike function */
     neuron_output[neuron_iterator] = Spike_function::get_value(

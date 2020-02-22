@@ -35,17 +35,16 @@ class Partial_solution_solver{
 
 public:
   Partial_solution_solver(
-    const Partial_solution& partial_solution,
-    uint32 output_layer_first_index_ = UINT32_MAX,
-    Service_context service_context = Service_context()
+    const Partial_solution& partial_solution, Service_context service_context = Service_context()
   ): detail(partial_solution)
-  , internal_iterator(detail.inside_indices())
-  , input_iterator(detail.input_data())
-  , output_iterator(detail.output_data())
-  , output_layer_first_index(output_layer_first_index_)
-  , neuron_output(detail.internal_neuron_number())
-  , collected_input_data(input_iterator.size())
-  , transfer_function(service_context)
+  ,  internal_iterator(detail.inside_indices())
+  ,  input_iterator(detail.input_data())
+  ,  output_iterator(detail.output_data())
+  ,  transfer_function_input(detail.internal_neuron_number(),0)
+  ,  transfer_function_output(detail.internal_neuron_number(),0)
+  ,  neuron_output(detail.internal_neuron_number())
+  ,  collected_input_data(input_iterator.size())
+  ,  transfer_function(service_context)
   { reset(); }
 
   /**
@@ -54,19 +53,6 @@ public:
    * @return     The input size in number of elements ( @sdouble32 ).
    */
   uint32 get_input_size(void) const;
-
-  /**
-   * @brief      Gives back the size of the array the required Gradient data is stored in.
-   *             the gradient data contains intermediate calculations of the output layer neurons,
-   *             which is required to calcualte gradient information.
-   *
-   * @return     The gradient data array size.
-   */
-  const uint32 get_gradient_data_size() const{
-    if(transfer_function_input.size() == transfer_function_output.size())
-      return transfer_function_output.size();
-    else throw "Neuron gradient information not consistent!";
-  }
 
   /**
    * @brief      Collects the input stated inside the @Partial_solution into @collected_input_data
@@ -104,22 +90,21 @@ public:
    */
   void provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_){
     if(transfer_function_input.size() != transfer_function_output.size()) throw "Neuron gradient data Incompatible!";
-    uint32 copy_num = 0, offset = 0;
+    uint32 output_index_start = 0;
+    vector<sdouble32> transfer_function_input_copy(transfer_function_input);
+    vector<sdouble32> transfer_function_output_copy(transfer_function_output);
     output_iterator.skim([&](int synapse_starts, unsigned int synapse_size){
-      copy_num = std::min( synapse_size,
-        std::max(output_layer_first_index,(synapse_starts + synapse_size)) - output_layer_first_index
+      swap_ranges(
+        transfer_function_input_copy.begin() + output_index_start,
+        transfer_function_input_copy.begin() + output_index_start + synapse_size,
+        transfer_function_input_.begin() + synapse_starts
       );
-      if(0 < copy_num){
-        std::copy(
-          transfer_function_input.begin() + offset, transfer_function_input.begin() + offset + copy_num,
-          transfer_function_input_.begin() + offset
-        );
-        std::copy(
-          transfer_function_output.begin() + offset, transfer_function_output.begin() + offset + copy_num,
-          transfer_function_output_.begin() + offset
-        );
-        offset += copy_num;
-      }
+      swap_ranges(
+        transfer_function_output_copy.begin() + output_index_start,
+        transfer_function_output_copy.begin() + output_index_start + synapse_size,
+        transfer_function_output_.begin() + synapse_starts
+      );
+      output_index_start += synapse_size;
     });
   }
 
@@ -134,13 +119,8 @@ public:
    */
   void reset(void){
     for(sdouble32& neuron_data : neuron_output) neuron_data = 0;
-    uint32 index = 1;
-    output_iterator.iterate([&](int synapse_index){
-      if(static_cast<int>(output_layer_first_index) < synapse_index)
-        ++index;
-    });
-    transfer_function_input = vector<sdouble32>(index,0);
-    transfer_function_output = vector<sdouble32>(index,0);
+    for(sdouble32& neuron_data : transfer_function_input) neuron_data = 0;
+    for(sdouble32& neuron_data : transfer_function_output) neuron_data = 0;
   }
 
   /**
@@ -170,10 +150,8 @@ private:
 
   /**
    * For Gradient information, intermeidate results are required to be stored.
-   * The Partial solution solver shall store the last num_of_transitional_data
-   * of intermediate results in @transfer_function_input and @transfer_function_output
+   * The Partial solution solver shall store the some intermediate results here
    */
-  uint32 output_layer_first_index;
   vector<sdouble32> transfer_function_input;
   vector<sdouble32> transfer_function_output;
 

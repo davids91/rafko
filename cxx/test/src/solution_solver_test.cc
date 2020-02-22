@@ -283,8 +283,8 @@ TEST_CASE("Solution Solver test for gradients", "[solve][build-solve][gradient]"
   Solution_solver solver(*Solution_builder().service_context().build(*net));
   vector<sdouble32> result = solver.solve(net_input);
 
-  REQUIRE( net_structure.back() == solver.get_transfer_function_input().size());
-  REQUIRE( net_structure.back() == solver.get_transfer_function_output().size());
+  REQUIRE( net->neuron_array_size() == solver.get_transfer_function_input().size());
+  REQUIRE( net->neuron_array_size() == solver.get_transfer_function_output().size());
 
 }
 

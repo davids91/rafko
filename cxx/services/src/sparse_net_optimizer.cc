@@ -155,12 +155,12 @@ void Sparse_net_optimizer::calculate_gradient(vector<sdouble32>& input_sample, u
       net.weight_table(net.neuron_array(neuron_iterator).memory_filter_idx()),
       transfer_function.get_derivative(
         net.neuron_array(neuron_iterator).transfer_function_idx(),
-        transfer_function_input[neuron_iterator+net.output_neuron_number()-net.neuron_array_size()]
+        transfer_function_input[neuron_iterator]
       )
     );
     buffer *= transfer_function.get_derivative(
       net.neuron_array(neuron_iterator).transfer_function_idx(),
-      transfer_function_input[neuron_iterator+net.output_neuron_number()-net.neuron_array_size()]
+      transfer_function_input[neuron_iterator]
     );
     *error_values[solve_thread_index][neuron_iterator] = buffer;
     buffer = last_error; /* Summarize the currently calculated error value */

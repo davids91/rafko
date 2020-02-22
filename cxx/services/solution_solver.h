@@ -121,14 +121,13 @@ private:
    * @param[in]  row_iterator            The row iterator
    * @param[in]  col_iterator            The col iterator
    */
-  void solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator, uint32 extended_info_start){
-    partial_solvers[row_iterator][col_iterator].collect_input_data(input,neuron_data);
-    partial_solvers[row_iterator][col_iterator].solve();
+  void solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator){
+    partial_solvers[row_iterator][col_iterator].collect_input_data(input,neuron_data); 
+    partial_solvers[row_iterator][col_iterator].solve(); 
     partial_solvers[row_iterator][col_iterator].provide_output_data(neuron_data);
-    if(0 < partial_solvers[row_iterator][col_iterator].get_gradient_data_size())
-      partial_solvers[row_iterator][col_iterator].provide_gradient_data(
-        transfer_function_input, transfer_function_output
-      );
+    partial_solvers[row_iterator][col_iterator].provide_gradient_data(
+      transfer_function_input, transfer_function_output
+    );
   }
 
   const Solution& solution;
