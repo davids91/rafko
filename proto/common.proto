@@ -41,6 +41,15 @@ enum cost_functions{
   COST_FUNCTION_QUADRATIC = 1; /* ( 0.5*(expected-calculated)^2 )/dataset_size  */
 }
 
+/** @brief      Describes the available weight updaters implemented in the framework
+ */
+enum weight_updaters{
+  WEIGHT_UPDATER_UNKNOWN = 0;
+  WEIGHT_UPDATER_DEAULT = 1;
+  WEIGHT_UPDATER_MOMENTUM = 2;
+  WEIGHT_UPDATER_NESTEROVS = 3;
+}
+
 /**
  * @brief      This class describes a synapse. A synapse corresponds with a table of intervals.
  *             The number of @starts and @sizes should always be equal. Each pair of them describes

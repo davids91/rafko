@@ -20,6 +20,7 @@
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
+#include "models/service_context.h"
 #include "services/sparse_net_builder.h"
 #include "services/sparse_net_optimizer.h"
 
@@ -38,6 +39,7 @@ using std::unique_ptr;
 using std::vector;
 using std::cout;
 using std::endl;
+using std::flush;
 using sparse_net_library::uint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::SparseNet;
@@ -45,6 +47,8 @@ using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::COST_FUNCTION_QUADRATIC;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::Sparse_net_optimizer;
+using sparse_net_library::Service_context;
+using sparse_net_library::WEIGHT_UPDATER_DEAULT;
 
 /*###############################################################################################
  * Testing if the Sparse net library optimization convegres the network
@@ -113,54 +117,67 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     ).dense_layers({3,2,1})
   ));
 
-  /* Optimize net */
+  /* Optimize nets */
   sdouble32 last_error;
   sdouble32 minimum_error = std::numeric_limits<sdouble32>::max();
   sdouble32 moving_average_error = 0;
+  uint32 number_of_steps = 0;
   last_error = 5;
-  Sparse_net_optimizer optimizer(*nets[0],addition_dataset);
+  Sparse_net_optimizer optimizer(
+    *nets[0],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-1)
+  );
   std::cout << "Optimizing net.." << std::endl;
-  while(abs(last_error) > 1e-2){
-    optimizer.step(net_inputs, 50, 1e-2);
+  while(abs(last_error) > 1e-1){
+    optimizer.step(net_inputs,50);
+    ++number_of_steps;
     last_error = optimizer.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     moving_average_error = (moving_average_error + last_error)/2;
     cout << "\r Error: [" << last_error << "]; "
     << "Average: ["<< moving_average_error <<"]; "
     << "Minimum: ["<< minimum_error <<"]; "
-    << "                    " << std::flush;
+    << "                    " << flush;
   }
-  cout << endl;
+  cout << endl << "Optimum reached in " << number_of_steps << " steps!" << endl;
 
-  Sparse_net_optimizer optimizer2(*nets[1],addition_dataset); /* Add sparse_net_library::Service_context().set_max_processing_threads(1)) for single-threaded tests */
+  Sparse_net_optimizer optimizer2(
+    *nets[1],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-2)
+  ); /* Add sparse_net_library::Service_context().set_max_processing_threads(1)) for single-threaded tests */
   std::cout << "Optimizing bigger net.." << std::endl;
   last_error = 5;
-  while(abs(last_error) > 1e-5){
-    optimizer2.step(net_inputs, 50, 1e-5);
+  number_of_steps = 0;
+  while(abs(last_error) > 1e-2){
+    optimizer2.step(net_inputs,50);
+    ++number_of_steps;
     last_error = optimizer2.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     moving_average_error = (moving_average_error + last_error)/2;
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"]; "
     << "Average: ["<< moving_average_error <<"]; "
-    << "                    " << std::flush;
+    << "                    " << flush;
   }
-  cout << std::endl;
+  cout << endl << "Optimum reached in " << number_of_steps << " steps!" << endl;
 
-  Sparse_net_optimizer optimizer3(*nets[1],addition_dataset);
-  std::cout << "Optimizing biggest net.." << std::endl;
+  Sparse_net_optimizer optimizer3(
+    *nets[1],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-2)
+  );
+  cout << "Optimizing biggest net.." << std::endl;
   last_error = 5;
-  while(abs(last_error) > 1e-4){
-    optimizer3.step(net_inputs, 50, 1e-4);
+  number_of_steps = 0;
+  while(abs(last_error) > 1e-2){
+    optimizer3.step(net_inputs,50);
+    ++number_of_steps;
     last_error = optimizer3.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     moving_average_error = (moving_average_error + last_error)/2;
     cout << "\r Error: [" << last_error << "]; "
     << "Average: ["<< moving_average_error <<"]; "
     << "Minimum: ["<< minimum_error <<"]; "
-    << "                    " << std::flush;
+    << "w: [" << nets[2]->weight_table(0) << "][" << nets[2]->weight_table(1)<< "][" << nets[2]->weight_table(2) << "]"
+    << "                    " << flush;
   }
-  cout << endl;
+  cout << endl << "Optimum reached in " << number_of_steps << " steps!" << endl;
 }
 
 }/* namespace sparse_net_library_test */
