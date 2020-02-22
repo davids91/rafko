@@ -56,32 +56,7 @@ void Sparse_net_optimizer::step(vector<vector<sdouble32>>& input_samples, uint32
 
   /* Update the weights of the SparseNet and the solution */
   weight_updater->update_weights_with_gradients();
-  process_thread_iterator = 0;
-  uint32 neuron_weight_synapse_starts = 0;
-  uint32 inner_neuron_weight_index_starts = 0;
-  for(sint32 partial_index = 0; partial_index < net_solution.partial_solutions_size(); ++partial_index){
-    Partial_solution& partial = *net_solution.mutable_partial_solutions(partial_index);
-    process_thread_iterator = 0;
-    neuron_weight_synapse_starts = 0;
-    inner_neuron_weight_index_starts = 0;
-    while(
-      (context.get_max_processing_threads() > solve_threads.size())
-      &&(process_thread_iterator < partial.internal_neuron_number())
-    ){
-      solve_threads.push_back(thread(
-        &Sparse_net_optimizer::copy_weight_to_solution, this, process_thread_iterator,
-        ref(partial), neuron_weight_synapse_starts, inner_neuron_weight_index_starts
-      ));
-      inner_neuron_weight_index_starts += 2; /* bias and memory filter */
-      for(uint32 i = 0; i < partial.weight_synapse_number(process_thread_iterator); ++i){
-        inner_neuron_weight_index_starts +=
-          partial.weight_indices(neuron_weight_synapse_starts + i).interval_size();
-      }
-      neuron_weight_synapse_starts += partial.weight_synapse_number(process_thread_iterator);
-      ++process_thread_iterator;
-    }
-    wait_for_threads(solve_threads);
-  } /* for(uint32 partial_index = 0;partial_index < net_solution.partial_solutions_size(); ++partial_index) */
+  weight_updater->update_solution_with_weights(net_solution);
 }
 
 void Sparse_net_optimizer::step_thread(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index){
@@ -183,34 +158,6 @@ void Sparse_net_optimizer::calculate_weight_gradients(vector<sdouble32>& input_s
     wait_for_threads(process_threads[solve_thread_index]);
   } /* while(static_cast<int>(process_thread_iterator) < net.neuron_array_size()) */
 
-}
-
-
-void Sparse_net_optimizer::copy_weight_to_solution(
-  uint32 inner_neuron_index, /* In the solution, the weights are copied in without optimization */
-  Partial_solution& partial,
-  uint32 neuron_weight_synapse_starts,
-  uint32 inner_neuron_weight_index_starts /* In the solution, the weights are copied in without optimization */
-){ /*!Note: After shared weight optimization, this part is to be re-worked */
-  uint32 weights_copied = 0;
-  uint32 weight_interval_index = 0;
-  uint32 weight_synapse_index = 0;
-  Neuron& neuron = *net.mutable_neuron_array(partial.actual_index(inner_neuron_index));
-  partial.set_weight_table(partial.bias_index(inner_neuron_index),net.weight_table(neuron.bias_idx()));
-  partial.set_weight_table(partial.memory_filter_index(inner_neuron_index),net.weight_table(neuron.memory_filter_idx()));
-  weights_copied += 2;
-  neuron_router.run_for_neuron_inputs(partial.actual_index(inner_neuron_index),[&](sint32 child_index){
-    partial.set_weight_table(
-      (inner_neuron_weight_index_starts + weights_copied),
-      net.weight_table(neuron.input_weights(weight_synapse_index).starts() + weight_interval_index)
-    );
-    ++weights_copied;
-    ++weight_interval_index; 
-    if(weight_interval_index >= neuron.input_weights(weight_synapse_index).interval_size()){
-      weight_interval_index = 0; 
-      ++weight_synapse_index;
-    }
-  });
 }
 
 void Sparse_net_optimizer::backpropagation_thread(uint32 neuron_index, uint32 solve_thread_index){

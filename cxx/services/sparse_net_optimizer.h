@@ -24,6 +24,7 @@
 #include "gen/solution.pb.h"
 #include "models/cost_function.h"
 #include "models/transfer_function.h"
+#include "services/neuron_router.h"
 #include "services/solution_builder.h"
 #include "services/solution_solver.h"
 #include "services/function_factory.h"
@@ -118,14 +119,14 @@ private:
 
   void backpropagation_thread(uint32 neuron_index, uint32 solve_thread_index);
   void calculate_weight_gradients_thread(vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
-  void copy_weight_to_solution(
-    uint32 inner_neuron_index,
-    Partial_solution& partial,
-    uint32 neuron_weight_synapse_starts,
-    uint32 inner_neuron_weight_index_starts
-  );
 
-  void wait_for_threads(vector<thread>& calculate_threads){
+  /**
+   * @brief      This function waits for the given threads to finish, ensures that every thread
+   *             in the reference vector is finished, before it does.
+   *
+   * @param      calculate_threads  The calculate threads
+   *//*!TODO: Find a better solution for these snippets */
+  static void wait_for_threads(vector<thread>& calculate_threads){
     while(0 < calculate_threads.size()){
       if(calculate_threads.back().joinable()){
         calculate_threads.back().join();

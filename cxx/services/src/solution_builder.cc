@@ -18,6 +18,7 @@
 #include "services/solution_builder.h"
 
 #include "models/neuron_info.h"
+#include "services/neuron_router.h"
 #include "services/partial_solution_builder.h"
 
 #include <memory>
