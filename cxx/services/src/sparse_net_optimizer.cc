@@ -59,7 +59,7 @@ void Sparse_net_optimizer::step_thread(vector<vector<sdouble32>>& input_samples,
       throw "Network output size doesn't match size of provided labels!";
 
     for(unique_ptr<atomic<sdouble32>>& error_value : error_values[solve_thread_index]) *error_value = 0;
-    calculate_output_errors(input_samples[sample_index],sample_index, solve_thread_index);
+    calculate_output_errors(sample_index, solve_thread_index);
     propagate_output_errors_back(solve_thread_index);
     calculate_weight_gradients(input_samples[sample_index],solve_thread_index);
 
@@ -67,37 +67,55 @@ void Sparse_net_optimizer::step_thread(vector<vector<sdouble32>>& input_samples,
   }  
 }
 
-void Sparse_net_optimizer::calculate_output_errors(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index){
-  uint32 output_layer_iterator = 0;
+void Sparse_net_optimizer::calculate_output_errors(uint32 sample_index, uint32 solve_thread_index){
+  uint32 neuron_index = net.neuron_array_size()-net.output_neuron_number();
+  const uint32 neuron_number = 1 + static_cast<uint32>(net.neuron_array_size()/context.get_max_processing_threads());
+  for(
+    uint32 process_thread_index = 0; 
+    ( (process_thread_index < context.get_max_processing_threads())
+      &&(static_cast<uint32>(net.output_neuron_number()) > process_thread_index) );
+    ++process_thread_index
+  ){ /* For every provided sample */
+      process_threads[solve_thread_index].push_back(thread(
+        &Sparse_net_optimizer::calculate_output_errors_thread, this, sample_index,
+        neuron_index, std::min(neuron_number, (net.neuron_array_size() - neuron_index)),
+        process_thread_index
+      ));
+      neuron_index += neuron_number;
+  }
+  wait_for_threads(process_threads[solve_thread_index]);
+}
+
+void Sparse_net_optimizer::calculate_output_errors_thread(uint32 sample_index, uint32 neuron_index, uint32 neuron_number, uint32 solve_thread_index){
   sdouble32 buffer;
   sdouble32 addition;
-  for( /* For every ouput layer Neuron */
-    sint32 neuron_iterator = net.neuron_array_size()-net.output_neuron_number();
-    neuron_iterator < net.neuron_array_size();
-    ++neuron_iterator
-  ){ /* Set its error value */
+  if(neuron_index < (net.neuron_array_size() - net.output_neuron_number()))
+    throw "Neuron index points to non-output Neuron in output layer error calculation!";
+
+  for(uint32 neuron_iterator = 0; neuron_iterator < neuron_number; ++neuron_iterator){
     /* Error =
      * (d cost over d feature) *
      * spike_function_derivative(neuron_memory_ilter) *
      * transfer_function_derivative(transfer_function_input)
      */
     buffer = cost_function->get_d_cost_over_d_feature(
-      sample_index, output_layer_iterator, solver[solve_thread_index].get_neuron_data(neuron_iterator)
+      sample_index, 
+      ((neuron_index + neuron_iterator) - (net.neuron_array_size() - net.output_neuron_number())),
+      solver[solve_thread_index].get_neuron_data(neuron_index + neuron_iterator)
     );
     buffer *= Spike_function::get_derivative(
-      net.weight_table(net.neuron_array(neuron_iterator).memory_filter_idx()),
-      solver[solve_thread_index].get_transfer_function_output(neuron_iterator)
+      net.weight_table(net.neuron_array(neuron_index + neuron_iterator).memory_filter_idx()),
+      solver[solve_thread_index].get_transfer_function_output(neuron_index + neuron_iterator)
     );
     buffer *= transfer_function.get_derivative(
-      net.neuron_array(neuron_iterator).transfer_function_idx(),
-      solver[solve_thread_index].get_transfer_function_input(neuron_iterator)
+      net.neuron_array(neuron_index + neuron_iterator).transfer_function_idx(),
+      solver[solve_thread_index].get_transfer_function_input(neuron_index + neuron_iterator)
     );
-    error_values[solve_thread_index][neuron_iterator]->store(buffer/static_cast<sdouble32>(label_samples.size()));
+    error_values[solve_thread_index][neuron_index + neuron_iterator]->store(buffer/static_cast<sdouble32>(label_samples.size()));
     buffer = last_error; /* Summarize the currently calculated error value */
-    addition = *error_values[solve_thread_index][neuron_iterator];
+    addition = *error_values[solve_thread_index][neuron_index + neuron_iterator];
     while(!last_error.compare_exchange_weak(buffer,(buffer + addition)))
       buffer = last_error;
-    ++output_layer_iterator;
   }
 }
 

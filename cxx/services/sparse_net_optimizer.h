@@ -113,10 +113,11 @@ private:
   atomic<sdouble32> last_error;
 
   void step_thread(vector<vector<sdouble32>>& input_samples, uint32 samples_to_evaluate, uint32 solve_thread_index);
-  void calculate_output_errors(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index);
+  void calculate_output_errors(uint32 sample_index, uint32 solve_thread_index);
   void propagate_output_errors_back(uint32 solve_thread_index);
   void calculate_weight_gradients(vector<sdouble32>& input_sample, uint32 solve_thread_index);
 
+  void calculate_output_errors_thread(uint32 sample_index, uint32 neuron_index, uint32 neuron_number, uint32 solve_thread_index);
   void backpropagation_thread(uint32 neuron_index, uint32 solve_thread_index);
   void calculate_weight_gradients_thread(vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
 
