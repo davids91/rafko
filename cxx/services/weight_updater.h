@@ -40,10 +40,13 @@ public:
   void update_solution_with_weights(Solution& solution);
 
 protected:
-  void update_weight_with_gradient(uint32 weight_index){
-    net.set_weight_table( weight_index,
-      net.weight_table(weight_index) + *weight_gradients[weight_index] * context.get_step_size()
-    );
+  void update_weight_with_gradient(uint32 weight_index, uint32 weight_number){
+    for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
+      net.set_weight_table( weight_index + weight_iterator,
+        net.weight_table(weight_index + weight_iterator) 
+        + (*weight_gradients[weight_index + weight_iterator] * context.get_step_size())
+      );      
+    }
   }
 
 private:

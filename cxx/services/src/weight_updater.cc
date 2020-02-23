@@ -5,19 +5,21 @@
 namespace sparse_net_library{
 
 void Weight_updater::update_weights_with_gradients(void){
-  uint32 process_thread_iterator = 0;
-  while(static_cast<int>(process_thread_iterator) < net.weight_table_size()){
-    while(
-      (context.get_max_processing_threads() > calculate_threads.size())
-      &&(net.weight_table_size() > static_cast<int>(process_thread_iterator))
-    ){
-      calculate_threads.push_back(
-        thread(&Weight_updater::update_weight_with_gradient, this, process_thread_iterator)
-      );
-      ++process_thread_iterator;
-    }
-    wait_for_threads(calculate_threads);
+  uint32 weight_index = 0;
+  const uint32 weight_number = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
+  for(
+    uint32 thread_index = 0; 
+    ( (thread_index < context.get_max_solve_threads())
+      &&(static_cast<uint32>(net.weight_table_size()) > thread_index) );
+    ++thread_index
+  ){ /* For every provided sample */
+      calculate_threads.push_back(thread(
+        &Weight_updater::update_weight_with_gradient, this, 
+        weight_index, std::min(weight_number, (net.weight_table_size() - weight_index))
+      ));
+      weight_index += weight_number;
   }
+  wait_for_threads(calculate_threads);
 }
 
 void Weight_updater::update_solution_with_weights(Solution& solution){
