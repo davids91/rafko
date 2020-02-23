@@ -3,7 +3,6 @@
 
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
-#include "services/neuron_router.h"
 #include "services/sparse_net_optimizer.h"
 
 namespace sparse_net_library{
@@ -96,7 +95,7 @@ private:
     partial.set_weight_table(partial.bias_index(inner_neuron_index),net.weight_table(neuron.bias_idx()));
     partial.set_weight_table(partial.memory_filter_index(inner_neuron_index),net.weight_table(neuron.memory_filter_idx()));
     weights_copied += 2;
-    Neuron_router::run_for_neuron_inputs(net, partial.actual_index(inner_neuron_index),[&](sint32 child_index){
+    Synapse_iterator::iterate(net.neuron_array(partial.actual_index(inner_neuron_index)).input_indices(),[&](sint32 child_index){
       partial.set_weight_table(
         (inner_neuron_weight_index_starts + weights_copied),
         net.weight_table(neuron.input_weights(weight_synapse_index).starts() + weight_interval_index)

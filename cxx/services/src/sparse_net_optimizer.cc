@@ -161,11 +161,11 @@ void Sparse_net_optimizer::calculate_weight_gradients(vector<sdouble32>& input_s
 }
 
 void Sparse_net_optimizer::backpropagation_thread(uint32 neuron_index, uint32 solve_thread_index){
-  sdouble32 buffer;
+  sdouble32 buffer; /* TODO: It calls ~SparseNet???? */
   sdouble32 addition;
   uint32 weight_index = 0;
   uint32 weight_synapse_index = 0;
-  Neuron_router::run_for_neuron_inputs(net,neuron_index,[&](sint32 child_index){
+  Synapse_iterator::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
     if(!Synapse_iterator::is_index_input(child_index)){
       buffer = *error_values[solve_thread_index][child_index];
       addition = 
@@ -210,7 +210,7 @@ void Sparse_net_optimizer::calculate_weight_gradients_thread(vector<sdouble32>& 
   uint32 weight_index = 0;
   uint32 weight_synapse_index = 0;
   sdouble32 neuron_input;
-  neuron_router.run_for_neuron_inputs(neuron_index,[&](sint32 child_index){
+  Synapse_iterator::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
     if(Synapse_iterator::is_index_input(child_index))
       neuron_input = input_sample[Synapse_iterator::input_index_from_synapse_index(child_index)];
         else neuron_input = solver[solve_thread_index].get_neuron_data(child_index);

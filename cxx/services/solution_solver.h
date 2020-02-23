@@ -164,7 +164,6 @@ private:
 
   const Solution& solution;
   vector<vector<Partial_solution_solver>> partial_solvers;
-  vector<vector<Synapse_iterator>> partial_solver_output_maps;  /* Maps each output of the partial solvers into an index in @neuron_data */
   vector<sdouble32> neuron_data;  /* The internal Data of each Neuron */
   vector<sdouble32> transfer_function_input; /* Extended data required for output layer error */
   vector<sdouble32> transfer_function_output;

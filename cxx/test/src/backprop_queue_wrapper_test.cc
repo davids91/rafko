@@ -87,7 +87,7 @@ TEST_CASE( "Testing backpropagation queue", "" ) {
   CHECK( net->neuron_array_size() == num_neurons ); /* Neuron column numbers shall add up the number of Neurons */
 
   Synapse_iterator(queue.neuron_synapses()).iterate([&](int neuron_index){
-    router.run_for_neuron_inputs(neuron_index,[=](int input_index){
+    Synapse_iterator::iterate(net->neuron_array(neuron_index).input_indices(),[=](int input_index){
       if(!Synapse_iterator::is_index_input(input_index))
       CHECK( neuron_depth[neuron_index] < neuron_depth[input_index] );
     });

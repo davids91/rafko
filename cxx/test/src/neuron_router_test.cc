@@ -56,17 +56,6 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
   net_builder.reset();
   Neuron_router net_iterator(*net);
 
-  /* Testing if a function can be run a @Neuron s inputs */
-  for(uint32 neuron_iterator = 0; static_cast<int>(neuron_iterator) < net->neuron_array_size(); ++neuron_iterator){
-    Synapse_iterator input_iterator(net->neuron_array(neuron_iterator).input_indices());
-    uint32 input_synapse_index = 0;
-    net_iterator.run_for_neuron_inputs(neuron_iterator, [&](int input_index){
-      REQUIRE( input_iterator.size() > input_synapse_index );
-      CHECK( input_index == input_iterator[input_synapse_index] );
-      ++input_synapse_index;
-    });
-  }
-
   /* Testing the collected subset in each iteration in the net */
   uint16 iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
 

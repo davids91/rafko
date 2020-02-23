@@ -53,32 +53,6 @@ public:
   }
 
   /**
-   * @brief      Runs the given function with every index of the input of the Neuron
-   *
-   * @param[in]  neuron_index  The neuron index
-   * @param[in]  to_run        THe function to run
-   */
-  void run_for_neuron_inputs(uint32 neuron_index, std::function< void(int) > to_run){
-    if(net.neuron_array_size() > static_cast<int>(neuron_index)){
-      Synapse_iterator iter(net.neuron_array(neuron_index).input_indices());
-      iter.iterate(to_run);
-    }else throw "Neuron index out of bounds!";
-  }
-
-  /**
-   * @brief      Runs the given function with every index of the input of the Neuron
-   *
-   * @param[in]  neuron_index  The neuron index
-   * @param[in]  to_run        THe function to run
-   */
-  static void run_for_neuron_inputs(SparseNet sparse_net, uint32 neuron_index, std::function< void(int) > to_run){
-    if(sparse_net.neuron_array_size() > static_cast<int>(neuron_index)){
-      Synapse_iterator iter(sparse_net.neuron_array(neuron_index).input_indices());
-      iter.iterate(to_run);
-    }else throw "Neuron index out of bounds!";
-  }
-
-  /**
    * @brief      Collects some Neurons into a solvable subset of the net
    *
    * @param[in]  arg_max_solve_threads     The argument maximum solve threads
