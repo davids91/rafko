@@ -32,6 +32,7 @@
 #include <cmath>
 #include <memory>
 #include <limits>
+#include <chrono>
 
 namespace sparse_net_library_test{
 
@@ -40,6 +41,9 @@ using std::vector;
 using std::cout;
 using std::endl;
 using std::flush;
+using std::chrono::steady_clock;
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
 using sparse_net_library::uint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::SparseNet;
@@ -115,30 +119,37 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
        {TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY}}
-    ).dense_layers({5,3,2,1})
+    ).dense_layers({64,32,16,1})
   ));
 
   /* Optimize nets */
   sdouble32 last_error;
   sdouble32 minimum_error;
   uint32 number_of_steps;
+  steady_clock::time_point start;
+  uint32 average_duration;
 
   last_error = 5;
   number_of_steps = 0;
+  average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
     *nets[0],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-1)
   );
   std::cout << "Optimizing net.." << std::endl;
   while(abs(last_error) > 1e-1){
+    start = steady_clock::now();
     optimizer.step(net_inputs,50);
+    average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     last_error = optimizer.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                     " << flush;
   }
-  cout << endl << "Optimum reached in " << number_of_steps << " steps!" << endl;
+  average_duration /= number_of_steps;
+  cout << endl << "Optimum reached in " << number_of_steps 
+  << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   Sparse_net_optimizer optimizer2(
     *nets[1],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-3)
@@ -148,14 +159,18 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   number_of_steps = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   while(abs(last_error) > 1e-2){
+    start = steady_clock::now();
     optimizer2.step(net_inputs,50);
+    average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     last_error = optimizer2.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                     " << flush;
   }
-  cout << endl << "Optimum reached in " << number_of_steps << " steps!" << endl;
+  average_duration /= number_of_steps;
+  cout << endl << "Optimum reached in " << number_of_steps 
+  << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   Sparse_net_optimizer optimizer3(
     *nets[2],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-4)
@@ -165,14 +180,18 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   number_of_steps = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   while(abs(last_error) > 1e-4){
+    start = steady_clock::now();
     optimizer3.step(net_inputs,50);
+    average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     last_error = optimizer3.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                     " << flush;
   }
-  cout << endl << "Optimum reached in " << number_of_steps << " steps!" << endl;
+  average_duration /= number_of_steps;
+  cout << endl << "Optimum reached in " << number_of_steps
+  << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 }
 
 }/* namespace sparse_net_library_test */

@@ -3,8 +3,8 @@ LIBS = `pkg-config --cflags --libs protobuf` -g#-pthread -IC:/msys64/mingw64/inc
 
 LIBS = `pkg-config --cflags --libs protobuf` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
 
-CPPFLAGS = -Wall $(LIBS) -std=c++14 -DNDEBUG  #-g -fsanitize=address #-v
-CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib  #-g -fsanitize=address
+CPPFLAGS = -Wall $(LIBS) -std=c++14 -DNDEBUG #-g -fsanitize=address #-v
+CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib #-g -fsanitize=address
 
 GENERATED_SOURCES = ../cxx/gen/common.pb.cc ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc
 

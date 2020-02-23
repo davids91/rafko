@@ -163,15 +163,14 @@ void Sparse_net_optimizer::calculate_weight_gradients(vector<sdouble32>& input_s
 void Sparse_net_optimizer::backpropagation_thread(uint32 neuron_index, uint32 solve_thread_index){
   sdouble32 buffer;
   sdouble32 addition;
-  const Neuron& neuron = net.neuron_array(neuron_index);
   uint32 weight_index = 0;
   uint32 weight_synapse_index = 0;
-  neuron_router.run_for_neuron_inputs(neuron_index,[&](sint32 child_index){
+  Neuron_router::run_for_neuron_inputs(net,neuron_index,[&](sint32 child_index){
     if(!Synapse_iterator::is_index_input(child_index)){
       buffer = *error_values[solve_thread_index][child_index];
       addition = 
       *error_values[solve_thread_index][neuron_index] 
-      * net.weight_table(neuron.input_weights(weight_synapse_index).starts() + weight_index)
+      * net.weight_table(net.neuron_array(neuron_index).input_weights(weight_synapse_index).starts() + weight_index)
       * transfer_function.get_derivative(
         net.neuron_array(child_index).transfer_function_idx(),
         solver[solve_thread_index].get_transfer_function_input(child_index)
@@ -184,7 +183,7 @@ void Sparse_net_optimizer::backpropagation_thread(uint32 neuron_index, uint32 so
         buffer = *error_values[solve_thread_index][child_index];
     }
     ++weight_index; 
-    if(weight_index >= neuron.input_weights(weight_synapse_index).interval_size()){
+    if(weight_index >= net.neuron_array(neuron_index).input_weights(weight_synapse_index).interval_size()){
       weight_index = 0; 
       ++weight_synapse_index;
     }
