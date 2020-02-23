@@ -3,8 +3,13 @@ LIBS = `pkg-config --cflags --libs protobuf` -g#-pthread -IC:/msys64/mingw64/inc
 
 LIBS = `pkg-config --cflags --libs protobuf` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
 
-CPPFLAGS = -Wall $(LIBS) -std=c++14 -DNDEBUG #-g -fsanitize=address #-v
-CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib #-g -fsanitize=address
+DEBUG_FLAGS = -DNDEBUG #no debug
+#DEBUG_FLAGS = -g #debug information added
+#DEBUG_FLAGS += -v # verbose compile information
+#DEBUG_FLAGS += -fsanitize=address #address sanitizer check
+#DEBUG_FLAGS += -static-libasan  #enables debug data to be shown in valgrind
+CPPFLAGS = -Wall $(LIBS) -std=c++14 $(DEBUG_FLAGS)
+CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib $(DEBUG_FLAGS)
 
 GENERATED_SOURCES = ../cxx/gen/common.pb.cc ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc
 
@@ -19,6 +24,7 @@ HELPER_SOURCES += ../cxx/models/src/dense_net_weight_initializer.cc
 HELPER_SOURCES += ../cxx/services/src/neuron_router.cc ../cxx/models/src/neuron_info.cc
 HELPER_SOURCES += ../cxx/models/src/transfer_function.cc
 HELPER_SOURCES += ../cxx/services/src/backpropagation_queue_wrapper.cc
+HELPER_SOURCES += ../cxx/services/src/weight_updater.cc
 
 LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst ../cxx/gen/,,$(GENERATED_SOURCES:.cc=.o))

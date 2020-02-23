@@ -178,9 +178,9 @@ public:
    */
   int back(void) const{
     if(0 < synapse_interval.size()){
-      int last_index = synapse_interval.Get(synapse_interval.size()-1).starts();
-      if(is_index_input(last_index)) last_index -= synapse_interval.Get(synapse_interval.size()-1).interval_size() - 1;
-        else last_index += synapse_interval.Get(synapse_interval.size()-1).interval_size() - 1;
+      int last_index = synapse_interval[synapse_interval.size()-1].starts();
+      if(is_index_input(last_index)) last_index -= synapse_interval[synapse_interval.size()-1].interval_size() - 1;
+        else last_index += synapse_interval[synapse_interval.size()-1].interval_size() - 1;
       return last_index;
     }else throw "Last item requested from empty synapse!";
   }

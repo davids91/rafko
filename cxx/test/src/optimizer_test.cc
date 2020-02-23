@@ -117,9 +117,8 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY},
-       {TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY}}
-    ).dense_layers({64,32,16,1})
+    ).dense_layers({3,2,1})
   ));
 
   /* Optimize nets */
@@ -145,7 +144,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     last_error = optimizer.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                     " << flush;
+    << "Minimum: ["<< minimum_error <<"];" 
+    << " Iteration: " << number_of_steps << ";"
+    << flush;
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps 
@@ -166,7 +167,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     last_error = optimizer2.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                     " << flush;
+    << "Minimum: ["<< minimum_error <<"];" 
+    << " Iteration: " << number_of_steps << ";"
+    << flush;
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps 
@@ -187,7 +190,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     last_error = optimizer3.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                     " << flush;
+    << "Minimum: ["<< minimum_error <<"];" 
+    << " Iteration: " << number_of_steps << ";"
+    << flush;
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
