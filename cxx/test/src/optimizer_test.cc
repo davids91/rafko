@@ -144,8 +144,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     last_error = optimizer.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];" 
-    << " Iteration: " << number_of_steps << ";"
+    << "Minimum: ["<< minimum_error <<"];                                           " 
     << flush;
   }
   average_duration /= number_of_steps;
@@ -167,8 +166,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     last_error = optimizer2.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];" 
-    << " Iteration: " << number_of_steps << ";"
+    << "Minimum: ["<< minimum_error <<"];                                           " 
     << flush;
   }
   average_duration /= number_of_steps;
@@ -190,8 +188,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     last_error = optimizer3.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];" 
-    << " Iteration: " << number_of_steps << ";"
+    << "Minimum: ["<< minimum_error <<"];                                           " 
     << flush;
   }
   average_duration /= number_of_steps;
