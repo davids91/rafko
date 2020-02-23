@@ -112,7 +112,7 @@ private:
   vector<sdouble32> gradient_values;
   atomic<sdouble32> last_error;
 
-  void step_thread(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index);
+  void step_thread(vector<vector<sdouble32>>& input_samples, uint32 samples_to_evaluate, uint32 solve_thread_index);
   void calculate_output_errors(vector<sdouble32>& input_sample, uint32 sample_index, uint32 solve_thread_index);
   void propagate_output_errors_back(uint32 solve_thread_index);
   void calculate_weight_gradients(vector<sdouble32>& input_sample, uint32 solve_thread_index);

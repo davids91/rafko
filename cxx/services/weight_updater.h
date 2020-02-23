@@ -39,17 +39,18 @@ public:
 
   void update_solution_with_weights(Solution& solution);
 
-private:
-  SparseNet& net;
-  Service_context& context;
-  vector<unique_ptr<atomic<sdouble32>>>& weight_gradients;
-  vector<thread> calculate_threads;
-
+protected:
   void update_weight_with_gradient(uint32 weight_index){
     net.set_weight_table( weight_index,
       net.weight_table(weight_index) + *weight_gradients[weight_index] * context.get_step_size()
     );
   }
+
+private:
+  SparseNet& net;
+  Service_context& context;
+  vector<unique_ptr<atomic<sdouble32>>>& weight_gradients;
+  vector<thread> calculate_threads;
 
   void copy_weight_to_solution(
     uint32 inner_neuron_index, Partial_solution& partial,
