@@ -40,20 +40,22 @@ public:
   void update_solution_with_weights(Solution& solution);
 
 protected:
-  void update_weight_with_gradient(uint32 weight_index, uint32 weight_number){
-    for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
-      net.set_weight_table( weight_index + weight_iterator,
-        net.weight_table(weight_index + weight_iterator) 
-        + (*weight_gradients[weight_index + weight_iterator] * context.get_step_size())
-      );      
-    }
-  }
-
-private:
   SparseNet& net;
   Service_context& context;
   vector<unique_ptr<atomic<sdouble32>>>& weight_gradients;
+  
+  sdouble32 get_new_weight(uint32 weight_index){
+    return(net.weight_table(weight_index) + (*weight_gradients[weight_index] * context.get_step_size()));
+  }
+
+private:
   vector<thread> calculate_threads;
+
+  void update_weight_with_gradient(uint32 weight_index, uint32 weight_number){
+    for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
+      net.set_weight_table( weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator));
+    }
+  }
 
   void copy_weight_to_solution(
     uint32 inner_neuron_index, Partial_solution& partial,

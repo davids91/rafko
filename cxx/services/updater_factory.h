@@ -5,6 +5,7 @@
 #include "gen/sparse_net.pb.h"
 #include "models/service_context.h"
 #include "services/weight_updater.h"
+#include "services/weight_updater_momentum.h"
 
 #include <memory>
 
@@ -20,8 +21,11 @@ public:
     weight_updaters weight_updater, Service_context& context
   ){
     switch(weight_updater){
+      case WEIGHT_UPDATER_MOMENTUM: 
+        return make_unique<Weight_updater_momentum>(net,weight_gradients,context);
       case WEIGHT_UPDATER_DEFAULT: 
-      default: return make_unique<Weight_updater>(net,weight_gradients,context);
+      default: 
+        return make_unique<Weight_updater>(net,weight_gradients,context);
     };
   }
 };

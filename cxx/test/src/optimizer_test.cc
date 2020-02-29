@@ -54,6 +54,7 @@ using sparse_net_library::TRANSFER_FUNCTION_TANH;
 using sparse_net_library::Sparse_net_optimizer;
 using sparse_net_library::Service_context;
 using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
+using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
 
 /*###############################################################################################
  * Testing if the Sparse net library optimization convegres the network
@@ -118,7 +119,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY},
-       {TRANSFER_FUNCTION_TANH}}
+       {TRANSFER_FUNCTION_IDENTITY}}
     ).dense_layers({3,2,1})
   ));
 
@@ -134,7 +135,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-1)
+    *nets[0],addition_dataset,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-1)
   );
   std::cout << "Optimizing net.." << std::endl;
   while(abs(last_error) > 1e-1){
@@ -153,7 +154,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   Sparse_net_optimizer optimizer2(
-    *nets[1],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-3)
+    *nets[1],addition_dataset,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-3)
   ); /* Add sparse_net_library::Service_context().set_max_processing_threads(1)) for single-threaded tests */
   std::cout << "Optimizing bigger net.." << std::endl;
   last_error = 5;
@@ -175,7 +176,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   Sparse_net_optimizer optimizer3(
-    *nets[2],addition_dataset,WEIGHT_UPDATER_DEAULT,Service_context().set_step_size(1e-4)
+    *nets[2],addition_dataset,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-4)
   );
   cout << "Optimizing biggest net.." << std::endl;
   last_error = 5;
