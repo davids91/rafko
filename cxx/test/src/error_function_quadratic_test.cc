@@ -11,7 +11,7 @@
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
@@ -68,8 +68,8 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
       == (0.5 * pow(distance,2))
     );
     for(uint16 feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){
-      CHECK( 
-        Approx(cost.get_error(sample_iterator, feature_iterator, featureset[sample_iterator][feature_iterator])).epsilon(0.00000000000001) 
+      CHECK(
+        Approx(cost.get_error(sample_iterator, feature_iterator, featureset[sample_iterator][feature_iterator])).epsilon(0.00000000000001)
         == (0.5 * pow(distance,2)) / static_cast<sdouble32>(feature_size)
       );
     }

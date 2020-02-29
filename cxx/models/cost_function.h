@@ -11,7 +11,7 @@
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 

@@ -11,7 +11,7 @@
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
@@ -51,10 +51,10 @@ void Sparse_net_optimizer::step(vector<vector<sdouble32>>& input_samples, uint32
 
 void Sparse_net_optimizer::step_thread(vector<vector<sdouble32>>& input_samples, uint32 samples_to_evaluate, uint32 solve_thread_index){
   uint32 sample_index;
-  for(uint32 sample = 0; sample < samples_to_evaluate; ++sample){ 
+  for(uint32 sample = 0; sample < samples_to_evaluate; ++sample){
     sample_index = rand()%(input_samples.size());
     solver[solve_thread_index].solve(input_samples[sample_index]); /* Solve the network for the given input */
-    
+
     if(label_samples[sample_index].size() != solver[solve_thread_index].get_output_size())
       throw "Network output size doesn't match size of provided labels!";
 
@@ -64,14 +64,14 @@ void Sparse_net_optimizer::step_thread(vector<vector<sdouble32>>& input_samples,
     calculate_weight_gradients(input_samples[sample_index],solve_thread_index);
 
     solver[solve_thread_index].reset();
-  }  
+  }
 }
 
 void Sparse_net_optimizer::calculate_output_errors(uint32 sample_index, uint32 solve_thread_index){
   uint32 neuron_index = net.neuron_array_size()-net.output_neuron_number();
   const uint32 neuron_number = 1 + static_cast<uint32>(net.neuron_array_size()/context.get_max_processing_threads());
   for(
-    uint32 process_thread_index = 0; 
+    uint32 process_thread_index = 0;
     ( (process_thread_index < context.get_max_processing_threads())
       &&(static_cast<uint32>(net.output_neuron_number()) > process_thread_index) );
     ++process_thread_index
@@ -99,7 +99,7 @@ void Sparse_net_optimizer::calculate_output_errors_thread(uint32 sample_index, u
      * transfer_function_derivative(transfer_function_input)
      */
     buffer = cost_function->get_d_cost_over_d_feature(
-      sample_index, 
+      sample_index,
       ((neuron_index + neuron_iterator) - (net.neuron_array_size() - net.output_neuron_number())),
       solver[solve_thread_index].get_neuron_data(neuron_index + neuron_iterator)
     );
@@ -161,7 +161,7 @@ void Sparse_net_optimizer::calculate_weight_gradients(vector<sdouble32>& input_s
       &&(net.neuron_array_size() > static_cast<int>(process_thread_iterator))
     ){
       process_threads[solve_thread_index].push_back(thread(
-        &Sparse_net_optimizer::calculate_weight_gradients_thread, this, 
+        &Sparse_net_optimizer::calculate_weight_gradients_thread, this,
         ref(input_sample), process_thread_iterator, solve_thread_index
       ));
 
@@ -181,8 +181,8 @@ void Sparse_net_optimizer::backpropagation_thread(uint32 neuron_index, uint32 so
   Synapse_iterator::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
     if(!Synapse_iterator::is_index_input(child_index)){
       buffer = *error_values[solve_thread_index][child_index];
-      addition = 
-      *error_values[solve_thread_index][neuron_index] 
+      addition =
+      *error_values[solve_thread_index][neuron_index]
       * net.weight_table(net.neuron_array(neuron_index).input_weights(weight_synapse_index).starts() + weight_index)
       * transfer_function.get_derivative(
         net.neuron_array(child_index).transfer_function_idx(),
@@ -195,9 +195,9 @@ void Sparse_net_optimizer::backpropagation_thread(uint32 neuron_index, uint32 so
       while(!error_values[solve_thread_index][child_index]->compare_exchange_weak(buffer, (buffer + addition)))
         buffer = *error_values[solve_thread_index][child_index];
     }
-    ++weight_index; 
+    ++weight_index;
     if(weight_index >= net.neuron_array(neuron_index).input_weights(weight_synapse_index).interval_size()){
-      weight_index = 0; 
+      weight_index = 0;
       ++weight_synapse_index;
     }
   });

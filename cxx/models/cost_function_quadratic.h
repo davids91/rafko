@@ -11,7 +11,7 @@
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
@@ -59,14 +59,14 @@ public:
   }
 
   sdouble32 get_error(uint32 sample_index, uint32 label_index, sdouble32 feature_value) const{
-    return ( 0.5 * 
-      pow((feature_value - labels[sample_index][label_index]),2) / static_cast<sdouble32>(labels[sample_index].size()) 
+    return ( 0.5 *
+      pow((feature_value - labels[sample_index][label_index]),2) / static_cast<sdouble32>(labels[sample_index].size())
     );
   }
-  
+
   sdouble32 get_d_cost_over_d_feature(uint32 sample_index, uint32 label_index, sdouble32 feature_value) const{
-    return ( 
-      -(feature_value - labels[sample_index][label_index]) / static_cast<sdouble32>(labels[sample_index].size()) 
+    return (
+      -(feature_value - labels[sample_index][label_index]) / static_cast<sdouble32>(labels[sample_index].size())
     );
   }
 };

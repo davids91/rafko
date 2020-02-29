@@ -11,7 +11,7 @@
  *    GNU General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
- *    along with Foobar.  If not, see <https://www.gnu.org/licenses/> or
+ *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
@@ -144,11 +144,11 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     last_error = optimizer.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                                           " 
+    << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
   }
   average_duration /= number_of_steps;
-  cout << endl << "Optimum reached in " << number_of_steps 
+  cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   Sparse_net_optimizer optimizer2(
@@ -166,11 +166,11 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     last_error = optimizer2.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                                           " 
+    << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
   }
   average_duration /= number_of_steps;
-  cout << endl << "Optimum reached in " << number_of_steps 
+  cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   Sparse_net_optimizer optimizer3(
@@ -188,7 +188,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     last_error = optimizer3.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                                           " 
+    << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
   }
   average_duration /= number_of_steps;
