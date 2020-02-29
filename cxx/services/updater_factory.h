@@ -20,7 +20,7 @@ public:
     weight_updaters weight_updater, Service_context& context
   ){
     switch(weight_updater){
-      case WEIGHT_UPDATER_DEAULT: 
+      case WEIGHT_UPDATER_DEFAULT: 
       default: return make_unique<Weight_updater>(net,weight_gradients,context);
     };
   }

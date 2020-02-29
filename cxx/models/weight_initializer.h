@@ -116,7 +116,7 @@ protected:
   /**
    * Estimated Maximum value of one @Neuron input
    */
-  sdouble32 expected_input_maximum_value = 0.0;
+  sdouble32 expected_input_maximum_value = numeric_limits<sdouble32>::epsilon();
 };
 
 } /* namespace sparse_net_library */

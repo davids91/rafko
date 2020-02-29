@@ -73,7 +73,7 @@ void Sparse_net_optimizer::calculate_output_errors(uint32 sample_index, uint32 s
   for(
     uint32 process_thread_index = 0;
     ( (process_thread_index < context.get_max_processing_threads())
-      &&(static_cast<uint32>(net.output_neuron_number()) > process_thread_index) );
+      &&(static_cast<uint32>(net.neuron_array_size()) >= neuron_index) );
     ++process_thread_index
   ){ /* For every provided sample */
       process_threads[solve_thread_index].push_back(thread(

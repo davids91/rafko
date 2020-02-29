@@ -45,7 +45,7 @@ enum cost_functions{
  */
 enum weight_updaters{
   WEIGHT_UPDATER_UNKNOWN = 0;
-  WEIGHT_UPDATER_DEAULT = 1;
+  WEIGHT_UPDATER_DEFAULT = 1;
   WEIGHT_UPDATER_MOMENTUM = 2;
   WEIGHT_UPDATER_NESTEROVS = 3;
 }

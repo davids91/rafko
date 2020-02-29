@@ -50,9 +50,10 @@ using sparse_net_library::SparseNet;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::COST_FUNCTION_QUADRATIC;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
+using sparse_net_library::TRANSFER_FUNCTION_TANH;
 using sparse_net_library::Sparse_net_optimizer;
 using sparse_net_library::Service_context;
-using sparse_net_library::WEIGHT_UPDATER_DEAULT;
+using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
 
 /*###############################################################################################
  * Testing if the Sparse net library optimization convegres the network
@@ -117,7 +118,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY},
-       {TRANSFER_FUNCTION_IDENTITY}}
+       {TRANSFER_FUNCTION_TANH}}
     ).dense_layers({3,2,1})
   ));
 
@@ -182,7 +183,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   minimum_error = std::numeric_limits<sdouble32>::max();
   while(abs(last_error) > 1e-4){
     start = steady_clock::now();
-    optimizer3.step(net_inputs,50);
+    optimizer3.step(net_inputs,100);
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     last_error = optimizer3.get_last_error();
