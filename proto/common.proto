@@ -50,6 +50,18 @@ enum weight_updaters{
   WEIGHT_UPDATER_NESTEROVS = 3;
 }
 
+/** @brief      Describes a data-set to train or test Neural Networks
+ *              The feature and label arrays contain @feature_size floating point numbers
+ *              repeated after one another, having the same cardinality for each feature-label pair.
+ *              By desgin the number of @features and @labels should match, and should be a multiple of
+ *              @feature_size
+ */
+message Data_set{
+  uint32 feature_size = 1;
+  repeated double features = 10;
+  repeated double labels = 11;
+}
+
 /**
  * @brief      This class describes a synapse. A synapse corresponds with a table of intervals.
  *             The number of @starts and @sizes should always be equal. Each pair of them describes

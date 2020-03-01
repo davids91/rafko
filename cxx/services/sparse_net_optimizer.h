@@ -24,6 +24,7 @@
 #include "gen/solution.pb.h"
 #include "models/cost_function.h"
 #include "models/transfer_function.h"
+#include "models/data_aggregate.h"
 #include "services/neuron_router.h"
 #include "services/solution_builder.h"
 #include "services/solution_solver.h"
@@ -40,22 +41,26 @@ using std::vector;
 using std::unique_ptr;
 using google::protobuf::Arena;
 
+
 class Sparse_net_optimizer{
 public:
   Sparse_net_optimizer(
-    SparseNet& neural_network, vector<vector<sdouble32>>& label_samples_,
+    SparseNet& neural_network, Data_aggregate& data_aggregate,
     weight_updaters weight_updater_, Service_context service_context = Service_context()
-  ): context(service_context)
-  ,  label_samples(label_samples_)
-  ,  net(neural_network)
+  ): net(neural_network)
+  ,  context(service_context)
   ,  transfer_function(context)
   ,  net_solution(*Solution_builder().service_context(context).build(net))
   ,  solver(context.get_max_solve_threads(), Solution_solver(net_solution, service_context))
+  ,  data_set(data_aggregate)
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
-  ,  cost_function(Function_factory::build_cost_function(net,label_samples))
+  ,  cost_function(Function_factory::build_cost_function(net, context))
   ,  neuron_router(net)
   ,  solve_threads(0)
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
+  ,  neuron_data(context.get_max_solve_threads())
+  ,  transfer_function_input(context.get_max_solve_threads())
+  ,  transfer_function_output(context.get_max_solve_threads())
   ,  error_values(context.get_max_solve_threads())
   ,  weight_gradients(0)
   {
@@ -64,6 +69,9 @@ public:
       for(sint32 i = 0; i < net.neuron_array_size(); ++i)
         error_values[threads].push_back(std::make_unique<atomic<sdouble32>>());
       process_threads[threads].reserve(context.get_max_processing_threads());
+      neuron_data[threads] = vector<sdouble32>(data_set.get_feature_size());
+      transfer_function_input[threads] = vector<sdouble32>(data_set.get_feature_size());
+      transfer_function_output[threads] = vector<sdouble32>(data_set.get_feature_size());
     }
     for(sint32 i = 0; i < net.weight_table_size(); ++i)
       weight_gradients.push_back(std::make_unique<atomic<sdouble32>>());
@@ -73,14 +81,13 @@ public:
    /**
     * @brief      Step the net in the opposite direction of the gradient slope
     *
-    * @param      input_samples  The input samples to base the error function on
     * @param[in]  sample_size    The number of feature-label pairs considered to be 1 sample
     *                            this is important for recurrent Networks, ans the sample size
     *                            shall set how deep shall the Back propagation through time go,
     *                            and it also considers @smaple_size number of samples in the array
     *                            as 1 actual sample.
     */
-  void step(vector<vector<sdouble32>>& input_samples, uint32 batch_size, uint32 sequence_size = 1);
+  void step(uint32 batch_size, uint32 sequence_size = 1);
 
   /**
    * @brief      Gives back the error of the configured Network based on the previous optimization step
@@ -88,18 +95,18 @@ public:
    * @return     Error value
    */
   sdouble32 get_last_error(){
-   return last_error;
+   return data_set.get_error();
   }
 
 private:
-  Service_context context;
-  vector<vector<sdouble32>>& label_samples;
   SparseNet& net;
+  Service_context context;
   Transfer_function transfer_function;
 
   Solution net_solution;
   vector<Solution_solver> solver;
 
+  Data_aggregate& data_set;
   Backpropagation_queue gradient_step;
   unique_ptr<Cost_function> cost_function;
   unique_ptr<Weight_updater> weight_updater;
@@ -107,19 +114,22 @@ private:
 
   vector<thread> solve_threads;
   vector<vector<thread>> process_threads;
+  vector<vector<sdouble32>> neuron_data; /* 1 feature for every solve thread for now */
+  vector<vector<sdouble32>> transfer_function_input;
+  vector<vector<sdouble32>> transfer_function_output;
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values;
   vector<unique_ptr<atomic<sdouble32>>> weight_gradients;
   vector<sdouble32> gradient_values;
-  atomic<sdouble32> last_error;
+  vector<atomic<sdouble32>> sample_errors;
 
-  void step_thread(vector<vector<sdouble32>>& input_samples, uint32 samples_to_evaluate, uint32 solve_thread_index);
+  void step_thread(uint32 samples_to_evaluate, uint32 solve_thread_index);
   void calculate_output_errors(uint32 sample_index, uint32 solve_thread_index);
   void propagate_output_errors_back(uint32 solve_thread_index);
-  void calculate_weight_gradients(vector<sdouble32>& input_sample, uint32 solve_thread_index);
+  void calculate_weight_gradients(const vector<sdouble32>& input_sample, uint32 solve_thread_index);
 
   void calculate_output_errors_thread(uint32 sample_index, uint32 neuron_index, uint32 neuron_number, uint32 solve_thread_index);
   void backpropagation_thread(uint32 neuron_index, uint32 solve_thread_index);
-  void calculate_weight_gradients_thread(vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
+  void calculate_weight_gradients_thread(const vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
 
   /**
    * @brief      This function waits for the given threads to finish, ensures that every thread

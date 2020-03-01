@@ -23,7 +23,7 @@ HELPER_SOURCES = ../cxx/services/src/synapse_iterator.cc
 HELPER_SOURCES += ../cxx/models/src/dense_net_weight_initializer.cc
 HELPER_SOURCES += ../cxx/services/src/neuron_router.cc ../cxx/models/src/neuron_info.cc
 HELPER_SOURCES += ../cxx/models/src/transfer_function.cc
-HELPER_SOURCES += ../cxx/services/src/backpropagation_queue_wrapper.cc
+HELPER_SOURCES += ../cxx/services/src/backpropagation_queue_wrapper.cc ../cxx/models/src/data_aggregate.cc
 HELPER_SOURCES += ../cxx/services/src/weight_updater.cc
 
 LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(HELPER_SOURCES)

@@ -47,7 +47,7 @@ public:
   void solve(vector<sdouble32> input);
 
   /**
-   * @brief      Gets the output size of the solution. Th solution output is defined as the last 
+   * @brief      Gets the output size of the solution. Th solution output is defined as the last
    *             Neurons in the solution. Cardinality is given by this function.
    *
    * @return     Number of output Neurons
@@ -154,8 +154,8 @@ private:
    * @param[in]  col_iterator            The col iterator
    */
   void solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator){
-    partial_solvers[row_iterator][col_iterator].collect_input_data(input,neuron_data); 
-    partial_solvers[row_iterator][col_iterator].solve(); 
+    partial_solvers[row_iterator][col_iterator].collect_input_data(input,neuron_data);
+    partial_solvers[row_iterator][col_iterator].solve();
     partial_solvers[row_iterator][col_iterator].provide_output_data(neuron_data);
     partial_solvers[row_iterator][col_iterator].provide_gradient_data(
       transfer_function_input, transfer_function_output

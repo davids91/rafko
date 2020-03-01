@@ -32,9 +32,8 @@ namespace sparse_net_library{
 using std::vector;
 using std::atomic;
 using std::mutex;
-using std::future;
 using std::lock_guard;
-using std::function;
+using std::thread;
 
 /**
  * @brief      Error function handling and utilities, provides a hook for a computation
@@ -42,61 +41,87 @@ using std::function;
  */
 class Cost_function{
 public:
-  Cost_function(vector<vector<sdouble32>>& label_samples, Service_context context = Service_context())
-  : max_threads(context.get_max_processing_threads())
-  , labels(label_samples)
-  { };
-
-  /**
-   * @brief      Gets the overall error compared to the label set
-   *
-   * @return     The error.
-   */
-  virtual sdouble32 get_error(vector<vector<sdouble32>>& features) const = 0;
-
-  /**
-   * @brief      Gets the overall error comapred to a sample in the labelset
-   *
-   * @return     The error.
-   */
-  virtual sdouble32 get_error(uint32 sample_index, vector<sdouble32>& features) const = 0;
+  Cost_function(uint32 feature_size_, Service_context service_context = Service_context())
+  :  context(service_context)
+  ,  process_threads(0)
+  ,  feature_size(feature_size_)
+  { process_threads.reserve(service_context.get_max_processing_threads()); };
 
   /**
    * @brief      Gets the error for a feature for a label set under the given index
    *
    * @param[in]  sample_index   The index of the sample in the dataset
    * @param[in]  label_index    The index of the datapoint inside the sample
-   * @param[in]  feature_value  The value of the datapoint to compare to
    *
    * @return     The error.
    */
-  virtual sdouble32 get_error(uint32 sample_index, uint32 label_index, sdouble32 feature_value) const = 0;
+  sdouble32 get_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data){
+    lock_guard<mutex> error_lock(error_mutex);
+    error.store(0);
+    uint32 feature_start_index = neuron_data.size() - feature_size;
+    const uint32 feature_number = 1 + static_cast<uint32>(labels.size()/context.get_max_processing_threads());
+    for(
+      uint32 thread_index = 0;
+      ( (thread_index < context.get_max_processing_threads())
+        &&(labels.size() > feature_start_index) );
+      ++thread_index
+    ){ /* For every provided sample */
+        process_threads.push_back(thread(
+          &Cost_function::summarize_errors, this,
+          ref(labels), ref(neuron_data), feature_start_index, feature_number
+        ));
+        feature_start_index += feature_number;
+    }
+    wait_for_threads(process_threads);
+    return error;
+  }
 
   /**
    * @brief      Gets the the Cost function function derivative for a feature compared to a selected label set
    *
-   * @param[in]  sample_index   The index of the sample in the dataset
-   * @param[in]  label_index    The index of the datapoint inside the sample
-   * @param[in]  feature_value  The value of the datapoint to compare to
+   * @param      feature_index  feature to examine
+   * @param[in]  label_value    The value of the datapoint to compare
+   * @param[in]  feature_value  The value to compare to label_value
    *
-   * @return     The d cost over d feature.
+   * @return     The gradient of the cost function in regards to its input
    */
-  virtual sdouble32 get_d_cost_over_d_feature(uint32 sample_index, uint32 label_index, sdouble32 feature_value) const = 0;
+  sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const vector<sdouble32>& label, const vector<sdouble32>& neuron_data) const{
+    return get_d_cost_over_d_feature(label[feature_index],neuron_data[feature_index]);
+  }
 
 protected:
-  uint8 max_threads;
-  vector<vector<sdouble32>>& labels;
+  Service_context context;
+  vector<thread> process_threads;
+  uint32 feature_size;
+
+  virtual sdouble32 get_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
+  virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const = 0;
+
+private:
+  mutex error_mutex;
+  atomic<sdouble32> error;
+  void summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add){
+    sdouble32 buffer = error;
+    sdouble32 local_error = 0;
+    for(uint32 feature_iterator = 0; feature_iterator < number_to_add; ++feature_iterator){
+      local_error += get_error(labels[start_index + feature_iterator],neuron_data[start_index + feature_iterator]);
+    }
+    while(error.compare_exchange_weak(buffer,(buffer + local_error)))buffer = error;
+  }
 
   /**
-   * @brief      Throws an exception if the references for a given features are incorrectly set up
+   * @brief      This function waits for the given threads to finish, ensures that every thread
+   *             in the reference vector is finished, before it does.
    *
-   * @param[in]  feature_index  The feature index
-   */
-  void verify_sizes(uint32 label_index, vector<sdouble32>& features) const{
-    if(/* Check if input index is valid */
-      (labels.size() <= label_index)
-      ||(features.size() != labels[label_index].size())
-    )throw "Incompatible Feature and Label sizes!";
+   * @param      calculate_threads  The calculate threads
+   *//*!TODO: Find a better solution for these snippets */
+  static void wait_for_threads(vector<thread>& threads){
+    while(0 < threads.size()){
+      if(threads.back().joinable()){
+        threads.back().join();
+        threads.pop_back();
+      }
+    }
   }
 };
 
