@@ -69,9 +69,7 @@ sdouble32 Dense_net_weight_initializer::next_memory_filter() const{
 }
 
 sdouble32 Dense_net_weight_initializer::next_bias() const{
-  return ( (expected_input_maximum_value / -2.0) +
-    (static_cast<sdouble32>(rand()%static_cast<int>(expected_input_maximum_value)))
-  );
+  return 0.0;
 }
 
 } /* namespace sparse_net_library */

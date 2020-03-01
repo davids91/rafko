@@ -164,7 +164,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],data_aggregate,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-1)
+    *nets[0],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-1)
   );
   std::cout << "Optimizing net.." << std::endl;
   while(abs(last_error) > 1e-1){
@@ -184,8 +184,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   Sparse_net_optimizer optimizer2(
     *nets[1],data_aggregate,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-3)
-  ); /* Add sparse_net_library::Service_context().set_max_processing_threads(1)) for single-threaded tests */
+  ); /* .set_max_processing_threads(1)) for single-threaded tests */
   std::cout << "Optimizing bigger net.." << std::endl;
+  data_aggregate.reset();
   last_error = 5;
   number_of_steps = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
@@ -208,6 +209,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     *nets[2],data_aggregate,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-4)
   );
   cout << "Optimizing biggest net.." << std::endl;
+  data_aggregate.reset();
   last_error = 5;
   number_of_steps = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();

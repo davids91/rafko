@@ -51,14 +51,16 @@ enum weight_updaters{
 }
 
 /** @brief      Describes a data-set to train or test Neural Networks
- *              The feature and label arrays contain @feature_size floating point numbers
- *              repeated after one another, having the same cardinality for each feature-label pair.
- *              By desgin the number of @features and @labels should match, and should be a multiple of
- *              @feature_size
+ *              The input and label arrays contain @input_size and @feature_size floating point numbers
+ *              respectively, repeated after one another.
+ *              In case of sequential data, label-input pairs of @sequence_size are considered one sequence.
+ *              By desgin the number of  @labels should  be a multiple of @sequence_size * @feature_size.
  */
 message Data_set{
-  uint32 feature_size = 1;
-  repeated double features = 10;
+  uint32 input_size = 1;
+  uint32 feature_size = 2;
+  uint32 sequence_size = 3;
+  repeated double inputs = 10;
   repeated double labels = 11;
 }
 

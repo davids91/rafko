@@ -81,13 +81,9 @@ public:
    /**
     * @brief      Step the net in the opposite direction of the gradient slope
     *
-    * @param[in]  sample_size    The number of feature-label pairs considered to be 1 sample
-    *                            this is important for recurrent Networks, ans the sample size
-    *                            shall set how deep shall the Back propagation through time go,
-    *                            and it also considers @smaple_size number of samples in the array
-    *                            as 1 actual sample.
+    * @param[in]  mini_batch_size     The number of samples to be evaluated in one step
     */
-  void step(uint32 batch_size, uint32 sequence_size = 1);
+  void step(uint32 mini_batch_size);
 
   /**
    * @brief      Gives back the error of the configured Network based on the previous optimization step
@@ -120,16 +116,15 @@ private:
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values;
   vector<unique_ptr<atomic<sdouble32>>> weight_gradients;
   vector<sdouble32> gradient_values;
-  vector<atomic<sdouble32>> sample_errors;
 
-  void step_thread(uint32 samples_to_evaluate, uint32 solve_thread_index);
-  void calculate_output_errors(uint32 sample_index, uint32 solve_thread_index);
+  void step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate);
+  void calculate_output_errors(uint32 solve_thread_index, uint32 sample_index);
   void propagate_output_errors_back(uint32 solve_thread_index);
-  void calculate_weight_gradients(const vector<sdouble32>& input_sample, uint32 solve_thread_index);
+  void calculate_weight_gradients(uint32 solve_thread_index, const vector<sdouble32>& input_sample);
 
-  void calculate_output_errors_thread(uint32 sample_index, uint32 neuron_index, uint32 neuron_number, uint32 solve_thread_index);
-  void backpropagation_thread(uint32 neuron_index, uint32 solve_thread_index);
-  void calculate_weight_gradients_thread(const vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index);
+  void calculate_output_errors_thread(uint32 solve_thread_index, uint32 sample_index, uint32 neuron_index, uint32 neuron_number);
+  void backpropagation_thread(uint32 solve_thread_index, uint32 neuron_index);
+  void calculate_weight_gradients_thread(uint32 solve_thread_index, const vector<sdouble32>& input_sample, uint32 neuron_index);
 
   /**
    * @brief      This function waits for the given threads to finish, ensures that every thread

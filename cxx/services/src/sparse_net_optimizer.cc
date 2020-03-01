@@ -29,15 +29,11 @@ using std::atomic;
 using std::thread;
 using std::ref;
 
-void Sparse_net_optimizer::step(uint32 minibatch_size, uint32 sequence_size){
-
+void Sparse_net_optimizer::step(uint32 mini_batch_size){
   /* Calculate features and errors for every input */
   for(unique_ptr<atomic<sdouble32>>& weight_gradient : weight_gradients) weight_gradient->store(0);
   for(uint32 thread_index = 0; thread_index < context.get_max_solve_threads();++thread_index){ /* For every provided sample */
-    solve_threads.push_back(thread(
-      &Sparse_net_optimizer::step_thread, this,
-      static_cast<uint32>(minibatch_size/context.get_max_solve_threads()), thread_index
-    ));
+    solve_threads.push_back(thread(&Sparse_net_optimizer::step_thread, this, thread_index, mini_batch_size));
   }
   wait_for_threads(solve_threads);
 
@@ -46,7 +42,7 @@ void Sparse_net_optimizer::step(uint32 minibatch_size, uint32 sequence_size){
   weight_updater->update_solution_with_weights(net_solution);
 }
 
-void Sparse_net_optimizer::step_thread(uint32 samples_to_evaluate, uint32 solve_thread_index){
+void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate){
   uint32 sample_index;
   for(uint32 sample = 0; sample < samples_to_evaluate; ++sample){
     sample_index = rand()%(data_set.get_number_of_samples());
@@ -61,15 +57,15 @@ void Sparse_net_optimizer::step_thread(uint32 samples_to_evaluate, uint32 solve_
     data_set.set_feature_for_label(sample_index, neuron_data[solve_thread_index]);
 
     for(unique_ptr<atomic<sdouble32>>& error_value : error_values[solve_thread_index]) *error_value = 0;
-    calculate_output_errors(sample_index, solve_thread_index);
+    calculate_output_errors(solve_thread_index, sample_index);
     propagate_output_errors_back(solve_thread_index);
-    calculate_weight_gradients(data_set.get_input_sample(sample_index),solve_thread_index);
+    calculate_weight_gradients(solve_thread_index, data_set.get_input_sample(sample_index));
 
     solver[solve_thread_index].reset();
   }
 }
 
-void Sparse_net_optimizer::calculate_output_errors(uint32 sample_index, uint32 solve_thread_index){
+void Sparse_net_optimizer::calculate_output_errors(uint32 solve_thread_index, uint32 sample_index){
   uint32 neuron_index = net.neuron_array_size()-net.output_neuron_number();
   const uint32 neuron_number = 1 + static_cast<uint32>(net.neuron_array_size()/context.get_max_processing_threads());
   for(
@@ -79,16 +75,15 @@ void Sparse_net_optimizer::calculate_output_errors(uint32 sample_index, uint32 s
     ++process_thread_index
   ){ /* For every provided sample */
       process_threads[solve_thread_index].push_back(thread(
-        &Sparse_net_optimizer::calculate_output_errors_thread, this, sample_index,
-        neuron_index, std::min(neuron_number, (net.neuron_array_size() - neuron_index)),
-        process_thread_index
+        &Sparse_net_optimizer::calculate_output_errors_thread, this, process_thread_index, sample_index,
+        neuron_index, std::min(neuron_number, (net.neuron_array_size() - neuron_index))
       ));
       neuron_index += neuron_number;
   }
   wait_for_threads(process_threads[solve_thread_index]);
 }
 
-void Sparse_net_optimizer::calculate_output_errors_thread(uint32 sample_index, uint32 neuron_index, uint32 neuron_number, uint32 solve_thread_index){
+void Sparse_net_optimizer::calculate_output_errors_thread(uint32 solve_thread_index, uint32 sample_index, uint32 neuron_index, uint32 neuron_number){
   sdouble32 buffer;
 
   if(neuron_index < (net.neuron_array_size() - net.output_neuron_number()))
@@ -133,9 +128,8 @@ void Sparse_net_optimizer::propagate_output_errors_back(uint32 solve_thread_inde
           &&(!Synapse_iterator::is_index_input(gradient_step.neuron_synapses(synapses_iterator).starts()))
         ){
           process_threads[solve_thread_index].push_back(thread(
-            &Sparse_net_optimizer::backpropagation_thread, this,
-            gradient_step.neuron_synapses(synapses_iterator).starts() + synapse_index_iterator,
-            solve_thread_index
+            &Sparse_net_optimizer::backpropagation_thread, this, solve_thread_index,
+            gradient_step.neuron_synapses(synapses_iterator).starts() + synapse_index_iterator
           ));
           ++process_thread_iterator;
         }
@@ -150,7 +144,7 @@ void Sparse_net_optimizer::propagate_output_errors_back(uint32 solve_thread_inde
   }
 }
 
-void Sparse_net_optimizer::calculate_weight_gradients(const vector<sdouble32>& input_sample, uint32 solve_thread_index){
+void Sparse_net_optimizer::calculate_weight_gradients(uint32 solve_thread_index, const vector<sdouble32>& input_sample){
   uint32 process_thread_iterator = 0;
   while(static_cast<int>(process_thread_iterator) < net.neuron_array_size()){
     while(
@@ -158,8 +152,8 @@ void Sparse_net_optimizer::calculate_weight_gradients(const vector<sdouble32>& i
       &&(net.neuron_array_size() > static_cast<int>(process_thread_iterator))
     ){
       process_threads[solve_thread_index].push_back(thread(
-        &Sparse_net_optimizer::calculate_weight_gradients_thread, this,
-        ref(input_sample), process_thread_iterator, solve_thread_index
+        &Sparse_net_optimizer::calculate_weight_gradients_thread, this, 
+        solve_thread_index, ref(input_sample), process_thread_iterator
       ));
 
       ++process_thread_iterator;
@@ -170,7 +164,7 @@ void Sparse_net_optimizer::calculate_weight_gradients(const vector<sdouble32>& i
 
 }
 
-void Sparse_net_optimizer::backpropagation_thread(uint32 neuron_index, uint32 solve_thread_index){
+void Sparse_net_optimizer::backpropagation_thread(uint32 solve_thread_index, uint32 neuron_index){
   sdouble32 buffer;
   sdouble32 addition;
   uint32 weight_index = 0;
@@ -200,7 +194,7 @@ void Sparse_net_optimizer::backpropagation_thread(uint32 neuron_index, uint32 so
   });
 }
 
-void Sparse_net_optimizer::calculate_weight_gradients_thread(const vector<sdouble32>& input_sample, uint32 neuron_index, uint32 solve_thread_index){
+void Sparse_net_optimizer::calculate_weight_gradients_thread(uint32 solve_thread_index, const vector<sdouble32>& input_sample, uint32 neuron_index){
   sdouble32 buffer;
   sdouble32 addition;
   uint32 index;

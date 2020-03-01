@@ -39,10 +39,10 @@ using std::move;
 class Data_aggregate{
 public:
   Data_aggregate(Data_set& samples_, unique_ptr<Cost_function> cost_function_)
-  :  sample_number(static_cast<uint32>(samples_.features_size()/samples_.feature_size()))
+  :  sample_number(static_cast<uint32>(samples_.labels_size()/samples_.feature_size()))
   ,  input_samples(sample_number)
   ,  label_samples(sample_number)
-  ,  sample_errors(sample_number,1.0)
+  ,  sample_errors(sample_number,sample_number)
   ,  average_error(sample_number)
   ,  cost_function(move(cost_function_))
   { fill(samples_); }
@@ -54,7 +54,7 @@ public:
   ):  sample_number(input_samples_.size())
   ,  input_samples(sample_number)
   ,  label_samples(sample_number)
-  ,  sample_errors(sample_number,1.0)
+  ,  sample_errors(sample_number,sample_number)
   ,  average_error(sample_number)
   ,  cost_function(move(cost_function_))
   { }
@@ -66,12 +66,18 @@ public:
   ):  sample_number(input_samples_.size())
   ,  input_samples(input_samples_)
   ,  label_samples(label_samples_)
-  ,  sample_errors(sample_number,1.0)
+  ,  sample_errors(sample_number,sample_number)
   ,  average_error(sample_number)
   ,  cost_function(Function_factory::build_cost_function(net, context))
   { }
 
   void set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data);
+
+  void reset(void){
+    for(uint32 i = 0; i<get_number_of_samples(); ++i)
+      sample_errors[i] = get_number_of_samples();
+    average_error.store(get_number_of_samples());
+  }
 
   const vector<sdouble32>& get_input_sample(uint32 sample_index){
     if(sample_number > sample_index)
@@ -83,6 +89,12 @@ public:
     if(sample_number > sample_index)
       return label_samples[sample_index];
       else throw "Sample index out of bounds!";
+  }
+
+  sdouble32 get_error(uint32 index){
+    if(sample_errors.size() > index)
+      return sample_errors[index];
+    else throw "Sample index out of bounds!";
   }
 
   sdouble32 get_error(void){
