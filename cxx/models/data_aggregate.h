@@ -20,49 +20,67 @@
 
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
+#include "models/service_context.h"
 #include "models/cost_function.h"
+#include "services/function_factory.h"
 
 #include <vector>
-#include <limits>
+#include <memory>
 
 namespace sparse_net_library{
 
 using std::vector;
+using std::unique_ptr;
+using std::move;
 
 /**
  * @brief      A Data set container complete with adaptive error statistics
  */
 class Data_aggregate{
 public:
-  Data_aggregate(Data_set& samples_, Cost_function& cost_function_)
-  :  input_samples(samples_.feature_size())
-  ,  label_samples(samples_.feature_size())
-  ,  sample_errors(samples_.feature_size(),std::numeric_limits<sdouble32>::max())
-  ,  average_error(std::numeric_limits<sdouble32>::max())
-  ,  cost_function(cost_function_)
+  Data_aggregate(Data_set& samples_, unique_ptr<Cost_function> cost_function_)
+  :  sample_number(static_cast<uint32>(samples_.features_size()/samples_.feature_size()))
+  ,  input_samples(sample_number)
+  ,  label_samples(sample_number)
+  ,  sample_errors(sample_number,1.0)
+  ,  average_error(sample_number)
+  ,  cost_function(move(cost_function_))
   { fill(samples_); }
 
   Data_aggregate(
     vector<vector<sdouble32>>&& input_samples_,
     vector<vector<sdouble32>>&& label_samples_,
-    Cost_function& cost_function_
-  ):  input_samples(input_samples_)
+    unique_ptr<Cost_function> cost_function_
+  ):  sample_number(input_samples_.size())
+  ,  input_samples(sample_number)
+  ,  label_samples(sample_number)
+  ,  sample_errors(sample_number,1.0)
+  ,  average_error(sample_number)
+  ,  cost_function(move(cost_function_))
+  { }
+
+  Data_aggregate(
+    vector<vector<sdouble32>>&& input_samples_,
+    vector<vector<sdouble32>>&& label_samples_,
+    SparseNet& net, Service_context context = Service_context()
+  ):  sample_number(input_samples_.size())
+  ,  input_samples(input_samples_)
   ,  label_samples(label_samples_)
-  ,  sample_errors(label_samples_.size())
-  ,  average_error(std::numeric_limits<sdouble32>::max())
-  ,  cost_function(cost_function_)
+  ,  sample_errors(sample_number,1.0)
+  ,  average_error(sample_number)
+  ,  cost_function(Function_factory::build_cost_function(net, context))
   { }
 
   void set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data);
 
   const vector<sdouble32>& get_input_sample(uint32 sample_index){
-    if(label_samples.size() > sample_index)
+    if(sample_number > sample_index)
       return input_samples[sample_index];
       else throw "Sample index out of bounds!";
   }
 
   const vector<sdouble32>& get_label_sample(uint32 sample_index){
-    if(label_samples.size() > sample_index)
+    if(sample_number > sample_index)
       return label_samples[sample_index];
       else throw "Sample index out of bounds!";
   }
@@ -76,15 +94,16 @@ public:
   }
 
   uint32 get_number_of_samples(void){
-    return label_samples.size();
+    return sample_number;
   }
 
 private:
+  uint32 sample_number;
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;
   vector<sdouble32> sample_errors;
   atomic<sdouble32> average_error;
-  Cost_function& cost_function;
+  unique_ptr<Cost_function> cost_function;
 
   void fill(Data_set& samples);
 };

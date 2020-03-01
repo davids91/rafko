@@ -35,7 +35,6 @@ public:
   : Cost_function(feature_size_, service_context)
   { };
 
-protected:
   sdouble32 get_error(sdouble32 label_value, sdouble32 feature_value) const{
     return ( 0.5 *pow((feature_value - label_value),2) / static_cast<sdouble32>(feature_size));
   }

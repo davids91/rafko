@@ -10,6 +10,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *    GNU General Public License for more details.
  *
+ *
  *    You should have received a copy of the GNU General Public License
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
@@ -18,7 +19,7 @@
 #include "test/catch.hpp"
 
 #include "sparse_net_global.h"
-
+#include "models/cost_function.h"
 #include "models/cost_function_quadratic.h"
 
 #include <random>
@@ -57,8 +58,16 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   }
 
   /* one feature distance should be (0.5 * (distance)^2 ) */
-  Cost_function_quadratic cost = Cost_function_quadratic();
+  Cost_function_quadratic cost(feature_size);
+  /*CHECK(
+    Approx(cost.get_error(dataset,featureset) / static_cast<sdouble32>(dataset_size)).epsilon(0.00000000000001)
+    == (0.5 * pow(distance,2))
+  ); /* The cost for evaluating whole datasets are not implemented yet */
   for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
+    CHECK(
+      Approx(cost.Cost_function::get_error(dataset[sample_iterator], featureset[sample_iterator])).epsilon(0.00000000000001)
+      == (0.5 * pow(distance,2))
+    );
     for(uint16 feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){
       CHECK(
         Approx(cost.get_error(dataset[sample_iterator][feature_iterator], featureset[sample_iterator][feature_iterator])).epsilon(0.00000000000001)

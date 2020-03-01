@@ -26,6 +26,7 @@
 #include <mutex>
 #include <future>
 #include <functional>
+#include <cmath>
 
 namespace sparse_net_library{
 
@@ -45,6 +46,7 @@ public:
   :  context(service_context)
   ,  process_threads(0)
   ,  feature_size(feature_size_)
+  ,  error_value(0)
   { process_threads.reserve(service_context.get_max_processing_threads()); };
 
   /**
@@ -57,7 +59,7 @@ public:
    */
   sdouble32 get_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data){
     lock_guard<mutex> error_lock(error_mutex);
-    error.store(0);
+    error_value.store(0);
     uint32 feature_start_index = neuron_data.size() - feature_size;
     const uint32 feature_number = 1 + static_cast<uint32>(labels.size()/context.get_max_processing_threads());
     for(
@@ -68,12 +70,13 @@ public:
     ){ /* For every provided sample */
         process_threads.push_back(thread(
           &Cost_function::summarize_errors, this,
-          ref(labels), ref(neuron_data), feature_start_index, feature_number
+          ref(labels), ref(neuron_data), feature_start_index, 
+          std::min(feature_number, static_cast<uint32>(labels.size() - feature_start_index))
         ));
         feature_start_index += feature_number;
     }
     wait_for_threads(process_threads);
-    return error;
+    return error_value;
   }
 
   /**
@@ -89,24 +92,23 @@ public:
     return get_d_cost_over_d_feature(label[feature_index],neuron_data[feature_index]);
   }
 
+  virtual sdouble32 get_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
+  virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const = 0;
+
 protected:
   Service_context context;
   vector<thread> process_threads;
   uint32 feature_size;
-
-  virtual sdouble32 get_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
-  virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const = 0;
-
-private:
   mutex error_mutex;
-  atomic<sdouble32> error;
+  atomic<sdouble32> error_value;
+
   void summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add){
-    sdouble32 buffer = error;
+    sdouble32 buffer = error_value;
     sdouble32 local_error = 0;
     for(uint32 feature_iterator = 0; feature_iterator < number_to_add; ++feature_iterator){
       local_error += get_error(labels[start_index + feature_iterator],neuron_data[start_index + feature_iterator]);
     }
-    while(error.compare_exchange_weak(buffer,(buffer + local_error)))buffer = error;
+    while(!error_value.compare_exchange_weak(buffer,(buffer + local_error)))buffer = error_value;
   }
 
   /**
