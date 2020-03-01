@@ -56,6 +56,9 @@ using sparse_net_library::Service_context;
 using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
 using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
 
+using sparse_net_library::Solution_builder;
+using sparse_net_library::Solution_solver;
+
 /*###############################################################################################
  * Testing if the Sparse net library optimization convegres the network
  * - Generate datasets
@@ -122,6 +125,23 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
        {TRANSFER_FUNCTION_IDENTITY}}
     ).dense_layers({3,2,1})
   ));
+
+  Solution_solver solver(Solution_solver(*Solution_builder().build(*nets[0])));
+  Solution_solver solver2(Solution_solver(*Solution_builder().build(*nets[1])));
+  Solution_solver solver3(Solution_solver(*Solution_builder().build(*nets[2])));
+
+
+  for(uint32 i = 0; i < 50; ++i){
+    //vector<sdouble32> input = {(rand()%10)/10.0,(rand()%10)/10.0};
+    solver.solve(net_inputs[i]);
+    solver2.solve(net_inputs[i]);
+    solver3.solve(net_inputs[i]);
+    std::cout << net_inputs[i][0] << " + " << net_inputs[i][1] << "=" << net_inputs[i][0] + net_inputs[i][1] 
+    << "\t\t\t" << solver.get_neuron_data(0) 
+    << "\t\t\t" << solver2.get_neuron_data(3) 
+    << "\t\t\t" << solver3.get_neuron_data(5) 
+    << std::endl;
+  }
 
   /* Optimize nets */
   sdouble32 last_error;
@@ -196,6 +216,21 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
+  Solution_solver after_solver(Solution_solver(*Solution_builder().build(*nets[0])));
+  Solution_solver after_solver2(Solution_solver(*Solution_builder().build(*nets[1])));
+  Solution_solver after_solver3(Solution_solver(*Solution_builder().build(*nets[2])));
+
+  for(uint32 i = 0; i < 50; ++i){
+    //vector<sdouble32> input = {(rand()%10)/10.0,(rand()%10)/10.0};
+    after_solver.solve(net_inputs[i]);
+    after_solver2.solve(net_inputs[i]);
+    after_solver3.solve(net_inputs[i]);
+    std::cout << net_inputs[i][0] << " + " << net_inputs[i][1] << "=" << net_inputs[i][0] + net_inputs[i][1] 
+    << "\t\t" << after_solver.get_neuron_data(0) 
+    << "\t\t" << after_solver2.get_neuron_data(3) 
+    << "\t\t" << after_solver3.get_neuron_data(5) 
+    << std::endl;
+  }
 }
 
 }/* namespace sparse_net_library_test */
