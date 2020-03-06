@@ -4,7 +4,10 @@
 
 namespace sparse_net_library{
 
-void Weight_updater::update_weights_with_gradients(void){
+void Weight_updater::update_weights_with_gradients(
+  vector<unique_ptr<atomic<sdouble32>>>& gradients,
+  vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
+){
   uint32 weight_index = 0;
   const uint32 weight_number = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
   for(
@@ -15,7 +18,8 @@ void Weight_updater::update_weights_with_gradients(void){
   ){ /* For every provided sample */
       calculate_threads.push_back(thread(
         &Weight_updater::update_weight_with_gradient, this, 
-        weight_index, std::min(weight_number, (net.weight_table_size() - weight_index))
+        weight_index, std::min(weight_number, (net.weight_table_size() - weight_index)),
+        ref(gradients), ref(previous_gradients)
       ));
       weight_index += weight_number;
   }

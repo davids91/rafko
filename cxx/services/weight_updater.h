@@ -24,42 +24,54 @@ using std::unique_ptr;
  */
 class Weight_updater{
 public:
-  Weight_updater(
-    SparseNet& sparse_net,vector<unique_ptr<atomic<sdouble32>>>& weight_gradients_,
-    Service_context& service_context
-  ): net(sparse_net)
+  Weight_updater(SparseNet& sparse_net, Service_context service_context = Service_context())
+  :  net(sparse_net)
   ,  context(service_context)
-  ,  weight_gradients(weight_gradients_)
   ,  calculate_threads(0)
-  { 
-    calculate_threads.reserve(context.get_max_processing_threads());
-  };
+  { calculate_threads.reserve(context.get_max_processing_threads()); };
 
-  void update_weights_with_gradients(void);
+  void update_weights_with_gradients(
+    vector<unique_ptr<atomic<sdouble32>>>& gradients,
+    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
+  );
 
   void update_solution_with_weights(Solution& solution);
 
+  uint32 number_of_required_checks_for_step(void){
+    return 1;
+  }
+
 protected:
   SparseNet& net;
-  Service_context& context;
-  vector<unique_ptr<atomic<sdouble32>>>& weight_gradients;
+  Service_context context;
   
-  sdouble32 get_new_weight(uint32 weight_index){
-    return(net.weight_table(weight_index) + (*weight_gradients[weight_index] * context.get_step_size()));
+  sdouble32 get_new_weight(
+    uint32 weight_index,
+    vector<unique_ptr<atomic<sdouble32>>>& gradients,
+    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
+  ){
+    return(net.weight_table(weight_index) + (*gradients[weight_index] * context.get_step_size()));
   }
 
 private:
   vector<thread> calculate_threads;
 
-  void update_weight_with_gradient(uint32 weight_index, uint32 weight_number){
+  void update_weight_with_gradient(
+    uint32 weight_index, uint32 weight_number,
+    vector<unique_ptr<atomic<sdouble32>>>& gradients,
+    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
+  ){
     for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
-      net.set_weight_table( weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator));
+      net.set_weight_table(
+        weight_index + weight_iterator, 
+        get_new_weight(weight_index + weight_iterator,ref(gradients),ref(previous_gradients))
+      );
     }
   }
 
   void copy_weight_to_solution(
     uint32 inner_neuron_index, Partial_solution& partial,
-    uint32 neuron_weight_synapse_starts, uint32 inner_neuron_weight_index_starts 
+    uint32 neuron_weight_synapse_starts, uint32 inner_neuron_weight_index_starts
   );
 
   /**

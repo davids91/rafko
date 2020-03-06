@@ -17,15 +17,14 @@ using std::make_unique;
 class Updater_factory{
 public:
   static unique_ptr<Weight_updater> build_weight_updater(
-    SparseNet& net, vector<unique_ptr<atomic<sdouble32>>>& weight_gradients,
-    weight_updaters weight_updater, Service_context& context
+    SparseNet& net, weight_updaters weight_updater, Service_context& context
   ){
     switch(weight_updater){
       case WEIGHT_UPDATER_MOMENTUM: 
-        return make_unique<Weight_updater_momentum>(net,weight_gradients,context);
+        return make_unique<Weight_updater_momentum>(net,context);
       case WEIGHT_UPDATER_DEFAULT: 
       default: 
-        return make_unique<Weight_updater>(net,weight_gradients,context);
+        return make_unique<Weight_updater>(net,context);
     };
   }
 };

@@ -40,6 +40,7 @@ namespace sparse_net_library{
 using std::vector;
 using std::unique_ptr;
 using google::protobuf::Arena;
+using std::array;
 
 
 class Sparse_net_optimizer{
@@ -62,7 +63,8 @@ public:
   ,  transfer_function_input(context.get_max_solve_threads())
   ,  transfer_function_output(context.get_max_solve_threads())
   ,  error_values(context.get_max_solve_threads())
-  ,  weight_gradients(0)
+  ,  weight_gradients(2)
+  ,  weight_gradient_curr_loop(1)
   {
     solve_threads.reserve(context.get_max_solve_threads());
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
@@ -73,9 +75,13 @@ public:
       transfer_function_input[threads] = vector<sdouble32>(data_set.get_feature_size());
       transfer_function_output[threads] = vector<sdouble32>(data_set.get_feature_size());
     }
-    for(sint32 i = 0; i < net.weight_table_size(); ++i)
-      weight_gradients.push_back(std::make_unique<atomic<sdouble32>>());
-    weight_updater = Updater_factory::build_weight_updater(net,weight_gradients,weight_updater_,context);
+    weight_gradients[0].reserve(net.weight_table_size());
+    weight_gradients[1].reserve(net.weight_table_size());
+    for(sint32 i = 0; i < net.weight_table_size(); ++i){
+      weight_gradients[0].push_back(std::make_unique<atomic<sdouble32>>());
+      weight_gradients[1].push_back(std::make_unique<atomic<sdouble32>>());
+    }
+    weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
   };
 
    /**
@@ -114,8 +120,8 @@ private:
   vector<vector<sdouble32>> transfer_function_input;
   vector<vector<sdouble32>> transfer_function_output;
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values;
-  vector<unique_ptr<atomic<sdouble32>>> weight_gradients;
-  vector<sdouble32> gradient_values;
+  vector<vector<unique_ptr<atomic<sdouble32>>>> weight_gradients; /* Store the gradient of the last  */
+  uint8 weight_gradient_curr_loop; /* The index the weight gradient of the last loop is under */
 
   void step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate);
   void calculate_output_errors(uint32 solve_thread_index, uint32 sample_index);
@@ -125,6 +131,14 @@ private:
   void calculate_output_errors_thread(uint32 solve_thread_index, uint32 sample_index, uint32 neuron_index, uint32 neuron_number);
   void backpropagation_thread(uint32 solve_thread_index, uint32 neuron_index);
   void calculate_weight_gradients_thread(uint32 solve_thread_index, const vector<sdouble32>& input_sample, uint32 neuron_index);
+
+  vector<unique_ptr<atomic<sdouble32>>>& current_weight_gradient(void){
+    return weight_gradients[weight_gradient_curr_loop];
+  }
+
+  vector<unique_ptr<atomic<sdouble32>>>& previous_weight_gradient(void){
+    return weight_gradients[(weight_gradient_curr_loop + 1) % 2];
+  }
 
   /**
    * @brief      This function waits for the given threads to finish, ensures that every thread
