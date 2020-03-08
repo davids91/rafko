@@ -52,7 +52,7 @@ using sparse_net_library::SparseNet;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::COST_FUNCTION_QUADRATIC;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
-using sparse_net_library::TRANSFER_FUNCTION_TANH;
+using sparse_net_library::TRANSFER_FUNCTION_RELU;
 using sparse_net_library::Sparse_net_optimizer;
 using sparse_net_library::Service_context;
 using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
@@ -107,7 +107,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .input_size(2).expected_input_range(1.0)
     .cost_function(COST_FUNCTION_QUADRATIC)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_IDENTITY}}
+      {{TRANSFER_FUNCTION_RELU}}
     ).dense_layers({1})
   ));
 
@@ -115,7 +115,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .input_size(2).expected_input_range(1.0)
     .cost_function(COST_FUNCTION_QUADRATIC)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_IDENTITY},{TRANSFER_FUNCTION_IDENTITY}}
+      {{TRANSFER_FUNCTION_RELU},{TRANSFER_FUNCTION_RELU}}
     ).dense_layers({3,1})
   ));
 
@@ -123,9 +123,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .input_size(2).expected_input_range(1.0)
     .cost_function(COST_FUNCTION_QUADRATIC)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_IDENTITY},
-       {TRANSFER_FUNCTION_IDENTITY},
-       {TRANSFER_FUNCTION_IDENTITY}}
+      {{TRANSFER_FUNCTION_RELU},
+       {TRANSFER_FUNCTION_RELU},
+       {TRANSFER_FUNCTION_RELU}}
     ).dense_layers({3,2,1})
   ));
 
@@ -183,7 +183,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   Sparse_net_optimizer optimizer2(
-    *nets[1],data_aggregate,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-3)
+    *nets[1],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
   ); /* .set_max_processing_threads(1)) for single-threaded tests */
   std::cout << "Optimizing bigger net.." << std::endl;
   data_aggregate.reset();

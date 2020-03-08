@@ -18,9 +18,10 @@ protected:
     vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
   ){
     return(
-      net.weight_table(weight_index) 
-      + (*gradients[weight_index] * context.get_step_size())
-      + (*previous_gradients[weight_index] * context.get_step_size() * context.get_gamma())
+      net.weight_table(weight_index) -( 
+        (*gradients[weight_index] * context.get_step_size())
+        + (*previous_gradients[weight_index] * context.get_gamma() * context.get_step_size())
+      )
     );
   }
 };
