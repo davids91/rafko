@@ -6,6 +6,7 @@
 #include "models/service_context.h"
 #include "services/weight_updater.h"
 #include "services/weight_updater_momentum.h"
+#include "services/weight_updater_nesterov.h"
 
 #include <memory>
 
@@ -22,6 +23,8 @@ public:
     switch(weight_updater){
       case WEIGHT_UPDATER_MOMENTUM: 
         return make_unique<Weight_updater_momentum>(net,context);
+      case WEIGHT_UPDATER_NESTEROV:
+        return make_unique<Weight_updater_nesterov>(net,context);
       case WEIGHT_UPDATER_DEFAULT: 
       default: 
         return make_unique<Weight_updater>(net,context);

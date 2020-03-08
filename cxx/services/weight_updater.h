@@ -24,26 +24,42 @@ using std::unique_ptr;
  */
 class Weight_updater{
 public:
-  Weight_updater(SparseNet& sparse_net, Service_context service_context = Service_context())
-  :  net(sparse_net)
+  Weight_updater(
+    SparseNet& sparse_net, Service_context service_context = Service_context(), uint32 required_iterations_for_step_ = 1
+  ): net(sparse_net)
   ,  context(service_context)
+  ,  required_iterations_for_step(required_iterations_for_step_)
+  ,  iteration(0)
+  ,  finished(false)
   ,  calculate_threads(0)
   { calculate_threads.reserve(context.get_max_processing_threads()); };
 
-  void update_weights_with_gradients(
+  void iterate(
     vector<unique_ptr<atomic<sdouble32>>>& gradients,
-    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
-  );
+    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients,
+    Solution& solution
+  ){
+    update_weights_with_gradients(gradients, previous_gradients);
+    update_solution_with_weights(solution);
+    iteration = (iteration + 1) % required_iterations_for_step;
+    finished = (0 == iteration);
+  }
 
-  void update_solution_with_weights(Solution& solution);
+  void start(void){
+    iteration = 0;
+    finished = false;
+  }
 
-  uint32 number_of_required_checks_for_step(void){
-    return 1;
+  bool is_finished(){
+    return finished;
   }
 
 protected:
   SparseNet& net;
   Service_context context;
+  const uint32 required_iterations_for_step;
+  uint32 iteration;
+  bool finished;
   
   sdouble32 get_new_weight(
     uint32 weight_index,
@@ -55,6 +71,13 @@ protected:
 
 private:
   vector<thread> calculate_threads;
+
+  void update_weights_with_gradients(
+    vector<unique_ptr<atomic<sdouble32>>>& gradients,
+    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
+  );
+
+  void update_solution_with_weights(Solution& solution);
 
   void update_weight_with_gradient(
     uint32 weight_index, uint32 weight_number,

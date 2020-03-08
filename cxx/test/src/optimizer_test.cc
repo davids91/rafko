@@ -57,6 +57,7 @@ using sparse_net_library::Sparse_net_optimizer;
 using sparse_net_library::Service_context;
 using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
 using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
+using sparse_net_library::WEIGHT_UPDATER_NESTEROV;
 using sparse_net_library::Data_aggregate;
 using sparse_net_library::Function_factory;
 using sparse_net_library::Solution_builder;
@@ -164,7 +165,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-1)
+    *nets[0],data_aggregate,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-1)
   );
   std::cout << "Optimizing net.." << std::endl;
   while(abs(last_error) > 1e-1){

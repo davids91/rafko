@@ -31,20 +31,20 @@ using std::ref;
 
 void Sparse_net_optimizer::step(uint32 mini_batch_size){
 
-  for(uint32 iteration = 0; iteration < weight_updater->number_of_required_checks_for_step(); ++iteration){
-    weight_gradient_curr_loop = (weight_gradient_curr_loop + 1) % 2;
-    for(unique_ptr<atomic<sdouble32>>& weight_gradient : current_weight_gradient())
-      weight_gradient->store(0);
-    
+  current_weight_gradient_index = (current_weight_gradient_index + 1) % 2;
+  for(unique_ptr<atomic<sdouble32>>& weight_gradient : current_weight_gradient())
+    weight_gradient->store(0);
+
+  weight_updater->start();
+  while(!weight_updater->is_finished()){
     for(uint32 thread_index = 0; thread_index < context.get_max_solve_threads();++thread_index)
       solve_threads.push_back(thread(&Sparse_net_optimizer::step_thread, this, thread_index, mini_batch_size));
-    
     wait_for_threads(solve_threads);
 
-    /* Update the weights of the SparseNet and the solution */
-    weight_updater->update_weights_with_gradients(current_weight_gradient(), previous_weight_gradient());
-    weight_updater->update_solution_with_weights(net_solution);
-  }/* for(uint32 iteration = 0; iteration < weight_updater->number_of_required_checks_for_step(); ++iteration) */
+    weight_updater->iterate( /* Update the weights of the SparseNet and the solution */
+      current_weight_gradient(), previous_weight_gradient(),net_solution
+    );
+  } /* while(!weight_updater->finished()) */
 }
 
 void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate){

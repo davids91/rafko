@@ -64,7 +64,7 @@ public:
   ,  transfer_function_output(context.get_max_solve_threads())
   ,  error_values(context.get_max_solve_threads())
   ,  weight_gradients(2)
-  ,  weight_gradient_curr_loop(1)
+  ,  current_weight_gradient_index(1)
   {
     solve_threads.reserve(context.get_max_solve_threads());
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
@@ -121,7 +121,7 @@ private:
   vector<vector<sdouble32>> transfer_function_output;
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values;
   vector<vector<unique_ptr<atomic<sdouble32>>>> weight_gradients; /* Store the gradient of the last  */
-  uint8 weight_gradient_curr_loop; /* The index the weight gradient of the last loop is under */
+  uint8 current_weight_gradient_index; /* The index the weight gradient of the last loop is under */
 
   void step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate);
   void calculate_output_errors(uint32 solve_thread_index, uint32 sample_index);
@@ -133,11 +133,11 @@ private:
   void calculate_weight_gradients_thread(uint32 solve_thread_index, const vector<sdouble32>& input_sample, uint32 neuron_index);
 
   vector<unique_ptr<atomic<sdouble32>>>& current_weight_gradient(void){
-    return weight_gradients[weight_gradient_curr_loop];
+    return weight_gradients[current_weight_gradient_index];
   }
 
   vector<unique_ptr<atomic<sdouble32>>>& previous_weight_gradient(void){
-    return weight_gradients[(weight_gradient_curr_loop + 1) % 2];
+    return weight_gradients[(current_weight_gradient_index + 1) % 2];
   }
 
   /**
