@@ -32,15 +32,16 @@ using std::unique_ptr;
 class Function_factory{
 public:
   static unique_ptr<Cost_function> build_cost_function(
-    const SparseNet& net, Service_context context = Service_context()
+    const SparseNet& net, uint32 sample_number, Service_context context = Service_context()
   ){
-    return build_cost_function(net.output_neuron_number(), net.cost_function(), context);
+    return build_cost_function(net.output_neuron_number(), sample_number, net.cost_function(), context);
   }
   static unique_ptr<Cost_function> build_cost_function(
-    uint32 feature_size, cost_functions the_function, Service_context context = Service_context()
+    uint32 feature_size, uint32 sample_number, cost_functions the_function, Service_context context = Service_context()
   ){
     switch(the_function){
-      case COST_FUNCTION_QUADRATIC: return std::make_unique<Cost_function_quadratic>(feature_size, context);
+      case COST_FUNCTION_QUADRATIC: 
+        return std::make_unique<Cost_function_quadratic>(feature_size, sample_number, context);
       default: throw "Unknown cost function requested from builder!";
     }
   }

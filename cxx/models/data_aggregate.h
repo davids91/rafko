@@ -68,7 +68,7 @@ public:
   ,  label_samples(label_samples_)
   ,  sample_errors(sample_number,sample_number)
   ,  average_error(sample_number)
-  ,  cost_function(Function_factory::build_cost_function(net, context))
+  ,  cost_function(Function_factory::build_cost_function(net, sample_number, context))
   { }
 
   void set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data);

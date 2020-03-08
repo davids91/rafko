@@ -55,7 +55,7 @@ public:
   ,  solver(context.get_max_solve_threads(), Solution_solver(net_solution, service_context))
   ,  data_set(data_aggregate)
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
-  ,  cost_function(Function_factory::build_cost_function(net, context))
+  ,  cost_function(Function_factory::build_cost_function(net, data_set.get_number_of_samples(), context))
   ,  neuron_router(net)
   ,  solve_threads(0)
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */

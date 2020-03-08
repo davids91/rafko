@@ -31,17 +31,21 @@ using std::vector;
  * @brief      Error function handling and utilities for MSE: C0 = 1/2n(y-y')^2 */
 class Cost_function_quadratic : public Cost_function{
 public:
-  Cost_function_quadratic(uint32 feature_size_, Service_context service_context = Service_context())
+  Cost_function_quadratic(uint32 feature_size_, uint32 sample_number_, Service_context service_context = Service_context())
   : Cost_function(feature_size_, service_context)
+  , sample_number(sample_number_)
   { };
 
   sdouble32 get_error(sdouble32 label_value, sdouble32 feature_value) const{
-    return ( 0.5 *pow((feature_value - label_value),2) / static_cast<sdouble32>(feature_size));
+    return ( 0.5 *pow((feature_value - label_value),2) / sample_number);
   }
 
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const{
-    return (-(feature_value - label_value) / static_cast<sdouble32>(feature_size));
+    return (-(feature_value - label_value) / sample_number);
   }
+
+private:
+  sdouble32 sample_number;
 };
 
 } /* namespace sparse_net_library */

@@ -112,7 +112,7 @@ void Sparse_net_optimizer::calculate_output_errors_thread(uint32 solve_thread_in
       net.neuron_array(neuron_index + neuron_iterator).transfer_function_idx(),
       transfer_function_output[solve_thread_index][neuron_index + neuron_iterator]
     );
-    error_values[solve_thread_index][neuron_index + neuron_iterator]->store(buffer/static_cast<sdouble32>(data_set.get_number_of_samples()));
+    error_values[solve_thread_index][neuron_index + neuron_iterator]->store(buffer);
   }
 }
 
