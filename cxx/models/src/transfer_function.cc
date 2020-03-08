@@ -78,10 +78,10 @@ sdouble32 Transfer_function::get_derivative(transfer_functions function, sdouble
     case TRANSFER_FUNCTION_TANH: return 1/cosh(data);
     case TRANSFER_FUNCTION_ELU:
     case TRANSFER_FUNCTION_SELU:
-      if(0 > data) return context.get_alpha() * exp(data);
+      if(0 >= data) return context.get_alpha() * exp(data);
       else return 1;
     case TRANSFER_FUNCTION_RELU:
-      if(0 > data) return 0;
+      if(0 >= data) return 0;
       else return 1;
     default: throw "Unidentified transfer function queried for information!";
   }

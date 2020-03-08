@@ -42,8 +42,8 @@ public:
   :  sample_number(static_cast<uint32>(samples_.labels_size()/samples_.feature_size()))
   ,  input_samples(sample_number)
   ,  label_samples(sample_number)
-  ,  sample_errors(sample_number,sample_number)
-  ,  average_error(sample_number)
+  ,  sample_errors(sample_number,1.0)
+  ,  error_sum(sample_number)
   ,  cost_function(move(cost_function_))
   { fill(samples_); }
 
@@ -54,8 +54,8 @@ public:
   ):  sample_number(input_samples_.size())
   ,  input_samples(sample_number)
   ,  label_samples(sample_number)
-  ,  sample_errors(sample_number,sample_number)
-  ,  average_error(sample_number)
+  ,  sample_errors(sample_number,1.0)
+  ,  error_sum(sample_number)
   ,  cost_function(move(cost_function_))
   { }
 
@@ -66,8 +66,8 @@ public:
   ):  sample_number(input_samples_.size())
   ,  input_samples(input_samples_)
   ,  label_samples(label_samples_)
-  ,  sample_errors(sample_number,sample_number)
-  ,  average_error(sample_number)
+  ,  sample_errors(sample_number,1.0)
+  ,  error_sum(sample_number)
   ,  cost_function(Function_factory::build_cost_function(net, sample_number, context))
   { }
 
@@ -75,8 +75,8 @@ public:
 
   void reset_errors(void){
     for(uint32 i = 0; i<get_number_of_samples(); ++i)
-      sample_errors[i] = get_number_of_samples();
-    average_error.store(get_number_of_samples());
+      sample_errors[i] = 1.0;
+    error_sum.store(get_number_of_samples());
   }
 
   const vector<sdouble32>& get_input_sample(uint32 sample_index){
@@ -98,7 +98,7 @@ public:
   }
 
   sdouble32 get_error(void){
-    return average_error;
+    return error_sum;
   }
 
   uint32 get_feature_size(void){
@@ -114,7 +114,7 @@ private:
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;
   vector<sdouble32> sample_errors;
-  atomic<sdouble32> average_error;
+  atomic<sdouble32> error_sum;
   unique_ptr<Cost_function> cost_function;
 
   void fill(Data_set& samples);

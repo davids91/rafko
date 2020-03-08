@@ -20,15 +20,18 @@ protected:
     if(is_finished()){
       return(
         net.weight_table(weight_index) - (
-          (*gradients[weight_index] * context.get_step_size())
-          + (*previous_gradients[weight_index] * context.get_gamma() * context.get_step_size())
+          (*previous_gradients[weight_index] * context.get_gamma())
+          + (*gradients[weight_index] * context.get_step_size())
         )
       );
     }else{
       return(
         net.weight_table(weight_index) -( 
-          (*gradients[weight_index] * context.get_step_size())
-          + (*previous_gradients[weight_index] * context.get_gamma() * context.get_step_size())
+          ( /* Momentum based update */
+            *gradients[weight_index]
+            + (*previous_gradients[weight_index] * context.get_gamma())
+          )
+          * context.get_step_size()
         )
       );
     }

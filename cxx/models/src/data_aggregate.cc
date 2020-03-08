@@ -18,13 +18,15 @@ void Data_aggregate::fill(Data_set& samples){
 }
 
 void Data_aggregate::set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data){
-  sdouble32 buffer = average_error;
-  sdouble32 local_error = sample_errors[sample_index] / static_cast<sdouble32>(get_number_of_samples());
+  sdouble32 buffer = error_sum;
   if(label_samples.size() > sample_index){
-    while(!average_error.compare_exchange_weak(buffer,(buffer - local_error)))buffer = average_error;
+    while(!error_sum.compare_exchange_weak(buffer,(buffer - sample_errors[sample_index])))
+      buffer = error_sum;
+
     sample_errors[sample_index] = cost_function->get_error(label_samples[sample_index], neuron_data);
-    local_error = sample_errors[sample_index] / static_cast<sdouble32>(get_number_of_samples());
-    while(!average_error.compare_exchange_weak(buffer,(buffer + local_error)))buffer = average_error;
+    
+    while(!error_sum.compare_exchange_weak(buffer,(buffer + sample_errors[sample_index])))
+      buffer = error_sum;
   }else throw "Sample index out of bounds!";
 }
 

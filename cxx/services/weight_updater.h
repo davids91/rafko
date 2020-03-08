@@ -66,7 +66,7 @@ protected:
     vector<unique_ptr<atomic<sdouble32>>>& gradients,
     vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
   ){
-    return(net.weight_table(weight_index) + (*gradients[weight_index] * context.get_step_size()));
+    return(net.weight_table(weight_index) - (*gradients[weight_index] * context.get_step_size()));
   }
 
 private:
