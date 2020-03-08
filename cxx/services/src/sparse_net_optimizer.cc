@@ -42,7 +42,7 @@ void Sparse_net_optimizer::step(uint32 mini_batch_size){
     wait_for_threads(solve_threads);
 
     weight_updater->iterate( /* Update the weights of the SparseNet and the solution */
-      current_weight_gradient(), previous_weight_gradient(),net_solution
+      current_weight_gradient(), previous_weight_gradient(), *net_solution
     );
   } /* while(!weight_updater->finished()) */
 }

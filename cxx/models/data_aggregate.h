@@ -73,7 +73,7 @@ public:
 
   void set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data);
 
-  void reset(void){
+  void reset_errors(void){
     for(uint32 i = 0; i<get_number_of_samples(); ++i)
       sample_errors[i] = get_number_of_samples();
     average_error.store(get_number_of_samples());

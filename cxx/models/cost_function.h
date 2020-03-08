@@ -106,7 +106,10 @@ protected:
     sdouble32 buffer = error_value;
     sdouble32 local_error = 0;
     for(uint32 feature_iterator = 0; feature_iterator < number_to_add; ++feature_iterator){
-      local_error += get_error(labels[start_index + feature_iterator],neuron_data[start_index + feature_iterator]);
+      local_error += get_error( /* (start + feature - netsize) gives back the index in the label */
+        labels[start_index + feature_iterator + feature_size - neuron_data.size()],
+        neuron_data[start_index + feature_iterator]
+      );
     }
     while(!error_value.compare_exchange_weak(buffer,(buffer + local_error)))buffer = error_value;
   }

@@ -7,7 +7,7 @@ DEBUG_FLAGS = -DNDEBUG #no debug
 #DEBUG_FLAGS = -g #debug information added
 #DEBUG_FLAGS += -v # verbose compile information
 #DEBUG_FLAGS += -fsanitize=address #address sanitizer check
-#DEBUG_FLAGS += -static-libasan  #enables debug data to be shown in valgrind
+#DEBUG_FLAGS += -static-libasan #enables debug data to be shown in valgrind and gdb with addresssanitizer
 CPPFLAGS = -Wall $(LIBS) -std=c++14 $(DEBUG_FLAGS)
 CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib $(DEBUG_FLAGS)
 

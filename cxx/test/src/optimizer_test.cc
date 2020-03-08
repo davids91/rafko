@@ -61,6 +61,7 @@ using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
 using sparse_net_library::WEIGHT_UPDATER_NESTEROV;
 using sparse_net_library::Data_aggregate;
 using sparse_net_library::Function_factory;
+using sparse_net_library::Solution;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::Solution_solver;
 using sparse_net_library::Cost_function_mse;
@@ -132,9 +133,15 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     ).dense_layers({3,2,1})
   ));
 
-  Solution_solver solver(Solution_solver(*Solution_builder().build(*nets[0])));
-  Solution_solver solver2(Solution_solver(*Solution_builder().build(*nets[1])));
-  Solution_solver solver3(Solution_solver(*Solution_builder().build(*nets[2])));
+  Solution solutions[3] = {
+    *Solution_builder().build(*nets[0]),
+    *Solution_builder().build(*nets[1]),
+    *Solution_builder().build(*nets[2])
+  };
+
+  Solution_solver solver(Solution_solver(solutions[0]));
+  Solution_solver solver2(Solution_solver(solutions[1]));
+  Solution_solver solver3(Solution_solver(solutions[2]));
 
   Data_aggregate data_aggregate(
     vector<vector<sdouble32>>(net_inputs),
@@ -176,7 +183,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     *nets[1],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
   ); /* .set_max_processing_threads(1)) for single-threaded tests */
   std::cout << "Optimizing bigger net.." << std::endl;
-  data_aggregate.reset();
+  data_aggregate.reset_errors();
   last_error = 5;
   number_of_steps = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
@@ -196,14 +203,14 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   Sparse_net_optimizer optimizer3(
-    *nets[2],data_aggregate,WEIGHT_UPDATER_NESTEROV,Service_context().set_step_size(1e-6)
+    *nets[2],data_aggregate,WEIGHT_UPDATER_NESTEROV,Service_context().set_step_size(1e-4)
   );
   cout << "Optimizing biggest net.." << std::endl;
-  data_aggregate.reset();
+  data_aggregate.reset_errors();
   last_error = 5;
   number_of_steps = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
-  while(abs(last_error) > 1e-6){
+  while(abs(last_error) > 1e-4){
     start = steady_clock::now();
     optimizer3.step(100);
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
@@ -217,9 +224,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
-  Solution_solver after_solver(Solution_solver(*Solution_builder().build(*nets[0])));
-  Solution_solver after_solver2(Solution_solver(*Solution_builder().build(*nets[1])));
-  Solution_solver after_solver3(Solution_solver(*Solution_builder().build(*nets[2])));
+  Solution_solver after_solver(solutions[0]);
+  Solution_solver after_solver2(solutions[1]);
+  Solution_solver after_solver3(solutions[2]);
 
   sdouble32 error_summary[3] = {0,0,0};
   Cost_function_mse after_cost(1,500);

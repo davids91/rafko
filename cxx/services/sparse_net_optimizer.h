@@ -51,8 +51,8 @@ public:
   ): net(neural_network)
   ,  context(service_context)
   ,  transfer_function(context)
-  ,  net_solution(*Solution_builder().service_context(context).build(net))
-  ,  solver(context.get_max_solve_threads(), Solution_solver(net_solution, service_context))
+  ,  net_solution(Solution_builder().service_context(context).build(net))
+  ,  solver(context.get_max_solve_threads(), Solution_solver(*net_solution, service_context))
   ,  data_set(data_aggregate)
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
   ,  cost_function(Function_factory::build_cost_function(net, data_set.get_number_of_samples(), context))
@@ -105,7 +105,7 @@ private:
   Service_context context;
   Transfer_function transfer_function;
 
-  Solution net_solution;
+  unique_ptr<Solution> net_solution;
   vector<Solution_solver> solver;
 
   Data_aggregate& data_set;
