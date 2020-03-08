@@ -38,7 +38,7 @@ using sparse_net_library::Solution_builder;
 using sparse_net_library::Solution;
 using sparse_net_library::Solution_solver;
 using sparse_net_library::Synapse_iterator;
-using sparse_net_library::COST_FUNCTION_QUADRATIC;
+using sparse_net_library::COST_FUNCTION_MSE;
 
 /*###############################################################################################
  * Testing Solution generation using the @Sparse_net_builder and the @Solution_builder
@@ -48,7 +48,7 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
   unique_ptr<SparseNet> net = (unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(50).expected_input_range(5.0)
     .output_neuron_number(2).arena_ptr(arena)
-    .cost_function(COST_FUNCTION_QUADRATIC).dense_layers(net_structure)
+    .cost_function(COST_FUNCTION_MSE).dense_layers(net_structure)
   ));
 
    unique_ptr<Solution> solution = unique_ptr<Solution>(Solution_builder()

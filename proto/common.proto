@@ -38,7 +38,7 @@ enum transfer_functions{
  */
 enum cost_functions{
   COST_FUNCTION_UNKNOWN = 0;
-  COST_FUNCTION_QUADRATIC = 1; /* ( 0.5*(expected-calculated)^2 )/dataset_size  */
+  COST_FUNCTION_MSE = 1; /* ( 0.5*(expected-calculated)^2 )/dataset_size  */
 }
 
 /** @brief      Describes the available weight updaters implemented in the framework

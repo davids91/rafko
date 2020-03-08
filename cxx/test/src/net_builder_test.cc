@@ -47,7 +47,7 @@ namespace sparse_net_library_test {
   using sparse_net_library::TRANSFER_FUNCTION_SELU;
   using sparse_net_library::Synapse_iterator;
   using sparse_net_library::Synapse_interval;
-  using sparse_net_library::COST_FUNCTION_QUADRATIC;
+  using sparse_net_library::COST_FUNCTION_MSE;
 
 /*###############################################################################################
  * Testing Manual Net creation
@@ -115,7 +115,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
     .expected_input_range(1.0)
     .output_neuron_number(2)
     .arena_ptr(arena)
-    .cost_function(COST_FUNCTION_QUADRATIC)
+    .cost_function(COST_FUNCTION_MSE)
     .neuron_array(neuron_table)
     .weight_table(weight_table);
   try{
@@ -214,7 +214,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   builder->input_size(5)
     .output_neuron_number(2)
     .expected_input_range(5.0)
-    .cost_function(COST_FUNCTION_QUADRATIC)
+    .cost_function(COST_FUNCTION_MSE)
     .arena_ptr(arena);
 
   SparseNet* net(builder->dense_layers(

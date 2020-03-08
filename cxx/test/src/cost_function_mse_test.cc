@@ -20,7 +20,7 @@
 
 #include "sparse_net_global.h"
 #include "models/cost_function.h"
-#include "models/cost_function_quadratic.h"
+#include "models/cost_function_mse.h"
 
 #include <random>
 
@@ -29,7 +29,7 @@ namespace sparse_net_library_test {
 using sparse_net_library::uint16;
 using sparse_net_library::uint32;
 using sparse_net_library::sdouble32;
-using sparse_net_library::Cost_function_quadratic;
+using sparse_net_library::Cost_function_mse;
 
 /*###############################################################################################
  * Testing Error function
@@ -58,7 +58,7 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   }
 
   /* one feature distance should be (0.5 * (distance)^2 ) */
-  Cost_function_quadratic cost(feature_size, dataset_size);
+  Cost_function_mse cost(feature_size, dataset_size);
   /*CHECK(
     Approx(cost.get_error(dataset,featureset) / static_cast<sdouble32>(dataset_size)).epsilon(0.00000000000001)
     == (0.5 * pow(distance,2))

@@ -22,6 +22,7 @@
 #include "gen/sparse_net.pb.h"
 #include "models/service_context.h"
 #include "models/data_aggregate.h"
+#include "models/cost_function_mse.h"
 #include "services/sparse_net_builder.h"
 #include "services/sparse_net_optimizer.h"
 #include "services/function_factory.h"
@@ -50,7 +51,7 @@ using sparse_net_library::uint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Sparse_net_builder;
-using sparse_net_library::COST_FUNCTION_QUADRATIC;
+using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::TRANSFER_FUNCTION_RELU;
 using sparse_net_library::Sparse_net_optimizer;
@@ -62,6 +63,7 @@ using sparse_net_library::Data_aggregate;
 using sparse_net_library::Function_factory;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::Solution_solver;
+using sparse_net_library::Cost_function_mse;
 
 /*###############################################################################################
  * Testing if the Sparse net library optimization convegres the network
@@ -106,7 +108,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(1.0)
-    .cost_function(COST_FUNCTION_QUADRATIC)
+    .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_RELU}}
     ).dense_layers({1})
@@ -114,7 +116,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(1.0)
-    .cost_function(COST_FUNCTION_QUADRATIC)
+    .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_RELU},{TRANSFER_FUNCTION_RELU}}
     ).dense_layers({3,1})
@@ -122,7 +124,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(1.0)
-    .cost_function(COST_FUNCTION_QUADRATIC)
+    .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_RELU},
        {TRANSFER_FUNCTION_RELU},
@@ -133,19 +135,6 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   Solution_solver solver(Solution_solver(*Solution_builder().build(*nets[0])));
   Solution_solver solver2(Solution_solver(*Solution_builder().build(*nets[1])));
   Solution_solver solver3(Solution_solver(*Solution_builder().build(*nets[2])));
-
-
-  for(uint32 i = 0; i < 50; ++i){
-    //vector<sdouble32> input = {(rand()%10)/10.0,(rand()%10)/10.0};
-    solver.solve(net_inputs[i]);
-    solver2.solve(net_inputs[i]);
-    solver3.solve(net_inputs[i]);
-    std::cout << net_inputs[i][0] << " + " << net_inputs[i][1] << "=" << net_inputs[i][0] + net_inputs[i][1] 
-    << "\t\t\t" << solver.get_neuron_data(0) 
-    << "\t\t\t" << solver2.get_neuron_data(3) 
-    << "\t\t\t" << solver3.get_neuron_data(5) 
-    << std::endl;
-  }
 
   Data_aggregate data_aggregate(
     vector<vector<sdouble32>>(net_inputs),
@@ -207,14 +196,14 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   Sparse_net_optimizer optimizer3(
-    *nets[2],data_aggregate,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-4)
+    *nets[2],data_aggregate,WEIGHT_UPDATER_NESTEROV,Service_context().set_step_size(1e-6)
   );
   cout << "Optimizing biggest net.." << std::endl;
   data_aggregate.reset();
   last_error = 5;
   number_of_steps = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
-  while(abs(last_error) > 1e-4){
+  while(abs(last_error) > 1e-6){
     start = steady_clock::now();
     optimizer3.step(100);
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
@@ -232,17 +221,28 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   Solution_solver after_solver2(Solution_solver(*Solution_builder().build(*nets[1])));
   Solution_solver after_solver3(Solution_solver(*Solution_builder().build(*nets[2])));
 
-  for(uint32 i = 0; i < 50; ++i){
-    //vector<sdouble32> input = {(rand()%10)/10.0,(rand()%10)/10.0};
+  sdouble32 error_summary[3] = {0,0,0};
+  Cost_function_mse after_cost(1,500);
+  for(uint32 i = 0; i < 500; ++i){
     after_solver.solve(net_inputs[i]);
     after_solver2.solve(net_inputs[i]);
     after_solver3.solve(net_inputs[i]);
-    std::cout << net_inputs[i][0] << " + " << net_inputs[i][1] << "=" << net_inputs[i][0] + net_inputs[i][1] 
-    << "\t\t" << after_solver.get_neuron_data(0) 
-    << "\t\t" << after_solver2.get_neuron_data(3) 
-    << "\t\t" << after_solver3.get_neuron_data(5) 
-    << std::endl;
+    error_summary[0] += after_cost.get_error(
+      after_solver.get_neuron_data(0), addition_dataset[i][0]
+    );
+    error_summary[1] +=after_cost.get_error(
+      after_solver2.get_neuron_data(3), addition_dataset[i][0]
+    );
+    error_summary[2] += after_cost.get_error(
+      after_solver3.get_neuron_data(5), addition_dataset[i][0]
+    );
   }
+  std::cout << "Error summaries:" 
+  << "\t"  << error_summary[0]
+  << "\t"  << error_summary[1]
+  << "\t"  << error_summary[2]
+  << std::endl;
+
 }
 
 }/* namespace sparse_net_library_test */

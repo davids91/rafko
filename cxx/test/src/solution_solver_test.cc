@@ -51,7 +51,7 @@ using sparse_net_library::Solution;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Synapse_interval;
 using sparse_net_library::Transfer_function;
-using sparse_net_library::COST_FUNCTION_QUADRATIC;
+using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::Service_context;
 
 /*###############################################################################################
@@ -235,7 +235,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   /* Build the described net */
   unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
   net_builder->input_size(5).expected_input_range(5.0)
-  .cost_function(COST_FUNCTION_QUADRATIC).arena_ptr(arena);
+  .cost_function(COST_FUNCTION_MSE).arena_ptr(arena);
   SparseNet net = *net_builder->dense_layers(net_structure);
   net_builder.reset();
 
@@ -286,7 +286,7 @@ TEST_CASE("Solution Solver test for gradients", "[solve][build-solve][gradient]"
   /* Build the above described net */
   unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
   net_builder->input_size(5).expected_input_range(5.0)
-  .cost_function(COST_FUNCTION_QUADRATIC);
+  .cost_function(COST_FUNCTION_MSE);
   unique_ptr<SparseNet> net(net_builder->dense_layers(net_structure));
   net_builder.reset();
 

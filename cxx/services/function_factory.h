@@ -21,7 +21,7 @@
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "models/service_context.h"
-#include "models/cost_function_quadratic.h"
+#include "models/cost_function_mse.h"
 
 #include <memory>
 
@@ -40,8 +40,8 @@ public:
     uint32 feature_size, uint32 sample_number, cost_functions the_function, Service_context context = Service_context()
   ){
     switch(the_function){
-      case COST_FUNCTION_QUADRATIC: 
-        return std::make_unique<Cost_function_quadratic>(feature_size, sample_number, context);
+      case COST_FUNCTION_MSE: 
+        return std::make_unique<Cost_function_mse>(feature_size, sample_number, context);
       default: throw "Unknown cost function requested from builder!";
     }
   }
