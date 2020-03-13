@@ -57,7 +57,7 @@ public:
    *
    * @return     The error.
    */
-  sdouble32 get_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data){
+  sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data){
     lock_guard<mutex> error_lock(error_mutex);
     error_value.store(0);
     uint32 feature_start_index = neuron_data.size() - feature_size;
@@ -76,7 +76,7 @@ public:
         feature_start_index += feature_number;
     }
     wait_for_threads(process_threads);
-    return error_value;
+    return error_post_process(error_value);
   }
 
   /**
@@ -89,11 +89,8 @@ public:
    * @return     The gradient of the cost function in regards to its input
    */
   sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const vector<sdouble32>& label, const vector<sdouble32>& neuron_data) const{
-    return get_d_cost_over_d_feature(label[feature_index],neuron_data[feature_index]);
+    return error_post_process(get_d_cost_over_d_feature(label[feature_index],neuron_data[feature_index]));
   }
-
-  virtual sdouble32 get_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
-  virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const = 0;
 
 protected:
   Service_context context;
@@ -102,11 +99,15 @@ protected:
   mutex error_mutex;
   atomic<sdouble32> error_value;
 
+  virtual sdouble32 error_post_process(sdouble32 error_value) const = 0;
+  virtual sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
+  virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const = 0;
+
   void summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add){
     sdouble32 buffer = error_value;
     sdouble32 local_error = 0;
     for(uint32 feature_iterator = 0; feature_iterator < number_to_add; ++feature_iterator){
-      local_error += get_error( /* (start + feature - netsize) gives back the index in the label */
+      local_error += get_cell_error( /* (start + feature - netsize) gives back the index in the label */
         labels[start_index + feature_iterator + feature_size - neuron_data.size()],
         neuron_data[start_index + feature_iterator]
       );

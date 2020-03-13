@@ -65,15 +65,9 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   ); /* The cost for evaluating whole datasets are not implemented yet */
   for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
     CHECK(
-      Approx(cost.Cost_function::get_error(dataset[sample_iterator], featureset[sample_iterator])).epsilon(0.00000000000001)
-      == (feature_size * 0.5 * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
+      Approx(cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator])).epsilon(0.00000000000001)
+      == (0.5 * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
     );
-    for(uint16 feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){
-      CHECK(
-        Approx(cost.get_error(dataset[sample_iterator][feature_iterator], featureset[sample_iterator][feature_iterator])).epsilon(0.00000000000001)
-        == (0.5 * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
-      );
-    }
   }
 
   /* overall feature ditance should be  */

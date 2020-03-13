@@ -36,12 +36,18 @@ public:
   , sample_number(sample_number_)
   { };
 
-  sdouble32 get_error(sdouble32 label_value, sdouble32 feature_value) const{
-    return ( 0.5 * pow((feature_value - label_value),2) / sample_number );
+protected:
+  sdouble32 error_post_process(sdouble32 error_value) const{
+    sdouble32 final_error = error_value / static_cast<sdouble32>(feature_size);
+    return final_error / static_cast<sdouble32>(sample_number);
+  }
+
+  sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
+    return ( 0.5 * pow((feature_value - label_value),2) );
   }
 
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const{
-    return ( (feature_value - label_value) / sample_number );
+    return (feature_value - label_value);
   }
 
 private:

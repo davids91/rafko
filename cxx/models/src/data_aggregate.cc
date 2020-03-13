@@ -23,7 +23,9 @@ void Data_aggregate::set_feature_for_label(uint32 sample_index, const vector<sdo
     while(!error_sum.compare_exchange_weak(buffer,(buffer - sample_errors[sample_index])))
       buffer = error_sum;
 
-    sample_errors[sample_index] = cost_function->get_error(label_samples[sample_index], neuron_data);
+    sample_errors[sample_index] = cost_function->get_feature_error(
+      label_samples[sample_index], neuron_data
+    );
     
     while(!error_sum.compare_exchange_weak(buffer,(buffer + sample_errors[sample_index])))
       buffer = error_sum;
