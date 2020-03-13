@@ -36,6 +36,9 @@
 #include <memory>
 #include <limits>
 #include <chrono>
+#include <string>
+#include <iostream>
+#include <fstream>
 
 namespace sparse_net_library_test{
 
@@ -53,7 +56,7 @@ using sparse_net_library::SparseNet;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
-using sparse_net_library::TRANSFER_FUNCTION_RELU;
+using sparse_net_library::TRANSFER_FUNCTION_SELU;
 using sparse_net_library::Sparse_net_optimizer;
 using sparse_net_library::Service_context;
 using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
@@ -111,7 +114,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .input_size(2).expected_input_range(1.0)
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_RELU}}
+      {{TRANSFER_FUNCTION_IDENTITY}}
     ).dense_layers({1})
   ));
 
@@ -119,7 +122,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .input_size(2).expected_input_range(1.0)
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_RELU},{TRANSFER_FUNCTION_RELU}}
+      {{TRANSFER_FUNCTION_IDENTITY},{TRANSFER_FUNCTION_IDENTITY}}
     ).dense_layers({3,1})
   ));
 
@@ -127,10 +130,10 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .input_size(2).expected_input_range(1.0)
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_RELU},
-       {TRANSFER_FUNCTION_RELU},
-       {TRANSFER_FUNCTION_RELU}}
-    ).dense_layers({3,2,1})
+      {{TRANSFER_FUNCTION_IDENTITY},
+       {TRANSFER_FUNCTION_IDENTITY},
+       {TRANSFER_FUNCTION_IDENTITY}}
+    ).dense_layers({2,2,1})
   ));
 
   Solution solutions[3] = {
@@ -155,20 +158,29 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   uint32 number_of_steps;
   steady_clock::time_point start;
   uint32 average_duration;
+  std::string file_name = "log_";
+  file_name += std::to_string(std::chrono::system_clock::now().time_since_epoch().count() / 60);
+  file_name += ".txt";
 
+  std::ofstream logfile;
+  logfile.open (file_name);
+
+#if 0
   last_error = 5;
   number_of_steps = 0;
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],data_aggregate,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-1)
+    *nets[0],data_aggregate,WEIGHT_UPDATER_NESTEROV,Service_context().set_step_size(1e-1)
   );
   std::cout << "Optimizing net.." << std::endl;
   while(abs(last_error) > 1e-1){
     start = steady_clock::now();
-    optimizer.step(50);
+    optimizer.step();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
+    if(5 < number_of_steps && last_error < optimizer.get_last_error())
+      exit(0);
     last_error = optimizer.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
@@ -178,7 +190,8 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
-
+#endif
+#if 1
   Sparse_net_optimizer optimizer2(
     *nets[1],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
   ); /* .set_max_processing_threads(1)) for single-threaded tests */
@@ -189,7 +202,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   minimum_error = std::numeric_limits<sdouble32>::max();
   while(abs(last_error) > 1e-2){
     start = steady_clock::now();
-    optimizer2.step(50);
+    optimizer2.step();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     last_error = optimizer2.get_last_error();
@@ -197,33 +210,42 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
+    logfile << last_error << ",";
+    for(int i = 0; i<nets[1]->weight_table_size(); ++i){
+      logfile << nets[1]->weight_table(i) << ",";
+    }
+    logfile << "\n";
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
-
+#endif
+#if 0
   Sparse_net_optimizer optimizer3(
-    *nets[2],data_aggregate,WEIGHT_UPDATER_NESTEROV,Service_context().set_step_size(1e-4)
+    *nets[2],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
   );
   cout << "Optimizing biggest net.." << std::endl;
   data_aggregate.reset_errors();
   last_error = 5;
   number_of_steps = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
-  while(abs(last_error) > 1e-4){
+  while(abs(last_error) > 1e-2){
     start = steady_clock::now();
-    optimizer3.step(100);
+    optimizer3.step();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     last_error = optimizer3.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
+    #if 1
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
+    #endif
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
+#endif
   Solution_solver after_solver(solutions[0]);
   Solution_solver after_solver2(solutions[1]);
   Solution_solver after_solver3(solutions[2]);
@@ -234,14 +256,14 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     after_solver.solve(net_inputs[i]);
     after_solver2.solve(net_inputs[i]);
     after_solver3.solve(net_inputs[i]);
-    error_summary[0] += after_cost.get_error(
-      after_solver.get_neuron_data(0), addition_dataset[i][0]
+    error_summary[0] += after_cost.get_feature_error(
+      after_solver.get_neuron_data(), addition_dataset[i]
     );
-    error_summary[1] +=after_cost.get_error(
-      after_solver2.get_neuron_data(3), addition_dataset[i][0]
+    error_summary[1] +=after_cost.get_feature_error(
+      after_solver2.get_neuron_data(), addition_dataset[i]
     );
-    error_summary[2] += after_cost.get_error(
-      after_solver3.get_neuron_data(5), addition_dataset[i][0]
+    error_summary[2] += after_cost.get_feature_error(
+      after_solver3.get_neuron_data(), addition_dataset[i]
     );
   }
   std::cout << "Error summaries:" 

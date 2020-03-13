@@ -89,7 +89,7 @@ public:
     *
     * @param[in]  mini_batch_size     The number of samples to be evaluated in one step
     */
-  void step(uint32 mini_batch_size);
+  void step(void);
 
   /**
    * @brief      Gives back the error of the configured Network based on the previous optimization step
@@ -126,11 +126,13 @@ private:
   void step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate);
   void calculate_output_errors(uint32 solve_thread_index, uint32 sample_index);
   void propagate_output_errors_back(uint32 solve_thread_index);
-  void calculate_weight_gradients(uint32 solve_thread_index, const vector<sdouble32>& input_sample);
+  void accumulate_weight_gradients(uint32 solve_thread_index, const vector<sdouble32>& input_sample);
+  void normalize_weight_gradients(void);
 
   void calculate_output_errors_thread(uint32 solve_thread_index, uint32 sample_index, uint32 neuron_index, uint32 neuron_number);
   void backpropagation_thread(uint32 solve_thread_index, uint32 neuron_index);
-  void calculate_weight_gradients_thread(uint32 solve_thread_index, const vector<sdouble32>& input_sample, uint32 neuron_index);
+  void accumulate_weight_gradients_thread(uint32 solve_thread_index, const vector<sdouble32>& input_sample, uint32 neuron_index);
+  void normalize_weight_gradients_thread(uint32 weight_index, uint32 weight_number);
 
   vector<unique_ptr<atomic<sdouble32>>>& current_weight_gradient(void){
     return weight_gradients[current_weight_gradient_index];

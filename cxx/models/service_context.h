@@ -47,6 +47,10 @@ public:
     return step_size;
   }
 
+  uint32 get_minibatch_size(void) const{
+    return minibatch_size;
+  }
+
   sdouble32 get_alpha(void) const{
     return alpha;
   }
@@ -65,6 +69,11 @@ public:
 
   Service_context& set_step_size(sdouble32 step_size_){
     step_size = step_size_;
+    return *this;
+  }
+
+  Service_context& set_minibatch_size(uint32 minibatch_size_){
+    minibatch_size = minibatch_size_;
     return *this;
   }
 
@@ -115,6 +124,7 @@ private:
   Arena* arena_ptr = nullptr;
 
   sdouble32 step_size = 1e-6;
+  uint32 minibatch_size = 64;
   sdouble32 alpha = 1.6732;
   sdouble32 gamma = 0.9;
   sdouble32 epsilon = 1e-15; /* very small positive value almost greater, than 0.0 */
