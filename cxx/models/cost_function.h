@@ -91,6 +91,7 @@ public:
   sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const vector<sdouble32>& label, const vector<sdouble32>& neuron_data) const{
     return error_post_process(get_d_cost_over_d_feature(label[feature_index],neuron_data[feature_index]));
   }
+  virtual ~Cost_function() = default;
 
 protected:
   Service_context context;

@@ -13,7 +13,7 @@ void Weight_updater::update_weights_with_gradients(
   for(
     uint32 thread_index = 0; 
     ( (thread_index < context.get_max_solve_threads())
-      &&(static_cast<uint32>(net.weight_table_size()) >= weight_index) );
+      &&(static_cast<uint32>(net.weight_table_size()) > weight_index) );
     ++thread_index
   ){ /* For every provided sample */
       calculate_threads.push_back(thread(

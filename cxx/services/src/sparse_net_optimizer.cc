@@ -77,7 +77,7 @@ void Sparse_net_optimizer::calculate_output_errors(uint32 solve_thread_index, ui
   for(
     uint32 process_thread_index = 0;
     ( (process_thread_index < context.get_max_processing_threads())
-      &&(static_cast<uint32>(net.neuron_array_size()) >= neuron_index) );
+      &&(static_cast<uint32>(net.neuron_array_size()) > neuron_index) );
     ++process_thread_index
   ){ /* For every provided sample */
       process_threads[solve_thread_index].push_back(thread(
@@ -200,16 +200,14 @@ void Sparse_net_optimizer::accumulate_weight_gradients(uint32 solve_thread_index
 }
 
 void Sparse_net_optimizer::accumulate_weight_gradients_thread(uint32 solve_thread_index, const vector<sdouble32>& input_sample, uint32 neuron_index){
-  uint32 index;
   sdouble32 buffer;
   sdouble32 addition;
 
   /* Calculate gradient for Bias (error * 1) */
-  index = net.neuron_array(neuron_index).bias_idx();
-  buffer = *current_weight_gradient()[index];
+  buffer = *current_weight_gradient()[net.neuron_array(neuron_index).bias_idx()];
     addition = (*error_values[solve_thread_index][neuron_index]);
-  while(!current_weight_gradient()[index]->compare_exchange_weak(buffer, buffer + addition))
-    buffer = *current_weight_gradient()[index];
+  while(!current_weight_gradient()[net.neuron_array(neuron_index).bias_idx()]->compare_exchange_weak(buffer, buffer + addition))
+    buffer = *current_weight_gradient()[net.neuron_array(neuron_index).bias_idx()];
 
   /* Calculate gradient for Memory filter (error * (1-memory_filter)) */
   /* maybe next time.. ? */
@@ -242,7 +240,7 @@ void Sparse_net_optimizer::normalize_weight_gradients(void){
   for(
     uint32 process_thread_index = 0;
     ( (process_thread_index < context.get_max_processing_threads())
-      &&(static_cast<uint32>(net.weight_table_size()) >= weight_index) );
+      &&(static_cast<uint32>(net.weight_table_size()) > weight_index) );
     ++process_thread_index
   ){ /* For every calculated gradient.. */
       process_threads[0].push_back(thread(

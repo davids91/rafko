@@ -55,6 +55,7 @@ using sparse_net_library::sdouble32;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::COST_FUNCTION_MSE;
+using sparse_net_library::COST_FUNCTION_SQUARED_ERROR;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::TRANSFER_FUNCTION_SELU;
 using sparse_net_library::Sparse_net_optimizer;
@@ -112,7 +113,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
-    .cost_function(COST_FUNCTION_MSE)
+    .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY}}
     ).dense_layers({1})
@@ -120,7 +121,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
-    .cost_function(COST_FUNCTION_MSE)
+    .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},{TRANSFER_FUNCTION_IDENTITY}}
     ).dense_layers({3,1})
@@ -128,7 +129,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
-    .cost_function(COST_FUNCTION_MSE)
+    .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY},
@@ -165,22 +166,23 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   //std::ofstream logfile;
   //logfile.open (file_name);
 
-#if 0
+#if 1
   last_error = 5;
   number_of_steps = 0;
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],data_aggregate,WEIGHT_UPDATER_NESTEROV,Service_context().set_step_size(1e-1)
+    *nets[0],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-1)
   );
+  nets[0]->set_weight_table(2,0.8);
+  nets[0]->set_weight_table(3,0.8);
+  std::cout.precision(15);
   std::cout << "Optimizing net.." << std::endl;
   while(abs(last_error) > 1e-1){
     start = steady_clock::now();
     optimizer.step();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
-    if(5 < number_of_steps && last_error < optimizer.get_last_error())
-      exit(0);
     last_error = optimizer.get_last_error();
     if(abs(last_error) < minimum_error)minimum_error = abs(last_error);
     cout << "\r Error: [" << last_error << "]; "
@@ -191,7 +193,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 #endif
-#if 1
+#if 0
   Sparse_net_optimizer optimizer2(
     *nets[1],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
   ); /* .set_max_processing_threads(1)) for single-threaded tests */

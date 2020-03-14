@@ -53,6 +53,7 @@ public:
   bool is_finished(){
     return finished;
   }
+  virtual ~Weight_updater() = default;
 
 protected:
   SparseNet& net;
@@ -87,7 +88,7 @@ private:
     for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
       net.set_weight_table(
         weight_index + weight_iterator, 
-        get_new_weight(weight_index + weight_iterator,ref(gradients),ref(previous_gradients))
+        get_new_weight((weight_index + weight_iterator),ref(gradients),ref(previous_gradients))
       );
     }
   }
