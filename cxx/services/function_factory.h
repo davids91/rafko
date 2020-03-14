@@ -21,6 +21,7 @@
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "models/service_context.h"
+#include "models/cost_function_absolute_error.h"
 #include "models/cost_function_mse.h"
 
 #include <memory>
@@ -42,6 +43,8 @@ public:
     switch(the_function){
       case COST_FUNCTION_MSE: 
         return std::make_unique<Cost_function_mse>(feature_size, sample_number, context);
+      case COST_FUNCTION_SQUARED_ERROR: 
+        return std::make_unique<Cost_function_squared_error>(feature_size, context);
       default: throw "Unknown cost function requested from builder!";
     }
   }
