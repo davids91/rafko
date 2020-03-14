@@ -27,8 +27,8 @@ using std::swap_ranges;
 Solution_solver::Solution_solver(const Solution& to_solve, Service_context context)
 : solution(to_solve)
 , neuron_data(solution.neuron_number())
-, transfer_function_input(solution.neuron_number(),0.0)
-, transfer_function_output(solution.neuron_number(),0.0)
+, transfer_function_input(solution.neuron_number(),0.0L)
+, transfer_function_output(solution.neuron_number(),0.0L)
 , number_of_threads(context.get_max_solve_threads())
 {
   int partial_solution_end_plus1 = 0;

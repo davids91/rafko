@@ -77,7 +77,7 @@ public:
       (numeric_limits<sdouble32>::max() > (expected_input_number_ * std::abs(expected_input_maximum_value_)))
     ){
       expected_input_maximum_value = expected_input_maximum_value_;
-    }else if(0.0 == expected_input_maximum_value_){
+    }else if(0.0L == expected_input_maximum_value_){
       expected_input_maximum_value = numeric_limits<sdouble32>::epsilon();
     }else{ /* Overflow! Use maximum value */
       expected_input_maximum_value = numeric_limits<sdouble32>::max() / expected_input_number_;
@@ -105,7 +105,7 @@ protected:
    * @return     Limited value
    */
   sdouble32 limit_weight(sdouble32 weight) const{
-    return min(1.0,max(-1.0,weight));
+    return min(1.0L,max(-1.0L,weight));
   }
 
   /**

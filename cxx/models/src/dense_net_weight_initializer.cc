@@ -33,8 +33,8 @@ Dense_net_weight_initializer::Dense_net_weight_initializer(bool seed){
 }
 
 Dense_net_weight_initializer::Dense_net_weight_initializer(sdouble32 memRatioMin, sdouble32 memRatioMax){
-  memMin = max(0.0, min(1.0, memRatioMin));
-  memMax = min(1.0, max(memMin,memRatioMax));
+  memMin = max(0.0L, min(1.0L, memRatioMin));
+  memMax = min(1.0L, max(memMin,memRatioMax));
 }
 
 Dense_net_weight_initializer::Dense_net_weight_initializer(uint32 seed, sdouble32 memRatioMin, sdouble32 memRatioMax){
@@ -54,7 +54,7 @@ sdouble32 Dense_net_weight_initializer::get_weight_amplitude(transfer_functions 
 }
 
 sdouble32 Dense_net_weight_initializer::next_weight_for(transfer_functions used_transfer_function) const{
-  return ((rand()%2 == 0)?-1.0:1.0) * limit_weight(
+  return ((rand()%2 == 0)?-1.0L:1.0L) * limit_weight(
     (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
   );
 }
@@ -62,14 +62,14 @@ sdouble32 Dense_net_weight_initializer::next_weight_for(transfer_functions used_
 sdouble32 Dense_net_weight_initializer::next_memory_filter() const{
   if(memMin <  memMax){
     sdouble32 diff = memMax - memMin;
-    return (0.0 == diff)?0:(
+    return (0.0L == diff)?0:(
        memMin + (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/diff)))
     );
   } else return memMin;
 }
 
 sdouble32 Dense_net_weight_initializer::next_bias() const{
-  return 0.0;
+  return 0.0L;
 }
 
 } /* namespace sparse_net_library */

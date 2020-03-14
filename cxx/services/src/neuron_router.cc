@@ -37,7 +37,7 @@ Neuron_router::Neuron_router(const SparseNet& sparse_net) : net(sparse_net){
       ) neuron_number_of_inputs[neuron_iterator] += net.neuron_array(neuron_iterator).input_indices(synapse_iterator).interval_size();
       neuron_states.push_back(std::make_unique<atomic<uint32>>());
   } /* Calculating how many children one Neuron has */
-  net_subset_size_bytes = 0.0;
+  net_subset_size_bytes = 0.0L;
   net_subset = std::deque<uint32>();
   net_subset_index = std::deque<uint32>();
   collection_running = false;
@@ -77,7 +77,7 @@ void Neuron_router::collect_subset_thread(uint8 arg_max_solve_threads, sdouble32
   while( /* Iterate the Net until every possible Neuron is collected into an independent subset of it */
     (net.neuron_array_size() > static_cast<int>(visiting.back())) /* The currently visiting Neuron is inside bounds of the net */
     &&(static_cast<int>(output_layer_iterator) < net.neuron_array_size()) /* Until the whole output layer is processed */
-    &&(net_subset_size_bytes/* Bytes *// 1024.0 /* KB *// 1024.0 /* MB */ < arg_device_max_megabytes) /* Or there is enough collected Neurons for a Partial solution */
+    &&(net_subset_size_bytes/* Bytes *// 1024.0L /* KB *// 1024.0L /* MB */ < arg_device_max_megabytes) /* Or there is enough collected Neurons for a Partial solution */
   ){
     visiting_next = get_next_neuron(visiting, strict);
     add_neuron_into_subset(visiting.back());
@@ -170,7 +170,7 @@ void Neuron_router::add_neuron_into_subset(uint32 neuron_index){
     tmp_number = Neuron_info::get_neuron_estimated_size_bytes(net.neuron_array(neuron_index));
     tmp_size = net_subset_size_bytes; /* Add estimated Neuron Size */
     while(!net_subset_size_bytes.compare_exchange_weak(
-      tmp_size,tmp_size + static_cast<sdouble32>(tmp_number)/(1024.0 * 1024.0)
+      tmp_size,tmp_size + static_cast<sdouble32>(tmp_number)/(1024.0L * 1024.0L)
     ))tmp_size = net_subset_size_bytes;
   }
 }

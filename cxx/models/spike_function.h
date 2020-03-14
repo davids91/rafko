@@ -36,7 +36,7 @@ public:
    * @param[in]  data      The data to apply it to
    */
   static sdouble32 get_value(sdouble32 parameter, sdouble32 new_data, sdouble32 previous_data){
-    return (previous_data * parameter) + (new_data * (1.0-parameter));
+    return (previous_data * parameter) + (new_data * (1.0L-parameter));
   }
 
   /**

@@ -52,12 +52,12 @@ Solution* Solution_builder::build(const SparseNet& net ){
     net_iterator.collect_subset(arg_max_solve_threads,arg_device_max_megabytes, strict_mode); /* Collect solvable neuron indices */
     placed_neurons_in_partial = net_iterator.get_subset_size();
     while (
-      ((current_partial->SpaceUsedLong() /* Bytes */ / 1024.0 /* KB *// 1024.0 /* MB */) <= arg_device_max_megabytes)
+      ((current_partial->SpaceUsedLong() /* Bytes */ / 1024.0L /* KB *// 1024.0L /* MB */) <= arg_device_max_megabytes)
       &&(0 < placed_neurons_in_partial)
     ){
       placed_neurons_in_partial = 0;
       while( /* Put all collected Neurons into the current @Partial_solution */
-        ((current_partial->SpaceUsedLong() /* Bytes */ / 1024.0 /* KB *// 1024.0 /* MB */) <= arg_device_max_megabytes)
+        ((current_partial->SpaceUsedLong() /* Bytes */ / 1024.0L /* KB *// 1024.0L /* MB */) <= arg_device_max_megabytes)
         &&(placed_neurons_in_row < net_iterator.get_subset_size())
       ){
         neuron_index = net_iterator[placed_neurons_in_row];
@@ -79,7 +79,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
       }
     } /* Loop for placing the Neurons from the subset into the Partial Solutions */
     if( /* If no Neurons could be placed inside the partial_matrix, a new row is needed */
-      (current_partial->SpaceUsedLong() /* Bytes *// 1024.0 /* KB *// 1024.0 /* MB */) < arg_device_max_megabytes
+      (current_partial->SpaceUsedLong() /* Bytes *// 1024.0L /* KB *// 1024.0L /* MB */) < arg_device_max_megabytes
       &&(0 == placed_neurons_in_partial)
     ){
       if(0 == partial_matrix.back().back()->internal_neuron_number()){
@@ -97,7 +97,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
       neurons_in_row.clear();
       placed_neurons_in_row = 0;
       ++row_iterator;
-    }else if((current_partial->SpaceUsedLong() /* Bytes *// 1024.0 /* KB *// 1024.0 /* MB */) >= arg_device_max_megabytes){
+    }else if((current_partial->SpaceUsedLong() /* Bytes *// 1024.0L /* KB *// 1024.0L /* MB */) >= arg_device_max_megabytes){
       /* Put a new Partial_solution into the current row if the memory limit is reached */
       current_partial = google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
       partial_matrix[row_iterator].push_back(current_partial); /* In case the @Partial_solution reached the size limit, push in a new one */

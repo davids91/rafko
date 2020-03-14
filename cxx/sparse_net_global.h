@@ -31,7 +31,7 @@ typedef signed long sint64;
 typedef signed int sint32;
 typedef signed short sint16;
 typedef signed char sint8;
-typedef double sdouble32;
+typedef long double sdouble32;
 typedef uint16* p_uint16;
 typedef sdouble32* p_sdouble32;
 

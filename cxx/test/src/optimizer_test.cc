@@ -111,7 +111,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
-    .input_size(2).expected_input_range(1.0)
+    .input_size(2).expected_input_range(1.0L)
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY}}
@@ -119,7 +119,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   ));
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
-    .input_size(2).expected_input_range(1.0)
+    .input_size(2).expected_input_range(1.0L)
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},{TRANSFER_FUNCTION_IDENTITY}}
@@ -127,7 +127,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   ));
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
-    .input_size(2).expected_input_range(1.0)
+    .input_size(2).expected_input_range(1.0L)
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},
@@ -162,8 +162,8 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   file_name += std::to_string(std::chrono::system_clock::now().time_since_epoch().count() / 60);
   file_name += ".txt";
 
-  std::ofstream logfile;
-  logfile.open (file_name);
+  //std::ofstream logfile;
+  //logfile.open (file_name);
 
 #if 0
   last_error = 5;
@@ -210,11 +210,11 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
-    logfile << last_error << ",";
+    /*logfile << last_error << ",";
     for(int i = 0; i<nets[1]->weight_table_size(); ++i){
       logfile << nets[1]->weight_table(i) << ",";
     }
-    logfile << "\n";
+    logfile << "\n";*/
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps

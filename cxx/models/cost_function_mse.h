@@ -43,7 +43,7 @@ protected:
   }
 
   sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
-    return ( 0.5 * pow((feature_value - label_value),2) );
+    return ( 0.5L * pow((feature_value - label_value),2) );
   }
 
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const{

@@ -31,6 +31,7 @@ using std::make_unique;
 using std::vector;
 
 using sparse_net_library::uint32;
+using sparse_net_library::sint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::SparseNet;
@@ -46,7 +47,7 @@ using sparse_net_library::COST_FUNCTION_MSE;
 unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes){
   vector<uint32> net_structure = {20,10,30,10,2}; /* Build a net of this structure */
   unique_ptr<SparseNet> net = (unique_ptr<SparseNet>(Sparse_net_builder()
-    .input_size(50).expected_input_range(5.0)
+    .input_size(50).expected_input_range(5.0L)
     .output_neuron_number(2).arena_ptr(arena)
     .cost_function(COST_FUNCTION_MSE).dense_layers(net_structure)
   ));
@@ -60,7 +61,7 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
   bool found;
   for(uint32 neuron_iterator = 0; neuron_iterator < static_cast<uint32>(std::max(0,net->neuron_array_size())); ++neuron_iterator){
     found = false;
-    for(int partial_solution_iterator = 0; partial_solution_iterator < solution->partial_solutions_size(); ++partial_solution_iterator){
+    for(sint32 partial_solution_iterator = 0; partial_solution_iterator < solution->partial_solutions_size(); ++partial_solution_iterator){
       for(
         uint32 internal_neuron_iterator = 0;
         internal_neuron_iterator < solution->partial_solutions(partial_solution_iterator).internal_neuron_number();
@@ -80,9 +81,9 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
   uint32 input_synapse_offset;
   uint32 weight_synapse_offset;
   uint32 neuron_synapse_element_iterator;
-  for(int neuron_iterator = 0; neuron_iterator < net->neuron_array_size(); ++neuron_iterator){ /* For the input Neurons */
+  for(sint32 neuron_iterator = 0; neuron_iterator < net->neuron_array_size(); ++neuron_iterator){ /* For the input Neurons */
     for(
-      int partial_solution_iterator = 0;
+      sint32 partial_solution_iterator = 0;
       partial_solution_iterator < solution->partial_solutions_size();
       ++partial_solution_iterator
     ){ /* Search trough the partial solutions, looking for the neuron_iterator'th Neuron */
@@ -96,14 +97,14 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
         inner_neuron_iterator < solution->partial_solutions(partial_solution_iterator).internal_neuron_number();
         ++inner_neuron_iterator
       ){
-        if(neuron_iterator == static_cast<int>(
+        if(neuron_iterator == static_cast<sint32>(
           solution->partial_solutions(partial_solution_iterator).actual_index(inner_neuron_iterator)
         )){ /* If the current neuron being checked is the one in the partial solution under inner_neuron_iterator */
           neuron_synapse_element_iterator = 0;
           /* Test iterates over the Neurons input weights, to see if they match with the wights in the Network */
           Synapse_iterator inner_neuron_weight_iterator(solution->partial_solutions(partial_solution_iterator).weight_indices());
           Synapse_iterator neuron_weight_iterator(net->neuron_array(neuron_iterator).input_weights());
-          inner_neuron_weight_iterator.iterate([&](int input_index){ /* Inner Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input is true ) */
+          inner_neuron_weight_iterator.iterate([&](sint32 input_index){ /* Inner Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input is true ) */
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
             CHECK(
               solution->partial_solutions(partial_solution_iterator).weight_table(input_index)
@@ -117,7 +118,7 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
           /* Test iterates over the inner neurons synapse to see if it matches the Neuron synapse */
           Synapse_iterator inner_neuron_input_iterator(solution->partial_solutions(partial_solution_iterator).inside_indices());
           Synapse_iterator neuron_input_iterator(net->neuron_array(neuron_iterator).input_indices());
-          inner_neuron_input_iterator.iterate([&](int input_index){ /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input s true ) */
+          inner_neuron_input_iterator.iterate([&](sint32 input_index){ /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input s true ) */
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!Synapse_iterator::is_index_input(input_index)){ /* Inner neuron takes its input internally */
               CHECK(
@@ -149,14 +150,14 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
 
 TEST_CASE( "Building a solution from a net", "[build][small][build-only]" ){
   sdouble32 space_used_megabytes = 0;
-  unique_ptr<Solution> solution = test_solution_builder_manually(nullptr,2048.0);
+  unique_ptr<Solution> solution = test_solution_builder_manually(nullptr,2048.0L);
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
-  space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// 1024.0 /* KB *// 1024.0 /* MB */;
+  space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// 1024.0L /* KB *// 1024.0L /* MB */;
   solution.release();
 
   /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
-  solution = test_solution_builder_manually(nullptr,space_used_megabytes/5.0);
+  solution = test_solution_builder_manually(nullptr,space_used_megabytes/5.0L);
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   solution.release();
