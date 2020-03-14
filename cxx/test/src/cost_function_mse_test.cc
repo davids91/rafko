@@ -43,7 +43,7 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   /* create fake data and fake features with a given distance */
   uint16 dataset_size = 500;
   uint32 feature_size = 20;
-  sdouble32 distance = 10.0L;
+  sdouble32 distance = double_literal(10.0);
 
   vector<vector<sdouble32>> dataset = vector<vector<sdouble32>>(dataset_size,vector<sdouble32>(feature_size));
   vector<vector<sdouble32>> featureset = vector<vector<sdouble32>>(dataset_size,vector<sdouble32>(feature_size));
@@ -57,16 +57,16 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
       }
   }
 
-  /* one feature distance should be (0.5L * (distance)^2 ) */
+  /* one feature distance should be (double_literal(0.5) * (distance)^2 ) */
   Cost_function_mse cost(feature_size, dataset_size);
   /*CHECK(
-    Approx(cost.get_error(dataset,featureset) / static_cast<sdouble32>(dataset_size)).epsilon(0.00000000000001L)
-    == (0.5L * pow(distance,2))
+    Approx(cost.get_error(dataset,featureset) / static_cast<sdouble32>(dataset_size)).epsilon(double_literal(0.00000000000001))
+    == (double_literal(0.5) * pow(distance,2))
   ); /* The cost for evaluating whole datasets are not implemented yet */
   for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
     CHECK(
-      Approx(cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator])).epsilon(0.00000000000001L)
-      == (0.5L * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
+      Approx(cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator])).epsilon(double_literal(0.00000000000001))
+      == (double_literal(0.5) * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
     );
   }
 

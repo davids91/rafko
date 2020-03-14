@@ -47,7 +47,7 @@ using sparse_net_library::COST_FUNCTION_MSE;
 unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes){
   vector<uint32> net_structure = {20,10,30,10,2}; /* Build a net of this structure */
   unique_ptr<SparseNet> net = (unique_ptr<SparseNet>(Sparse_net_builder()
-    .input_size(50).expected_input_range(5.0L)
+    .input_size(50).expected_input_range(double_literal(5.0))
     .output_neuron_number(2).arena_ptr(arena)
     .cost_function(COST_FUNCTION_MSE).dense_layers(net_structure)
   ));
@@ -150,14 +150,14 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
 
 TEST_CASE( "Building a solution from a net", "[build][small][build-only]" ){
   sdouble32 space_used_megabytes = 0;
-  unique_ptr<Solution> solution = test_solution_builder_manually(nullptr,2048.0L);
+  unique_ptr<Solution> solution = test_solution_builder_manually(nullptr,double_literal(2048.0));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
-  space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// 1024.0L /* KB *// 1024.0L /* MB */;
+  space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
   solution.release();
 
   /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
-  solution = test_solution_builder_manually(nullptr,space_used_megabytes/5.0L);
+  solution = test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   solution.release();

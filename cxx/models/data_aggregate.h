@@ -42,7 +42,7 @@ public:
   :  sample_number(static_cast<uint32>(samples_.labels_size()/samples_.feature_size()))
   ,  input_samples(sample_number)
   ,  label_samples(sample_number)
-  ,  sample_errors(sample_number,1.0L)
+  ,  sample_errors(sample_number,double_literal(1.0))
   ,  error_sum(sample_number)
   ,  cost_function(move(cost_function_))
   { fill(samples_); }
@@ -54,7 +54,7 @@ public:
   ):  sample_number(input_samples_.size())
   ,  input_samples(sample_number)
   ,  label_samples(sample_number)
-  ,  sample_errors(sample_number,1.0L)
+  ,  sample_errors(sample_number,double_literal(1.0))
   ,  error_sum(sample_number)
   ,  cost_function(move(cost_function_))
   { }
@@ -66,7 +66,7 @@ public:
   ):  sample_number(input_samples_.size())
   ,  input_samples(input_samples_)
   ,  label_samples(label_samples_)
-  ,  sample_errors(sample_number,1.0L)
+  ,  sample_errors(sample_number,double_literal(1.0))
   ,  error_sum(sample_number)
   ,  cost_function(Function_factory::build_cost_function(net, sample_number, context))
   { }
@@ -75,7 +75,7 @@ public:
 
   void reset_errors(void){
     for(uint32 i = 0; i<get_number_of_samples(); ++i)
-      sample_errors[i] = 1.0L;
+      sample_errors[i] = double_literal(1.0);
     error_sum.store(get_number_of_samples());
   }
 

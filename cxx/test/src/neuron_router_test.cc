@@ -51,7 +51,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
   vector<uint32> layer_structure = {2,3,3,5};
   unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
   net_builder->input_size(5).output_neuron_number(5)
-  .cost_function(COST_FUNCTION_MSE).expected_input_range(5.0L);
+  .cost_function(COST_FUNCTION_MSE).expected_input_range(double_literal(5.0));
   SparseNet* net(net_builder->dense_layers(layer_structure));
   net_builder.reset();
   Neuron_router net_iterator(*net);
@@ -64,8 +64,8 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small
   bool last_run = false;
   CHECK( false == net_iterator.finished() );
   while(!net_iterator.finished()){ /* Until the whole output layer is processed */
-    net_iterator.collect_subset(iteration,1,500.0L);
-    
+    net_iterator.collect_subset(iteration,1,double_literal(500.0));
+
     /* For a fully connected Dense Layer, each iteration subset should be the actual layer */
     vector<uint32> subset;
     while(net_iterator.get_first_neuron_index_from_subset(tmp_index)){

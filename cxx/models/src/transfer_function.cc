@@ -45,13 +45,13 @@ sdouble32 Transfer_function::get_average_output_range(transfer_functions functio
   switch(function){
   case TRANSFER_FUNCTION_SIGMOID:
   case TRANSFER_FUNCTION_TANH:
-    return 1.0L;
+    return double_literal(1.0);
   case TRANSFER_FUNCTION_ELU:
   case TRANSFER_FUNCTION_RELU:
   case TRANSFER_FUNCTION_SELU:
   case TRANSFER_FUNCTION_IDENTITY:
   default:
-    return 50.0L; /* The averagest number there is */
+    return double_literal(50.0); /* The averagest number there is */
   }
 }
 
@@ -66,7 +66,7 @@ sdouble32 Transfer_function::get_value(transfer_functions function, sdouble32 da
     case TRANSFER_FUNCTION_SELU:
       if(0 > data) return context.get_alpha() * (exp(data) -1) * context.get_lambda();
       else return data;
-    case TRANSFER_FUNCTION_RELU: return max(0.0L,data);
+    case TRANSFER_FUNCTION_RELU: return max(double_literal(0.0),data);
     default: throw "Unidentified transfer function queried for information!";
   }
 }

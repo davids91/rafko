@@ -47,9 +47,9 @@ extern void manual_2_neuron_partial_solution(Partial_solution& partial_solution,
  *         In case there are more than 2 inputs, all of them shall be processed with the same weight
  *         The end result shall be calculated as follows:
  *         - result1 = f[0]((input1 * weight1 + input2 * weight2) + bias1) //weighted inputs + biaf, given to the transfer function
- *         - result1 = (prev_result1 * memory_filter1) + (result1 * (1.0L-memory_rato1) //apply memory filter
+ *         - result1 = (prev_result1 * memory_filter1) + (result1 * (double_literal(1.0)-memory_rato1) //apply memory filter
  *         - result2 = f[1]((result1 * weight3) + bias2)
- *         - end_result = (prev_result2 * memory_filter2) + (result2 * (1.0L-memory_rato2)
+ *         - end_result = (prev_result2 * memory_filter2) + (result2 * (double_literal(1.0)-memory_rato2)
  * @param[in]  partial_inputs      The collected inputs of the @Partial_solution
  * @param      prev_neuron_output  The previous neuron data
  * @param[in]  partial_solution    The partial solution containing the weights andmisc parameters of the calculation

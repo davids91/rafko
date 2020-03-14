@@ -37,7 +37,7 @@ public:
 
 protected:
   sdouble32 error_post_process(sdouble32 error_value) const{
-    return error_value / static_cast<sdouble32>(sample_number*2.0L);
+    return error_value / static_cast<sdouble32>(sample_number*double_literal(2.0));
   }
 
   sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{

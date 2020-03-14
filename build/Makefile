@@ -8,7 +8,7 @@ DEBUG_FLAGS = -DNDEBUG #no debug
 #DEBUG_FLAGS += -v # verbose compile information
 #DEBUG_FLAGS += -fsanitize=address #address sanitizer check
 #DEBUG_FLAGS += -static-libasan #enables debug data to be shown in valgrind and gdb with addresssanitizer
-CPPFLAGS = -Wall $(LIBS) -std=c++14 -latomic $(DEBUG_FLAGS)
+CPPFLAGS = -Wall $(LIBS) -std=c++14 $(DEBUG_FLAGS)
 CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib $(DEBUG_FLAGS)
 
 GENERATED_SOURCES = ../cxx/gen/common.pb.cc ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc
@@ -46,7 +46,7 @@ gen: #as in generate models; Can't be bothered to type something like `make gene
 
 $(LIBRARY_OBJECTS):
 	@clear
-	g++-9 -c $(LIBRARY_SOURCES) $(SOURCES_INCLUDE_DIR) $(GENERATED_FILES_INCLUDE_DIR) $(CPPFLAGS)
+	g++ -c $(LIBRARY_SOURCES) $(SOURCES_INCLUDE_DIR) $(GENERATED_FILES_INCLUDE_DIR) $(CPPFLAGS)
 
 clean:
 	rm -f *.o *.exe *.out ../lib/libsparsenetlib.a ../lib/libsparsenetlib.so
@@ -77,13 +77,13 @@ TEST_LOOPS = 100
 .PHONY: test build-tests run-tests test-solution-builder test-only loop-tests
 $(TEST_RESULT): $(TEST_OBJECTS)
 	@rm -f $(TEST_RESULT)
-	g++-9 $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 
 test: clean build_library run-tests
 
 test-only: $(TEST_OBJECTS)
 	@clear
-	g++-9 $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 	make run-tests
 
 run-tests: $(TEST_RESULT)
@@ -94,13 +94,13 @@ loop-tests:
 
 test-solution-builder: clean build_library
 	@rm -f $(TEST_RESULT)
-	g++-9 $(TEST_BASE) ../cxx/test/solution_builder_test.cc ../cxx/test/neuron_router_test.cc $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_BASE) ../cxx/test/solution_builder_test.cc ../cxx/test/neuron_router_test.cc $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 	./$(TEST_RESULT)
 
 test-opt: clean build_library #as in optimization
 	@rm -f $(TEST_RESULT)
-	g++-9 $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 	./$(TEST_RESULT)
 
 $(TEST_OBJECTS):
-	g++-9 -c $(TEST_SOURCES) $(SOURCES_INCLUDE_DIR)
+	g++ -c $(TEST_SOURCES) $(SOURCES_INCLUDE_DIR)

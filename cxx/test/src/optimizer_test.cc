@@ -111,7 +111,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
-    .input_size(2).expected_input_range(1.0L)
+    .input_size(2).expected_input_range(double_literal(1.0))
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY}}
@@ -119,7 +119,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   ));
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
-    .input_size(2).expected_input_range(1.0L)
+    .input_size(2).expected_input_range(double_literal(1.0))
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},{TRANSFER_FUNCTION_IDENTITY}}
@@ -127,7 +127,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   ));
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
-    .input_size(2).expected_input_range(1.0L)
+    .input_size(2).expected_input_range(double_literal(1.0))
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},
@@ -266,7 +266,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
       after_solver3.get_neuron_data(), addition_dataset[i]
     );
   }
-  std::cout << "Error summaries:" 
+  std::cout << "Error summaries:"
   << "\t"  << error_summary[0]
   << "\t"  << error_summary[1]
   << "\t"  << error_summary[2]

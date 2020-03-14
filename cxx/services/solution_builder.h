@@ -120,7 +120,7 @@ private:
   bool is_max_solve_threads_set = false;
   google::protobuf::Arena* arg_arena_ptr = nullptr;
   uint8 arg_max_solve_threads = 1;
-  sdouble32 arg_device_max_megabytes = 2.0L /* GB */ * 1024.0L/* MB */;
+  sdouble32 arg_device_max_megabytes = double_literal(2.0) /* GB */ * double_literal(1024.0)/* MB */;
 };
 
 } /* namespace sparse_net_library */

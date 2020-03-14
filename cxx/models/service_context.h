@@ -120,15 +120,15 @@ public:
 private:
   uint16 max_solve_threads = 2;
   uint16 max_processing_threads = 4;
-  sdouble32 device_max_megabytes = 2048.0L;
+  sdouble32 device_max_megabytes = double_literal(2048);
   Arena* arena_ptr = nullptr;
 
   sdouble32 step_size = 1e-6;
   uint32 minibatch_size = 64;
-  sdouble32 alpha = 1.6732L;
-  sdouble32 gamma = 0.9L;
-  sdouble32 epsilon = 1e-15; /* very small positive value almost greater, than 0.0L */
-  sdouble32 lambda = 1.0507L;
+  sdouble32 alpha = double_literal(1.6732);
+  sdouble32 gamma = double_literal(0.9);
+  sdouble32 epsilon = 1e-15; /* very small positive value almost greater, than double_literal(0.0) */
+  sdouble32 lambda = double_literal(1.0507);
 };
 
 } /* namespace sparse_net_library */
