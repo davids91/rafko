@@ -84,23 +84,24 @@ using sparse_net_library::Cost_function_mse;
  * - For each dataset test if the each Net converges
  * */
 TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
-  vector<vector<sdouble32>> net_inputs(500);
-  vector<vector<sdouble32>> addition_dataset(500);
-  vector<vector<sdouble32>> substraction_dataset(500);
-  vector<vector<sdouble32>> square_x_dataset(500);
-  vector<vector<sdouble32>> square_y_dataset(500);
+  uint32 number_of_samples = 500;
+  vector<vector<sdouble32>> net_inputs(number_of_samples);
+  vector<vector<sdouble32>> addition_dataset(number_of_samples);
+  vector<vector<sdouble32>> substraction_dataset(number_of_samples);
+  vector<vector<sdouble32>> square_x_dataset(number_of_samples);
+  vector<vector<sdouble32>> square_y_dataset(number_of_samples);
 
   srand(time(nullptr));
   sdouble32 max_x = DBL_MIN;
   sdouble32 max_y = DBL_MIN;
-  for(uint32 i = 0;i < 500;++i){
+  for(uint32 i = 0;i < number_of_samples;++i){
     net_inputs[i].push_back(static_cast<sdouble32>(rand()%100));
     net_inputs[i].push_back(static_cast<sdouble32>(rand()%100));
     if(net_inputs[i][0] > max_x)max_x = net_inputs[i][0];
     if(net_inputs[i][1] > max_y)max_y = net_inputs[i][1];
   }
 
-  for(uint32 i = 0;i < 500;++i){ /* Normalize the inputs */
+  for(uint32 i = 0;i < number_of_samples;++i){ /* Normalize the inputs */
     net_inputs[i][0] /= max_x;
     net_inputs[i][1] /= max_y;
 
@@ -162,7 +163,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   std::string file_name = "log_";
   file_name += std::to_string(std::chrono::system_clock::now().time_since_epoch().count() / 60);
   file_name += ".txt";
-  std::cout.precision(15);
+  std::cout.precision(20);
 
   std::ofstream logfile;
   logfile.open (file_name);
@@ -173,10 +174,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
+    *nets[0],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2).set_minibatch_size(std::min(64u,number_of_samples))
   );
-  nets[0]->set_weight_table(2,0.8);
-  nets[0]->set_weight_table(3,0.8);
+
   std::cout << "Optimizing net.." << std::endl;
   while(abs(last_error) > 1e-2){
     start = steady_clock::now();
@@ -188,11 +188,11 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
-    /*logfile << last_error << ",";
+    logfile << last_error << ",";
     for(int i = 0; i<nets[0]->weight_table_size(); ++i){
       logfile << nets[0]->weight_table(i) << ",";
     }
-    logfile << "\n"; */
+    logfile << "\n";
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
@@ -258,8 +258,8 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   Solution_solver after_solver3(solutions[2]);
 
   sdouble32 error_summary[3] = {0,0,0};
-  Cost_function_mse after_cost(1,500);
-  for(uint32 i = 0; i < 500; ++i){
+  Cost_function_mse after_cost(1,number_of_samples);
+  for(uint32 i = 0; i < number_of_samples; ++i){
     after_solver.solve(net_inputs[i]);
     after_solver2.solve(net_inputs[i]);
     after_solver3.solve(net_inputs[i]);

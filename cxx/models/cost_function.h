@@ -89,7 +89,10 @@ public:
    * @return     The gradient of the cost function in regards to its input
    */
   sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const vector<sdouble32>& label, const vector<sdouble32>& neuron_data) const{
-    return error_post_process(get_d_cost_over_d_feature(label[feature_index],neuron_data[feature_index]));
+    return error_post_process(
+      get_d_cost_over_d_feature(label[feature_index],
+      neuron_data[neuron_data.size() - feature_size + feature_index])
+    );
   }
   virtual ~Cost_function() = default;
 
@@ -104,6 +107,16 @@ protected:
   virtual sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
   virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const = 0;
 
+  /**
+   * @brief      Summarizes the errors given back by @get_cell_error for all of the features. It's called
+   *             by @get_feature_error, which divides the features to almost equal parts,
+   *             and calls this function on them.
+   *
+   * @param[in]  labels         The labels
+   * @param[in]  neuron_data    The neuron data
+   * @param[in]  start_index    The start index of in the neuron data
+   * @param[in]  number_to_add  The number of features to calculate
+   */
   void summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add){
     sdouble32 buffer = error_value;
     sdouble32 local_error = 0;

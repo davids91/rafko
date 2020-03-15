@@ -41,7 +41,8 @@ using std::vector;
 using std::unique_ptr;
 using google::protobuf::Arena;
 using std::array;
-
+using std::min;
+using std::max;
 
 class Sparse_net_optimizer{
 public:
@@ -65,6 +66,9 @@ public:
   ,  weight_gradients(2)
   ,  current_weight_gradient_index(1)
   {
+    (void)context.set_minibatch_size(max(1u,min(
+        data_set.get_number_of_samples(),context.get_minibatch_size()
+    )));
     solve_threads.reserve(context.get_max_solve_threads());
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
       for(sint32 i = 0; i < net.neuron_array_size(); ++i)
