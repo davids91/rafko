@@ -4,7 +4,7 @@ LIBS = `pkg-config --cflags --libs protobuf` -g#-pthread -IC:/msys64/mingw64/inc
 LIBS = `pkg-config --cflags --libs protobuf` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
 
 DEBUG_FLAGS = -DNDEBUG #no debug
-#DEBUG_FLAGS = -g #debug information added
+#DEBUG_FLAGS = -ggdb #debug information added
 #DEBUG_FLAGS += -v # verbose compile information
 #DEBUG_FLAGS += -fsanitize=address #address sanitizer check
 #DEBUG_FLAGS += -static-libasan #enables debug data to be shown in valgrind and gdb with addresssanitizer

@@ -21,7 +21,7 @@
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "models/service_context.h"
-#include "models/cost_function_absolute_error.h"
+#include "models/cost_function_squared_error.h"
 #include "models/cost_function_mse.h"
 
 #include <memory>

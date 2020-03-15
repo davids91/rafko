@@ -121,7 +121,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
-    .cost_function(COST_FUNCTION_SQUARED_ERROR)
+    .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},{TRANSFER_FUNCTION_IDENTITY}}
     ).dense_layers({3,1})
@@ -129,7 +129,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
-    .cost_function(COST_FUNCTION_SQUARED_ERROR)
+    .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_IDENTITY},
        {TRANSFER_FUNCTION_IDENTITY},
@@ -162,9 +162,10 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   std::string file_name = "log_";
   file_name += std::to_string(std::chrono::system_clock::now().time_since_epoch().count() / 60);
   file_name += ".txt";
+  std::cout.precision(15);
 
-  //std::ofstream logfile;
-  //logfile.open (file_name);
+  std::ofstream logfile;
+  logfile.open (file_name);
 
 #if 1
   last_error = 5;
@@ -172,13 +173,12 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-1)
+    *nets[0],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
   );
   nets[0]->set_weight_table(2,0.8);
   nets[0]->set_weight_table(3,0.8);
-  std::cout.precision(15);
   std::cout << "Optimizing net.." << std::endl;
-  while(abs(last_error) > 1e-1){
+  while(abs(last_error) > 1e-2){
     start = steady_clock::now();
     optimizer.step();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
@@ -188,6 +188,11 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
+    /*logfile << last_error << ",";
+    for(int i = 0; i<nets[0]->weight_table_size(); ++i){
+      logfile << nets[0]->weight_table(i) << ",";
+    }
+    logfile << "\n"; */
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
@@ -212,11 +217,11 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     cout << "\r Error: [" << last_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
-    /*logfile << last_error << ",";
+    logfile << last_error << ",";
     for(int i = 0; i<nets[1]->weight_table_size(); ++i){
       logfile << nets[1]->weight_table(i) << ",";
     }
-    logfile << "\n";*/
+    logfile << "\n";
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
