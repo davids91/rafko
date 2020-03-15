@@ -139,7 +139,6 @@ TEST_CASE("Test Partial solution input collection","[solve][partial_solution][in
   partial_solution.add_weight_table(double_literal(0.0));  /* A weight for the biases and memory filters */
   for(uint32 i = 0; i < network_inputs.size(); ++i){
     partial_solution.add_weight_table(double_literal(1.0));
-    partial_solution.add_actual_index(i);
     partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
     partial_solution.add_memory_filter_index(0);
     partial_solution.add_bias_index(0);

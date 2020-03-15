@@ -59,15 +59,16 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
 
   /* See if every Neuron is inside the result solution */
   bool found;
-  for(uint32 neuron_iterator = 0; neuron_iterator < static_cast<uint32>(std::max(0,net->neuron_array_size())); ++neuron_iterator){
+  for(sint32 neuron_iterator = 0; neuron_iterator < net->neuron_array_size(); ++neuron_iterator){
     found = false;
     for(sint32 partial_solution_iterator = 0; partial_solution_iterator < solution->partial_solutions_size(); ++partial_solution_iterator){
+      Synapse_iterator output_neurons(solution->partial_solutions(partial_solution_iterator).output_data());
       for(
         uint32 internal_neuron_iterator = 0;
         internal_neuron_iterator < solution->partial_solutions(partial_solution_iterator).internal_neuron_number();
         ++internal_neuron_iterator
       ){
-        if(solution->partial_solutions(partial_solution_iterator).actual_index(internal_neuron_iterator) == neuron_iterator){
+        if(output_neurons[internal_neuron_iterator] == neuron_iterator){
           found = true;
           goto Solution_search_over; /* don't judge */
         }
@@ -92,14 +93,14 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
 
       /* Since Neurons take their inputs from the partial solution input, test iterates over it */
       Synapse_iterator partial_input_iterator(solution->partial_solutions(partial_solution_iterator).input_data());
+      Synapse_iterator output_neurons(solution->partial_solutions(partial_solution_iterator).output_data());
       for( /* Skim through the inner neurons in the partial solution until the current one if found */
         uint32 inner_neuron_iterator = 0;
         inner_neuron_iterator < solution->partial_solutions(partial_solution_iterator).internal_neuron_number();
         ++inner_neuron_iterator
       ){
-        if(neuron_iterator == static_cast<sint32>(
-          solution->partial_solutions(partial_solution_iterator).actual_index(inner_neuron_iterator)
-        )){ /* If the current neuron being checked is the one in the partial solution under inner_neuron_iterator */
+        if(neuron_iterator == output_neurons[inner_neuron_iterator]){
+          /* If the current neuron being checked is the one in the partial solution under inner_neuron_iterator */
           neuron_synapse_element_iterator = 0;
           /* Test iterates over the Neurons input weights, to see if they match with the wights in the Network */
           Synapse_iterator inner_neuron_weight_iterator(solution->partial_solutions(partial_solution_iterator).weight_indices());
@@ -121,10 +122,7 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
           inner_neuron_input_iterator.iterate([&](sint32 input_index){ /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator::is_index_input s true ) */
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!Synapse_iterator::is_index_input(input_index)){ /* Inner neuron takes its input internally */
-              CHECK(
-                solution->partial_solutions(partial_solution_iterator).actual_index(input_index)
-                == neuron_input_iterator[neuron_synapse_element_iterator]
-              );
+              CHECK(output_neurons[input_index] == neuron_input_iterator[neuron_synapse_element_iterator]);
             }else{ /* Inner Neuron takes its input from the partial solution input */
               CHECK(
                 partial_input_iterator[Synapse_iterator::input_index_from_synapse_index(input_index)]

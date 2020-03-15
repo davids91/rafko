@@ -66,10 +66,6 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
   partial_solution.add_weight_table(double_literal(50.0)); /* Biases are also stored here */
   partial_solution.add_weight_table(double_literal(10.0));
 
-  /* Add internal Neuron IDs */
-  partial_solution.add_actual_index(neuron_offset + 0u); /* Really doesn't matter that much in this testcase */
-  partial_solution.add_actual_index(neuron_offset + 1u); /* It will matter only when multiple partial partial_solutions are joind together */
-
   /**###################################################################################################
    * The first neuron shall have the inputs
    */

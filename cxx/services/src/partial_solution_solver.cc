@@ -101,7 +101,6 @@ bool Partial_solution_solver::is_valid(void) const{
     (0u < detail.internal_neuron_number())
     &&(static_cast<int>(detail.internal_neuron_number()) == detail.index_synapse_number_size())
     &&(static_cast<int>(detail.internal_neuron_number()) == detail.weight_synapse_number_size())
-    &&(static_cast<int>(detail.internal_neuron_number()) == detail.actual_index_size())
     &&(static_cast<int>(detail.internal_neuron_number()) == detail.neuron_transfer_functions_size())
     &&(static_cast<int>(detail.internal_neuron_number()) == detail.memory_filter_index_size())
     &&(static_cast<int>(detail.internal_neuron_number()) == detail.bias_index_size())

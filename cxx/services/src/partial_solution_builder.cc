@@ -27,7 +27,6 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
     Synapse_iterator index_iterator(neuron.input_indices());
     /* Add a new Neuron into the partial solution */
     partial.set_internal_neuron_number(partial.internal_neuron_number() + 1);
-    partial.add_actual_index(neuron_index);
 
     /* Copy in Neuron parameters */
     partial.add_neuron_transfer_functions(neuron.transfer_function_idx());
@@ -132,8 +131,9 @@ bool Partial_solution_builder::look_for_neuron_input_internally(uint32 neuron_in
   using std::for_each;
 
   uint32 inner_neuron_index = 0;
-  for(uint32 i = 0; i < partial.internal_neuron_number(); ++i){
-    if(neuron_input_index != partial.actual_index(i))++inner_neuron_index;
+  Synapse_iterator partial_neuron_output_index(partial.output_data());
+  for(uint32 internal_neuron_iterator = 0; internal_neuron_iterator < partial.internal_neuron_number(); ++internal_neuron_iterator){
+    if(static_cast<sint32>(neuron_input_index) != partial_neuron_output_index[internal_neuron_iterator])++inner_neuron_index;
     else{
       if(0 < neuron_synapse_count){
         if(

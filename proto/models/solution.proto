@@ -52,11 +52,6 @@ message Partial_solution{
    * A representation of the actual neuron to be used in this intermediate solution
    * - sizes are of @internal_neuron_number
    */
-  repeated uint32 actual_index = 10; /* Stores the actual index of the Neuron in the sparse_net it calculates the value for
-                                     * Indexes are global to @neuron_array under the @SparseNet to be solved */
-
-  /** Parameters each neuron have to post-process their inputs
-   */
   repeated transfer_functions neuron_transfer_functions = 11;
   repeated uint32 memory_filter_index = 12;
   repeated uint32 bias_index = 13;
