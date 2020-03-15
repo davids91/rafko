@@ -32,11 +32,31 @@ using std::unique_ptr;
 
 class Function_factory{
 public:
+  /**
+   * @brief      Builds a cost function.
+   *
+   * @param[in]  net            The @SparseNet that decides which cost function to build
+   * @param[in]  sample_number  Number of samples to evaluate with the cost function
+   * @param[in]  context        The service context
+   *
+   * @return     The cost function.
+   */
   static unique_ptr<Cost_function> build_cost_function(
     const SparseNet& net, uint32 sample_number, Service_context context = Service_context()
   ){
     return build_cost_function(net.output_neuron_number(), sample_number, net.cost_function(), context);
   }
+
+  /**
+   * @brief      Builds a cost function.
+   *
+   * @param[in]  feature_size   The size of one feature
+   * @param[in]  sample_number  Number of samples to evaluate with the cost function
+   * @param[in]  the_function   The cost function to build
+   * @param[in]  context        The service context
+   *
+   * @return     The cost function.
+   */
   static unique_ptr<Cost_function> build_cost_function(
     uint32 feature_size, uint32 sample_number, cost_functions the_function, Service_context context = Service_context()
   ){

@@ -10,12 +10,12 @@ void Weight_updater::update_weights_with_gradients(
 ){
   uint32 weight_index = 0;
   const uint32 weight_number = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
-  for(
+  for( /* As long as there are threads to open or remaining weights */
     uint32 thread_index = 0; 
     ( (thread_index < context.get_max_solve_threads())
       &&(static_cast<uint32>(net.weight_table_size()) > weight_index) );
     ++thread_index
-  ){ /* For every provided sample */
+  ){
       calculate_threads.push_back(thread(
         &Weight_updater::update_weight_with_gradient, this, 
         weight_index, std::min(weight_number, (net.weight_table_size() - weight_index)),
@@ -35,7 +35,7 @@ void Weight_updater::update_solution_with_weights(Solution& solution){
     process_thread_iterator = 0;
     neuron_weight_synapse_starts = 0;
     inner_neuron_weight_index_starts = 0;
-    while(
+    while( /* As long as there are threads to open or remaining neurons */
       (context.get_max_processing_threads() > calculate_threads.size())
       &&(process_thread_iterator < partial.internal_neuron_number())
     ){

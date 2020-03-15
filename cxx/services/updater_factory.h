@@ -17,6 +17,15 @@ using std::make_unique;
 
 class Updater_factory{
 public:
+  /**
+   * @brief      Builds a weight updater.
+   *
+   * @param      net             The net to base the weight updater upon
+   * @param[in]  weight_updater  The weight updater type
+   * @param      context         The service context
+   *
+   * @return     The weight updater.
+   */
   static unique_ptr<Weight_updater> build_weight_updater(
     SparseNet& net, weight_updaters weight_updater, Service_context& context
   ){

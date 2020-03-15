@@ -34,6 +34,14 @@ public:
   ,  calculate_threads(0)
   { calculate_threads.reserve(context.get_max_processing_threads()); };
 
+  /**
+   * @brief      Do an iteration of weight updates. An actual weight update 
+   *             shall count as valid when @required_iterations_for_step taken place.
+   *
+   * @param      gradients           The gradients
+   * @param      previous_gradients  The previous gradients
+   * @param      solution            The solution
+   */
   void iterate(
     vector<unique_ptr<atomic<sdouble32>>>& gradients,
     vector<unique_ptr<atomic<sdouble32>>>& previous_gradients,
@@ -45,11 +53,20 @@ public:
     finished = (0 == iteration);
   }
 
+  /**
+   * @brief      The function to signal the weight updater that an iteration have started
+   */
   void start(void){
     iteration = 0;
     finished = false;
   }
 
+  /**
+   * @brief      Tells if an iteration is at its valid state or not based on 
+   *             he number of iterations since calling @start
+   *
+   * @return     True if finished, False otherwise.
+   */
   bool is_finished(){
     return finished;
   }
@@ -62,6 +79,17 @@ protected:
   uint32 iteration;
   bool finished;
   
+  /**
+   * @brief      Gets the new value for one weight based on the gradients.
+   *             More complex weight updaters should overwirte this function,
+   *             as it is the basis of updating weights.
+   *
+   * @param[in]  weight_index        The weight index
+   * @param      gradients           The gradients
+   * @param      previous_gradients  The previous gradients
+   *
+   * @return     The new weight.
+   */
   sdouble32 get_new_weight(
     uint32 weight_index,
     vector<unique_ptr<atomic<sdouble32>>>& gradients,
@@ -73,13 +101,38 @@ protected:
 private:
   vector<thread> calculate_threads;
 
+  /**
+   * @brief      The function to update every weight of the referenced @SparseNet
+   *             based on the values provided by @get_new_weight.
+   *             It starts multiple threads, dividing almost equally the number of weights
+   *             to be updated in each thread.
+   *
+   * @param      gradients           The gradients
+   * @param      previous_gradients  The previous gradients
+   */
   void update_weights_with_gradients(
     vector<unique_ptr<atomic<sdouble32>>>& gradients,
     vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
   );
 
+  /**
+   * @brief      Copies the referenced @SparseNet weights into the solution in the arguments
+   *             It supposes that the solution is one already built, and it is built from
+   *             the same @SparseNet referenced in the updater. Opens up a thread for every internal 
+   *             neuron in the partial solution, up until a maximum of Service_context::get_max_processing_threads.
+   *
+   * @param      solution  The solution
+   */
   void update_solution_with_weights(Solution& solution);
 
+  /**
+   * @brief      A thread to update the weights of the @SpraseNet, called by @update_weights_with_gradients
+   *
+   * @param[in]  weight_index        The weight index
+   * @param[in]  weight_number       The weight number
+   * @param      gradients           The gradients
+   * @param      previous_gradients  The previous gradients
+   */
   void update_weight_with_gradient(
     uint32 weight_index, uint32 weight_number,
     vector<unique_ptr<atomic<sdouble32>>>& gradients,
@@ -93,6 +146,15 @@ private:
     }
   }
 
+  /**
+   * @brief      A thread to copy a weight synapse from the referenced @SparseNet
+   *             into a partial solution.
+   *
+   * @param[in]  inner_neuron_index                The inner neuron index
+   * @param      partial                           The partial
+   * @param[in]  neuron_weight_synapse_starts      The neuron weight synapse starts
+   * @param[in]  inner_neuron_weight_index_starts  The inner neuron weight index starts
+   */
   void copy_weight_to_solution(
     uint32 inner_neuron_index, Partial_solution& partial,
     uint32 neuron_weight_synapse_starts, uint32 inner_neuron_weight_index_starts
