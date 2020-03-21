@@ -4,6 +4,7 @@ LIBS = `pkg-config --cflags --libs protobuf` -g#-pthread -IC:/msys64/mingw64/inc
 LIBS = `pkg-config --cflags --libs protobuf` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
 
 DEBUG_FLAGS = -DNDEBUG #no debug
+#DEBUG_FLAGS = -g #debug information added
 #DEBUG_FLAGS = -ggdb #debug information added
 #DEBUG_FLAGS += -v # verbose compile information
 #DEBUG_FLAGS += -fsanitize=address #address sanitizer check
@@ -45,7 +46,6 @@ gen: #as in generate models; Can't be bothered to type something like `make gene
 	./gen_models.bat
 
 $(LIBRARY_OBJECTS):
-	@clear
 	g++ -c $(LIBRARY_SOURCES) $(SOURCES_INCLUDE_DIR) $(GENERATED_FILES_INCLUDE_DIR) $(CPPFLAGS)
 
 clean:
@@ -82,7 +82,6 @@ $(TEST_RESULT): $(TEST_OBJECTS)
 test: clean build_library run-tests
 
 test-only: $(TEST_OBJECTS)
-	@clear
 	g++ $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 	make run-tests
 

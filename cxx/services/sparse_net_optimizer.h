@@ -47,16 +47,18 @@ using std::max;
 class Sparse_net_optimizer{
 public:
   Sparse_net_optimizer(
-    SparseNet& neural_network, Data_aggregate& data_aggregate,
+    SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
     weight_updaters weight_updater_, Service_context service_context = Service_context()
   ): net(neural_network)
   ,  context(service_context)
   ,  transfer_function(context)
   ,  net_solution(Solution_builder().service_context(context).build(net))
   ,  solver(context.get_max_solve_threads(), Solution_solver(*net_solution, service_context))
-  ,  data_set(data_aggregate)
+  ,  train_set(train_set_)
+  ,  test_set(test_set_)
+  ,  loops_unchecked(50)
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
-  ,  cost_function(Function_factory::build_cost_function(net, data_set.get_number_of_samples(), context))
+  ,  cost_function(Function_factory::build_cost_function(net, train_set.get_number_of_samples(), context))
   ,  solve_threads(0)
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
   ,  neuron_data(context.get_max_solve_threads())
@@ -66,16 +68,16 @@ public:
   ,  weight_gradient(0)
   {
     (void)context.set_minibatch_size(max(1u,min(
-        data_set.get_number_of_samples(),context.get_minibatch_size()
+      train_set.get_number_of_samples(),context.get_minibatch_size()
     )));
     solve_threads.reserve(context.get_max_solve_threads());
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
       for(sint32 i = 0; i < net.neuron_array_size(); ++i)
         error_values[threads].push_back(std::make_unique<atomic<sdouble32>>());
       process_threads[threads].reserve(context.get_max_processing_threads());
-      neuron_data[threads] = vector<sdouble32>(data_set.get_feature_size());
-      transfer_function_input[threads] = vector<sdouble32>(data_set.get_feature_size());
-      transfer_function_output[threads] = vector<sdouble32>(data_set.get_feature_size());
+      neuron_data[threads] = vector<sdouble32>(train_set.get_feature_size());
+      transfer_function_input[threads] = vector<sdouble32>(train_set.get_feature_size());
+      transfer_function_output[threads] = vector<sdouble32>(train_set.get_feature_size());
     }
     weight_gradient.reserve(net.weight_table_size());
     for(sint32 i = 0; i < net.weight_table_size(); ++i){
@@ -92,8 +94,15 @@ public:
   /**
    * @brief      Gives back the error of the configured Network based on the previous optimization step
    */
-  sdouble32 get_last_error(){
-   return data_set.get_error();
+  sdouble32 get_train_error(){
+   return train_set.get_error();
+  }
+
+  /**
+   * @brief      Gives back the error of the configured Network based on the previous optimization step
+   */
+  sdouble32 get_test_error(){
+   return test_set.get_error();
   }
 
   /**
@@ -113,7 +122,9 @@ private:
   unique_ptr<Solution> net_solution;
   vector<Solution_solver> solver;
 
-  Data_aggregate& data_set;
+  Data_aggregate& train_set;
+  Data_aggregate& test_set;
+  uint32 loops_unchecked;
   Backpropagation_queue gradient_step; /* Defines the neuron order during back-propagation */
   unique_ptr<Cost_function> cost_function;
   unique_ptr<Weight_updater> weight_updater;
@@ -127,12 +138,21 @@ private:
   vector<unique_ptr<atomic<sdouble32>>> weight_gradient; /* calculated gradient values */
 
   /**
-   * @brief      A thread 
+   * @brief      A thread to step the neural network forward
    *
-   * @param[in]  solve_thread_index   The solve thread index
-   * @param[in]  samples_to_evaluate  The samples to evaluate
+   * @param[in]  solve_thread_index   The index of the solve thread the function is working in
+   * @param[in]  samples_to_evaluate  The number of samples to evaluate
    */
   void step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate);
+
+  /**
+   * @brief      A Thread to evaluate a network on all given samples
+   *
+   * @param[in]  solve_thread_index   The index of the solve thread the function is working in
+   * @param[in]  sample_start   The index of the sample to start evaluating from
+   * @param[in]  samples_to_evaluate  Number of samples to be evaluated
+   */
+  void evaluate_thread(uint32 solve_thread_index, uint32 sample_start, uint32 samples_to_evaluate);
 
   /**
    * @brief      Calculates the output layer deviation from the given sample under @sample_index.

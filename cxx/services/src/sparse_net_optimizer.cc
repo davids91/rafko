@@ -51,19 +51,51 @@ void Sparse_net_optimizer::step(void){
       get_weight_gradient(), *net_solution
     );
   } /* while(!weight_updater->finished()) */
+  ++loops_unchecked;
+
+  if(loops_unchecked > std::min(double_literal(50.0),(test_set.get_error()/context.get_step_size()))){
+    uint32 sample_start_index = 0;
+    const uint32 samples_to_evaluate = 1 + static_cast<uint32>(train_set.get_number_of_samples()/context.get_max_solve_threads());
+    for(
+      uint32 thread_index = 0;
+      thread_index < min(test_set.get_number_of_samples(),static_cast<uint32>(context.get_max_solve_threads()));
+      ++thread_index
+    ){
+      solve_threads.push_back(thread(
+        &Sparse_net_optimizer::evaluate_thread, this, thread_index, sample_start_index,
+        min(samples_to_evaluate,(train_set.get_number_of_samples() - sample_start_index))
+      ));
+      sample_start_index += samples_to_evaluate;
+    }
+    wait_for_threads(solve_threads);
+    loops_unchecked = 0;
+  }
+}
+
+void Sparse_net_optimizer::evaluate_thread(uint32 solve_thread_index, uint32 sample_start, uint32 samples_to_evaluate){
+  for(uint32 sample_iterator = 0; sample_iterator < samples_to_evaluate; ++sample_iterator){
+    solver[solve_thread_index].solve(test_set.get_input_sample(sample_start + sample_iterator)); /* Solve the network for the sampled labels input */
+    neuron_data[solve_thread_index] = solver[solve_thread_index].get_neuron_data(); /* Copy results out */
+    transfer_function_input[solve_thread_index] = solver[solve_thread_index].get_transfer_function_input();
+    transfer_function_output[solve_thread_index] = solver[solve_thread_index].get_transfer_function_output();
+    if(test_set.get_feature_size() != solver[solve_thread_index].get_output_size())
+      throw "Network output size doesn't match size of provided labels!";
+    test_set.set_feature_for_label((sample_start + sample_iterator), neuron_data[solve_thread_index]); /* Re-calculate error for the training set */
+    solver[solve_thread_index].reset();
+  }
 }
 
 void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate){
   uint32 sample_index;
   for(uint32 sample = 0; sample < samples_to_evaluate; ++sample){
-    sample_index = rand()%(data_set.get_number_of_samples()); /* sample randomly to help convergence */
-    solver[solve_thread_index].solve(data_set.get_input_sample(sample_index)); /* Solve the network for the sampled labels input */
+    sample_index = rand()%(train_set.get_number_of_samples()); /* sample randomly to help convergence */
+    solver[solve_thread_index].solve(train_set.get_input_sample(sample_index)); /* Solve the network for the sampled labels input */
     neuron_data[solve_thread_index] = solver[solve_thread_index].get_neuron_data(); /* Copy results out */
     transfer_function_input[solve_thread_index] = solver[solve_thread_index].get_transfer_function_input();
     transfer_function_output[solve_thread_index] = solver[solve_thread_index].get_transfer_function_output();
-    if(data_set.get_feature_size() != solver[solve_thread_index].get_output_size())
+    if(train_set.get_feature_size() != solver[solve_thread_index].get_output_size())
       throw "Network output size doesn't match size of provided labels!";
-    data_set.set_feature_for_label(sample_index, neuron_data[solve_thread_index]); /* Re-calculate error for the training set */
+    train_set.set_feature_for_label(sample_index, neuron_data[solve_thread_index]); /* Re-calculate error for the training set */
     for(unique_ptr<atomic<sdouble32>>& error_value : error_values[solve_thread_index]) *error_value = 0;
     calculate_output_errors(solve_thread_index, sample_index);
     propagate_output_errors_back(solve_thread_index);
@@ -80,11 +112,11 @@ void Sparse_net_optimizer::calculate_output_errors(uint32 solve_thread_index, ui
     process_thread_index < min(static_cast<uint32>(context.get_max_processing_threads()),static_cast<uint32>(net.output_neuron_number()));
     ++process_thread_index
   ){ /* Iterate through the neurons in the network */
-      process_threads[solve_thread_index].push_back(thread(
-        &Sparse_net_optimizer::calculate_output_errors_thread, this, solve_thread_index, sample_index,
-        neuron_index, min(neuron_number, (net.output_neuron_number() - neuron_index))
-      ));
-      neuron_index += neuron_number;
+    process_threads[solve_thread_index].push_back(thread(
+      &Sparse_net_optimizer::calculate_output_errors_thread, this, solve_thread_index, sample_index,
+      neuron_index, min(neuron_number, (net.output_neuron_number() - neuron_index))
+    ));
+    neuron_index += neuron_number;
   }
   wait_for_threads(process_threads[solve_thread_index]);
 }
@@ -94,7 +126,7 @@ void Sparse_net_optimizer::calculate_output_errors_thread(uint32 solve_thread_in
   for(uint32 neuron_iterator = 0; neuron_iterator < neuron_number; ++neuron_iterator){
     buffer = cost_function->get_d_cost_over_d_feature(
       ((neuron_index + neuron_iterator) - (net.neuron_array_size() - net.output_neuron_number())),
-      data_set.get_label_sample(sample_index), neuron_data[solve_thread_index]
+      train_set.get_label_sample(sample_index), neuron_data[solve_thread_index]
     );
     buffer *= transfer_function.get_derivative(
       net.neuron_array(neuron_index + neuron_iterator).transfer_function_idx(),
@@ -191,11 +223,13 @@ void Sparse_net_optimizer::accumulate_weight_gradients(uint32 solve_thread_index
 void Sparse_net_optimizer::accumulate_weight_gradients_thread(uint32 solve_thread_index, uint32 sample_index, uint32 neuron_index){
   sdouble32 buffer;
   sdouble32 addition;
+  
   /* Calculate gradient for Bias (error * 1) */
   buffer = *get_weight_gradient()[net.neuron_array(neuron_index).bias_idx()];
   addition = (*error_values[solve_thread_index][neuron_index]);
   while(!get_weight_gradient()[net.neuron_array(neuron_index).bias_idx()]->compare_exchange_weak(buffer, buffer + addition))
     buffer = *get_weight_gradient()[net.neuron_array(neuron_index).bias_idx()];
+
   /* Calculate gradient for Memory filter (error * (1-memory_filter)) */
   /* maybe next time.. ? */
 
@@ -205,7 +239,7 @@ void Sparse_net_optimizer::accumulate_weight_gradients_thread(uint32 solve_threa
   sdouble32 neuron_input;
   Synapse_iterator::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
     if(Synapse_iterator::is_index_input(child_index))
-      neuron_input = data_set.get_input_sample(sample_index)[Synapse_iterator::input_index_from_synapse_index(child_index)];
+      neuron_input = train_set.get_input_sample(sample_index)[Synapse_iterator::input_index_from_synapse_index(child_index)];
         else neuron_input = neuron_data[solve_thread_index][child_index];
     buffer = *get_weight_gradient()[net.neuron_array(neuron_index).input_weights(weight_synapse_index).starts() + weight_index];
     addition = neuron_input * *error_values[solve_thread_index][neuron_index];
