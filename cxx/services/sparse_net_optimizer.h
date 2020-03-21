@@ -63,8 +63,7 @@ public:
   ,  transfer_function_input(context.get_max_solve_threads())
   ,  transfer_function_output(context.get_max_solve_threads())
   ,  error_values(context.get_max_solve_threads())
-  ,  weight_gradients(2)
-  ,  current_weight_gradient_index(1)
+  ,  weight_gradient(0)
   {
     (void)context.set_minibatch_size(max(1u,min(
         data_set.get_number_of_samples(),context.get_minibatch_size()
@@ -78,11 +77,9 @@ public:
       transfer_function_input[threads] = vector<sdouble32>(data_set.get_feature_size());
       transfer_function_output[threads] = vector<sdouble32>(data_set.get_feature_size());
     }
-    weight_gradients[0].reserve(net.weight_table_size());
-    weight_gradients[1].reserve(net.weight_table_size());
+    weight_gradient.reserve(net.weight_table_size());
     for(sint32 i = 0; i < net.weight_table_size(); ++i){
-      weight_gradients[0].push_back(std::make_unique<atomic<sdouble32>>());
-      weight_gradients[1].push_back(std::make_unique<atomic<sdouble32>>());
+      weight_gradient.push_back(std::make_unique<atomic<sdouble32>>());
     }
     weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
   };
@@ -97,6 +94,15 @@ public:
    */
   sdouble32 get_last_error(){
    return data_set.get_error();
+  }
+
+  /**
+   * @brief      Helper function to get the weight gradient at the latest iteration
+   *
+   * @return     Constant reference to the current weight gradients array
+   */
+  vector<unique_ptr<atomic<sdouble32>>>& get_weight_gradient(void){
+    return weight_gradient;
   }
 
 private:
@@ -118,8 +124,7 @@ private:
   vector<vector<sdouble32>> transfer_function_input; /* Copy of the Neurons data for each solve thread */
   vector<vector<sdouble32>> transfer_function_output; /* Copy of the Neurons data for each solve thread */
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values; /* Calculated error values */
-  vector<vector<unique_ptr<atomic<sdouble32>>>> weight_gradients; /* Current and previous last loop calculated gradient values */
-  uint8 current_weight_gradient_index; /* The index the weight gradient of the last loop is under */
+  vector<unique_ptr<atomic<sdouble32>>> weight_gradient; /* calculated gradient values */
 
   /**
    * @brief      A thread 
@@ -211,24 +216,6 @@ private:
    * @param[in]  weight_number  The weight number
    */
   void normalize_weight_gradients_thread(uint32 weight_index, uint32 weight_number);
-
-  /**
-   * @brief      Helper function to get the weight gradient at the latest iteration
-   *
-   * @return     Constant reference to the current weight gradients array
-   */
-  vector<unique_ptr<atomic<sdouble32>>>& current_weight_gradient(void){
-    return weight_gradients[current_weight_gradient_index];
-  }
-
-  /**
-   * @brief      Helper function to get the weight gradients at the iteration before the current one
-   *
-   * @return     Constant reference to the previous weight gradients array
-   */
-  vector<unique_ptr<atomic<sdouble32>>>& previous_weight_gradient(void){
-    return weight_gradients[(current_weight_gradient_index + 1) % 2];
-  }
 
   /**
    * @brief      This function waits for the given threads to finish, ensures that every thread

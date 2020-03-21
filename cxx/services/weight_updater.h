@@ -31,27 +31,10 @@ public:
   ,  required_iterations_for_step(required_iterations_for_step_)
   ,  iteration(0)
   ,  finished(false)
+  ,  current_velocity(sparse_net.weight_table_size(),double_literal(0.0))
   ,  calculate_threads(0)
   { calculate_threads.reserve(context.get_max_processing_threads()); };
 
-  /**
-   * @brief      Do an iteration of weight updates. An actual weight update 
-   *             shall count as valid when @required_iterations_for_step taken place.
-   *
-   * @param      gradients           The gradients
-   * @param      previous_gradients  The previous gradients
-   * @param      solution            The solution
-   */
-  void iterate(
-    vector<unique_ptr<atomic<sdouble32>>>& gradients,
-    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients,
-    Solution& solution
-  ){
-    update_weights_with_gradients(gradients, previous_gradients);
-    update_solution_with_weights(solution);
-    iteration = (iteration + 1) % required_iterations_for_step;
-    finished = (0 == iteration);
-  }
 
   /**
    * @brief      The function to signal the weight updater that an iteration have started
@@ -62,14 +45,38 @@ public:
   }
 
   /**
+   * @brief      Do an iteration of weight updates. An actual weight update 
+   *             shall count as valid when @required_iterations_for_step taken place.
+   *
+   * @param      gradients           The gradients
+   * @param      solution            The solution
+   */
+  void iterate(vector<unique_ptr<atomic<sdouble32>>>& gradients,Solution& solution){
+    calculate_velocity(gradients);
+    update_weights_with_velocity();
+    update_solution_with_weights(solution);
+    iteration = (iteration + 1) % required_iterations_for_step;
+    finished = (0 == iteration);
+  }
+
+  /**
    * @brief      Tells if an iteration is at its valid state or not based on 
    *             he number of iterations since calling @start
    *
    * @return     True if finished, False otherwise.
    */
-  bool is_finished(){
+  bool is_finished() const{
     return finished;
   }
+
+  sdouble32 get_current_velocity(uint32 weight_index) const{
+    return current_velocity[weight_index];
+  }
+
+  const vector<sdouble32>& get_current_velocity() const{
+    return current_velocity;
+  }
+
   virtual ~Weight_updater() = default;
 
 protected:
@@ -78,6 +85,7 @@ protected:
   const uint32 required_iterations_for_step;
   uint32 iteration;
   bool finished;
+  vector<sdouble32> current_velocity;
   
   /**
    * @brief      Gets the new value for one weight based on the gradients.
@@ -85,35 +93,29 @@ protected:
    *             as it is the basis of updating weights.
    *
    * @param[in]  weight_index        The weight index
-   * @param      gradients           The gradients
-   * @param      previous_gradients  The previous gradients
    *
    * @return     The new weight.
    */
-  sdouble32 get_new_weight(
-    uint32 weight_index,
-    vector<unique_ptr<atomic<sdouble32>>>& gradients,
-    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
-  ){
-    return(net.weight_table(weight_index) - (*gradients[weight_index] * context.get_step_size()));
+  sdouble32 get_new_weight(uint32 weight_index){
+    return(net.weight_table(weight_index) - get_current_velocity(weight_index));
+  }
+
+  sdouble32 get_new_velocity(uint32 weight_index, const vector<unique_ptr<atomic<sdouble32>>>& gradients){
+    return (*gradients[weight_index] * context.get_step_size());
   }
 
 private:
   vector<thread> calculate_threads;
+
+  void calculate_velocity(const vector<unique_ptr<atomic<sdouble32>>>& gradients);
 
   /**
    * @brief      The function to update every weight of the referenced @SparseNet
    *             based on the values provided by @get_new_weight.
    *             It starts multiple threads, dividing almost equally the number of weights
    *             to be updated in each thread.
-   *
-   * @param      gradients           The gradients
-   * @param      previous_gradients  The previous gradients
    */
-  void update_weights_with_gradients(
-    vector<unique_ptr<atomic<sdouble32>>>& gradients,
-    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
-  );
+  void update_weights_with_velocity();
 
   /**
    * @brief      Copies the referenced @SparseNet weights into the solution in the arguments
@@ -126,22 +128,28 @@ private:
   void update_solution_with_weights(Solution& solution);
 
   /**
-   * @brief      A thread to update the weights of the @SpraseNet, called by @update_weights_with_gradients
+   * @brief      A thread to update the weights of the @SpraseNet, called by @update_weights_with_velocity
    *
    * @param[in]  weight_index        The weight index
    * @param[in]  weight_number       The weight number
-   * @param      gradients           The gradients
-   * @param      previous_gradients  The previous gradients
    */
-  void update_weight_with_gradient(
-    uint32 weight_index, uint32 weight_number,
-    vector<unique_ptr<atomic<sdouble32>>>& gradients,
-    vector<unique_ptr<atomic<sdouble32>>>& previous_gradients
-  ){
+  void calculate_velocity_thread(const vector<unique_ptr<atomic<sdouble32>>>& gradients, uint32 weight_index, uint32 weight_number){
+    for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
+      current_velocity[weight_index + weight_iterator] = get_new_velocity(weight_index + weight_iterator, gradients);
+    }
+  }
+
+  /**
+   * @brief      A thread to calculate the newest velocity based on the gradients
+   *
+   * @param      gradients      The gradients
+   * @param[in]  weight_index   The weight index
+   * @param[in]  weight_number  The weight number
+   */
+  void update_weight_with_velocity(uint32 weight_index, uint32 weight_number){
     for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
       net.set_weight_table(
-        weight_index + weight_iterator, 
-        get_new_weight((weight_index + weight_iterator),ref(gradients),ref(previous_gradients))
+        weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator)
       );
     }
   }

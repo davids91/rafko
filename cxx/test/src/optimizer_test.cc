@@ -116,7 +116,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .input_size(2).expected_input_range(double_literal(1.0))
     .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_IDENTITY}}
+      {{TRANSFER_FUNCTION_SELU}}
     ).dense_layers({1})
   ));
 
@@ -124,7 +124,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .input_size(2).expected_input_range(double_literal(1.0))
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_IDENTITY},{TRANSFER_FUNCTION_IDENTITY}}
+      {{TRANSFER_FUNCTION_SELU},{TRANSFER_FUNCTION_SELU}}
     ).dense_layers({3,1})
   ));
 
@@ -132,9 +132,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     .input_size(2).expected_input_range(double_literal(1.0))
     .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_IDENTITY},
-       {TRANSFER_FUNCTION_IDENTITY},
-       {TRANSFER_FUNCTION_IDENTITY}}
+      {{TRANSFER_FUNCTION_SELU},
+       {TRANSFER_FUNCTION_SELU},
+       {TRANSFER_FUNCTION_SELU}}
     ).dense_layers({2,2,1})
   ));
 
@@ -174,7 +174,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2).set_minibatch_size(std::min(64u,number_of_samples))
+    *nets[0],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
   );
 
   std::cout << "Optimizing net.." << std::endl;
@@ -198,9 +198,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 #endif
-#if 0
+#if 1
   Sparse_net_optimizer optimizer2(
-    *nets[1],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
+    *nets[1],data_aggregate,WEIGHT_UPDATER_MOMENTUM,Service_context().set_step_size(1e-2)
   ); /* .set_max_processing_threads(1)) for single-threaded tests */
   std::cout << "Optimizing bigger net.." << std::endl;
   data_aggregate.reset_errors();
@@ -227,9 +227,9 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 #endif
-#if 0
+#if 1
   Sparse_net_optimizer optimizer3(
-    *nets[2],data_aggregate,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
+    *nets[2],data_aggregate,WEIGHT_UPDATER_NESTEROV, Service_context().set_step_size(1e-2)
   );
   cout << "Optimizing biggest net.." << std::endl;
   data_aggregate.reset_errors();
