@@ -30,9 +30,9 @@ using std::vector;
 
 using sparse_net_library::uint32;
 using sparse_net_library::sdouble32;
-using sparse_net_library::sdouble32;
-using sparse_net_library::Partial_solution;
 using sparse_net_library::SparseNet;
+using sparse_net_library::Solution;
+using sparse_net_library::Partial_solution;
 
 /**
  * @brief      generates a partial partial_solution manually based on the Neural Network structure:
@@ -67,6 +67,23 @@ extern void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vect
  */
 extern void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdouble32>& neuron_data,
     vector<uint32> layer_structure, SparseNet network);
+
+/**
+ * @brief      Checks if the inputs are pointing to the same data and weight values are matching in the given 
+ *             @SparseNet and @Solution
+ *
+ * @param      net       The net
+ * @param      solution  The solution
+ */
+extern void check_if_the_same(SparseNet& net, Solution& solution);
+
+/**
+ * @brief      Prints weights for the given arguments
+ *
+ * @param      net       The net
+ * @param      solution  The solution
+ */
+extern void print_weights(SparseNet& net, Solution& solution);
 
 };
 

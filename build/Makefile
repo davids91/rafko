@@ -63,6 +63,7 @@ TEST_SOURCES += ../cxx/test/src/partial_solution_solver_test.cc ../cxx/test/src/
 TEST_SOURCES += ../cxx/test/src/synapse_iterator_test.cc ../cxx/test/src/neuron_router_test.cc
 TEST_SOURCES += ../cxx/test/src/neuron_info_test.cc ../cxx/test/src/cost_function_mse_test.cc
 TEST_SOURCES += ../cxx/test/src/backprop_queue_wrapper_test.cc
+TEST_SOURCES += ../cxx/test/src/weight_updater_test.cc
 
 OPTIMIZATION_TEST_SOURCES = $(TEST_BASE_SOURCE)
 OPTIMIZATION_TEST_SOURCES += ../cxx/test/src/optimizer_test.cc

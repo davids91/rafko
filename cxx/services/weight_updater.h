@@ -60,6 +60,16 @@ public:
   }
 
   /**
+   * @brief      Copies the referenced @SparseNet weights into the solution in the arguments
+   *             It supposes that the solution is one already built, and it is built from
+   *             the same @SparseNet referenced in the updater. Opens up a thread for every internal 
+   *             neuron in the partial solution, up until a maximum of Service_context::get_max_processing_threads.
+   *
+   * @param      solution  The solution
+   */
+  void update_solution_with_weights(Solution& solution);
+
+  /**
    * @brief      Tells if an iteration is at its valid state or not based on 
    *             he number of iterations since calling @start
    *
@@ -116,16 +126,6 @@ private:
    *             to be updated in each thread.
    */
   void update_weights_with_velocity();
-
-  /**
-   * @brief      Copies the referenced @SparseNet weights into the solution in the arguments
-   *             It supposes that the solution is one already built, and it is built from
-   *             the same @SparseNet referenced in the updater. Opens up a thread for every internal 
-   *             neuron in the partial solution, up until a maximum of Service_context::get_max_processing_threads.
-   *
-   * @param      solution  The solution
-   */
-  void update_solution_with_weights(Solution& solution);
 
   /**
    * @brief      A thread to update the weights of the @SpraseNet, called by @update_weights_with_velocity
