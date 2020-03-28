@@ -65,7 +65,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   Synapse_interval temp_synapse_interval;
   sdouble32 used_weight = double_literal(0.5);
   transfer_functions used_transfer_function = TRANSFER_FUNCTION_SIGMOID;
-  vector<sdouble32> weight_table {double_literal(0.0)};
+  vector<sdouble32> weight_table {double_literal(0.0),double_literal(0.0)};
   weight_table[0] = used_weight;
   REQUIRE( nullptr != &(weight_table[0]) );
   REQUIRE( weight_table[0] == used_weight);
@@ -76,38 +76,35 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   /* Neuron 0 Has an input of 1 */
   neuron_table[0].set_transfer_function_idx(used_transfer_function);
   neuron_table[0].set_memory_filter_idx(0); /* Weight 0 in the weight_table */
-  neuron_table[0].set_bias_idx(0); /* Weight 0 in the weight_table */
   temp_synapse_interval.set_starts(0); /* Input Starting from 0 */
   temp_synapse_interval.set_interval_size(1); /* 1 Input */
   *neuron_table[0].add_input_indices() = temp_synapse_interval;
   temp_synapse_interval.set_starts(0); /* Weight 0 in the weight_table */
-  temp_synapse_interval.set_interval_size(1); /* only Weight 0 in the weight_table */
+  temp_synapse_interval.set_interval_size(2); /* Weight0 + bias0 in the weight_table */
   *neuron_table[0].add_input_weights() = temp_synapse_interval;
-  REQUIRE( true == Neuron_info::is_neuron_valid(neuron_table[0]) );
+  REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[0]) );
 
   /* Neuron 1 Has Neuron 0 as input */
   neuron_table[1].set_transfer_function_idx(used_transfer_function);
   neuron_table[1].set_memory_filter_idx(0);
-  neuron_table[1].set_bias_idx(0);
   temp_synapse_interval.set_starts(0);
   temp_synapse_interval.set_interval_size(1);
   *neuron_table[1].add_input_indices() = temp_synapse_interval;
   temp_synapse_interval.set_starts(0);
-  temp_synapse_interval.set_interval_size(1);
+  temp_synapse_interval.set_interval_size(2);
   *neuron_table[1].add_input_weights() = temp_synapse_interval;
-  REQUIRE( true == Neuron_info::is_neuron_valid(neuron_table[1]) );
+  REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[1]) );
 
   /* Neuron 2 Also has Neuron 0 as input */
   neuron_table[2].set_transfer_function_idx(used_transfer_function);
   neuron_table[2].set_memory_filter_idx(0);
-  neuron_table[2].set_bias_idx(0);
   temp_synapse_interval.set_starts(0);
   temp_synapse_interval.set_interval_size(1);
   *neuron_table[2].add_input_indices() = temp_synapse_interval;
   temp_synapse_interval.set_starts(0);
-  temp_synapse_interval.set_interval_size(1);
+  temp_synapse_interval.set_interval_size(2);
   *neuron_table[2].add_input_weights() = temp_synapse_interval;
-  REQUIRE( true == Neuron_info::is_neuron_valid(neuron_table[2]) );
+  REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[2]) );
 
   /* Pass the net into the builder */
   shared_ptr<Sparse_net_builder> builder(make_shared<Sparse_net_builder>());
@@ -126,7 +123,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
     REQUIRE( 0 < net->neuron_array_size() );
     REQUIRE( 0 < net->weight_table_size() );
     CHECK( 3 == net->neuron_array_size() );
-    CHECK( 1 == net->weight_table_size() );
+    CHECK( 2 == net->weight_table_size() );
     CHECK( used_weight == net->weight_table(0) );
 
     /* Check parameters for each neuron */
@@ -137,7 +134,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
     CHECK( 0 == net->neuron_array(0).input_indices(0).starts() );
     REQUIRE( 0 < net->neuron_array(0).input_weights_size() );
     CHECK( 1 == net->neuron_array(0).input_weights_size() );
-    CHECK( 1 == net->neuron_array(0).input_weights(0).interval_size() );
+    CHECK( 2 == net->neuron_array(0).input_weights(0).interval_size() );
     CHECK( 0 == net->neuron_array(0).input_weights(0).starts() );
     CHECK(
       weight_table[net->neuron_array(0).input_weights(0).starts()]
@@ -155,7 +152,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
     CHECK( 0 == net->neuron_array(1).input_indices(0).starts() );
     REQUIRE( 0 < net->neuron_array(1).input_weights_size() );
     CHECK( 1 == net->neuron_array(1).input_weights_size() );
-    CHECK( 1 == net->neuron_array(1).input_weights(0).interval_size() );
+    CHECK( 2 == net->neuron_array(1).input_weights(0).interval_size() );
     CHECK( 0 == net->neuron_array(1).input_weights(0).starts() );
     CHECK(
       weight_table[net->neuron_array(1).input_weights(0).starts()]
@@ -172,7 +169,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
     CHECK( 1 == net->neuron_array(2).input_indices(0).interval_size() );
     CHECK( 0 == net->neuron_array(2).input_indices(0).starts() );
     REQUIRE( 0 < net->neuron_array(2).input_weights_size() );
-    CHECK( 1 == net->neuron_array(2).input_weights(0).interval_size() );
+    CHECK( 2 == net->neuron_array(2).input_weights(0).interval_size() );
     CHECK( 0 == net->neuron_array(2).input_weights(0).starts() );
     CHECK(
       weight_table[net->neuron_array(2).input_weights(0).starts()]
@@ -257,7 +254,6 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     REQUIRE( 0 < net->neuron_array(i).input_weights_size() );
     for(int weight_synapse_iterator = 0; weight_synapse_iterator < net->neuron_array(i).input_weights_size(); ++weight_synapse_iterator){
       /* Bias and memory filter index has to point inside the weight table array*/
-      REQUIRE( net->weight_table_size() > net->neuron_array(i).bias_idx() );
       REQUIRE( net->weight_table_size() > net->neuron_array(i).memory_filter_idx() );
 
       /* Weights */
@@ -282,7 +278,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     }
 
     /* See if number on inputs are the same for indexes and weights */
-    CHECK( number_of_input_indexes == number_of_input_weights );
+    CHECK( number_of_input_indexes <= number_of_input_weights );
   }
 
   /* Check Input neurons */

@@ -124,8 +124,8 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
       {{TRANSFER_FUNCTION_SELU}}
     ).dense_layers({1})
   ));
-  nets[0]->set_weight_table(2,0.8);
-  nets[0]->set_weight_table(3,0.8);
+  nets[0]->set_weight_table(1,0.9);
+  nets[0]->set_weight_table(2,0.9);
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
@@ -134,12 +134,12 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
       {{TRANSFER_FUNCTION_SELU},{TRANSFER_FUNCTION_SELU}}
     ).dense_layers({2,1})
   ));
+  nets[1]->set_weight_table(1,0.5);
   nets[1]->set_weight_table(2,0.5);
-  nets[1]->set_weight_table(3,0.5);
+  nets[1]->set_weight_table(5,0.5);
   nets[1]->set_weight_table(6,0.5);
-  nets[1]->set_weight_table(7,0.5);
+  nets[1]->set_weight_table(9,0.99);
   nets[1]->set_weight_table(10,0.99);
-  nets[1]->set_weight_table(11,0.99);
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
@@ -151,16 +151,16 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     ).dense_layers({2,2,1})
   ));
 
+  nets[2]->set_weight_table(1,0.99);
   nets[2]->set_weight_table(2,0.99);
-  nets[2]->set_weight_table(3,0.99);
+  nets[2]->set_weight_table(5,0.99);
   nets[2]->set_weight_table(6,0.99);
-  nets[2]->set_weight_table(7,0.99);
+  nets[2]->set_weight_table(9,0.5);
   nets[2]->set_weight_table(10,0.5);
-  nets[2]->set_weight_table(11,0.5);
+  nets[2]->set_weight_table(13,0.5);
   nets[2]->set_weight_table(14,0.5);
-  nets[2]->set_weight_table(15,0.5);
+  nets[2]->set_weight_table(17,0.5);
   nets[2]->set_weight_table(18,0.5);
-  nets[2]->set_weight_table(19,0.5);
 
   Data_aggregate train_set(
     vector<vector<sdouble32>>(net_inputs_train),

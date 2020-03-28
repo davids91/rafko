@@ -55,12 +55,12 @@ void Weight_updater::update_solution_with_weights(Solution& solution){
         (context.get_max_processing_threads() > calculate_threads.size())
         &&(inner_neuron_iterator < solution.partial_solutions(partial_index).internal_neuron_number())
       ){
-        neuron_index = output_iterator[inner_neuron_iterator];        
+        neuron_index = output_iterator[inner_neuron_iterator];
         calculate_threads.push_back(thread(
           &Weight_updater::copy_weight_to_solution, this, neuron_index, inner_neuron_iterator,
-          ref(*solution.mutable_partial_solutions(partial_index)), neuron_weight_synapse_starts, inner_neuron_weight_index_starts
+          ref(*solution.mutable_partial_solutions(partial_index)), inner_neuron_weight_index_starts
         ));
-        inner_neuron_weight_index_starts += 2; /* bias and memory filter */
+        ++inner_neuron_weight_index_starts; /* ++ for memory filter */
         for(uint32 i = 0; i < solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_iterator); ++i){
           inner_neuron_weight_index_starts += 
             solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
@@ -74,34 +74,19 @@ void Weight_updater::update_solution_with_weights(Solution& solution){
 }
 
 void Weight_updater::copy_weight_to_solution(
-  uint32 neuron_index, uint32 inner_neuron_index, Partial_solution& partial,
-  uint32 neuron_weight_synapse_starts, uint32 inner_neuron_weight_index_starts 
+  uint32 neuron_index, uint32 inner_neuron_index, Partial_solution& partial, uint32 inner_neuron_weight_index_starts 
 ){ /*!Note: After shared weight optimization, this part is to be re-worked */
-  uint32 weights_copied = 2; /* for bias and memory ratio */
-  uint32 weight_interval_index = 0;
-  uint32 weight_synapse_index = 0;
-  
-  partial.set_weight_table(
-    partial.bias_index(inner_neuron_index),
-    net.weight_table(net.neuron_array(neuron_index).bias_idx())
-  );
+  uint32 weights_copied = 0;
   partial.set_weight_table(
     partial.memory_filter_index(inner_neuron_index),
     net.weight_table(net.neuron_array(neuron_index).memory_filter_idx())
   );
-  Synapse_iterator::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
+  ++weights_copied; /* ++ for Memory ratio */
+  Synapse_iterator::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 network_weight_index){
     partial.set_weight_table(
-      (inner_neuron_weight_index_starts + weights_copied),
-      net.weight_table(net.neuron_array(neuron_index).input_weights(weight_synapse_index).starts() + weight_interval_index)
+      (inner_neuron_weight_index_starts + weights_copied), net.weight_table(network_weight_index)
     );
     ++weights_copied;
-    ++weight_interval_index; 
-    if(
-      weight_interval_index >= net.neuron_array(neuron_index).input_weights(weight_synapse_index).interval_size()
-    ){
-      weight_interval_index = 0; 
-      ++weight_synapse_index;
-    }
   });
 }
 

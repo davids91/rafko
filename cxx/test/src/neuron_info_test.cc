@@ -42,7 +42,7 @@ TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
   CHECK( false == Neuron_info::is_neuron_valid(neuron) );
 
   /* Setting some parameters */
-  neuron.set_bias_idx(0); /* Unfortunately checking against the weight table is not possible without Net context */
+  /* Unfortunately checking against the weight table is not possible without Net context */
   CHECK( false == Neuron_info::is_neuron_valid(neuron) );
 
   neuron.set_memory_filter_idx(0);
@@ -73,14 +73,14 @@ TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
   CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 
   temp_synapse_interval.set_starts(5); /* Adding additional weights */
-  temp_synapse_interval.set_interval_size(5);
+  temp_synapse_interval.set_interval_size(5); /* ..should still be a valid state, since the extra weights count as biases */
   *neuron.add_input_weights() = temp_synapse_interval;
-  CHECK( false == Neuron_info::is_neuron_valid(neuron) );
+  CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 
   temp_synapse_interval.set_starts(5); /* Indices to follow number of weights */
   temp_synapse_interval.set_interval_size(3);
   *neuron.add_input_indices() = temp_synapse_interval;
-  CHECK( false == Neuron_info::is_neuron_valid(neuron) );
+  CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 
   temp_synapse_interval.set_starts(8); /* Indices to follow number of weights */
   temp_synapse_interval.set_interval_size(2);

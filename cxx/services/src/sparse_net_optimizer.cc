@@ -204,54 +204,54 @@ void Sparse_net_optimizer::backpropagation_thread(uint32 solve_thread_index, uin
 }
 
 void Sparse_net_optimizer::accumulate_weight_gradients(uint32 solve_thread_index, uint32 sample_index){
-  uint32 process_thread_iterator = 0;
-  while(static_cast<int>(process_thread_iterator) < net.neuron_array_size()){
+  uint32 neuron_iterator = 0;
+  while(static_cast<sint32>(neuron_iterator) < net.neuron_array_size()){
     while( /* As long as there are remaining threads to open */
       (context.get_max_processing_threads() > process_threads[solve_thread_index].size())
-      &&(net.neuron_array_size() > static_cast<int>(process_thread_iterator))
+      &&(net.neuron_array_size() > static_cast<int>(neuron_iterator))
     ){ /* And the thread would process an existing Neuron */
       process_threads[solve_thread_index].push_back(thread(
         &Sparse_net_optimizer::accumulate_weight_gradients_thread, this, 
-        solve_thread_index, sample_index, process_thread_iterator
+        solve_thread_index, sample_index, neuron_iterator
       ));
-      ++process_thread_iterator;
+      ++neuron_iterator;
     }/* while((context.get_max_processing_threads() > process_threads[solve_thread_index].size()))&&... */
     wait_for_threads(process_threads[solve_thread_index]);
-  } /* while(static_cast<int>(process_thread_iterator) < net.neuron_array_size()) */
+  } /* while(static_cast<int>(neuron_iterator) < net.neuron_array_size()) */
 }
 
 void Sparse_net_optimizer::accumulate_weight_gradients_thread(uint32 solve_thread_index, uint32 sample_index, uint32 neuron_index){
   sdouble32 buffer;
   sdouble32 addition;
-  
-  /* Calculate gradient for Bias (error * 1) */
-  buffer = *get_weight_gradient()[net.neuron_array(neuron_index).bias_idx()];
-  addition = (*error_values[solve_thread_index][neuron_index]);
-  while(!get_weight_gradient()[net.neuron_array(neuron_index).bias_idx()]->compare_exchange_weak(buffer, buffer + addition))
-    buffer = *get_weight_gradient()[net.neuron_array(neuron_index).bias_idx()];
 
   /* Calculate gradient for Memory filter (error * (1-memory_filter)) */
   /* maybe next time.. ? */
 
-  /* Calculate gradient for each Weight (error * corresponding input) */
-  uint32 weight_index = 0;
-  uint32 weight_synapse_index = 0;
+  /* Calculate gradient for each Weight (error * corresponding input); In case of bias, the input is 1.0 */
+  uint32 input_index_offset = 0;
+  uint32 input_synapse_index = 0;
   sdouble32 neuron_input;
-  Synapse_iterator::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
-    if(Synapse_iterator::is_index_input(child_index))
-      neuron_input = train_set.get_input_sample(sample_index)[Synapse_iterator::input_index_from_synapse_index(child_index)];
-        else neuron_input = neuron_data[solve_thread_index][child_index];
-    buffer = *get_weight_gradient()[net.neuron_array(neuron_index).input_weights(weight_synapse_index).starts() + weight_index];
+  Synapse_iterator::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 weight_index){
+    if(static_cast<sint32>(input_synapse_index) < net.neuron_array(neuron_index).input_indices_size()){
+      if(Synapse_iterator::is_index_input(net.neuron_array(neuron_index).input_indices(input_synapse_index).starts())){
+        neuron_input = train_set.get_input_sample(sample_index)[Synapse_iterator::input_index_from_synapse_index(
+          net.neuron_array(neuron_index).input_indices(input_synapse_index).starts() - input_index_offset
+        )];
+      }else neuron_input = neuron_data[solve_thread_index][
+        net.neuron_array(neuron_index).input_indices(input_synapse_index).starts() + input_index_offset
+      ];
+      ++input_index_offset;
+      if(net.neuron_array(neuron_index).input_indices(input_synapse_index).interval_size() <= input_index_offset){
+        input_index_offset = 0;
+        ++input_synapse_index;
+      }
+    }else neuron_input = 1.0;
+
+    buffer = *get_weight_gradient()[weight_index];
     addition = neuron_input * *error_values[solve_thread_index][neuron_index];
     while( /* try to add the calculated gradient to the accumulated value */
-      !get_weight_gradient()[net.neuron_array(neuron_index).input_weights(weight_synapse_index).starts() + weight_index]
-        ->compare_exchange_weak( buffer, buffer + addition )
-    )buffer = *get_weight_gradient()[net.neuron_array(neuron_index).input_weights(weight_synapse_index).starts() + weight_index];
-    ++weight_index;
-    if(weight_index >= net.neuron_array(neuron_index).input_weights(weight_synapse_index).interval_size()){
-      weight_index = 0;
-      ++weight_synapse_index;
-    }
+      !get_weight_gradient()[weight_index]->compare_exchange_weak( buffer, buffer + addition )
+    )buffer = *get_weight_gradient()[weight_index];
   });
 }
 

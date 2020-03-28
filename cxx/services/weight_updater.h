@@ -164,8 +164,7 @@ private:
    * @param[in]  inner_neuron_weight_index_starts  The inner neuron weight index starts
    */
   void copy_weight_to_solution(
-    uint32 neuron_index, uint32 inner_neuron_index, Partial_solution& partial,
-    uint32 neuron_weight_synapse_starts, uint32 inner_neuron_weight_index_starts
+    uint32 neuron_index, uint32 inner_neuron_index, Partial_solution& partial, uint32 inner_neuron_weight_index_starts
   );
 
   /**

@@ -105,7 +105,7 @@ private:
    */
   uint32 neuron_synapse_count = 0;
   uint32 partial_input_synapse_count = 0;
-  int previous_neuron_input_index;
+  sint32 previous_neuron_input_index;
   uint8 previous_neuron_input_source;
   static const uint8 neuron_input_none = 0;
   static const uint8 neuron_input_internal = 1;

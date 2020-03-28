@@ -53,7 +53,7 @@ bool Neuron_info::is_neuron_valid(const Neuron& neuron)
     }
 
     /* Check if inputs from synapses match */
-    return (number_of_input_indexes == number_of_input_weights);
+    return (number_of_input_indexes <= number_of_input_weights);
   } else return false;
 }
 

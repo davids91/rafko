@@ -54,12 +54,13 @@ message Partial_solution{
    */
   repeated transfer_functions neuron_transfer_functions = 11;
   repeated uint32 memory_filter_index = 12;
-  repeated uint32 bias_index = 13;
 
   /** ################################################################################################
    * Synapse information
    * - Positive Neuron synapse inputs are mapped to the previous Partial solution output
    * - Negative Synapse inputs are not mapped to the actual @SparseNet input
+   * - @weight_synapse_number might contain more weights, than @index_synapse_number contains inputs
+   * - Weights additional to inputs shall behave like biases: they shall have an input of 1.0
    */
   repeated uint32 index_synapse_number = 14; /* Number of input index synapses. Every Neuron can have a different number of them. */
   repeated uint32 weight_synapse_number = 15; /* Number of weight index synapses. Every Neuron can have a different number of them. */

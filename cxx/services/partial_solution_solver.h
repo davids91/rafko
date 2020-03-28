@@ -37,7 +37,7 @@ public:
   Partial_solution_solver(
     const Partial_solution& partial_solution, Service_context service_context = Service_context()
   ): detail(partial_solution)
-  ,  internal_iterator(detail.inside_indices())
+  ,  internal_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())
   ,  output_iterator(detail.output_data())
   ,  transfer_function_input(detail.internal_neuron_number(),0)
@@ -138,7 +138,7 @@ private:
   const Partial_solution& detail;
 
   /**
-   * The iterator to go through the Neurons while solving the detail
+   * The iterator to go through the Neuron weights while solving the detail
    */
   Synapse_iterator internal_iterator;
 

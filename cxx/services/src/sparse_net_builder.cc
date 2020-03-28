@@ -86,11 +86,9 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
       /* Add the Neurons */
       expPrevLayerOutput = 0;
       for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++){
-        arg_weight_table[weightIt] = arg_weight_initer->next_bias();
-        arg_weight_table[weightIt+1] = arg_weight_initer->next_memory_filter();
-        arg_neuron_array[neurIt].set_bias_idx(weightIt);
-        arg_neuron_array[neurIt].set_memory_filter_idx(weightIt+1);
-        weightIt += 2;
+        arg_weight_table[weightIt] = arg_weight_initer->next_memory_filter();
+        arg_neuron_array[neurIt].set_memory_filter_idx(weightIt);
+        ++weightIt;
         if(is_allowed_transfer_functions_by_layer_set){
           arg_neuron_array[neurIt].set_transfer_function_idx(
             Transfer_function::next(arg_allowed_transfer_functions_by_layer[layerIt])
@@ -106,7 +104,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
 
         /* Add the previous layer as an input synapse */
         temp_synapse_interval.set_starts(weightIt);
-        temp_synapse_interval.set_interval_size(previous_size);
+        temp_synapse_interval.set_interval_size(previous_size + 1); /* Previous layer + a bias */
         *arg_neuron_array[neurIt].add_input_weights() = temp_synapse_interval;
 
         if(0 == layerIt){
@@ -124,6 +122,9 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
           );
           weightIt++;
         }
+        arg_weight_table[weightIt] = arg_weight_initer->next_bias();
+        weightIt++;
+        
         neurIt++; /* Step the neuron iterator forward */
       }
 

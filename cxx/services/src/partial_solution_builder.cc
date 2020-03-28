@@ -30,18 +30,16 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
 
     /* Copy in Neuron parameters */
     partial.add_neuron_transfer_functions(neuron.transfer_function_idx());
-    partial.add_bias_index(partial.weight_table_size());
-    partial.add_weight_table(net.weight_table(neuron.bias_idx()));
     partial.add_memory_filter_index(partial.weight_table_size());
     partial.add_weight_table(net.weight_table(neuron.memory_filter_idx()));
 
     /* Copy in weights from the net */
     partial.add_weight_synapse_number(neuron.input_weights_size());
-    weight_iterator.iterate([&](unsigned int weight_synapse_size){
+    weight_iterator.iterate([&](uint32 weight_synapse_size){
       temp_synapse_interval.set_starts(partial.weight_table_size());
       temp_synapse_interval.set_interval_size(weight_synapse_size);
       *partial.add_weight_indices() = temp_synapse_interval;
-    },[&](int weight_index){
+    },[&](sint32 weight_index){
       partial.add_weight_table(net.weight_table(weight_index));
     });
 
@@ -50,7 +48,7 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
     previous_neuron_input_source = neuron_input_none;
     previous_neuron_input_index = input_synapse.size(); /* Input value to point above the size of the input */
     uint32 index_synapse_previous_size = partial.inside_indices_size();
-    index_iterator.iterate([&](int neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
+    index_iterator.iterate([&](sint32 neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
       if(!look_for_neuron_input(neuron_input_index)){
         /* Check if the partial input synapse needs to be closed */
         if(!look_for_neuron_input_internally(neuron_input_index)){ /* if the Neuron is not found internally */

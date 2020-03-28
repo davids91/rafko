@@ -38,6 +38,7 @@ using std::make_unique;
 using sparse_net_library::uint8;
 using sparse_net_library::uint16;
 using sparse_net_library::uint32;
+using sparse_net_library::sint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::COST_FUNCTION_MSE;

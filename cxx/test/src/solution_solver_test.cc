@@ -123,7 +123,7 @@ void test_solution_solver_multithread(uint16 threads){
   vector<sdouble32> network_output;
 
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
-    if(0 < variant_iterator){ /* modify some weights and stuff */
+    if(0 < variant_iterator){ /* modify some weights biases and memory filters */
       for(int i = 0; i < partial_solutions[0][0].get().weight_table_size(); ++i){
         partial_solutions[0][0].get().set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
@@ -137,27 +137,19 @@ void test_solution_solver_multithread(uint16 threads){
         partial_solutions[1][1].get().set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
 
-      /* Modify Biases, memory filters and transfer functions */
-      partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().bias_index(0),static_cast<sdouble32>(rand()%110) / double_literal(10.0));
-      partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().bias_index(1),static_cast<sdouble32>(rand()%110) / double_literal(10.0));
+      /* Modify memory filters and transfer functions */
       partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       partial_solutions[0][0].get().set_neuron_transfer_functions(rand()%(partial_solutions[0][0].get().neuron_transfer_functions_size()),Transfer_function::next());
 
-      partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().bias_index(0),static_cast<sdouble32>(rand()%110) / double_literal(10.0));
-      partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().bias_index(1),static_cast<sdouble32>(rand()%110) / double_literal(10.0));
       partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       partial_solutions[0][1].get().set_neuron_transfer_functions(rand()%(partial_solutions[0][1].get().neuron_transfer_functions_size()),Transfer_function::next());
 
-      partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().bias_index(0),static_cast<sdouble32>(rand()%110) / double_literal(10.0));
-      partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().bias_index(1),static_cast<sdouble32>(rand()%110) / double_literal(10.0));
       partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       partial_solutions[1][0].get().set_neuron_transfer_functions(rand()%(partial_solutions[1][0].get().neuron_transfer_functions_size()),Transfer_function::next());
 
-      partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().bias_index(0),static_cast<sdouble32>(rand()%110) / double_literal(10.0));
-      partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().bias_index(1),static_cast<sdouble32>(rand()%110) / double_literal(10.0));
       partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       partial_solutions[1][1].get().set_neuron_transfer_functions(rand()%(partial_solutions[1][1].get().neuron_transfer_functions_size()),Transfer_function::next());
@@ -229,7 +221,7 @@ TEST_CASE("Solution solver manual testing","[solve][small][manual-solve]"){
  * Testing if the solution solver produces a correct output, given a built @SparseNet
  */
 void testing_solution_solver_manually(google::protobuf::Arena* arena){
-  vector<uint32> net_structure = {2,4,3,10,20};
+  vector<uint32> net_structure = {2,4,3,1,2};
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the described net */
@@ -245,12 +237,10 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
 
   Solution_solver solver(solution);
   solver.solve(net_input);
-  vector<sdouble32> result = solver.get_neuron_data();
-  result = {result.end() - solver.get_output_size(),result.end()};
+  vector<sdouble32> result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net.neuron_array_size());
-  manaual_fully_connected_network_result(net_input, expected_neuron_data, net_structure,net);
-  vector<sdouble32> expected_result = {expected_neuron_data.end() - net.output_neuron_number(),expected_neuron_data.end()};
-
+  manaual_fully_connected_network_result(net_input, expected_neuron_data, net_structure, net);
+  vector<sdouble32> expected_result = {expected_neuron_data.end() - net.output_neuron_number(), expected_neuron_data.end()};
   /* Verify if the calculated values match the expected ones */
   REQUIRE( net_structure.back() == result.size() );
   REQUIRE( expected_result.size() == result.size() );
@@ -263,8 +253,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   Solution solution2 = *solution_builder->max_solve_threads(4).device_max_megabytes(solution_size/double_literal(4.0)).arena_ptr(arena).build(net);
   Solution_solver solver2 = Solution_solver(solution2);
   solver2.solve(net_input);
-  result = solver2.get_neuron_data();
-  result = {result.end() - solver2.get_output_size(),result.end()};
+  result = {solver2.get_neuron_data().end() - solver2.get_output_size(),solver2.get_neuron_data().end()};
   
   /* Verify once more if the calculated values match the expected ones */
   for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator){
@@ -279,7 +268,7 @@ TEST_CASE("Solution Solver test based on Fully Connected Dense Net", "[solve][bu
 /*###############################################################################################
  * Testing if the solution solver produces correct data for gradient calculations
  */
-TEST_CASE("Solution Solver test for gradients", "[solve][build-solve][gradient]"){
+TEST_CASE("Solution Solver test for gradients", "[solve][gradient]"){
   vector<uint32> net_structure = {2,4,3,10,20};
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
