@@ -57,7 +57,7 @@ public:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  static void add_to_synapse(int index, uint32& current_synapse_count, RepeatedPtrField<Synapse_interval>* synapse_intervals){
+  static void add_to_synapse(sint32 index, uint32& current_synapse_count, RepeatedPtrField<Synapse_interval>* synapse_intervals){
     if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
       ++current_synapse_count;
       synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
@@ -80,7 +80,7 @@ private:
    *
    * @return     returns true if the neuron index was found in the @Partial_solution input
    */
-  bool look_for_neuron_input(int neuron_input_index);
+  bool look_for_neuron_input(sint32 neuron_input_index);
 
   /**
    * @brief      Looks for the given Neuron index in the @Partial_solution internally,
