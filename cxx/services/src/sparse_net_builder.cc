@@ -108,7 +108,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
         *arg_neuron_array[neurIt].add_input_weights() = temp_synapse_interval;
 
         if(0 == layerIt){
-          temp_synapse_interval.set_starts(Synapse_iterator::synapse_index_from_input_index(0));
+          temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
         }else{
           temp_synapse_interval.set_starts(layerStart);
         }

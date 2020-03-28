@@ -287,8 +287,8 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( 1 == net->neuron_array(1).input_weights_size() );
 
   /* Input Neurons should have their synapse starting from the 0th input */
-  CHECK( Synapse_iterator::synapse_index_from_input_index(0) == net->neuron_array(0).input_indices(0).starts() ); /* 0th Input, translated using Synapse_iterator */
-  CHECK( Synapse_iterator::synapse_index_from_input_index(0) == net->neuron_array(1).input_indices(0).starts() );
+  CHECK( Synapse_iterator<>::synapse_index_from_input_index(0) == net->neuron_array(0).input_indices(0).starts() ); /* 0th Input, translated using Synapse_iterator<> */
+  CHECK( Synapse_iterator<>::synapse_index_from_input_index(0) == net->neuron_array(1).input_indices(0).starts() );
 
   /* The input Layer should have Identity transfer function according to configuration */
   CHECK( TRANSFER_FUNCTION_IDENTITY == net->neuron_array(0).transfer_function_idx() );

@@ -55,7 +55,7 @@ TEST_CASE("Synapse Iteration","[synapse_iteration]"){
 
   uint32 range_iter = 0;
   sint32 manual_index = synapse_indexes[0][0];
-  Synapse_iterator iter(neuron.input_indices());
+  Synapse_iterator<> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
@@ -93,7 +93,7 @@ TEST_CASE("Synapse iteration on a range","[synapse_iteration]"){
 
   uint32 range_iter = 1;
   sint32 manual_index = synapse_indexes[1][0];
-  Synapse_iterator iter(neuron.input_indices());
+  Synapse_iterator<> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
@@ -131,7 +131,7 @@ TEST_CASE("Synapse iteration including negative numbers","[synapse_iteration]"){
 
   uint32 range_iter = 0;
   sint32 manual_index = synapse_indexes[0][0];
-  Synapse_iterator iter(neuron.input_indices());
+  Synapse_iterator<> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
@@ -167,7 +167,7 @@ TEST_CASE("Synapse Iterator direct access","[synapse_iteration]"){
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  Synapse_iterator iter(neuron.input_indices());
+  Synapse_iterator<> iter(neuron.input_indices());
   CHECK( iter[0] == -50 );
   CHECK( iter[5] == -55 );
   CHECK( iter[10] == 70 );
@@ -197,7 +197,7 @@ TEST_CASE("Synapse Iterator Skimming","[synapse_iteration]"){
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  Synapse_iterator iter(neuron.input_indices());
+  Synapse_iterator<> iter(neuron.input_indices());
 
   sint32 manual_index = 0;
   iter.skim([&](int synapse_start, unsigned int synapse_size){
@@ -224,7 +224,7 @@ TEST_CASE("Synapse Iterator Utility functions","[synapse_iteration]"){
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  Synapse_iterator iter(neuron.input_indices());
+  Synapse_iterator<> iter(neuron.input_indices());
   CHECK( 110 == iter.size() );
   CHECK( -89 == iter.back() );
 }

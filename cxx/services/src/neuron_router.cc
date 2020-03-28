@@ -98,7 +98,7 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
     &&(number_of_processed_inputs < neuron_number_of_inputs[visiting.back()]) /* Neuron has some unprocessed and not reserved inputs */
     &&(visiting.back() == visiting_next)  /* no children are found to move on to */
   ){
-    Synapse_iterator iter(net.neuron_array(visiting.back()).input_indices());
+    Synapse_iterator<> iter(net.neuron_array(visiting.back()).input_indices());
     number_of_processed_inputs = *neuron_states[visiting.back()];
     expected_number_of_processed_inputs = *neuron_states[visiting.back()];
     if(is_neuron_in_progress(visiting.back())){ /* If the Neuron is in progess still */
@@ -113,7 +113,7 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
     number_of_processed_inputs = start_input_index_from;
     iter.iterate_terminatable([&](int synapse_input_index)->bool{
       if(
-        (Synapse_iterator::is_index_input(synapse_input_index))
+        (Synapse_iterator<>::is_index_input(synapse_input_index))
         ||(is_neuron_processed(synapse_input_index))
         ||((!strict)&&(is_neuron_reserved(synapse_input_index)))
         /*!Note: In non-strict mode usually the whole of the net is collected into the subset, which might be undesirable compared
@@ -123,7 +123,7 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
         ++number_of_processed_inputs;
         return true;
       }else if(
-        (!Synapse_iterator::is_index_input(synapse_input_index))
+        (!Synapse_iterator<>::is_index_input(synapse_input_index))
         &&(is_neuron_subset_candidate(synapse_input_index, iteration))
       ){
         visiting_next = synapse_input_index;

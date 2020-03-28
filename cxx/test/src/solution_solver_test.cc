@@ -89,14 +89,14 @@ void test_solution_solver_multithread(uint16 threads){
 
   /* [0][0]: Whole of the input */
   manual_2_neuron_partial_solution(partial_solutions[0][0], network_inputs.size(),0);
-  temp_synapse_interval.set_starts(Synapse_iterator::synapse_index_from_input_index(0));
+  temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
   temp_synapse_interval.set_interval_size(network_inputs.size());
   *partial_solutions[0][0].get().add_input_data() = temp_synapse_interval;
   Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(partial_solutions[0][0]);
 
   /* [0][1]: Half of the input */
   manual_2_neuron_partial_solution(partial_solutions[0][1], network_inputs.size()/2,2);
-  temp_synapse_interval.set_starts(Synapse_iterator::synapse_index_from_input_index(network_inputs.size()/2));
+  temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(network_inputs.size()/2));
   temp_synapse_interval.set_interval_size(network_inputs.size()/2);
   *partial_solutions[0][1].get().add_input_data() = temp_synapse_interval;
   Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(partial_solutions[0][1]);

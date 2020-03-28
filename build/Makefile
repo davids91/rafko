@@ -20,7 +20,6 @@ BUILDER_SOURCES += ../cxx/services/src/solution_builder.cc ../cxx/services/src/p
 SOLVER_SOURCES = ../cxx/services/src/partial_solution_solver.cc ../cxx/services/src/solution_solver.cc
 SOLVER_SOURCES += ../cxx/services/src/sparse_net_optimizer.cc
 
-HELPER_SOURCES = ../cxx/services/src/synapse_iterator.cc
 HELPER_SOURCES += ../cxx/models/src/dense_net_weight_initializer.cc
 HELPER_SOURCES += ../cxx/services/src/neuron_router.cc ../cxx/models/src/neuron_info.cc
 HELPER_SOURCES += ../cxx/models/src/transfer_function.cc

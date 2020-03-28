@@ -46,7 +46,7 @@ void Weight_updater::update_solution_with_weights(Solution& solution){
   uint32 inner_neuron_weight_index_starts = 0;
   uint32 neuron_index;
   for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
-    Synapse_iterator output_iterator(solution.partial_solutions(partial_index).output_data());
+    Synapse_iterator<> output_iterator(solution.partial_solutions(partial_index).output_data());
     inner_neuron_iterator = 0;
     neuron_weight_synapse_starts = 0;
     inner_neuron_weight_index_starts = 0;
@@ -82,7 +82,7 @@ void Weight_updater::copy_weight_to_solution(
     net.weight_table(net.neuron_array(neuron_index).memory_filter_idx())
   );
   ++weights_copied; /* ++ for Memory ratio */
-  Synapse_iterator::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 network_weight_index){
+  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 network_weight_index){
     partial.set_weight_table(
       (inner_neuron_weight_index_starts + weights_copied), net.weight_table(network_weight_index)
     );

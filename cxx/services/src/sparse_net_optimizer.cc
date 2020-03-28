@@ -155,7 +155,7 @@ void Sparse_net_optimizer::propagate_output_errors_back(uint32 solve_thread_inde
       ){
         if( /* In case the current synapse index points to a Neuron in the network */
           (static_cast<uint32>(net.neuron_array_size()) > (gradient_step.neuron_synapses(synapses_iterator).starts() + synapse_index_iterator))
-          &&(!Synapse_iterator::is_index_input(gradient_step.neuron_synapses(synapses_iterator).starts()))
+          &&(!Synapse_iterator<>::is_index_input(gradient_step.neuron_synapses(synapses_iterator).starts()))
         ){ /* And the current synapse index is not pointing to an input */
           process_threads[solve_thread_index].push_back(thread(
             &Sparse_net_optimizer::backpropagation_thread, this, solve_thread_index,
@@ -179,8 +179,8 @@ void Sparse_net_optimizer::backpropagation_thread(uint32 solve_thread_index, uin
   sdouble32 addition;
   uint32 weight_index = 0;
   uint32 weight_synapse_index = 0;
-  Synapse_iterator::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
-    if(!Synapse_iterator::is_index_input(child_index)){
+  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
+    if(!Synapse_iterator<>::is_index_input(child_index)){
       buffer = *error_values[solve_thread_index][child_index];
       addition = *error_values[solve_thread_index][neuron_index]
         * net.weight_table(net.neuron_array(neuron_index).input_weights(weight_synapse_index).starts() + weight_index)
@@ -231,10 +231,10 @@ void Sparse_net_optimizer::accumulate_weight_gradients_thread(uint32 solve_threa
   uint32 input_index_offset = 0;
   uint32 input_synapse_index = 0;
   sdouble32 neuron_input;
-  Synapse_iterator::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 weight_index){
+  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 weight_index){
     if(static_cast<sint32>(input_synapse_index) < net.neuron_array(neuron_index).input_indices_size()){
-      if(Synapse_iterator::is_index_input(net.neuron_array(neuron_index).input_indices(input_synapse_index).starts())){
-        neuron_input = train_set.get_input_sample(sample_index)[Synapse_iterator::input_index_from_synapse_index(
+      if(Synapse_iterator<>::is_index_input(net.neuron_array(neuron_index).input_indices(input_synapse_index).starts())){
+        neuron_input = train_set.get_input_sample(sample_index)[Synapse_iterator<>::input_index_from_synapse_index(
           net.neuron_array(neuron_index).input_indices(input_synapse_index).starts() - input_index_offset
         )];
       }else neuron_input = neuron_data[solve_thread_index][

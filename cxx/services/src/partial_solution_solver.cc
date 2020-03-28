@@ -28,8 +28,8 @@ namespace sparse_net_library {
 void Partial_solution_solver::collect_input_data(vector<sdouble32>& input_data, vector<sdouble32>& neuron_data){
   uint32 index = 0;
   input_iterator.iterate([&](int synapse_index){
-    if(Synapse_iterator::is_index_input(synapse_index)){ /* If @Partial_solution input is from the network input */
-      collected_input_data[index] = input_data[Synapse_iterator::input_index_from_synapse_index(synapse_index)];
+    if(Synapse_iterator<>::is_index_input(synapse_index)){ /* If @Partial_solution input is from the network input */
+      collected_input_data[index] = input_data[Synapse_iterator<>::input_index_from_synapse_index(synapse_index)];
     }else if(neuron_data.size() > static_cast<std::size_t>(synapse_index)){  /* If @Partial_solution input is from the previous row */
       collected_input_data[index] = neuron_data[synapse_index];
     }
@@ -50,8 +50,8 @@ void Partial_solution_solver::solve(){
       /* Collect input only as long as it's assigned to the current inner neuron */
       if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){
         /* Neuron gets its input from the partial solution input */
-        if(Synapse_iterator::is_index_input(detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts()))
-          new_neuron_input = collected_input_data[Synapse_iterator::input_index_from_synapse_index(
+        if(Synapse_iterator<>::is_index_input(detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts()))
+          new_neuron_input = collected_input_data[Synapse_iterator<>::input_index_from_synapse_index(
             detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts() - input_index_offset
           )];
         else new_neuron_input = neuron_output[ /* Neuron gets its input internaly */

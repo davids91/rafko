@@ -97,7 +97,7 @@ private:
    */
   const SparseNet& net;
   Partial_solution& partial;
-  Synapse_iterator input_synapse;
+  Synapse_iterator<> input_synapse;
 
   /**
    * Temporary helper variables used only during Neuron mapping which is started by @add_neuron_to_partial_solution

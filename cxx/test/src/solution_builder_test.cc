@@ -63,7 +63,7 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
   for(sint32 neuron_iterator = 0; neuron_iterator < net->neuron_array_size(); ++neuron_iterator){
     found = false;
     for(sint32 partial_solution_iterator = 0; partial_solution_iterator < solution->partial_solutions_size(); ++partial_solution_iterator){
-      Synapse_iterator output_neurons(solution->partial_solutions(partial_solution_iterator).output_data());
+      Synapse_iterator<> output_neurons(solution->partial_solutions(partial_solution_iterator).output_data());
       for(
         uint32 internal_neuron_iterator = 0;
         internal_neuron_iterator < solution->partial_solutions(partial_solution_iterator).internal_neuron_number();

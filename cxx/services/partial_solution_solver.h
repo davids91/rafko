@@ -140,13 +140,13 @@ private:
   /**
    * The iterator to go through the Neuron weights while solving the detail
    */
-  Synapse_iterator internal_iterator;
+  Synapse_iterator<> internal_iterator;
 
   /**
    * The iterator to go through the I/O of the detail
    */
-  Synapse_iterator input_iterator;
-  Synapse_iterator output_iterator;
+  Synapse_iterator<> input_iterator;
+  Synapse_iterator<> output_iterator;
 
   /**
    * For Gradient information, intermeidate results are required to be stored.
