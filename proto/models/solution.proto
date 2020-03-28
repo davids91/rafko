@@ -30,7 +30,7 @@ import "common.proto";
  */
 message Backpropagation_queue{
   repeated uint32 cols = 1; /* Number of neurons to be calculated at once */
-  repeated Synapse_interval neuron_synapses = 2; /* Neuron indices encapsulating the whole network */
+  repeated Index_synapse_interval neuron_synapses = 2; /* Neuron indices encapsulating the whole network */
 }
 
 /**
@@ -45,8 +45,8 @@ message Partial_solution{
    */
   uint32 internal_neuron_number = 1; /* number of neurons used in this partial solution */
   repeated double weight_table = 2; /* stores the weights paired to @inside_indexes for the inputs of the Neurons; Ranges [0.0,1.0) */
-  repeated Synapse_interval input_data = 3; /* @Partial_solution input: negative intervals are network inputs, positives are inner neuron data */
-  repeated Synapse_interval output_data = 4; /* @Partial_solution output; The inner Neurons mapped to Neuron indices in the @SparseNet */
+  repeated Input_synapse_interval input_data = 3; /* @Partial_solution input: negative intervals are network inputs, positives are inner neuron data */
+  repeated Index_synapse_interval output_data = 4; /* @Partial_solution output; The inner Neurons mapped to Neuron indices in the @SparseNet */
 
   /** ################################################################################################
    * A representation of the actual neuron to be used in this intermediate solution
@@ -71,7 +71,7 @@ message Partial_solution{
    * - Negative intervals are mapped to the Partial solution input
    * - Since solving the detail is incremental, the start of each Neuron's input synapse index
    *   is determined at runtime, so it doesn't need to be stored    */
-  repeated Synapse_interval inside_indices = 20;
+  repeated Input_synapse_interval inside_indices = 20;
 
   /**
    * Inner Neuron weight intervals corresponding to the @weight_table in the @Partial_solution
@@ -82,7 +82,7 @@ message Partial_solution{
    * - Although @weight_synapse_number is not used while solving the @Partial_solution it can be
    *   used to check wether the above statement holds true
    */
-  repeated Synapse_interval weight_indices = 30;
+  repeated Index_synapse_interval weight_indices = 30;
 }
 
 /**

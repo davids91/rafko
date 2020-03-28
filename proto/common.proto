@@ -66,7 +66,7 @@ message Data_set{
 }
 
 /**
- * @brief      This class describes a synapse. A synapse corresponds with a table of intervals.
+ * @brief      These classes describes a synapse each. A synapse corresponds with a table of intervals.
  *             The number of @starts and @sizes should always be equal. Each pair of them describes
  *             an index interval where @starts[x] states where the interval x is starting, and @sizes[x]
  *             denotes the number of indices present in taht interval. The intervals are free to overlap
@@ -83,7 +83,14 @@ message Data_set{
  *             The -1 becomes index 0, -2 ==> 1 and so on... This is needed to be able to use negative intervals as
  *             indexes in arrays.
  */
-message Synapse_interval{
+message Input_synapse_interval{
+  uint32 reach_past_loop = 1; /* How far in the past runs of the network is taken from. 0 is current run. */
   sint32 starts = 10; /* Starting indexes of intervals */
   uint32 interval_size = 11; /* Sizes of intervals */
 }
+
+message Index_synapse_interval{
+  sint32 starts = 10; /* Starting indexes of intervals */
+  uint32 interval_size = 11; /* Sizes of intervals */
+}
+

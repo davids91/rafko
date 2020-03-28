@@ -26,8 +26,9 @@ namespace sparse_net_library_test {
 
   using sparse_net_library::Neuron;
   using sparse_net_library::Neuron_info;
+  using sparse_net_library::Index_synapse_interval;
+  using sparse_net_library::Input_synapse_interval;
   using sparse_net_library::Synapse_iterator;
-  using sparse_net_library::Synapse_interval;
   using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 
 /*###############################################################################################
@@ -35,7 +36,8 @@ namespace sparse_net_library_test {
  * */
 TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
 
-  Synapse_interval temp_synapse_interval;
+  Index_synapse_interval temp_index_interval;
+  Input_synapse_interval temp_input_interval;
 
   /* Empty Neuron should be invalid */
   Neuron neuron = Neuron();
@@ -52,39 +54,39 @@ TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
   CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 
   /* Setting indexing information */
-  temp_synapse_interval.set_starts(0); /* Adding weight inputs */
-  temp_synapse_interval.set_interval_size(0);
-  *neuron.add_input_weights() = temp_synapse_interval;
+  temp_index_interval.set_starts(0); /* Adding weight inputs */
+  temp_index_interval.set_interval_size(0);
+  *neuron.add_input_weights() = temp_index_interval;
   CHECK( false == Neuron_info::is_neuron_valid(neuron) );
 
-  temp_synapse_interval.set_starts(0); /* Adding an index input of a non-matching number */
-  temp_synapse_interval.set_interval_size(5);
-  *neuron.add_input_indices() = temp_synapse_interval;
+  temp_input_interval.set_starts(0); /* Adding an index input of a non-matching number */
+  temp_input_interval.set_interval_size(5);
+  *neuron.add_input_indices() = temp_input_interval;
   CHECK( false == Neuron_info::is_neuron_valid(neuron) );
 
-  temp_synapse_interval.set_starts(0); /* Extending input indices to match weights */
-  temp_synapse_interval.set_interval_size(4);
-  *neuron.add_input_weights() = temp_synapse_interval;
+  temp_index_interval.set_starts(0); /* Extending input indices to match weights */
+  temp_index_interval.set_interval_size(4);
+  *neuron.add_input_weights() = temp_index_interval;
   CHECK( false == Neuron_info::is_neuron_valid(neuron) );
 
-  temp_synapse_interval.set_starts(4);
-  temp_synapse_interval.set_interval_size(1);
-  *neuron.add_input_weights() = temp_synapse_interval;
+  temp_index_interval.set_starts(4);
+  temp_index_interval.set_interval_size(1);
+  *neuron.add_input_weights() = temp_index_interval;
   CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 
-  temp_synapse_interval.set_starts(5); /* Adding additional weights */
-  temp_synapse_interval.set_interval_size(5); /* ..should still be a valid state, since the extra weights count as biases */
-  *neuron.add_input_weights() = temp_synapse_interval;
+  temp_index_interval.set_starts(5); /* Adding additional weights */
+  temp_index_interval.set_interval_size(5); /* ..should still be a valid state, since the extra weights count as biases */
+  *neuron.add_input_weights() = temp_index_interval;
   CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 
-  temp_synapse_interval.set_starts(5); /* Indices to follow number of weights */
-  temp_synapse_interval.set_interval_size(3);
-  *neuron.add_input_indices() = temp_synapse_interval;
+  temp_input_interval.set_starts(5); /* Indices to follow number of weights */
+  temp_input_interval.set_interval_size(3);
+  *neuron.add_input_indices() = temp_input_interval;
   CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 
-  temp_synapse_interval.set_starts(8); /* Indices to follow number of weights */
-  temp_synapse_interval.set_interval_size(2);
-  *neuron.add_input_indices() = temp_synapse_interval;
+  temp_input_interval.set_starts(8); /* Indices to follow number of weights */
+  temp_input_interval.set_interval_size(2);
+  *neuron.add_input_indices() = temp_input_interval;
   CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 }
 

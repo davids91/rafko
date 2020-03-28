@@ -41,8 +41,9 @@ using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Partial_solution_solver;
 using sparse_net_library::Transfer_function;
+using sparse_net_library::Index_synapse_interval;
+using sparse_net_library::Input_synapse_interval;
 using sparse_net_library::Synapse_iterator;
-using sparse_net_library::Synapse_interval;
 
 /*###############################################################################################
  * Testing if the solver processes a partial_solution detail correctly
@@ -62,7 +63,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial_sol
   vector<sdouble32> neuron_output(2);
   vector<sdouble32> expected_neuron_output;
   vector<sdouble32> empty_vector = vector<sdouble32>();
-  Synapse_interval temp_synapse_interval;
+  Input_synapse_interval temp_synapse_interval;
 
   /* Define the input and structure of the network */
   vector<sdouble32> network_inputs = {double_literal(10.0),double_literal(5.0)};
@@ -130,12 +131,13 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial_sol
 TEST_CASE("Test Partial solution input collection","[solve][partial_solution][input_collection]"){
   Partial_solution partial_solution;
   vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
-  Synapse_interval temp_synapse_interval;
+  Index_synapse_interval temp_index_interval;
+  Input_synapse_interval temp_input_interval;
   vector<sdouble32> empty_vector = vector<sdouble32>();
 
-  temp_synapse_interval.set_starts(0);
-  temp_synapse_interval.set_interval_size(network_inputs.size());
-  *partial_solution.add_output_data() = temp_synapse_interval;
+  temp_index_interval.set_starts(0);
+  temp_index_interval.set_interval_size(network_inputs.size());
+  *partial_solution.add_output_data() = temp_index_interval;
   partial_solution.set_internal_neuron_number(network_inputs.size());
   partial_solution.add_weight_table(double_literal(0.0));  /* A weight for the memory filter */
   for(uint32 i = 0; i < network_inputs.size(); ++i){
@@ -144,38 +146,38 @@ TEST_CASE("Test Partial solution input collection","[solve][partial_solution][in
     partial_solution.add_memory_filter_index(0);
 
     partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights */
-    temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(i));
-    temp_synapse_interval.set_interval_size(1u); /* Input index synapse starts at the beginning of the data and goes on for an interval of 1 */
-    *partial_solution.add_inside_indices() = temp_synapse_interval;
+    temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(i));
+    temp_input_interval.set_interval_size(1u); /* Input index synapse starts at the beginning of the data and goes on for an interval of 1 */
+    *partial_solution.add_inside_indices() = temp_input_interval;
 
     partial_solution.add_weight_synapse_number(1);
-    temp_synapse_interval.set_starts(1u);
-    temp_synapse_interval.set_interval_size(1u); /* weight of 1 here */
-    *partial_solution.add_weight_indices() = temp_synapse_interval;
+    temp_index_interval.set_starts(1u);
+    temp_index_interval.set_interval_size(1u); /* weight of 1 here */
+    *partial_solution.add_weight_indices() = temp_index_interval;
   }
 
   /**###################################################################################################
    * Add the partial solution inputs
    */
   /* First 3 elements */
-  temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
-  temp_synapse_interval.set_interval_size(3);
-  *partial_solution.add_input_data() = temp_synapse_interval;
+  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
+  temp_input_interval.set_interval_size(3);
+  *partial_solution.add_input_data() = temp_input_interval;
 
   /* Elements from 3 to 5 */
-  temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(3));
-  temp_synapse_interval.set_interval_size(3);
-  *partial_solution.add_input_data() = temp_synapse_interval;
+  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(3));
+  temp_input_interval.set_interval_size(3);
+  *partial_solution.add_input_data() = temp_input_interval;
 
   /* Elements from 6 to 8 */
-  temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(6));
-  temp_synapse_interval.set_interval_size(2);
-  *partial_solution.add_input_data() = temp_synapse_interval;
+  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(6));
+  temp_input_interval.set_interval_size(2);
+  *partial_solution.add_input_data() = temp_input_interval;
 
   /* Elements from 8 to 9 ( to the end ) */
-    temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(8));
-  temp_synapse_interval.set_interval_size(2);
-  *partial_solution.add_input_data() = temp_synapse_interval;
+  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(8));
+  temp_input_interval.set_interval_size(2);
+  *partial_solution.add_input_data() = temp_input_interval;
 
   /* Prepare the partial solution */
   Partial_solution_solver solver(partial_solution);

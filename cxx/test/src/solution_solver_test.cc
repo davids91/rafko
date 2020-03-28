@@ -48,8 +48,9 @@ using sparse_net_library::Partial_solution_solver;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Solution_solver;
 using sparse_net_library::Solution;
+using sparse_net_library::Index_synapse_interval;
+using sparse_net_library::Input_synapse_interval;
 using sparse_net_library::Synapse_iterator;
-using sparse_net_library::Synapse_interval;
 using sparse_net_library::Transfer_function;
 using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::Service_context;
@@ -85,34 +86,34 @@ void test_solution_solver_multithread(uint16 threads){
   };
 
   vector<sdouble32> network_inputs = {double_literal(5.1),double_literal(10.3),double_literal(3.2),double_literal(9.4)};
-  Synapse_interval temp_synapse_interval;
+  Input_synapse_interval temp_input_interval;
 
   /* [0][0]: Whole of the input */
   manual_2_neuron_partial_solution(partial_solutions[0][0], network_inputs.size(),0);
-  temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
-  temp_synapse_interval.set_interval_size(network_inputs.size());
-  *partial_solutions[0][0].get().add_input_data() = temp_synapse_interval;
+  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
+  temp_input_interval.set_interval_size(network_inputs.size());
+  *partial_solutions[0][0].get().add_input_data() = temp_input_interval;
   Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(partial_solutions[0][0]);
 
   /* [0][1]: Half of the input */
   manual_2_neuron_partial_solution(partial_solutions[0][1], network_inputs.size()/2,2);
-  temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(network_inputs.size()/2));
-  temp_synapse_interval.set_interval_size(network_inputs.size()/2);
-  *partial_solutions[0][1].get().add_input_data() = temp_synapse_interval;
+  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(network_inputs.size()/2));
+  temp_input_interval.set_interval_size(network_inputs.size()/2);
+  *partial_solutions[0][1].get().add_input_data() = temp_input_interval;
   Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(partial_solutions[0][1]);
 
   /* [1][0]: Whole of the previous row's data --> neuron [0] to [3] */
   manual_2_neuron_partial_solution(partial_solutions[1][0],4,4);
-  temp_synapse_interval.set_starts(0);
-  temp_synapse_interval.set_interval_size(4);
-  *partial_solutions[1][0].get().add_input_data() = temp_synapse_interval;
+  temp_input_interval.set_starts(0);
+  temp_input_interval.set_interval_size(4);
+  *partial_solutions[1][0].get().add_input_data() = temp_input_interval;
   Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(partial_solutions[1][0]);
 
   /* [1][1]: Half of the previous row's data ( in the middle) --> neuron [1] to [2] */
   manual_2_neuron_partial_solution(partial_solutions[1][1],2,6);
-  temp_synapse_interval.set_starts(1);
-  temp_synapse_interval.set_interval_size(2);
-  *partial_solutions[1][1].get().add_input_data() = temp_synapse_interval;
+  temp_input_interval.set_starts(1);
+  temp_input_interval.set_interval_size(2);
+  *partial_solutions[1][1].get().add_input_data() = temp_input_interval;
   Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(partial_solutions[1][1]);
 
   /* Solve the compiled Solution */

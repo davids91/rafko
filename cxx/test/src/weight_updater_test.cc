@@ -47,7 +47,6 @@ using sparse_net_library::SparseNet;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Solution;
 using sparse_net_library::Synapse_iterator;
-using sparse_net_library::Synapse_interval;
 using sparse_net_library::Weight_updater;
 
 /*###############################################################################################

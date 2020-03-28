@@ -67,7 +67,7 @@ Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net, Ser
   /* Push queue array into gradient step */
   uint32 previous_added_index = -1;
   uint32 number_of_neurons_in_depth;
-  Synapse_interval tmp_interval = Synapse_interval();
+  Index_synapse_interval tmp_interval = Index_synapse_interval();
   for(auto depth_iterator = neuron_queue.rbegin(); depth_iterator != neuron_queue.rend(); ++depth_iterator){
     number_of_neurons_in_depth = 0;
     for(uint32 neuron_index : *depth_iterator){

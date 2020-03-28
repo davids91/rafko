@@ -98,7 +98,7 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
     &&(number_of_processed_inputs < neuron_number_of_inputs[visiting.back()]) /* Neuron has some unprocessed and not reserved inputs */
     &&(visiting.back() == visiting_next)  /* no children are found to move on to */
   ){
-    Synapse_iterator<> iter(net.neuron_array(visiting.back()).input_indices());
+    Synapse_iterator<Input_synapse_interval> iter(net.neuron_array(visiting.back()).input_indices());
     number_of_processed_inputs = *neuron_states[visiting.back()];
     expected_number_of_processed_inputs = *neuron_states[visiting.back()];
     if(is_neuron_in_progress(visiting.back())){ /* If the Neuron is in progess still */

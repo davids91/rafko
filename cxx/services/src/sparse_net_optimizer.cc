@@ -179,7 +179,7 @@ void Sparse_net_optimizer::backpropagation_thread(uint32 solve_thread_index, uin
   sdouble32 addition;
   uint32 weight_index = 0;
   uint32 weight_synapse_index = 0;
-  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
+  Synapse_iterator<Input_synapse_interval>::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
     if(!Synapse_iterator<>::is_index_input(child_index)){
       buffer = *error_values[solve_thread_index][child_index];
       addition = *error_values[solve_thread_index][neuron_index]

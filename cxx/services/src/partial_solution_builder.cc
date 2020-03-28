@@ -22,9 +22,9 @@ namespace sparse_net_library{
 void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_index){
   if(net.neuron_array_size() > static_cast<int>(neuron_index)){
     const Neuron& neuron = net.neuron_array(neuron_index);
-    Synapse_interval temp_synapse_interval;
+    Index_synapse_interval temp_synapse_interval;
     Synapse_iterator<> weight_iterator(neuron.input_weights());
-    Synapse_iterator<> index_iterator(neuron.input_indices());
+    Synapse_iterator<Input_synapse_interval> index_iterator(neuron.input_indices());
     /* Add a new Neuron into the partial solution */
     partial.set_internal_neuron_number(partial.internal_neuron_number() + 1);
 

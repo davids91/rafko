@@ -57,6 +57,7 @@ public:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
+  template<typename Synapse_interval = Input_synapse_interval>
   static void add_to_synapse(sint32 index, uint32& current_synapse_count, RepeatedPtrField<Synapse_interval>* synapse_intervals){
     if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
       ++current_synapse_count;
@@ -97,7 +98,7 @@ private:
    */
   const SparseNet& net;
   Partial_solution& partial;
-  Synapse_iterator<> input_synapse;
+  Synapse_iterator<Input_synapse_interval> input_synapse;
 
   /**
    * Temporary helper variables used only during Neuron mapping which is started by @add_neuron_to_partial_solution

@@ -145,7 +145,7 @@ private:
   /**
    * The iterator to go through the I/O of the detail
    */
-  Synapse_iterator<> input_iterator;
+  Synapse_iterator<Input_synapse_interval> input_iterator;
   Synapse_iterator<> output_iterator;
 
   /**

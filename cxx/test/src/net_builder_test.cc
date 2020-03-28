@@ -45,8 +45,9 @@ namespace sparse_net_library_test {
   using sparse_net_library::TRANSFER_FUNCTION_TANH;
   using sparse_net_library::TRANSFER_FUNCTION_RELU;
   using sparse_net_library::TRANSFER_FUNCTION_SELU;
+  using sparse_net_library::Input_synapse_interval;
+  using sparse_net_library::Index_synapse_interval;
   using sparse_net_library::Synapse_iterator;
-  using sparse_net_library::Synapse_interval;
   using sparse_net_library::COST_FUNCTION_MSE;
 
 /*###############################################################################################
@@ -62,7 +63,8 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   using std::make_shared;
 
   /* Create the single Weight Table */
-  Synapse_interval temp_synapse_interval;
+  Index_synapse_interval temp_index_interval;
+  Input_synapse_interval temp_input_interval;
   sdouble32 used_weight = double_literal(0.5);
   transfer_functions used_transfer_function = TRANSFER_FUNCTION_SIGMOID;
   vector<sdouble32> weight_table {double_literal(0.0),double_literal(0.0)};
@@ -76,34 +78,34 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   /* Neuron 0 Has an input of 1 */
   neuron_table[0].set_transfer_function_idx(used_transfer_function);
   neuron_table[0].set_memory_filter_idx(0); /* Weight 0 in the weight_table */
-  temp_synapse_interval.set_starts(0); /* Input Starting from 0 */
-  temp_synapse_interval.set_interval_size(1); /* 1 Input */
-  *neuron_table[0].add_input_indices() = temp_synapse_interval;
-  temp_synapse_interval.set_starts(0); /* Weight 0 in the weight_table */
-  temp_synapse_interval.set_interval_size(2); /* Weight0 + bias0 in the weight_table */
-  *neuron_table[0].add_input_weights() = temp_synapse_interval;
+  temp_input_interval.set_starts(0); /* Input Starting from 0 */
+  temp_input_interval.set_interval_size(1); /* 1 Input */
+  *neuron_table[0].add_input_indices() = temp_input_interval;
+  temp_index_interval.set_starts(0); /* Weight 0 in the weight_table */
+  temp_index_interval.set_interval_size(2); /* Weight0 + bias0 in the weight_table */
+  *neuron_table[0].add_input_weights() = temp_index_interval;
   REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[0]) );
 
   /* Neuron 1 Has Neuron 0 as input */
   neuron_table[1].set_transfer_function_idx(used_transfer_function);
   neuron_table[1].set_memory_filter_idx(0);
-  temp_synapse_interval.set_starts(0);
-  temp_synapse_interval.set_interval_size(1);
-  *neuron_table[1].add_input_indices() = temp_synapse_interval;
-  temp_synapse_interval.set_starts(0);
-  temp_synapse_interval.set_interval_size(2);
-  *neuron_table[1].add_input_weights() = temp_synapse_interval;
+  temp_input_interval.set_starts(0);
+  temp_input_interval.set_interval_size(1);
+  *neuron_table[1].add_input_indices() = temp_input_interval;
+  temp_index_interval.set_starts(0);
+  temp_index_interval.set_interval_size(2);
+  *neuron_table[1].add_input_weights() = temp_index_interval;
   REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[1]) );
 
   /* Neuron 2 Also has Neuron 0 as input */
   neuron_table[2].set_transfer_function_idx(used_transfer_function);
   neuron_table[2].set_memory_filter_idx(0);
-  temp_synapse_interval.set_starts(0);
-  temp_synapse_interval.set_interval_size(1);
-  *neuron_table[2].add_input_indices() = temp_synapse_interval;
-  temp_synapse_interval.set_starts(0);
-  temp_synapse_interval.set_interval_size(2);
-  *neuron_table[2].add_input_weights() = temp_synapse_interval;
+  temp_input_interval.set_starts(0);
+  temp_input_interval.set_interval_size(1);
+  *neuron_table[2].add_input_indices() = temp_input_interval;
+  temp_index_interval.set_starts(0);
+  temp_index_interval.set_interval_size(2);
+  *neuron_table[2].add_input_weights() = temp_index_interval;
   REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[2]) );
 
   /* Pass the net into the builder */

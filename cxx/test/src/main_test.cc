@@ -44,21 +44,23 @@ using sparse_net_library::sint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::Transfer_function;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
+using sparse_net_library::Input_synapse_interval;
+using sparse_net_library::Index_synapse_interval;
 using sparse_net_library::Synapse_iterator;
-using sparse_net_library::Synapse_interval;
 using sparse_net_library::Neuron;
 
 void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset){
 
-  Synapse_interval temp_synapse_interval;
+  Input_synapse_interval temp_input_interval;
+  Index_synapse_interval temp_index_interval;
 
   /**###################################################################################################
    * Neuron global parameters in partial
    */
   partial_solution.set_internal_neuron_number(2);
-  temp_synapse_interval.set_starts(neuron_offset + 0u);
-  temp_synapse_interval.set_interval_size(2);
-  *partial_solution.add_output_data() = temp_synapse_interval;
+  temp_index_interval.set_starts(neuron_offset + 0u);
+  temp_index_interval.set_interval_size(2);
+  *partial_solution.add_output_data() = temp_index_interval;
 
   for(uint32 i = 0; i < number_of_inputs; ++i){
     partial_solution.add_weight_table(double_literal(1.0)); /* weight for the inputs coming to the first Neuron */
@@ -79,14 +81,14 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
 
   /* inputs go to neuron1 */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights */
-  temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0)); /* Input index synapse starts at the beginning of the data */
-  temp_synapse_interval.set_interval_size(number_of_inputs); /* Neuron 1 has an input index synapse of the inputs */
-  *partial_solution.add_inside_indices() = temp_synapse_interval;
+  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0)); /* Input index synapse starts at the beginning of the data */
+  temp_input_interval.set_interval_size(number_of_inputs); /* Neuron 1 has an input index synapse of the inputs */
+  *partial_solution.add_inside_indices() = temp_input_interval;
 
   partial_solution.add_weight_synapse_number(1u);
-  temp_synapse_interval.set_starts(0u);
-  temp_synapse_interval.set_interval_size(number_of_inputs + 1); /* Neuron 1 has the inputs in its only weight synapse */
-  *partial_solution.add_weight_indices() = temp_synapse_interval;
+  temp_index_interval.set_starts(0u);
+  temp_index_interval.set_interval_size(number_of_inputs + 1); /* Neuron 1 has the inputs in its only weight synapse */
+  *partial_solution.add_weight_indices() = temp_index_interval;
 
   /**###################################################################################################
    * The second Neuron shall only have the first neuron as input
@@ -98,15 +100,15 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
 
   /* neuron1 goes to neuron2;  that is the output which isn't in the inside indexes */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights*/
-  temp_synapse_interval.set_starts(0u); /* The input synapse starts at the 1st internal Neuron (index 0) */
-  temp_synapse_interval.set_interval_size(1u); /* Neuron 2 has an input synapse of size 1 plus a bias*/
-  *partial_solution.add_inside_indices() = temp_synapse_interval;
+  temp_input_interval.set_starts(0u); /* The input synapse starts at the 1st internal Neuron (index 0) */
+  temp_input_interval.set_interval_size(1u); /* Neuron 2 has an input synapse of size 1 plus a bias*/
+  *partial_solution.add_inside_indices() = temp_input_interval;
   partial_solution.add_weight_synapse_number(1u);
-  temp_synapse_interval.set_starts(
+  temp_index_interval.set_starts(
     number_of_inputs             + 1u            + 1u
   ); /* number of inputs + bias1 + memory_ratio1 + index start*/
-  temp_synapse_interval.set_interval_size(2); /* Neuron 2 has a an weight synapse of size 1 + a bias*/
-  *partial_solution.add_weight_indices() = temp_synapse_interval;
+  temp_index_interval.set_interval_size(2); /* Neuron 2 has a an weight synapse of size 1 + a bias*/
+  *partial_solution.add_weight_indices() = temp_index_interval;
 }
 
 void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdouble32>& prev_neuron_output, const Partial_solution& partial_solution, uint32 neuron_offset){
@@ -191,7 +193,7 @@ void check_if_the_same(SparseNet& net, Solution& solution){
       weight_synapse_offset = 0;
 
       /* Since Neurons take their inputs from the partial solution input, test iterates over it */
-      Synapse_iterator<> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
+      Synapse_iterator<Input_synapse_interval> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
       Synapse_iterator<> output_neurons(solution.partial_solutions(partial_solution_iterator).output_data());
       for( /* Skim through the inner neurons in the partial solution until the current one if found */
         uint32 inner_neuron_iterator = 0;
@@ -216,8 +218,8 @@ void check_if_the_same(SparseNet& net, Solution& solution){
           /* Test if all of the neurons inputs are are the same as the ones in the net */
           neuron_synapse_element_iterator = 0;
           /* Test iterates over the inner neurons synapse to see if it matches the Neuron synapse */
-          Synapse_iterator<> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
-          Synapse_iterator<> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
+          Synapse_iterator<Input_synapse_interval> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
+          Synapse_iterator<Input_synapse_interval> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
           inner_neuron_input_iterator.iterate([&](sint32 input_index){ /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input s true ) */
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!Synapse_iterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
