@@ -14,11 +14,10 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-
-#include <random>
-
 #include "test/catch.hpp"
 #include "test/test_mockups.h"
+
+#include <random>
 
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
