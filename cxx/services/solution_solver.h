@@ -80,14 +80,14 @@ public:
    * @return     The neuron data.
    */
   const vector<sdouble32>& get_neuron_data(void) const{
-    return neuron_data;
+    return neuron_data[0];
   }
 
   /**
    * @brief      Resets Neuron data in the solver and in the partial solutions
    */
   void reset(void){
-    for(sdouble32& neuron_data_element : neuron_data)neuron_data_element = 0;
+    for(sdouble32& neuron_data_element : neuron_data[0])neuron_data_element = 0;
     for(vector<Partial_solution_solver>& solver_row : partial_solvers)
       for(Partial_solution_solver& solver : solver_row)solver.reset();
   }
@@ -124,7 +124,7 @@ public:
    * @return     The neuron data.
    */
   sdouble32 get_neuron_data(uint32 index) const{
-    if(neuron_data.size() > index)return neuron_data[index];
+    if(neuron_data[0].size() > index)return neuron_data[0][index];
      else throw "Neuron index out of bounds!";
   }
 
@@ -153,18 +153,11 @@ private:
    * @param[in]  row_iterator            The row iterator
    * @param[in]  col_iterator            The col iterator
    */
-  void solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator){
-    partial_solvers[row_iterator][col_iterator].collect_input_data(input,neuron_data);
-    partial_solvers[row_iterator][col_iterator].solve();
-    partial_solvers[row_iterator][col_iterator].provide_output_data(neuron_data);
-    partial_solvers[row_iterator][col_iterator].provide_gradient_data(
-      transfer_function_input, transfer_function_output
-    );
-  }
+  void solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator);
 
   const Solution& solution;
   vector<vector<Partial_solution_solver>> partial_solvers;
-  vector<sdouble32> neuron_data;  /* The internal Data of each Neuron */
+  vector<vector<sdouble32>> neuron_data;  /* The internal Data of each Neuron */
   vector<sdouble32> transfer_function_input; /* Extended data required for output layer error */
   vector<sdouble32> transfer_function_output;
 

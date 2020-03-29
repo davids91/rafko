@@ -67,20 +67,7 @@ public:
    *
    * @param      neuron_data  The reference to the neuron data
    */
-  void provide_output_data(vector<sdouble32>& neuron_data){
-    uint32 output_index_start = 0;
-    vector<sdouble32> neuron_output_copy(neuron_output);
-    output_iterator.skim([&](Index_synapse_interval weight_synapse){
-      if(neuron_data.size() < (weight_synapse.starts() + weight_synapse.interval_size()))
-        throw "Neuron data out of Bounds!";
-      swap_ranges( /* Save output into the internal neuron memory */
-        neuron_output_copy.begin() + output_index_start,
-        neuron_output_copy.begin() + output_index_start + weight_synapse.interval_size(),
-        neuron_data.begin() + weight_synapse.starts()
-      );
-      output_index_start += weight_synapse.interval_size();
-    });
-  }
+  void provide_output_data(vector<sdouble32>& neuron_data);
 
   /**
    * @brief      Provides the gradient data to the given references

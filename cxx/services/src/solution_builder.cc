@@ -45,6 +45,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
   uint32 placed_neurons_in_row = 0;
   uint32 partial_output_synapse_count = 0;
   uint32 latest_placed_neuron_index = net.neuron_array_size();
+  uint32 reach_back;
   bool strict_mode = false;
 
   if(0 == net.output_neuron_number()) throw "Can't build a solution with 0 output Neurons!";
@@ -61,7 +62,9 @@ Solution* Solution_builder::build(const SparseNet& net ){
         &&(placed_neurons_in_row < net_iterator.get_subset_size())
       ){
         neuron_index = net_iterator[placed_neurons_in_row];
-        partial_builder->add_neuron_to_partial_solution(neuron_index);
+        reach_back = partial_builder->add_neuron_to_partial_solution(neuron_index);
+        if(reach_past_loops_maximum < reach_back)
+          reach_past_loops_maximum = reach_back;
         ++placed_neurons_in_row;
         neurons_in_row.push_back(neuron_index);
         if(
@@ -119,6 +122,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
 
   solution->set_output_neuron_number(net.output_neuron_number());
   solution->set_neuron_number(net.neuron_array_size());
+  solution->set_network_memory_length(reach_past_loops_maximum + 1); /* Current loop is "0" reachback, so length should be at least 1 */
   for(vector<Partial_solution*> row : partial_matrix){
     solution->add_cols(row.size());
     for(Partial_solution* cell : row){

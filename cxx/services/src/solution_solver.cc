@@ -19,6 +19,7 @@
 #include "services/synapse_iterator.h"
 
 #include <thread>
+#include <cmath>
 
 namespace sparse_net_library{
 
@@ -26,17 +27,17 @@ using std::swap_ranges;
 
 Solution_solver::Solution_solver(const Solution& to_solve, Service_context context)
 : solution(to_solve)
-, neuron_data(solution.neuron_number())
+, neuron_data(std::min(1u,solution.network_memory_length()))
 , transfer_function_input(solution.neuron_number(),double_literal(0.0))
 , transfer_function_output(solution.neuron_number(),double_literal(0.0))
 , number_of_threads(context.get_max_solve_threads())
 {
-  int partial_solution_end_plus1 = 0;
   partial_solvers = vector<vector<Partial_solution_solver>>();
-  for(int row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
+  for(uint32 network_memory_iterator = 0; network_memory_iterator < solution.network_memory_length(); ++network_memory_iterator)
+    neuron_data[network_memory_iterator] = vector<sdouble32>(solution.neuron_number());
+  for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
     partial_solvers.push_back(vector<Partial_solution_solver>());
     for(uint32 column_index = 0; column_index < solution.cols(row_iterator); ++column_index){
-      partial_solution_end_plus1 += get_partial(row_iterator,column_index,solution).internal_neuron_number();
       partial_solvers[row_iterator].push_back( Partial_solution_solver(
         get_partial(row_iterator,column_index,solution)
       )); /* Initialize a solver for this partial solution element */
@@ -53,7 +54,6 @@ void Solution_solver::solve(vector<sdouble32> input){
   if(0 < solution.cols_size()){
     vector<thread> solve_threads;
     uint32 col_iterator;
-
     for(int row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
       col_iterator = 0;
       if(0 == solution.cols(row_iterator)) throw "A solution row of 0 columns!";
@@ -73,6 +73,15 @@ void Solution_solver::solve(vector<sdouble32> input){
       }
     }
   }else throw "A solution of 0 rows!";
+}
+
+void Solution_solver::solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator){
+  partial_solvers[row_iterator][col_iterator].collect_input_data(input,neuron_data[0]);
+  partial_solvers[row_iterator][col_iterator].solve();
+  partial_solvers[row_iterator][col_iterator].provide_output_data(neuron_data[0]);
+  partial_solvers[row_iterator][col_iterator].provide_gradient_data(
+    transfer_function_input, transfer_function_output
+  );
 }
 
 } /* namespace sparse_net_library */

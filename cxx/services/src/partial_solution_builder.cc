@@ -19,22 +19,22 @@
 
 namespace sparse_net_library{
 
-void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_index){
+uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_index){
   if(net.neuron_array_size() > static_cast<int>(neuron_index)){
-    const Neuron& neuron = net.neuron_array(neuron_index);
+    uint32 max_reach_back = 0;
     Index_synapse_interval temp_synapse_interval;
-    Synapse_iterator<> weight_iterator(neuron.input_weights());
-    Synapse_iterator<Input_synapse_interval> index_iterator(neuron.input_indices());
+    Synapse_iterator<> weight_iterator(net.neuron_array(neuron_index).input_weights());
+    Synapse_iterator<Input_synapse_interval> input_iterator(net.neuron_array(neuron_index).input_indices());
     /* Add a new Neuron into the partial solution */
     partial.set_internal_neuron_number(partial.internal_neuron_number() + 1);
 
     /* Copy in Neuron parameters */
-    partial.add_neuron_transfer_functions(neuron.transfer_function_idx());
+    partial.add_neuron_transfer_functions(net.neuron_array(neuron_index).transfer_function_idx());
     partial.add_memory_filter_index(partial.weight_table_size());
-    partial.add_weight_table(net.weight_table(neuron.memory_filter_idx()));
+    partial.add_weight_table(net.weight_table(net.neuron_array(neuron_index).memory_filter_idx()));
 
     /* Copy in weights from the net */
-    partial.add_weight_synapse_number(neuron.input_weights_size());
+    partial.add_weight_synapse_number(net.neuron_array(neuron_index).input_weights_size());
     weight_iterator.iterate([&](Index_synapse_interval weight_synapse){
       temp_synapse_interval.set_starts(partial.weight_table_size());
       temp_synapse_interval.set_interval_size(weight_synapse.interval_size());
@@ -48,10 +48,18 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
     previous_neuron_input_source = neuron_input_none;
     previous_neuron_input_index = input_synapse.size(); /* Input value to point above the size of the input */
     uint32 index_synapse_previous_size = partial.inside_indices_size();
-    index_iterator.iterate([&](sint32 neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
+    uint32 reach_past_loops_in_current_synapse = 0;
+    input_iterator.iterate([&](Input_synapse_interval input_synapse){
+      reach_past_loops_in_current_synapse = input_synapse.reach_past_loops();
+      if(reach_past_loops_in_current_synapse < max_reach_back)
+         max_reach_back = reach_past_loops_in_current_synapse;
+    },[&](sint32 neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
       if(!look_for_neuron_input(neuron_input_index)){
         /* Check if the partial input synapse needs to be closed */
-        if(!look_for_neuron_input_internally(neuron_input_index)){ /* if the Neuron is not found internally */
+        if( /* if the Neuron is not found internally or has no inputs from the past*/
+          (!look_for_neuron_input_internally(neuron_input_index))
+          &&(0 == reach_past_loops_in_current_synapse)
+        ){ 
           if(
             (0 < partial_input_synapse_count)
             &&((
@@ -91,6 +99,7 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
       &&(0 == partial.input_data(partial.input_data_size()-1).interval_size())
     )partial.mutable_input_data()->RemoveLast();
 
+    return max_reach_back;
   }else throw "Neuron index is out of bounds from net neuron array!";
 }
 

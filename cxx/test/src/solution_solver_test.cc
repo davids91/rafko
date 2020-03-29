@@ -71,6 +71,7 @@ void test_solution_solver_multithread(uint16 threads){
   /* Define the input, @Solution and partial solution table */
   Service_context context = Service_context().set_max_solve_threads(threads);
   Solution solution;
+  solution.set_network_memory_length(1);
   solution.set_neuron_number(8);
   solution.set_output_neuron_number(4);
   solution.add_cols(2); /* Every row shall have 2 columns */

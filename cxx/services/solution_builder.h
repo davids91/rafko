@@ -57,7 +57,9 @@ public:
    *
    * @param[in]  context  The Service context
    */
-  Solution_builder(Service_context context = Service_context()){
+  Solution_builder(Service_context context = Service_context())
+  :  reach_past_loops_maximum(0)
+  {
     (void)service_context(context);
   }
 
@@ -121,6 +123,7 @@ private:
   google::protobuf::Arena* arg_arena_ptr = nullptr;
   uint8 arg_max_solve_threads = 1;
   sdouble32 arg_device_max_megabytes = double_literal(2.0) /* GB */ * double_literal(1024.0)/* MB */;
+  uint32 reach_past_loops_maximum;
 };
 
 } /* namespace sparse_net_library */

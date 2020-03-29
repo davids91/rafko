@@ -45,13 +45,14 @@ public:
   /**
    * @brief      Adds a neuron to partial solution.
    *
-   * @param      net  The sparse net to read the neuron from
-   * @param      neuron_index  the index of the neuron inside the net
+   * @param[in]  neuron_index  The neuron index
+   *
+   * @return     Returns with the maximum reach-back value of the neuron ( How far it takes its input from previous runs )
    */
-  void add_neuron_to_partial_solution(uint32 neuron_index);
+  uint32 add_neuron_to_partial_solution(uint32 neuron_index);
 
   /**
-   * @brief      Adds the given index to teh given synapse
+   * @brief      Adds the given index to the given synapse
    *
    * @param[in]  index                  The Neuron or Weight index
    * @param      current_synapse_count  The number of elements currently present in the synapse

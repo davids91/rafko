@@ -37,6 +37,21 @@ void Partial_solution_solver::collect_input_data(vector<sdouble32>& input_data, 
   });
 }
 
+void Partial_solution_solver::provide_output_data(vector<sdouble32>& neuron_data){
+  uint32 output_index_start = 0;
+  vector<sdouble32> neuron_output_copy(neuron_output);
+  output_iterator.skim([&](Index_synapse_interval weight_synapse){
+    if(neuron_data.size() < (weight_synapse.starts() + weight_synapse.interval_size()))
+      throw "Neuron data out of Bounds!";
+    swap_ranges( /* Save output into the internal neuron memory */
+      neuron_output_copy.begin() + output_index_start,
+      neuron_output_copy.begin() + output_index_start + weight_synapse.interval_size(),
+      neuron_data.begin() + weight_synapse.starts()
+    );
+    output_index_start += weight_synapse.interval_size();
+  });
+}
+
 void Partial_solution_solver::solve(){
   sdouble32 new_neuron_data = 0;
   sdouble32 new_neuron_input;
