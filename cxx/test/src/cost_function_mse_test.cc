@@ -62,7 +62,7 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   /*CHECK(
     Approx(cost.get_error(dataset,featureset) / static_cast<sdouble32>(dataset_size)).epsilon(double_literal(0.00000000000001))
     == (double_literal(0.5) * pow(distance,2))
-  ); /* The cost for evaluating whole datasets are not implemented yet */
+  ); issue #59 */
   for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
     CHECK(
       Approx(cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator])).epsilon(double_literal(0.00000000000001))

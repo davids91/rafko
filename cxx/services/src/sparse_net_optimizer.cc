@@ -74,14 +74,14 @@ void Sparse_net_optimizer::step(void){
 
 void Sparse_net_optimizer::evaluate_thread(uint32 solve_thread_index, uint32 sample_start, uint32 samples_to_evaluate){
   for(uint32 sample_iterator = 0; sample_iterator < samples_to_evaluate; ++sample_iterator){
-    solver[solve_thread_index].solve(test_set.get_input_sample(sample_start + sample_iterator)); /* Solve the network for the sampled labels input */
-    neuron_data[solve_thread_index] = solver[solve_thread_index].get_neuron_data(); /* Copy results out */
-    transfer_function_input[solve_thread_index] = solver[solve_thread_index].get_transfer_function_input();
-    transfer_function_output[solve_thread_index] = solver[solve_thread_index].get_transfer_function_output();
-    if(test_set.get_feature_size() != solver[solve_thread_index].get_output_size())
+    solvers[solve_thread_index]->solve(test_set.get_input_sample(sample_start + sample_iterator)); /* Solve the network for the sampled labels input */
+    neuron_data[solve_thread_index] = solvers[solve_thread_index]->get_neuron_data(); /* Copy results out */
+    transfer_function_input[solve_thread_index] = solvers[solve_thread_index]->get_transfer_function_input();
+    transfer_function_output[solve_thread_index] = solvers[solve_thread_index]->get_transfer_function_output();
+    if(test_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
       throw "Network output size doesn't match size of provided labels!";
     test_set.set_feature_for_label((sample_start + sample_iterator), neuron_data[solve_thread_index]); /* Re-calculate error for the training set */
-    solver[solve_thread_index].reset();
+    solvers[solve_thread_index]->reset();
   }
 }
 
@@ -89,18 +89,18 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
   uint32 sample_index;
   for(uint32 sample = 0; sample < samples_to_evaluate; ++sample){
     sample_index = rand()%(train_set.get_number_of_samples()); /* sample randomly to help convergence */
-    solver[solve_thread_index].solve(train_set.get_input_sample(sample_index)); /* Solve the network for the sampled labels input */
-    neuron_data[solve_thread_index] = solver[solve_thread_index].get_neuron_data(); /* Copy results out */
-    transfer_function_input[solve_thread_index] = solver[solve_thread_index].get_transfer_function_input();
-    transfer_function_output[solve_thread_index] = solver[solve_thread_index].get_transfer_function_output();
-    if(train_set.get_feature_size() != solver[solve_thread_index].get_output_size())
+    solvers[solve_thread_index]->solve(train_set.get_input_sample(sample_index)); /* Solve the network for the sampled labels input */
+    neuron_data[solve_thread_index] = solvers[solve_thread_index]->get_neuron_data(); /* Copy results out */
+    transfer_function_input[solve_thread_index] = solvers[solve_thread_index]->get_transfer_function_input();
+    transfer_function_output[solve_thread_index] = solvers[solve_thread_index]->get_transfer_function_output();
+    if(train_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
       throw "Network output size doesn't match size of provided labels!";
     train_set.set_feature_for_label(sample_index, neuron_data[solve_thread_index]); /* Re-calculate error for the training set */
     for(unique_ptr<atomic<sdouble32>>& error_value : error_values[solve_thread_index]) *error_value = 0;
     calculate_output_errors(solve_thread_index, sample_index);
     propagate_output_errors_back(solve_thread_index);
     accumulate_weight_gradients(solve_thread_index, sample_index);
-    solver[solve_thread_index].reset();
+    solvers[solve_thread_index]->reset();
   }
 }
 

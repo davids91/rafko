@@ -43,6 +43,11 @@ class Solution_solver{
 public:
   Solution_solver(const Solution& to_solve, Service_context context = Service_context());
 
+  Solution_solver(const Solution_solver& other) = delete;/* Copy constructor */
+  Solution_solver(Solution_solver&& other)  = delete; /* Move constructor */
+  Solution_solver& operator=(const Solution_solver& other)  = delete; /* Copy assignment */
+  Solution_solver& operator=(Solution_solver&& other)  = delete; /* Move assignment */
+
   /**
    * @brief      Solves the Solution given in the constructor, considering the previous runs
    *
@@ -140,6 +145,7 @@ private:
   vector<vector<Partial_solution_solver>> partial_solvers;
   vector<sdouble32> transfer_function_input; /* Extended data required for output layer error */
   vector<sdouble32> transfer_function_output;
+  vector<thread> solve_threads;
   uint16 number_of_threads;
 
   /**

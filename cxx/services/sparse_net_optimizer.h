@@ -39,6 +39,7 @@ namespace sparse_net_library{
 
 using std::vector;
 using std::unique_ptr;
+using std::make_unique;
 using google::protobuf::Arena;
 using std::array;
 using std::min;
@@ -53,7 +54,7 @@ public:
   ,  context(service_context)
   ,  transfer_function(context)
   ,  net_solution(Solution_builder().service_context(context).build(net))
-  ,  solver(context.get_max_solve_threads(), Solution_solver(*net_solution, service_context))
+  ,  solvers()
   ,  train_set(train_set_)
   ,  test_set(test_set_)
   ,  loops_unchecked(50)
@@ -72,8 +73,9 @@ public:
     )));
     solve_threads.reserve(context.get_max_solve_threads());
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
+      solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
       for(sint32 i = 0; i < net.neuron_array_size(); ++i)
-        error_values[threads].push_back(std::make_unique<atomic<sdouble32>>());
+        error_values[threads].push_back(make_unique<atomic<sdouble32>>());
       process_threads[threads].reserve(context.get_max_processing_threads());
       neuron_data[threads] = vector<sdouble32>(train_set.get_feature_size());
       transfer_function_input[threads] = vector<sdouble32>(train_set.get_feature_size());
@@ -81,10 +83,14 @@ public:
     }
     weight_gradient.reserve(net.weight_table_size());
     for(sint32 i = 0; i < net.weight_table_size(); ++i){
-      weight_gradient.push_back(std::make_unique<atomic<sdouble32>>());
+      weight_gradient.push_back(make_unique<atomic<sdouble32>>());
     }
     weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
   };
+
+  ~Sparse_net_optimizer(){
+    solvers.clear();
+  }
 
    /**
     * @brief      Step the net in the opposite direction of the gradient slope
@@ -120,7 +126,7 @@ private:
   Transfer_function transfer_function;
 
   unique_ptr<Solution> net_solution;
-  vector<Solution_solver> solver;
+  vector<unique_ptr<Solution_solver>> solvers;
 
   Data_aggregate& train_set;
   Data_aggregate& test_set;
