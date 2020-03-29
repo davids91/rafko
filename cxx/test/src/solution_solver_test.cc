@@ -26,6 +26,7 @@
 #include "gen/sparse_net.pb.h"
 #include "models/transfer_function.h"
 #include "models/service_context.h"
+#include "models/data_ringbuffer.h"
 #include "services/solution_solver.h"
 #include "services/partial_solution_solver.h"
 #include "services/synapse_iterator.h"
@@ -44,10 +45,11 @@ using sparse_net_library::uint8;
 using sparse_net_library::uint16;
 using sparse_net_library::uint32;
 using sparse_net_library::sdouble32;
-using sparse_net_library::Partial_solution_solver;
+using sparse_net_library::Data_ringbuffer;
 using sparse_net_library::Partial_solution;
-using sparse_net_library::Solution_solver;
+using sparse_net_library::Partial_solution_solver;
 using sparse_net_library::Solution;
+using sparse_net_library::Solution_solver;
 using sparse_net_library::Index_synapse_interval;
 using sparse_net_library::Input_synapse_interval;
 using sparse_net_library::Synapse_iterator;
@@ -66,9 +68,8 @@ using sparse_net_library::Service_context;
  */
 void test_solution_solver_multithread(uint16 threads){
 
-  using std::copy;
-
   /* Define the input, @Solution and partial solution table */
+  Data_ringbuffer neuron_data(1,8);
   Service_context context = Service_context().set_max_solve_threads(threads);
   Solution solution;
   solution.set_network_memory_length(1);
@@ -94,34 +95,33 @@ void test_solution_solver_multithread(uint16 threads){
   temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
   temp_input_interval.set_interval_size(network_inputs.size());
   *partial_solutions[0][0].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(partial_solutions[0][0]);
+  Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(partial_solutions[0][0], neuron_data);
 
   /* [0][1]: Half of the input */
   manual_2_neuron_partial_solution(partial_solutions[0][1], network_inputs.size()/2,2);
   temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(network_inputs.size()/2));
   temp_input_interval.set_interval_size(network_inputs.size()/2);
   *partial_solutions[0][1].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(partial_solutions[0][1]);
+  Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(partial_solutions[0][1], neuron_data);
 
   /* [1][0]: Whole of the previous row's data --> neuron [0] to [3] */
   manual_2_neuron_partial_solution(partial_solutions[1][0],4,4);
   temp_input_interval.set_starts(0);
   temp_input_interval.set_interval_size(4);
   *partial_solutions[1][0].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(partial_solutions[1][0]);
+  Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(partial_solutions[1][0], neuron_data);
 
   /* [1][1]: Half of the previous row's data ( in the middle) --> neuron [1] to [2] */
   manual_2_neuron_partial_solution(partial_solutions[1][1],2,6);
   temp_input_interval.set_starts(1);
   temp_input_interval.set_interval_size(2);
   *partial_solutions[1][1].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(partial_solutions[1][1]);
+  Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(partial_solutions[1][1], neuron_data);
 
   /* Solve the compiled Solution */
   srand (time(nullptr));
   Solution_solver solution_solver(solution,context);
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(solution.neuron_number());
-  vector<sdouble32> neuron_data = vector<sdouble32>(solution.neuron_number());
   vector<sdouble32> network_output;
 
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
@@ -173,24 +173,24 @@ void test_solution_solver_multithread(uint16 threads){
 
     /* Solve the net */
     /* row 0, column 0 */
-    partial_solution_solver_0_0.collect_input_data(network_inputs,neuron_data);
+    partial_solution_solver_0_0.collect_input_data(network_inputs);
     partial_solution_solver_0_0.solve();
-    partial_solution_solver_0_0.provide_output_data(neuron_data);
+    partial_solution_solver_0_0.provide_output_data();
 
     /* row 0, column 1 */
-    partial_solution_solver_0_1.collect_input_data(network_inputs,neuron_data);
+    partial_solution_solver_0_1.collect_input_data(network_inputs);
     partial_solution_solver_0_1.solve();
-    partial_solution_solver_0_1.provide_output_data(neuron_data);
+    partial_solution_solver_0_1.provide_output_data();
 
     /* row 1, column 0 */
-    partial_solution_solver_1_0.collect_input_data(network_inputs,neuron_data);
+    partial_solution_solver_1_0.collect_input_data(network_inputs);
     partial_solution_solver_1_0.solve();
-    partial_solution_solver_1_0.provide_output_data(neuron_data);
+    partial_solution_solver_1_0.provide_output_data();
 
     /* row 1, column 1 */
-    partial_solution_solver_1_1.collect_input_data(network_inputs,neuron_data);
+    partial_solution_solver_1_1.collect_input_data(network_inputs);
     partial_solution_solver_1_1.solve();
-    partial_solution_solver_1_1.provide_output_data(neuron_data);
+    partial_solution_solver_1_1.provide_output_data();
 
     solution_solver.solve(network_inputs);
 
@@ -202,7 +202,7 @@ void test_solution_solver_multithread(uint16 threads){
 
     for(uint32 i = 0; i < network_output.size(); ++i){
       CHECK(
-        Approx(neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]).epsilon(double_literal(0.00000000000001))
+        Approx(neuron_data.get_element(solution.neuron_number() - solution.output_neuron_number() + i, 0)).epsilon(double_literal(0.00000000000001))
         == expected_neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]
       );
       CHECK(

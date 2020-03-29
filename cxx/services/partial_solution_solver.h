@@ -25,6 +25,7 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "models/transfer_function.h"
+#include "models/data_ringbuffer.h"
 #include "services/synapse_iterator.h"
 
 namespace sparse_net_library {
@@ -35,8 +36,11 @@ class Partial_solution_solver{
 
 public:
   Partial_solution_solver(
-    const Partial_solution& partial_solution, Service_context service_context = Service_context()
+    const Partial_solution& partial_solution,
+    Data_ringbuffer& neuron_data_,
+    Service_context service_context = Service_context()
   ): detail(partial_solution)
+  ,  neuron_data(neuron_data_)
   ,  internal_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())
   ,  output_iterator(detail.output_data())
@@ -56,18 +60,17 @@ public:
 
   /**
    * @brief      Collects the input stated inside the @Partial_solution into @collected_input_data
+   *             from the data in @input_data and the neuron data provided by @solver
    *
-   * @param      input_data   The input data
-   * @param[in]  neuron_data  The neuron data
+   * @param      input_data   The input data given to the network
    */
-  void collect_input_data(vector<sdouble32>& input_data, vector<sdouble32>& neuron_data);
+  void collect_input_data(const vector<sdouble32>& input_data);
 
   /**
-   * @brief      Provides output data into the given reference
-   *
-   * @param      neuron_data  The reference to the neuron data
+   * @brief      Copies internal output data into the neuron_data reference
+   *             latest slot ( 0 )
    */
-  void provide_output_data(vector<sdouble32>& neuron_data);
+  void provide_output_data();
 
   /**
    * @brief      Provides the gradient data to the given references
@@ -123,6 +126,11 @@ private:
    * The Partial solution to solve
    */
   const Partial_solution& detail;
+
+  /**
+   * The reference from which the input can be collected, and output can be provided to
+   */
+  Data_ringbuffer& neuron_data;
 
   /**
    * The iterator to go through the Neuron weights while solving the detail

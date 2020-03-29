@@ -25,19 +25,19 @@
 
 namespace sparse_net_library {
 
-void Partial_solution_solver::collect_input_data(vector<sdouble32>& input_data, vector<sdouble32>& neuron_data){
+void Partial_solution_solver::collect_input_data(const vector<sdouble32>& input_data){
   uint32 index = 0;
   input_iterator.iterate([&](sint32 synapse_index){
     if(Synapse_iterator<>::is_index_input(synapse_index)){ /* If @Partial_solution input is from the network input */
       collected_input_data[index] = input_data[Synapse_iterator<>::input_index_from_synapse_index(synapse_index)];
-    }else if(neuron_data.size() > static_cast<std::size_t>(synapse_index)){  /* If @Partial_solution input is from the previous row */
-      collected_input_data[index] = neuron_data[synapse_index];
+    }else if(static_cast<sint32>(neuron_data.size()) > synapse_index){  /* If @Partial_solution input is from the previous row */
+      collected_input_data[index] = neuron_data.get_element(synapse_index,0);
     }
     ++index;
   });
 }
 
-void Partial_solution_solver::provide_output_data(vector<sdouble32>& neuron_data){
+void Partial_solution_solver::provide_output_data(){
   uint32 output_index_start = 0;
   vector<sdouble32> neuron_output_copy(neuron_output);
   output_iterator.skim([&](Index_synapse_interval weight_synapse){
@@ -46,7 +46,7 @@ void Partial_solution_solver::provide_output_data(vector<sdouble32>& neuron_data
     swap_ranges( /* Save output into the internal neuron memory */
       neuron_output_copy.begin() + output_index_start,
       neuron_output_copy.begin() + output_index_start + weight_synapse.interval_size(),
-      neuron_data.begin() + weight_synapse.starts()
+      neuron_data.get_element(0).begin() + weight_synapse.starts()
     );
     output_index_start += weight_synapse.interval_size();
   });

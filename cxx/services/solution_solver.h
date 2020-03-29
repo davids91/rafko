@@ -21,15 +21,19 @@
 #include "sparse_net_global.h"
 
 #include <vector>
+#include <thread>
 #include <atomic>
+#include <utility>
 
 #include "gen/solution.pb.h"
 #include "models/service_context.h"
+#include "models/data_ringbuffer.h"
 #include "services/partial_solution_solver.h"
 
 namespace sparse_net_library{
 
 using std::vector;
+using std::thread;
 
 /**
  * @brief      This class Processes a @Solution given in its constructor and handles
@@ -42,9 +46,9 @@ public:
   /**
    * @brief      Solves the Solution given in the constructor, considering the previous runs
    *
-   * @param[in]  input  The input data to be taken
+   * @param      input  The input data to be taken
    */
-  void solve(vector<sdouble32> input);
+  void solve(const vector<sdouble32>& input);
 
   /**
    * @brief      Gets the output size of the solution. Th solution output is defined as the last
@@ -77,17 +81,19 @@ public:
   /**
    * @brief      Gets the neuron data.
    *
+   * @param[in]  past_index  The index of the previous runs to take the data from
+   *
    * @return     The neuron data.
    */
-  const vector<sdouble32>& get_neuron_data(void) const{
-    return neuron_data[0];
+  const vector<sdouble32>& get_neuron_data(uint32 past_index = 0){
+    return neuron_data.get_element(past_index);
   }
 
   /**
    * @brief      Resets Neuron data in the solver and in the partial solutions
    */
   void reset(void){
-    for(sdouble32& neuron_data_element : neuron_data[0])neuron_data_element = 0;
+    neuron_data.reset();
     for(vector<Partial_solution_solver>& solver_row : partial_solvers)
       for(Partial_solution_solver& solver : solver_row)solver.reset();
   }
@@ -119,16 +125,22 @@ public:
   /**
    * @brief      Gets the neuron data at the given neuron index
    *
-   * @param[in]  index  Neuron index
+   * @param[in]  index       The Neuron index
+   * @param[in]  past_index  The index of which previous runs the data should be taken from
    *
    * @return     The neuron data.
    */
-  sdouble32 get_neuron_data(uint32 index) const{
-    if(neuron_data[0].size() > index)return neuron_data[0][index];
-     else throw "Neuron index out of bounds!";
+  sdouble32 get_neuron_data(uint32 index, uint32 past_index){
+    return neuron_data.get_element(index, past_index);
   }
 
 private:
+  const Solution& solution;
+  Data_ringbuffer neuron_data; /* The internal Data of each Neuron for some last runs */
+  vector<vector<Partial_solution_solver>> partial_solvers;
+  vector<sdouble32> transfer_function_input; /* Extended data required for output layer error */
+  vector<sdouble32> transfer_function_output;
+  uint16 number_of_threads;
 
   /**
    * @brief      Gets a @Partial_Solution reference from the solution based on the given coordinates.
@@ -153,15 +165,7 @@ private:
    * @param[in]  row_iterator            The row iterator
    * @param[in]  col_iterator            The col iterator
    */
-  void solve_a_partial(vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator);
-
-  const Solution& solution;
-  vector<vector<Partial_solution_solver>> partial_solvers;
-  vector<vector<sdouble32>> neuron_data;  /* The internal Data of each Neuron */
-  vector<sdouble32> transfer_function_input; /* Extended data required for output layer error */
-  vector<sdouble32> transfer_function_output;
-
-  uint16 number_of_threads = 1;
+  void solve_a_partial(const vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator);
 };
 
 } /* namespace sparse_net_library */
