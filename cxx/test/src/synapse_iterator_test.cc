@@ -200,9 +200,9 @@ TEST_CASE("Synapse Iterator Skimming","[synapse_iteration]"){
   Synapse_iterator<Input_synapse_interval> iter(neuron.input_indices());
 
   sint32 manual_index = 0;
-  iter.skim([&](int synapse_start, unsigned int synapse_size){
-    CHECK( synapse_start == synapse_indexes[manual_index][0] );
-    CHECK( synapse_size == synapse_indexes[manual_index][1] );
+  iter.skim([&](Input_synapse_interval input_synapse){
+    CHECK( input_synapse.starts() == synapse_indexes[manual_index][0] );
+    CHECK( input_synapse.interval_size() == synapse_indexes[manual_index][1] );
     ++manual_index;
   });
 }

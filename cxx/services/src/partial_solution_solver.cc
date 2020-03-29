@@ -27,7 +27,7 @@ namespace sparse_net_library {
 
 void Partial_solution_solver::collect_input_data(vector<sdouble32>& input_data, vector<sdouble32>& neuron_data){
   uint32 index = 0;
-  input_iterator.iterate([&](int synapse_index){
+  input_iterator.iterate([&](sint32 synapse_index){
     if(Synapse_iterator<>::is_index_input(synapse_index)){ /* If @Partial_solution input is from the network input */
       collected_input_data[index] = input_data[Synapse_iterator<>::input_index_from_synapse_index(synapse_index)];
     }else if(neuron_data.size() > static_cast<std::size_t>(synapse_index)){  /* If @Partial_solution input is from the previous row */

@@ -35,9 +35,9 @@ void Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_inde
 
     /* Copy in weights from the net */
     partial.add_weight_synapse_number(neuron.input_weights_size());
-    weight_iterator.iterate([&](uint32 weight_synapse_size){
+    weight_iterator.iterate([&](Index_synapse_interval weight_synapse){
       temp_synapse_interval.set_starts(partial.weight_table_size());
-      temp_synapse_interval.set_interval_size(weight_synapse_size);
+      temp_synapse_interval.set_interval_size(weight_synapse.interval_size());
       *partial.add_weight_indices() = temp_synapse_interval;
     },[&](sint32 weight_index){
       partial.add_weight_table(net.weight_table(weight_index));
