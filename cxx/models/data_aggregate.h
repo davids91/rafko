@@ -72,7 +72,7 @@ public:
   { }
 
   /**
-   * @brief      Sets the approximated value for an observed value, 
+   * @brief      Sets the approximated value for an observed value,
    *             and updates the calculated errorbased on the cost function and the given value.
    *
    * @param[in]  sample_index  The sample index

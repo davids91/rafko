@@ -10,6 +10,5 @@ providing services for:
 
 ## Dependencies: 
 
- - g++ 9.1
  - pkg-config
  - protocol buffers (proto3 compatible)
