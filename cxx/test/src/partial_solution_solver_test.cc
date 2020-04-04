@@ -36,6 +36,7 @@ using sparse_net_library::sdouble32;
 using sparse_net_library::uint8;
 using sparse_net_library::uint16;
 using sparse_net_library::uint32;
+using sparse_net_library::sint32;
 using sparse_net_library::transfer_functions;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::Data_ringbuffer;
@@ -89,10 +90,10 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial_sol
   /* The result should change in accordance with the parameters */
   srand (time(nullptr));
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
-    Synapse_iterator<>::iterate_unsafe(partial_solution.weight_indices(),[&](int neuron_weight_index){
+    Synapse_iterator<>::iterate_unsafe(partial_solution.weight_indices(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },0u,1u); /* Mess with the weights of the first Neuron */
-    Synapse_iterator<>::iterate_unsafe(partial_solution.weight_indices(),[&](int neuron_weight_index){
+    Synapse_iterator<>::iterate_unsafe(partial_solution.weight_indices(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },1u,1u); /* Mess with the weights of the second Neuron */
 

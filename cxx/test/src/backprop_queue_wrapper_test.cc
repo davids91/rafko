@@ -68,7 +68,7 @@ TEST_CASE( "Testing backpropagation queue", "" ) {
   uint32 current_depth = 0;
   uint32 current_row = 0;
   REQUIRE( 0 < Synapse_iterator<>(queue.neuron_synapses()).size() );
-  Synapse_iterator<>::iterate(queue.neuron_synapses(),[&](sint32 neuron_index){
+  Synapse_iterator<>::iterate(queue.neuron_synapses(),[&](Index_synapse_interval interval_synapse, sint32 neuron_index){
     REQUIRE( net->neuron_array_size() > neuron_index ); /* all indexes shall be inside network bounds */
     ++num_neurons;
     neuron_depth[neuron_index] = current_depth;
@@ -88,8 +88,10 @@ TEST_CASE( "Testing backpropagation queue", "" ) {
   }
   CHECK( net->neuron_array_size() == num_neurons ); /* Neuron column numbers shall add up the number of Neurons */
 
-  Synapse_iterator<>::iterate(queue.neuron_synapses(),[&](int neuron_index){
-    Synapse_iterator<Input_synapse_interval>::iterate(net->neuron_array(neuron_index).input_indices(),[=](int input_index){
+  Synapse_iterator<>::iterate(queue.neuron_synapses(),[&](Index_synapse_interval interval_synapse, sint32 neuron_index){
+    Synapse_iterator<Input_synapse_interval>::iterate(net->neuron_array(neuron_index).input_indices(),[=](
+      Input_synapse_interval input_synapse, sint32 input_index
+    ){
       if(!Synapse_iterator<>::is_index_input(input_index))
       CHECK( neuron_depth[neuron_index] < neuron_depth[input_index] );
     });

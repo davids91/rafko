@@ -102,16 +102,16 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
     number_of_processed_inputs = *neuron_states[visiting.back()];
     expected_number_of_processed_inputs = *neuron_states[visiting.back()];
     if(is_neuron_in_progress(visiting.back())){ /* If the Neuron is in progess still */
-      iter.iterate_terminatable([&](Input_synapse_interval input_synapse){
+      iter.skim_terminatable([&](Input_synapse_interval input_synapse){
         if((start_input_index_from + input_synapse.interval_size()) < number_of_processed_inputs){
           ++start_synapse_iteration_from; /* Skip this synapse */
           start_input_index_from += input_synapse.interval_size();
           return true;
         }else return false;
-      },[](int synapse_index){return true;});
+      }); /* Skim through its input synapses */
     }
     number_of_processed_inputs = start_input_index_from;
-    iter.iterate_terminatable([&](int synapse_input_index)->bool{
+    iter.iterate_terminatable([&](Input_synapse_interval input_synapse, sint32 synapse_input_index){
       if(
         (Synapse_iterator<>::is_index_input(synapse_input_index))
         ||(is_neuron_processed(synapse_input_index))

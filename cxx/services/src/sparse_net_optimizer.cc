@@ -39,16 +39,13 @@ void Sparse_net_optimizer::step(void){
       uint32 thread_index = 0;
       thread_index < min(context.get_minibatch_size(),static_cast<uint32>(context.get_max_solve_threads()));
       ++thread_index
-    ){
-      solve_threads.push_back(thread(
-        &Sparse_net_optimizer::step_thread, this, thread_index,
-        max(1u,(context.get_minibatch_size()/context.get_max_solve_threads()))
-      ));
-    }
+    )solve_threads.push_back(thread(
+      &Sparse_net_optimizer::step_thread, this, thread_index,
+      max(1u,(context.get_minibatch_size()/context.get_max_solve_threads()))
+    ));
     wait_for_threads(solve_threads);
     normalize_weight_gradients();
-    /* Update the weights of the SparseNet and the solution */
-    weight_updater->iterate(get_weight_gradient(), *net_solution);
+    weight_updater->iterate(get_weight_gradient(), *net_solution); /* Update the weights of the SparseNet and the solution */
   } /* while(!weight_updater->finished()) */
   ++loops_unchecked;
 
@@ -188,7 +185,9 @@ void Sparse_net_optimizer::backpropagation_thread(uint32 solve_thread_index, uin
   sdouble32 addition;
   uint32 weight_index = 0;
   uint32 weight_synapse_index = 0;
-  Synapse_iterator<Input_synapse_interval>::iterate(net.neuron_array(neuron_index).input_indices(),[&](sint32 child_index){
+  Synapse_iterator<Input_synapse_interval>::iterate(net.neuron_array(neuron_index).input_indices(),[&](
+    Input_synapse_interval input_synapse, sint32 child_index
+  ){
     if(!Synapse_iterator<>::is_index_input(child_index)){
       buffer = *error_values[solve_thread_index][child_index];
       addition = *error_values[solve_thread_index][neuron_index]
@@ -240,17 +239,18 @@ void Sparse_net_optimizer::accumulate_weight_gradients_thread(uint32 solve_threa
   uint32 input_index_offset = 0;
   uint32 input_synapse_index = 0;
   sdouble32 neuron_input;
-  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 weight_index){
+  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
+    Index_synapse_interval weight_synapse, sint32 weight_index
+  ){
     if(static_cast<sint32>(input_synapse_index) < net.neuron_array(neuron_index).input_indices_size()){
       if(Synapse_iterator<>::is_index_input(net.neuron_array(neuron_index).input_indices(input_synapse_index).starts())){
         neuron_input = train_set.get_input_sample(sample_index)[Synapse_iterator<>::input_index_from_synapse_index(
           net.neuron_array(neuron_index).input_indices(input_synapse_index).starts() - input_index_offset
         )];
-      }else{
-        neuron_input = solvers[solve_thread_index]->get_neuron_memory()
-          .get_const_element(net.neuron_array(neuron_index).input_indices(input_synapse_index).reach_past_loops())
-          [net.neuron_array(neuron_index).input_indices(input_synapse_index).starts() + input_index_offset];
-      }
+      }else neuron_input = solvers[solve_thread_index]->get_neuron_memory()
+        .get_const_element(net.neuron_array(neuron_index).input_indices(input_synapse_index).reach_past_loops())
+        [net.neuron_array(neuron_index).input_indices(input_synapse_index).starts() + input_index_offset];
+
       ++input_index_offset;
       if(net.neuron_array(neuron_index).input_indices(input_synapse_index).interval_size() <= input_index_offset){
         input_index_offset = 0;

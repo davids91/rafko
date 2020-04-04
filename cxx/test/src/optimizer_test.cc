@@ -138,8 +138,8 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
   nets[1]->set_weight_table(2,0.5);
   nets[1]->set_weight_table(5,0.5);
   nets[1]->set_weight_table(6,0.5);
-  nets[1]->set_weight_table(9,0.99);
-  nets[1]->set_weight_table(10,0.99);
+  nets[1]->set_weight_table(9,0.985);
+  nets[1]->set_weight_table(10,0.985);
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
@@ -151,10 +151,10 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
     ).dense_layers({2,2,1})
   ));
 
-  nets[2]->set_weight_table(1,0.99);
-  nets[2]->set_weight_table(2,0.99);
-  nets[2]->set_weight_table(5,0.99);
-  nets[2]->set_weight_table(6,0.99);
+  nets[2]->set_weight_table(1,0.985);
+  nets[2]->set_weight_table(2,0.985);
+  nets[2]->set_weight_table(5,0.985);
+  nets[2]->set_weight_table(6,0.985);
   nets[2]->set_weight_table(9,0.5);
   nets[2]->set_weight_table(10,0.5);
   nets[2]->set_weight_table(13,0.5);
@@ -318,7 +318,7 @@ TEST_CASE("Testing basic optimization based on math","[opt-test][opt-math]"){
       after_solver3.get_neuron_data(), addition_dataset_test[i]
     );
   }
-  std::cout << "Error summaries:"
+  std::cout << "==================================\n Error summaries:"
   << "\t"  << error_summary[0]
   << "\t"  << error_summary[1]
   << "\t"  << error_summary[2]

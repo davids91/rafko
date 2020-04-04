@@ -82,7 +82,9 @@ void Weight_updater::copy_weight_to_solution(
     net.weight_table(net.neuron_array(neuron_index).memory_filter_idx())
   );
   ++weights_copied; /* ++ for Memory ratio */
-  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 network_weight_index){
+  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
+    Index_synapse_interval weight_synapse, sint32 network_weight_index
+  ){
     partial.set_weight_table(
       (inner_neuron_weight_index_starts + weights_copied), net.weight_table(network_weight_index)
     );

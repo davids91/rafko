@@ -152,7 +152,7 @@ void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdo
     input_synapse_index = 0;
     input_index_offset = 0;
 
-    Synapse_iterator<>::iterate(neuron.input_weights(),[&](int neuron_weight_index){
+    Synapse_iterator<>::iterate(neuron.input_weights(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
       if(static_cast<sdouble32>(input_synapse_index) < neuron.input_indices_size()){ /* Only get input from the net if it's explicitly defined */
         if(Synapse_iterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
           neuron_input_value = inputs[Synapse_iterator<>::input_index_from_synapse_index(
@@ -206,7 +206,9 @@ void check_if_the_same(SparseNet& net, Solution& solution){
           /* Test iterates over the Neurons input weights, to see if they match with the wights in the Network */
           Synapse_iterator<> inner_neuron_weight_iterator(solution.partial_solutions(partial_solution_iterator).weight_indices());
           Synapse_iterator<> neuron_weight_iterator(net.neuron_array(neuron_iterator).input_weights());
-          inner_neuron_weight_iterator.iterate([&](sint32 input_index){ /* Inner Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input is true ) */
+
+          /* Inner Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input is true ) */
+          inner_neuron_weight_iterator.iterate([&](Index_synapse_interval weight_synapse, sint32 input_index){
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
             CHECK(
               solution.partial_solutions(partial_solution_iterator).weight_table(input_index)
@@ -220,7 +222,9 @@ void check_if_the_same(SparseNet& net, Solution& solution){
           /* Test iterates over the inner neurons synapse to see if it matches the Neuron synapse */
           Synapse_iterator<Input_synapse_interval> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
           Synapse_iterator<Input_synapse_interval> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
-          inner_neuron_input_iterator.iterate([&](sint32 input_index){ /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input s true ) */
+
+          /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input s true ) */
+          inner_neuron_input_iterator.iterate([&](Input_synapse_interval input_synapse, sint32 input_index){
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!Synapse_iterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
               CHECK(output_neurons[input_index] == neuron_input_iterator[neuron_synapse_element_iterator]);

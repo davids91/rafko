@@ -59,7 +59,7 @@ TEST_CASE("Synapse Iteration","[synapse_iteration]"){
 
   REQUIRE( 110 == iter.size() );
 
-  iter.iterate([&](int index){
+  iter.iterate([&](Input_synapse_interval input_synapse, sint32 index){
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     ++manual_index;
@@ -97,7 +97,7 @@ TEST_CASE("Synapse iteration on a range","[synapse_iteration]"){
 
   REQUIRE( 110 == iter.size() );
 
-  iter.iterate([&](int index){
+  iter.iterate([&](Input_synapse_interval input_synapse, sint32 index){
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     ++manual_index;
@@ -135,7 +135,7 @@ TEST_CASE("Synapse iteration including negative numbers","[synapse_iteration]"){
 
   REQUIRE( 110 == iter.size() );
 
-  iter.iterate([&](int index){
+  iter.iterate([&](Input_synapse_interval input_synapse, sint32 index){
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     --manual_index;
