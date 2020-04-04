@@ -36,14 +36,14 @@ message Neuron{
    * Every weight above inputs in @input_indices count as a bias, and shall behave 
    * like it has an input of 1.
    */
-  repeated Index_synapse_interval input_weights = 4;
+  repeated Index_synapse_interval input_weights = 10;
 
   /**
    * Input indices describes intervals denoting the neurons inputs.
    * Each positive interval corresponds to indices in the internal data of a @Neuron stored in the @Solution_solver
    * Each negative interval corresponds to indices in the input data given to the @Solution_solver
    */
-  repeated Input_synapse_interval input_indices = 5;
+  repeated Input_synapse_interval input_indices = 11;
 }
 
 /** @brief      A sparse net implementation containing the

@@ -284,11 +284,11 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   }
 
   /* Check Input neurons */
-  /* Input Neurons should have 1 weight Synapse */
-  CHECK( 1 == net->neuron_array(0).input_weights_size() );
-  CHECK( 1 == net->neuron_array(1).input_weights_size() );
+  /* Input Neurons should have 2 weight Synapses: inputs and bias */
+  CHECK( 2 == net->neuron_array(0).input_weights_size() );
+  CHECK( 2 == net->neuron_array(1).input_weights_size() );
 
-  /* Input Neurons should have their synapse starting from the 0th input */
+  /* Input Neurons should have their first synapse starting from the 0th input */
   CHECK( Synapse_iterator<>::synapse_index_from_input_index(0) == net->neuron_array(0).input_indices(0).starts() ); /* 0th Input, translated using Synapse_iterator<> */
   CHECK( Synapse_iterator<>::synapse_index_from_input_index(0) == net->neuron_array(1).input_indices(0).starts() );
 
@@ -297,12 +297,12 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( TRANSFER_FUNCTION_IDENTITY == net->neuron_array(1).transfer_function_idx() );
 
   /* Check Hidden Neurons */
-  /* Hidden Neurons should have 1 weight synapse */
-  CHECK( 1 == net->neuron_array(2).input_weights_size() );
-  CHECK( 1 == net->neuron_array(3).input_weights_size() );
-  CHECK( 1 == net->neuron_array(4).input_weights_size() );
+  /* Hidden Neurons should have 2 weight Synapses: inputs and bias */
+  CHECK( 2 == net->neuron_array(2).input_weights_size() );
+  CHECK( 2 == net->neuron_array(3).input_weights_size() );
+  CHECK( 2 == net->neuron_array(4).input_weights_size() );
 
-  /* Input Neurons should have their synapse starting from 0 as well */
+  /* Input Neurons should have their first synapse starting from 0 as well */
   CHECK( 0 == net->neuron_array(2).input_indices(0).starts() ); /* 0th Neuron, because neuron index >= net->input_neuron_number() */
   CHECK( 0 == net->neuron_array(3).input_indices(0).starts() );
   CHECK( 0 == net->neuron_array(4).input_indices(0).starts() );
@@ -324,9 +324,9 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   ));
 
   /* Check Output Neurons */
-  /* Output Neurons should have 3 input weights */
-  CHECK( 1 == net->neuron_array(5).input_weights_size() );
-  CHECK( 1 == net->neuron_array(6).input_weights_size() );
+  /* Output Neurons should have 2 input weight synapses */
+  CHECK( 2 == net->neuron_array(5).input_weights_size() );
+  CHECK( 2 == net->neuron_array(6).input_weights_size() );
 
   /* Output Neurons should have should have their synapse start at the 2nd Neuron (Previous layer start) */
   CHECK( 2 == net->neuron_array(5).input_indices(0).starts() );

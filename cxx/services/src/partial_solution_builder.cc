@@ -56,10 +56,10 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_in
     },[&](Input_synapse_interval interval_synapse, sint32 neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
       if(!look_for_neuron_input(neuron_input_index)){
         /* Check if the partial input synapse needs to be closed */
-        if( /* if the Neuron is not found internally or has no inputs from the past*/
-          (!look_for_neuron_input_internally(neuron_input_index))
-          &&(0 == reach_past_loops_in_current_synapse)
-        ){ 
+        if( /* if the Neuron has any inputs from the past or not found internally */
+          (0 == reach_past_loops_in_current_synapse)
+          &&(!look_for_neuron_input_internally(neuron_input_index))
+        ){
           if(
             (0 < partial_input_synapse_count)
             &&((

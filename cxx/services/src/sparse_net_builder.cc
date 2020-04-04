@@ -103,7 +103,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
           arg_neuron_array[neurIt].transfer_function_idx()
         );
 
-        /* Add the previous layer as an input synapse */
+        /* Add the previous layer to the built net */
         temp_index_interval.set_starts(weightIt);
         temp_index_interval.set_interval_size(previous_size + 1); /* Previous layer + a bias */
         *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
@@ -116,16 +116,57 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
         temp_input_interval.set_interval_size(previous_size);
         *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
 
-        for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < previous_size; neuron_weight_iterator++)
-        { /* Fill in some initial neuron input values */
+        /* Add the input weights for the previous layer */
+        for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < previous_size; neuron_weight_iterator++){
           arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
             arg_neuron_array[neurIt].transfer_function_idx()
           );
           weightIt++;
         }
+
+        /* Add recurrence of the Neuron */
+        if(0x01 == recurrence){ /* recurrence to self */
+          /* Add the weight synapse */
+          temp_index_interval.set_starts(weightIt);
+          temp_index_interval.set_interval_size(1 + 1); /* self-recurrence + a bias */
+          *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
+
+          /* Add the weight */
+          arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
+            arg_neuron_array[neurIt].transfer_function_idx()
+          );
+          weightIt++;
+
+          /* Add the input synapse */
+          temp_input_interval.set_starts(neurIt); /* self-recurrence, an additional input snypse */
+          temp_input_interval.set_interval_size(1); /* of a lone input as the actual @Neuron itself */
+          *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
+        }else if(0x02 == recurrence){ /* recurrence to layer */
+          /* Add the weight synapse */
+          temp_index_interval.set_starts(weightIt);
+          temp_index_interval.set_interval_size(layer_sizes[layerIt] + 1); /* Current layer + a bias */
+          *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
+
+          /* Add the weights */
+          for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < layer_sizes[layerIt]; neuron_weight_iterator++){
+            arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
+              arg_neuron_array[neurIt].transfer_function_idx()
+            );
+            weightIt++;
+          }
+
+          /* Add the input synapse */
+          temp_input_interval.set_starts(layerStart + layer_sizes[layerIt]); /* starts at the beginning of the current layer */
+          temp_input_interval.set_interval_size(layer_sizes[layerIt]); /* takes up the whole layer */
+          *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
+        }else{ /* Only bias */
+          temp_index_interval.set_starts(weightIt);
+          temp_index_interval.set_interval_size(1); /* a lone bias weight */
+          *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
+        }
+
         arg_weight_table[weightIt] = arg_weight_initer->next_bias();
         weightIt++;
-        
         neurIt++; /* Step the neuron iterator forward */
       }
 

@@ -40,10 +40,8 @@ using std::shared_ptr;
  * - In case the arena is a nullptr, the ownership is of the caller of the function
  * - In case the arena is valid, it has the ownership
  */
-class Sparse_net_builder
-{
+class Sparse_net_builder{
 public:
-
   /**
    * @brief      Sparse_net_builder::input_size: sets the number of expected inputs for the SparseNet object to be built
    *
@@ -148,7 +146,7 @@ public:
    *
    * @param[in]  allowed_transfer_functions_by_layer  The allowed transfer functions by layer
    *
-   * @return     { description_of_the_return_value }
+   * @return     builder reference for chaining
    */
   Sparse_net_builder& allowed_transfer_functions_by_layer(vector<vector<transfer_functions> > filter){
     arg_allowed_transfer_functions_by_layer = filter;
@@ -156,11 +154,40 @@ public:
     return *this;
   }
 
+  /**
+   * @brief      Sets the cost function for the build network
+   *
+   * @param[in]  cost_function  The cost function
+   *
+   * @return     builder reference for chaining
+   */
   Sparse_net_builder& cost_function(cost_functions cost_function){
     if(COST_FUNCTION_UNKNOWN != cost_function){
       arg_cost_function = cost_function;
       is_cost_function_set = true;
     }
+    return *this;
+  }
+
+  /**
+   * @brief      If supported, produced network will also contain for every @Neuron
+   *             its previous input, in case this function is called
+   *
+   * @return     builder reference for chaining
+   */
+  Sparse_net_builder& set_recurrence_to_self(void){
+    recurrence = 0x01;
+    return *this;
+  }
+
+  /**
+   * @brief      If supported, produced network will also contain for every layer
+   *             the activation of the layer from the previous run
+   *
+   * @return     builder reference for chaining
+   */
+  Sparse_net_builder& set_recurrence_to_layer(void){
+    recurrence = 0x02;
     return *this;
   }
 
@@ -213,6 +240,7 @@ private:
   bool is_neuron_array_set = false;
   bool is_allowed_transfer_functions_by_layer_set = false;
   bool is_cost_function_set = false;
+  uint32 recurrence = 0x0;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
