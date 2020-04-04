@@ -40,36 +40,44 @@ class Data_aggregate{
 public:
   Data_aggregate(Data_set& samples_, unique_ptr<Cost_function> cost_function_)
   :  sample_number(static_cast<uint32>(samples_.labels_size()/samples_.feature_size()))
+  ,  sequence_size(std::max(1u,samples_.sequence_size()))
   ,  input_samples(sample_number)
   ,  label_samples(sample_number)
   ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(move(cost_function_))
-  { fill(samples_); }
+  {
+    if(0 != (label_samples.size()%sequence_size))throw "Sequence size doesn't match label number in Data set!";
+    else fill(samples_); 
+  }
 
   Data_aggregate(
     vector<vector<sdouble32>>&& input_samples_,
     vector<vector<sdouble32>>&& label_samples_,
-    unique_ptr<Cost_function> cost_function_
+    unique_ptr<Cost_function> cost_function_,
+    uint32 sequence_size_ = 1
   ):  sample_number(input_samples_.size())
+  ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(sample_number)
   ,  label_samples(sample_number)
   ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(move(cost_function_))
-  { }
+  { if(0 != (label_samples.size()%sequence_size))throw "Sequence size doesn't match label number in Data set!"; }
 
   Data_aggregate(
     vector<vector<sdouble32>>&& input_samples_,
     vector<vector<sdouble32>>&& label_samples_,
-    SparseNet& net, Service_context context = Service_context()
+    SparseNet& net,
+    uint32 sequence_size_ = 1, Service_context context = Service_context()
   ):  sample_number(input_samples_.size())
+  ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(input_samples_)
   ,  label_samples(label_samples_)
   ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(Function_factory::build_cost_function(net, sample_number, context))
-  { }
+  { if(0 != (label_samples.size()%sequence_size))throw "Sequence size doesn't match label number in Data set!"; }
 
   /**
    * @brief      Sets the approximated value for an observed value,
@@ -84,8 +92,8 @@ public:
    * @brief      Sets the error values to the default value
    */
   void reset_errors(void){
-    for(uint32 i = 0; i<get_number_of_samples(); ++i)
-      sample_errors[i] = (double_literal(1.0)/sample_number);
+    for(sdouble32& sample_error : sample_errors)
+      sample_error = (double_literal(1.0)/sample_number);
     error_sum.store(double_literal(1.0));
   }
 
@@ -147,7 +155,7 @@ public:
   }
 
   /**
-   * @brief      Gets the number of samples.
+   * @brief      Gets the number of samples
    *
    * @return     The number of samples.
    */
@@ -155,8 +163,27 @@ public:
     return sample_number;
   }
 
+  /**
+   * @brief      Gets the number of sequences.
+   *
+   * @return     The number of sequences.
+   */
+  uint32 get_number_of_sequences(void) const{
+    return (sample_number / sequence_size);
+  }
+
+  /**
+   * @brief      Gets the size of one sequence
+   *
+   * @return     Number of consecutive datapoints that count as one sample.
+   */
+  uint32 get_sequence_size(void){
+    return sequence_size;
+  }
+
 private:
   uint32 sample_number;
+  uint32 sequence_size;
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;
   vector<sdouble32> sample_errors;

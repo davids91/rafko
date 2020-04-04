@@ -62,14 +62,13 @@ public:
   ,  cost_function(Function_factory::build_cost_function(net, train_set.get_number_of_samples(), context))
   ,  solve_threads(0)
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
-  ,  neuron_data(context.get_max_solve_threads())
   ,  transfer_function_input(context.get_max_solve_threads())
   ,  transfer_function_output(context.get_max_solve_threads())
   ,  error_values(context.get_max_solve_threads())
   ,  weight_gradient(0)
   {
     (void)context.set_minibatch_size(max(1u,min(
-      train_set.get_number_of_samples(),context.get_minibatch_size()
+      train_set.get_number_of_sequences(),context.get_minibatch_size()
     )));
     solve_threads.reserve(context.get_max_solve_threads());
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
@@ -77,7 +76,6 @@ public:
       for(sint32 i = 0; i < net.neuron_array_size(); ++i)
         error_values[threads].push_back(make_unique<atomic<sdouble32>>());
       process_threads[threads].reserve(context.get_max_processing_threads());
-      neuron_data[threads] = vector<sdouble32>(train_set.get_feature_size());
       transfer_function_input[threads] = vector<sdouble32>(train_set.get_feature_size());
       transfer_function_output[threads] = vector<sdouble32>(train_set.get_feature_size());
     }
@@ -137,7 +135,6 @@ private:
 
   vector<thread> solve_threads; /* The threads to be started during optimizing the network */
   vector<vector<thread>> process_threads; /* The inner process thread to be started during net optimization */
-  vector<vector<sdouble32>> neuron_data; /* Copy of the Neurons data for each solve thread */
   vector<vector<sdouble32>> transfer_function_input; /* Copy of the Neurons data for each solve thread */
   vector<vector<sdouble32>> transfer_function_output; /* Copy of the Neurons data for each solve thread */
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values; /* Calculated error values */

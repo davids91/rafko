@@ -5,7 +5,7 @@ namespace sparse_net_library{
 void Data_aggregate::fill(Data_set& samples){
   uint32 feature_start_index = 0;
   uint32 input_start_index = 0;
-  for(uint32 sample_iterator = 0; sample_iterator < get_number_of_samples(); ++ sample_iterator){
+  for(uint32 sample_iterator = 0; sample_iterator < input_samples.size(); ++ sample_iterator){
     input_samples[sample_iterator] = vector<sdouble32>(samples.input_size());
     label_samples[sample_iterator] = vector<sdouble32>(samples.feature_size());
     for(uint32 input_iterator = 0; input_iterator < samples.input_size(); ++input_iterator)
