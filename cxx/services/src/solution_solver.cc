@@ -29,7 +29,7 @@ Solution_solver::Solution_solver(const Solution& to_solve, Service_context conte
 ,  neuron_data(std::max(1u,solution.network_memory_length()), solution.neuron_number())
 ,  transfer_function_input(solution.neuron_number(),double_literal(0.0))
 ,  transfer_function_output(solution.neuron_number(),double_literal(0.0))
-,  solve_threads(0)
+,  solve_threads()
 ,  number_of_threads(context.get_max_solve_threads())
 {
   partial_solvers = vector<vector<Partial_solution_solver>>();

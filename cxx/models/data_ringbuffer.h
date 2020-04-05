@@ -19,6 +19,8 @@
 #define DATA_RINGBUFFER_H
 
 #include "sparse_net_global.h"
+#include "gen/common.pb.h"
+
 
 #include <vector>
 
@@ -104,17 +106,66 @@ public:
   }
 
   /**
+   * @brief      Gets the number of buffers stored in the object
+   *
+   * @return     The sequence size.
+   */
+  uint32 get_sequence_size(void){
+    return data.size();
+  }
+
+  /**
+   * @brief      Calculates the index to reach the neuron data at the @sequence_index th
+   *             evaluation of a data sample which was the last @past_index th loop.
+   *             Since the evaluation goes from the 0th item in the sequence,
+   *             by the time every sequence is evaluated, the neuron_data_sequences buffer
+   *             should contain the hidden data form every Neuron at the end of every solution.
+   *             At that point, the "latest" neuron data array should be under
+   *             neuron_data_sequences.get_element(0).
+   *             If a Network is recurrent (has inputs "from the past"), what it would have
+   *             as input at the last sequence is at index 0. If it would have input from 
+   *             "the past", the inputs from the past would be under
+   *             neuron_data_sequences.get_element(past_index). 
+   *             In case the following data needs to be accessed: what would the network see as input 
+   *             data in the @sequence_index 'th step, if that network would take input from the 
+   *             past ( @past_index loops before that step ) => the below function shall be used.
+   *
+   * @param[in]  sequence_index  The sequence index
+   * @param[in]  input_synapse   The input synapse containing the used past index
+   *
+   * @return     The buffer index.
+   */
+  sint32 get_sequence_index(uint32 sequence_index, Input_synapse_interval input_synapse){
+    return (get_sequence_size() - sequence_index - 1) + input_synapse.reach_past_loops();
+  }
+
+  /**
    * @brief      Returns the size of the available vectors
    *
    * @return     Number of elements
    */
-  uint32 size(void) const{
+  uint32 buffer_size(void) const{
     return data[0].size();
   }
 
+  /**
+   * @brief      Resets every data element to all zeroes.
+   */
   void reset(){
     for(vector<sdouble32>& vector : data)
       for(sdouble32& element : vector) element = double_literal(0.0);
+  }
+  
+  /**
+   * @brief      Take over the latest row from the provided buffer
+   *
+   * @param[in]  other  The buffer to take the data from
+   */
+  void copy_latest(const Data_ringbuffer& other){
+    std::copy(
+      other.get_const_element(0).begin(),other.get_const_element(0).end(),
+      get_element(0).begin()
+    );
   }
 
 private:

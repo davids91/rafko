@@ -25,13 +25,15 @@
 namespace sparse_net_library_test {
 
 using std::vector;
+using std::copy;
 using sparse_net_library::uint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::Data_ringbuffer;
+using sparse_net_library::Input_synapse_interval;
 
 /*###############################################################################################
  * Testing Ringbuffer implementation by creating a ringbuffer object and adding new entries in
- * multiple times, and checking the validity of the data.
+ *  multiple times, and checking the validity of the data.
  * */
 void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& ringbuffer_data){
   REQUIRE(sample_data.size() == ringbuffer_data.size());
@@ -40,12 +42,15 @@ void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& ringbuf
   }
 }
 
-TEST_CASE( "Testing Data Ringbuffer implementation", "[data-handling]" ) {
+TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
   uint32 buffer_number = 5;
   uint32 buffer_size = 30;
   vector<sdouble32> data_sample(buffer_size, double_literal(0.0));
   vector<sdouble32> previous_data_sample(buffer_size, double_literal(0.0));
   Data_ringbuffer buffer(buffer_number, buffer_size);
+
+  REQUIRE( buffer.buffer_size() == buffer_size );
+  REQUIRE( buffer.get_sequence_size() == buffer_number );
 
   /* By default every data should be 0 */
   for(uint32 i = 0; i<buffer_number; ++i)
@@ -55,13 +60,50 @@ TEST_CASE( "Testing Data Ringbuffer implementation", "[data-handling]" ) {
   for(uint32 variant = 0; variant < (buffer_number*2); ++variant){
     check_data_match(data_sample, buffer.get_element(0));
     check_data_match(previous_data_sample, buffer.get_element(1));
-    std::copy(
-      data_sample.begin(),data_sample.end(), previous_data_sample.begin()
-    );
+    copy(data_sample.begin(),data_sample.end(), previous_data_sample.begin());
     buffer.step();
     for(uint32 b = 0; b < buffer_size; ++b){
       data_sample[b] += b;
       buffer.get_element(0)[b] = data_sample[b];
+    }
+  }
+}
+
+/*###############################################################################################
+ * Testing a sequence of runs to be stored in the ringbuffer, and seeing if the indexing is as expected
+ *  by querying sequence indices and comparing to past reaches
+ * */
+TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-handling]"){
+  uint32 sequence_number = 5;
+  uint32 buffer_size = 30;
+  Data_ringbuffer buffer(sequence_number, buffer_size);
+  Input_synapse_interval input_synapse;
+  vector<sdouble32> data_sample(buffer_size);
+
+  /* Simulate some runs */
+  for(uint32 i = 0; i < sequence_number; ++i){
+    buffer.step();
+    for(sdouble32& sample_element : data_sample)
+      sample_element = i;
+    copy(data_sample.begin(),data_sample.end(), buffer.get_element(0).begin());
+  }
+
+  /* See if the first sequence reach back only to that index */
+  input_synapse.set_reach_past_loops(0);
+  CHECK( buffer.get_sequence_size() > buffer.get_sequence_index(0, input_synapse) );
+  CHECK( (sequence_number-1) == buffer.get_sequence_index(0, input_synapse) );
+
+  for(uint32 i = 1; i < sequence_number; ++i){
+    input_synapse.set_reach_past_loops(i);
+    CHECK( buffer.get_sequence_size() <= buffer.get_sequence_index(0, input_synapse) );
+  }
+
+  /* See if later sequences reach back to the relevant index */
+  for(uint32 sequence_iterator = 1; sequence_iterator < sequence_number; ++sequence_iterator){
+    for(uint32 reach_back_count = 0; reach_back_count < sequence_iterator; ++reach_back_count){
+      input_synapse.set_reach_past_loops(reach_back_count);
+      CHECK( buffer.get_sequence_size() > buffer.get_sequence_index(sequence_iterator, input_synapse) );
+      CHECK( (sequence_number - sequence_iterator - 1) + reach_back_count == buffer.get_sequence_index(sequence_iterator, input_synapse) );
     }
   }
 

@@ -25,6 +25,7 @@
 #include "models/cost_function.h"
 #include "models/transfer_function.h"
 #include "models/data_aggregate.h"
+#include "models/data_ringbuffer.h"
 #include "services/neuron_router.h"
 #include "services/solution_builder.h"
 #include "services/solution_solver.h"
@@ -60,12 +61,13 @@ public:
   ,  loops_unchecked(50)
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
   ,  cost_function(Function_factory::build_cost_function(net, train_set.get_number_of_samples(), context))
-  ,  solve_threads(0)
+  ,  solve_threads()
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
+  ,  neuron_data_sequences()
   ,  transfer_function_input(context.get_max_solve_threads())
   ,  transfer_function_output(context.get_max_solve_threads())
   ,  error_values(context.get_max_solve_threads())
-  ,  weight_gradient(0)
+  ,  weight_gradient()
   {
     (void)context.set_minibatch_size(max(1u,min(
       train_set.get_number_of_sequences(),context.get_minibatch_size()
@@ -73,6 +75,7 @@ public:
     solve_threads.reserve(context.get_max_solve_threads());
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
       solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
+      neuron_data_sequences.push_back(Data_ringbuffer(train_set_.get_sequence_size(), neural_network.neuron_array_size()));
       for(sint32 i = 0; i < net.neuron_array_size(); ++i)
         error_values[threads].push_back(make_unique<atomic<sdouble32>>());
       process_threads[threads].reserve(context.get_max_processing_threads());
@@ -135,6 +138,7 @@ private:
 
   vector<thread> solve_threads; /* The threads to be started during optimizing the network */
   vector<vector<thread>> process_threads; /* The inner process thread to be started during net optimization */
+  vector<Data_ringbuffer> neuron_data_sequences; /* neuron activation data at every sequence(for every solve thread). Non-sequential data has only 1 sequence */
   vector<vector<sdouble32>> transfer_function_input; /* Copy of the Neurons data for each solve thread */
   vector<vector<sdouble32>> transfer_function_output; /* Copy of the Neurons data for each solve thread */
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values; /* Calculated error values */
@@ -185,9 +189,10 @@ private:
    *             The number of threads to be started depends on @Service_context::get_max_solve_threads
    *
    * @param[in]  solve_thread_index  The solve thread index
+   * @param[in]  sample_index        The index of the sequence currently processed
    * @param[in]  sample_index        The sample index
    */
-  void accumulate_weight_gradients(uint32 solve_thread_index, uint32 sample_index);
+  void accumulate_weight_gradients(uint32 solve_thread_index, uint32 sequence_index, uint32 sample_index);
 
   /**
    * @brief      Divides all weight gradients with the minibatch size, so the weights are being updated 
@@ -229,7 +234,7 @@ private:
    * @param[in]  sample_index        The sample index
    * @param[in]  neuron_index        The neuron index
    */
-  void accumulate_weight_gradients_thread(uint32 solve_thread_index, uint32 sample_index, uint32 neuron_index);
+  void accumulate_weight_gradients_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 sample_index, uint32 neuron_index);
 
   /**
    * @brief      The thread used by @normalize_weight_gradients, it iterates through 

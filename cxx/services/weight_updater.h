@@ -32,7 +32,7 @@ public:
   ,  iteration(0)
   ,  finished(false)
   ,  current_velocity(sparse_net.weight_table_size(),double_literal(0.0))
-  ,  calculate_threads(0)
+  ,  calculate_threads()
   { calculate_threads.reserve(context.get_max_processing_threads()); };
 
 

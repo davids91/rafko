@@ -44,9 +44,9 @@ class Cost_function{
 public:
   Cost_function(uint32 feature_size_, Service_context service_context = Service_context())
   :  context(service_context)
-  ,  process_threads(0)
+  ,  process_threads()
   ,  feature_size(feature_size_)
-  ,  error_value(0)
+  ,  error_value()
   { process_threads.reserve(service_context.get_max_processing_threads()); };
 
   /**

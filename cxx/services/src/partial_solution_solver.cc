@@ -30,7 +30,7 @@ void Partial_solution_solver::collect_input_data(const vector<sdouble32>& input_
   input_iterator.iterate([&](Input_synapse_interval input_synapse, sint32 synapse_index){
     if(Synapse_iterator<>::is_index_input(synapse_index)){ /* If @Partial_solution input is from the network input */
       collected_input_data[index] = input_data[Synapse_iterator<>::input_index_from_synapse_index(synapse_index)];
-    }else if(static_cast<sint32>(neuron_data.size()) > synapse_index){  /* If @Partial_solution input is from the previous row */
+    }else if(static_cast<sint32>(neuron_data.buffer_size()) > synapse_index){  /* If @Partial_solution input is from the previous row */
       collected_input_data[index] = neuron_data.get_element(synapse_index,input_synapse.reach_past_loops());
     }
     ++index;
@@ -41,7 +41,7 @@ void Partial_solution_solver::provide_output_data(){
   uint32 output_index_start = 0;
   vector<sdouble32> neuron_output_copy(neuron_output);
   output_iterator.skim([&](Index_synapse_interval weight_synapse){
-    if(neuron_data.size() < (weight_synapse.starts() + weight_synapse.interval_size()))
+    if(neuron_data.buffer_size() < (weight_synapse.starts() + weight_synapse.interval_size()))
       throw "Neuron data out of Bounds!";
     swap_ranges( /* Save output into the internal neuron memory */
       neuron_output_copy.begin() + output_index_start,
