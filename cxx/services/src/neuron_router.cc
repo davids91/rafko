@@ -114,6 +114,7 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
     iter.iterate_terminatable([&](Input_synapse_interval input_synapse, sint32 synapse_input_index){
       if(
         (Synapse_iterator<>::is_index_input(synapse_input_index))
+        ||(0 < input_synapse.reach_past_loops()) /* Inputs from the past count as already processed */
         ||(is_neuron_processed(synapse_input_index))
         ||((!strict)&&(is_neuron_reserved(synapse_input_index)))
         /*!Note: In non-strict mode usually the whole of the net is collected into the subset, which might be undesirable compared

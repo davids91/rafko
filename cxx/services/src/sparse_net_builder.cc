@@ -44,6 +44,8 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
       numWeights += previous_size * layerSize; /* Calculate the number of weights needed */
       numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_filter amongst the weights */
     }
+    if(0x01 == recurrence)numWeights += layerSize; /* Recurrence to self */
+    else if(0x02 == recurrence)numWeights += (layerSize * layerSize); /* Recurrence to layer */
     previous_size = layerSize;
     numNeurons += layerSize; /* Calculate the number of elements needed */
   }
@@ -156,7 +158,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
           }
 
           /* Add the input synapse */
-          temp_input_interval.set_starts(layerStart + layer_sizes[layerIt]); /* starts at the beginning of the current layer */
+          temp_input_interval.set_starts(layerStart); /* starts at the beginning of the current layer */
           temp_input_interval.set_interval_size(layer_sizes[layerIt]); /* takes up the whole layer */
           *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
         }else{ /* Only bias */
