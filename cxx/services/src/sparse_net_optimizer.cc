@@ -99,16 +99,18 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
         throw "Network output size doesn't match size of provided labels!";
       neuron_data_sequences[solve_thread_index].copy_latest(solvers[solve_thread_index]->get_neuron_memory());
       train_set.set_feature_for_label(sample_index, neuron_data_sequences[solve_thread_index].get_const_element(0)); /* Re-calculate error for the training set */
-      calculate_output_errors(solve_thread_index, sample_index);
       ++sample_index;
     }
-
-    propagate_output_errors_back(solve_thread_index);
 
     /* Calculate the gradients from the current sequence */
     for(sint32 sequence_iterator = train_set.get_sequence_size()-1; sequence_iterator >= 0 ; --sequence_iterator){
       --sample_index;
+      calculate_output_errors(solve_thread_index, sample_index);
+      propagate_output_errors_back(solve_thread_index);
       accumulate_weight_gradients(solve_thread_index, sequence_iterator, sample_index);
+      /*!TODO: Subtract not relevant errors ( Any errors calculated before the max_memory loops )
+       * - Are they not relevant though??
+       */
     }
     solvers[solve_thread_index]->reset();
     neuron_data_sequences[solve_thread_index].reset();
@@ -134,22 +136,20 @@ void Sparse_net_optimizer::calculate_output_errors(uint32 solve_thread_index, ui
 
 void Sparse_net_optimizer::calculate_output_errors_thread(uint32 solve_thread_index, uint32 sample_index, uint32 neuron_index, uint32 neuron_number){
   sdouble32 buffer;
-  sdouble32 addition;
   for(uint32 neuron_iterator = 0; neuron_iterator < neuron_number; ++neuron_iterator){
-    addition = cost_function->get_d_cost_over_d_feature(
+    buffer = cost_function->get_d_cost_over_d_feature(
       ((neuron_index + neuron_iterator) - (net.neuron_array_size() - net.output_neuron_number())),
       train_set.get_label_sample(sample_index), neuron_data_sequences[solve_thread_index].get_const_element(0)
     );
-    addition *= transfer_function.get_derivative(
+    buffer *= transfer_function.get_derivative(
       net.neuron_array(neuron_index + neuron_iterator).transfer_function_idx(),
       transfer_function_input[solve_thread_index][neuron_index + neuron_iterator]
     );
-    addition *= Spike_function::get_derivative(
+    buffer *= Spike_function::get_derivative(
       net.weight_table(net.neuron_array(neuron_index + neuron_iterator).memory_filter_idx()),
       transfer_function_output[solve_thread_index][neuron_index + neuron_iterator]
     );
-    while(!error_values[solve_thread_index][neuron_index + neuron_iterator]->compare_exchange_weak(buffer, (buffer + addition)))
-     buffer = *error_values[solve_thread_index][neuron_index + neuron_iterator];
+    error_values[solve_thread_index][neuron_index + neuron_iterator]->store(buffer);
   }
 }
 

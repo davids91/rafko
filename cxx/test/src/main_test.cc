@@ -26,15 +26,8 @@
 #include "services/synapse_iterator.h"
 
 int main( int argc, char* argv[] ) {
-
-  Catch::cout() << "Catch version "
-  << CATCH_VERSION_MAJOR << "." << CATCH_VERSION_MINOR << "."
-  << CATCH_VERSION_PATCH <<std::endl;
-
   int result = Catch::Session().run( argc, argv );
-
   google::protobuf::ShutdownProtobufLibrary();
-
   return result;
 }
 

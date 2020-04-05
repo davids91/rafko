@@ -59,6 +59,36 @@ public:
   }
 
   /**
+   * @brief      Resets every data element to all zeroes.
+   */
+  void reset(void){
+    for(vector<sdouble32>& vector : data)
+      for(sdouble32& element : vector) element = double_literal(0.0);
+  }
+  
+  /**
+   * @brief      Removes the first element from the Queue by 
+   *             filling the latest item with zeroes, and setting the 
+   *             current index one step back into the past.
+   */
+  void pop_front(void){
+    std::fill(get_element(0).begin(),get_element(0).end(),double_literal(0.0));
+    current_index = get_buffer_index(1);
+  }
+
+  /**
+   * @brief      Take over the latest row from the provided buffer
+   *
+   * @param[in]  other  The buffer to take the data from
+   */
+  void copy_latest(const Data_ringbuffer& other){
+    std::copy(
+      other.get_const_element(0).begin(),other.get_const_element(0).end(),
+      get_element(0).begin()
+    );
+  }
+
+  /**
    * @brief      Gets the data element in the..
    *
    * @param[in]  data_index  ..past @past_index th loop .. 
@@ -79,12 +109,8 @@ public:
    * @return     The reference pointing to a data
    */
   vector<sdouble32>& get_element(uint32 past_index){
-    uint32 loop_index = current_index;
     if(past_index < data.size()){
-      for(uint32 i = 0; i < past_index; ++i)
-        if(0 < loop_index)--loop_index;
-          else loop_index = data.size()-1;
-      return data[loop_index];
+      return data[get_buffer_index(past_index)];
     }else throw "Ringbuffer index out of bounds!";
   }
 
@@ -96,12 +122,8 @@ public:
    * @return     The reference pointing to a data
    */
   const vector<sdouble32>& get_const_element(uint32 past_index) const{
-    uint32 loop_index = current_index;
     if(past_index < data.size()){
-      for(uint32 i = 0; i < past_index; ++i)
-        if(0 < loop_index)--loop_index;
-          else loop_index = data.size()-1;
-      return data[loop_index];
+      return data[get_buffer_index(past_index)];
     }else throw "Ringbuffer index out of bounds!";
   }
 
@@ -148,29 +170,24 @@ public:
     return data[0].size();
   }
 
-  /**
-   * @brief      Resets every data element to all zeroes.
-   */
-  void reset(){
-    for(vector<sdouble32>& vector : data)
-      for(sdouble32& element : vector) element = double_literal(0.0);
-  }
-  
-  /**
-   * @brief      Take over the latest row from the provided buffer
-   *
-   * @param[in]  other  The buffer to take the data from
-   */
-  void copy_latest(const Data_ringbuffer& other){
-    std::copy(
-      other.get_const_element(0).begin(),other.get_const_element(0).end(),
-      get_element(0).begin()
-    );
-  }
-
 private:
   uint32 current_index;
   vector<vector<sdouble32>> data;
+
+  /**
+   * @brief      Gets the buffer index for the given past index
+   *
+   * @param[in]  past_index  The past index
+   *
+   * @return     The buffer index.
+   */
+  uint32 get_buffer_index(uint32 past_index) const{
+    uint32 loop_index = current_index;
+    for(uint32 i = 0; i < past_index; ++i)
+      if(0 < loop_index)--loop_index;
+        else loop_index = data.size()-1;
+    return loop_index;
+  }
 };
 
 } /* namespace sparse_net_library */
