@@ -65,12 +65,27 @@ public:
    */
   void collect_subset(uint8 arg_max_solve_threads, sdouble32 arg_device_max_megabytes, bool strict = true);
 
+  /**
+   * @brief      Reads an index from the recently collected subset. Shall only be used 
+   *             when a collection is not actually running; It's not thread-safe!
+   *
+   * @param[in]  subset_index  The subset index
+   *
+   * @return     The neuron index from subset.
+   */
   uint32 get_neuron_index_from_subset(uint32 subset_index){
     if((!collection_running)&&(0 < net_subset.size())){
       return net_subset[subset_index];
     }else throw std::runtime_error("Invalid usage or Index out of bounds!");
   }
 
+  /**
+   * @brief      Gets the first neuron index from the recently collected subset, if there is any.
+   *
+   * @param      put_it_here  The reference to load the index into
+   *
+   * @return     Operation success
+   */
   bool get_first_neuron_index_from_subset(uint32& put_it_here){
     if((!collection_running)&&(0 < net_subset.size())){
       put_it_here = net_subset.front();
@@ -78,6 +93,16 @@ public:
     }else return false;
   }
 
+  /**
+   * @brief      If the index in the arguments matches the first index in the subset,
+   *             removes the index from it; Sets its neuron state to processed.
+   *             This validation mechanism is to ensure that the user 
+   *             of the interface knows what index it is removing.
+   *
+   * @param[in]  neuron_index  The neuron index to compare against
+   *
+   * @return     Operation success
+   */
   bool confirm_first_subset_element_processed(uint32 neuron_index){
     if((!collection_running)&&(0 < net_subset.size())&&(neuron_index == net_subset.front())){
       (neuron_states[neuron_index])->store(neuron_state_processed_value(neuron_index));
@@ -86,6 +111,16 @@ public:
     }else return false;
   }
 
+  /**
+   * @brief      If the index in the arguments matches the first index in the subset,
+   *             removes the index from it; Sets its neuron state to be in progress.
+   *             This validation mechanism is to ensure that the user 
+   *             of the interface knows what index it is removing.
+   *
+   * @param[in]  neuron_index  The neuron index to compare against
+   *
+   * @return     Operation success
+   */
   bool confirm_first_subset_element_ommitted(uint32 neuron_index){
     bool ret = false;
     if((0 < net_subset.size())&&(neuron_index == net_subset.front())){
@@ -96,10 +131,18 @@ public:
     return ret;
   }
 
+  /**
+   * @brief      Gets the number of elements in the subset
+   *
+   * @return     The subset size.
+   */
   uint32 get_subset_size(){
     return net_subset.size();
   }
 
+  /**
+   * @brief      Clears the subset and sets the neuron states of the items in it to be in progress.
+   */
   void reset_remaining_subset(void){
     for(uint32 neuron_index : net_subset){
       confirm_first_subset_element_ommitted(neuron_index);
@@ -130,6 +173,39 @@ public:
     return (neuron_state_processed_value(neuron_index) == *neuron_states[neuron_index]);
   }
 private:
+  const SparseNet& net;
+  bool collection_running = false;
+
+  /**
+   * Number of already processed output layer Neurons
+   */
+  atomic<uint32> output_layer_iterator;
+
+  /**
+   * For each @Neuron in @SparseNet stores the processed state. Values:
+   *  - Number of processed children ( storing raw children number without synapse information )
+   *  - Number of processed children + 1 in case the Neuron is reserved
+   *  - Number of processed children + 2 in case the Neuron is processed
+   */
+  vector<unique_ptr<atomic<uint32>>> neuron_states;
+
+  /**
+   * Number of inputs a Neuron has, based on the input index synapse sizes
+   */
+  vector<uint32> neuron_number_of_inputs;
+
+  /**
+   * A subset of the net representing independent solutions
+   */
+  mutex net_subset_mutex;
+  std::atomic<sdouble32> net_subset_size_bytes; /* The size of the currently partial solution to be built in bytes */
+  deque<uint32> net_subset_index;
+  deque<uint32> net_subset;
+
+  /**
+   * The number of times the algorithm ran to look for Neuron candidates, it is used to decide relevance to the currently finished subset.
+   */
+  uint16 iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
 
   /**
    * @brief      Called form inside @collect_subset; A thread to handle @collect_subset
@@ -166,41 +242,6 @@ private:
    * @param      visiting_next  The visiting next
    */
   void step(vector<uint32>& visiting, uint32 visiting_next);
-
-  const SparseNet& net;
-
-  bool collection_running = false;
-
-  /**
-   * Number of already processed output layer Neurons
-   */
-  atomic<uint32> output_layer_iterator;
-
-  /**
-   * For each @Neuron in @SparseNet stores the processed state. Values:
-   *  - Number of processed children ( storing raw children number without synapse information )
-   *  - Number of processed children + 1 in case the Neuron is reserved
-   *  - Number of processed children + 2 in case the Neuron is processed
-   */
-  vector<unique_ptr<atomic<uint32>>> neuron_states;
-
-  /**
-   * Number of inputs a Neuron has, based on the input index synapse sizes
-   */
-  vector<uint32> neuron_number_of_inputs;
-
-  /**
-   * A subset of the net representing independent solutions
-   */
-  mutex net_subset_mutex;
-  std::atomic<sdouble32> net_subset_size_bytes; /* The size of the currently partial solution to be built in bytes */
-  deque<uint32> net_subset_index;
-  deque<uint32> net_subset;
-
-  /**
-   * The number of times the algorithm ran to look for Neuron candidates, it is used to decide relevance to the currently finished subset.
-   */
-  uint16 iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
 
   /**
    * @brief       functions to help build partial solutions
