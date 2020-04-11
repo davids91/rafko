@@ -202,7 +202,7 @@ TEST_CASE("Synapse Iterator Skimming","[synapse_iteration]"){
   sint32 manual_index = 0;
   iter.skim([&](Input_synapse_interval input_synapse){
     CHECK( input_synapse.starts() == synapse_indexes[manual_index][0] );
-    CHECK( input_synapse.interval_size() == synapse_indexes[manual_index][1] );
+    CHECK( static_cast<sint32>(input_synapse.interval_size()) == synapse_indexes[manual_index][1] );
     ++manual_index;
   });
 }

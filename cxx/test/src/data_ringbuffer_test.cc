@@ -27,6 +27,7 @@ namespace sparse_net_library_test {
 using std::vector;
 using std::copy;
 using sparse_net_library::uint32;
+using sparse_net_library::sint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::Data_ringbuffer;
 using sparse_net_library::Input_synapse_interval;
@@ -90,20 +91,20 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
 
   /* See if the first sequence reach back only to that index */
   input_synapse.set_reach_past_loops(0);
-  CHECK( buffer.get_sequence_size() > buffer.get_sequence_index(0, input_synapse) );
-  CHECK( (sequence_number-1) == buffer.get_sequence_index(0, input_synapse) );
+  CHECK( static_cast<sint32>(buffer.get_sequence_size()) > buffer.get_sequence_index(0, input_synapse) );
+  CHECK( static_cast<sint32>(sequence_number-1) == buffer.get_sequence_index(0, input_synapse) );
 
   for(uint32 i = 1; i < sequence_number; ++i){
     input_synapse.set_reach_past_loops(i);
-    CHECK( buffer.get_sequence_size() <= buffer.get_sequence_index(0, input_synapse) );
+    CHECK( static_cast<sint32>(buffer.get_sequence_size()) <= buffer.get_sequence_index(0, input_synapse) );
   }
 
   /* See if later sequences reach back to the relevant index */
   for(uint32 sequence_iterator = 1; sequence_iterator < sequence_number; ++sequence_iterator){
     for(uint32 reach_back_count = 0; reach_back_count < sequence_iterator; ++reach_back_count){
       input_synapse.set_reach_past_loops(reach_back_count);
-      CHECK( buffer.get_sequence_size() > buffer.get_sequence_index(sequence_iterator, input_synapse) );
-      CHECK( (sequence_number - sequence_iterator - 1) + reach_back_count == buffer.get_sequence_index(sequence_iterator, input_synapse) );
+      CHECK( static_cast<sint32>(buffer.get_sequence_size()) > buffer.get_sequence_index(sequence_iterator, input_synapse) );
+      CHECK( static_cast<sint32>((sequence_number - sequence_iterator - 1) + reach_back_count) == buffer.get_sequence_index(sequence_iterator, input_synapse) );
     }
   }
 

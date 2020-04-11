@@ -44,6 +44,7 @@ using sparse_net_library::SparseNet;
 using sparse_net_library::uint8;
 using sparse_net_library::uint16;
 using sparse_net_library::uint32;
+using sparse_net_library::sint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::Data_ringbuffer;
 using sparse_net_library::Partial_solution;
@@ -286,8 +287,8 @@ TEST_CASE("Solution Solver test for gradients", "[solve][gradient]"){
   vector<sdouble32> result = solver.get_neuron_data();
   result = {result.end() - solver.get_output_size(),result.end()};
 
-  REQUIRE( net->neuron_array_size() == solver.get_transfer_function_input().size());
-  REQUIRE( net->neuron_array_size() == solver.get_transfer_function_output().size());
+  REQUIRE( net->neuron_array_size() == static_cast<sint32>(solver.get_transfer_function_input().size()) );
+  REQUIRE( net->neuron_array_size() == static_cast<sint32>(solver.get_transfer_function_output().size()) );
 
 }
 

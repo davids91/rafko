@@ -33,6 +33,7 @@ namespace sparse_net_library_test {
   using std::make_unique;
   using std::vector;
 
+  using sparse_net_library::sint32;
   using sparse_net_library::uint32;
   using sparse_net_library::sdouble32;
   using sparse_net_library::Neuron;
@@ -244,7 +245,7 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     for(int index_synapse_iterator = 0; index_synapse_iterator < net->neuron_array(i).input_indices_size(); ++index_synapse_iterator){
       REQUIRE( /* Every index synapse element has to point inside the neuron array */
         net->neuron_array_size() >
-        ( net->neuron_array(i).input_indices(index_synapse_iterator).starts()
+        static_cast<sint32>( net->neuron_array(i).input_indices(index_synapse_iterator).starts()
           + net->neuron_array(i).input_indices(index_synapse_iterator).interval_size() )
       );
       number_of_input_indexes += net->neuron_array(i).input_indices(index_synapse_iterator).interval_size();
@@ -256,12 +257,12 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     REQUIRE( 0 < net->neuron_array(i).input_weights_size() );
     for(int weight_synapse_iterator = 0; weight_synapse_iterator < net->neuron_array(i).input_weights_size(); ++weight_synapse_iterator){
       /* Bias and memory filter index has to point inside the weight table array*/
-      REQUIRE( net->weight_table_size() > net->neuron_array(i).memory_filter_idx() );
+      REQUIRE( net->weight_table_size() > static_cast<sint32>(net->neuron_array(i).memory_filter_idx()) );
 
       /* Weights */
       REQUIRE( /* Every weight synapse element has to point inside the weight table array */
         net->weight_table_size() >= /* Equality is permitted here, because the interval iterates from (start) to (start + size - 1) */
-        ( net->neuron_array(i).input_weights(weight_synapse_iterator).starts()
+        static_cast<sint32>( net->neuron_array(i).input_weights(weight_synapse_iterator).starts()
           + net->neuron_array(i).input_weights(weight_synapse_iterator).interval_size() )
       );
       for(uint32 weight_iterator = 0; weight_iterator < net->neuron_array(i).input_weights(weight_synapse_iterator).interval_size(); ++weight_iterator){
