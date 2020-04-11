@@ -46,7 +46,7 @@ using sparse_net_library::Synapse_iterator;
  * - Each iteration has to add the corresponding layer
  *    Because of the structure of a fully connected Net, one iteration would involve one layer exactly
  * */
-TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron_iteration][small]" ){
+TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small]" ){
   /* Build a net */
   vector<uint32> layer_structure = {2,3,3,5};
   unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();

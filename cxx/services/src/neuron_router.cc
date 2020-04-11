@@ -90,7 +90,7 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
   uint32 start_input_index_from = 0;
   uint32 number_of_processed_inputs = 0;
   uint32 start_synapse_iteration_from = 0;
-  uint32 expected_number_of_processed_inputs = 0;
+  uint32 expected_neuron_state = 0;
 
   visiting_next = visiting.back();
   while(/* Checking current Neuron and its inputs */
@@ -99,8 +99,11 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
     &&(visiting.back() == visiting_next)  /* no children are found to move on to */
   ){
     Synapse_iterator<Input_synapse_interval> iter(net.neuron_array(visiting.back()).input_indices());
-    number_of_processed_inputs = *neuron_states[visiting.back()];
-    expected_number_of_processed_inputs = *neuron_states[visiting.back()];
+    expected_neuron_state = *neuron_states[visiting.back()];
+    number_of_processed_inputs = std::min(
+      static_cast<uint32>(*neuron_states[visiting.back()]),
+      neuron_number_of_inputs[visiting.back()]
+    );
     if(is_neuron_in_progress(visiting.back())){ /* If the Neuron is in progess still */
       iter.skim_terminatable([&](Input_synapse_interval input_synapse){
         if((start_input_index_from + input_synapse.interval_size()) < number_of_processed_inputs){
@@ -136,12 +139,12 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
       &&(visiting_next == visiting.back()) /* There are no next input to iterate to */
     ){
       (void)neuron_states[visiting.back()]->compare_exchange_strong(
-        expected_number_of_processed_inputs,
+        expected_neuron_state,
         neuron_state_next_iteration_value(visiting.back(),iteration)
       ); /* If another thread updated the Neuron status before this one, don't tinker with it! */
     }else{ /* Neuron has unprocessed inputs still, iteration shall continue with one of them */
       (void)neuron_states[visiting.back()]->compare_exchange_strong(
-        expected_number_of_processed_inputs,
+        expected_neuron_state,
         number_of_processed_inputs
       ); /* If another thread updated the Neuron status before this one, don't tinker with it! */
     }
@@ -178,7 +181,6 @@ void Neuron_router::add_neuron_into_subset(uint32 neuron_index){
 
 void Neuron_router::step(vector<uint32>& visiting, uint32 visiting_next){
   uint32 tmp_index = 0;
-
   if(visiting_next != visiting.back()){ /* found another Neuron to iterate to because the index values differ (because visiting_next is updated!) */
     visiting.push_back(visiting_next);
   }else if(1 < visiting.size()){ /* haven't found another Neuron to iterate to, try with parent Neuron, if there is any */
@@ -194,7 +196,7 @@ void Neuron_router::step(vector<uint32>& visiting, uint32 visiting_next){
       &&(tmp_index == output_layer_iterator) /* If the Neuron at @output_layer_iterator is processed */
       &&(static_cast<int>(output_layer_iterator) < (net.neuron_array_size()-1)) /* And it shall remain in bounds of the array */
     ){ /*  step the output_layer_iterator forward! */
-      (void)output_layer_iterator.compare_exchange_strong(tmp_index, tmp_index+1 );
+      (void)output_layer_iterator.compare_exchange_strong( tmp_index, (tmp_index+1) );
       /*!Note: @output_layer_iterator may have been updated within another thread, but that's okay */
     }
   } /* (1 == visiting.size()) */

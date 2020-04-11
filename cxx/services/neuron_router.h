@@ -23,6 +23,8 @@
 #include "services/synapse_iterator.h"
 
 #include <deque>
+#include <mutex>
+#include <atomic>
 #include <functional>
 #include <stdexcept>
 
@@ -32,6 +34,7 @@ using std::unique_ptr;
 using std::vector;
 using std::deque;
 using std::atomic;
+using std::mutex;
 
 /**
  * @brief      This class describes a neuron router which iterates through the given @SparseNet,
@@ -189,7 +192,7 @@ private:
   /**
    * A subset of the net representing independent solutions
    */
-  std::mutex net_subset_mutex;
+  mutex net_subset_mutex;
   std::atomic<sdouble32> net_subset_size_bytes; /* The size of the currently partial solution to be built in bytes */
   deque<uint32> net_subset_index;
   deque<uint32> net_subset;

@@ -81,7 +81,8 @@ $(TEST_RESULT): $(TEST_OBJECTS)
 	@rm -f $(TEST_RESULT)
 	g++ $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 
-test: clean build_library run-tests
+test: clean build_library
+	make run-tests
 
 test-only: $(TEST_OBJECTS)
 	g++ $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
