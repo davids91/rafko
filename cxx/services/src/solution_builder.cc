@@ -22,6 +22,7 @@
 #include "services/partial_solution_builder.h"
 
 #include <memory>
+#include <stdexcept>
 
 namespace sparse_net_library{
 
@@ -48,7 +49,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
   uint32 reach_back;
   bool strict_mode = false;
 
-  if(0 == net.output_neuron_number()) throw "Can't build a solution with 0 output Neurons!";
+  if(0 == net.output_neuron_number()) throw std::runtime_error("Can't build a solution with 0 output Neurons!");
   while(!net_iterator.finished()){ /* Until the whole output layer is processed */
     net_iterator.collect_subset(arg_max_solve_threads,arg_device_max_megabytes, strict_mode); /* Collect solvable neuron indices */
     placed_neurons_in_partial = net_iterator.get_subset_size();

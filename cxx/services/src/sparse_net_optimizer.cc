@@ -21,6 +21,7 @@
 #include <atomic>
 #include <thread>
 #include <cmath>
+#include <stdexcept>
 
 namespace sparse_net_library{
 
@@ -74,7 +75,7 @@ void Sparse_net_optimizer::evaluate_thread(uint32 solve_thread_index, uint32 sam
     transfer_function_input[solve_thread_index] = solvers[solve_thread_index]->get_transfer_function_input();
     transfer_function_output[solve_thread_index] = solvers[solve_thread_index]->get_transfer_function_output();
     if(test_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
-      throw "Network output size doesn't match size of provided labels!";
+      throw std::runtime_error("Network output size doesn't match size of provided labels!");
     test_set.set_feature_for_label(
       (sample_start + sample_iterator), solvers[solve_thread_index]->get_neuron_memory().get_const_element(0)
     ); /* Re-calculate error for the training set */
@@ -96,7 +97,7 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
       transfer_function_input[solve_thread_index] = solvers[solve_thread_index]->get_transfer_function_input();
       transfer_function_output[solve_thread_index] = solvers[solve_thread_index]->get_transfer_function_output();
       if(train_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
-        throw "Network output size doesn't match size of provided labels!";
+        throw std::runtime_error("Network output size doesn't match size of provided labels!");
       neuron_data_sequences[solve_thread_index].copy_latest(solvers[solve_thread_index]->get_neuron_memory());
       train_set.set_feature_for_label(sample_index, neuron_data_sequences[solve_thread_index].get_const_element(0)); /* Re-calculate error for the training set */
       ++sample_index;

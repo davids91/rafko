@@ -18,15 +18,15 @@
 #ifndef Partial_solution_H
 #define Partial_solution_H
 
-#include <vector>
-
 #include "sparse_net_global.h"
-
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "models/transfer_function.h"
 #include "models/data_ringbuffer.h"
 #include "services/synapse_iterator.h"
+
+#include <vector>
+#include <stdexcept>
 
 namespace sparse_net_library {
 
@@ -79,7 +79,7 @@ public:
    * @param      transfer_function_output_  The reference to transfer function output
    */
   void provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_){
-    if(transfer_function_input.size() != transfer_function_output.size()) throw "Neuron gradient data Incompatible!";
+    if(transfer_function_input.size() != transfer_function_output.size()) throw std::runtime_error("Neuron gradient data Incompatible!");
     uint32 output_index_start = 0;
     vector<sdouble32> transfer_function_input_copy(transfer_function_input);
     vector<sdouble32> transfer_function_output_copy(transfer_function_output);

@@ -29,7 +29,7 @@ void Data_aggregate::set_feature_for_label(uint32 sample_index, const vector<sdo
     
     while(!error_sum.compare_exchange_weak(buffer,(buffer + sample_errors[sample_index])))
       buffer = error_sum;
-  }else throw "Sample index out of bounds!";
+  }else throw std::runtime_error("Sample index out of bounds!");
 }
 
 } /* namespace sparse_net_library*/

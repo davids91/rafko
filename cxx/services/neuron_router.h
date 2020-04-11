@@ -18,12 +18,13 @@
 #ifndef NEURON_ROUTER_H
 #define NEURON_ROUTER_H
 
-#include <deque>
-#include <functional>
-
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
 #include "services/synapse_iterator.h"
+
+#include <deque>
+#include <functional>
+#include <stdexcept>
 
 namespace sparse_net_library {
 
@@ -64,7 +65,7 @@ public:
   uint32 get_neuron_index_from_subset(uint32 subset_index){
     if((!collection_running)&&(0 < net_subset.size())){
       return net_subset[subset_index];
-    }else throw "Invalid usage or Index out of bounds!";
+    }else throw std::runtime_error("Invalid usage or Index out of bounds!");
   }
 
   bool get_first_neuron_index_from_subset(uint32& put_it_here){

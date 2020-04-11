@@ -20,6 +20,7 @@
 #include "models/dense_net_weight_initializer.h"
 #include "services/synapse_iterator.h"
 
+#include <stdexcept>
 #include <time.h>
 
 namespace sparse_net_library {
@@ -185,7 +186,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
     set_weight_table(ret);
     set_neuron_array(ret);
     return ret;
-  }else throw "Input Output Pre-requisites failed;Unable to determine Net Structure!";
+  }else throw std::runtime_error("Input Output Pre-requisites failed;Unable to determine Net Structure!");
 }
 
 SparseNet* Sparse_net_builder::build(void){
@@ -202,7 +203,7 @@ SparseNet* Sparse_net_builder::build(void){
     set_weight_table(ret);
     set_neuron_array(ret);
     return ret;
-  }else throw "Inconsistent parameters given to Sparse Net Builder!";
+  }else throw std::runtime_error("Inconsistent parameters given to Sparse Net Builder!");
 }
 
 } /* namespace sparse_net_library */

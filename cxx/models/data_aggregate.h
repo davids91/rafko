@@ -26,6 +26,7 @@
 
 #include <vector>
 #include <memory>
+#include <stdexcept>
 
 namespace sparse_net_library{
 
@@ -47,7 +48,7 @@ public:
   ,  error_sum(double_literal(1.0))
   ,  cost_function(move(cost_function_))
   {
-    if(0 != (label_samples.size()%sequence_size))throw "Sequence size doesn't match label number in Data set!";
+    if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_); 
   }
 
@@ -63,7 +64,7 @@ public:
   ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(move(cost_function_))
-  { if(0 != (label_samples.size()%sequence_size))throw "Sequence size doesn't match label number in Data set!"; }
+  { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
   Data_aggregate(
     vector<vector<sdouble32>>&& input_samples_,
@@ -77,7 +78,7 @@ public:
   ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(Function_factory::build_cost_function(net, sample_number, context))
-  { if(0 != (label_samples.size()%sequence_size))throw "Sequence size doesn't match label number in Data set!"; }
+  { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
   /**
    * @brief      Sets the approximated value for an observed value,
@@ -107,7 +108,7 @@ public:
   const vector<sdouble32>& get_input_sample(uint32 sample_index){
     if(sample_number > sample_index)
       return input_samples[sample_index];
-      else throw "Sample index out of bounds!";
+      else throw std::runtime_error("Sample index out of bounds!");
   }
 
   /**
@@ -120,7 +121,7 @@ public:
   const vector<sdouble32>& get_label_sample(uint32 sample_index){
     if(sample_number > sample_index)
       return label_samples[sample_index];
-      else throw "Sample index out of bounds!";
+      else throw std::runtime_error("Sample index out of bounds!");
   }
 
   /**
@@ -133,7 +134,7 @@ public:
   sdouble32 get_error(uint32 index){
     if(sample_errors.size() > index)
       return sample_errors[index];
-    else throw "Sample index out of bounds!";
+    else throw std::runtime_error("Sample index out of bounds!");
   }
 
   /**

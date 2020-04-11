@@ -25,6 +25,7 @@
 #include "models/cost_function_mse.h"
 
 #include <memory>
+#include <stdexcept>
 
 namespace sparse_net_library{
 
@@ -65,7 +66,7 @@ public:
         return std::make_unique<Cost_function_mse>(feature_size, sample_number, context);
       case COST_FUNCTION_SQUARED_ERROR: 
         return std::make_unique<Cost_function_squared_error>(feature_size, context);
-      default: throw "Unknown cost function requested from builder!";
+      default: throw std::runtime_error("Unknown cost function requested from builder!");
     }
   }
 };

@@ -24,6 +24,7 @@
 #include <thread>
 #include <atomic>
 #include <utility>
+#include <stdexcept>
 
 #include "gen/solution.pb.h"
 #include "models/service_context.h"
@@ -83,7 +84,7 @@ public:
    */
   sdouble32 get_transfer_function_input(uint32 neuron_index) const{
     if(solution.neuron_number() > neuron_index)return transfer_function_input[neuron_index];
-      else throw "Neuron index out of bounds!";
+      else throw std::runtime_error("Neuron index out of bounds!");
   }
 
   /**
@@ -104,7 +105,7 @@ public:
    */
   sdouble32 get_transfer_function_output(uint32 neuron_index) const{
     if(solution.neuron_number() > neuron_index)return transfer_function_output[neuron_index];
-      else throw "Neuron index out of bounds!";
+      else throw std::runtime_error("Neuron index out of bounds!");
   }
 
   /**
@@ -167,7 +168,7 @@ private:
    * @return     The @Partial_solution reference.
    */
   static const Partial_solution& get_partial(uint32 row, uint32 col, const Solution& solution){
-    if(solution.cols_size() <= static_cast<int>(row)) throw "Row index out of bounds!";
+    if(solution.cols_size() <= static_cast<int>(row)) throw std::runtime_error("Row index out of bounds!");
     uint32 index = 0;
     for(uint32 i = 0;i < row; ++i) index += solution.cols(i);
     return solution.partial_solutions(index + col);

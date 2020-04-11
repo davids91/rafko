@@ -67,7 +67,7 @@ sdouble32 Transfer_function::get_value(transfer_functions function, sdouble32 da
       if(0 >= data) return ((context.get_alpha() * exp(data)) - context.get_alpha()) * context.get_lambda();
       else return data;
     case TRANSFER_FUNCTION_RELU: return max(double_literal(0.0),data);
-    default: throw "Unidentified transfer function queried for information!";
+    default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
 
@@ -85,7 +85,7 @@ sdouble32 Transfer_function::get_derivative(transfer_functions function, sdouble
     case TRANSFER_FUNCTION_RELU:
       if(0 >= data) return 0;
       else return 1;
-    default: throw "Unidentified transfer function queried for information!";
+    default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
 

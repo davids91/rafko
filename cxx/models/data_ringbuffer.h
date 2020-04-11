@@ -21,8 +21,8 @@
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
 
-
 #include <vector>
+#include <stdexcept>
 
 namespace sparse_net_library{
 
@@ -98,7 +98,7 @@ public:
    */
   sdouble32 get_element(uint32 data_index, uint32 past_index) const{
     if(data[0].size() > data_index)return get_const_element(past_index)[data_index];
-     else throw "Ringbuffer data index out of bounds!";
+     else throw std::runtime_error("Ringbuffer data index out of bounds!");
   }
 
   /**
@@ -111,7 +111,7 @@ public:
   vector<sdouble32>& get_element(uint32 past_index){
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
-    }else throw "Ringbuffer index out of bounds!";
+    }else throw std::runtime_error("Ringbuffer index out of bounds!");
   }
 
   /**
@@ -124,7 +124,7 @@ public:
   const vector<sdouble32>& get_const_element(uint32 past_index) const{
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
-    }else throw "Ringbuffer index out of bounds!";
+    }else throw std::runtime_error("Ringbuffer index out of bounds!");
   }
 
   /**

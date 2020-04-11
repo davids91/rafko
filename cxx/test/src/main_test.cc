@@ -133,7 +133,7 @@ void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdo
   for(uint32 layer_iterator = 0; layer_iterator < layer_structure.size(); ++layer_iterator){ /* Go through all of the layers, count the number of Neurons */
     neuron_number += layer_structure[layer_iterator]; /* Sum the number of neurons accoding to the given layer structure */
   }
-  if(static_cast<int>(neuron_number) != network.neuron_array_size())throw "Given Network Structure doesn't fit Network Neuron number!";
+  REQUIRE(static_cast<sint32>(neuron_number) == network.neuron_array_size());
   if(0 == neuron_data.size())neuron_data = vector<sdouble32>(neuron_number);
   sdouble32 new_neuron_data = 0;
   sdouble32 neuron_input_value = 0;

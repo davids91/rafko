@@ -17,6 +17,8 @@
 
 #include "services/partial_solution_builder.h"
 
+#include <stdexcept>
+
 namespace sparse_net_library{
 
 uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_index){
@@ -100,7 +102,7 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_in
     )partial.mutable_input_data()->RemoveLast();
 
     return max_reach_back;
-  }else throw "Neuron index is out of bounds from net neuron array!";
+  }else throw std::runtime_error("Neuron index is out of bounds from net neuron array!");
 }
 
 bool Partial_solution_builder::look_for_neuron_input(sint32 neuron_input_index){

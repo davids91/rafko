@@ -26,6 +26,7 @@
 
 #include <vector>
 #include <memory>
+#include <stdexcept>
 
 namespace sparse_net_library {
 
@@ -290,7 +291,7 @@ private:
   void set_neuron_array(SparseNet* net){
     if(Neuron_info::is_neuron_valid(arg_neuron_array.back())){ /* If the last element is valid */
       *net->mutable_neuron_array() = {arg_neuron_array.begin(),arg_neuron_array.end()};
-    } else throw "Unable to set Neuron Array into Sparse net as the last Neuron seems invalid!";
+    } else throw std::runtime_error("Unable to set Neuron Array into Sparse net as the last Neuron seems invalid!");
   }
 
   /**
@@ -301,7 +302,7 @@ private:
   void set_weight_table(SparseNet* net){
     if(0 < arg_weight_table.size()){
       *net->mutable_weight_table() = {arg_weight_table.begin(), arg_weight_table.end()};
-    }else throw "Unable to build net, weight table is of size 0!";
+    }else throw std::runtime_error("Unable to build net, weight table is of size 0!");
   }
 
 };
