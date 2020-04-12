@@ -45,13 +45,21 @@ using sparse_net_library::COST_FUNCTION_MSE;
 /*###############################################################################################
  * Testing Solution generation using the @Sparse_net_builder and the @Solution_builder
  * */
-unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes){
-  vector<uint32> net_structure = {20,10,30,10,2}; /* Build a net of this structure */
-  unique_ptr<SparseNet> net = (unique_ptr<SparseNet>(Sparse_net_builder()
-    .input_size(50).expected_input_range(double_literal(5.0))
+unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, uint32 recursion){
+  vector<uint32> net_structure = {20,20,30,10,2}; /* Build a net of this structure */
+  Sparse_net_builder builder;
+
+  builder.input_size(50).expected_input_range(double_literal(5.0))
     .output_neuron_number(2).arena_ptr(arena)
-    .cost_function(COST_FUNCTION_MSE).dense_layers(net_structure)
-  ));
+    .cost_function(COST_FUNCTION_MSE);
+
+  if(0x01 == recursion){
+    builder.set_recurrence_to_self();
+  }else if(0x02 == recursion){
+    builder.set_recurrence_to_layer();
+  }
+
+  unique_ptr<SparseNet> net = unique_ptr<SparseNet>(builder.dense_layers(net_structure));
 
    unique_ptr<Solution> solution = unique_ptr<Solution>(Solution_builder()
     .max_solve_threads(4).device_max_megabytes(device_max_megabytes)
@@ -88,14 +96,27 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
 
 TEST_CASE( "Building a solution from a net", "[build][small][build-only]" ){
   sdouble32 space_used_megabytes = 0;
-  unique_ptr<Solution> solution = test_solution_builder_manually(nullptr,double_literal(2048.0));
+  unique_ptr<Solution> solution = test_solution_builder_manually(nullptr,double_literal(2048.0),0);
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
   solution.release();
 
   /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
-  solution = test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0));
+  solution = test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),0);
+  REQUIRE( nullptr != solution );
+  REQUIRE( 0 < solution->SpaceUsedLong() );
+  solution.release();
+
+  /* again, but With recursion enabled */
+  solution = test_solution_builder_manually(nullptr,double_literal(2048.0),0x02);
+  REQUIRE( nullptr != solution );
+  REQUIRE( 0 < solution->SpaceUsedLong() );
+  space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
+  solution.release();
+
+  /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
+  solution = test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),0x02);
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   solution.release();

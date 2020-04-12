@@ -117,6 +117,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
           temp_input_interval.set_starts(layerStart);
         }
         temp_input_interval.set_interval_size(previous_size);
+        temp_input_interval.set_reach_past_loops(0);
         *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
 
         /* Add the input weights for the previous layer */
@@ -143,6 +144,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
           /* Add the input synapse */
           temp_input_interval.set_starts(neurIt); /* self-recurrence, an additional input snypse */
           temp_input_interval.set_interval_size(1); /* of a lone input as the actual @Neuron itself */
+          temp_input_interval.set_reach_past_loops(1);
           *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
         }else if(0x02 == recurrence){ /* recurrence to layer */
           /* Add the weight synapse */
@@ -161,6 +163,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
           /* Add the input synapse */
           temp_input_interval.set_starts(layerStart); /* starts at the beginning of the current layer */
           temp_input_interval.set_interval_size(layer_sizes[layerIt]); /* takes up the whole layer */
+          temp_input_interval.set_reach_past_loops(1);
           *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
         }else{ /* Only bias */
           temp_index_interval.set_starts(weightIt);

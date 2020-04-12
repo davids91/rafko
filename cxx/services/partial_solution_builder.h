@@ -54,17 +54,38 @@ public:
   /**
    * @brief      Adds the given index to the given synapse
    *
-   * @param[in]  index                  The Neuron or Weight index
+   * @param[in]  index                  The Neuron index
+   * @param[in]  reach_back             The input reach_back value to show how far the input reaches back to past runs
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  template<typename Synapse_interval = Input_synapse_interval>
-  static void add_to_synapse(sint32 index, uint32& current_synapse_count, RepeatedPtrField<Synapse_interval>* synapse_intervals){
+  static void add_to_synapse(sint32 index, uint32 reach_back, uint32& current_synapse_count, RepeatedPtrField<Input_synapse_interval>* synapse_intervals){
     if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
       ++current_synapse_count;
       synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
     }else{ /* Opening up a totally new Neuron Synapse */
-      Synapse_interval new_interval;
+      Input_synapse_interval new_interval;
+      new_interval.set_starts(index);
+      new_interval.set_interval_size(1);
+      new_interval.set_reach_past_loops(reach_back);
+      *synapse_intervals->Add() = new_interval;
+      current_synapse_count = 1;
+    }
+  }
+
+  /**
+   * @brief      Adds the given index to the given synapse
+   *
+   * @param[in]  index                  The Neuron or Weight index
+   * @param      current_synapse_count  The number of elements currently present in the synapse
+   * @param      synapse_intervals      The array of synapses to add the index to
+   */
+  static void add_to_synapse(sint32 index, uint32& current_synapse_count, RepeatedPtrField<Index_synapse_interval>* synapse_intervals){
+    if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
+      ++current_synapse_count;
+      synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
+    }else{ /* Opening up a totally new Neuron Synapse */
+      Index_synapse_interval new_interval;
       new_interval.set_starts(index);
       new_interval.set_interval_size(1);
       *synapse_intervals->Add() = new_interval;
@@ -79,10 +100,11 @@ private:
    *             and adds the input to it if found
    *
    * @param[in]  neuron_input_index  The neuron input index to look for
+   * @param[in]  input_reach_back    The number of loops a Neural input reaches back to 
    *
    * @return     returns true if the neuron index was found in the @Partial_solution input
    */
-  bool look_for_neuron_input(sint32 neuron_input_index);
+  bool look_for_neuron_input(sint32 neuron_input_index, uint32 input_reach_back);
 
   /**
    * @brief      Looks for the given Neuron index in the @Partial_solution internally,

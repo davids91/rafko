@@ -220,11 +220,16 @@ void check_if_the_same(SparseNet& net, Solution& solution){
           inner_neuron_input_iterator.iterate([&](Input_synapse_interval input_synapse, sint32 input_index){
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!Synapse_iterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
+              CHECK( 0 == input_synapse.reach_past_loops() ); /* Internal inputs should always be taken from the current loop */
               CHECK(output_neurons[input_index] == neuron_input_iterator[neuron_synapse_element_iterator]);
             }else{ /* Inner Neuron takes its input from the partial solution input */
-              CHECK(
+              CHECK( /* Input indices match */
                 partial_input_iterator[Synapse_iterator<>::input_index_from_synapse_index(input_index)]
                 == neuron_input_iterator[neuron_synapse_element_iterator]
+              );
+             CHECK( /* The time the neuron takes its input also match */
+                partial_input_iterator.synapse_under(Synapse_iterator<>::input_index_from_synapse_index(input_index)).reach_past_loops()
+                == neuron_input_iterator.synapse_under(neuron_synapse_element_iterator).reach_past_loops()
               );
             }
             ++neuron_synapse_element_iterator;

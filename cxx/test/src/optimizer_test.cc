@@ -390,13 +390,13 @@ TEST_CASE("Testing recursive Networks","[optimize][recursive]"){
   Data_aggregate train_set(
     vector<vector<sdouble32>>(net_inputs_train),
     vector<vector<sdouble32>>(addition_dataset_train),
-    *nets[0]
+    *nets[0], sequence_size
   );
 
   Data_aggregate test_set(
     vector<vector<sdouble32>>(net_inputs_test),
     vector<vector<sdouble32>>(addition_dataset_test),
-    *nets[0]
+    *nets[0], sequence_size
   );
 
   sdouble32 train_error = 1.0;

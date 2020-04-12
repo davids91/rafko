@@ -31,15 +31,6 @@ namespace sparse_net_library{
 using std::function;
 using google::protobuf::RepeatedPtrField;
 
-template <typename T>
-struct return_type;
-
-template <typename R, typename C, typename... Args>
-struct return_type<R(C::*)(Args...) const> { using type = R; };
-
-template <typename T>
-using return_type_t = typename return_type<T>::type;
-
 /**
  * @brief      This class describes a synapse iterator. Based on the given references
  *             it provides a hook to go through every index described by them.
@@ -74,7 +65,8 @@ public:
   void iterate(function< void(Interval_type,sint32) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
     if((0 == interval_size)&&(synapse_interval.size() > static_cast<sint32>(interval_start)))
       interval_size = synapse_interval.size() - interval_start;
-    else if(0 == interval_size) throw std::runtime_error("Incorrect synapse range start!");
+    else if(0 == interval_size)
+      throw std::runtime_error("Incorrect synapse range start!");
     if(static_cast<sint32>(interval_start + interval_size) <= synapse_interval.size()){ 
       iterate_unsafe(synapse_interval, do_for_each_index,interval_start,interval_size);
     }else throw std::runtime_error("Incorrect Synapse range!");
@@ -82,7 +74,8 @@ public:
   void iterate(function< void(Interval_type) > do_for_each_synapse, function< void(Interval_type,sint32) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
     if((0 == interval_size)&&(synapse_interval.size() > static_cast<sint32>(interval_start)))
       interval_size = synapse_interval.size() - interval_start;
-    else if(0 == interval_size) throw std::runtime_error("Incorrect synapse range start!");
+    else if(0 == interval_size)
+      throw std::runtime_error("Incorrect synapse range start!");
     if(static_cast<sint32>(interval_start + interval_size) <= synapse_interval.size()){ 
       iterate_unsafe(synapse_interval, do_for_each_synapse,do_for_each_index,interval_start,interval_size);
     }else throw std::runtime_error("Incorrect Synapse range!");
@@ -90,7 +83,8 @@ public:
   void iterate_terminatable(function< bool(Interval_type,sint32) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
     if((0 == interval_size)&&(synapse_interval.size() > static_cast<sint32>(interval_start)))
       interval_size = synapse_interval.size() - interval_start;
-    else if(0 == interval_size) throw std::runtime_error("Incorrect synapse range start!");
+    else if(0 == interval_size)
+      throw std::runtime_error("Incorrect synapse range start!");
     if(static_cast<sint32>(interval_start + interval_size) <= synapse_interval.size()){ 
       iterate_unsafe_terminatable(synapse_interval, do_for_each_index,interval_start,interval_size);
     }else throw std::runtime_error("Incorrect Synapse range!");
@@ -98,7 +92,8 @@ public:
   void iterate_terminatable(function< bool(Interval_type) > do_for_each_synapse, function< bool(Interval_type,sint32) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
     if((0 == interval_size)&&(synapse_interval.size() > static_cast<sint32>(interval_start)))
       interval_size = synapse_interval.size() - interval_start;
-    else if(0 == interval_size) throw std::runtime_error("Incorrect synapse range start!");
+    else if(0 == interval_size)
+      throw std::runtime_error("Incorrect synapse range start!");
     if(static_cast<sint32>(interval_start + interval_size) <= synapse_interval.size()){ 
       iterate_unsafe_terminatable(synapse_interval, do_for_each_synapse,do_for_each_index,interval_start,interval_size);
     }else throw std::runtime_error("Incorrect Synapse range!");
@@ -278,6 +273,34 @@ public:
   }
 
   /**
+   * @brief      Gives back a copy of the synapse under the given index:
+   *             In a synapse with multiple intervals, the index refers to 
+   *             the number of indices, not the number of intervals.
+   *
+   * @param[in]  index  The index
+   *
+   * @return     The interval synapse
+   */
+  Interval_type synapse_under(sint32 index){
+    if(0 == size())throw "Empty synapse iterator reached for query!";
+    sint32 iteration_helper = 0;
+    Interval_type result;
+
+    iterate_terminatable([&](Interval_type interval_synapse){
+      result = interval_synapse;
+      return true;
+    },[&](Interval_type interval_synapse, sint32 synapse_index){
+      if(iteration_helper < index){
+        ++iteration_helper;
+        return true; /* Found the synapse we have been looking for */
+      }else return false; /* Continue searching.. */
+    });
+    if(iteration_helper != index)
+      throw "Index Out of bounds with Synapse Iterator!";
+    return result;
+  }
+
+  /**
    * @brief      Returns the overall number of inputs
    *
    * @return     Returns the overall number of inputs
@@ -301,10 +324,19 @@ public:
       if(is_index_input(last_index)) last_index -= synapse_interval[synapse_interval.size()-1].interval_size() - 1;
         else last_index += synapse_interval[synapse_interval.size()-1].interval_size() - 1;
       return last_index;
-    }else throw std::runtime_error("Last item requested from empty synapse!");
+    }else throw std::runtime_error("Last index requested from empty synapse!");
   }
 
-  
+  /**
+   * @brief      Add back the last stored synapse interval
+   *
+   * @return     Synapse interval defined by template function
+   */
+  Interval_type last_synapse(void) const{
+    if(0 < synapse_interval.size()){
+      return synapse_interval[synapse_interval.size()-1];
+    }else throw std::runtime_error("Last item requested from empty synapse!");
+  }
 
   /**
    * @brief      Determines whether the specified index is index taken from the inputs, rather than internally.
