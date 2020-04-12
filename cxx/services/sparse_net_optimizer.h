@@ -76,8 +76,12 @@ public:
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
       solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
       neuron_data_sequences.push_back(Data_ringbuffer(train_set_.get_sequence_size(), neural_network.neuron_array_size()));
-      for(sint32 i = 0; i < net.neuron_array_size(); ++i)
-        error_values[threads].push_back(make_unique<atomic<sdouble32>>());
+      error_values[threads] = vector<vector<unique_ptr<atomic<sdouble32>>>>(train_set.get_number_of_sequences());
+      for(uint32 sequence_index = 0; sequence_index < train_set.get_number_of_sequences(); ++sequence_index){
+        error_values[threads][sequence_index] = vector<unique_ptr<atomic<sdouble32>>>();
+        for(sint32 i = 0; i < net.neuron_array_size(); ++i)
+          error_values[threads][sequence_index].push_back(make_unique<atomic<sdouble32>>());
+      }
       process_threads[threads].reserve(context.get_max_processing_threads());
       transfer_function_input[threads] = vector<sdouble32>(train_set.get_feature_size());
       transfer_function_output[threads] = vector<sdouble32>(train_set.get_feature_size());
@@ -89,9 +93,12 @@ public:
     weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
   };
 
-  ~Sparse_net_optimizer(){
-    solvers.clear();
-  }
+  ~Sparse_net_optimizer(){ solvers.clear(); }
+  Sparse_net_optimizer(const Sparse_net_optimizer& other) = delete;/* Copy constructor */
+  Sparse_net_optimizer(Sparse_net_optimizer&& other) = delete; /* Move constructor */
+  Sparse_net_optimizer& operator=(const Sparse_net_optimizer& other) = delete; /* Copy assignment */
+  Sparse_net_optimizer& operator=(Sparse_net_optimizer&& other) = delete; /* Move assignment */
+
 
    /**
     * @brief      Step the net in the opposite direction of the gradient slope
@@ -141,7 +148,7 @@ private:
   vector<Data_ringbuffer> neuron_data_sequences; /* neuron activation data at every sequence(for every solve thread). Non-sequential data has only 1 sequence */
   vector<vector<sdouble32>> transfer_function_input; /* Copy of the Neurons data for each solve thread */
   vector<vector<sdouble32>> transfer_function_output; /* Copy of the Neurons data for each solve thread */
-  vector<vector<unique_ptr<atomic<sdouble32>>>> error_values; /* Calculated error values */
+  vector<vector<vector<unique_ptr<atomic<sdouble32>>>>> error_values; /* Calculated error values: [Threads][Sequences][Neurons] */
   vector<unique_ptr<atomic<sdouble32>>> weight_gradient; /* calculated gradient values */
 
   /**
@@ -170,7 +177,7 @@ private:
    * @param[in]  solve_thread_index  The solve thread index
    * @param[in]  sample_index        The sample index
    */
-  void calculate_output_errors(uint32 solve_thread_index, uint32 sample_index);
+  void calculate_output_errors(uint32 solve_thread_index, uint32 sequence_index, uint32 sample_index);
 
   /**
    * @brief      Propagates the error back to the hidden Neurons. Starts one thread for each Neuron
@@ -178,8 +185,9 @@ private:
    *             The order in which the Neurons are processed is decided by @gradient_step.
    *
    * @param[in]  solve_thread_index  The solve thread index
+   * @param[in]  sequence_index      The index of the currently evaluated sequence
    */
-  void propagate_output_errors_back(uint32 solve_thread_index);
+  void propagate_output_errors_back(uint32 solve_thread_index, uint32 sequence_index);
 
   /**
    * @brief      Calculates and accumulates weight gradients for the Neuron weights 
@@ -192,7 +200,7 @@ private:
    * @param[in]  sample_index        The index of the sequence currently processed
    * @param[in]  sample_index        The sample index
    */
-  void accumulate_weight_gradients(uint32 solve_thread_index, uint32 sequence_index, uint32 sample_index);
+  void accumulate_weight_gradients(uint32 solve_thread_index, uint32 sample_index, uint32 sequence_index);
 
   /**
    * @brief      Divides all weight gradients with the minibatch size, so the weights are being updated 
@@ -211,10 +219,11 @@ private:
    *
    * @param[in]  solve_thread_index  The solve thread index
    * @param[in]  sample_index        The sample index
+   * @param[in]  sequence_index      The index of the currently evaluated sequence
    * @param[in]  neuron_index        The neuron index to start calculatin output errors from
    * @param[in]  neuron_number       The number of neurons to include in this thread
    */
-  void calculate_output_errors_thread(uint32 solve_thread_index, uint32 sample_index, uint32 neuron_index, uint32 neuron_number);
+  void calculate_output_errors_thread(uint32 solve_thread_index, uint32 sample_index, uint32 sequence_index, uint32 neuron_index, uint32 neuron_number);
 
   /**
    * @brief      The thread used by @propagate_output_errors_back. For its every input node
@@ -222,9 +231,10 @@ private:
    *             with that nodes derivative
    *
    * @param[in]  solve_thread_index  The solve thread index
+   * @param[in]  sequence_index      The index of the currently evaluated sequence
    * @param[in]  neuron_index        The neuron index
    */
-  void backpropagation_thread(uint32 solve_thread_index, uint32 neuron_index);
+  void backpropagation_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 neuron_index);
 
   /**
    * @brief      The thread used by @accumulate_weight_gradients, it iterates through 

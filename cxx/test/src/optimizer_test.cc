@@ -183,7 +183,7 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   std::string file_name = "log_";
   file_name += std::to_string(std::chrono::system_clock::now().time_since_epoch().count() / 60);
   file_name += ".txt";
-  std::cout.precision(20);
+  std::cout.precision(15);
 
   //std::ofstream logfile;
   //logfile.open (file_name);
@@ -324,9 +324,9 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
  *     - multi-layer
  * - For each dataset test if the each Net converges
  * */
-TEST_CASE("Testing recursive Networks","[optimize][recursive]"){
+TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
   uint32 sequence_size = 5;
-  uint32 number_of_samples = 50;
+  uint32 number_of_samples = 500;
   uint32 carry_bit_train;
   uint32 carry_bit_test;
   vector<vector<sdouble32>> net_inputs_train(sequence_size * number_of_samples);
@@ -382,8 +382,8 @@ TEST_CASE("Testing recursive Networks","[optimize][recursive]"){
     .set_recurrence_to_layer()
     .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_SELU}}
-    ).dense_layers({2})
+      {{TRANSFER_FUNCTION_SELU},{TRANSFER_FUNCTION_SELU},{TRANSFER_FUNCTION_SELU}}
+    ).dense_layers({2,4,2})
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
@@ -408,7 +408,7 @@ TEST_CASE("Testing recursive Networks","[optimize][recursive]"){
   std::string file_name = "log_";
   file_name += std::to_string(std::chrono::system_clock::now().time_since_epoch().count() / 60);
   file_name += ".txt";
-  std::cout.precision(20);
+  std::cout.precision(15);
 
   //std::ofstream logfile;
     //logfile.open (file_name);
@@ -420,7 +420,7 @@ TEST_CASE("Testing recursive Networks","[optimize][recursive]"){
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],train_set,test_set,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-1)
+    *nets[0],train_set,test_set,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-3)
   );
 
   std::cout << "Optimizing net.." << std::endl;
