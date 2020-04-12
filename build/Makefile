@@ -102,7 +102,7 @@ test-solution-builder: clean build_library
 test-opt: clean build_library #as in optimization
 	@rm -f $(TEST_RESULT)
 	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
-	./$(TEST_RESULT)
+	./$(TEST_RESULT) [recurrent]
 
 $(TEST_OBJECTS):
 	g++ -c $(TEST_SOURCES) $(SOURCES_INCLUDE_DIR)

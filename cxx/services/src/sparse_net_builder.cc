@@ -108,7 +108,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
 
         /* Add the previous layer to the built net */
         temp_index_interval.set_starts(weightIt);
-        temp_index_interval.set_interval_size(previous_size + 1); /* Previous layer + a bias */
+        temp_index_interval.set_interval_size(previous_size); /* Previous layer */
         *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
 
         if(0 == layerIt){

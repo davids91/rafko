@@ -45,9 +45,9 @@ public:
   Solution_solver(const Solution& to_solve, Service_context context = Service_context());
 
   Solution_solver(const Solution_solver& other) = delete;/* Copy constructor */
-  Solution_solver(Solution_solver&& other)  = delete; /* Move constructor */
-  Solution_solver& operator=(const Solution_solver& other)  = delete; /* Copy assignment */
-  Solution_solver& operator=(Solution_solver&& other)  = delete; /* Move assignment */
+  Solution_solver(Solution_solver&& other) = delete; /* Move constructor */
+  Solution_solver& operator=(const Solution_solver& other) = delete; /* Copy assignment */
+  Solution_solver& operator=(Solution_solver&& other) = delete; /* Move assignment */
 
   /**
    * @brief      Solves the Solution given in the constructor, considering the previous runs
