@@ -47,8 +47,8 @@ public:
    *
    * @return     The derivative from data.
    */
-  static sdouble32 get_derivative(sdouble32 parameter, sdouble32 transfer_function_output){
-    return (1 - parameter);
+  static sdouble32 get_derivative(sdouble32 parameter, sdouble32 transfer_function_output, sdouble32 previous_value){
+    return (previous_value - transfer_function_output);
   }
 };
 } /* namespace sparse_net_library */

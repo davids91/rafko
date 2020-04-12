@@ -382,8 +382,11 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
     .set_recurrence_to_layer()
     .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
-      {{TRANSFER_FUNCTION_SELU},{TRANSFER_FUNCTION_SELU},{TRANSFER_FUNCTION_SELU}}
-    ).dense_layers({2,4,2})
+      {
+        {TRANSFER_FUNCTION_SELU},
+        {TRANSFER_FUNCTION_SELU}
+      }
+    ).dense_layers({32,2})
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
@@ -420,7 +423,7 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],train_set,test_set,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-3)
+    *nets[0],train_set,test_set,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
   );
 
   std::cout << "Optimizing net.." << std::endl;
