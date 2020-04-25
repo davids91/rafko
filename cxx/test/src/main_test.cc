@@ -176,6 +176,7 @@ void check_if_the_same(SparseNet& net, Solution& solution){
   uint32 input_synapse_offset;
   uint32 weight_synapse_offset;
   uint32 neuron_synapse_element_iterator;
+  uint32 counted_inputs;
   for(sint32 neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator){ /* For the input Neurons */
     for(
       sint32 partial_solution_iterator = 0;
@@ -211,12 +212,13 @@ void check_if_the_same(SparseNet& net, Solution& solution){
           },weight_synapse_offset,solution.partial_solutions(partial_solution_iterator).weight_synapse_number(inner_neuron_iterator));
 
           /* Test if all of the neurons inputs are are the same as the ones in the net */
-          neuron_synapse_element_iterator = 0;
           /* Test iterates over the inner neurons synapse to see if it matches the Neuron synapse */
           Synapse_iterator<Input_synapse_interval> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
           Synapse_iterator<Input_synapse_interval> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
 
           /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input s true ) */
+          neuron_synapse_element_iterator = 0;
+          counted_inputs = 0;
           inner_neuron_input_iterator.iterate([&](Input_synapse_interval input_synapse, sint32 input_index){
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!Synapse_iterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
@@ -233,7 +235,9 @@ void check_if_the_same(SparseNet& net, Solution& solution){
               );
             }
             ++neuron_synapse_element_iterator;
+            ++counted_inputs;
           },input_synapse_offset,solution.partial_solutions(partial_solution_iterator).index_synapse_number(inner_neuron_iterator));
+          REQUIRE( neuron_input_iterator.size() == counted_inputs );
           goto Neuron_found_in_partial;
         }else{ /* neuron_iterator is not under inner_neuron_iterator in the partial solutio.. adjust synapse offsets */
           input_synapse_offset += solution.partial_solutions(partial_solution_iterator).index_synapse_number(inner_neuron_iterator);

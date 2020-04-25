@@ -50,17 +50,16 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_in
     previous_neuron_input_source = neuron_input_none;
     previous_neuron_input_index = input_synapse.size(); /* Input value to point above the size of the input */
     uint32 index_synapse_previous_size = partial.inside_indices_size();
-    uint32 reach_past_loops_in_current_synapse = 0;
+
     input_iterator.iterate([&](Input_synapse_interval interval_synapse){
-      reach_past_loops_in_current_synapse = interval_synapse.reach_past_loops();
-      if(reach_past_loops_in_current_synapse < max_reach_back)
-         max_reach_back = reach_past_loops_in_current_synapse;
+      if(interval_synapse.reach_past_loops() < max_reach_back)
+         max_reach_back = interval_synapse.reach_past_loops();
     },[&](Input_synapse_interval interval_synapse, sint32 neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
       if(!look_for_neuron_input(neuron_input_index, interval_synapse.reach_past_loops())){
         /* Check if the partial input synapse needs to be closed */
         if( /* if the Neuron has any inputs from the past or not found internally */
-          (0 == reach_past_loops_in_current_synapse)
-          &&(!look_for_neuron_input_internally(neuron_input_index))
+          (0 < interval_synapse.reach_past_loops())
+          ||(!look_for_neuron_input_internally(neuron_input_index))
         ){
           if( /* Close input synapse if */
             (0 < partial_input_synapse_count) /* There is one open already */
@@ -68,7 +67,8 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_in
                 Synapse_iterator<>::is_index_input(neuron_input_index)
                 &&(input_synapse.back() != neuron_input_index+1)
               )||(
-                input_synapse.back() != neuron_input_index-1
+                (!Synapse_iterator<>::is_index_input(neuron_input_index))
+                &&(input_synapse.back() != neuron_input_index-1)
               )||(/* Current index not in same memory depth */
                 input_synapse.last_synapse().reach_past_loops() != interval_synapse.reach_past_loops()
             ))

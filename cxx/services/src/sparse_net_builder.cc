@@ -59,7 +59,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
     )
   ){
     SparseNet* ret(google::protobuf::Arena::CreateMessage<SparseNet>(arg_arena));
-    uint32 layerStart = 0;
+    uint32 layer_input_starts_at = 0;
     uint64 weightIt = 0;
     uint64 neurIt = 0;
     sdouble32 expPrevLayerOutput = Transfer_function::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
@@ -114,7 +114,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
         if(0 == layerIt){
           temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
         }else{
-          temp_input_interval.set_starts(layerStart);
+          temp_input_interval.set_starts(layer_input_starts_at);
         }
         temp_input_interval.set_interval_size(previous_size);
         temp_input_interval.set_reach_past_loops(0);
@@ -161,7 +161,9 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
           }
 
           /* Add the input synapse */
-          temp_input_interval.set_starts(layerStart); /* starts at the beginning of the current layer */
+          if(0 < layerIt)temp_input_interval.set_starts(layer_input_starts_at + layer_sizes[layerIt-1]); /* starts at the beginning of the current layer */
+          else temp_input_interval.set_starts(layer_input_starts_at); /* starts at the beginning of the current layer */
+          
           temp_input_interval.set_interval_size(layer_sizes[layerIt]); /* takes up the whole layer */
           temp_input_interval.set_reach_past_loops(1);
           *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
@@ -178,10 +180,10 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
 
       if(0 == layerIt){
         expPrevLayerOutput = arg_expected_input_range;
-        layerStart = 0;
+        layer_input_starts_at = 0;
       }else{
         expPrevLayerOutput /= static_cast<sdouble32>(layer_sizes[layerIt]);
-        layerStart += previous_size;
+        layer_input_starts_at += previous_size;
       }
       previous_size = layer_sizes[layerIt];
     } /* Itearte through all of the layers */
