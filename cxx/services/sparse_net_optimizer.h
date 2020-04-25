@@ -76,8 +76,8 @@ public:
     for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
       solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
       neuron_data_sequences.push_back(Data_ringbuffer(train_set_.get_sequence_size(), neural_network.neuron_array_size()));
-      error_values[threads] = vector<vector<unique_ptr<atomic<sdouble32>>>>(train_set.get_number_of_sequences());
-      for(uint32 sequence_index = 0; sequence_index < train_set.get_number_of_sequences(); ++sequence_index){
+      error_values[threads] = vector<vector<unique_ptr<atomic<sdouble32>>>>(train_set.get_sequence_size());
+      for(uint32 sequence_index = 0; sequence_index < train_set.get_sequence_size(); ++sequence_index){
         error_values[threads][sequence_index] = vector<unique_ptr<atomic<sdouble32>>>();
         for(sint32 i = 0; i < net.neuron_array_size(); ++i)
           error_values[threads][sequence_index].push_back(make_unique<atomic<sdouble32>>());

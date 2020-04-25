@@ -340,8 +340,8 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
     for(uint32 j = 0;j <sequence_size;++j){ /* Add testing and training sequences randomly */
       net_inputs_train[(sequence_size * i) + j] = vector<sdouble32>(2);
       net_inputs_test[(sequence_size * i) + j] = vector<sdouble32>(2);
-      addition_dataset_train[(sequence_size * i) + j] = vector<sdouble32>(2);
-      addition_dataset_test[(sequence_size * i) + j] = vector<sdouble32>(2);
+      addition_dataset_train[(sequence_size * i) + j] = vector<sdouble32>(1);
+      addition_dataset_test[(sequence_size * i) + j] = vector<sdouble32>(1);
       net_inputs_train[(sequence_size * i) + j][0] = static_cast<sdouble32>(rand()%2);
       net_inputs_train[(sequence_size * i) + j][1] = static_cast<sdouble32>(rand()%2);
       net_inputs_test[(sequence_size * i) + j][0] = static_cast<sdouble32>(rand()%2);
@@ -351,12 +351,10 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
         net_inputs_train[(sequence_size * i) + j][0]
         + net_inputs_train[(sequence_size * i) + j][1]
         + carry_bit_train;
-      addition_dataset_train[(sequence_size * i) + j][1] = carry_bit_train;
       if(1 < addition_dataset_train[(sequence_size * i) + j][0]){
         addition_dataset_train[(sequence_size * i) + j][0] = 1;
         carry_bit_train = 1;
       }else{
-        addition_dataset_train[(sequence_size * i) + j][1] = 0;
         carry_bit_train = 0;
       }
 
@@ -364,16 +362,33 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
         net_inputs_test[(sequence_size * i) + j][0]
         + net_inputs_test[(sequence_size * i) + j][1]
         + carry_bit_train;
-      addition_dataset_test[(sequence_size * i) + j][0] = carry_bit_test;
       if(1 < addition_dataset_test[(sequence_size * i) + j][0]){
-        addition_dataset_test[(sequence_size * i) + j][1] = 1;
+        addition_dataset_test[(sequence_size * i) + j][0] = 1;
         carry_bit_test = 1;
       }else{
-        addition_dataset_test[(sequence_size * i) + j][1] = 0;
         carry_bit_test = 0;
       }
     }
   }
+
+  /* Print out the training data */
+  std::cout << "==============" << std::endl;
+  for(uint32 i = 0;i < number_of_samples;++i){
+    for(uint32 j = 0;j < sequence_size;++j){
+      std::cout << "["<< net_inputs_train[(sequence_size * i) + j][0] <<"]";
+    }
+    std::cout << std::endl;
+    for(uint32 j = 0;j < sequence_size;++j){
+      std::cout << "["<< net_inputs_train[(sequence_size * i) + j][1] <<"]";
+    }
+    std::cout << std::endl;
+    std::cout << "--------------" << std::endl;
+    for(uint32 j = 0;j < sequence_size;++j){
+      std::cout << "["<< addition_dataset_train[(sequence_size * i) + j][0] <<"]";
+    }
+    std::cout << std::endl;
+    std::cout << "==============" << std::endl;
+  }/**/
 
   /* Create nets */
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
@@ -386,7 +401,7 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
         {TRANSFER_FUNCTION_SELU},
         {TRANSFER_FUNCTION_SELU}
       }
-    ).dense_layers({32,2})
+    ).dense_layers({32,1})
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
@@ -423,7 +438,7 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
-    *nets[0],train_set,test_set,WEIGHT_UPDATER_DEFAULT,Service_context().set_step_size(1e-2)
+    *nets[0],train_set,test_set,WEIGHT_UPDATER_NESTEROV,Service_context().set_step_size(1e-2)
   );
 
   std::cout << "Optimizing net.." << std::endl;
@@ -464,29 +479,6 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
   std::cout << "==================================\n Error summaries:"
   << "\t"  << error_summary[0]
   << std::endl;
-
-  /* Print out the training data *
-  std::cout << "==============" << std::endl;
-  for(uint32 i = 0;i < number_of_samples;++i){
-    for(uint32 j = 0;j < sequence_size;++j){
-      std::cout << "["<< net_inputs_train[(sequence_size * i) + j][0] <<"]";
-    }
-    std::cout << std::endl;
-    for(uint32 j = 0;j < sequence_size;++j){
-      std::cout << "["<< net_inputs_train[(sequence_size * i) + j][1] <<"]";
-    }
-    std::cout << std::endl;
-    std::cout << "--------------" << std::endl;
-    for(uint32 j = 0;j < sequence_size;++j){
-      std::cout << "["<< addition_dataset_train[(sequence_size * i) + j][0] <<"]";
-    }
-    std::cout << std::endl;
-    for(uint32 j = 0;j < sequence_size;++j){
-      std::cout << "["<< addition_dataset_train[(sequence_size * i) + j][1] <<"]";
-    }
-    std::cout << std::endl;
-    std::cout << "==============" << std::endl;
-  }*/
 }
 
 }/* namespace sparse_net_library_test */
