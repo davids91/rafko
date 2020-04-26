@@ -65,43 +65,68 @@ public class MainWindow {
             dataset.add(dataset_trend.solve_for(i) + (rnd.nextDouble() - 0.5) * entropy_slider.getValue() * dataset_size_slider.getValue());
             dataset_series.getData().add( new XYChart.Data(i, dataset.get(i)));
         }
+
         display_graph.getData().add(0, dataset_series);
         display_graph.getData().add(1, new XYChart.Series());
         displaySolutionTrend();
     }
 
+    private double gradientA = 0.0;
+    private double gradientB = 0.0;
+    private double gradientC = 0.0;
+
+    private double distanceA = 10;
+    private double distanceB = 10;
+    private double distanceC = 10;
+
+    private double error = 1.0;
+
     @FXML
     public void step() { /* this is where the magic will happen */
         /* Calculate the gradient using every sample in the dataset */
-        double gradientA = 0;
-        double gradientB = 0;
-        double gradientC = 0;
-        for (int x = 0; x < dataset.size(); x++) {
-            gradientA += -2*x*x*(dataset.get(x) - solution_trend.solve_for(x));
-            gradientB += -2*x*(dataset.get(x) - solution_trend.solve_for(x));
-            gradientC += -2*(dataset.get(x) - solution_trend.solve_for(x));
-        }
-        gradientA /= dataset.size();
-        gradientB /= dataset.size();
-        gradientC /= dataset.size();
-        System.out.println("Gradient for A: " +  gradientA);
-        System.out.println("Gradient for B: " +  gradientB);
-        System.out.println("Gradient for C: " +  gradientC);
+
+        /* Take a weight */
+        /* calculate the error with (w+h) */
+        Polynomial trend_modA = new Polynomial(solution_trend);
+        Polynomial trend_modB = new Polynomial(solution_trend);
+        Polynomial trend_modC = new Polynomial(solution_trend);
+        trend_modA.stepA(learning_rate_slider.getValue());
+        trend_modB.stepB(learning_rate_slider.getValue());
+        trend_modC.stepC(learning_rate_slider.getValue());
+//        trend_modA.stepA(distanceA);
+//        trend_modB.stepB(distanceB);
+//        trend_modC.stepC(distanceC);
+
+                gradientA = (
+                        (ErrorFunction.getErrorValue(dataset, trend_modA)
+                                - ErrorFunction.getErrorValue(dataset, solution_trend))
+                );//)/learning_rate_slider.getValue();
+
+                gradientB = (
+                        (ErrorFunction.getErrorValue(dataset, trend_modB)
+                                - ErrorFunction.getErrorValue(dataset, solution_trend))
+                );//)/learning_rate_slider.getValue();
+
+                gradientC = (
+                        (ErrorFunction.getErrorValue(dataset, trend_modC)
+                                - ErrorFunction.getErrorValue(dataset, solution_trend))
+                );//)/learning_rate_slider.getValue();
+        /* Calculate the gradient in respect to w */
+        error = ErrorFunction.getErrorValue(dataset,solution_trend);
         solution_trend.stepA(-gradientA * learning_rate_slider.getValue());
         solution_trend.stepB(-gradientB * learning_rate_slider.getValue());
         solution_trend.stepC(-gradientC * learning_rate_slider.getValue());
-        System.out.println("solution_trend.getC()" + solution_trend.getC() + "<>" + dataset_trend.getA());
-        System.out.println("solution_trend.getB()" + solution_trend.getB() + "<>" + dataset_trend.getB());
-        System.out.println("solution_trend.getC()" + solution_trend.getC() + "<>" + dataset_trend.getC());
-        System.out.println("====================");
+        System.out.println("Gradients: A:" + gradientA + "; B: "+ gradientB +"; C:" + gradientC + ";");
+        //System.out.println( "new C: " + solution_trend.getC());
+        System.out.println("deviation: " + error);
+
         displaySolutionTrend();
         if(
             (
-                (Math.abs(gradientC) < learning_rate_slider.getValue())
-                &&(Math.abs(gradientB) < learning_rate_slider.getValue())
+                (Math.abs(error) < learning_rate_slider.getValue())
             )&&!(
                 (Animation.Status.STOPPED == timeline.getStatus())
-                ||(Animation.Status.PAUSED == timeline.getStatus())
+                        ||(Animation.Status.PAUSED == timeline.getStatus())
             )
         )play_stop();
     }

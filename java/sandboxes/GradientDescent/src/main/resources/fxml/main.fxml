@@ -7,18 +7,18 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<SplitPane dividerPositions="0.8" prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controls.MainWindow">
+<SplitPane prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controls.MainWindow">
    <items>
-       <LineChart fx:id="display_graph">
-           <xAxis>
-               <NumberAxis side="BOTTOM" />
-           </xAxis>
-           <yAxis>
-               <NumberAxis side="LEFT" />
-           </yAxis>
-       </LineChart>
-      <VBox prefHeight="200.0" prefWidth="100.0">
+      <VBox>
          <children>
+             <LineChart fx:id="display_graph">
+                 <xAxis>
+                     <NumberAxis side="BOTTOM" />
+                 </xAxis>
+                 <yAxis>
+                     <NumberAxis side="LEFT" />
+                 </yAxis>
+             </LineChart>
             <Button fx:id="fill_button" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#fill_chart" text="Reset" />
             <Button fx:id="step_button" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#step" text="Step" />
             <Button fx:id="play_button" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#play_stop" text="Start" />
@@ -39,7 +39,7 @@
                   <Label fx:id="learning_rate_label" text="0.01" />
                </children>
             </HBox>
-            <Slider fx:id="learning_rate_slider" value="5.0E-10" min="1.0E-10" max="1.0E-1" />
+            <Slider fx:id="learning_rate_slider" max="1.0" min="1.0E-10" value="5.0E-10" />
          </children>
       </VBox>
    </items>
