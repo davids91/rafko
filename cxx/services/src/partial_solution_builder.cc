@@ -52,7 +52,7 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_in
     uint32 index_synapse_previous_size = partial.inside_indices_size();
 
     input_iterator.iterate([&](Input_synapse_interval interval_synapse){
-      if(interval_synapse.reach_past_loops() < max_reach_back)
+      if(interval_synapse.reach_past_loops() > max_reach_back)
          max_reach_back = interval_synapse.reach_past_loops();
     },[&](Input_synapse_interval interval_synapse, sint32 neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
       if(!look_for_neuron_input(neuron_input_index, interval_synapse.reach_past_loops())){

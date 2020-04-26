@@ -60,6 +60,7 @@ using sparse_net_library::Sparse_net_optimizer;
 using sparse_net_library::COST_FUNCTION_SQUARED_ERROR;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::TRANSFER_FUNCTION_SELU;
+using sparse_net_library::TRANSFER_FUNCTION_RELU;
 using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
 using sparse_net_library::Service_context;
 using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
@@ -325,8 +326,9 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
  * - For each dataset test if the each Net converges
  * */
 TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
-  uint32 sequence_size = 5;
-  uint32 number_of_samples = 500;
+  uint32 sequence_size = 3;
+  uint32 number_of_samples = 20;
+  uint32 epoch = 100;
   uint32 carry_bit_train;
   uint32 carry_bit_test;
   vector<vector<sdouble32>> net_inputs_train(sequence_size * number_of_samples);
@@ -371,7 +373,7 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
     }
   }
 
-  /* Print out the training data */
+  /* Print out the training data *
   std::cout << "==============" << std::endl;
   for(uint32 i = 0;i < number_of_samples;++i){
     for(uint32 j = 0;j < sequence_size;++j){
@@ -401,7 +403,7 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
         {TRANSFER_FUNCTION_SELU},
         {TRANSFER_FUNCTION_SELU}
       }
-    ).dense_layers({32,1})
+    ).dense_layers({5,1})
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
@@ -421,6 +423,8 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
   sdouble32 test_error = 1.0;
   sdouble32 minimum_error;
   uint32 number_of_steps;
+  uint32 sample_index;
+  uint32 iteration;
   steady_clock::time_point start;
   uint32 average_duration;
   std::string file_name = "log_";
@@ -436,13 +440,72 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
   test_error = 1.0;
   number_of_steps = 0;
   average_duration = 0;
+  iteration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_optimizer optimizer(
     *nets[0],train_set,test_set,WEIGHT_UPDATER_NESTEROV,Service_context().set_step_size(1e-2)
   );
 
+  // std::cout << "Initial sample tests:" << std::endl;
+  // Solution_solver sample_solver(*Solution_builder().build(*nets[0]));
+  // sample_index = rand()%number_of_samples;
+  // sample_solver.solve(net_inputs_test[sample_index
+  //   ]);
+  // std::cout << std::endl << "Training sample["<< sample_index <<"]:" << std::endl;
+  // for(uint32 j = 0;j < sequence_size;++j){
+  //   std::cout << "["<< net_inputs_train[(sequence_size * sample_index) + j][0] <<"]";
+  // }
+  // std::cout << std::endl;
+  // for(uint32 j = 0;j < sequence_size;++j){
+  //   std::cout << "["<< net_inputs_train[(sequence_size * sample_index) + j][1] <<"]";
+  // }
+  // std::cout << std::endl;
+  // std::cout << "--------------expected:" << std::endl;
+  // for(uint32 j = 0;j < sequence_size;++j){
+  //   std::cout << "["<< addition_dataset_train[(sequence_size * sample_index) + j][0] <<"]";
+  // }
+  // std::cout << std::endl;
+  // std::cout << "------<>------actual:" << std::endl;
+  // for(uint32 j = 0;j < sequence_size;++j){
+  //   std::cout << "["<< sample_solver.get_neuron_data()[j] <<"]";
+  // }
+  // std::cout << std::endl;
+  // std::cout << "==============" << std::endl;
+
+  vector<sdouble32> neuron_data(sequence_size);
+  Solution_solver sample_solver(*Solution_builder().build(*nets[0]));
+
+  for(int sample_sequence = 0; sample_sequence < number_of_samples; ++sample_sequence){
+    sample_index = sample_sequence;
+    std::cout << std::endl << "Training sample["<< sample_index <<"]:" << std::endl;
+    for(uint32 j = 0;j < sequence_size;++j){
+      std::cout << "["<< net_inputs_train[(sequence_size * sample_index) + j][0] <<"]";
+    }
+    std::cout << std::endl;
+    for(uint32 j = 0;j < sequence_size;++j){
+      std::cout << "["<< net_inputs_train[(sequence_size * sample_index) + j][1] <<"]";
+    }
+    std::cout << std::endl;
+    std::cout << "--------------expected:" << std::endl;
+    for(uint32 j = 0;j < sequence_size;++j){
+      std::cout << "["<< addition_dataset_train[(sequence_size * sample_index) + j][0] <<"]";
+      sample_solver.solve(net_inputs_train[(sequence_size * sample_index) + j]);
+      neuron_data[j] = sample_solver.get_neuron_data().back();
+    }
+    sample_solver.reset();
+    std::cout << std::endl;
+    std::cout << "------<>------actual:" << std::endl;
+      std::cout.precision(2);
+    for(uint32 j = 0;j < sequence_size;++j){
+      std::cout << "["<< neuron_data[j] <<"]";
+    }
+      std::cout.precision(15);
+    std::cout << std::endl;
+    std::cout << "==============" << std::endl;
+  }
+
   std::cout << "Optimizing net.." << std::endl;
-  while(abs(train_error) > 1e-1){
+  while(abs(train_error) > 1e-2){
     start = steady_clock::now();
     optimizer.step();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
@@ -453,13 +516,51 @@ TEST_CASE("Testing recursive Networks","[optimize][recurrent]"){
     cout << "\r Error:"
     <<" training:[" << train_error << "]; "
     <<" test:[" << test_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                                           "
+    << "Minimum: ["<< minimum_error <<"]"
+    << "Iteration: ["<< iteration <<"];                                           "
     << flush;
     /*logfile << train_error << ",";
     for(int i = 0; i<nets[0]->weight_table_size(); ++i){
       logfile << nets[0]->weight_table(i) << ",";
     }
     logfile << "\n";*/
+    ++iteration;
+    if(0 == (iteration % epoch)){
+      vector<sdouble32> neuron_data(sequence_size);
+      Solution_solver sample_solver(*Solution_builder().build(*nets[0]));
+      for(int sample_sequence = 4; sample_sequence < number_of_samples; ++sample_sequence){
+        sample_index = rand()%number_of_samples;
+        std::cout << std::endl << "Training sample["<< sample_index <<"]:" << std::endl;
+        for(uint32 j = 0;j < sequence_size;++j){
+          std::cout << "["<< net_inputs_train[(sequence_size * sample_index) + j][0] <<"]";
+        }
+        std::cout << std::endl;
+        for(uint32 j = 0;j < sequence_size;++j){
+          std::cout << "["<< net_inputs_train[(sequence_size * sample_index) + j][1] <<"]";
+        }
+        std::cout << std::endl;
+        std::cout << "--------------expected:" << std::endl;
+        std::cout.precision(2);
+        sample_solver.reset();
+        for(uint32 j = 0;j < sequence_size;++j){
+          std::cout << "["<< addition_dataset_train[(sequence_size * sample_index) + j][0] <<"]";
+          sample_solver.solve(net_inputs_train[(sequence_size * sample_index) + j]);
+          neuron_data[j] = sample_solver.get_neuron_data().back();
+        }
+        std::cout << std::endl;
+        std::cout << "------<>------actual:" << std::endl;
+
+        for(uint32 j = 0;j < sequence_size;++j){
+          std::cout << "["<< neuron_data[j] <<"]";
+        }
+        std::cout << std::endl;
+        std::cout << "==============" << std::endl;
+        std::cout.precision(15);
+        //std::getchar();
+      }
+    }
+    //std::cout << "\nHow long shall one epoch be? " << std::endl;
+    //std::cin >> epoch;
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps

@@ -52,7 +52,7 @@ public:
   /**
    * @brief      Store the current data and move the iterator forward for the next one
    */
-  void step(){
+  void step(void){
     current_index = (current_index + 1)%(data.size());
     if(1 < data.size())
       std::copy(get_element(1).begin(),get_element(1).end(),get_element(0).begin());
