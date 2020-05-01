@@ -62,139 +62,92 @@ public:
   ,  last_reached_index(0)
   { };
 
-  void iterate(function< void(Interval_type,sint32) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
-    if((0 == interval_size)&&(synapse_interval.size() > static_cast<sint32>(interval_start)))
-      interval_size = synapse_interval.size() - interval_start;
-    else if(0 == interval_size)
-      throw std::runtime_error("Incorrect synapse range start!");
-    if(static_cast<sint32>(interval_start + interval_size) <= synapse_interval.size()){ 
-      iterate_unsafe(synapse_interval, do_for_each_index,interval_start,interval_size);
-    }else throw std::runtime_error("Incorrect Synapse range!");
+  void iterate(function< void(Interval_type,sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    iterate(synapse_interval, do_for_each_index,interval_start,interval_size_);
   }
-  void iterate(function< void(Interval_type) > do_for_each_synapse, function< void(Interval_type,sint32) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
-    if((0 == interval_size)&&(synapse_interval.size() > static_cast<sint32>(interval_start)))
-      interval_size = synapse_interval.size() - interval_start;
-    else if(0 == interval_size)
-      throw std::runtime_error("Incorrect synapse range start!");
-    if(static_cast<sint32>(interval_start + interval_size) <= synapse_interval.size()){ 
-      iterate_unsafe(synapse_interval, do_for_each_synapse,do_for_each_index,interval_start,interval_size);
-    }else throw std::runtime_error("Incorrect Synapse range!");
+  void iterate(function< void(Interval_type) > do_for_each_synapse, function< void(Interval_type,sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    iterate(synapse_interval, do_for_each_synapse,do_for_each_index,interval_start,interval_size_);
   }
-  void iterate_terminatable(function< bool(Interval_type,sint32) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
-    if((0 == interval_size)&&(synapse_interval.size() > static_cast<sint32>(interval_start)))
-      interval_size = synapse_interval.size() - interval_start;
-    else if(0 == interval_size)
-      throw std::runtime_error("Incorrect synapse range start!");
-    if(static_cast<sint32>(interval_start + interval_size) <= synapse_interval.size()){ 
-      iterate_unsafe_terminatable(synapse_interval, do_for_each_index,interval_start,interval_size);
-    }else throw std::runtime_error("Incorrect Synapse range!");
+  void iterate_terminatable(function< bool(Interval_type,sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    iterate_terminatable(synapse_interval, do_for_each_index,interval_start,interval_size_);
   }
-  void iterate_terminatable(function< bool(Interval_type) > do_for_each_synapse, function< bool(Interval_type,sint32) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
-    if((0 == interval_size)&&(synapse_interval.size() > static_cast<sint32>(interval_start)))
-      interval_size = synapse_interval.size() - interval_start;
-    else if(0 == interval_size)
-      throw std::runtime_error("Incorrect synapse range start!");
-    if(static_cast<sint32>(interval_start + interval_size) <= synapse_interval.size()){ 
-      iterate_unsafe_terminatable(synapse_interval, do_for_each_synapse,do_for_each_index,interval_start,interval_size);
-    }else throw std::runtime_error("Incorrect Synapse range!");
+  void iterate_terminatable(function< bool(Interval_type) > do_for_each_synapse, function< bool(Interval_type,sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    iterate_terminatable(synapse_interval, do_for_each_synapse,do_for_each_index,interval_start,interval_size_);
   }
-  void skim_terminatable(function< bool(Interval_type) > do_for_each_synapse) const{
-    skim_unsafe(synapse_interval, do_for_each_synapse);
+  void skim(function< void(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    skim(synapse_interval, do_for_each_synapse,interval_start,interval_size_);
   }
-  void skim(function< void(Interval_type) > do_for_each_synapse) const{
-    skim_unsafe(synapse_interval, do_for_each_synapse);
-  }
-  void iterate(function< void(Interval_type,sint32) > do_for_each_index) const{
-    iterate_unsafe(synapse_interval, do_for_each_index);
-  }
-  void iterate(function< void(Interval_type) > do_for_each_synapse, function< void(Interval_type,sint32) > do_for_each_index) const{
-    iterate_unsafe(synapse_interval, do_for_each_synapse, do_for_each_index);
-  }
-  void iterate_terminatable(function< bool(Interval_type,sint32) > do_for_each_index) const{
-    iterate_unsafe_terminatable(synapse_interval, do_for_each_index);
-  }
-  void iterate_terminatable(function< bool(Interval_type) > do_for_each_synapse, function< bool(Interval_type,sint32) > do_for_each_index) const{
-    iterate_unsafe_terminatable(synapse_interval, do_for_each_synapse,do_for_each_index);
+  void skim_terminatable(function< bool(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    skim_terminatable(synapse_interval, do_for_each_synapse,interval_start,interval_size_);
   }
 
-  void iterate_unsafe(function< void(Interval_type,sint32) > do_for_each_index, uint32 interval_start, uint32 interval_size = 0) const{
-    iterate_unsafe(synapse_interval, do_for_each_index,interval_start,interval_size);
+  static void skim(
+    const RepeatedPtrField<Interval_type>& arg_synapse_interval,
+    function< void(Interval_type) > do_for_each_synapse,
+    uint32 interval_start = 0, uint32 interval_size_ = 0
+  ){
+    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
+    for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator){
+      do_for_each_synapse(arg_synapse_interval[synapse_iterator]);
+    }
   }
 
   static void iterate(
     const RepeatedPtrField<Interval_type>& arg_synapse_interval,
-    function< void(Interval_type,sint32) > do_for_each_index
-  ){
-    iterate_unsafe(arg_synapse_interval, do_for_each_index);
-  }
-
-  static void skim_unsafe(
-    const RepeatedPtrField<Interval_type>& arg_synapse_interval,
-    function< void(Interval_type) > do_for_each_synapse,
-    uint32 interval_start = 0, uint32 interval_size = 0
-  ){
-    if((0 == interval_size)&&(arg_synapse_interval.size() > static_cast<int>(interval_start)))
-      interval_size = arg_synapse_interval.size() - interval_start;
-    for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator)
-      do_for_each_synapse(arg_synapse_interval[synapse_iterator]);
-  }
-
-  static void iterate_unsafe(
-    const RepeatedPtrField<Interval_type>& arg_synapse_interval,
     function< void(Interval_type,sint32) > do_for_each_index,
-    uint32 interval_start = 0, uint32 interval_size = 0
+    uint32 interval_start = 0, uint32 interval_size_ = 0
   ){
-    if((0 == interval_size)&&(arg_synapse_interval.size() > static_cast<int>(interval_start)))
-      interval_size = arg_synapse_interval.size() - interval_start;
+    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
     for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator){
       if(!is_index_input(arg_synapse_interval[synapse_iterator].starts()))
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
+        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator){
           do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() + input_iterator);
+        }
       else /* current @starts. element is from the input, iterate in a negative way */
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
+        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator){
           do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() - input_iterator);
+        }
     } /* For every synapse */
   }
 
-  static void iterate_unsafe(
+  static void iterate(
     const RepeatedPtrField<Interval_type>& arg_synapse_interval,
     function< void(Interval_type) > do_for_each_synapse,
     function< void(Interval_type,sint32) > do_for_each_index,
-    uint32 interval_start = 0, uint32 interval_size = 0
+    uint32 interval_start = 0, uint32 interval_size_ = 0
   ){
-    if((0 == interval_size)&&(arg_synapse_interval.size() > static_cast<int>(interval_start)))
-      interval_size = arg_synapse_interval.size() - interval_start;
+    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
     for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator){
       do_for_each_synapse(arg_synapse_interval[synapse_iterator]);
       if(!is_index_input(arg_synapse_interval[synapse_iterator].starts())){
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
+        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator){
           do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() + input_iterator);
+        }
       }else{ /* current @starts. element is from the input, iterate in a negative way */
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
+        for(sint32 input_iterator = 0; static_cast<uint32>(input_iterator) < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator){
           do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() - input_iterator);
+        }
       }
     } /* For every synapse */
   }
 
-  static void skim_unsafe_terminatable(
+  static void skim_terminatable(
     const RepeatedPtrField<Interval_type>& arg_synapse_interval,
-    function< void(Interval_type) > do_for_each_synapse,
-    uint32 interval_start = 0, uint32 interval_size = 0
+    function< bool(Interval_type) > do_for_each_synapse,
+    uint32 interval_start = 0, uint32 interval_size_ = 0
   ){
-    if((0 == interval_size)&&(arg_synapse_interval.size() > static_cast<int>(interval_start)))
-      interval_size = arg_synapse_interval.size() - interval_start;
+    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
     for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator)
       if(!do_for_each_synapse(arg_synapse_interval[synapse_iterator]))
         return;
   }
 
-  static void iterate_unsafe_terminatable(
+  static void iterate_terminatable(
     const RepeatedPtrField<Interval_type>& arg_synapse_interval,
     function< bool(Interval_type,sint32) > do_for_each_index,
-    uint32 interval_start = 0, uint32 interval_size = 0
+    uint32 interval_start = 0, uint32 interval_size_ = 0
   ){
-    if((0 == interval_size)&&(arg_synapse_interval.size() > static_cast<int>(interval_start)))
-      interval_size = arg_synapse_interval.size() - interval_start;
+    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
     for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator){
       if(!is_index_input(arg_synapse_interval[synapse_iterator].starts())){
         for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
@@ -208,18 +161,17 @@ public:
     } /* For every synapse */
   }
 
-  static void iterate_unsafe_terminatable(
+  static void iterate_terminatable(
     const RepeatedPtrField<Interval_type>& arg_synapse_interval,
     function< bool(Interval_type) > do_for_each_synapse,
     function< bool(Interval_type,sint32) > do_for_each_index,
-    uint32 interval_start = 0, uint32 interval_size = 0
+    uint32 interval_start = 0, uint32 interval_size_ = 0
   ){
-    if((0 == interval_size)&&(arg_synapse_interval.size() > static_cast<int>(interval_start)))
-      interval_size = arg_synapse_interval.size() - interval_start;
+    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
     for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator){
       if(!do_for_each_synapse(arg_synapse_interval[synapse_iterator]))
         return;
-      if(!is_index_input(arg_synapse_interval[synapse_iterator].starts())){      
+      if(!is_index_input(arg_synapse_interval[synapse_iterator].starts())){
         for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
           if(!do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() + input_iterator))
             return;
@@ -314,6 +266,15 @@ public:
   }
 
   /**
+   * @brief      Return the number of input synapses in the iterator.
+   *
+   * @return     Size of the Repeatedfiled for the  synapse_intervals
+   */
+  uint32 number_of_synapses(void) const{
+    return synapse_interval.size();
+  }
+
+  /**
    * @brief      Give back the last element of the synapse
    *
    * @return     the last index of the synapse
@@ -373,12 +334,30 @@ public:
   }
 
 private:
-  /**
-   * The index of the first element in every synapse
-   */
   const RepeatedPtrField<Interval_type>& synapse_interval;
   uint32 last_reached_synapse;
   uint32 last_reached_index;
+  static uint32 interval_size; /* temporary variable */
+
+  /**
+   * @brief      Gets the number of synapses to iterate based on the provided start and size values.
+   *             Checks wether the arguments related validity, and returns the number of synapses to iterate over.
+   *             It sets the mutable helper @interval_size to the correct iteration value
+   *
+   * @param      arg_synapse_interval  The argument synapse interval
+   * @param[in]  interval_start        The interval start
+   * @param[in]  interval_size_        The interval size
+   *
+   */
+  static uint32 get_number_of_synapses_to_iterate(const RepeatedPtrField<Interval_type>& arg_synapse_interval, uint32 interval_start, uint32 interval_size_){
+    if( (0 == arg_synapse_interval.size())&&(0 == interval_start) )
+      return 0;
+    else if( (0 == interval_size_)&&(arg_synapse_interval.size() > static_cast<sint32>(interval_start)) )
+      return (arg_synapse_interval.size() - interval_start);
+    else if(0 == interval_size_)
+      throw std::runtime_error("Incorrect synapse range start!");
+    else return interval_size_;
+  }
 };
 
 } /* namespace sparse_net_library */

@@ -61,7 +61,7 @@ void Partial_solution_solver::solve(){
   uint32 input_index_offset = 0;
   for(uint16 neuron_iterator = 0; neuron_iterator < detail.internal_neuron_number(); ++neuron_iterator){
     new_neuron_data = 0;
-    internal_iterator.iterate_unsafe([&](Index_synapse_interval weight_synapse, sint32 weight_index){
+    internal_iterator.iterate([&](Index_synapse_interval weight_synapse, sint32 weight_index){
       /* Collect input only as long as it's assigned to the current inner neuron */
       if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){
         /* Neuron gets its input from the partial solution input */

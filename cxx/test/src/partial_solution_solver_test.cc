@@ -59,7 +59,7 @@ using sparse_net_library::Synapse_iterator;
  *   - different biases
  */
 
-TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial_solution][manual]" ){
+TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-solution][manual]" ){
   Data_ringbuffer neuron_data(1,2);
   Partial_solution partial_solution;
   vector<uint32> helper_vector_uint;
@@ -90,10 +90,10 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial_sol
   /* The result should change in accordance with the parameters */
   srand (time(nullptr));
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
-    Synapse_iterator<>::iterate_unsafe(partial_solution.weight_indices(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
+    Synapse_iterator<>::iterate(partial_solution.weight_indices(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },0u,1u); /* Mess with the weights of the first Neuron */
-    Synapse_iterator<>::iterate_unsafe(partial_solution.weight_indices(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
+    Synapse_iterator<>::iterate(partial_solution.weight_indices(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },1u,1u); /* Mess with the weights of the second Neuron */
 
@@ -129,7 +129,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial_sol
  * - define the partial solution so every neuon gives back the corresponding input
  * - see if the input is collected correctly
  */
-TEST_CASE("Test Partial solution input collection","[solve][partial_solution][input_collection]"){
+TEST_CASE("Test Partial solution input collection","[solve][partial-solution][input_collection]"){
   Partial_solution partial_solution;
   vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
   Index_synapse_interval temp_index_interval;
