@@ -42,7 +42,7 @@ using sparse_net_library::Synapse_iterator;
 
 /*###############################################################################################
  * Testing if the iteration is correctly processing the Sparse net
- * - Building a Fully COnnected Multilayered Net
+ * - Building a Fully Connected Multilayered Net
  * - Each iteration has to add the corresponding layer
  *    Because of the structure of a fully connected Net, one iteration would involve one layer exactly
  * */

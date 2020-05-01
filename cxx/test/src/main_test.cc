@@ -177,6 +177,7 @@ void check_if_the_same(SparseNet& net, Solution& solution){
   uint32 weight_synapse_offset;
   uint32 neuron_synapse_element_iterator;
   uint32 counted_inputs;
+  uint32 expected_inputs;
   for(sint32 neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator){ /* For the input Neurons */
     for(
       sint32 partial_solution_iterator = 0;
@@ -197,17 +198,23 @@ void check_if_the_same(SparseNet& net, Solution& solution){
         if(neuron_iterator == output_neurons[inner_neuron_iterator]){
           /* If the current neuron being checked is the one in the partial solution under inner_neuron_iterator */
           neuron_synapse_element_iterator = 0;
+
           /* Test iterates over the Neurons input weights, to see if they match with the wights in the Network */
           Synapse_iterator<> inner_neuron_weight_iterator(solution.partial_solutions(partial_solution_iterator).weight_indices());
           Synapse_iterator<> neuron_weight_iterator(net.neuron_array(neuron_iterator).input_weights());
 
           /* Inner Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input is true ) */
-          inner_neuron_weight_iterator.iterate([&](Index_synapse_interval weight_synapse, sint32 input_index){
+          expected_inputs = 0;
+          counted_inputs = 0;
+          inner_neuron_weight_iterator.iterate([&](Index_synapse_interval weight_synapse){
+            expected_inputs += weight_synapse.interval_size();
+          },[&](Index_synapse_interval weight_synapse, sint32 input_index){
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
             CHECK(
               solution.partial_solutions(partial_solution_iterator).weight_table(input_index)
               == net.weight_table(neuron_weight_iterator[neuron_synapse_element_iterator])
             );
+            ++counted_inputs;
             ++neuron_synapse_element_iterator;
           },weight_synapse_offset,solution.partial_solutions(partial_solution_iterator).weight_synapse_number(inner_neuron_iterator));
 

@@ -47,7 +47,7 @@ using sparse_net_library::COST_FUNCTION_MSE;
  * */
 unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, uint32 recursion){
   vector<uint32> net_structure = {20,20,30,10,2}; /* Build a net of this structure */
-  Sparse_net_builder builder;
+  Sparse_net_builder builder = Sparse_net_builder();
 
   builder.input_size(50).expected_input_range(double_literal(5.0))
     .output_neuron_number(2).arena_ptr(arena)
@@ -59,16 +59,23 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
     builder.set_recurrence_to_layer();
   }
 
-  unique_ptr<SparseNet> net = unique_ptr<SparseNet>(builder.dense_layers(net_structure));
-
-   unique_ptr<Solution> solution = unique_ptr<Solution>(Solution_builder()
-    .max_solve_threads(4).device_max_megabytes(device_max_megabytes)
-    .arena_ptr(arena).build(*net)
+  SparseNet net;
+  REQUIRE_NOTHROW(
+    net = *builder.dense_layers(net_structure)
   );
+
+   unique_ptr<Solution> solution;
+
+   REQUIRE_NOTHROW(
+      solution = unique_ptr<Solution>(Solution_builder()
+        .max_solve_threads(4).device_max_megabytes(device_max_megabytes)
+        .arena_ptr(arena).build(net)
+      )
+   );
 
   /* See if every Neuron is inside the result solution */
   bool found;
-  for(sint32 neuron_iterator = 0; neuron_iterator < net->neuron_array_size(); ++neuron_iterator){
+  for(sint32 neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator){
     found = false;
     for(sint32 partial_solution_iterator = 0; partial_solution_iterator < solution->partial_solutions_size(); ++partial_solution_iterator){
       Synapse_iterator<> output_neurons(solution->partial_solutions(partial_solution_iterator).output_data());
@@ -88,7 +95,7 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
   }
 
   /* Test if the inputs of the partial in the first row only contain input indexes */
-  check_if_the_same(*net, *solution);
+  check_if_the_same(net, *solution);
 
   /* TODO: Test if all of the neuron is present in all of the partial solutions outputs */
   return solution;

@@ -228,11 +228,10 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the described net */
-  unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
-  net_builder->input_size(5).expected_input_range(double_literal(5.0))
+  Sparse_net_builder net_builder = Sparse_net_builder();
+  net_builder.input_size(5).expected_input_range(double_literal(5.0))
   .cost_function(COST_FUNCTION_MSE).arena_ptr(arena);
-  SparseNet net = *net_builder->dense_layers(net_structure);
-  net_builder.reset();
+  SparseNet net = *net_builder.dense_layers(net_structure);
 
   /* Generate solution from Net */
   unique_ptr<Solution_builder> solution_builder = make_unique<Solution_builder>();
@@ -276,11 +275,10 @@ TEST_CASE("Solution Solver test for gradients", "[solve][gradient]"){
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the above described net */
-  unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
-  net_builder->input_size(5).expected_input_range(double_literal(5.0))
+  Sparse_net_builder net_builder = Sparse_net_builder();
+  net_builder.input_size(5).expected_input_range(double_literal(5.0))
   .cost_function(COST_FUNCTION_MSE);
-  unique_ptr<SparseNet> net(net_builder->dense_layers(net_structure));
-  net_builder.reset();
+  unique_ptr<SparseNet> net(net_builder.dense_layers(net_structure));
 
   /* Generate solution from Net */
   Solution_solver solver(*Solution_builder().service_context().build(*net));

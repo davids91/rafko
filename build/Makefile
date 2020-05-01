@@ -92,7 +92,8 @@ run-tests: $(TEST_RESULT)
 	./$< --use-colour yes
 
 loop-tests:
-	for i in {1..${TEST_LOOPS}}; do ./$(TEST_RESULT) --use-colour yes; done
+#	while true; do ./$(TEST_RESULT) --use-colour yes; done
+	while true; do ./$(TEST_RESULT) -b; done
 
 test-solution-builder: clean build_library
 	@rm -f $(TEST_RESULT)
