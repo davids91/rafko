@@ -67,6 +67,7 @@ public:
   ,  transfer_function_input(context.get_max_solve_threads())
   ,  transfer_function_output(context.get_max_solve_threads())
   ,  error_values(context.get_max_solve_threads())
+  ,  weight_derivatives(context.get_max_solve_threads())
   ,  weight_gradient()
   {
     (void)context.set_minibatch_size(max(1u,min(
@@ -77,10 +78,14 @@ public:
       solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
       neuron_data_sequences.push_back(Data_ringbuffer(train_set_.get_sequence_size(), neural_network.neuron_array_size()));
       error_values[threads] = vector<vector<unique_ptr<atomic<sdouble32>>>>(train_set.get_sequence_size());
+      weight_derivatives[threads] = vector<vector<unique_ptr<atomic<sdouble32>>>>(train_set.get_sequence_size());
       for(uint32 sequence_index = 0; sequence_index < train_set.get_sequence_size(); ++sequence_index){
         error_values[threads][sequence_index] = vector<unique_ptr<atomic<sdouble32>>>();
+        weight_derivatives[threads][sequence_index] = vector<unique_ptr<atomic<sdouble32>>>();
         for(sint32 i = 0; i < net.neuron_array_size(); ++i)
           error_values[threads][sequence_index].push_back(make_unique<atomic<sdouble32>>());
+        for(sint32 i = 0; i < net.weight_table_size(); ++i)
+          weight_derivatives[threads][sequence_index].push_back(make_unique<atomic<sdouble32>>());
       }
       process_threads[threads].reserve(context.get_max_processing_threads());
       transfer_function_input[threads] = vector<sdouble32>(train_set.get_feature_size());
@@ -149,6 +154,7 @@ private:
   vector<vector<sdouble32>> transfer_function_input; /* Copy of the Neurons data for each solve thread */
   vector<vector<sdouble32>> transfer_function_output; /* Copy of the Neurons data for each solve thread */
   vector<vector<vector<unique_ptr<atomic<sdouble32>>>>> error_values; /* Calculated error values: [Threads][Sequences][Neurons] */
+  vector<vector<vector<unique_ptr<atomic<sdouble32>>>>> weight_derivatives; /* Calculated derivatives for each weights [Threads][Sequences][Weights] */
   vector<unique_ptr<atomic<sdouble32>>> weight_gradient; /* calculated gradient values */
 
   /**
@@ -167,6 +173,18 @@ private:
    * @param[in]  samples_to_evaluate  Number of samples to be evaluated
    */
   void evaluate_thread(uint32 solve_thread_index, uint32 sample_start, uint32 samples_to_evaluate);
+
+  /**
+   * @brief      Calculates the derivatives part of the gradient for each weight
+   *             Starts @calculate_derivatives_thread-s simultaniously, almost equally dividing 
+   *             the number of output neurons to be calculated in one thread.
+   *             The number of threads to be started depends on @Service_context::get_max_solve_threads
+   *
+   * @param[in]  solve_thread_index  The solve thread index
+   * @param[in]  sequence_index      The sequence index
+   * @param[in]  sample_index        The sample index
+   */
+  void calculate_derivatives(uint32 solve_thread_index, uint32 sequence_index, uint32 sample_index);
 
   /**
    * @brief      Calculates the output layer deviation from the given sample under @sample_index.
@@ -209,6 +227,17 @@ private:
    *             number of weights to process.
    */
   void normalize_weight_gradients(void);
+
+  /**
+   * @brief      The thread for calculating the derivative part for each weights
+   *
+   * @param[in]  solve_thread_index  The solve thread index
+   * @param[in]  sample_index        The sample index
+   * @param[in]  sequence_index      The index of the currently evaluated sequence
+   * @param[in]  neuron_index        The neuron index to start calculatin output errors from
+   * @param[in]  neuron_number       The number of neurons to include in this thread
+   */
+  void calculate_derivatives_thread(uint32 solve_thread_index, uint32 sample_index, uint32 sequence_index, uint32 neuron_index, uint32 neuron_number);
 
   /**
    * @brief      The thread call for calculating the output errors. MUltiple Output Neurons are calculated in one thread

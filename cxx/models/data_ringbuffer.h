@@ -128,11 +128,44 @@ public:
   }
 
   /**
+   * @brief      Utility function to get an element from the given sequence. 
+   *             Please also refer to the description of @get_sequence_index
+   *
+   * @param[in]  sequence_index             The sequence index
+   * @param[in]  input_synapse              The input synapse
+   * @param[in]  element_offset_from_start  The element offset from start
+   *
+   * @return     The buffer element in the given sequence
+   */
+  sdouble32 get_const_element(uint32 sequence_index, Input_synapse_interval input_synapse, uint32 element_offset_from_start) const{
+    if(static_cast<sint32>(get_sequence_size()) > get_sequence_index(sequence_index,input_synapse)){
+      if(input_synapse.starts() + element_offset_from_start < data[get_sequence_index(sequence_index,input_synapse)].size())
+        return data[get_sequence_index(sequence_index,input_synapse)][input_synapse.starts() + element_offset_from_start];
+      else throw std::runtime_error("Buffer element index out of bounds!");
+    }else return 0.0;
+  }
+
+  /**
+   * @brief      Utility element to get a buffer under the given sequence based on a past reach back value
+   *             provided in the given input synapse
+   *
+   * @param[in]  sequence_index  The sequence index
+   * @param[in]  input_synapse   The input synapse
+   *
+   * @return     The constant element.
+   */
+  const vector<sdouble32>& get_const_element(uint32 sequence_index, Input_synapse_interval input_synapse) const{
+    if(static_cast<sint32>(get_sequence_size()) > get_sequence_index(sequence_index,input_synapse)){
+        return data[get_sequence_index(sequence_index,input_synapse)];
+    }else throw std::runtime_error("Buffer index out of bounds!");
+  }
+
+  /**
    * @brief      Gets the number of buffers stored in the object
    *
    * @return     The sequence size.
    */
-  uint32 get_sequence_size(void){
+  uint32 get_sequence_size(void) const{
     return data.size();
   }
 
@@ -157,8 +190,21 @@ public:
    *
    * @return     The buffer index.
    */
-  sint32 get_sequence_index(uint32 sequence_index, Input_synapse_interval input_synapse){
-    return (get_sequence_size() - sequence_index - 1) + input_synapse.reach_past_loops();
+  sint32 get_sequence_index(uint32 sequence_index, Input_synapse_interval input_synapse) const{
+    return get_sequence_index(sequence_index, input_synapse.reach_past_loops());
+  }
+
+  /**
+   * @brief      Calculates the index to reach the neuron data at the @sequence_index th
+   *             evaluation of a data sample which was the last @past_index th loop.
+   *
+   * @param[in]  sequence_index    The sequence index
+   * @param[in]  reach_past_loops  The number of loops to reach back in the sequence
+   *
+   * @return     The buffer index.
+   */
+  sint32 get_sequence_index(uint32 sequence_index, uint32 reach_past_loops) const{
+    return (get_sequence_size() - sequence_index - 1) + reach_past_loops;
   }
 
   /**
