@@ -140,7 +140,9 @@ public:
   sdouble32 get_const_element(uint32 sequence_index, Input_synapse_interval input_synapse, uint32 element_offset_from_start) const{
     if(static_cast<sint32>(get_sequence_size()) > get_sequence_index(sequence_index,input_synapse)){
       if(input_synapse.starts() + element_offset_from_start < data[get_sequence_index(sequence_index,input_synapse)].size())
-        return data[get_sequence_index(sequence_index,input_synapse)][input_synapse.starts() + element_offset_from_start];
+        return get_const_element(
+          get_sequence_index(sequence_index,input_synapse)
+        )[input_synapse.starts() + element_offset_from_start];
       else throw std::runtime_error("Buffer element index out of bounds!");
     }else return 0.0;
   }
@@ -156,7 +158,7 @@ public:
    */
   const vector<sdouble32>& get_const_element(uint32 sequence_index, Input_synapse_interval input_synapse) const{
     if(static_cast<sint32>(get_sequence_size()) > get_sequence_index(sequence_index,input_synapse)){
-        return data[get_sequence_index(sequence_index,input_synapse)];
+        return get_const_element(get_sequence_index(sequence_index,input_synapse));
     }else throw std::runtime_error("Buffer index out of bounds!");
   }
 

@@ -73,6 +73,10 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
 /*###############################################################################################
  * Testing a sequence of runs to be stored in the ringbuffer, and seeing if the indexing is as expected
  *  by querying sequence indices and comparing to past reaches
+ *  Used interfaces: 
+ * - get_sequence_size
+ * - get_const_element
+ * - get_sequence_index
  * */
 TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-handling]"){
   uint32 sequence_number = 5;
@@ -81,13 +85,21 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
   Input_synapse_interval input_synapse;
   vector<sdouble32> data_sample(buffer_size);
 
-  /* Simulate some runs */
-  for(uint32 i = 0; i < sequence_number; ++i){
+  /* Simulate some runs: each element in the buffer shall have the value of it's past value */
+  for(sint32 i = sequence_number-1; i >= 0; --i){
     buffer.step();
     for(sdouble32& sample_element : data_sample)
       sample_element = i;
     copy(data_sample.begin(),data_sample.end(), buffer.get_element(0).begin());
   }
+
+  /*!Note: To understand Sequential indexes in the Data ringbuffer, this might help: 
+  for(sint32 i = sequence_number-1; i >= 0; --i)
+    std::cout << "[" << i << "]-";
+  std::cout << "past index (buffer conents also in this example)" << std::endl;
+  for(uint32 i = 0; i < sequence_number; i++)
+    std::cout << "[" << i << "]-";
+  std::cout << "sequence index" << std::endl; */
 
   /* See if the first sequence reach back only to that index */
   input_synapse.set_reach_past_loops(0);
@@ -101,13 +113,15 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
 
   /* See if later sequences reach back to the relevant index */
   for(uint32 sequence_iterator = 1; sequence_iterator < sequence_number; ++sequence_iterator){
-    for(uint32 reach_back_count = 0; reach_back_count < sequence_iterator; ++reach_back_count){
+    for(uint32 reach_back_count = 0; reach_back_count <= sequence_iterator; ++reach_back_count){
       input_synapse.set_reach_past_loops(reach_back_count);
       CHECK( static_cast<sint32>(buffer.get_sequence_size()) > buffer.get_sequence_index(sequence_iterator, input_synapse) );
       CHECK( static_cast<sint32>((sequence_number - sequence_iterator - 1) + reach_back_count) == buffer.get_sequence_index(sequence_iterator, input_synapse) );
+      CHECK( buffer.get_const_element(buffer.get_sequence_index(sequence_iterator, input_synapse))[0] == buffer.get_sequence_index(sequence_iterator, input_synapse) );
+      CHECK( buffer.get_const_element(sequence_iterator,input_synapse,0) == buffer.get_sequence_index(sequence_iterator, input_synapse) );
+      CHECK( buffer.get_const_element(sequence_iterator,input_synapse)[0] == buffer.get_sequence_index(sequence_iterator, input_synapse) );
     }
   }
-
 }
 
 } /* namespace sparse_net_library_test */
