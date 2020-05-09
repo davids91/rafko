@@ -51,6 +51,10 @@ public:
     return minibatch_size;
   }
 
+  uint32 get_memory_truncation(void) const{
+    return memory_truncation;
+  }
+
   sdouble32 get_alpha(void) const{
     return alpha;
   }
@@ -97,6 +101,11 @@ public:
     return *this;
   }
 
+  Service_context& set_memory_truncation(uint32 memory_truncation_){
+    memory_truncation = memory_truncation_;
+    return *this;
+  }
+
   Service_context& set_alpha(sdouble32 alpha_){
     epsilon = alpha_;
     return *this;
@@ -125,6 +134,8 @@ private:
 
   sdouble32 step_size = 1e-6;
   uint32 minibatch_size = 64;
+  uint32 memory_truncation = 2;
+
   sdouble32 alpha = double_literal(1.6732);
   sdouble32 gamma = double_literal(0.9);
   sdouble32 epsilon = 1e-15; /* very small positive value almost greater, than double_literal(0.0) */
