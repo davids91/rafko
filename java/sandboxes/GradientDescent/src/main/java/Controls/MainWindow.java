@@ -34,9 +34,8 @@ public class MainWindow {
     public Label learning_rate_label;
     public Slider learning_rate_slider;
 
-    private Random rnd = new Random();
+    private final Random rnd = new Random();
     private Polynomial solution_trend;
-    private Polynomial dataset_trend;
     private ArrayList<Double> dataset;
     private Timeline timeline;
 
@@ -56,7 +55,7 @@ public class MainWindow {
     public  void fill_chart(){
         dataset = new ArrayList((int) dataset_size_slider.getValue());
         display_graph.setData(FXCollections.observableArrayList());
-        dataset_trend = new Polynomial(rnd,dataset_size_slider.getValue());
+        Polynomial dataset_trend = new Polynomial(rnd, dataset_size_slider.getValue());
         solution_trend = new Polynomial(rnd, dataset_size_slider.getValue());
         XYChart.Series dataset_series = new XYChart.Series();
         dataset_series.setName("Data points");
@@ -71,16 +70,6 @@ public class MainWindow {
         displaySolutionTrend();
     }
 
-    private double gradientA = 0.0;
-    private double gradientB = 0.0;
-    private double gradientC = 0.0;
-
-    private double distanceA = 10;
-    private double distanceB = 10;
-    private double distanceC = 10;
-
-    private double error = 1.0;
-
     @FXML
     public void step() { /* this is where the magic will happen */
         /* Calculate the gradient using every sample in the dataset */
@@ -90,34 +79,31 @@ public class MainWindow {
         Polynomial trend_modA = new Polynomial(solution_trend);
         Polynomial trend_modB = new Polynomial(solution_trend);
         Polynomial trend_modC = new Polynomial(solution_trend);
-        trend_modA.stepA(learning_rate_slider.getValue());
-        trend_modB.stepB(learning_rate_slider.getValue());
-        trend_modC.stepC(learning_rate_slider.getValue());
-//        trend_modA.stepA(distanceA);
-//        trend_modB.stepB(distanceB);
-//        trend_modC.stepC(distanceC);
+        trend_modA.stepA(learning_rate_slider.getValue()/2.0);
+        trend_modB.stepB(learning_rate_slider.getValue()/2.0);
+        trend_modC.stepC(learning_rate_slider.getValue()/2.0);
 
-                gradientA = (
-                        (ErrorFunction.getErrorValue(dataset, trend_modA)
-                                - ErrorFunction.getErrorValue(dataset, solution_trend))
-                );//)/learning_rate_slider.getValue();
+        double gradientA = (
+                (ErrorFunction.getErrorValue(dataset, trend_modA)
+                        - ErrorFunction.getErrorValue(dataset, solution_trend))
+        );
 
-                gradientB = (
-                        (ErrorFunction.getErrorValue(dataset, trend_modB)
-                                - ErrorFunction.getErrorValue(dataset, solution_trend))
-                );//)/learning_rate_slider.getValue();
+        double gradientB = (
+                (ErrorFunction.getErrorValue(dataset, trend_modB)
+                        - ErrorFunction.getErrorValue(dataset, solution_trend))
+        );
 
-                gradientC = (
-                        (ErrorFunction.getErrorValue(dataset, trend_modC)
-                                - ErrorFunction.getErrorValue(dataset, solution_trend))
-                );//)/learning_rate_slider.getValue();
+        double gradientC = (
+                (ErrorFunction.getErrorValue(dataset, trend_modC)
+                        - ErrorFunction.getErrorValue(dataset, solution_trend))
+        );
+
         /* Calculate the gradient in respect to w */
-        error = ErrorFunction.getErrorValue(dataset,solution_trend);
+        double error = ErrorFunction.getErrorValue(dataset, solution_trend);
         solution_trend.stepA(-gradientA * learning_rate_slider.getValue());
         solution_trend.stepB(-gradientB * learning_rate_slider.getValue());
         solution_trend.stepC(-gradientC * learning_rate_slider.getValue());
         System.out.println("Gradients: A:" + gradientA + "; B: "+ gradientB +"; C:" + gradientC + ";");
-        //System.out.println( "new C: " + solution_trend.getC());
         System.out.println("deviation: " + error);
 
         displaySolutionTrend();
