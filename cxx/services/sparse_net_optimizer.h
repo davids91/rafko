@@ -27,10 +27,8 @@
 #include "models/transfer_function.h"
 #include "models/data_aggregate.h"
 #include "models/data_ringbuffer.h"
-#include "services/neuron_router.h"
 #include "services/solution_builder.h"
 #include "services/solution_solver.h"
-#include "services/function_factory.h"
 #include "services/backpropagation_queue_wrapper.h"
 #include "services/updater_factory.h"
 
@@ -42,8 +40,6 @@ namespace sparse_net_library{
 using std::vector;
 using std::unique_ptr;
 using std::make_unique;
-using google::protobuf::Arena;
-using std::array;
 using std::min;
 using std::max;
 
@@ -113,22 +109,22 @@ public:
   Sparse_net_optimizer& operator=(Sparse_net_optimizer&& other) = delete; /* Move assignment */
 
 
-   /**
-    * @brief      Step the net in the opposite direction of the gradient slope
-    */
+  /**
+   * @brief      Step the net in the opposite direction of the gradient slope
+   */
   void step(void);
 
   /**
-   * @brief      Gives back the error of the configured Network based on the previous optimization step
+   * @brief      Gives back the error of the configured Network based on the training dataset
    */
-  sdouble32 get_train_error(){
+  sdouble32 get_train_error() const{
    return train_set.get_error();
   }
 
   /**
-   * @brief      Gives back the error of the configured Network based on the previous optimization step
+   * @brief      Gives back the error of the configured Network based on the test set
    */
-  sdouble32 get_test_error(){
+  sdouble32 get_test_error() const{
    return test_set.get_error();
   }
 
@@ -148,9 +144,9 @@ private:
 
   unique_ptr<Solution> net_solution;
   vector<unique_ptr<Solution_solver>> solvers;
-
   Data_aggregate& train_set;
   Data_aggregate& test_set;
+
   uint32 loops_unchecked;
   uint32 sequence_truncation;
   Backpropagation_queue gradient_step; /* Defines the neuron order during back-propagation */

@@ -110,6 +110,14 @@ protected:
     return(net.weight_table(weight_index) - get_current_velocity(weight_index));
   }
 
+  /**
+   * @brief      Returns with a velocity value for a weight based on the provided gradients
+   *
+   * @param[in]  weight_index  The weight index
+   * @param[in]  gradients     The gradients
+   *
+   * @return     The new velocity.
+   */
   sdouble32 get_new_velocity(uint32 weight_index, const vector<unique_ptr<atomic<sdouble32>>>& gradients){
     return (*gradients[weight_index] * context.get_step_size());
   }
@@ -117,6 +125,11 @@ protected:
 private:
   vector<thread> calculate_threads;
 
+  /**
+   * @brief      Calculates and stroes the required velocity for a weight based on the provided gradients
+   *
+   * @param[in]  gradients  The gradients array of size equal to the weights of the configured net
+   */
   void calculate_velocity(const vector<unique_ptr<atomic<sdouble32>>>& gradients);
 
   /**
@@ -125,7 +138,7 @@ private:
    *             It starts multiple threads, dividing almost equally the number of weights
    *             to be updated in each thread.
    */
-  void update_weights_with_velocity();
+  void update_weights_with_velocity(void);
 
   /**
    * @brief      A thread to update the weights of the @SpraseNet, called by @update_weights_with_velocity
@@ -140,7 +153,7 @@ private:
   }
 
   /**
-   * @brief      A thread to calculate the newest velocity based on the gradients
+   * @brief      A thread to calculate the latest velocity based on the gradients
    *
    * @param      gradients      The gradients
    * @param[in]  weight_index   The weight index

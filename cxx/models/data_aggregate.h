@@ -105,7 +105,7 @@ public:
    *
    * @return     The input sample.
    */
-  const vector<sdouble32>& get_input_sample(uint32 sample_index){
+  const vector<sdouble32>& get_input_sample(uint32 sample_index) const{
     if(sample_number > sample_index)
       return input_samples[sample_index];
       else throw std::runtime_error("Sample index out of bounds!");
@@ -118,7 +118,7 @@ public:
    *
    * @return     The label sample.
    */
-  const vector<sdouble32>& get_label_sample(uint32 sample_index){
+  const vector<sdouble32>& get_label_sample(uint32 sample_index) const{
     if(sample_number > sample_index)
       return label_samples[sample_index];
       else throw std::runtime_error("Sample index out of bounds!");
@@ -131,7 +131,7 @@ public:
    *
    * @return     The error.
    */
-  sdouble32 get_error(uint32 index){
+  sdouble32 get_error(uint32 index) const{
     if(sample_errors.size() > index)
       return sample_errors[index];
     else throw std::runtime_error("Sample index out of bounds!");
@@ -142,7 +142,7 @@ public:
    *
    * @return     The sum of the errors for all of the samples.
    */
-  sdouble32 get_error(void){
+  sdouble32 get_error(void) const{
     return error_sum;
   }
 
@@ -151,7 +151,7 @@ public:
    *
    * @return     The feature size.
    */
-  uint32 get_feature_size(void){
+  uint32 get_feature_size(void) const{
     return label_samples[0].size();
   }
 
@@ -160,7 +160,7 @@ public:
    *
    * @return     The number of samples.
    */
-  uint32 get_number_of_samples(void){
+  uint32 get_number_of_samples(void) const{
     return sample_number;
   }
 
@@ -178,7 +178,7 @@ public:
    *
    * @return     Number of consecutive datapoints that count as one sample.
    */
-  uint32 get_sequence_size(void){
+  uint32 get_sequence_size(void) const{
     return sequence_size;
   }
 
