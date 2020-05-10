@@ -1,0 +1,45 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
+syntax = "proto3";
+option cc_enable_arenas = true;
+
+package sparse_net_library;
+
+import "common.proto";
+
+/**
+ * @brief      Neuron indices who can be calcuated in paralell to one another
+ *             while calculating backpropagation.
+ *             @cols stores the number of synapses present in a queue element.
+ *             Queue elements can be done one after another only.
+ */
+message Backpropagation_queue{
+  repeated uint32 cols = 1; /* Number of neurons to be calculated at once */
+  repeated Index_synapse_interval neuron_synapses = 2; /* Neuron indices encapsulating the whole network */
+}
+
+/**
+ * @brief      An incomplete update value to the vector of a @SparseNet.
+ *             A fragment shall contain some gradient values to update a corresponding
+ *             network. A fragment can be calculated from a host, then it can be used to
+ *             update or partially update a network.
+ */
+message Gradient_fragment{
+  repeated double values = 3; /* Weight update values  inside the fragment */
+  repeated Index_synapse_interval weight_synapses = 2; /* The corresponding indices ( in the @SparseNet ) for the values */
+}

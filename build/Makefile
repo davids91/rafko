@@ -12,7 +12,8 @@ DEBUG_FLAGS = -DNDEBUG #no debug
 CPPFLAGS = -Wall $(LIBS) -std=c++14 $(DEBUG_FLAGS)
 CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib $(DEBUG_FLAGS)
 
-GENERATED_SOURCES = ../cxx/gen/common.pb.cc ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc
+GENERATED_SOURCES = ../cxx/gen/common.pb.cc 
+GENERATED_SOURCES += ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc ../cxx/gen/training.pb.cc
 
 BUILDER_SOURCES = ../cxx/services/src/sparse_net_builder.cc
 BUILDER_SOURCES += ../cxx/services/src/solution_builder.cc ../cxx/services/src/partial_solution_builder.cc

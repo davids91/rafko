@@ -19,6 +19,7 @@
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
+#include "gen/training.pb.h"
 
 #include "services/sparse_net_builder.h"
 #include "services/synapse_iterator.h"

@@ -22,6 +22,7 @@
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+#include "gen/training.pb.h"
 #include "models/cost_function.h"
 #include "models/transfer_function.h"
 #include "models/data_aggregate.h"
@@ -46,6 +47,9 @@ using std::array;
 using std::min;
 using std::max;
 
+/**
+ * @brief      An optimizer to train neural networks based on calculated gradients.
+ */
 class Sparse_net_optimizer{
 public:
   Sparse_net_optimizer(
@@ -304,7 +308,7 @@ private:
     if(
       (context.get_max_solve_threads() <= solve_thread_index)
       ||(train_set.get_sequence_size() <= sequence_index)
-      ||(net.weight_table_size() <= weight_index)
+      ||(net.weight_table_size() <= static_cast<sint32>(weight_index))
     )throw std::runtime_error("Weight index out of bounds!");
     return(*weight_derivatives[solve_thread_index][min(
       (sequence_truncation-1), (sequence_index - min(sequence_index, input_synapse.reach_past_loops()))
