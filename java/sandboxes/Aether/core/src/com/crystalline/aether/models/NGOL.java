@@ -14,8 +14,12 @@ import java.util.Random;
  */
 public class NGOL {
 
-    final Random rnd = new Random();
+    @FunctionalInterface
+    public interface NGOL_RULE{
+        Color execute(Color pixel, float proxR, float proxG, float proxB, int x, int y);
+    }
 
+    NGOL_RULE custom_rule = null;
     Pixmap[] ngolBuffer;
     int usedBuf = 0;
 
@@ -31,6 +35,13 @@ public class NGOL {
      */
     float underPopThr = 4f;
     float overPopThr = 9f;
+
+    final Random rnd = new Random();
+
+    public NGOL(int width, int height, float uThr, float oThr, NGOL_RULE custom_rule_) {
+        this(width,height,uThr,oThr);
+        custom_rule = custom_rule_;
+    }
 
     public NGOL(int width, int height, float uThr, float oThr) {
         ngolBuffer = new Pixmap[2];
@@ -49,7 +60,6 @@ public class NGOL {
     float proxR = 0; float proxG = 0; float proxB = 0;
 
     public void loop(){
-        float avgProx = 0;
         for(int i = 0; i < ngolBuffer[usedBuf].getWidth(); i++){
             for(int j = 0; j < ngolBuffer[usedBuf].getHeight(); j++){
                 envPixColor = new Color(ngolBuffer[usedBuf].getPixel(i,j));
@@ -65,7 +75,6 @@ public class NGOL {
                         proxB += envPixColor.b;
                     }
                 }
-                avgProx += proxR;
 
                 if((underPopThr > proxR)||(overPopThr < proxR))r = 0; /* under + overpopulation */
                 else if((underPopThr <= proxR)&&(overPopThr >= proxR))r = proxR / ((underPopThr+overPopThr)/2.0f); /* re-production */
@@ -78,24 +87,14 @@ public class NGOL {
                 if((underPopThr > proxB)||(overPopThr < proxB))b = 0; /* under + overpopulation */
                 else if((underPopThr <= proxB)&&(overPopThr >= proxB))b = proxB / ((underPopThr+overPopThr)/2.0f); /* re-production */
                 else b = 0;
-//                if(nullptr != ruuru)
-//                {
-//                    pixState[i][j] = ruuru(r,g,b,proxR,proxG,proxB, underPopThr, overPopThr, pixState[i][j]);
-//                }
-//                else
-//                {
-//                    /* no rule assigned to this object */
-//                }
 
-                r = Math.min(1.0f, r);
-                g = Math.min(1.0f, g);
-                b = Math.min(1.0f, b);
-                ngolBuffer[(usedBuf + 1)%2].drawPixel(i, j, Color.rgba8888(r,g,b,1.0f));
+                envPixColor.set( Math.min(1.0f, r),Math.min(1.0f, g),Math.min(1.0f, b),1.0f);
+                if(null != custom_rule)envPixColor = custom_rule.execute(envPixColor,proxR,proxG,proxB,i,j);
+
+                ngolBuffer[(usedBuf + 1)%2].drawPixel(i, j, Color.rgba8888(envPixColor));
             }
         }
         usedBuf = (usedBuf + 1)%2;
-        avgProx /= (ngolBuffer[usedBuf].getHeight() * ngolBuffer[usedBuf].getWidth());
-        System.out.println("AverageProx:" + avgProx);
     }
 
     public void reset(float addR, float addG, float addB){
@@ -122,6 +121,9 @@ public class NGOL {
         overPopThr = oThr;
     }
 
+    public void setRule(NGOL_RULE new_rule){
+        custom_rule = new_rule;
+    }
     public void setUnderPopThr(float uThr){
         underPopThr = uThr;
     }
