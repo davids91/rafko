@@ -70,11 +70,11 @@ void Sparse_net_optimizer::step(void){
 }
 
 void Sparse_net_optimizer::evaluate_thread(uint32 solve_thread_index, uint32 sample_start, uint32 samples_to_evaluate){
+  if(test_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
+    throw std::runtime_error("Network output size doesn't match size of provided testing labels!");
   for(uint32 sample_iterator = 0; sample_iterator < samples_to_evaluate; ++sample_iterator){
     for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
       solvers[solve_thread_index]->solve(test_set.get_input_sample(sample_start + sample_iterator + sequence_iterator)); /* Solve the network for the sampled labels input */
-      if(test_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
-        throw std::runtime_error("Network output size doesn't match size of provided labels!");
       test_set.set_feature_for_label(
         (sample_start + sample_iterator + sequence_iterator), solvers[solve_thread_index]->get_neuron_memory().get_const_element(0)
       ); /* Re-calculate error for the training set */
@@ -85,16 +85,19 @@ void Sparse_net_optimizer::evaluate_thread(uint32 solve_thread_index, uint32 sam
 
 void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate){
   uint32 sample_index;
+
+  if(train_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
+    throw std::runtime_error("Network output size doesn't match size of provided training labels!");
+
   for(uint32 sample = 0; sample < samples_to_evaluate; ++sample){
     sample_index = (rand()%(train_set.get_number_of_sequences())) * train_set.get_sequence_size();
 
     /* Evaluate the current sequence step by step */
+    solvers[solve_thread_index]->reset();
     for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
       neuron_data_sequences[solve_thread_index].step();
       solvers[solve_thread_index]->solve(train_set.get_input_sample(sample_index)); /* Solve the network for the sampled labels input */
       transfer_function_input[solve_thread_index][sequence_iterator] = solvers[solve_thread_index]->get_transfer_function_input();
-      if(train_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
-        throw std::runtime_error("Network output size doesn't match size of provided labels!");
       neuron_data_sequences[solve_thread_index].copy_latest(solvers[solve_thread_index]->get_neuron_memory());
       train_set.set_feature_for_label(sample_index, neuron_data_sequences[solve_thread_index].get_const_element(0)); /* Re-calculate error for the training set */
       /* Only calculate the derivatives for the first un-truncated sequences */

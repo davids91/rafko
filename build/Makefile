@@ -15,22 +15,23 @@ CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib $(DEBUG_FLAGS)
 GENERATED_SOURCES = ../cxx/gen/common.pb.cc 
 GENERATED_SOURCES += ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc ../cxx/gen/training.pb.cc
 
-BUILDER_SOURCES = ../cxx/services/src/sparse_net_builder.cc
+BUILDER_SOURCES = ../cxx/services/src/sparse_net_builder.cc ../cxx/services/src/neuron_router.cc
 BUILDER_SOURCES += ../cxx/services/src/solution_builder.cc ../cxx/services/src/partial_solution_builder.cc
 
 SOLVER_SOURCES = ../cxx/services/src/partial_solution_solver.cc ../cxx/services/src/solution_solver.cc
-SOLVER_SOURCES += ../cxx/services/src/sparse_net_optimizer.cc
 
-HELPER_SOURCES += ../cxx/models/src/dense_net_weight_initializer.cc
-HELPER_SOURCES += ../cxx/services/src/neuron_router.cc ../cxx/models/src/neuron_info.cc
-HELPER_SOURCES += ../cxx/models/src/transfer_function.cc
-HELPER_SOURCES += ../cxx/services/src/backpropagation_queue_wrapper.cc ../cxx/models/src/data_aggregate.cc
-HELPER_SOURCES += ../cxx/services/src/weight_updater.cc
+TRAINER_SOURCES = ../cxx/models/src/dense_net_weight_initializer.cc ../cxx/services/src/weight_updater.cc
+TRAINER_SOURCES += ../cxx/services/src/backpropagation_queue_wrapper.cc
+TRAINER_SOURCES += ../cxx/services/src/sparse_net_optimizer.cc ../cxx/services/src/sparse_net_approximizer.cc
 
-LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(HELPER_SOURCES)
+HELPER_SOURCES =  ../cxx/models/src/data_aggregate.cc
+HELPER_SOURCES +=  ../cxx/models/src/neuron_info.cc ../cxx/models/src/transfer_function.cc
+
+LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst ../cxx/gen/,,$(GENERATED_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(BUILDER_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(SOLVER_SOURCES:.cc=.o))
+LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(TRAINER_SOURCES:.cc=.o)))
 LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(HELPER_SOURCES:.cc=.o)))
 
 GENERATED_FILES_INCLUDE_DIR = -I ../cxx/gen

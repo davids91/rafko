@@ -157,6 +157,7 @@ private:
   vector<sdouble32> transfer_function_output;
   vector<thread> solve_threads;
   uint16 number_of_threads;
+  sdouble32 initial_error;
 
   /**
    * @brief      Gets a @Partial_Solution reference from the solution based on the given coordinates.
