@@ -74,6 +74,23 @@ public:
   void apply_fragment(void);
 
   /**
+   * @brief      Adds the given values to the stored fragment.
+   *
+   * @param[in]  weight_index             The weight index to give the value to
+   * @param[in]  gradient_fragment_value  The value to give to the fragment
+   */
+  void add_to_fragment(uint32 weight_index, sdouble32 gradient_fragment_value);
+
+  /**
+   * @brief      Gets the previously collected gradient fragment.
+   *
+   * @return     The fragment.
+   */
+  const Gradient_fragment get_fragment(void){
+    return gradient_fragment;
+  }
+
+  /**
    * @brief      Gives back the error of the configured Network based on the training dataset
    */
   sdouble32 get_train_error() const{
@@ -123,6 +140,21 @@ private:
    * @param[in]  samples_to_evaluate  The number of samples to evaluate
    */
   void collect_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 sequences_to_evaluate);
+
+  /**
+   * @brief      Insert an element to the given position into the given field by
+   *             first adding it to the end, and then reverse iterating and swapping elements
+   *             until the desired position is reached
+   *
+   * @param      message_field  The message field
+   * @param[in]  value          The value
+   * @param[in]  position       The position
+   */
+  void insert_element_at_position(google::protobuf::RepeatedField<sdouble32>& message_field, sdouble32 value, uint32 position){
+    *message_field.Add() = value;
+    for(sint32 i(message_field.size() - 1); i > static_cast<sint32>(position); --i)
+      message_field.SwapElements(i, i - 1);
+  }
 
   /**
    * @brief      This function waits for the given threads to finish, ensures that every thread

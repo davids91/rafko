@@ -46,50 +46,10 @@ void Sparse_net_approximizer::collect(void){
     sequence_index += sequences_in_one_thread;
   }
   wait_for_threads(solve_threads);
-
-  /* Add the collected gradient into the fragment */
-  uint32 weight_synapse_index = 0;
-  #if 0
-  /*!TODO: Optimize gradient_fragment on the run */
-  uint32 values_index = 0;
-  uint32 weight_synapse_index = gradient_fragment.weight_synapses_size();
-  for(weight_synapse_index = 0; weight_synapse_index < gradient_fragment.weight_synapses_size(); ++weight_synapse_index){
-    if( /* If the weight synapse is at or in-between the first index before the start of the synapse */
-      ((gradient_fragment.weight_synapses(weight_synapse_index).starts()-1) >= weight_synapse_index)
-      &&( /* and the one after the last index */
-        (gradient_fragment.weight_synapses(weight_synapse_index).starts() + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
-        <= weight_synapse_index
-      )
-    ){ /* current weight index shall be inside the fragment */
-      /* add weight into the synapse */
-      if((gradient_fragment.weight_synapses(weight_synapse_index).starts()-1) == weight_synapse_index){
-        /* The index is the first index before the synapse */
-        gradient_fragment.mutable_weight_synapses(weight_synapse_index)->set_interval_size(
-          gradient_fragment.weight_synapses(weight_synapse_index).interval_size + 1
-        );
-      }else if(){
-        /* the Index is inside the synapse */
-
-      }else{ /* The index is the first index after the synapse */
-        gradient_fragment.add_values();
-        gradient_fragment.mutable_weight_synapses(weight_synapse_index)->set_interval_size(
-          gradient_fragment.weight_synapses(weight_synapse_index).interval_size + 1
-        );
-      }
-      break; /* weight is placed inside the fragment, no need to continue */
-    }
-    values_index += gradient_fragment.weight_synapses(weight_synapse_index).interval_size();
-  }
-  #endif
-  if(
-    (0 == gradient_fragment.weight_synapses_size())
-    ||(static_cast<sint32>(weight_synapse_index) < gradient_fragment.weight_synapses_size())
-  ){
-    gradient_fragment.add_values((initial_error - train_set.get_error()) * context.get_step_size());
-    tmp_synapse_interval.set_interval_size(1);
-    tmp_synapse_interval.set_starts(weight_index);
-    *gradient_fragment.add_weight_synapses() = tmp_synapse_interval;
-  }
+  
+  add_to_fragment( /* Add the collected gradient into the fragment */
+    weight_index, ((initial_error - train_set.get_error()) * context.get_step_size())
+  );
 
   /* Revert weight modification */
   net.set_weight_table(
@@ -116,6 +76,55 @@ void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 s
       ++sample_index;
     }
     solvers[solve_thread_index]->reset();
+  }
+}
+
+void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gradient_fragment_value){
+  uint32 values_index = 0;
+  uint32 weight_synapse_index = gradient_fragment.weight_synapses_size();
+  for(weight_synapse_index = 0; static_cast<sint32>(weight_synapse_index) < gradient_fragment.weight_synapses_size(); ++weight_synapse_index){
+    if( /* If the weight synapse is at or in-between the first index before the start of the synapse */
+      ((gradient_fragment.weight_synapses(weight_synapse_index).starts()-1) >= static_cast<sint32>(weight_index))
+      &&( /* and the one after the last index */
+        (gradient_fragment.weight_synapses(weight_synapse_index).starts() + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
+        <= weight_index
+      )
+    ){ /* current weight index shall be inside the fragment */
+      gradient_fragment.mutable_weight_synapses(weight_synapse_index)->set_interval_size(
+        gradient_fragment.weight_synapses(weight_synapse_index).interval_size() + 1
+      );
+      if((gradient_fragment.weight_synapses(weight_synapse_index).starts()-1) == static_cast<sint32>(weight_index)){
+        /* The index is the first index before the synapse */
+        insert_element_at_position(*gradient_fragment.mutable_values(),gradient_fragment_value,values_index);
+      }else if(
+        (gradient_fragment.weight_synapses(weight_synapse_index).starts() + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
+        > weight_index
+      ){ /* the index is inside the synapse */
+        insert_element_at_position(
+          *gradient_fragment.mutable_values(), gradient_fragment_value,
+          (values_index + (
+            (gradient_fragment.weight_synapses(weight_synapse_index).starts() + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
+            - weight_index
+          ))
+        );
+      }else{ /* The index is the first index after the synapse */
+        insert_element_at_position(
+          *gradient_fragment.mutable_values(), gradient_fragment_value,
+          (values_index + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
+        );
+      }
+      break; /* weight is placed inside the fragment, no need to continue */
+    }
+    values_index += gradient_fragment.weight_synapses(weight_synapse_index).interval_size();
+  }
+  if(
+    (0 == gradient_fragment.weight_synapses_size())
+    ||(static_cast<sint32>(weight_synapse_index) < gradient_fragment.weight_synapses_size())
+  ){
+    gradient_fragment.add_values((initial_error - train_set.get_error()) * context.get_step_size());
+    tmp_synapse_interval.set_interval_size(1);
+    tmp_synapse_interval.set_starts(weight_index);
+    *gradient_fragment.add_weight_synapses() = tmp_synapse_interval;
   }
 }
 
