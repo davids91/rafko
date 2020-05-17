@@ -34,6 +34,7 @@
 
 #include <vector>
 #include <memory>
+#include <mutex>
 
 namespace sparse_net_library{
 
@@ -42,6 +43,7 @@ using std::unique_ptr;
 using std::make_unique;
 using std::min;
 using std::max;
+using std::mutex;
 
 /**
  * @brief      An optimizer to train neural networks based on calculated gradients.
@@ -58,6 +60,7 @@ public:
   ,  solvers()
   ,  train_set(train_set_)
   ,  test_set(test_set_)
+  ,  set_mutex()
   ,  loops_unchecked(50)
   ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
@@ -146,6 +149,7 @@ private:
   vector<unique_ptr<Solution_solver>> solvers;
   Data_aggregate& train_set;
   Data_aggregate& test_set;
+  mutex set_mutex;
 
   uint32 loops_unchecked;
   uint32 sequence_truncation;

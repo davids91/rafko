@@ -24,8 +24,7 @@ TRAINER_SOURCES = ../cxx/models/src/dense_net_weight_initializer.cc ../cxx/servi
 TRAINER_SOURCES += ../cxx/services/src/backpropagation_queue_wrapper.cc
 TRAINER_SOURCES += ../cxx/services/src/sparse_net_optimizer.cc ../cxx/services/src/sparse_net_approximizer.cc
 
-HELPER_SOURCES =  ../cxx/models/src/data_aggregate.cc
-HELPER_SOURCES +=  ../cxx/models/src/neuron_info.cc ../cxx/models/src/transfer_function.cc
+HELPER_SOURCES =  ../cxx/models/src/neuron_info.cc ../cxx/models/src/transfer_function.cc
 
 LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst ../cxx/gen/,,$(GENERATED_SOURCES:.cc=.o))
@@ -94,8 +93,7 @@ run-tests: $(TEST_RESULT)
 	./$< --use-colour yes
 
 loop-tests:
-#	while true; do ./$(TEST_RESULT) --use-colour yes; done
-	while true; do ./$(TEST_RESULT) -b; done
+	while true; do ./$(TEST_RESULT) --use-colour yes; done
 
 test-solution-builder: clean build_library
 	@rm -f $(TEST_RESULT)
