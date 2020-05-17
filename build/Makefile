@@ -68,7 +68,7 @@ TEST_SOURCES += ../cxx/test/src/data_ringbuffer_test.cc
 TEST_SOURCES += ../cxx/test/src/weight_updater_test.cc
 
 OPTIMIZATION_TEST_SOURCES = $(TEST_BASE_SOURCE)
-OPTIMIZATION_TEST_SOURCES += ../cxx/test/src/optimizer_test.cc
+OPTIMIZATION_TEST_SOURCES += ../cxx/test/src/optimizer_test.cc ../cxx/test/src/approximizer_test.cc
 
 TEST_OBJECTS = $(subst ../cxx/test/src/,,$(TEST_SOURCES:.cc=.o))
 OPTIMIZATION_TEST_OBJECTS = $(subst ../cxx/test/src/,,$(OPTIMIZATION_TEST_SOURCES:.cc=.o))
@@ -100,10 +100,10 @@ test-solution-builder: clean build_library
 	g++ $(TEST_BASE) ../cxx/test/solution_builder_test.cc ../cxx/test/neuron_router_test.cc $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 	./$(TEST_RESULT)
 
-test-opt: clean build_library #as in optimization
+test-opt: clean build_library #as in optimization or approximization
 	@rm -f $(TEST_RESULT)
 	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
-	./$(TEST_RESULT) [recurrent]
+	./$(TEST_RESULT) [approximize]
 
 $(TEST_OBJECTS):
 	g++ -c $(TEST_SOURCES) $(SOURCES_INCLUDE_DIR)

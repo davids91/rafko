@@ -23,6 +23,7 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "models/transfer_function.h"
+#include "models/data_aggregate.h"
 #include "services/synapse_iterator.h"
 
 int main( int argc, char* argv[] ) {
@@ -257,7 +258,6 @@ void check_if_the_same(SparseNet& net, Solution& solution){
   } /*(uint32 neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator)*/
 }
 
-
 void print_weights(SparseNet& net, Solution& solution){
   std::cout << "net("<< net.weight_table_size() << " weights):";
   for(sint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
@@ -271,5 +271,71 @@ void print_weights(SparseNet& net, Solution& solution){
     std::cout << std::endl;
   }
 }
+
+Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net, Service_context service_context){
+
+  using std::vector;
+
+  vector<vector<sdouble32>> net_inputs(number_of_samples);
+  vector<vector<sdouble32>> addition_dataset(number_of_samples);
+
+  srand(time(nullptr));
+  sdouble32 max_x = DBL_MIN;
+  sdouble32 max_y = DBL_MIN;
+  for(uint32 i = 0;i < number_of_samples;++i){
+    net_inputs[i].push_back(static_cast<sdouble32>(rand()%100));
+    net_inputs[i].push_back(static_cast<sdouble32>(rand()%100));
+    if(net_inputs[i][0] > max_x)max_x = net_inputs[i][0];
+    if(net_inputs[i][1] > max_y)max_y = net_inputs[i][1];
+  }
+
+  for(uint32 i = 0;i < number_of_samples;++i){ /* Normalize the inputs */
+    net_inputs[i][0] /= max_x;
+    net_inputs[i][1] /= max_y;
+    addition_dataset[i].push_back(net_inputs[i][0] + net_inputs[i][1]);
+  }
+
+  return Data_aggregate(
+    vector<vector<sdouble32>>(net_inputs),
+    vector<vector<sdouble32>>(addition_dataset),
+    net
+  );
+}
+
+Data_aggregate create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size, SparseNet& net, Service_context service_context){
+  uint32 carry_bit;
+  vector<vector<sdouble32>> net_inputs(sequence_size * number_of_samples);
+  vector<vector<sdouble32>> addition_dataset(sequence_size * number_of_samples);
+
+  srand(time(nullptr));
+  for(uint32 i = 0;i < number_of_samples;++i){
+    carry_bit = 0;
+    for(uint32 j = 0;j <sequence_size;++j){ /* Add testing and training sequences randomly */
+      net_inputs[(sequence_size * i) + j] = vector<sdouble32>(2);
+      addition_dataset[(sequence_size * i) + j] = vector<sdouble32>(1);
+      net_inputs[(sequence_size * i) + j][0] = static_cast<sdouble32>(rand()%2);
+      net_inputs[(sequence_size * i) + j][1] = static_cast<sdouble32>(rand()%2);
+
+      addition_dataset[(sequence_size * i) + j][0] =
+        net_inputs[(sequence_size * i) + j][0]
+        + net_inputs[(sequence_size * i) + j][1]
+        + carry_bit;
+      if(1 < addition_dataset[(sequence_size * i) + j][0]){
+        addition_dataset[(sequence_size * i) + j][0] = 1;
+        carry_bit = 1;
+      }else{
+        carry_bit = 0;
+      }
+    }
+  }
+
+  return Data_aggregate(
+    vector<vector<sdouble32>>(net_inputs),
+    vector<vector<sdouble32>>(addition_dataset),
+    net, sequence_size
+  );
+
+}
+
 
 } /* namsepace sparse_net_library_test */

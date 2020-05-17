@@ -91,8 +91,32 @@ extern void check_if_the_same(SparseNet& net, Solution& solution);
  */
 extern void print_weights(SparseNet& net, Solution& solution);
 
-
+/**
+ * @brief      Creates a normalized dataset for addition: basically adding two numbers together.
+ *             The generated dataset is adequate for testing non-recurrent neural networks
+ *
+ * @param[in]  number_of_samples  The number of samples to create
+ * @param      net                The @SparseNet to supply the given cost function
+ * @param[in]  service_context    The service context
+ *
+ * @return     The addition dataset. For each sample: Inputs: [a][b]; Outputs: [a+b]
+ */
 extern Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net, Service_context service_context = Service_context());
+
+
+/**
+ * @brief      Creates a normalized dataset for adding binary numbers: each number is stored
+ *             as sequences of 0/1 one after another.
+ *             The generated dataset is adequate for testing recurrent neural networks
+ *
+ * @param[in]  number_of_samples  The number of samples to create
+ * @param[in]  sequence_size      The number of sequences one sample should contain, i.e. the size of the binary number
+ * @param      net                The @SparseNet to supply the given cost function
+ * @param[in]  service_context    The service context
+ *
+ * @return     The addition dataset. For each sample: Inputs: [[a0][...][an]][[b0][...][bn]]; Outputs: [[result0][...][resultn]]
+ */
+extern Data_aggregate create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size, SparseNet& net, Service_context service_context = Service_context());
 
 };
 

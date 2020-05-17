@@ -17,6 +17,7 @@
 
 #include "test/catch.hpp"
 
+#include "test/test_utility.h"
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
@@ -86,35 +87,6 @@ using sparse_net_library::Cost_function_mse;
  * */
 TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]"){
   uint32 number_of_samples = 500;
-  vector<vector<sdouble32>> net_inputs_train(number_of_samples);
-  vector<vector<sdouble32>> net_inputs_test(number_of_samples);
-  vector<vector<sdouble32>> addition_dataset_train(number_of_samples);
-  vector<vector<sdouble32>> addition_dataset_test(number_of_samples);
-
-  srand(time(nullptr));
-  sdouble32 max_x = DBL_MIN;
-  sdouble32 max_y = DBL_MIN;
-  for(uint32 i = 0;i < number_of_samples;++i){
-    net_inputs_train[i].push_back(static_cast<sdouble32>(rand()%100));
-    net_inputs_train[i].push_back(static_cast<sdouble32>(rand()%100));
-    if(net_inputs_train[i][0] > max_x)max_x = net_inputs_train[i][0];
-    if(net_inputs_train[i][1] > max_y)max_y = net_inputs_train[i][1];
-
-    net_inputs_test[i].push_back(static_cast<sdouble32>(rand()%100));
-    net_inputs_test[i].push_back(static_cast<sdouble32>(rand()%100));
-    if(net_inputs_test[i][0] > max_x)max_x = net_inputs_test[i][0];
-    if(net_inputs_test[i][1] > max_y)max_y = net_inputs_test[i][1];
-  }
-
-  for(uint32 i = 0;i < number_of_samples;++i){ /* Normalize the inputs */
-    net_inputs_train[i][0] /= max_x;
-    net_inputs_train[i][1] /= max_y;
-    net_inputs_test[i][0] /= max_x;
-    net_inputs_test[i][1] /= max_y;
-
-    addition_dataset_train[i].push_back(net_inputs_train[i][0] + net_inputs_train[i][1]);
-    addition_dataset_test[i].push_back(net_inputs_test[i][0] + net_inputs_test[i][1]);
-  }
 
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
@@ -163,17 +135,9 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   nets[2]->set_weight_table(18,0.5);
 
   /* Create data-set and test-set and optimize networks */
-  Data_aggregate train_set(
-    vector<vector<sdouble32>>(net_inputs_train),
-    vector<vector<sdouble32>>(addition_dataset_train),
-    *nets[0]
-  );
+  Data_aggregate train_set = create_addition_dataset(number_of_samples,*nets[0]);
 
-  Data_aggregate test_set(
-    vector<vector<sdouble32>>(net_inputs_test),
-    vector<vector<sdouble32>>(addition_dataset_test),
-    *nets[0]
-  );
+  Data_aggregate test_set = create_addition_dataset(number_of_samples,*nets[0]);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -295,17 +259,17 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   sdouble32 error_summary[3] = {0,0,0};
   Cost_function_mse after_cost(1,number_of_samples);
   for(uint32 i = 0; i < number_of_samples; ++i){
-    after_solver.solve(net_inputs_test[i]);
-    after_solver2.solve(net_inputs_test[i]);
-    after_solver3.solve(net_inputs_test[i]);
+    after_solver.solve(test_set.get_input_sample(i));
+    after_solver2.solve(test_set.get_input_sample(i));
+    after_solver3.solve(test_set.get_input_sample(i));
     error_summary[0] += after_cost.get_feature_error(
-      after_solver.get_neuron_data(), addition_dataset_test[i]
+      after_solver.get_neuron_data(), test_set.get_label_sample(i)
     );
     error_summary[1] +=after_cost.get_feature_error(
-      after_solver2.get_neuron_data(), addition_dataset_test[i]
+      after_solver2.get_neuron_data(), test_set.get_label_sample(i)
     );
     error_summary[2] += after_cost.get_feature_error(
-      after_solver3.get_neuron_data(), addition_dataset_test[i]
+      after_solver3.get_neuron_data(), test_set.get_label_sample(i)
     );
   }
   std::cout << "==================================\n Error summaries:"
@@ -325,36 +289,31 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
  *     - multi-layer
  * - For each dataset test if the each Net converges
  * */
-void print_training_sample(
-  uint32 sequence_size, uint32 sample_index,
-  vector<vector<sdouble32>>& net_inputs_train,
-  vector<vector<sdouble32>>& addition_dataset_train,
-  SparseNet& net
-){
+void print_training_sample(uint32 sample_sequence_index, Data_aggregate data_set, SparseNet& net){
     Solution_solver sample_solver(*Solution_builder().build(net));
-    vector<sdouble32> neuron_data(sequence_size);
+    vector<sdouble32> neuron_data(data_set.get_sequence_size());
     std::cout.precision(2);
-    std::cout << std::endl << "Training sample["<< sample_index <<"]:" << std::endl;
-    for(uint32 j = 0;j < sequence_size;++j){
-      std::cout << "["<< net_inputs_train[(sequence_size * sample_index) + j][0] <<"]";
+    std::cout << std::endl << "Training sample["<< sample_sequence_index <<"]:" << std::endl;
+    for(uint32 j = 0;j < data_set.get_sequence_size();++j){
+      std::cout << "["<< data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
     }
     std::cout << std::endl;
-    for(uint32 j = 0;j < sequence_size;++j){
-      std::cout << "["<< net_inputs_train[(sequence_size * sample_index) + j][1] <<"]";
+    for(uint32 j = 0;j < data_set.get_sequence_size();++j){
+      std::cout << "["<< data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[1] <<"]";
     }
     std::cout << std::endl;
     std::cout << "--------------expected:" << std::endl;
     std::cout.precision(2);
     sample_solver.reset();
-    for(uint32 j = 0;j < sequence_size;++j){
-      std::cout << "["<< addition_dataset_train[(sequence_size * sample_index) + j][0] <<"]";
-      sample_solver.solve(net_inputs_train[(sequence_size * sample_index) + j]);
+    for(uint32 j = 0;j < data_set.get_sequence_size();++j){
+      std::cout << "["<< data_set.get_label_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
+      sample_solver.solve(data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j));
       neuron_data[j] = sample_solver.get_neuron_data().back();
     }
     std::cout << std::endl;
     std::cout << "------<>------actual:" << std::endl;
 
-    for(uint32 j = 0;j < sequence_size;++j){
+    for(uint32 j = 0;j < data_set.get_sequence_size();++j){
       std::cout << "["<< neuron_data[j] <<"]";
     }
     std::cout << std::endl;
@@ -366,49 +325,6 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   uint32 sequence_size = 5;
   uint32 number_of_samples = 50;
   uint32 epoch = 100;
-  uint32 carry_bit_train;
-  uint32 carry_bit_test;
-  vector<vector<sdouble32>> net_inputs_train(sequence_size * number_of_samples);
-  vector<vector<sdouble32>> net_inputs_test(sequence_size * number_of_samples);
-  vector<vector<sdouble32>> addition_dataset_train(sequence_size * number_of_samples);
-  vector<vector<sdouble32>> addition_dataset_test(sequence_size * number_of_samples);
-
-  for(uint32 i = 0;i < number_of_samples;++i){
-    carry_bit_train = 0;
-    carry_bit_test = 0;
-    for(uint32 j = 0;j <sequence_size;++j){ /* Add testing and training sequences randomly */
-      net_inputs_train[(sequence_size * i) + j] = vector<sdouble32>(2);
-      net_inputs_test[(sequence_size * i) + j] = vector<sdouble32>(2);
-      addition_dataset_train[(sequence_size * i) + j] = vector<sdouble32>(1);
-      addition_dataset_test[(sequence_size * i) + j] = vector<sdouble32>(1);
-      net_inputs_train[(sequence_size * i) + j][0] = static_cast<sdouble32>(rand()%2);
-      net_inputs_train[(sequence_size * i) + j][1] = static_cast<sdouble32>(rand()%2);
-      net_inputs_test[(sequence_size * i) + j][0] = static_cast<sdouble32>(rand()%2);
-      net_inputs_test[(sequence_size * i) + j][1] = static_cast<sdouble32>(rand()%2);
-
-      addition_dataset_train[(sequence_size * i) + j][0] =
-        net_inputs_train[(sequence_size * i) + j][0]
-        + net_inputs_train[(sequence_size * i) + j][1]
-        + carry_bit_train;
-      if(1 < addition_dataset_train[(sequence_size * i) + j][0]){
-        addition_dataset_train[(sequence_size * i) + j][0] = 1;
-        carry_bit_train = 1;
-      }else{
-        carry_bit_train = 0;
-      }
-
-      addition_dataset_test[(sequence_size * i) + j][0] =
-        net_inputs_test[(sequence_size * i) + j][0]
-        + net_inputs_test[(sequence_size * i) + j][1]
-        + carry_bit_test;
-      if(1 < addition_dataset_test[(sequence_size * i) + j][0]){
-        addition_dataset_test[(sequence_size * i) + j][0] = 1;
-        carry_bit_test = 1;
-      }else{
-        carry_bit_test = 0;
-      }
-    }
-  }
 
   /* Create nets */
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
@@ -425,23 +341,13 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
-  Data_aggregate train_set(
-    vector<vector<sdouble32>>(net_inputs_train),
-    vector<vector<sdouble32>>(addition_dataset_train),
-    *nets[0], sequence_size
-  );
-
-  Data_aggregate test_set(
-    vector<vector<sdouble32>>(net_inputs_test),
-    vector<vector<sdouble32>>(addition_dataset_test),
-    *nets[0], sequence_size
-  );
+  Data_aggregate train_set = create_sequenced_addition_dataset(number_of_samples, sequence_size, *nets[0]);
+  Data_aggregate test_set = create_sequenced_addition_dataset(number_of_samples, sequence_size, *nets[0]);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
   sdouble32 minimum_error;
   uint32 number_of_steps;
-  uint32 sample_index;
   uint32 iteration;
   steady_clock::time_point start;
   uint32 average_duration;
@@ -464,15 +370,8 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
     *nets[0],train_set,test_set,WEIGHT_UPDATER_NESTEROV,Service_context().set_step_size(1e-2)
   );
 
-  for(uint32 sample_sequence = 0; sample_sequence < number_of_samples; ++sample_sequence){
-    print_training_sample(
-      sequence_size,
-      sample_sequence,
-      net_inputs_train,
-      addition_dataset_train,
-      *nets[0]
-    );
-  }
+  for(uint32 sample_sequence = 0; sample_sequence < number_of_samples; ++sample_sequence)
+    print_training_sample(sample_sequence, train_set, *nets[0]);
 
   std::cout << "Optimizing net.." << std::endl;
   while(abs(train_error) > 1e-2){
@@ -495,15 +394,9 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
     }
     logfile << "\n";*/
     ++iteration;
-    if(0 == (iteration % epoch)){
-      print_training_sample(
-        sequence_size,
-        (rand()%number_of_samples),
-         net_inputs_train,
-         addition_dataset_train,
-         *nets[0]
-       );
-    }
+    if(0 == (iteration % epoch))
+      print_training_sample((rand()%number_of_samples), train_set, *nets[0]);
+    
     //std::cout << "\nHow long shall one epoch be? " << std::endl;
     //std::cin >> epoch;
   }
@@ -517,9 +410,9 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   sdouble32 error_summary[3] = {0,0,0};
   Cost_function_mse after_cost(1,number_of_samples);
   for(uint32 i = 0; i < number_of_samples; ++i){
-    after_solver.solve(net_inputs_test[i]);
+    after_solver.solve(test_set.get_input_sample(i));
     error_summary[0] += after_cost.get_feature_error(
-      after_solver.get_neuron_data(), addition_dataset_test[i]
+      after_solver.get_neuron_data(), test_set.get_label_sample(i)
     );
   }
   std::cout << "==================================\n Error summaries:"
