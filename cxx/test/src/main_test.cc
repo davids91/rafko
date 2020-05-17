@@ -19,7 +19,7 @@
 
 #include "test/catch.hpp"
 
-#include "test/test_mockups.h"
+#include "test/test_utility.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "models/transfer_function.h"

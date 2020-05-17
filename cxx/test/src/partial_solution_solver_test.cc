@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 #include "test/catch.hpp"
-#include "test/test_mockups.h"
+#include "test/test_utility.h"
 
 #include <random>
 

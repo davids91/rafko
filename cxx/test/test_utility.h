@@ -19,20 +19,26 @@
 #define sparse_net_TEST_MOCKUPS_H
 
 #include <vector>
+#include <memory>
 
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+#include "models/service_context.h"
+#include "models/data_aggregate.h"
 
 namespace sparse_net_library_test {
 
 using std::vector;
+using std::unique_ptr;
 
 using sparse_net_library::uint32;
 using sparse_net_library::sdouble32;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Solution;
 using sparse_net_library::Partial_solution;
+using sparse_net_library::Service_context;
+using sparse_net_library::Data_aggregate;
 
 /**
  * @brief      generates a partial partial_solution manually based on the Neural Network structure:
@@ -84,6 +90,9 @@ extern void check_if_the_same(SparseNet& net, Solution& solution);
  * @param      solution  The solution
  */
 extern void print_weights(SparseNet& net, Solution& solution);
+
+
+extern Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net, Service_context service_context = Service_context());
 
 };
 
