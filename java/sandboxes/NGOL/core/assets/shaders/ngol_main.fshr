@@ -1,0 +1,64 @@
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_time;
+varying vec2 v_texCoords;
+
+uniform float underPopThr;
+uniform float overPopThr;
+uniform sampler2D prev_step_texture;
+vec2 board_size = textureSize(prev_step_texture,0);
+
+vec4 color_at(vec2 position){
+ vec2 uv = (vec2(position.x, position.y)) / board_size;
+ return texture(prev_step_texture, uv);
+}
+
+void main(){
+	if((board_size.x < gl_FragCoord.x)||(board_size.y < gl_FragCoord.y)){
+	  gl_FragColor = vec4(0.0,0.0,0.0,1.0); /* The void surrounds all of us */
+	}else{
+    float proxR = 0; float proxG = 0; float proxB = 0;
+    float r = color_at(vec2(gl_FragCoord)).r;
+    float g = color_at(vec2(gl_FragCoord)).g;
+    float b = color_at(vec2(gl_FragCoord)).b;
+
+     for(int inItX = -1; inItX <= 1; ++inItX){
+        for(int inItY = -1; inItY <= 1; ++inItY){
+            proxR += color_at(vec2(
+                min(board_size.x,max(0,gl_FragCoord.x + inItX)),
+                min(board_size.y,max(0,gl_FragCoord.y + inItY))
+            )).r;
+            proxG += color_at(vec2(
+              min(board_size.x,max(0,gl_FragCoord.x + inItX)),
+              min(board_size.y,max(0,gl_FragCoord.y + inItY))
+            )).g;
+            proxB += color_at(vec2(
+              min(board_size.x,max(0,gl_FragCoord.x + inItX)),
+              min(board_size.y,max(0,gl_FragCoord.y + inItY))
+            )).b;
+        }
+    }
+
+    if((underPopThr > proxR)||(overPopThr < proxR))r = 0; /* under + overpopulation */
+    else if((underPopThr <= proxR)&&(overPopThr >= proxR))r = proxR / ((underPopThr+overPopThr)/2.0); /* re-production */
+    else r = 0;
+
+    if((underPopThr > proxG)||(overPopThr < proxG))g = 0; /* under + overpopulation */
+    else if((underPopThr <= proxG)&&(overPopThr >= proxG))g =  proxG / ((underPopThr+overPopThr)/2.0); /* re-production */
+    else g = 0;
+
+    if((underPopThr > proxB)||(overPopThr < proxB))b = 0; /* under + overpopulation */
+    else if((underPopThr <= proxB)&&(overPopThr >= proxB))b = proxB / ((underPopThr+overPopThr)/2.0); /* re-production */
+    else b = 0;
+
+    //TODO: Custom rule
+    //envPixColor.set( min(1.0f, r),min(1.0f, g),min(1.0f, b),1.0f);
+    //if(null != custom_rule)envPixColor = custom_rule.execute(envPixColor,proxR,proxG,proxB,i,j);
+
+    gl_FragColor = vec4(r,g,b,1.0);
+	}
+}

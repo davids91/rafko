@@ -1,0 +1,21 @@
+
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_time;
+
+uniform float my_seed;
+uniform sampler2D u_texture;
+varying vec2 v_texCoords;
+
+float rand(vec2 co){
+  return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+void main(){
+    gl_FragColor = vec4(
+        rand(v_texCoords/my_seed),
+        rand(v_texCoords/my_seed),
+        rand(v_texCoords/my_seed),
+        1.0
+    );
+}
