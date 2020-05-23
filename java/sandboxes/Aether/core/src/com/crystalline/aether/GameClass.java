@@ -12,7 +12,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.crystalline.aether.models.Elemental_plane;
-import com.crystalline.aether.models.NGOL;
 import com.crystalline.aether.models.Nethereal_plane;
 
 public class GameClass extends ApplicationAdapter {
@@ -25,26 +24,10 @@ public class GameClass extends ApplicationAdapter {
 	BitmapFont font;
 	Nethereal_plane nethereal_plane;
 	Elemental_plane elemental_plane;
-	NGOL ngol;
 
 	final int[] world_block_number = {15,15};
 	final float world_block_size = 100.0f;
 	final float[] world_size = {world_block_number[0] * world_block_size, world_block_number[1] * world_block_size};
-	my_rule_type my_rule;
-	boolean rule_set = false;
-
-	public class my_rule_type implements NGOL.NGOL_RULE {
-
-		@Override
-		public Color execute(Color pixel, float proxR, float proxG, float proxB, int x, int y) {
-			return new Color(
-					Math.min(1.0f, nethereal_plane.aether_value_at(x,y)/10.0f),
-					pixel.g,//Math.min(1.0f,world.ratio_at(x,y)/10.0f),
-					Math.min(1.0f, nethereal_plane.nether_value_at(x,y)/10.0f),
-				1.0f
-			);
-		}
-	};
 
 	@Override
 	public void create () {
@@ -63,12 +46,6 @@ public class GameClass extends ApplicationAdapter {
 		elemental_plane = new Elemental_plane(world_block_number[0], world_block_number[1]);
 		elemental_plane.pond_with_grill((int)(world_block_number[1]/2.0f));
 		nethereal_plane.attach_to(elemental_plane);
-		ngol = new NGOL(
-				world_block_number[0],
-				world_block_number[1],
-				4f, 9f
-		);
-		my_rule = new my_rule_type();
 	}
 
 	private void drawblock(int x, int y, float scale_, Texture tex){
@@ -115,16 +92,6 @@ public class GameClass extends ApplicationAdapter {
 
 	public void my_game_loop(){
 		nethereal_plane.main_loop(0.01f);
-		ngol.loop();
-		if(Gdx.input.isKeyJustPressed(Input.Keys.TAB)){
-			if(!rule_set){
-				ngol.setRule(my_rule);
-				rule_set = true;
-			}else{
-				ngol.setRule(null);
-				rule_set = false;
-			}
-		}
 		if(Gdx.input.isKeyPressed(Input.Keys.ENTER)){
 			nethereal_plane.add_nether_to(world_block_number[0]/2,world_block_number[1]/2 + 1, 0.5f);
 		}
@@ -134,7 +101,6 @@ public class GameClass extends ApplicationAdapter {
 //		}
 		if(Gdx.input.isKeyJustPressed(Input.Keys.BACKSPACE)){
 			nethereal_plane.attach_to(elemental_plane);
-			ngol.reset(1.0f,1.0f,1.0f);
 		}
 	}
 

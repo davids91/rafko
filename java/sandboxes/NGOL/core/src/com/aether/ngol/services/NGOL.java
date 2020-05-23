@@ -1,4 +1,4 @@
-package com.crystalline.aether.models;
+package com.aether.ngol.services;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
