@@ -145,15 +145,7 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   uint32 number_of_steps;
   steady_clock::time_point start;
   uint32 average_duration;
-  std::string file_name = "log_";
-  file_name += std::to_string(std::chrono::system_clock::now().time_since_epoch().count() / 60);
-  file_name += ".txt";
-  std::cout.precision(15);
 
-  //std::ofstream logfile;
-  //logfile.open (file_name);
-
-#if 1
   train_error = 1.0;
   test_error = 1.0;
   number_of_steps = 0;
@@ -177,17 +169,11 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
     <<" test:[" << test_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
-    /*logfile << train_error << ",";
-    for(int i = 0; i<nets[0]->weight_table_size(); ++i){
-      logfile << nets[0]->weight_table(i) << ",";
-    }
-    logfile << "\n";*/
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
-#endif
-#if 1
+
   Sparse_net_optimizer optimizer2(
     *nets[1], train_set, test_set, WEIGHT_UPDATER_MOMENTUM, Service_context().set_step_size(1e-1)
   ); /* .set_max_processing_threads(1)) for single-threaded tests */
@@ -211,17 +197,11 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
     <<" test:[" << test_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
-    /*logfile << train_error << ",";
-    for(int i = 0; i<nets[1]->weight_table_size(); ++i){
-      logfile << nets[1]->weight_table(i) << ",";
-    }
-    logfile << "\n";*/
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
-#endif
-#if 1
+
   Sparse_net_optimizer optimizer3(
     *nets[2], train_set, test_set, WEIGHT_UPDATER_NESTEROV, Service_context().set_step_size(1e-1)
   );
@@ -240,18 +220,16 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
     train_error = optimizer3.get_train_error();
     test_error = optimizer3.get_test_error();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
-    #if 1
     cout << "\r Error:"
     <<" training:[" << train_error << "]; "
     <<" test:[" << test_error << "]; "
     << "Minimum: ["<< minimum_error <<"];                                           "
     << flush;
-    #endif
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
-#endif
+
   Solution_solver after_solver(*Solution_builder().build(*nets[0]));
   Solution_solver after_solver2(*Solution_builder().build(*nets[1]));
   Solution_solver after_solver3(*Solution_builder().build(*nets[2]));
@@ -351,15 +329,7 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   uint32 iteration;
   steady_clock::time_point start;
   uint32 average_duration;
-  std::string file_name = "log_";
-  file_name += std::to_string(std::chrono::system_clock::now().time_since_epoch().count() / 60);
-  file_name += ".txt";
-  std::cout.precision(15);
 
-  //std::ofstream logfile;
-    //logfile.open (file_name);
-
-#if 1
   train_error = 1.0;
   test_error = 1.0;
   number_of_steps = 0;
@@ -388,22 +358,14 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
     << "Minimum: ["<< minimum_error <<"]"
     << "Iteration: ["<< iteration <<"];                                           "
     << flush;
-    /*logfile << train_error << ",";
-    for(int i = 0; i<nets[0]->weight_table_size(); ++i){
-      logfile << nets[0]->weight_table(i) << ",";
-    }
-    logfile << "\n";*/
     ++iteration;
     if(0 == (iteration % epoch))
       print_training_sample((rand()%number_of_samples), train_set, *nets[0]);
     
-    //std::cout << "\nHow long shall one epoch be? " << std::endl;
-    //std::cin >> epoch;
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
-#endif
 
   Solution_solver after_solver(*Solution_builder().build(*nets[0]));
 

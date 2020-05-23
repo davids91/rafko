@@ -138,7 +138,7 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
     (0 == gradient_fragment.weight_synapses_size())
     ||(static_cast<sint32>(weight_synapse_index) < gradient_fragment.weight_synapses_size())
   ){
-    gradient_fragment.add_values((initial_error - train_set.get_error()) * context.get_step_size());
+    gradient_fragment.add_values(gradient_fragment_value);
     tmp_synapse_interval.set_interval_size(1);
     tmp_synapse_interval.set_starts(weight_index);
     *gradient_fragment.add_weight_synapses() = tmp_synapse_interval;
@@ -156,6 +156,8 @@ void Sparse_net_approximizer::apply_fragment(void){
     );
     ++fragment_value_index;
   });
+
+  gradient_fragment = Gradient_fragment();
 }
 
 } /* namespace sparse_net_library */
