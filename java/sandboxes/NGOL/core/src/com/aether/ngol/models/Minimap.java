@@ -1,5 +1,6 @@
 package com.aether.ngol.models;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -7,7 +8,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
 public class Minimap extends WidgetGroup{
@@ -15,8 +15,8 @@ public class Minimap extends WidgetGroup{
     private Image minimap_border;
     private Image minimap_position;
 
+    private float zoom_value = 0.5f;
     private Vector2 dimensions;
-    private float zoom_value = 1.0f;
 
     Minimap(Skin used_skin, Vector2 dimensions_){
         dimensions = dimensions_;
@@ -24,6 +24,7 @@ public class Minimap extends WidgetGroup{
         minimap_border.setFillParent(true);
         minimap = new Image();
         minimap_position = new Image(used_skin.getRegion("minimap_position"));
+        minimap_position.setSize(minimap.getWidth() * zoom_value, minimap.getHeight() * zoom_value);
         minimap_position.addListener(new DragListener(){
             public void drag(InputEvent event, float x, float y, int pointer) {
                 Vector2 addition = new Vector2(x - minimap_position.getWidth() / 2, y - minimap_position.getHeight() / 2);
@@ -38,6 +39,7 @@ public class Minimap extends WidgetGroup{
                 minimap_position.moveBy(addition.x, addition.y);
             }
         });
+        minimap_position.setPosition(minimap_border.getWidth() * 0.025f, minimap_border.getHeight() * 0.025f);
 
         addActor(minimap_border);
         addActor(minimap);
@@ -50,8 +52,8 @@ public class Minimap extends WidgetGroup{
 
     public Vector2 get_position(float width, float height){
         return new Vector2(
-            (((minimap_position.getX() - minimap_border.getWidth() * 0.025f) * width * zoom_value) / minimap.getWidth()),
-            (((minimap_position.getY() - minimap_border.getHeight() * 0.025f) * height * zoom_value) / minimap.getHeight())
+            (((minimap_position.getX() - minimap_border.getWidth() * 0.025f) * width) / minimap.getWidth()),
+            (((minimap_position.getY() - minimap_border.getHeight() * 0.025f) * height) / minimap.getHeight())
         );
     }
 
@@ -68,18 +70,19 @@ public class Minimap extends WidgetGroup{
 
     @Override
     public void layout() {
+        setHeight(getWidth() * (Gdx.graphics.getWidth() / Gdx.graphics.getHeight()));
         minimap_border.setSize(getWidth(),getHeight());
         minimap.setSize(minimap_border.getWidth() * 0.95f, minimap_border.getHeight() * 0.95f);
         minimap.setPosition(minimap_border.getWidth() * 0.025f, minimap_border.getHeight() * 0.025f);
-        minimap_position.setSize(minimap.getWidth() / zoom_value, minimap.getHeight() / zoom_value);
+        minimap_position.setSize(
+            minimap.getWidth() / zoom_value,
+            minimap.getHeight() / zoom_value
+        );
     }
 
     public void set_map_image(TextureRegion minimap_image){
         minimap.setDrawable(new TextureRegionDrawable(minimap_image));
-        dimensions.x = minimap_image.getRegionWidth();
-        dimensions.x = minimap_image.getRegionHeight();
         minimap_position.setSize(minimap.getWidth(), minimap.getHeight());
-        minimap_position.setPosition(minimap_border.getWidth() * 0.025f, minimap_border.getHeight() * 0.025f);
         layout();
     }
 }

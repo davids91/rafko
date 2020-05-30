@@ -5,6 +5,7 @@ import com.aether.ngol.services.NGOL;
 import com.aether.ngol.services.ScrollProcessor;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -76,6 +77,10 @@ public class NGOL_Main extends ApplicationAdapter {
 			}
 		}
 
+		if(Gdx.input.isKeyPressed(Input.Keys.SPACE)&&Gdx.input.justTouched()){
+			ngol.addBrush();
+		}
+
 		if(Gdx.input.isKeyPressed(Input.Keys.MINUS)){
 			MainLayout.getMinimap().adjust_zoom(-0.1f);
 		}
@@ -90,12 +95,12 @@ public class NGOL_Main extends ApplicationAdapter {
 		stage.getBatch().draw(
 			ngol.getBoard(),
 				-MainLayout.getMinimap().get_position(
-					Gdx.graphics.getWidth(),
-					Gdx.graphics.getHeight()
+					Gdx.graphics.getWidth()*MainLayout.getMinimap().get_zoom(),
+					Gdx.graphics.getHeight()*MainLayout.getMinimap().get_zoom()
 				).x,
 				-MainLayout.getMinimap().get_position(
-					Gdx.graphics.getWidth(),
-					Gdx.graphics.getHeight()
+					Gdx.graphics.getWidth()*MainLayout.getMinimap().get_zoom(),
+					Gdx.graphics.getHeight()*MainLayout.getMinimap().get_zoom()
 				).y,
 			Gdx.graphics.getWidth()*MainLayout.getMinimap().get_zoom(),
 			Gdx.graphics.getHeight()*MainLayout.getMinimap().get_zoom()
