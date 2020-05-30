@@ -7,10 +7,13 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 
 import java.util.HashMap;
@@ -27,16 +30,12 @@ public class MainLayout {
     private static Label uThr_label;
     private static Label oThr_label;
     private static Label speed_label;
-    private static Image minimap;
-    private static Image minimap_border;
-
-    public static void set_minimap_image(Drawable minimap_image){
-        minimap.setDrawable(minimap_image);
-    }
+    private static Minimap minimap;
 
     public static float getSpeed(){
         return speed_slider.getValue();
     }
+    public  static Minimap getMinimap(){return  minimap;}
 
     public static Stage getUI(HashMap<String, ChangeListener> actions){
         TextureAtlas my_atlas = new TextureAtlas("neutralizer-ui.atlas");
@@ -111,13 +110,7 @@ public class MainLayout {
             }
         });
 
-        minimap_border = new Image(used_skin.getRegion("minimap"));
-        minimap_border.setFillParent(true);
-        minimap = new Image();
-        minimap.setFillParent(true);
-        Stack minimapStack = new Stack();
-        minimapStack.add(minimap);
-        minimapStack.add(minimap_border);
+        minimap = new Minimap(used_skin, new Vector2(Gdx.graphics.getWidth(),Gdx.graphics.getHeight()));
 
         main_layout = new Table();
         Table control_panel = new Table();
@@ -138,7 +131,7 @@ public class MainLayout {
 
         stage.addActor(main_layout);
         main_layout.add(control_panel).top().left().expandX();
-        main_layout.add(minimapStack).prefSize(64,64);
+        main_layout.add(minimap).prefSize(128,128);
         return stage;
     }
 }

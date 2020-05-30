@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.BufferUtils;
 
 import java.awt.*;
@@ -27,7 +28,7 @@ public class NGOL {
     Batch batch;
     FrameBuffer[] ngolBuffer;
     int usedBuf = 0;
-    float board_size[];
+    Vector2 board_size;
 
     String vertex_shader;
     String randomize_shader;
@@ -74,9 +75,7 @@ public class NGOL {
 
         underPopThr = uThr;
         overPopThr = oThr;
-        board_size = new float[2];
-        board_size[0] = width;
-        board_size[1] = height;
+        board_size = new Vector2(width, height);
 //        Gdx.gl.glClearColor(prev_color.get(),prev_color.get(),prev_color.get(),1.0f);
 
         ShaderProgram.pedantic = false;
@@ -178,6 +177,10 @@ public class NGOL {
         placeholder_texture = new TextureRegion(ngolBuffer[usedBuf].getColorBufferTexture());
         placeholder_texture.flip(false,true);
         return placeholder_texture;
+    }
+
+    public Vector2 getSize(){
+        return board_size;
     }
 
 }

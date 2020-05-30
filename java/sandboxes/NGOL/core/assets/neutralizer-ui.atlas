@@ -4,7 +4,7 @@ size: 512,512
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-minimap
+minimap_position
   rotate: false
   xy: 103, 0
   size: 50, 50
