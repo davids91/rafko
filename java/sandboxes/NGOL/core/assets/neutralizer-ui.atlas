@@ -4,6 +4,13 @@ size: 512,512
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
+minimap
+  rotate: false
+  xy: 103, 0
+  size: 50, 50
+  orig: 0, 0
+  offset: 0, 0
+  index: -1
 bar-selector
   rotate: false
   xy: 251, 74

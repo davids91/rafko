@@ -1,6 +1,4 @@
 buildscript {
-    
-
     repositories {
         mavenLocal()
         mavenCentral()
@@ -17,8 +15,9 @@ buildscript {
 
 allprojects {
     apply plugin: "eclipse"
-
-    version = '1.0'
+    apply plugin: "java"
+    version = '0.1'
+    sourceCompatibility = 1.8
     ext {
         appName = "NGOL"
         gdxVersion = '1.9.10'
@@ -41,7 +40,6 @@ allprojects {
 project(":desktop") {
     apply plugin: "java-library"
 
-
     dependencies {
         implementation project(":core")
         api "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
@@ -53,7 +51,6 @@ project(":desktop") {
 
 project(":core") {
     apply plugin: "java-library"
-
 
     dependencies {
         api "com.badlogicgames.gdx:gdx:$gdxVersion"

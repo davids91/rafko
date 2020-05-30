@@ -2,12 +2,16 @@ package com.aether.ngol.models;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 
 import java.util.HashMap;
 
@@ -23,6 +27,12 @@ public class MainLayout {
     private static Label uThr_label;
     private static Label oThr_label;
     private static Label speed_label;
+    private static Image minimap;
+    private static Image minimap_border;
+
+    public static void set_minimap_image(Drawable minimap_image){
+        minimap.setDrawable(minimap_image);
+    }
 
     public static float getSpeed(){
         return speed_slider.getValue();
@@ -57,7 +67,7 @@ public class MainLayout {
         if(null != actions.get("goBtn"))
             goBtn.addListener(actions.get("goBtn"));
 
-        my_label = new Label("Population Thresholds:" , label_style);
+        my_label = new Label("Life ranges:" , label_style);
         uThr_label = new Label("2" , label_style);
         oThr_label = new Label("3" , label_style);
         my_label2 = new Label("Speed:" , label_style);
@@ -71,7 +81,7 @@ public class MainLayout {
         uThrSlider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                uThr_label.setText(Float.toString(uThrSlider.getValue()));
+                uThr_label.setText(String.format("%.2f",uThrSlider.getValue()));
             }
         });
 
@@ -83,7 +93,7 @@ public class MainLayout {
         oThrSlider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                oThr_label.setText(Float.toString(oThrSlider.getValue()));
+                oThr_label.setText(String.format("%.2f",oThrSlider.getValue()));
             }
         });
 
@@ -101,22 +111,34 @@ public class MainLayout {
             }
         });
 
+        minimap_border = new Image(used_skin.getRegion("minimap"));
+        minimap_border.setFillParent(true);
+        minimap = new Image();
+        minimap.setFillParent(true);
+        Stack minimapStack = new Stack();
+        minimapStack.add(minimap);
+        minimapStack.add(minimap_border);
+
         main_layout = new Table();
+        Table control_panel = new Table();
+        control_panel.add(my_label);
+        control_panel.add(uThrSlider);
+        control_panel.add(uThr_label);
+        control_panel.add(oThrSlider);
+        control_panel.add(oThr_label);
+        control_panel.row();
+        control_panel.add(my_label2);
+        control_panel.add(speed_slider);
+        control_panel.add(speed_label);
+        control_panel.add(goBtn);
+
         main_layout.setFillParent(true);
         main_layout.setDebug(false);
         main_layout.top().left();
 
         stage.addActor(main_layout);
-        main_layout.add(my_label);
-        main_layout.add(uThrSlider);
-        main_layout.add(uThr_label);
-        main_layout.add(oThrSlider);
-        main_layout.add(oThr_label);
-        main_layout.row();
-        main_layout.add(my_label2);
-        main_layout.add(speed_slider);
-        main_layout.add(speed_label);
-        main_layout.add(goBtn);
+        main_layout.add(control_panel).top().left().expandX();
+        main_layout.add(minimapStack).prefSize(64,64);
         return stage;
     }
 }
