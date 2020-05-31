@@ -54,8 +54,8 @@ public class Minimap extends WidgetGroup{
     }
     public Vector2 get_world_coordinates(Vector2 mouse_coords){
         return new Vector2(
-                get_position().x + (mouse_coords.x * Gdx.graphics.getWidth() / (dimensions.x * get_zoom())),
-                get_position().y + (mouse_coords.y * Gdx.graphics.getHeight() / (dimensions.y * get_zoom()))
+            ((get_position().x + mouse_coords.x) * Gdx.graphics.getWidth() / (dimensions.x * get_zoom())),
+            ((get_position().y + mouse_coords.y) * Gdx.graphics.getHeight() / (dimensions.y * get_zoom()))
         );
     }
 

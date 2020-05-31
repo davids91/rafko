@@ -75,7 +75,6 @@ public class NGOL {
         underPopThr = uThr;
         overPopThr = oThr;
         board_size = new Vector2(width, height);
-//        Gdx.gl.glClearColor(prev_color.get(),prev_color.get(),prev_color.get(),1.0f);
 
         ShaderProgram.pedantic = false;
         vertex_shader = Gdx.files.internal("shaders/vanilla.vshr").readString();
@@ -119,14 +118,12 @@ public class NGOL {
         batch.setShader(main_program);
 
         /* Send required variables */
-//        reset_program.setUniformf("my_seed", my_random.nextFloat());
         ngolBuffer[usedBuf].getColorBufferTexture().bind(0);
         main_program.setUniformi("u_texture",0);
 
         /* bind in-active BFO */
         ngolBuffer[(usedBuf + 1)%2].begin();
         batch.begin();
-        Gdx.gl.glClearColor(0.0f, 1.0f, 0.0f, 1);
 
         /* render main program */
         batch.draw(placeholder_texture,0,0,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
