@@ -132,6 +132,7 @@ public class MainLayout {
         stage.addActor(main_layout);
         main_layout.add(control_panel).top().left().expandX();
         main_layout.add(minimap).prefSize(128,128);
+        minimap.adjust_zoom(0.0f);
         return stage;
     }
 }

@@ -5,6 +5,7 @@ import com.aether.ngol.services.NGOL;
 import com.aether.ngol.services.ScrollProcessor;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -45,7 +46,7 @@ public class NGOL_Main extends ApplicationAdapter {
 		ScrollProcessor mySP = new ScrollProcessor(new ScrollProcessor.My_scroll_action_interface() {
 			@Override
 			public void scrollAction(int scrollValue) {
-				MainLayout.getMinimap().adjust_zoom(-1.0f * scrollValue);
+			MainLayout.getMinimap().adjust_zoom(-1.0f * scrollValue);
 			}
 		});
 		InputMultiplexer myInput = new InputMultiplexer();
@@ -77,8 +78,12 @@ public class NGOL_Main extends ApplicationAdapter {
 			}
 		}
 
-		if(Gdx.input.isKeyPressed(Input.Keys.SPACE)&&Gdx.input.justTouched()){
-			ngol.addBrush();
+		if(Gdx.input.isKeyPressed(Input.Keys.SPACE)&&Gdx.input.isTouched()){
+			ngol.addBrush(
+				new Texture(Gdx.files.internal("peener.png")),
+				MainLayout.getMinimap().get_world_coordinates(new Vector2(Gdx.input.getX(),Gdx.graphics.getHeight() - Gdx.input.getY())),
+				new Vector2(64 / MainLayout.getMinimap().get_zoom(),64 / MainLayout.getMinimap().get_zoom())
+			);
 		}
 
 		if(Gdx.input.isKeyPressed(Input.Keys.MINUS)){
@@ -95,12 +100,8 @@ public class NGOL_Main extends ApplicationAdapter {
 		stage.getBatch().draw(
 			ngol.getBoard(),
 				-MainLayout.getMinimap().get_position(
-					Gdx.graphics.getWidth()*MainLayout.getMinimap().get_zoom(),
-					Gdx.graphics.getHeight()*MainLayout.getMinimap().get_zoom()
 				).x,
 				-MainLayout.getMinimap().get_position(
-					Gdx.graphics.getWidth()*MainLayout.getMinimap().get_zoom(),
-					Gdx.graphics.getHeight()*MainLayout.getMinimap().get_zoom()
 				).y,
 			Gdx.graphics.getWidth()*MainLayout.getMinimap().get_zoom(),
 			Gdx.graphics.getHeight()*MainLayout.getMinimap().get_zoom()

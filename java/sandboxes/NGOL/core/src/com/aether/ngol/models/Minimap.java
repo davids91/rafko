@@ -20,7 +20,7 @@ public class Minimap extends WidgetGroup{
 
     Minimap(Skin used_skin, Vector2 dimensions_){
         dimensions = dimensions_;
-        minimap_border = new Image(used_skin.getRegion("panel"));
+        minimap_border = new Image(used_skin.getRegion("minimap_position"));
         minimap_border.setFillParent(true);
         minimap = new Image();
         minimap_position = new Image(used_skin.getRegion("minimap_position"));
@@ -30,30 +30,32 @@ public class Minimap extends WidgetGroup{
                 Vector2 addition = new Vector2(x - minimap_position.getWidth() / 2, y - minimap_position.getHeight() / 2);
                 Vector2 new_position = new Vector2(minimap_position.getX(),minimap_position.getY()).add(addition);
                 if((minimap_border.getWidth() * 0.025f > new_position.x)||((new_position.x + minimap_position.getWidth()) > (minimap_border.getWidth() - minimap_border.getWidth() * 0.025f))){
-                    addition.x = 0;
+                    addition.x = 0.00001f;
                 }
                 if((minimap_border.getHeight() * 0.025f > new_position.y)||((new_position.y + minimap_position.getHeight()) > (minimap_border.getHeight() - minimap_border.getHeight() * 0.025f))){
-                    addition.y = 0;
+                    addition.y = 0.00001f;
                 }
 
                 minimap_position.moveBy(addition.x, addition.y);
             }
         });
-        minimap_position.setPosition(minimap_border.getWidth() * 0.025f, minimap_border.getHeight() * 0.025f);
+        minimap_position.setPosition(0,0);
 
-        addActor(minimap_border);
         addActor(minimap);
+        addActor(minimap_border);
         addActor(minimap_position);
     }
 
-    public Vector2 get_position(Vector2 size){
-        return get_position(size.x, size.y);
-    }
-
-    public Vector2 get_position(float width, float height){
+    public Vector2 get_position(){
         return new Vector2(
-            (((minimap_position.getX() - minimap_border.getWidth() * 0.025f) * width) / minimap.getWidth()),
-            (((minimap_position.getY() - minimap_border.getHeight() * 0.025f) * height) / minimap.getHeight())
+            ((minimap_position.getX() * Gdx.graphics.getWidth()*get_zoom()) / minimap.getWidth()),
+            ((minimap_position.getY() * Gdx.graphics.getHeight()*get_zoom()) / minimap.getHeight())
+        );
+    }
+    public Vector2 get_world_coordinates(Vector2 mouse_coords){
+        return new Vector2(
+                get_position().x + (mouse_coords.x * Gdx.graphics.getWidth() / (dimensions.x * get_zoom())),
+                get_position().y + (mouse_coords.y * Gdx.graphics.getHeight() / (dimensions.y * get_zoom()))
         );
     }
 
@@ -72,8 +74,7 @@ public class Minimap extends WidgetGroup{
     public void layout() {
         setHeight(getWidth() * (Gdx.graphics.getWidth() / Gdx.graphics.getHeight()));
         minimap_border.setSize(getWidth(),getHeight());
-        minimap.setSize(minimap_border.getWidth() * 0.95f, minimap_border.getHeight() * 0.95f);
-        minimap.setPosition(minimap_border.getWidth() * 0.025f, minimap_border.getHeight() * 0.025f);
+        minimap.setSize(getWidth(),getHeight());
         minimap_position.setSize(
             minimap.getWidth() / zoom_value,
             minimap.getHeight() / zoom_value

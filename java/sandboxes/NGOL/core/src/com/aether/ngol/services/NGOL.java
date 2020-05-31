@@ -35,7 +35,6 @@ public class NGOL {
     String main_loop_shader;
     ShaderProgram reset_program;
     ShaderProgram main_program;
-    ShaderProgram previous_shader;
 
     /**
      * Interesting ranges:
@@ -105,10 +104,18 @@ public class NGOL {
 //	    shader_program.setUniform3fv("my_data", my_float_array, 0, my_float_array.length);
     }
 
+    public  void addBrush(Texture tex, Vector2 position, Vector2 size){
+        batch.setShader(null);
+        ngolBuffer[usedBuf].begin();
+        batch.begin();
+        batch.draw(tex,(position.x - size.x/2.0f),(position.y - size.y/2.0f), size.x,size.y);
+        batch.end();
+        ngolBuffer[usedBuf].end();
+    }
+
     public void loop(){
 
         /* bind main shader */
-        previous_shader = batch.getShader();
         batch.setShader(main_program);
 
         /* Send required variables */
@@ -127,7 +134,6 @@ public class NGOL {
         /* unbind stuff */
         batch.end();
         ngolBuffer[(usedBuf + 1)%2].end();
-        batch.setShader(previous_shader);
 
         usedBuf = (usedBuf + 1)%2;
     }
@@ -135,7 +141,6 @@ public class NGOL {
     public void randomize(){
         usedBuf = 0;
         /* bind reset shader */
-        previous_shader = batch.getShader();
         batch.setShader(reset_program);
 
         /* bind active BFO */
@@ -153,7 +158,6 @@ public class NGOL {
         /* unbind stuff */
         batch.end();
         ngolBuffer[usedBuf].end();
-        batch.setShader(previous_shader);
     }
 
     public void setThresholds(float uThr, float oThr){
