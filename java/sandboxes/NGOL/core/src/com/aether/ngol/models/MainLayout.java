@@ -1,9 +1,15 @@
 package com.aether.ngol.models;
 
+import com.aether.ngol.services.MouseInputProcessor;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -11,6 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
@@ -32,6 +39,7 @@ public class MainLayout {
     private Label speed_label;
     private Minimap minimap;
     private BrushPanel brush_panel;
+    private Image capture_mouse;
 
     public float getSpeed(){
         return speed_slider.getValue();
@@ -120,7 +128,7 @@ public class MainLayout {
         minimap = new Minimap(
             used_skin, new Vector2(data.get("ngol-width"),data.get("ngol-height"))
         );
-        brush_panel = new BrushPanel(used_skin);
+        brush_panel = new BrushPanel(used_skin, actions);
 
         main_layout = new Table();
         main_layout.setFillParent(true);
@@ -137,7 +145,7 @@ public class MainLayout {
         control_panel.add(reset_button);
         control_panel.row().fill();
         control_panel.add(brush_panel).left().padLeft(-25);
-        
+
         main_layout.setFillParent(true);
         main_layout.top().left();
 
@@ -145,10 +153,49 @@ public class MainLayout {
         main_layout.add(control_panel).top().left().expandX();
         main_layout.add(minimap).prefSize(128,128).top().left();
         minimap.layout();
+
+        capture_mouse = new Image(used_skin.getDrawable("capture_icon"));
+        capture_mouse.setSize(64,64);
+        capture_mouse.setVisible(false);
+        stage.addActor(capture_mouse);
+    }
+
+    public void setInputProcessor(){
+        MouseInputProcessor mySP = new MouseInputProcessor(new MouseInputProcessor.My_scroll_action_interface() {
+            @Override
+            public boolean scrollAction(int scrollValue) {
+                getMinimap().adjust_zoom(-0.1f * scrollValue);
+                return false;
+            }
+
+            @Override
+            public boolean mouseMoveAction(int screenX, int screenY) {
+                if(!Gdx.input.isKeyPressed(Input.Keys.TAB))
+                capture_mouse.setPosition(
+                        screenX - capture_mouse.getWidth()/2,
+                        screenY - capture_mouse.getHeight()/2
+                );
+                return false;
+            }
+
+            @Override
+            public boolean touchDownAction(int screenX, int screenY, int pointer, int button) {
+                capture_mouse.setVisible(false);
+                return false;
+            }
+        });
+        InputMultiplexer myInput = new InputMultiplexer();
+        myInput.addProcessor(mySP);
+        myInput.addProcessor(main_layout.getStage());
+        Gdx.input.setInputProcessor(myInput);
     }
 
     public void layout(){
         stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         minimap.layout();
+    }
+
+    public void startCapture(){
+        capture_mouse.setVisible(true);
     }
 }

@@ -32,16 +32,7 @@ public class Minimap extends WidgetGroup {
         minimap_position.setPosition(0,0);
         minimap_position.addListener(new DragListener(){
             public void drag(InputEvent event, float x, float y, int pointer) {
-            Vector2 addition = new Vector2(x - minimap_position.getWidth() / 2, y - minimap_position.getHeight() / 2);
-            Vector2 new_position = new Vector2(minimap_position.getX(),minimap_position.getY()).add(addition);
-            if((0 > new_position.x)||((new_position.x + minimap_position.getWidth()) > minimap_border.getWidth())){
-                addition.x = 0.00001f;
-            }
-            if((0 > new_position.y)||((new_position.y + minimap_position.getHeight()) > minimap_border.getHeight())){
-                addition.y = 0.00001f;
-            }
-
-            minimap_position.moveBy(addition.x, addition.y);
+                step(x,y);
             }
         });
 
@@ -56,6 +47,10 @@ public class Minimap extends WidgetGroup {
         (getWidth() * Gdx.graphics.getWidth())/minimap_position.getWidth(),
         (getHeight() * Gdx.graphics.getHeight())/minimap_position.getHeight()
         );
+    }
+
+    public float get_zoom(){
+        return zoom_width_value;
     }
 
     public Vector2 get_camera_position(){
@@ -97,5 +92,17 @@ public class Minimap extends WidgetGroup {
     public void set_map_image(TextureRegion minimap_image){
         minimap.setDrawable(new TextureRegionDrawable(minimap_image));
         layout();
+    }
+
+    public void step(float x, float y){
+        Vector2 addition = new Vector2(x , y );
+        Vector2 new_position = new Vector2(minimap_position.getX(),minimap_position.getY()).add(addition);
+        if((0 > new_position.x)||((new_position.x + minimap_position.getWidth()) > minimap_border.getWidth())){
+            addition.x = 0.00001f;
+        }
+        if((0 > new_position.y)||((new_position.y + minimap_position.getHeight()) > minimap_border.getHeight())){
+            addition.y = 0.00001f;
+        }
+        minimap_position.moveBy(addition.x, addition.y);
     }
 }

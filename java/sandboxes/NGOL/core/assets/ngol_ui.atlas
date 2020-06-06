@@ -6,35 +6,42 @@ filter: Nearest,Nearest
 repeat: none
 brush_in_focus
   rotate: false
-  xy: 2, 2
+  xy: 133, 758
   size: 100, 100
   orig: 100, 100
   offset: 0, 0
   index: -1
 brush_selected
   rotate: false
-  xy: 133, 792
+  xy: 133, 860
   size: 100, 100
   orig: 100, 100
   offset: 0, 0
   index: -1
-minimap_position
+capture_icon
   rotate: false
-  xy: 2, 104
-  size: 132, 132
-  orig: 132, 132
+  xy: 2, 270
+  size: 167, 168
+  orig: 167, 168
   offset: 0, 0
   index: -1
 minimap
   rotate: false
-  xy: 2, 238
+  xy: 2, 2
+  size: 132, 132
+  orig: 132, 132
+  offset: 0, 0
+  index: -1
+minimap_position
+  rotate: false
+  xy: 2, 136
   size: 132, 132
   orig: 132, 132
   offset: 0, 0
   index: -1
 panel
   rotate: false
-  xy: 2, 372
+  xy: 2, 440
   size: 129, 520
   orig: 129, 520
   offset: 0, 0

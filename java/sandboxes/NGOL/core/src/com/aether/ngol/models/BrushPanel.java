@@ -11,6 +11,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 
+import java.util.HashMap;
+
 
 public class BrushPanel extends Table {
     Button brushes[];
@@ -22,7 +24,7 @@ public class BrushPanel extends Table {
     TextButton remove_button;
     BrushSet currentSet;
 
-    public BrushPanel(Skin used_skin){
+    public BrushPanel(Skin used_skin, HashMap<String, ChangeListener> actions){
         BitmapFont bitmapFont = new BitmapFont(Gdx.files.internal("font-export.fnt"), used_skin.getRegion("font-export"));
         setBackground(used_skin.getDrawable("panel"));
         top().left().padLeft(Value.percentWidth(.25f,this));
@@ -50,6 +52,7 @@ public class BrushPanel extends Table {
         capture_button = new ImageButton(imageButtonStyle_capture);
         capture_button.setTransform(true);
         capture_button.setScale(1.0f,0.95f);
+        capture_button.addListener(actions.get("startCapture"));
 
         TextButton.TextButtonStyle textButtonStyle = new TextButton.TextButtonStyle();
         textButtonStyle.font = bitmapFont;
@@ -63,7 +66,7 @@ public class BrushPanel extends Table {
         add_button.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                currentSet.addBrush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
+            currentSet.addBrush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
             }
         });
         remove_button = new TextButton("-",textButtonStyle);

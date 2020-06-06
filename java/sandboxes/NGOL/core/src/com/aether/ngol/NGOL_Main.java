@@ -2,10 +2,11 @@ package com.aether.ngol;
 
 import com.aether.ngol.models.MainLayout;
 import com.aether.ngol.services.NGOL;
-import com.aether.ngol.services.ScrollProcessor;
+import com.aether.ngol.services.MouseInputProcessor;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -41,22 +42,19 @@ public class NGOL_Main extends ApplicationAdapter {
 				ngol.setOverPopThr(((Slider)actor).getValue());
 			}
 		});
+		actions.put("startCapture", new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				main_layout.startCapture();
+			}
+		});
 
 		HashMap<String,Float> data = new HashMap<>();
 		data.put("ngol-width", 2048.0f);
 		data.put("ngol-height", 2048.0f);
 		main_layout = new MainLayout(actions,data);
+		main_layout.setInputProcessor();
 
-		ScrollProcessor mySP = new ScrollProcessor(new ScrollProcessor.My_scroll_action_interface() {
-			@Override
-			public void scrollAction(int scrollValue) {
-			main_layout.getMinimap().adjust_zoom(-0.1f * scrollValue);
-			}
-		});
-		InputMultiplexer myInput = new InputMultiplexer();
-		myInput.addProcessor(mySP);
-		myInput.addProcessor(main_layout.getStage());
-		Gdx.input.setInputProcessor(myInput);
 		Gdx.gl.glClearColor(0.2f, 0.5f, 0.1f, 1);
 		ngol = new NGOL(2048,2048, 2f, 3f);
 		ngol.randomize();
@@ -82,7 +80,7 @@ public class NGOL_Main extends ApplicationAdapter {
 			}
 		}
 
-		if(Gdx.input.isKeyPressed(Input.Keys.SPACE)&&Gdx.input.isTouched()){
+		if((null != main_layout.getBrushPanel().get_selected_brush())&&Gdx.input.isTouched()){
 			if(null != main_layout.getBrushPanel().get_selected_brush())
 			ngol.addBrush(
 					new Texture(main_layout.getBrushPanel().get_selected_brush()),
@@ -90,7 +88,7 @@ public class NGOL_Main extends ApplicationAdapter {
 							main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(),0)).x,
 							main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(),0)).y
 					)),
-				new Vector2(64,64)
+				new Vector2(256/main_layout.getMinimap().get_zoom(),256/main_layout.getMinimap().get_zoom())
 			);
 		}
 
@@ -98,8 +96,19 @@ public class NGOL_Main extends ApplicationAdapter {
 			main_layout.getMinimap().adjust_zoom(-0.05f);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.PLUS)){
-//			main_layout.getMinimap().adjust_zoom(+0.05f);
-			Gdx.graphics.setWindowedMode(1280,960);
+			main_layout.getMinimap().adjust_zoom(+0.05f);
+		}
+		if(Gdx.input.isKeyPressed(Input.Keys.LEFT)){
+			main_layout.getMinimap().step(-10,0);
+		}
+		if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)){
+			main_layout.getMinimap().step(10,0);
+		}
+		if(Gdx.input.isKeyPressed(Input.Keys.UP)){
+			main_layout.getMinimap().step(0,10);
+		}
+		if(Gdx.input.isKeyPressed(Input.Keys.DOWN)){
+			main_layout.getMinimap().step(0,-10);
 		}
 
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
