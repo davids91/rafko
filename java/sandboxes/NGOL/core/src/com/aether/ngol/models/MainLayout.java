@@ -34,14 +34,14 @@ public class MainLayout {
         return speed_slider.getValue();
     }
     public Minimap getMinimap(){return  minimap;}
-
+    public BrushPanel getBrushPanel(){return brush_panel;}
     public Stage getUI(){
         return stage;
     }
 
     public MainLayout(HashMap<String, ChangeListener> actions){
         TextureAtlas ui_atlas = new TextureAtlas("neutralizer-ui.atlas");
-        TextureAtlas extra_atlas = new TextureAtlas("ngol-ui.atlas");
+        TextureAtlas extra_atlas = new TextureAtlas("ngol_ui.atlas");
         BitmapFont bitmapFont = new BitmapFont(Gdx.files.internal("font-export.fnt"), ui_atlas.findRegion("font-export"));
 
         stage = new Stage();

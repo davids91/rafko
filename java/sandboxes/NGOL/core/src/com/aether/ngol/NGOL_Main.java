@@ -11,7 +11,6 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import sun.applet.Main;
 
 import java.util.HashMap;
 
@@ -82,8 +81,9 @@ public class NGOL_Main extends ApplicationAdapter {
 		}
 
 		if(Gdx.input.isKeyPressed(Input.Keys.SPACE)&&Gdx.input.isTouched()){
+			if(null != main_layout.getBrushPanel().get_selected_brush())
 			ngol.addBrush(
-				new Texture(Gdx.files.internal("peener.png")),
+					new Texture(main_layout.getBrushPanel().get_selected_brush()),
 					main_layout.getMinimap().get_world_coordinates(new Vector2(Gdx.input.getX(),Gdx.graphics.getHeight() - Gdx.input.getY())),
 				new Vector2(64 / main_layout.getMinimap().get_zoom(),64 / main_layout.getMinimap().get_zoom())
 			);

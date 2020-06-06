@@ -1,4 +1,4 @@
-name=ngol_atlas
+name=ngol_ui
 filename=
 output=.
 
@@ -32,7 +32,7 @@ limitMemory=true
 useIndexes=true
 
 scaleFactors=[{suffix:"",factor:1,resampling:bicubic}]
-inputFiles=[{path:Minimap.png,type:Input,regionName:null},{path:minimap_position.png,type:Input,regionName:null},{path:panel.png,type:Input,regionName:null}]
+inputFiles=[{path:brush_selected.png,type:Input,regionName:null},{path:minimap.png,type:Input,regionName:null},{path:minimap_position.png,type:Input,regionName:null},{path:panel.png,type:Input,regionName:null},{path:brush_in_focus.png,type:Input,regionName:null}]
 
 
 -PROJ-
