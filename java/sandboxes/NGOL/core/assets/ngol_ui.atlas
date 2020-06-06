@@ -18,14 +18,14 @@ brush_selected
   orig: 100, 100
   offset: 0, 0
   index: -1
-minimap
+minimap_position
   rotate: false
   xy: 2, 104
   size: 132, 132
   orig: 132, 132
   offset: 0, 0
   index: -1
-minimap_position
+minimap
   rotate: false
   xy: 2, 238
   size: 132, 132

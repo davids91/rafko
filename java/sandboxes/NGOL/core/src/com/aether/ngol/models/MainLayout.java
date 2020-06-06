@@ -11,6 +11,9 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.FillViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 
 import java.util.HashMap;
 
@@ -35,16 +38,16 @@ public class MainLayout {
     }
     public Minimap getMinimap(){return  minimap;}
     public BrushPanel getBrushPanel(){return brush_panel;}
-    public Stage getUI(){
+    public Stage getStage(){
         return stage;
     }
 
-    public MainLayout(HashMap<String, ChangeListener> actions){
+    public MainLayout(HashMap<String, ChangeListener> actions, HashMap<String, Float> data){
         TextureAtlas ui_atlas = new TextureAtlas("neutralizer-ui.atlas");
         TextureAtlas extra_atlas = new TextureAtlas("ngol_ui.atlas");
         BitmapFont bitmapFont = new BitmapFont(Gdx.files.internal("font-export.fnt"), ui_atlas.findRegion("font-export"));
 
-        stage = new Stage();
+        stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(),Gdx.graphics.getHeight()));
         Skin used_skin = new Skin();
         used_skin.addRegions(ui_atlas);
         used_skin.addRegions(extra_atlas);
@@ -114,30 +117,38 @@ public class MainLayout {
             }
         });
 
-        minimap = new Minimap(used_skin, new Vector2(Gdx.graphics.getWidth(),Gdx.graphics.getHeight()));
+        minimap = new Minimap(
+            used_skin, new Vector2(data.get("ngol-width"),data.get("ngol-height"))
+        );
         brush_panel = new BrushPanel(used_skin);
 
         main_layout = new Table();
+        main_layout.setFillParent(true);
         Table control_panel = new Table();
         control_panel.add(my_label);
         control_panel.add(uThrSlider);
         control_panel.add(uThr_label);
         control_panel.add(oThrSlider);
         control_panel.add(oThr_label);
-        control_panel.row();
+        control_panel.row().fill();
         control_panel.add(my_label2);
         control_panel.add(speed_slider);
         control_panel.add(speed_label);
         control_panel.add(reset_button);
-        control_panel.row();
+        control_panel.row().fill();
         control_panel.add(brush_panel).left().padLeft(-25);
-
+        
         main_layout.setFillParent(true);
         main_layout.top().left();
 
         stage.addActor(main_layout);
         main_layout.add(control_panel).top().left().expandX();
-        main_layout.add(minimap).prefSize(128,128).top().right();
-        minimap.adjust_zoom(0.0f);
+        main_layout.add(minimap).prefSize(128,128).top().left();
+        minimap.layout();
+    }
+
+    public void layout(){
+        stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+        minimap.layout();
     }
 }

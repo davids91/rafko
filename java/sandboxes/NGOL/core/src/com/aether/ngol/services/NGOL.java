@@ -1,10 +1,8 @@
 package com.aether.ngol.services;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -53,7 +51,12 @@ public class NGOL {
     TextureRegion placeholder_texture;
 
     public NGOL(int width, int height, float uThr, float oThr) {
+        board_size = new Vector2(width, height);
         batch = new SpriteBatch();
+        OrthographicCamera ngol_view = new OrthographicCamera(width, height);
+        ngol_view.translate(board_size.x/2,board_size.y/2);
+        ngol_view.update();
+        batch.setProjectionMatrix(ngol_view.combined);
 
         Gdx.gl.glClearColor(0.0f, 0.0f, 0.0f, 1);
         placeholder_texture = new TextureRegion(new Texture(width, height, Pixmap.Format.RGBA8888));
@@ -74,7 +77,6 @@ public class NGOL {
 
         underPopThr = uThr;
         overPopThr = oThr;
-        board_size = new Vector2(width, height);
 
         ShaderProgram.pedantic = false;
         vertex_shader = Gdx.files.internal("shaders/vanilla.vshr").readString();
@@ -126,7 +128,7 @@ public class NGOL {
         batch.begin();
 
         /* render main program */
-        batch.draw(placeholder_texture,0,0,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
+        batch.draw(placeholder_texture,0,0,board_size.x,board_size.y);
 
         /* unbind stuff */
         batch.end();
@@ -150,7 +152,7 @@ public class NGOL {
 
         /* render randomize program */
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        batch.draw(placeholder_texture,0,0,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
+        batch.draw(placeholder_texture,0,0,board_size.x,board_size.y);
 
         /* unbind stuff */
         batch.end();
