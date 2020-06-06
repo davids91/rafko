@@ -11,11 +11,13 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import sun.applet.Main;
 
 import java.util.HashMap;
 
 public class NGOL_Main extends ApplicationAdapter {
 	private Stage stage;
+	private MainLayout main_layout;
 
 	NGOL ngol;
 	float time_delayed = 0;
@@ -41,12 +43,13 @@ public class NGOL_Main extends ApplicationAdapter {
 				ngol.setOverPopThr(((Slider)actor).getValue());
 			}
 		});
-		stage = MainLayout.getUI(actions);
+		main_layout = new MainLayout(actions);
+		stage = main_layout.getUI();
 
 		ScrollProcessor mySP = new ScrollProcessor(new ScrollProcessor.My_scroll_action_interface() {
 			@Override
 			public void scrollAction(int scrollValue) {
-			MainLayout.getMinimap().adjust_zoom(-1.0f * scrollValue);
+			main_layout.getMinimap().adjust_zoom(-0.1f * scrollValue);
 			}
 		});
 		InputMultiplexer myInput = new InputMultiplexer();
@@ -56,7 +59,7 @@ public class NGOL_Main extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0.2f, 0.5f, 0.1f, 1);
 		ngol = new NGOL(2048,2048, 2f, 3f);
 		ngol.randomize();
-		MainLayout.getMinimap().set_map_image(ngol.getBoard());
+		main_layout.getMinimap().set_map_image(ngol.getBoard());
 	}
 
 	@Override
@@ -68,12 +71,12 @@ public class NGOL_Main extends ApplicationAdapter {
 	public void render () {
 		Gdx.gl.glClearColor(0.0f, 0.0f, 0.0f, 1);
 		if(!Gdx.input.isKeyPressed(Input.Keys.TAB)){
-			if(MainLayout.getSpeed() > 0)
-			if(time_delayed < MainLayout.getSpeed()){
+			if(main_layout.getSpeed() > 0)
+			if(time_delayed < main_layout.getSpeed()){
 				time_delayed += Gdx.graphics.getDeltaTime();
 			}else{
 				ngol.loop();
-				MainLayout.getMinimap().set_map_image(ngol.getBoard());
+				main_layout.getMinimap().set_map_image(ngol.getBoard());
 				time_delayed = 0;
 			}
 		}
@@ -81,16 +84,16 @@ public class NGOL_Main extends ApplicationAdapter {
 		if(Gdx.input.isKeyPressed(Input.Keys.SPACE)&&Gdx.input.isTouched()){
 			ngol.addBrush(
 				new Texture(Gdx.files.internal("peener.png")),
-				MainLayout.getMinimap().get_world_coordinates(new Vector2(Gdx.input.getX(),Gdx.graphics.getHeight() - Gdx.input.getY())),
-				new Vector2(64 / MainLayout.getMinimap().get_zoom(),64 / MainLayout.getMinimap().get_zoom())
+					main_layout.getMinimap().get_world_coordinates(new Vector2(Gdx.input.getX(),Gdx.graphics.getHeight() - Gdx.input.getY())),
+				new Vector2(64 / main_layout.getMinimap().get_zoom(),64 / main_layout.getMinimap().get_zoom())
 			);
 		}
 
 		if(Gdx.input.isKeyPressed(Input.Keys.MINUS)){
-			MainLayout.getMinimap().adjust_zoom(-0.1f);
+			main_layout.getMinimap().adjust_zoom(-0.05f);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.PLUS)){
-			MainLayout.getMinimap().adjust_zoom(+0.1f);
+			main_layout.getMinimap().adjust_zoom(+0.05f);
 		}
 
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -99,12 +102,12 @@ public class NGOL_Main extends ApplicationAdapter {
 		stage.getBatch().begin();
 		stage.getBatch().draw(
 			ngol.getBoard(),
-				-MainLayout.getMinimap().get_position(
+				-main_layout.getMinimap().get_position(
 				).x,
-				-MainLayout.getMinimap().get_position(
+				-main_layout.getMinimap().get_position(
 				).y,
-			Gdx.graphics.getWidth()*MainLayout.getMinimap().get_zoom(),
-			Gdx.graphics.getHeight()*MainLayout.getMinimap().get_zoom()
+			Gdx.graphics.getWidth()*main_layout.getMinimap().get_zoom(),
+			Gdx.graphics.getHeight()*main_layout.getMinimap().get_zoom()
 		);
 		stage.getBatch().end();
 

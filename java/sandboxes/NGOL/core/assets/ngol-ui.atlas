@@ -1,0 +1,27 @@
+
+ngol_atlas.png
+size: 256,1024
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+minimap
+  rotate: false
+  xy: 2, 2
+  size: 132, 132
+  orig: 132, 132
+  offset: 0, 0
+  index: -1
+minimap_position
+  rotate: false
+  xy: 2, 136
+  size: 132, 132
+  orig: 132, 132
+  offset: 0, 0
+  index: -1
+panel
+  rotate: false
+  xy: 2, 270
+  size: 129, 520
+  orig: 129, 520
+  offset: 0, 0
+  index: -1

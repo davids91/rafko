@@ -2,48 +2,52 @@ package com.aether.ngol.models;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
 import java.util.HashMap;
 
 public class MainLayout {
-    private static Stage stage;
-    private static Table main_layout;
-    private static TextButton goBtn;
-    private static Slider uThrSlider;
-    private static Slider oThrSlider;
-    private static Slider speed_slider;
-    private static Label my_label;
-    private static Label my_label2;
-    private static Label uThr_label;
-    private static Label oThr_label;
-    private static Label speed_label;
-    private static Minimap minimap;
+    private Stage stage;
+    private Table main_layout;
+    private TextButton reset_button;
+    private TextButton step_button;
+    private Slider uThrSlider;
+    private Slider oThrSlider;
+    private Slider speed_slider;
+    private Label my_label;
+    private Label my_label2;
+    private Label uThr_label;
+    private Label oThr_label;
+    private Label speed_label;
+    private Minimap minimap;
+    private BrushPanel brush_panel;
 
-    public static float getSpeed(){
+    public float getSpeed(){
         return speed_slider.getValue();
     }
-    public  static Minimap getMinimap(){return  minimap;}
+    public Minimap getMinimap(){return  minimap;}
 
-    public static Stage getUI(HashMap<String, ChangeListener> actions){
-        TextureAtlas my_atlas = new TextureAtlas("neutralizer-ui.atlas");
-        BitmapFont bitmapFont = new BitmapFont(Gdx.files.internal("font-export.fnt"), my_atlas.findRegion("font-export"));
+    public Stage getUI(){
+        return stage;
+    }
+
+    public MainLayout(HashMap<String, ChangeListener> actions){
+        TextureAtlas ui_atlas = new TextureAtlas("neutralizer-ui.atlas");
+        TextureAtlas extra_atlas = new TextureAtlas("ngol-ui.atlas");
+        BitmapFont bitmapFont = new BitmapFont(Gdx.files.internal("font-export.fnt"), ui_atlas.findRegion("font-export"));
 
         stage = new Stage();
         Skin used_skin = new Skin();
-        used_skin.addRegions(my_atlas);
+        used_skin.addRegions(ui_atlas);
+        used_skin.addRegions(extra_atlas);
 
         TextButton.TextButtonStyle textButtonStyle = new TextButton.TextButtonStyle();
         textButtonStyle.font = bitmapFont;
@@ -60,11 +64,11 @@ public class MainLayout {
         label_style.font = bitmapFont;
         label_style.fontColor = Color.RED;
 
-        goBtn = new TextButton("Reset", textButtonStyle);
-        goBtn.setSize(128,128);
+        reset_button = new TextButton("Reset", textButtonStyle);
+        reset_button.setSize(128,128);
 
         if(null != actions.get("goBtn"))
-            goBtn.addListener(actions.get("goBtn"));
+            reset_button.addListener(actions.get("goBtn"));
 
         my_label = new Label("Life ranges:" , label_style);
         uThr_label = new Label("2" , label_style);
@@ -111,6 +115,7 @@ public class MainLayout {
         });
 
         minimap = new Minimap(used_skin, new Vector2(Gdx.graphics.getWidth(),Gdx.graphics.getHeight()));
+        brush_panel = new BrushPanel(used_skin);
 
         main_layout = new Table();
         Table control_panel = new Table();
@@ -123,16 +128,16 @@ public class MainLayout {
         control_panel.add(my_label2);
         control_panel.add(speed_slider);
         control_panel.add(speed_label);
-        control_panel.add(goBtn);
+        control_panel.add(reset_button);
+        control_panel.row();
+        control_panel.add(brush_panel).left().padLeft(-25);
 
         main_layout.setFillParent(true);
-        main_layout.setDebug(false);
         main_layout.top().left();
 
         stage.addActor(main_layout);
         main_layout.add(control_panel).top().left().expandX();
-        main_layout.add(minimap).prefSize(128,128);
+        main_layout.add(minimap).prefSize(128,128).top().right();
         minimap.adjust_zoom(0.0f);
-        return stage;
     }
 }

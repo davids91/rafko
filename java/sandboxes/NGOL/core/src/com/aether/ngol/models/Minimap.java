@@ -20,7 +20,7 @@ public class Minimap extends WidgetGroup{
 
     Minimap(Skin used_skin, Vector2 dimensions_){
         dimensions = dimensions_;
-        minimap_border = new Image(used_skin.getRegion("minimap_position"));
+        minimap_border = new Image(used_skin.getRegion("minimap"));
         minimap_border.setFillParent(true);
         minimap = new Image();
         minimap_position = new Image(used_skin.getRegion("minimap_position"));
@@ -29,10 +29,10 @@ public class Minimap extends WidgetGroup{
             public void drag(InputEvent event, float x, float y, int pointer) {
                 Vector2 addition = new Vector2(x - minimap_position.getWidth() / 2, y - minimap_position.getHeight() / 2);
                 Vector2 new_position = new Vector2(minimap_position.getX(),minimap_position.getY()).add(addition);
-                if((minimap_border.getWidth() * 0.025f > new_position.x)||((new_position.x + minimap_position.getWidth()) > (minimap_border.getWidth() - minimap_border.getWidth() * 0.025f))){
+                if((0 > new_position.x)||((new_position.x + minimap_position.getWidth()) > minimap_border.getWidth())){
                     addition.x = 0.00001f;
                 }
-                if((minimap_border.getHeight() * 0.025f > new_position.y)||((new_position.y + minimap_position.getHeight()) > (minimap_border.getHeight() - minimap_border.getHeight() * 0.025f))){
+                if((0 > new_position.y)||((new_position.y + minimap_position.getHeight()) > minimap_border.getHeight())){
                     addition.y = 0.00001f;
                 }
 

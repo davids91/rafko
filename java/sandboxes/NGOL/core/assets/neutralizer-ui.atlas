@@ -4,13 +4,6 @@ size: 512,512
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-minimap_position
-  rotate: false
-  xy: 103, 0
-  size: 50, 50
-  orig: 0, 0
-  offset: 0, 0
-  index: -1
 bar-selector
   rotate: false
   xy: 251, 74
@@ -141,6 +134,13 @@ font-title-export
   orig: 216, 217
   offset: 0, 0
   index: -1
+icon-save
+  rotate: false
+  xy: 225, 41
+  size: 22, 20
+  orig: 15, 10
+  offset: 0, 0
+  index: -1
 icon-arrow-1
   rotate: false
   xy: 294, 233
@@ -208,7 +208,7 @@ icon-folder
   rotate: false
   xy: 329, 325
   size: 25, 25
-  orig: 25, 25
+  orig: 20, 20
   offset: 0, 0
   index: -1
 icon-folder-new
