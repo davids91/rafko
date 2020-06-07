@@ -1,6 +1,7 @@
 package com.aether.ngol.models;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -14,14 +15,13 @@ import java.util.HashMap;
 
 
 public class BrushPanel extends Table {
-    Button brushes[];
     HorizontalGroup buttons_panel;
     ImageButton load_button;
     ImageButton save_button;
     ImageButton capture_button;
     TextButton add_button;
     TextButton remove_button;
-    BrushSet currentSet;
+    BrushSet brush_set;
 
     public BrushPanel(Skin used_skin, HashMap<String, EventListener> actions){
         BitmapFont bitmapFont = new BitmapFont(Gdx.files.internal("font-export.fnt"), used_skin.getRegion("font-export"));
@@ -65,7 +65,7 @@ public class BrushPanel extends Table {
         add_button.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-            currentSet.addBrush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
+            brush_set.addBrush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
             }
         });
         remove_button = new TextButton("-",textButtonStyle);
@@ -75,7 +75,7 @@ public class BrushPanel extends Table {
         remove_button.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                currentSet.removeBrush(-1);
+                brush_set.remove_brush(-1);
             }
         });
 
@@ -89,11 +89,27 @@ public class BrushPanel extends Table {
         add(file_op_group).row();
         add(brush_op_group);
         add(buttons_panel).row();
-        currentSet = new BrushSet(used_skin);
-        add(currentSet).expandY().fill();
+        brush_set = new BrushSet(used_skin);
+        add(brush_set).expandY().fill();
     }
 
     public Pixmap get_selected_brush(){
-        return currentSet.get_selected_brush();
+        return brush_set.get_selected_brush();
+    }
+    public void update_selected_brush(Texture tex){
+        if(!tex.getTextureData().isPrepared())
+            tex.getTextureData().prepare();
+        brush_set.update_selected_brush(tex.getTextureData().consumePixmap());
+    }
+    public void start_capture(){
+        capture_button.setColor(Color.RED);
+        if(null == get_selected_brush()){
+            brush_set.addBrush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
+            brush_set.select_last_brush();
+        }
+    }
+
+    public void stop_capture(){
+        capture_button.setColor(Color.WHITE);
     }
 }

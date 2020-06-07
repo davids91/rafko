@@ -12,16 +12,16 @@ import java.util.ArrayList;
 
 public class BrushSet extends Table {
     Skin used_skin;
-    ButtonGroup<ImageButton> brush_buttons;
+    ButtonGroup<ImageButton> brush_button_group;
     ArrayList<Pixmap> brushes;
 
     public BrushSet(Skin skin){
         super(skin);
         used_skin = skin;
         top().left();
-        brush_buttons = new ButtonGroup<>();
-        brush_buttons.setMinCheckCount(0);
-        brush_buttons.setMaxCheckCount(1);
+        brush_button_group = new ButtonGroup<>();
+        brush_button_group.setMinCheckCount(0);
+        brush_button_group.setMaxCheckCount(1);
 
         brushes = new ArrayList<>();
     }
@@ -34,11 +34,11 @@ public class BrushSet extends Table {
 
     private void refresh(){
         clear();
-        for(ImageButton brush : brush_buttons.getButtons())
+        for(ImageButton brush : brush_button_group.getButtons())
             add(brush).expand().fill().minSize(32).maxSize(64).row();
     }
 
-    private Drawable remove_corners_of(Pixmap image){
+    private Pixmap remove_corners_of(Pixmap image){
         image.setBlending(Pixmap.Blending.None);
         Vector2 middle = new Vector2(image.getWidth()/2.0f,image.getHeight()/2.0f);
         for(int x = 0; x < image.getWidth(); ++x){
@@ -48,7 +48,7 @@ public class BrushSet extends Table {
                 }
             }
         }
-        return new TextureRegionDrawable(new Texture(image));
+        return image;
     }
 
     public void addBrush(Texture texture){
@@ -58,32 +58,53 @@ public class BrushSet extends Table {
         brushes.add(tex);
 
         ImageButton.ImageButtonStyle style = get_brush_style();
-        style.up = remove_corners_of(tex);
+        style.up = new TextureRegionDrawable(new Texture(remove_corners_of(tex)));
         ImageButton new_brush = new ImageButton(style);
-        brush_buttons.add(new_brush);
+        brush_button_group.add(new_brush);
         refresh();
     }
 
-    public void removeBrush(int index){
-        if(0 < brush_buttons.getButtons().size){
-            if((0 < index) && (brush_buttons.getButtons().size > index)){ /* Remove Brush at index */
+    public void select_last_brush(){
+        select_brush(brush_button_group.getButtons().size - 1);
+    }
+
+    public void select_brush(int index) {
+        if((0 <= index)&&(brush_button_group.getButtons().size > index)){
+            brush_button_group.getButtons().get(index).setChecked(true);
+        }
+    }
+
+    public void remove_brush(int index){
+        if(0 < brush_button_group.getButtons().size){
+            if((0 < index) && (brush_button_group.getButtons().size > index)){ /* Remove Brush at index */
                 brushes.remove(index);
-                brush_buttons.remove(brush_buttons.getButtons().get(index));
-            }else if(-1 != brush_buttons.getCheckedIndex()){ /* Remove selected brush */
-                brushes.remove(brush_buttons.getCheckedIndex());
-                brush_buttons.remove(brush_buttons.getButtons().get(brush_buttons.getCheckedIndex()));
+                brush_button_group.remove(brush_button_group.getButtons().get(index));
+            }else if(-1 != brush_button_group.getCheckedIndex()){ /* Remove selected brush */
+                brushes.remove(brush_button_group.getCheckedIndex());
+                brush_button_group.remove(brush_button_group.getButtons().get(brush_button_group.getCheckedIndex()));
             }else{ /* Remove last Brush */
                 brushes.remove(brushes.size()-1);
-                brush_buttons.remove(brush_buttons.getButtons().get(brush_buttons.getButtons().size-1));
+                brush_button_group.remove(brush_button_group.getButtons().get(brush_button_group.getButtons().size-1));
             }
             refresh();
         }
     }
 
     public Pixmap get_selected_brush(){
-        if(-1 != brush_buttons.getCheckedIndex())
-            return brushes.get(brush_buttons.getCheckedIndex());
+        if(-1 != brush_button_group.getCheckedIndex())
+            return brushes.get(brush_button_group.getCheckedIndex());
         else return null;
+    }
+
+    public void update_selected_brush(Pixmap new_brush){
+        if(-1 != brush_button_group.getCheckedIndex()) {
+            brushes.set(brush_button_group.getCheckedIndex(), new_brush);
+            brush_button_group.getButtons().get(brush_button_group.getCheckedIndex()).getStyle().up = (
+                new TextureRegionDrawable( new Texture(
+                       remove_corners_of(brushes.get(brush_button_group.getCheckedIndex()))
+                ))
+            );
+        }
     }
 
 }

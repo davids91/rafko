@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.awt.*;
 import java.nio.FloatBuffer;
@@ -105,13 +106,37 @@ public class NGOL {
 //	    shader_program.setUniform3fv("my_data", my_float_array, 0, my_float_array.length);
     }
 
-    public  void addBrush(Texture tex, Vector2 position, Vector2 size){
+    public void addBrush(Texture tex, Vector2 position, Vector2 size){
         batch.setShader(null);
         ngolBuffer[usedBuf].begin();
         batch.begin();
         batch.draw(tex,(position.x - size.x/2.0f),(position.y - size.y/2.0f), size.x,size.y);
         batch.end();
         ngolBuffer[usedBuf].end();
+    }
+
+    public Pixmap flipPixmap(Pixmap src) {
+        final int width = src.getWidth();
+        final int height = src.getHeight();
+        Pixmap flipped = new Pixmap(width, height, src.getFormat());
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                flipped.drawPixel(x, y, src.getPixel(x, height - y - 1));
+            }
+        }
+        return flipped;
+    }
+
+    public Texture get_brush(Vector2 position, Vector2 size){
+        ngolBuffer[usedBuf].begin();
+        batch.begin();
+        Texture tex = new Texture(flipPixmap(
+                ScreenUtils.getFrameBufferPixmap((int)(position.x - size.x/2.0f),(int)(position.y - size.y/2.0f), (int)size.x,(int)size.y)
+        ));
+        batch.end();
+        ngolBuffer[usedBuf].end();
+        return tex;
     }
 
     public void loop(){

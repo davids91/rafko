@@ -5,9 +5,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -18,22 +20,25 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import java.util.HashMap;
 
 public class MainLayout {
-    private Stage stage;
-    private Table main_layout;
-    private TextButton reset_button;
-    private TextButton step_button;
-    private Slider uThrSlider;
-    private Slider oThrSlider;
-    private Slider speed_slider;
-    private Label my_label;
-    private Label my_label2;
-    private Label uThr_label;
-    private Label oThr_label;
-    private Label speed_label;
-    private Minimap minimap;
-    private BrushPanel brush_panel;
-    private Image capture_mouse;
-    private Image touch_me;
+    Stage stage;
+    Table main_layout;
+    TextButton reset_button;
+    TextButton step_button;
+    TextButton play_button;
+    Slider uThrSlider;
+    Slider oThrSlider;
+    Slider speed_slider;
+    Label my_label;
+    Label my_label2;
+    Label uThr_label;
+    Label oThr_label;
+    Label speed_label;
+    Minimap minimap;
+    BrushPanel brush_panel;
+    Image capture_mouse;
+    Image touch_me;
+
+    boolean capturing = false;
 
     public float getSpeed(){
         return speed_slider.getValue();
@@ -44,7 +49,7 @@ public class MainLayout {
         return stage;
     }
 
-    public MainLayout(HashMap<String, EventListener> actions, HashMap<String, Float> data){
+    public MainLayout(final HashMap<String, EventListener> actions, HashMap<String, Float> data){
         TextureAtlas ui_atlas = new TextureAtlas("neutralizer-ui.atlas");
         TextureAtlas extra_atlas = new TextureAtlas("ngol_ui.atlas");
         BitmapFont bitmapFont = new BitmapFont(Gdx.files.internal("font-export.fnt"), ui_atlas.findRegion("font-export"));
@@ -53,15 +58,16 @@ public class MainLayout {
         used_skin.addRegions(extra_atlas);
 
         stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(),Gdx.graphics.getHeight()));
-        touch_me = new Image();
-        touch_me.setFillParent(true);
-        touch_me.addListener(actions.get("touch"));
-        stage.addActor(touch_me);
 
         capture_mouse = new Image(used_skin.getDrawable("capture_icon"));
         capture_mouse.setSize(64,64);
         capture_mouse.setVisible(false);
         stage.addActor(capture_mouse);
+
+        touch_me = new Image();
+        touch_me.setFillParent(true);
+        touch_me.addListener(actions.get("touch"));
+        stage.addActor(touch_me);
 
         main_layout = new Table();
         main_layout.setFillParent(true);
@@ -92,6 +98,20 @@ public class MainLayout {
         step_button = new TextButton("Step", textButtonStyle);
         if(null != actions.get("step"))
             step_button.addListener(actions.get("step"));
+
+        play_button = new TextButton("Play", textButtonStyle);
+        play_button.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(0 == speed_slider.getValue()){
+                    play_button.setText("Pause");
+                    speed_slider.setValue(0.05f);
+                }else{
+                    play_button.setText("Play");
+                    speed_slider.setValue(0.0f);
+                }
+            }
+        });
 
         my_label = new Label("Life ranges:" , label_style);
         uThr_label = new Label("2" , label_style);
@@ -150,9 +170,10 @@ public class MainLayout {
         control_panel.row().fill();
         control_panel.add(my_label2);
         control_panel.add(speed_slider);
-        control_panel.add(speed_label);
-        control_panel.add(reset_button).expand();
-        control_panel.add(step_button).expand();
+        control_panel.add(speed_label).expand();
+        control_panel.add(play_button).prefWidth(64);
+        control_panel.add(reset_button).prefWidth(64);
+        control_panel.add(step_button).prefWidth(64);
         control_panel.row().fill();
         control_panel.add(brush_panel).left().padLeft(-25);
 
@@ -172,17 +193,20 @@ public class MainLayout {
 
             @Override
             public boolean mouseMoveAction(int screenX, int screenY) {
-                if(!Gdx.input.isKeyPressed(Input.Keys.TAB))
-                capture_mouse.setPosition(
-                screenX - capture_mouse.getWidth()/2,
-                screenY - capture_mouse.getHeight()/2
-                );
+                if(!Gdx.input.isKeyPressed(Input.Keys.TAB)){
+                    Vector3 target_position = getStage().getCamera().unproject(
+                        new Vector3(screenX, Gdx.graphics.getHeight() - screenY,0)
+                    );
+                    capture_mouse.setPosition(
+                    target_position.x - capture_mouse.getWidth()/2,
+                    target_position.y - capture_mouse.getHeight()/2
+                    );
+                }
                 return false;
             }
 
             @Override
             public boolean touchDownAction(int screenX, int screenY, int pointer, int button) {
-                capture_mouse.setVisible(false);
                 return false;
             }
         });
@@ -197,7 +221,40 @@ public class MainLayout {
         minimap.layout();
     }
 
-    public void startCapture(){
-        capture_mouse.setVisible(true);
+    public Texture get_brush(){
+        if(
+            (null != getBrushPanel().get_selected_brush())
+            &&(!capturing)
+        ){
+            return new Texture(getBrushPanel().get_selected_brush());
+        }else return null;
     }
+
+    public boolean is_capturing(){
+        return capturing;
+    }
+
+    public void capture(Texture tex){
+        if(capturing){
+            brush_panel.update_selected_brush(tex);
+            stop_capture();
+        }
+    }
+
+    public void start_capture(){
+        if(!capturing){
+            capture_mouse.setVisible(true);
+            brush_panel.start_capture();
+            capturing = true;
+        }
+    }
+
+    public void stop_capture(){
+        if(capturing){
+            capture_mouse.setVisible(false);
+            brush_panel.stop_capture();
+            capturing = false;
+        }
+    }
+
 }

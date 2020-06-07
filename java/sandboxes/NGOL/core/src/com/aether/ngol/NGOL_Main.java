@@ -4,7 +4,6 @@ import com.aether.ngol.models.MainLayout;
 import com.aether.ngol.services.NGOL;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -53,22 +52,37 @@ public class NGOL_Main extends ApplicationAdapter {
 		actions.put("startCapture", new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
-				main_layout.startCapture();
+				main_layout.start_capture();
 			}
 		});
 		actions.put("touch",new DragListener(){
 			@Override
+			public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+				touchDragged(event,x,y,pointer);
+				return super.touchDown(event, x, y, pointer, button);
+			}
+
+			@Override
 			public void touchDragged(InputEvent event, float x, float y, int pointer) {
-				if(null != main_layout.getBrushPanel().get_selected_brush()){
-					if(null != main_layout.getBrushPanel().get_selected_brush())
+				if(main_layout.is_capturing()){ /* Provide texture from ngol */
+					main_layout.capture(ngol.get_brush(
+						main_layout.getMinimap().get_render_coordinates(new Vector2(
+							main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0)).x,
+							main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0)).y
+						)),
+						new Vector2(128 / main_layout.getMinimap().get_zoom(), 128 / main_layout.getMinimap().get_zoom())
+					));
+				}else { /* paint from brush */
+					if (null != main_layout.get_brush()){
 						ngol.addBrush(
-								new Texture(main_layout.getBrushPanel().get_selected_brush()),
-								main_layout.getMinimap().get_render_coordinates(new Vector2(
-										main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(),0)).x,
-										main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(),0)).y
-								)),
-								new Vector2(256/main_layout.getMinimap().get_zoom(),256/main_layout.getMinimap().get_zoom())
+							main_layout.get_brush(),
+							main_layout.getMinimap().get_render_coordinates(new Vector2(
+								main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0)).x,
+								main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0)).y
+							)),
+							new Vector2(256 / main_layout.getMinimap().get_zoom(), 256 / main_layout.getMinimap().get_zoom())
 						);
+					}
 				}
 				super.touchDragged(event, x, y, pointer);
 			}
@@ -112,16 +126,16 @@ public class NGOL_Main extends ApplicationAdapter {
 			main_layout.getMinimap().adjust_zoom(+0.05f);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.LEFT)){
-			main_layout.getMinimap().step(-10,0);
+			main_layout.getMinimap().step(-1f / main_layout.getMinimap().get_zoom(),0);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)){
-			main_layout.getMinimap().step(10,0);
+			main_layout.getMinimap().step(1f / main_layout.getMinimap().get_zoom(),0);
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.UP)){
-			main_layout.getMinimap().step(0,10);
+			main_layout.getMinimap().step(0,1f / main_layout.getMinimap().get_zoom());
 		}
 		if(Gdx.input.isKeyPressed(Input.Keys.DOWN)){
-			main_layout.getMinimap().step(0,-10);
+			main_layout.getMinimap().step(0,-1f / main_layout.getMinimap().get_zoom());
 		}
 
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
