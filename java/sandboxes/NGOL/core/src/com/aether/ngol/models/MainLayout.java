@@ -5,22 +5,15 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.FillViewport;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
 
 import java.util.HashMap;
 
@@ -40,6 +33,7 @@ public class MainLayout {
     private Minimap minimap;
     private BrushPanel brush_panel;
     private Image capture_mouse;
+    private Image touch_me;
 
     public float getSpeed(){
         return speed_slider.getValue();
@@ -50,15 +44,31 @@ public class MainLayout {
         return stage;
     }
 
-    public MainLayout(HashMap<String, ChangeListener> actions, HashMap<String, Float> data){
+    public MainLayout(HashMap<String, EventListener> actions, HashMap<String, Float> data){
         TextureAtlas ui_atlas = new TextureAtlas("neutralizer-ui.atlas");
         TextureAtlas extra_atlas = new TextureAtlas("ngol_ui.atlas");
         BitmapFont bitmapFont = new BitmapFont(Gdx.files.internal("font-export.fnt"), ui_atlas.findRegion("font-export"));
-
-        stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(),Gdx.graphics.getHeight()));
         Skin used_skin = new Skin();
         used_skin.addRegions(ui_atlas);
         used_skin.addRegions(extra_atlas);
+
+        stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(),Gdx.graphics.getHeight()));
+        touch_me = new Image();
+        touch_me.setFillParent(true);
+        touch_me.addListener(actions.get("touch"));
+        stage.addActor(touch_me);
+
+        capture_mouse = new Image(used_skin.getDrawable("capture_icon"));
+        capture_mouse.setSize(64,64);
+        capture_mouse.setVisible(false);
+        stage.addActor(capture_mouse);
+
+        main_layout = new Table();
+        main_layout.setFillParent(true);
+        main_layout.setFillParent(true);
+        main_layout.top().left();
+
+        Table control_panel = new Table();
 
         TextButton.TextButtonStyle textButtonStyle = new TextButton.TextButtonStyle();
         textButtonStyle.font = bitmapFont;
@@ -76,10 +86,12 @@ public class MainLayout {
         label_style.fontColor = Color.RED;
 
         reset_button = new TextButton("Reset", textButtonStyle);
-        reset_button.setSize(128,128);
+        if(null != actions.get("reset"))
+            reset_button.addListener(actions.get("reset"));
 
-        if(null != actions.get("goBtn"))
-            reset_button.addListener(actions.get("goBtn"));
+        step_button = new TextButton("Step", textButtonStyle);
+        if(null != actions.get("step"))
+            step_button.addListener(actions.get("step"));
 
         my_label = new Label("Life ranges:" , label_style);
         uThr_label = new Label("2" , label_style);
@@ -130,9 +142,6 @@ public class MainLayout {
         );
         brush_panel = new BrushPanel(used_skin, actions);
 
-        main_layout = new Table();
-        main_layout.setFillParent(true);
-        Table control_panel = new Table();
         control_panel.add(my_label);
         control_panel.add(uThrSlider);
         control_panel.add(uThr_label);
@@ -142,29 +151,22 @@ public class MainLayout {
         control_panel.add(my_label2);
         control_panel.add(speed_slider);
         control_panel.add(speed_label);
-        control_panel.add(reset_button);
+        control_panel.add(reset_button).expand();
+        control_panel.add(step_button).expand();
         control_panel.row().fill();
         control_panel.add(brush_panel).left().padLeft(-25);
-
-        main_layout.setFillParent(true);
-        main_layout.top().left();
 
         stage.addActor(main_layout);
         main_layout.add(control_panel).top().left().expandX();
         main_layout.add(minimap).prefSize(128,128).top().left();
         minimap.layout();
-
-        capture_mouse = new Image(used_skin.getDrawable("capture_icon"));
-        capture_mouse.setSize(64,64);
-        capture_mouse.setVisible(false);
-        stage.addActor(capture_mouse);
     }
 
     public void setInputProcessor(){
         MouseInputProcessor mySP = new MouseInputProcessor(new MouseInputProcessor.My_scroll_action_interface() {
             @Override
             public boolean scrollAction(int scrollValue) {
-                getMinimap().adjust_zoom(-0.1f * scrollValue);
+                getMinimap().adjust_zoom(-0.2f * scrollValue);
                 return false;
             }
 
@@ -172,8 +174,8 @@ public class MainLayout {
             public boolean mouseMoveAction(int screenX, int screenY) {
                 if(!Gdx.input.isKeyPressed(Input.Keys.TAB))
                 capture_mouse.setPosition(
-                        screenX - capture_mouse.getWidth()/2,
-                        screenY - capture_mouse.getHeight()/2
+                screenX - capture_mouse.getWidth()/2,
+                screenY - capture_mouse.getHeight()/2
                 );
                 return false;
             }

@@ -31,8 +31,23 @@ public class Minimap extends WidgetGroup {
 
         minimap_position.setPosition(0,0);
         minimap_position.addListener(new DragListener(){
-            public void drag(InputEvent event, float x, float y, int pointer) {
-                step(x,y);
+            float prevX;
+            float prevY;
+
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                System.out.println("touchDown!");
+                prevX = x;
+                prevY = y;
+                return super.touchDown(event, x, y, pointer, button);
+            }
+
+            @Override
+            public void touchDragged(InputEvent event, float x, float y, int pointer) {
+                step((x-prevX),(y-prevY));
+                prevX = x;
+                prevY = y;
+                super.touchDragged(event, x, y, pointer);
             }
         });
 

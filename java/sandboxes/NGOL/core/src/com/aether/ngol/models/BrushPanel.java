@@ -4,11 +4,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 
 import java.util.HashMap;
@@ -24,7 +23,7 @@ public class BrushPanel extends Table {
     TextButton remove_button;
     BrushSet currentSet;
 
-    public BrushPanel(Skin used_skin, HashMap<String, ChangeListener> actions){
+    public BrushPanel(Skin used_skin, HashMap<String, EventListener> actions){
         BitmapFont bitmapFont = new BitmapFont(Gdx.files.internal("font-export.fnt"), used_skin.getRegion("font-export"));
         setBackground(used_skin.getDrawable("panel"));
         top().left().padLeft(Value.percentWidth(.25f,this));
