@@ -65,7 +65,7 @@ public class BrushPanel extends Table {
         add_button.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-            brush_set.addBrush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
+            brush_set.add_brush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
             }
         });
         remove_button = new TextButton("-",textButtonStyle);
@@ -104,7 +104,7 @@ public class BrushPanel extends Table {
     public void start_capture(){
         capture_button.setColor(Color.RED);
         if(null == get_selected_brush()){
-            brush_set.addBrush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
+            brush_set.add_brush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
             brush_set.select_last_brush();
         }
     }

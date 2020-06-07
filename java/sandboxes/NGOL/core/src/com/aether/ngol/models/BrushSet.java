@@ -38,6 +38,17 @@ public class BrushSet extends Table {
             add(brush).expand().fill().minSize(32).maxSize(64).row();
     }
 
+    private Pixmap remove_blacks_from(Pixmap image){
+        for(int x = 0; x < image.getWidth(); ++x){
+            for(int y = 0; y < image.getWidth(); ++y){
+                if(Color.BLACK.equals(new Color(image.getPixel(x,y)))){
+                    image.drawPixel(x,y, Color.rgba8888(0.0f,0.0f,0.0f,0.0f));
+                }
+            }
+        }
+        return image;
+    }
+
     private Pixmap remove_corners_of(Pixmap image){
         image.setBlending(Pixmap.Blending.None);
         Vector2 middle = new Vector2(image.getWidth()/2.0f,image.getHeight()/2.0f);
@@ -51,7 +62,7 @@ public class BrushSet extends Table {
         return image;
     }
 
-    public void addBrush(Texture texture){
+    public void add_brush(Texture texture){
         if(!texture.getTextureData().isPrepared())
             texture.getTextureData().prepare();
         Pixmap tex = texture.getTextureData().consumePixmap();
@@ -92,7 +103,7 @@ public class BrushSet extends Table {
 
     public Pixmap get_selected_brush(){
         if(-1 != brush_button_group.getCheckedIndex())
-            return brushes.get(brush_button_group.getCheckedIndex());
+            return remove_blacks_from(brushes.get(brush_button_group.getCheckedIndex()));
         else return null;
     }
 

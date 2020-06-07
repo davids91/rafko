@@ -114,14 +114,14 @@ public class MainLayout {
         });
 
         my_label = new Label("Life ranges:" , label_style);
-        uThr_label = new Label("2" , label_style);
-        oThr_label = new Label("3" , label_style);
+        uThr_label = new Label("1.9" , label_style);
+        oThr_label = new Label("2.9" , label_style);
         my_label2 = new Label("Speed:" , label_style);
-        speed_label = new Label("Stopped" , label_style);
+        speed_label = new Label("Stop." , label_style);
 
         uThrSlider = new Slider(0,10,0.1f,false, slider_style);
         uThrSlider.setSize(256,64);
-        uThrSlider.setValue(2);
+        uThrSlider.setValue(1.9f);
         if(null != actions.get("uThrSlider"))
             uThrSlider.addListener(actions.get("uThrSlider"));
         uThrSlider.addListener(new ChangeListener() {
@@ -133,7 +133,7 @@ public class MainLayout {
 
         oThrSlider = new Slider(0,10,0.1f,false, slider_style);
         oThrSlider.setSize(256,64);
-        oThrSlider.setValue(3);
+        oThrSlider.setValue(2.9f);
         if(null != actions.get("oThrSlider"))
             oThrSlider.addListener(actions.get("oThrSlider"));
         oThrSlider.addListener(new ChangeListener() {
@@ -153,7 +153,7 @@ public class MainLayout {
             public void changed(ChangeEvent event, Actor actor) {
                 if(speed_slider.getValue() > 0)
                     speed_label.setText(Float.toString(1/speed_slider.getValue()));
-                else speed_label.setText("Stopped");
+                else speed_label.setText("Stop.");
             }
         });
 
@@ -170,7 +170,7 @@ public class MainLayout {
         control_panel.row().fill();
         control_panel.add(my_label2);
         control_panel.add(speed_slider);
-        control_panel.add(speed_label).expand();
+        control_panel.add(speed_label);
         control_panel.add(play_button).prefWidth(64);
         control_panel.add(reset_button).prefWidth(64);
         control_panel.add(step_button).prefWidth(64);
@@ -179,7 +179,7 @@ public class MainLayout {
 
         stage.addActor(main_layout);
         main_layout.add(control_panel).top().left().expandX();
-        main_layout.add(minimap).prefSize(128,128).top().left();
+        main_layout.add(minimap).size(128,128).top().left();
         minimap.layout();
     }
 

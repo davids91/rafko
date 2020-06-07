@@ -40,6 +40,7 @@ public class NGOL {
      * - 0.7 ; 1.0 - Square trip
      * - 1.0 ; 1.0 - Trip
      * - 2.0 ; 3.0 - Game Of Life ??
+     * - 1.9 ; 2.9 - Game Of Life !!
      * - 2.5 ; 4.0 - New Game of life 2 ??
      * - 3.0 ; 5.0 - Building Squares
      * - 3.0 ; 7.0 - New Game of Life??
@@ -106,11 +107,12 @@ public class NGOL {
 //	    shader_program.setUniform3fv("my_data", my_float_array, 0, my_float_array.length);
     }
 
-    public void addBrush(Texture tex, Vector2 position, Vector2 size){
+    public void addBrush(Texture tex, Vector2 position){
+        tex.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.MipMapNearestNearest);
         batch.setShader(null);
         ngolBuffer[usedBuf].begin();
         batch.begin();
-        batch.draw(tex,(position.x - size.x/2.0f),(position.y - size.y/2.0f), size.x,size.y);
+        batch.draw(tex,(position.x - tex.getWidth()/2.0f),(position.y - tex.getHeight()/2.0f), tex.getWidth(),tex.getHeight());
         batch.end();
         ngolBuffer[usedBuf].end();
     }

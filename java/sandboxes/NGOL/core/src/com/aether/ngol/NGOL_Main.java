@@ -79,8 +79,7 @@ public class NGOL_Main extends ApplicationAdapter {
 							main_layout.getMinimap().get_render_coordinates(new Vector2(
 								main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0)).x,
 								main_layout.getStage().getCamera().unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0)).y
-							)),
-							new Vector2(256 / main_layout.getMinimap().get_zoom(), 256 / main_layout.getMinimap().get_zoom())
+							))
 						);
 					}
 				}
@@ -89,13 +88,13 @@ public class NGOL_Main extends ApplicationAdapter {
 		});
 
 		HashMap<String,Float> data = new HashMap<>();
-		data.put("ngol-width", 2048.0f);
-		data.put("ngol-height", 2048.0f);
+		data.put("ngol-width", 1024.0f);
+		data.put("ngol-height", 1024.0f);
 		main_layout = new MainLayout(actions,data);
 		main_layout.setInputProcessor();
 
 		Gdx.gl.glClearColor(0.2f, 0.5f, 0.1f, 1);
-		ngol = new NGOL(2048,2048, 2f, 3f);
+		ngol = new NGOL(1024,1024, 1.9f, 2.9f);
 		ngol.randomize();
 		main_layout.getMinimap().set_map_image(ngol.getBoard());
 	}

@@ -28,6 +28,7 @@ void main(){
 
      for(int inItX = -1; inItX <= 1; ++inItX){
         for(int inItY = -1; inItY <= 1; ++inItY){
+          if((inItX != gl_FragCoord.x)&&(inItY != gl_FragCoord.y)){
             proxR += color_at(vec2(
                 min(board_size.x,max(0,gl_FragCoord.x + inItX)),
                 min(board_size.y,max(0,gl_FragCoord.y + inItY))
@@ -40,6 +41,7 @@ void main(){
               min(board_size.x,max(0,gl_FragCoord.x + inItX)),
               min(board_size.y,max(0,gl_FragCoord.y + inItY))
             )).b;
+          }
         }
     }
 
@@ -59,6 +61,6 @@ void main(){
     //envPixColor.set( min(1.0f, r),min(1.0f, g),min(1.0f, b),1.0f);
     //if(null != custom_rule)envPixColor = custom_rule.execute(envPixColor,proxR,proxG,proxB,i,j);
 
-    gl_FragColor = vec4(r,g,b,1.0);
+    gl_FragColor = vec4(min(1.0, r),min(1.0, g),min(1.0, b),1.0);
 	}
 }
