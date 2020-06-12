@@ -36,7 +36,6 @@ public class Minimap extends WidgetGroup {
 
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                System.out.println("touchDown!");
                 prevX = x;
                 prevY = y;
                 return super.touchDown(event, x, y, pointer, button);
@@ -44,10 +43,8 @@ public class Minimap extends WidgetGroup {
 
             @Override
             public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                step((x-prevX),(y-prevY));
-                prevX = x;
-                prevY = y;
                 super.touchDragged(event, x, y, pointer);
+                step((x-prevX),(y-prevY));
             }
         });
 
@@ -97,9 +94,11 @@ public class Minimap extends WidgetGroup {
     public void layout() {
         setHeight(getWidth() * (dimensions.x / dimensions.y));
         screen_ratio = ((float)Gdx.graphics.getWidth() / Gdx.graphics.getHeight());
+        minimap.setSize(getWidth(),getHeight());
+        minimap_border.setSize(getWidth(),getHeight());
         minimap_position.setSize(
-            getWidth() * screen_ratio / zoom_width_value,
-            getHeight() / zoom_width_value
+        getWidth() * screen_ratio / zoom_width_value,
+        getHeight() / zoom_width_value
         );
 
     }
@@ -111,7 +110,7 @@ public class Minimap extends WidgetGroup {
 
     public void step(float x, float y){
         Vector2 addition = new Vector2(x , y );
-        Vector2 new_position = new Vector2(minimap_position.getX(),minimap_position.getY()).add(addition);
+        Vector2 new_position = new Vector2(minimap_position.getX() + addition.x,minimap_position.getY() + addition.y);
         if((0 > new_position.x)||((new_position.x + minimap_position.getWidth()) > minimap_border.getWidth())){
             addition.x = 0.00001f;
         }

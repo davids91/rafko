@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.EventListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import java.util.HashMap;
@@ -36,6 +37,7 @@ public class MainLayout {
     Minimap minimap;
     BrushPanel brush_panel;
     Image capture_mouse;
+    Image brush_mouse;
     Image touch_me;
 
     boolean capturing = false;
@@ -58,6 +60,10 @@ public class MainLayout {
         used_skin.addRegions(extra_atlas);
 
         stage = new Stage(new ExtendViewport(Gdx.graphics.getWidth(),Gdx.graphics.getHeight()));
+
+        brush_mouse = new Image();
+        brush_mouse.setSize(64,64);
+        stage.addActor(brush_mouse);
 
         capture_mouse = new Image(used_skin.getDrawable("capture_icon"));
         capture_mouse.setSize(64,64);
@@ -119,7 +125,7 @@ public class MainLayout {
         my_label2 = new Label("Speed:" , label_style);
         speed_label = new Label("Stop." , label_style);
 
-        uThrSlider = new Slider(0,10,0.1f,false, slider_style);
+        uThrSlider = new Slider(0,10,0.01f,false, slider_style);
         uThrSlider.setSize(256,64);
         uThrSlider.setValue(1.9f);
         if(null != actions.get("uThrSlider"))
@@ -131,7 +137,7 @@ public class MainLayout {
             }
         });
 
-        oThrSlider = new Slider(0,10,0.1f,false, slider_style);
+        oThrSlider = new Slider(0,10,0.01f,false, slider_style);
         oThrSlider.setSize(256,64);
         oThrSlider.setValue(2.9f);
         if(null != actions.get("oThrSlider"))
@@ -163,9 +169,9 @@ public class MainLayout {
         brush_panel = new BrushPanel(used_skin, actions);
 
         control_panel.add(my_label);
-        control_panel.add(uThrSlider);
+        control_panel.add(uThrSlider).expand().fill();
         control_panel.add(uThr_label);
-        control_panel.add(oThrSlider);
+        control_panel.add(oThrSlider).expand().fill();
         control_panel.add(oThr_label);
         control_panel.row().fill();
         control_panel.add(my_label2);
@@ -194,12 +200,24 @@ public class MainLayout {
             @Override
             public boolean mouseMoveAction(int screenX, int screenY) {
                 if(!Gdx.input.isKeyPressed(Input.Keys.TAB)){
+                    Texture current_brush = get_brush();
+                    if(null != current_brush){
+                        brush_mouse.setDrawable(new TextureRegionDrawable(current_brush));
+                        brush_mouse.setSize(
+                        current_brush.getWidth()*minimap.get_zoom(),
+                        current_brush.getHeight()*minimap.get_zoom()
+                        );
+                    }
                     Vector3 target_position = getStage().getCamera().unproject(
                         new Vector3(screenX, Gdx.graphics.getHeight() - screenY,0)
                     );
                     capture_mouse.setPosition(
                     target_position.x - capture_mouse.getWidth()/2,
                     target_position.y - capture_mouse.getHeight()/2
+                    );
+                    brush_mouse.setPosition(
+                    target_position.x - brush_mouse.getWidth()/2,
+                    target_position.y - brush_mouse.getHeight()/2
                     );
                 }
                 return false;

@@ -33,8 +33,8 @@ public class NGOL_Main extends ApplicationAdapter {
 		actions.put("step",new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
-				ngol.loop();
-				main_layout.getMinimap().set_map_image(ngol.getBoard());
+			ngol.loop();
+			main_layout.getMinimap().set_map_image(ngol.getBoard());
 			}
 		});
 		actions.put("uThrSlider",new ChangeListener() {
