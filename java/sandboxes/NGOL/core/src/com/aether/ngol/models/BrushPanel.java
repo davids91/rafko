@@ -35,6 +35,12 @@ public class BrushPanel extends Table {
         load_button = new ImageButton(imageButtonStyle_load);
         load_button.getImage().setScale(0.7f,0.7f);
         load_button.getImage().setOrigin(Align.center);
+        load_button.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                brush_set.load_set();
+            }
+        });
 
         ImageButton.ImageButtonStyle imageButtonStyle_save = new ImageButton.ImageButtonStyle();
         imageButtonStyle_save.up = used_skin.getDrawable("button");
@@ -43,6 +49,12 @@ public class BrushPanel extends Table {
         save_button = new ImageButton(imageButtonStyle_save);
         save_button.getImage().setScale(0.6f,0.6f);
         save_button.getImage().setOrigin(Align.center);
+        save_button.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                brush_set.save_set();
+            }
+        });
 
         ImageButton.ImageButtonStyle imageButtonStyle_capture = new ImageButton.ImageButtonStyle();
         imageButtonStyle_capture.up = used_skin.getDrawable("button");
@@ -65,7 +77,7 @@ public class BrushPanel extends Table {
         add_button.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-            brush_set.add_brush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
+            brush_set.add_brush(new Texture(Gdx.files.internal("eraser.png"), Pixmap.Format.RGBA8888,true),true);
             }
         });
         remove_button = new TextButton("-",textButtonStyle);
@@ -104,7 +116,7 @@ public class BrushPanel extends Table {
     public void start_capture(){
         capture_button.setColor(Color.RED);
         if(null == get_selected_brush()){
-            brush_set.add_brush(new Texture(Gdx.files.internal("brush.png"), Pixmap.Format.RGBA8888,true));
+            brush_set.add_brush(new Texture(Gdx.files.internal("eraser.png"), Pixmap.Format.RGBA8888,true),false);
             brush_set.select_last_brush();
         }
     }

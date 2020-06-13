@@ -1,13 +1,16 @@
 package com.aether.ngol.models;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
+import java.awt.*;
 import java.util.ArrayList;
 
 public class BrushSet extends Table {
@@ -22,7 +25,6 @@ public class BrushSet extends Table {
         brush_button_group = new ButtonGroup<>();
         brush_button_group.setMinCheckCount(0);
         brush_button_group.setMaxCheckCount(1);
-
         brushes = new ArrayList<>();
     }
 
@@ -34,19 +36,31 @@ public class BrushSet extends Table {
 
     private void refresh(){
         clear();
-        for(ImageButton brush : brush_button_group.getButtons())
+        int i = 0;
+        for(ImageButton brush : brush_button_group.getButtons()){
             add(brush).expand().fill().minSize(32).maxSize(64).row();
+        }
     }
 
     private Pixmap remove_blacks_from(Pixmap image){
+        Pixmap purged = new Pixmap(image.getWidth(),image.getHeight(), Pixmap.Format.RGBA8888);
+        int void_pixels = 0;
         for(int x = 0; x < image.getWidth(); ++x){
             for(int y = 0; y < image.getWidth(); ++y){
-                if(Color.BLACK.equals(new Color(image.getPixel(x,y)))){
-                    image.drawPixel(x,y, Color.rgba8888(0.0f,0.0f,0.0f,0.0f));
+                if(
+                    (0.0f == new Color(image.getPixel(x,y)).a)
+                    ||(Color.BLACK.equals(new Color(image.getPixel(x,y))))
+                ){
+                    purged.drawPixel(x,y, Color.rgba8888(0.0f,0.0f,0.0f,0.0f));
+                    ++void_pixels;
+                }else{
+                    purged.drawPixel(x,y,Color.rgba8888(new Color(image.getPixel(x,y))));
                 }
             }
         }
-        return image;
+        if((image.getWidth() * image.getHeight()) == void_pixels)
+            return image; /* Only purge black pixel if there are any other colors */
+        else return purged;
     }
 
     private Pixmap remove_corners_of(Pixmap image){
@@ -62,7 +76,7 @@ public class BrushSet extends Table {
         return image;
     }
 
-    public void add_brush(Texture texture){
+    public void add_brush(Texture texture, boolean is_eraser_){
         if(!texture.getTextureData().isPrepared())
             texture.getTextureData().prepare();
         Pixmap tex = texture.getTextureData().consumePixmap();
@@ -115,6 +129,31 @@ public class BrushSet extends Table {
                        remove_corners_of(brushes.get(brush_button_group.getCheckedIndex()))
                 ))
             );
+        }
+    }
+
+    public void save_set(){
+        /* delete previous sets */
+        for(int i = 0; i < 100; ++i){
+            if(Gdx.files.local(i + ".png").exists())
+                Gdx.files.local(i + ".png").delete();
+        }
+
+        /* Go through the current BrushSets */
+        int i = 0;
+        for(Pixmap brush : brushes){
+            PixmapIO.writePNG(Gdx.files.local(i + ".png"), brush);
+            ++i;
+        }
+    }
+
+    public void load_set(){
+        brush_button_group.clear();
+        brushes.clear();
+
+        for(int i = 0; i < 100; ++i){
+            if(Gdx.files.local(i + ".png").exists())
+                add_brush(new Texture(Gdx.files.local(i + ".png")),false);
         }
     }
 
