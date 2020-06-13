@@ -94,7 +94,11 @@ public class NGOL_Main extends ApplicationAdapter {
 		main_layout.setInputProcessor();
 
 		Gdx.gl.glClearColor(0.2f, 0.5f, 0.1f, 1);
-		ngol = new NGOL(1024,1024, 1.9f, 2.9f);
+		ngol = new NGOL(
+		1024,1024,
+		Gdx.app.getPreferences("my_stuff").getFloat("uThr"),
+		Gdx.app.getPreferences("my_stuff").getFloat("oThr")
+		);
 		ngol.randomize();
 		main_layout.getMinimap().set_map_image(ngol.getBoard());
 	}

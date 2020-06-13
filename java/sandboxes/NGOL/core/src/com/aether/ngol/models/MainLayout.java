@@ -39,6 +39,8 @@ public class MainLayout {
     Image capture_mouse;
     Image brush_mouse;
     Image touch_me;
+    TextButton load_shader_btn;
+    TextButton reset_shader_btn;
 
     boolean capturing = false;
 
@@ -94,7 +96,8 @@ public class MainLayout {
         slider_style.background = used_skin.getDrawable("scrollbar-horizontal");
 
         Label.LabelStyle label_style = new Label.LabelStyle();
-        label_style.font = bitmapFont;
+        label_style.font = new BitmapFont(Gdx.files.internal("font-title-export.fnt"), ui_atlas.findRegion("font-title-export"));
+        label_style.font.getData().setScale(0.7f);
         label_style.fontColor = Color.RED;
 
         reset_button = new TextButton("Reset", textButtonStyle);
@@ -109,43 +112,69 @@ public class MainLayout {
         play_button.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                if(0 == speed_slider.getValue()){
-                    play_button.setText("Pause");
-                    speed_slider.setValue(0.05f);
-                }else{
-                    play_button.setText("Play");
-                    speed_slider.setValue(0.0f);
-                }
+            if(0 == speed_slider.getValue()){
+                play_button.setText("Pause");
+                speed_slider.setValue(0.05f);
+            }else{
+                play_button.setText("Play");
+                speed_slider.setValue(0.0f);
+            }
+            }
+        });
+
+        load_shader_btn = new TextButton("Load Shader!", textButtonStyle);
+        load_shader_btn.setFillParent(false);
+        load_shader_btn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                set_message("GPU's empty mate!");
+            }
+        });
+
+        reset_shader_btn = new TextButton("Reset Shader", textButtonStyle);
+        reset_shader_btn.setFillParent(false);
+        reset_shader_btn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                set_message("GPU became empty mate!");
             }
         });
 
         my_label = new Label("Life ranges:" , label_style);
-        uThr_label = new Label("1.9" , label_style);
-        oThr_label = new Label("2.9" , label_style);
         my_label2 = new Label("Speed:" , label_style);
-        speed_label = new Label("Stop." , label_style);
+        speed_label = new Label("Stop" , label_style);
 
+        float[] values_snap = {0.7f,1.0f,2.0f,1.9f,2.5f,2.9f,3.0f,4.0f,5.0f,7.0f,9.0f};
+        float values_uThr = Gdx.app.getPreferences("my_stuff").getFloat("uThr",1.9f);
         uThrSlider = new Slider(0,10,0.01f,false, slider_style);
+        uThrSlider.setSnapToValues(values_snap,0.05f);
         uThrSlider.setSize(256,64);
-        uThrSlider.setValue(1.9f);
-        if(null != actions.get("uThrSlider"))
+        uThrSlider.setValue(values_uThr);
+        uThr_label = new Label(String.format("%.2f",uThrSlider.getValue()) , label_style);
+        if(null != actions.get("uThrSlider")) {
             uThrSlider.addListener(actions.get("uThrSlider"));
+        }
         uThrSlider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                uThr_label.setText(String.format("%.2f",uThrSlider.getValue()));
+            uThr_label.setText(String.format("%.2f",uThrSlider.getValue()));
+            Gdx.app.getPreferences("my_stuff").putFloat("uThr",uThrSlider.getValue()).flush();
             }
         });
 
+        float values_oThr = Gdx.app.getPreferences("my_stuff").getFloat("oThr",2.9f);
         oThrSlider = new Slider(0,10,0.01f,false, slider_style);
+        oThrSlider.setSnapToValues(values_snap,0.05f);
         oThrSlider.setSize(256,64);
-        oThrSlider.setValue(2.9f);
+        oThrSlider.setValue(values_oThr);
+        oThr_label = new Label(String.format("%.2f",oThrSlider.getValue()) , label_style);
         if(null != actions.get("oThrSlider"))
             oThrSlider.addListener(actions.get("oThrSlider"));
         oThrSlider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 oThr_label.setText(String.format("%.2f",oThrSlider.getValue()));
+                Gdx.app.getPreferences("my_stuff").putFloat("oThr",oThrSlider.getValue()).flush();
             }
         });
 
@@ -158,8 +187,8 @@ public class MainLayout {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 if(speed_slider.getValue() > 0)
-                    speed_label.setText(Float.toString(1/speed_slider.getValue()));
-                else speed_label.setText("Stop.");
+                    speed_label.setText(String.format("%.2f",1/speed_slider.getValue()));
+                else speed_label.setText("Stop");
             }
         });
 
@@ -168,25 +197,35 @@ public class MainLayout {
         );
         brush_panel = new BrushPanel(used_skin, actions);
 
-        control_panel.add(my_label);
-        control_panel.add(uThrSlider).expand().fill();
-        control_panel.add(uThr_label);
-        control_panel.add(oThrSlider).expand().fill();
-        control_panel.add(oThr_label);
-        control_panel.row().fill();
         control_panel.add(my_label2);
-        control_panel.add(speed_slider);
-        control_panel.add(speed_label);
+        control_panel.add(speed_slider).expandX().fillX();
+        control_panel.add(speed_label).width(64);
         control_panel.add(play_button).prefWidth(64);
         control_panel.add(reset_button).prefWidth(64);
         control_panel.add(step_button).prefWidth(64);
-        control_panel.row().fill();
+        control_panel.row();
         control_panel.add(brush_panel).left().padLeft(-25);
+        control_panel.add(reset_shader_btn).colspan(3).size(128,20).top().right();
+        control_panel.add(load_shader_btn).colspan(3).size(128,20).top().right();
+        control_panel.row();
 
         stage.addActor(main_layout);
-        main_layout.add(control_panel).top().left().expandX();
+        main_layout.add(control_panel).top().left().expandX().fillX();
         main_layout.add(minimap).size(128,128).top().left();
         minimap.layout();
+        main_layout.row();
+        Table bottom_bar = new Table();
+
+        bottom_bar.add(my_label).left().row();
+        bottom_bar.add(uThrSlider).fillX().expandX();
+        bottom_bar.add(uThr_label).width(64);
+        bottom_bar.add(oThrSlider).fillX().expandX();
+        bottom_bar.add(oThr_label).width(64);
+        main_layout.add(bottom_bar).colspan(2).fillX();
+    }
+
+    public void set_message(String message){
+        System.out.println(message);
     }
 
     public void setInputProcessor(){
