@@ -2,6 +2,7 @@
 /** Usage:
  * r,g,b ==> references to current pixel color values [0.0,1.0]
  * proxR,proxG,proxB ==> references to the summary of the surrounding pixel color values [0.0,9.0]
+ * numR,numG,numB ==> references to the number of pixels containing the given color components
  * rand() ==> Excpects a vec2, v_TexCoords are super usable with my_seed
  * my_seed ==> a pseudo-random number between 0 and 1 provided by the cpu
  * Error messages: Subtract 65 from the actual error message line number. I'm lazy I KNOW
@@ -9,32 +10,34 @@
 float newR = r; float newG = g; float newB = b;
 
 /**
+ * WATER
+ */
+if(overPopThr <= proxB)newG *= 0.65; /* too many blue suffocates green */
+if(0 < proxB)newR = 0; /* Blue extinguishes red */
+
+/**
+ * PLANTS
+ */
+/* if there is water near green, green will grow */
+if((0 < proxG)&&(underPopThr < proxB)&&(overPopThr > proxB)&&(0 == proxR))
+    newG += rand(v_texCoords/my_seed) * underPopThr / overPopThr;
+else if((1.0 < proxG)&&(underPopThr > proxG)&&(0 == proxB)&&(0 == proxR))
+    newG += rand(v_texCoords/my_seed) * ((underPopThr + overPopThr)/25.0);
+else if(overPopThr < proxG)
+    newG /= 2.0;
+if((0 == proxB)||(0 < proxR))
+  newG = min(newG * 0.9,proxG/4.0);
+
+/**
  * FLAMES
  */
-if((1.0 < proxR)&&(0.0 < proxG)&&(newR >= newB)) newR += newG; /* Grass is feeding the flames */
-else if(0 == newG)newR = 0; /* if there's no plant to burn red dies out */
+if((1.2 < proxR)&&(0.0 < proxG)&&(0 == proxB)) newR += newG; /* Grass is feeding the flames */
+else if(0 == newG)newR /= 4.0; /* if there's no plant to burn red dies out */
 else newR /= 2.0; /* otherwise red fades out */
 
 if(overPopThr <= proxR)newG /= 4; /* The Flame is eating the plants if strong enough */
 else if((underPopThr+overPopThr)/2.0 <= proxR) newG /= 2.0; /* Not that strong, but still going at it */
 else if(underPopThr > proxR) /* The Flame is burning out if not strong enough */
   newR /= (rand(v_texCoords/my_seed) * overPopThr) + 0.00001;
-
-/**
- * PLANTS
- */
-/* if there is water near green, green will grow */
-if((0 < proxG)&&(underPopThr < proxB)&&((overPopThr) > proxB)&&(0 == proxR))
-    newG += 1.0/overPopThr * rand(v_texCoords/my_seed) * underPopThr;
-else if((1.0 < proxG)&&(underPopThr > proxG)&&(0 == proxB)&&(0 == proxR))
-    newG += 1.0/underPopThr * rand(v_texCoords/my_seed) * underPopThr;
-else if(overPopThr < proxG)
-    newG /= 2.0;
-
-/**
- * WATER
- */
-if(proxB >= overPopThr) newG /= 2; /* too many blue suffocates green */
-if(0 < proxB)newR = 0; /* Blue extinguishes red */
 
 r = newR; g = newG; b = newB;

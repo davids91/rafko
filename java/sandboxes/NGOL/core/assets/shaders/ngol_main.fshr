@@ -27,6 +27,7 @@ void main(){
 	  gl_FragColor = vec4(0.0,0.0,0.0,1.0); /* The void surrounds all of us */
 	}else{
     float proxR = 0; float proxG = 0; float proxB = 0;
+    int numR = 0; int numG = 0; int numB = 0;
     float r = color_at(vec2(gl_FragCoord)).r;
     float g = color_at(vec2(gl_FragCoord)).g;
     float b = color_at(vec2(gl_FragCoord)).b;
@@ -34,14 +35,26 @@ void main(){
      for(int inItX = -1; inItX <= 1; ++inItX){
         for(int inItY = -1; inItY <= 1; ++inItY){
           if((inItX != gl_FragCoord.x)&&(inItY != gl_FragCoord.y)){
+            if(0 < color_at(vec2(
+              min(board_size.x,max(0,gl_FragCoord.x + inItX)),
+              min(board_size.y,max(0,gl_FragCoord.y + inItY))
+            )).r)++numR;
             proxR += color_at(vec2(
                 min(board_size.x,max(0,gl_FragCoord.x + inItX)),
                 min(board_size.y,max(0,gl_FragCoord.y + inItY))
             )).r;
+            if(0 < color_at(vec2(
+              min(board_size.x,max(0,gl_FragCoord.x + inItX)),
+              min(board_size.y,max(0,gl_FragCoord.y + inItY))
+            )).g)++numG;
             proxG += color_at(vec2(
               min(board_size.x,max(0,gl_FragCoord.x + inItX)),
               min(board_size.y,max(0,gl_FragCoord.y + inItY))
             )).g;
+            if(0 < color_at(vec2(
+              min(board_size.x,max(0,gl_FragCoord.x + inItX)),
+              min(board_size.y,max(0,gl_FragCoord.y + inItY))
+            )).b)++numB;
             proxB += color_at(vec2(
               min(board_size.x,max(0,gl_FragCoord.x + inItX)),
               min(board_size.y,max(0,gl_FragCoord.y + inItY))
