@@ -27,7 +27,18 @@ public class NGOL_Main extends ApplicationAdapter {
 		actions.put("reset",new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
-				ngol.randomize();
+				float red_intensity = 0.0f;
+				float green_intensity = 0.0f;
+				float blue_intensity = 0.0f;
+				if(Gdx.input.isKeyPressed(Input.Keys.R)) red_intensity += 1.0f;
+				if(Gdx.input.isKeyPressed(Input.Keys.G)) green_intensity += 1.0f;
+				if(Gdx.input.isKeyPressed(Input.Keys.B)) blue_intensity += 1.0f;
+				if(0 == (red_intensity + green_intensity + blue_intensity)){
+					red_intensity = 1.0f;
+					green_intensity = 1.0f;
+					blue_intensity = 1.0f;
+				}
+				ngol.randomize(red_intensity,green_intensity,blue_intensity);
 			}
 		});
 		actions.put("step",new ChangeListener() {
@@ -53,6 +64,26 @@ public class NGOL_Main extends ApplicationAdapter {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				main_layout.start_capture();
+			}
+		});
+		actions.put("loadShader", new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				if(Gdx.input.isKeyPressed(Input.Keys.F5)){
+					String my_shader = Gdx.files.internal("shaders/naboo_lakes.fshr").readString();
+					ngol.load_main_shader(my_shader);
+				}else{
+					if(Gdx.files.local("my_shader.fshr").exists()){
+						String my_shader = Gdx.files.local("my_shader.fshr").readString();
+						ngol.load_main_shader(my_shader);
+					}else System.out.println("File not found!");
+				}
+			}
+		});
+		actions.put("resetShader", new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				ngol.load_main_shader("");
 			}
 		});
 		actions.put("touch",new DragListener(){

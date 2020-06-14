@@ -2,19 +2,14 @@ package com.aether.ngol.services;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 
-import java.awt.*;
-import java.nio.FloatBuffer;
-import java.text.Format;
 import java.util.Random;
 
 
@@ -82,29 +77,33 @@ public class NGOL {
 
         ShaderProgram.pedantic = false;
         vertex_shader = Gdx.files.internal("shaders/vanilla.vshr").readString();
-		main_loop_shader = Gdx.files.internal("shaders/ngol_main.fshr").readString();
         randomize_shader = Gdx.files.internal("shaders/ngol_randomize.fshr").readString();
 
         reset_program = new ShaderProgram(vertex_shader, randomize_shader);
         if (reset_program.getLog().length()!=0)
             System.out.println(reset_program.getLog());
 
+        load_main_shader("");
+    }
+
+    public void load_main_shader(String custom_part){
+        main_loop_shader = Gdx.files.internal("shaders/ngol_main.fshr").readString();
+
         if (!reset_program.isCompiled()) {
             System.err.println(reset_program.getLog());
             System.exit(0);
         }
 
+        main_loop_shader = main_loop_shader.replace("$CUSTOM_RULE$",custom_part);
         main_program = new ShaderProgram(vertex_shader, main_loop_shader);
         if (main_program.getLog().length()!=0)
             System.out.println(main_program.getLog());
 
         if (!main_program.isCompiled()) {
             System.err.println(main_program.getLog());
-            System.exit(0);
         }
-
-        setThresholds(uThr,oThr);
-//	    shader_program.setUniform3fv("my_data", my_float_array, 0, my_float_array.length);
+        /*!Note: This might come in handy ==> shader_program.setUniform3fv("my_data", my_float_array, 0, my_float_array.length); */
+        setThresholds(underPopThr,overPopThr);
     }
 
     public void addBrush(Texture tex, Vector2 position){
@@ -142,7 +141,6 @@ public class NGOL {
     }
 
     public void loop(){
-
         /* bind main shader */
         batch.setShader(main_program);
 
@@ -155,6 +153,7 @@ public class NGOL {
         batch.begin();
 
         /* render main program */
+        main_program.setUniformf("my_seed", my_random.nextFloat());
         batch.draw(placeholder_texture,0,0,board_size.x,board_size.y);
 
         /* unbind stuff */
@@ -164,7 +163,8 @@ public class NGOL {
         usedBuf = (usedBuf + 1)%2;
     }
 
-    public void randomize(){
+    public void randomize(){ randomize(1.0f,1.0f,1.0f); }
+    public void randomize(float red_intensity, float green_intensity, float blue_intensity){
         usedBuf = 0;
         /* bind reset shader */
         batch.setShader(reset_program);
@@ -176,6 +176,9 @@ public class NGOL {
 
         /* Send required variables */
         reset_program.setUniformf("my_seed", my_random.nextFloat());
+        reset_program.setUniformf("red_intensity", red_intensity);
+        reset_program.setUniformf("green_intensity", green_intensity);
+        reset_program.setUniformf("blue_intensity", blue_intensity);
 
         /* render randomize program */
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);

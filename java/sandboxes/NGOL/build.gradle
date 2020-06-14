@@ -8,7 +8,6 @@ buildscript {
         google()
     }
     dependencies {
-        
 
     }
 }
@@ -16,7 +15,7 @@ buildscript {
 allprojects {
     apply plugin: "eclipse"
     apply plugin: "java"
-    version = '0.1'
+    version = '0.9'
     sourceCompatibility = 1.8
     ext {
         appName = "NGOL"

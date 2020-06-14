@@ -5,6 +5,7 @@ precision mediump float;
 uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
+uniform float my_seed;
 varying vec2 v_texCoords;
 
 uniform float underPopThr;
@@ -15,6 +16,10 @@ vec2 board_size = textureSize(prev_step_texture,0);
 vec4 color_at(vec2 position){
  vec2 uv = (vec2(position.x, position.y)) / board_size;
  return texture(prev_step_texture, uv);
+}
+
+float rand(vec2 co){
+  return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
 void main(){
@@ -57,9 +62,7 @@ void main(){
     else if((underPopThr <= proxB)&&(overPopThr >= proxB))b = proxB / ((underPopThr+overPopThr)/2.0); /* re-production */
     else b = 0;
 
-    //TODO: Custom rule
-    //envPixColor.set( min(1.0f, r),min(1.0f, g),min(1.0f, b),1.0f);
-    //if(null != custom_rule)envPixColor = custom_rule.execute(envPixColor,proxR,proxG,proxB,i,j);
+    $CUSTOM_RULE$
 
     gl_FragColor = vec4(min(1.0, r),min(1.0, g),min(1.0, b),1.0);
 	}

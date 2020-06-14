@@ -122,23 +122,13 @@ public class MainLayout {
             }
         });
 
-        load_shader_btn = new TextButton("Load Shader!", textButtonStyle);
+        load_shader_btn = new TextButton("Load Shader", textButtonStyle);
         load_shader_btn.setFillParent(false);
-        load_shader_btn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                set_message("GPU's empty mate!");
-            }
-        });
+        load_shader_btn.addListener(actions.get("loadShader"));
 
         reset_shader_btn = new TextButton("Reset Shader", textButtonStyle);
         reset_shader_btn.setFillParent(false);
-        reset_shader_btn.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                set_message("GPU became empty mate!");
-            }
-        });
+        reset_shader_btn.addListener(actions.get("resetShader"));
 
         my_label = new Label("Life ranges:" , label_style);
         my_label2 = new Label("Speed:" , label_style);

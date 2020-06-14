@@ -4,6 +4,9 @@ uniform vec2 u_mouse;
 uniform float u_time;
 
 uniform float my_seed;
+uniform float red_intensity;
+uniform float green_intensity;
+uniform float blue_intensity;
 uniform sampler2D u_texture;
 varying vec2 v_texCoords;
 
@@ -13,9 +16,9 @@ float rand(vec2 co){
 
 void main(){
     gl_FragColor = vec4(
-        rand(v_texCoords/my_seed),
-        rand(v_texCoords/my_seed),
-        rand(v_texCoords/my_seed),
+        rand(v_texCoords/my_seed) * red_intensity,
+        rand(v_texCoords/my_seed) * green_intensity,
+        rand(v_texCoords/my_seed) * blue_intensity,
         1.0
     );
 }
