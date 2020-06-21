@@ -136,8 +136,17 @@ public:
    *
    * @return     The subset size.
    */
-  uint32 get_subset_size(){
+  uint32 get_subset_size() const{
     return net_subset.size();
+  }
+
+  /**
+   * @brief      Gets a non-modifyable reference to the currently collected subset of Neuron indices.
+   *
+   * @return     The subset.
+   */
+  const deque<uint32>& get_subset() const{
+    return net_subset;
   }
 
   /**
