@@ -67,10 +67,10 @@ void Solution_solver::solve(const vector<sdouble32>& input){
         });
         solve_threads.clear();
       }
+    } /* for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator) */
+    /* Store the current data and move the iterator forward for the next one */
+    neuron_data.step();
 
-      /* Store the current data and move the iterator forward for the next one */
-      neuron_data.step();
-    }
   }else throw std::runtime_error("A solution of 0 rows!");
 }
 
