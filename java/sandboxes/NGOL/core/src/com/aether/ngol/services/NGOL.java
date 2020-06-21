@@ -21,6 +21,7 @@ public class NGOL {
 
     Batch batch;
     FrameBuffer[] ngolBuffer;
+    FrameBuffer duplicate_buffer; /* A copy of the current loop to get the attachement from */
     int usedBuf = 0;
     Vector2 board_size;
 
@@ -59,18 +60,15 @@ public class NGOL {
         placeholder_texture = new TextureRegion(new Texture(width, height, Pixmap.Format.RGBA8888));
         placeholder_texture.getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
 
-        ngolBuffer = new FrameBuffer[2];
-        ngolBuffer[0] = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
-        ngolBuffer[0].getColorBufferTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-        ngolBuffer[0].begin();
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        ngolBuffer[0].end();
-
-        ngolBuffer[1] = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
-        ngolBuffer[1].getColorBufferTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-        ngolBuffer[1].begin();
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        ngolBuffer[1].end();
+        ngolBuffer = new FrameBuffer[3];
+        duplicate_buffer = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
+        for(int i = 0; i<3; ++i){
+            ngolBuffer[i] = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
+            ngolBuffer[i].getColorBufferTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+            ngolBuffer[i].begin();
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            ngolBuffer[i].end();
+        }
 
         underPopThr = uThr;
         overPopThr = oThr;
@@ -102,18 +100,17 @@ public class NGOL {
         if (!main_program.isCompiled()) {
             System.err.println(main_program.getLog());
         }
-        /*!Note: This might come in handy ==> shader_program.setUniform3fv("my_data", my_float_array, 0, my_float_array.length); */
         setThresholds(underPopThr,overPopThr);
     }
 
     public void addBrush(Texture tex, Vector2 position){
         tex.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.MipMapNearestNearest);
         batch.setShader(null);
-        ngolBuffer[usedBuf].begin();
+        get_current_buffer().begin();
         batch.begin();
         batch.draw(tex,(position.x - tex.getWidth()/2.0f),(position.y - tex.getHeight()/2.0f), tex.getWidth(),tex.getHeight());
         batch.end();
-        ngolBuffer[usedBuf].end();
+        get_current_buffer().end();
     }
 
     public Pixmap flipPixmap(Pixmap src) {
@@ -130,63 +127,81 @@ public class NGOL {
     }
 
     public Texture get_brush(Vector2 position, Vector2 size){
-        ngolBuffer[usedBuf].begin();
+        get_current_buffer().begin();
         batch.begin();
         Texture tex = new Texture(flipPixmap(
                 ScreenUtils.getFrameBufferPixmap((int)(position.x - size.x/2.0f),(int)(position.y - size.y/2.0f), (int)size.x,(int)size.y)
         ));
         batch.end();
-        ngolBuffer[usedBuf].end();
+        get_current_buffer().end();
         return tex;
+    }
+
+    private FrameBuffer get_previous_buffer(){
+        if(0 < usedBuf) return ngolBuffer[usedBuf - 1];
+        else return  ngolBuffer[ngolBuffer.length - 1];
+    }
+
+    private FrameBuffer get_current_buffer(){
+        return  ngolBuffer[usedBuf];
+    }
+
+    private FrameBuffer get_next_buffer(){
+        return ngolBuffer[(usedBuf + 1)%3];
+    }
+
+    private void step_buffers_forward(){
+        usedBuf = (usedBuf + 1)%3;
     }
 
     public void loop(){
         /* bind main shader */
         batch.setShader(main_program);
 
-        /* Send required variables */
-        ngolBuffer[usedBuf].getColorBufferTexture().bind(0);
-        main_program.setUniformi("u_texture",0);
-
-        /* bind in-active BFO */
-        ngolBuffer[(usedBuf + 1)%2].begin();
+        get_next_buffer().begin();
         batch.begin();
-
-        /* render main program */
+        get_previous_buffer().getColorBufferTexture().bind(1);
+        get_current_buffer().getColorBufferTexture().bind(0);
+        main_program.setUniformi("previous_pixels",1);
+        main_program.setUniformi("current_pixels",0);
         main_program.setUniformf("my_seed", my_random.nextFloat());
+        /*!Note: This might come in handy ==> main_program.setUniform3fv("my_data", my_float_array, 0, my_float_array.length); */
         batch.draw(placeholder_texture,0,0,board_size.x,board_size.y);
-
-        /* unbind stuff */
         batch.end();
-        ngolBuffer[(usedBuf + 1)%2].end();
+        get_next_buffer().end();
 
-        usedBuf = (usedBuf + 1)%2;
+        step_buffers_forward();
     }
 
     public void randomize(){ randomize(1.0f,1.0f,1.0f); }
     public void randomize(float red_intensity, float green_intensity, float blue_intensity){
-        usedBuf = 0;
-        /* bind reset shader */
+        Gdx.gl.glClearColor(0.0f, 1.0f, 0.0f, 1);
         batch.setShader(reset_program);
 
-        /* bind active BFO */
-        ngolBuffer[usedBuf].begin();
+        get_previous_buffer().begin();
         batch.begin();
-        Gdx.gl.glClearColor(0.0f, 1.0f, 0.0f, 1);
-
-        /* Send required variables */
         reset_program.setUniformf("my_seed", my_random.nextFloat());
         reset_program.setUniformf("red_intensity", red_intensity);
         reset_program.setUniformf("green_intensity", green_intensity);
         reset_program.setUniformf("blue_intensity", blue_intensity);
-
-        /* render randomize program */
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.draw(placeholder_texture,0,0,board_size.x,board_size.y);
-
-        /* unbind stuff */
         batch.end();
-        ngolBuffer[usedBuf].end();
+        get_previous_buffer().end();
+
+        get_current_buffer().begin();
+        batch.begin();
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        batch.draw(placeholder_texture,0,0,board_size.x,board_size.y);
+        batch.end();
+        get_current_buffer().end();
+
+        get_next_buffer().begin();
+        batch.begin();
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        batch.draw(placeholder_texture,0,0,board_size.x,board_size.y);
+        batch.end();
+        get_next_buffer().end();
     }
 
     public void setThresholds(float uThr, float oThr){
@@ -207,7 +222,7 @@ public class NGOL {
         main_program.end();
     }
     public TextureRegion getBoard(){
-        placeholder_texture = new TextureRegion(ngolBuffer[usedBuf].getColorBufferTexture());
+        placeholder_texture = new TextureRegion(get_current_buffer().getColorBufferTexture());
         placeholder_texture.flip(false,true);
         return placeholder_texture;
     }

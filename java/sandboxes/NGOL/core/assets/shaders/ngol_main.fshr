@@ -10,12 +10,19 @@ varying vec2 v_texCoords;
 
 uniform float underPopThr;
 uniform float overPopThr;
-uniform sampler2D prev_step_texture;
-vec2 board_size = textureSize(prev_step_texture,0);
+
+uniform sampler2D previous_pixels;
+uniform sampler2D current_pixels;
+vec2 board_size = textureSize(current_pixels,0);
 
 vec4 color_at(vec2 position){
  vec2 uv = (vec2(position.x, position.y)) / board_size;
- return texture(prev_step_texture, uv);
+ return texture(current_pixels, uv);
+}
+
+vec4 prev_color_at(vec2 position){
+ vec2 uv = (vec2(position.x, position.y)) / board_size;
+ return texture(previous_pixels, uv);
 }
 
 float rand(vec2 co){
@@ -26,39 +33,38 @@ void main(){
 	if((board_size.x < gl_FragCoord.x)||(board_size.y < gl_FragCoord.y)){
 	  gl_FragColor = vec4(0.0,0.0,0.0,1.0); /* The void surrounds all of us */
 	}else{
+	  vec4 current_color;
     float proxR = 0; float proxG = 0; float proxB = 0;
     int numR = 0; int numG = 0; int numB = 0;
-    float r = color_at(vec2(gl_FragCoord)).r;
-    float g = color_at(vec2(gl_FragCoord)).g;
-    float b = color_at(vec2(gl_FragCoord)).b;
+    int numDeadR = 0; int numDeadG = 0; int numDeadB = 0;
+    int numFullR = 0; int numFullG = 0; int numFullB = 0;
+    float r = color_at(vec2(gl_FragCoord)).r; float g = color_at(vec2(gl_FragCoord)).g; float b = color_at(vec2(gl_FragCoord)).b;
+    float prevR = prev_color_at(vec2(gl_FragCoord)).r; float prevG = prev_color_at(vec2(gl_FragCoord)).g; float prevB = prev_color_at(vec2(gl_FragCoord)).b;
 
      for(int inItX = -1; inItX <= 1; ++inItX){
         for(int inItY = -1; inItY <= 1; ++inItY){
           if((inItX != gl_FragCoord.x)&&(inItY != gl_FragCoord.y)){
-            if(0 < color_at(vec2(
+            current_color = color_at(vec2(
               min(board_size.x,max(0,gl_FragCoord.x + inItX)),
               min(board_size.y,max(0,gl_FragCoord.y + inItY))
-            )).r)++numR;
-            proxR += color_at(vec2(
-                min(board_size.x,max(0,gl_FragCoord.x + inItX)),
-                min(board_size.y,max(0,gl_FragCoord.y + inItY))
-            )).r;
-            if(0 < color_at(vec2(
-              min(board_size.x,max(0,gl_FragCoord.x + inItX)),
-              min(board_size.y,max(0,gl_FragCoord.y + inItY))
-            )).g)++numG;
-            proxG += color_at(vec2(
-              min(board_size.x,max(0,gl_FragCoord.x + inItX)),
-              min(board_size.y,max(0,gl_FragCoord.y + inItY))
-            )).g;
-            if(0 < color_at(vec2(
-              min(board_size.x,max(0,gl_FragCoord.x + inItX)),
-              min(board_size.y,max(0,gl_FragCoord.y + inItY))
-            )).b)++numB;
-            proxB += color_at(vec2(
-              min(board_size.x,max(0,gl_FragCoord.x + inItX)),
-              min(board_size.y,max(0,gl_FragCoord.y + inItY))
-            )).b;
+            ));
+            if(0 < current_color.r){
+              ++numR;
+              if(1.0 == current_color.r)++numFullR;
+            }else ++numDeadR;
+            proxR += current_color.r;
+
+            if(0 < current_color.g){
+              ++numG;
+              if(1.0 == current_color.g)++numFullG;
+            }else ++numDeadG;
+            proxG += current_color.g;
+
+            if(0 < current_color.b){
+              ++numB;
+              if(1.0 == current_color.b)++numFullB;
+            }else ++numDeadB;
+            proxB += current_color.b;
           }
         }
     }

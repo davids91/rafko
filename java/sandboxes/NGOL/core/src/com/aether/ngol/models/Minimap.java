@@ -81,8 +81,8 @@ public class Minimap extends WidgetGroup {
 
     public void adjust_zoom(float val){
         zoom_width_value += val;
-        if(1.0f > zoom_width_value)
-            zoom_width_value = 1.0f;
+        if(0.5f > zoom_width_value)
+            zoom_width_value = 0.5f;
         layout();
     }
 

@@ -103,6 +103,8 @@ public class BrushPanel extends Table {
         add(buttons_panel).row();
         brush_set = new BrushSet(used_skin);
         add(brush_set).expandY().fill();
+
+        brush_set.load_set();
     }
 
     public Pixmap get_selected_brush(){

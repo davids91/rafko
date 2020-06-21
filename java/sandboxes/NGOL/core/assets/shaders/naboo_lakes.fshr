@@ -1,32 +1,40 @@
 /* NGOL Rule for elemental life: Red is fire, Green is Land, Blue is Water */
 /** Usage:
+ * board_size.x, board_size.y ==> Gives back the size of the map
  * r,g,b ==> references to current pixel color values [0.0,1.0]
  * proxR,proxG,proxB ==> references to the summary of the surrounding pixel color values [0.0,9.0]
+ * prevR,prevG,prevB ==> references to the previous values of the current pixel color values [0.0,9.0]
  * numR,numG,numB ==> references to the number of pixels containing the given color components
- * rand() ==> Excpects a vec2, v_TexCoords are super usable with my_seed
- * my_seed ==> a pseudo-random number between 0 and 1 provided by the cpu
+ * numDeadR,numDeadG,numDeadB ==> references to the number of surrounding pixels with the value of 0.0
+ * numFullR,numFullG,numFullB ==> references to the number of surrounding pixels with the value of 1.0
+ * my_seed ==> a pseudo-random number between 0 and 1 provided by the cpu, but it stays the same for the whole image!
+ * rand() ==> Excpects a vec2, v_TexCoords are super usable with my_seed.
  * Error messages: Subtract 65 from the actual error message line number. I'm lazy I KNOW
  */
 float newR = r; float newG = g; float newB = b;
 
 /**
  * WATER
- */
-if(overPopThr <= proxB)newG *= 0.65; /* too many blue suffocates green */
-if(0 < proxB)newR = 0; /* Blue extinguishes red */
+ *//* too many blue suffocates green, any blue extinguishes red */
+if((overPopThr <= proxB)&&(proxB >= proxG))newG *= 0.5;
+if(0 < proxB)newR = 0;
 
 /**
  * PLANTS
  */
-/* if there is water near green, green will grow */
-if((0 < proxG)&&(underPopThr < proxB)&&(overPopThr > proxB)&&(0 == proxR))
-    newG += rand(v_texCoords/my_seed) * underPopThr / overPopThr;
-else if((1.0 < proxG)&&(underPopThr > proxG)&&(0 == proxB)&&(0 == proxR))
-    newG += rand(v_texCoords/my_seed) * ((underPopThr + overPopThr)/25.0);
-else if(overPopThr < proxG)
-    newG /= 2.0;
-if((0 == proxB)||(0 < proxR))
-  newG = min(newG * 0.9,proxG/4.0);
+if((0 < proxG)&&(0 == proxR)){
+if((underPopThr < proxB)&&(overPopThr > proxB)&&(prevG < newG)){ /* if there is the perfect amount of water near green, green will grow */
+      newG += rand(v_texCoords/my_seed) * 0.75;
+  }else if((0.8 > newB)&&(0 < proxB)){
+      newG += rand(v_texCoords/my_seed) * 0.5;
+  }else if((0 < proxB)&&(prevG < newG)){ /* If there is some water near green, it will still grow, but a sparsely */
+      newG *= 2.0;
+  }else if((1.0 > newB)&&(0.75 < proxG)&&(prevG <= newG)){ /* At least the proximity of green grows it some */
+     newG += rand(v_texCoords/my_seed) * 0.5;
+  }else if (0 == proxG){
+    newG *= 0.5;
+  }
+}
 
 /**
  * FLAMES
