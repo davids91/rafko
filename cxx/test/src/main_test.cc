@@ -127,8 +127,10 @@ void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdou
    + neuron2_result * (double_literal(1.0) - partial_solution.weight_table(partial_solution.memory_filter_index(1)));
 }
 
-void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdouble32>& neuron_data,
-    vector<uint32> layer_structure, SparseNet network){
+void manaual_fully_connected_network_result(
+  vector<sdouble32>& inputs, vector<sdouble32> previous_data, vector<sdouble32>& neuron_data,
+  vector<uint32> layer_structure, SparseNet network
+){
   Transfer_function trasfer_function;
   uint32 neuron_number = 0;
   for(uint32 layer_iterator = 0; layer_iterator < layer_structure.size(); ++layer_iterator){ /* Go through all of the layers, count the number of Neurons */
@@ -146,13 +148,20 @@ void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdo
     input_synapse_index = 0;
     input_index_offset = 0;
 
+    if(0 < previous_data.size())
+      REQUIRE( neuron_data.size() == previous_data.size() );
     Synapse_iterator<>::iterate(neuron.input_weights(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
       if(static_cast<sdouble32>(input_synapse_index) < neuron.input_indices_size()){ /* Only get input from the net if it's explicitly defined */
+        REQUIRE( 1 >= neuron.input_indices(input_synapse_index).reach_past_loops() ); /* Only the last loop and the current can be handled in this test yet */
         if(Synapse_iterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
           neuron_input_value = inputs[Synapse_iterator<>::input_index_from_synapse_index(
             neuron.input_indices(input_synapse_index).starts() - input_index_offset
           )];
-        else neuron_input_value = neuron_data[
+        else if(1 == neuron.input_indices(input_synapse_index).reach_past_loops())
+          neuron_input_value = previous_data[ /* Neuron input is from network input 1 loop from the past */
+            neuron.input_indices(input_synapse_index).starts() + input_index_offset
+          ];
+        else neuron_input_value = neuron_data[ /* Neuron input is from the current internal data of the network */
           neuron.input_indices(input_synapse_index).starts() + input_index_offset
         ];
         ++input_index_offset;

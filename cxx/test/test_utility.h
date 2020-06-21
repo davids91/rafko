@@ -67,12 +67,15 @@ extern void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vect
  * @brief      Calculates the result of a fully connected Network for the given inputs
  *
  * @param[in]  inputs           The inputs
- * @param[in]  neuron_data      The Neural data available to the network
+ * @param      previous_data    The data the Network should recieve from the previous run
+ * @param[in]  neuron_data      The data the Neural network should contain in the current run
  * @param[in]  layer_structure  The layer structure
  * @param[in]  network          The network
  */
-extern void manaual_fully_connected_network_result(vector<sdouble32> inputs, vector<sdouble32>& neuron_data,
-    vector<uint32> layer_structure, SparseNet network);
+extern void manaual_fully_connected_network_result(
+  vector<sdouble32>& inputs, vector<sdouble32> previous_data, vector<sdouble32>& neuron_data,
+  vector<uint32> layer_structure, SparseNet network
+);
 
 /**
  * @brief      Checks if the inputs are pointing to the same data and weight values are matching in the given 

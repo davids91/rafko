@@ -231,36 +231,35 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   Sparse_net_builder net_builder = Sparse_net_builder();
   net_builder.input_size(5).expected_input_range(double_literal(5.0))
   .cost_function(COST_FUNCTION_MSE).arena_ptr(arena);
-  SparseNet net = *net_builder.dense_layers(net_structure);
+  unique_ptr<SparseNet> net(net_builder.dense_layers(net_structure));
 
   /* Generate solution from Net */
   unique_ptr<Solution_builder> solution_builder = make_unique<Solution_builder>();
-  Solution solution = *solution_builder->max_solve_threads(4).device_max_megabytes(2048).arena_ptr(arena).build(net);
+  Solution solution = *solution_builder->max_solve_threads(4).device_max_megabytes(2048).arena_ptr(arena).build(*net);
 
+  /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   Solution_solver solver(solution);
   solver.solve(net_input);
   vector<sdouble32> result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
-  vector<sdouble32> expected_neuron_data = vector<sdouble32>(net.neuron_array_size());
-  manaual_fully_connected_network_result(net_input, expected_neuron_data, net_structure, net);
-  vector<sdouble32> expected_result = {expected_neuron_data.end() - net.output_neuron_number(), expected_neuron_data.end()};
+  vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size());
+  manaual_fully_connected_network_result(net_input, {}, expected_neuron_data, net_structure, *net);
+  vector<sdouble32> expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
   /* Verify if the calculated values match the expected ones */
   REQUIRE( net_structure.back() == result.size() );
   REQUIRE( expected_result.size() == result.size() );
-  for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator){
+  for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
     CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
-  }
 
-  /* Re-veriy with guaranted multiple partial solutions */
+  /* Re-veriy with guaranteed multiple partial solutions */
   sdouble32 solution_size = solution.SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
-  Solution solution2 = *solution_builder->max_solve_threads(4).device_max_megabytes(solution_size/double_literal(4.0)).arena_ptr(arena).build(net);
+  Solution solution2 = *solution_builder->max_solve_threads(4).device_max_megabytes(solution_size/double_literal(4.0)).arena_ptr(arena).build(*net);
   Solution_solver solver2(solution2);
   solver2.solve(net_input);
   result = {solver2.get_neuron_data().end() - solver2.get_output_size(),solver2.get_neuron_data().end()};
   
   /* Verify once more if the calculated values match the expected ones */
-  for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator){
+  for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
     CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
-  }
 }
 
 TEST_CASE("Solution Solver test based on Fully Connected Dense Net", "[solve][build-solve]"){
@@ -268,26 +267,72 @@ TEST_CASE("Solution Solver test based on Fully Connected Dense Net", "[solve][bu
 }
 
 /*###############################################################################################
- * Testing if the solution solver produces correct data for gradient calculations
- */
-TEST_CASE("Solution Solver test for gradients", "[solve][gradient]"){
-  vector<uint32> net_structure = {2,4,3,10,20};
-  vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
+ * Testing if the solution solver produces correct data for Networks generated 
+ * with connections of memories of the past
+ *//* The utility function returns with the number of megabytes required for the complete Solution */
+sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdouble32 max_space_mb, uint32 recurrence){
+  vector<uint32> net_structure = {20,30,40,30,20};
+  vector<sdouble32> net_input = {
+    double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)
+  };
 
   /* Build the above described net */
   Sparse_net_builder net_builder = Sparse_net_builder();
-  net_builder.input_size(5).expected_input_range(double_literal(5.0))
-  .cost_function(COST_FUNCTION_MSE);
+  net_builder.input_size(5).expected_input_range(double_literal(5.0)).cost_function(COST_FUNCTION_MSE);
+  if(0x01 == recurrence)
+    net_builder.set_recurrence_to_self();
+  else if(0x02 == recurrence)
+    net_builder.set_recurrence_to_layer();
+
   unique_ptr<SparseNet> net(net_builder.dense_layers(net_structure));
 
   /* Generate solution from Net */
-  Solution_solver solver(*Solution_builder().service_context().build(*net));
-  vector<sdouble32> result = solver.get_neuron_data();
-  result = {result.end() - solver.get_output_size(),result.end()};
+  unique_ptr<Solution> solution = unique_ptr<Solution>(
+    Solution_builder().service_context().device_max_megabytes(max_space_mb).build(*net)
+  );
+  Solution_solver solver(*solution);
 
+  /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
+  solver.solve(net_input);
   REQUIRE( net->neuron_array_size() == static_cast<sint32>(solver.get_transfer_function_input().size()) );
   REQUIRE( net->neuron_array_size() == static_cast<sint32>(solver.get_transfer_function_output().size()) );
+  vector<sdouble32> result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
+  vector<sdouble32> previous_neuron_data = vector<sdouble32>(net->neuron_array_size());
+  vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size()); /* Should be all zeroes the first time */
 
+  manaual_fully_connected_network_result(net_input, previous_neuron_data, expected_neuron_data, net_structure, *net);
+  vector<sdouble32> expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
+
+  REQUIRE( net_structure.back() == result.size() );
+  REQUIRE( expected_result.size() == result.size() );
+  for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator){
+    CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+  }
+
+  /* Re-verify with another run */
+  solver.solve(net_input);
+  result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
+  previous_neuron_data = vector<sdouble32>(expected_neuron_data);
+  manaual_fully_connected_network_result(net_input, previous_neuron_data, expected_neuron_data, net_structure, *net);
+  expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
+
+  REQUIRE( net_structure.back() == result.size() );
+  REQUIRE( expected_result.size() == result.size() );
+  for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
+    CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+
+  /* Return with the size of the overall solution */
+  return solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
 }
 
-} /* namespace sparse_net_library_test */
+TEST_CASE("Solution Solver test with memory", "[solve][memory]"){
+  /* Test if the network is producing correct results when neurons take past-inputs from themselves ( 0x01 ID given to builder ) */
+  sdouble32 megabytes_used = testing_nets_with_memory_manually(nullptr, (double_literal(4.0) * double_literal(1024.0)), 0x01);
+  (void)testing_nets_with_memory_manually(nullptr, megabytes_used / double_literal(4.0),0x01); /* Even if the net needs to be splitted */
+
+  // /* Test if the network is producing correct results when neurons take past-inputs from their layers ( 0x02 ID given to builder ) */
+  // megabytes_used = testing_nets_with_memory_manually(nullptr, (double_literal(4.0) * double_literal(1024.0)), 0x02);
+  // (void)testing_nets_with_memory_manually(nullptr, megabytes_used / double_literal(4.0),0x02); /* Even if the net needs to be splitted */
+}
+
+}
