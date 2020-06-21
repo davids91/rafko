@@ -19,6 +19,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
 import java.util.HashMap;
+import java.util.Random;
 
 public class MainLayout {
     Stage stage;
@@ -218,7 +219,7 @@ public class MainLayout {
         System.out.println(message);
     }
 
-    public void setInputProcessor(){
+    public void setInputProcessor(final HashMap<String, Float> data){
         MouseInputProcessor mySP = new MouseInputProcessor(new MouseInputProcessor.My_scroll_action_interface() {
             @Override
             public boolean scrollAction(int scrollValue) {
@@ -231,12 +232,13 @@ public class MainLayout {
                 if(!Gdx.input.isKeyPressed(Input.Keys.TAB)){
                     Texture current_brush = get_brush();
                     if(null != current_brush){
+                        brush_mouse.setVisible(true);
                         brush_mouse.setDrawable(new TextureRegionDrawable(current_brush));
                         brush_mouse.setSize(
-                        current_brush.getWidth()*minimap.get_zoom(),
-                        current_brush.getHeight()*minimap.get_zoom()
+                        current_brush.getWidth() * minimap.get_world_size().x / data.get("ngol-width"),
+                        current_brush.getHeight() * minimap.get_world_size().y / data.get("ngol-height")
                         );
-                    }
+                    }else brush_mouse.setVisible(false);
                     Vector3 target_position = getStage().getCamera().unproject(
                         new Vector3(screenX, Gdx.graphics.getHeight() - screenY,0)
                     );
@@ -254,6 +256,7 @@ public class MainLayout {
 
             @Override
             public boolean touchDownAction(int screenX, int screenY, int pointer, int button) {
+                mouseMoveAction(screenX,Gdx.graphics.getHeight() - screenY);
                 return false;
             }
         });
@@ -291,6 +294,7 @@ public class MainLayout {
     public void start_capture(){
         if(!capturing){
             capture_mouse.setVisible(true);
+            brush_mouse.setVisible(false);
             brush_panel.start_capture();
             capturing = true;
         }
@@ -299,6 +303,7 @@ public class MainLayout {
     public void stop_capture(){
         if(capturing){
             capture_mouse.setVisible(false);
+            brush_mouse.setVisible(true);
             brush_panel.stop_capture();
             capturing = false;
         }

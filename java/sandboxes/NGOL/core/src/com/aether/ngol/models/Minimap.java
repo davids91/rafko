@@ -80,14 +80,10 @@ public class Minimap extends WidgetGroup {
     }
 
     public void adjust_zoom(float val){
-        if(
-            (getWidth() * screen_ratio / (zoom_width_value + val)) <= getWidth()
-        ){
-            zoom_width_value += val;
-            if(1.0f > zoom_width_value)
-                zoom_width_value = 1.0f;
-            layout();
-        }
+        zoom_width_value += val;
+        if(1.0f > zoom_width_value)
+            zoom_width_value = 1.0f;
+        layout();
     }
 
     @Override
@@ -97,8 +93,8 @@ public class Minimap extends WidgetGroup {
         minimap.setSize(getWidth(),getHeight());
         minimap_border.setSize(getWidth(),getHeight());
         minimap_position.setSize(
-        getWidth() * screen_ratio / zoom_width_value,
-        getHeight() / zoom_width_value
+        getWidth() * screen_ratio / zoom_width_value / 2.0f,
+        getWidth() / zoom_width_value / 2.0f
         );
 
     }
@@ -109,14 +105,6 @@ public class Minimap extends WidgetGroup {
     }
 
     public void step(float x, float y){
-        Vector2 addition = new Vector2(x , y );
-        Vector2 new_position = new Vector2(minimap_position.getX() + addition.x,minimap_position.getY() + addition.y);
-        if((0 > new_position.x)||((new_position.x + minimap_position.getWidth()) > minimap_border.getWidth())){
-            addition.x = 0.00001f;
-        }
-        if((0 > new_position.y)||((new_position.y + minimap_position.getHeight()) > minimap_border.getHeight())){
-            addition.y = 0.00001f;
-        }
-        minimap_position.moveBy(addition.x, addition.y);
+        minimap_position.moveBy(x, y);
     }
 }

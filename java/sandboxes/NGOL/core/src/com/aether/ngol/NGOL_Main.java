@@ -122,7 +122,7 @@ public class NGOL_Main extends ApplicationAdapter {
 		data.put("ngol-width", 1024.0f);
 		data.put("ngol-height", 1024.0f);
 		main_layout = new MainLayout(actions,data);
-		main_layout.setInputProcessor();
+		main_layout.setInputProcessor(data);
 
 		Gdx.gl.glClearColor(0.2f, 0.5f, 0.1f, 1);
 		ngol = new NGOL(

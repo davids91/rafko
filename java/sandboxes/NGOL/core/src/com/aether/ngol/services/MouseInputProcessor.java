@@ -43,8 +43,8 @@ public class MouseInputProcessor implements InputProcessor {
     }
 
     @Override
-    public boolean touchDragged(int screenX, int screenY, int pointer) {
-        return false;
+    public boolean touchDragged(int screenX, int screenY, int pointer){
+        return my_action.touchDownAction(screenX,screenY,pointer,0);
     }
 
     @Override
