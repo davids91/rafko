@@ -100,9 +100,9 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
   uint32 values_index = 0;
   uint32 weight_synapse_index = gradient_fragment.weight_synapses_size();
   for(weight_synapse_index = 0; static_cast<sint32>(weight_synapse_index) < gradient_fragment.weight_synapses_size(); ++weight_synapse_index){
-    if( /* If the weight synapse is at or in-between the first index before the start of the synapse */
+    if( /* If the weight synapse is at or in-between the first index before the start of the synapse.. */
       ((gradient_fragment.weight_synapses(weight_synapse_index).starts()-1) >= static_cast<sint32>(weight_index))
-      &&( /* and the one after the last index */
+      &&( /* ..and the one after the last index */
         (gradient_fragment.weight_synapses(weight_synapse_index).starts() + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
         <= weight_index
       )
@@ -117,12 +117,19 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
         (gradient_fragment.weight_synapses(weight_synapse_index).starts() + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
         > weight_index
       ){ /* the index is inside the synapse */
-        insert_element_at_position(
-          *gradient_fragment.mutable_values(), gradient_fragment_value,
-          (values_index + (
-            (gradient_fragment.weight_synapses(weight_synapse_index).starts() + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
-            - weight_index
-          ))
+        gradient_fragment.set_values(
+            (
+              values_index + (
+              (gradient_fragment.weight_synapses(weight_synapse_index).starts() + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
+              - weight_index)
+            ),
+          gradient_fragment.values(
+            (
+              values_index + (
+              (gradient_fragment.weight_synapses(weight_synapse_index).starts() + gradient_fragment.weight_synapses(weight_synapse_index).interval_size())
+              - weight_index)
+            )
+          ) + gradient_fragment_value
         );
       }else{ /* The index is the first index after the synapse */
         insert_element_at_position(
@@ -133,7 +140,7 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
       break; /* weight is placed inside the fragment, no need to continue */
     }
     values_index += gradient_fragment.weight_synapses(weight_synapse_index).interval_size();
-  }
+  } /* Go through the synapses */
   if(
     (0 == gradient_fragment.weight_synapses_size())
     ||(static_cast<sint32>(weight_synapse_index) < gradient_fragment.weight_synapses_size())

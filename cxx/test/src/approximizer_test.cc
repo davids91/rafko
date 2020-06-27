@@ -125,6 +125,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
+    .set_recurrence_to_self()
     .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
       {
