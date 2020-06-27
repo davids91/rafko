@@ -309,17 +309,18 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
     CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
   }
 
-  /* Re-verify with another run */
-  solver.solve(net_input);
-  result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
-  previous_neuron_data = vector<sdouble32>(expected_neuron_data);
-  manaual_fully_connected_network_result(net_input, previous_neuron_data, expected_neuron_data, net_structure, *net);
-  expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
+  for(uint32 loop = 0; loop < 5; ++loop){ /* Re-verify with additional runs, at least 3, more shouldn't hurt */
+    solver.solve(net_input);
+    result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
+    previous_neuron_data = vector<sdouble32>(expected_neuron_data);
+    manaual_fully_connected_network_result(net_input, previous_neuron_data, expected_neuron_data, net_structure, *net);
+    expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
 
-  REQUIRE( net_structure.back() == result.size() );
-  REQUIRE( expected_result.size() == result.size() );
-  for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
-    CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+    REQUIRE( net_structure.back() == result.size() );
+    REQUIRE( expected_result.size() == result.size() );
+    for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
+      CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+  }
 
   /* Return with the size of the overall solution */
   return solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
