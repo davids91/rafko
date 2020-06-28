@@ -45,7 +45,7 @@ void Sparse_net_approximizer::collect(void){
   /* Modify a random weight */
   uint32 weight_index = rand()%(net.weight_table_size());
   net.set_weight_table(
-    weight_index, (net.weight_table(weight_index) + context.get_step_size() / 2.0)
+    weight_index, (net.weight_table(weight_index) + context.get_step_size() / 10.0)
   );
   weight_updater->update_solution_with_weights(*net_solution);
 
@@ -70,10 +70,9 @@ void Sparse_net_approximizer::collect(void){
 
   /* Revert weight modification */
   net.set_weight_table(
-    weight_index, (net.weight_table(weight_index) - context.get_step_size() / 2.0)
+    weight_index, (net.weight_table(weight_index) - context.get_step_size() / 10.0)
   );
   weight_updater->update_solution_with_weights(*net_solution);
-
 }
 
 void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 sequences_to_evaluate){

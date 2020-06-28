@@ -125,7 +125,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
-    .set_recurrence_to_self()
+    .set_recurrence_to_layer()
     .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
       {
@@ -135,8 +135,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
-  Data_aggregate train_set = create_addition_dataset(number_of_samples, *nets[0]);
-  Data_aggregate test_set = create_addition_dataset(number_of_samples, *nets[0]);
+  Data_aggregate train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0]);
+  Data_aggregate test_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0]);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -172,6 +172,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     << "Minimum: ["<< minimum_error <<"]"
     << "Iteration: ["<< iteration <<"];                                           "
     << flush;
+
+    ++iteration;
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps

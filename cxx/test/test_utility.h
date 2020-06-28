@@ -106,7 +106,6 @@ extern void print_weights(SparseNet& net, Solution& solution);
  */
 extern Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net, Service_context service_context = Service_context());
 
-
 /**
  * @brief      Creates a normalized dataset for adding binary numbers: each number is stored
  *             as sequences of 0/1 one after another.
