@@ -12,8 +12,26 @@ DEBUG_FLAGS = -DNDEBUG #no debug
 CPPFLAGS = -Wall $(LIBS) -std=c++14 $(DEBUG_FLAGS)
 CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib $(DEBUG_FLAGS)
 
+##########################################################################################################
+# Protocol bufffer 
+##########################################################################################################
+GRPC_CPP_PLUGIN = grpc_cpp_plugin
+GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
+
+gen: #as in generate models; Can't be bothered to type something like `make generate-protocol-buffer-files` every time...
+	protoc common.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
+	protoc sparse_net.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
+	protoc solution.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
+	protoc training.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
+	protoc service.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
+	mkdir "../lib"
+
+##########################################################################################################
+# Compile
+##########################################################################################################
 GENERATED_SOURCES = ../cxx/gen/common.pb.cc 
-GENERATED_SOURCES += ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc ../cxx/gen/training.pb.cc
+GENERATED_SOURCES += ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc
+GENERATED_SOURCES += ../cxx/gen/training.pb.cc ../cxx/gen/service.pb.cc
 
 BUILDER_SOURCES = ../cxx/services/src/sparse_net_builder.cc ../cxx/services/src/neuron_router.cc
 BUILDER_SOURCES += ../cxx/services/src/solution_builder.cc ../cxx/services/src/partial_solution_builder.cc
@@ -41,9 +59,6 @@ LIB_OUTPUT = ../lib/libsparsenetlib.a
 .PHONY: build_library clean gen
 build_library: clean $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
-
-gen: #as in generate models; Can't be bothered to type something like `make generate-protocol-buffer-files` every time...
-	./gen_models.bat
 
 $(LIBRARY_OBJECTS):
 	g++ -c $(LIBRARY_SOURCES) $(SOURCES_INCLUDE_DIR) $(GENERATED_FILES_INCLUDE_DIR) $(CPPFLAGS)

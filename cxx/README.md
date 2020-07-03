@@ -18,3 +18,5 @@ providing services for:
 
  - pkg-config
  - protocol buffers (proto3 compatible)
+ - gRPC 
+  - At the time of writing this [gRPC does not support WSL for C++](https://github.com/grpc/grpc/issues/23314). 

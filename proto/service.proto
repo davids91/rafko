@@ -1,0 +1,106 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
+syntax = "proto3";
+option cc_enable_arenas = true;
+option cc_generic_services = true;
+
+package sparse_net_library;
+
+import "common.proto";
+import "sparse_net.proto";
+
+/** @brief      A service consists of slots on which different Neural related tasks can run.
+ *              The differetn kinds of tasks are contained in the enum @Slot_type
+ */
+enum Slot_type{
+  SERV_SLOT_UNKNOWN = 0;
+  SERV_SLOT_RUN = 1;
+  SERV_SLOT_OPTIMIZE = 2;
+  SERV_SLOT_APPROXIMIZE = 3;
+}
+
+/** @brief      A service slot can have different states, all of which are contained in the below enum
+ */
+enum Slot_state_values{
+  SERV_SLOT_STATE_UNKNOWN = 0;
+  SERV_SLOT_MISSING_NET = 1;
+  SERV_SLOT_MISSING_TRAINING_SET = 2;
+  SERV_SLOT_MISSING_TEST_SET = 4;
+  SERV_SLOT_OK = 65536; /* 2 Byte max */
+}
+
+/** @brief      Available actions to request from a service slot
+ */
+enum Slot_action{
+  SERV_SLOT_NOOP = 0;
+  SERV_SLOT_RUN_ONCE = 1;
+  SERV_SLOT_TO_START = 2;
+  SERV_SLOT_TO_STOP = 3;
+  SERV_SLOT_TO_RESET = 4;
+  SERV_SLOT_TO_DIE = 5;
+}
+
+/** @brief      Certain slots may require raw I/O data form the network to operate.
+ *              The message @Neural_io_stream provides either Neural network input data
+ *              or output data, depending on the recipient. 
+ */
+message Neural_io_stream{
+  uint32 feature_size = 1;
+  uint32 sequence_size = 3;
+  repeated double package = 10;
+}
+
+/** @brief      Requests to a server reply with the following response package. Some fields may
+ *              be left blank.
+ */
+message Slot_status{
+  string slot_id = 1; /* A string id to query existing service slots by */
+  uint32 slot_state = 10; /* a bitfield representing the status of the slot */
+  double training_error = 20; /* Error values stored for the loaded training data set */
+  double test_error = 21; /* Error values stored for the loaded test data set */
+}
+
+/** @brief      The meaasge to ask requests from the server. @action, @data_stream may be left blank.
+ */
+message Slot_request{
+  string slot_id = 1;
+  Slot_action action = 10;
+  Neural_io_stream data_stream = 20;
+}
+
+/** @brief      The structure of a service slot encapsulating a channel in which deep learning related requests
+ *              can be run.
+ */
+message Service_slot{
+  string slot_id = 1;
+  uint32 state = 2;
+  Slot_type type = 10;
+  SparseNet network = 11;
+  Data_set training_set = 12;
+  Data_set test_set = 13;
+}
+
+/**
+ * @brief      Describes a Rafko Deep Learning Service
+ */
+service Rafko_deep_learning{
+  rpc add_slot(stream Service_slot) returns (Slot_status) {}
+  rpc update_slot(stream Service_slot) returns (Slot_status) {}
+  rpc request_action(stream Slot_request) returns (Slot_status) {}
+  rpc run_net_for(stream Slot_request) returns (stream Neural_io_stream) {}
+}
