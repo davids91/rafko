@@ -21,6 +21,26 @@
 
 namespace sparse_net_library{
 
+void Deep_learning_server::loop(void){
+  /* Go through the server slots */
+  /* run each of them */
+}
+
+::grpc::Status Deep_learning_server::add_slot(::grpc::ServerContext* context, const ::sparse_net_library::Service_slot* request, ::sparse_net_library::Slot_response* response){
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status Deep_learning_server::update_slot(::grpc::ServerContext* context, const ::sparse_net_library::Service_slot* request, ::sparse_net_library::Slot_response* response){
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status Deep_learning_server::request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::sparse_net_library::Slot_response, ::sparse_net_library::Slot_request>* stream){
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status Deep_learning_server::get_network(::grpc::ServerContext* context, const ::sparse_net_library::Slot_request* request, ::sparse_net_library::SparseNet* response){
+  return ::grpc::Status::OK;
+}
 
 
 } /* namespace sparse_net_library */

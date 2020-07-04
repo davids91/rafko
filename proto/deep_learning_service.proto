@@ -28,9 +28,9 @@ import "sparse_net.proto";
  */
 enum Slot_type{
   SERV_SLOT_UNKNOWN = 0;
-  SERV_SLOT_RUN = 1;
-  SERV_SLOT_OPTIMIZE = 2;
-  SERV_SLOT_APPROXIMIZE = 3;
+  SERV_SLOT_TO_RUN = 1;
+  SERV_SLOT_TO_OPTIMIZE = 2;
+  SERV_SLOT_TO_APPROXIMIZE = 3;
 }
 
 /** @brief      A service slot can have different states, all of which are contained in the below enum
@@ -40,7 +40,7 @@ enum Slot_state_values{
   SERV_SLOT_MISSING_NET = 1;
   SERV_SLOT_MISSING_TRAINING_SET = 2;
   SERV_SLOT_MISSING_TEST_SET = 4;
-  SERV_SLOT_OK = 65536; /* 2 Byte max */
+  SERV_SLOT_OK = 65536;
 }
 
 /** @brief      Available actions to request from a service slot
@@ -51,7 +51,10 @@ enum Slot_action{
   SERV_SLOT_TO_START = 2;
   SERV_SLOT_TO_STOP = 3;
   SERV_SLOT_TO_RESET = 4;
-  SERV_SLOT_TO_DIE = 5;
+  SERV_SLOT_TO_TAKEOVER_NET = 5;
+  SERV_SLOT_TO_APPEND_TRAINING_SET = 6;
+  SERV_SLOT_TO_APPEND_TEST_SET = 7;
+  SERV_SLOT_TO_DIE = 65536;
 }
 
 /** @brief      Certain slots may require raw I/O data form the network to operate.
@@ -59,39 +62,42 @@ enum Slot_action{
  *              or output data, depending on the recipient. 
  */
 message Neural_io_stream{
-  uint32 feature_size = 1;
-  uint32 sequence_size = 3;
-  repeated double package = 10;
-}
-
-/** @brief      Requests to a server reply with the following response package. Some fields may
- *              be left blank.
- */
-message Slot_status{
-  string slot_id = 1; /* A string id to query existing service slots by */
-  uint32 slot_state = 10; /* a bitfield representing the status of the slot */
-  double training_error = 20; /* Error values stored for the loaded training data set */
-  double test_error = 21; /* Error values stored for the loaded test data set */
+  uint32 feature_size = 1; /* Number of float numbers in one feature array of the network */
+  uint32 sequence_size = 2; /* Number of feature arrays in a package */
+  repeated double package = 10; /* The packed data */
 }
 
 /** @brief      The meaasge to ask requests from the server. @action, @data_stream may be left blank.
  */
 message Slot_request{
-  string slot_id = 1;
+  string source_slot_id = 1; /* In case of action requests involving 2 service slots, this field shall be used as the source slot */
+  string target_slot_id = 2; /* In case of action requests involving only one slot this field shall be used */
   Slot_action action = 10;
-  Neural_io_stream data_stream = 20;
+  Neural_io_stream data_stream = 20; /* May be a part of a data-set or a run-once request */
+}
+
+/** @brief      Requests to a server reply with the following response package. Some fields may
+ *              be left blank.
+ */
+message Slot_response{
+  string slot_id = 1; /* A string id to query existing service slots by */
+  uint32 slot_state = 10; /* a bitfield representing the status of the slot */
+  double training_error = 20; /* Error values stored for the loaded training data set */
+  double test_error = 21; /* Error values stored for the loaded test data set */
+  Neural_io_stream data_stream = 30; /* May be a part of a data-set or a run-once request */
 }
 
 /** @brief      The structure of a service slot encapsulating a channel in which deep learning related requests
  *              can be run.
  */
 message Service_slot{
-  string slot_id = 1;
-  uint32 state = 2;
+  string slot_id = 1; /* A unique identifier for each service slot */
+  uint32 state = 2; /* A bitfield storing 0 or 1 at the positions given in enum @Slot_state_values, except when everything is fine, then the value @SERV_SLOT_OK is used */
   Slot_type type = 10;
   SparseNet network = 11;
   Data_set training_set = 12;
   Data_set test_set = 13;
+  weight_updaters weight_updater = 14;
 }
 
 /**
@@ -107,7 +113,7 @@ message Service_hyperparameters{
 
   double alpha = 21;
   double gamma = 22;
-  double epsilon = 23; /* very small positive value almost greater, than double_literal(0.0) */
+  double epsilon = 23; /* very small positive value almost greater, than zero */
   double lambda = 24;
 };
 
@@ -115,8 +121,8 @@ message Service_hyperparameters{
  * @brief      Describes a Rafko Deep Learning Service
  */
 service Rafko_deep_learning{
-  rpc add_slot(stream Service_slot) returns (Slot_status) {}
-  rpc update_slot(stream Service_slot) returns (Slot_status) {}
-  rpc request_action(stream Slot_request) returns (Slot_status) {}
-  rpc run_net_for(stream Slot_request) returns (stream Neural_io_stream) {}
+  rpc add_slot(Service_slot) returns (Slot_response) {} /* If possible adds a new slot into the server, then retudrns the status and ID of it */
+  rpc update_slot(Service_slot) returns (Slot_response) {} /* Modify existing slot; the ID must be provided */
+  rpc request_action(stream Slot_request) returns (stream Slot_response) {} /* Make requests for the target service_slot, and return with the status after each request is completed */
+  rpc get_network(Slot_request) returns (SparseNet) {} /* Provides the Loaded network into the slot */
 }

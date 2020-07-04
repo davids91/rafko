@@ -21,6 +21,8 @@
 #include "sparse_net_global.h"
 #include "gen/deep_learning_service.grpc.pb.h"
 
+#include "models/server_slot.h"
+
 namespace sparse_net_library{
 
 /**
@@ -29,19 +31,19 @@ namespace sparse_net_library{
  */
 class Deep_learning_server final : public Rafko_deep_learning::Service{
 public:
-    ~Deep_learning_server();
-    ::grpc::Status add_slot(::grpc::ServerContext* context, ::grpc::ServerReader< ::sparse_net_library::Service_slot>* reader, ::sparse_net_library::Slot_status* response);
-    ::grpc::Status update_slot(::grpc::ServerContext* context, ::grpc::ServerReader< ::sparse_net_library::Service_slot>* reader, ::sparse_net_library::Slot_status* response);
-    ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReader< ::sparse_net_library::Slot_request>* reader, ::sparse_net_library::Slot_status* response);
-    ::grpc::Status run_net_for(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::sparse_net_library::Neural_io_stream, ::sparse_net_library::Slot_request>* stream);
+  ~Deep_learning_server(void);
+  ::grpc::Status add_slot(::grpc::ServerContext* context, const ::sparse_net_library::Service_slot* request, ::sparse_net_library::Slot_response* response);
+  ::grpc::Status update_slot(::grpc::ServerContext* context, const ::sparse_net_library::Service_slot* request, ::sparse_net_library::Slot_response* response);
+  ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::sparse_net_library::Slot_response, ::sparse_net_library::Slot_request>* stream);
+  ::grpc::Status get_network(::grpc::ServerContext* context, const ::sparse_net_library::Slot_request* request, ::sparse_net_library::SparseNet* response);
 
-    /**
-     * @brief      The main loop of the server to run to be able to provide the service
-     */
-    void run();
+  /**
+   * @brief      The main loop of the server to run to be able to provide the service
+   */
+  void loop(void);
 
 private:
-  /* Service slots */
+  vector<unique_ptr<Server_slot>> server_slots; /* points to different implementations of a @Server_slot */
 
 };
 
