@@ -1,7 +1,5 @@
 # Makefile
-LIBS = `pkg-config --cflags --libs protobuf` -g#-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
-
-LIBS = `pkg-config --cflags --libs protobuf` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
+LIBS = `pkg-config --cflags --libs protobuf grpc` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
 
 DEBUG_FLAGS = -DNDEBUG #no debug
 #DEBUG_FLAGS = -g #debug information added
@@ -12,8 +10,43 @@ DEBUG_FLAGS = -DNDEBUG #no debug
 CPPFLAGS = -Wall $(LIBS) -std=c++14 $(DEBUG_FLAGS)
 CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib $(DEBUG_FLAGS)
 
+LIB_DIR = ../lib
+LIB_OUTPUT = $(LIB_DIR)/libsparsenetlib.a
+
 ##########################################################################################################
-# Protocol bufffer 
+# Source files
+##########################################################################################################
+GENERATED_SOURCES = ../cxx/gen/common.pb.cc 
+GENERATED_SOURCES += ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc ../cxx/gen/training.pb.cc
+GENERATED_SOURCES += ../cxx/gen/deep_learning_service.pb.cc ../cxx/gen/deep_learning_service.grpc.pb.cc
+
+BUILDER_SOURCES = ../cxx/services/src/sparse_net_builder.cc ../cxx/services/src/neuron_router.cc
+BUILDER_SOURCES += ../cxx/services/src/solution_builder.cc ../cxx/services/src/partial_solution_builder.cc
+SOLVER_SOURCES = ../cxx/services/src/partial_solution_solver.cc ../cxx/services/src/solution_solver.cc
+TRAINER_SOURCES = ../cxx/models/src/dense_net_weight_initializer.cc ../cxx/services/src/weight_updater.cc
+TRAINER_SOURCES += ../cxx/services/src/backpropagation_queue_wrapper.cc
+TRAINER_SOURCES += ../cxx/services/src/sparse_net_optimizer.cc ../cxx/services/src/sparse_net_approximizer.cc
+HELPER_SOURCES =  ../cxx/models/src/neuron_info.cc ../cxx/models/src/transfer_function.cc
+
+SERVER_SOURCES = ../cxx/services/src/deep_learning_server.cc
+
+LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(SERVER_SOURCES) $(HELPER_SOURCES)
+LIBRARY_OBJECTS = $(subst ../cxx/gen/,,$(GENERATED_SOURCES:.cc=.o))
+LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(BUILDER_SOURCES:.cc=.o))
+LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(SOLVER_SOURCES:.cc=.o))
+LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(SERVER_SOURCES:.cc=.o))
+LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(TRAINER_SOURCES:.cc=.o)))
+LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(HELPER_SOURCES:.cc=.o)))
+
+GENERATED_FILES_INCLUDE_DIR = -I ../cxx/gen
+SOURCES_INCLUDE_DIR = -I ../cxx
+
+.PHONY: build_library clean gen
+build_library: clean gen $(LIBRARY_OBJECTS)
+	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
+
+##########################################################################################################
+# Protocol bufffer
 ##########################################################################################################
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
@@ -23,49 +56,20 @@ gen: #as in generate models; Can't be bothered to type something like `make gene
 	protoc sparse_net.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
 	protoc solution.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
 	protoc training.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
-	protoc service.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
-	mkdir "../lib"
+	protoc deep_learning_service.proto --proto_path="../proto/" --cpp_out="../cxx/gen/" --grpc_out="../cxx/gen" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
 
 ##########################################################################################################
 # Compile
 ##########################################################################################################
-GENERATED_SOURCES = ../cxx/gen/common.pb.cc 
-GENERATED_SOURCES += ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc
-GENERATED_SOURCES += ../cxx/gen/training.pb.cc ../cxx/gen/service.pb.cc
-
-BUILDER_SOURCES = ../cxx/services/src/sparse_net_builder.cc ../cxx/services/src/neuron_router.cc
-BUILDER_SOURCES += ../cxx/services/src/solution_builder.cc ../cxx/services/src/partial_solution_builder.cc
-
-SOLVER_SOURCES = ../cxx/services/src/partial_solution_solver.cc ../cxx/services/src/solution_solver.cc
-
-TRAINER_SOURCES = ../cxx/models/src/dense_net_weight_initializer.cc ../cxx/services/src/weight_updater.cc
-TRAINER_SOURCES += ../cxx/services/src/backpropagation_queue_wrapper.cc
-TRAINER_SOURCES += ../cxx/services/src/sparse_net_optimizer.cc ../cxx/services/src/sparse_net_approximizer.cc
-
-HELPER_SOURCES =  ../cxx/models/src/neuron_info.cc ../cxx/models/src/transfer_function.cc
-
-LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(HELPER_SOURCES)
-LIBRARY_OBJECTS = $(subst ../cxx/gen/,,$(GENERATED_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(BUILDER_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(SOLVER_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(TRAINER_SOURCES:.cc=.o)))
-LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(HELPER_SOURCES:.cc=.o)))
-
-GENERATED_FILES_INCLUDE_DIR = -I ../cxx/gen
-SOURCES_INCLUDE_DIR = -I ../cxx
-
-LIB_OUTPUT = ../lib/libsparsenetlib.a
-
-.PHONY: build_library clean gen
-build_library: clean $(LIBRARY_OBJECTS)
-	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
+$(LIB_DIR):
+	@echo "Folder $(directory) does not exist"
+	mkdir -p $@
 
 $(LIBRARY_OBJECTS):
 	g++ -c $(LIBRARY_SOURCES) $(SOURCES_INCLUDE_DIR) $(GENERATED_FILES_INCLUDE_DIR) $(CPPFLAGS)
 
 clean:
-	rm -f *.o *.exe *.out ../lib/libsparsenetlib.a ../lib/libsparsenetlib.so
-
+	rm -f *.o *.exe *.out ../lib/libsparsenetlib.a ../lib/libsparsenetlib.so ../cxx/gen/*.cc ../cxx/gen/*.h
 
 ##########################################################################################################
 # Testing
