@@ -94,6 +94,22 @@ message Service_slot{
   Data_set test_set = 13;
 }
 
+/**
+ * @brief      Service hyperparameters describe the context in which deep learning services
+ *             operate. It contains all the neccessary set of variables to function in the 
+ *             context of deep learning. System relevant parameters like the number of working threads
+ *             are decided from the server configuration.
+ */
+message Service_hyperparameters{
+  double step_size = 10;
+  uint32 minibatch_size = 11;
+  uint32 memory_truncation = 12;
+
+  double alpha = 21;
+  double gamma = 22;
+  double epsilon = 23; /* very small positive value almost greater, than double_literal(0.0) */
+  double lambda = 24;
+};
 
 /**
  * @brief      Describes a Rafko Deep Learning Service

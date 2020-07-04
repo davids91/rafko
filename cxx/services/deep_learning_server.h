@@ -29,7 +29,7 @@ namespace sparse_net_library{
  */
 class Deep_learning_server final : public Rafko_deep_learning::Service{
 public:
-    ~Service();
+    ~Deep_learning_server();
     ::grpc::Status add_slot(::grpc::ServerContext* context, ::grpc::ServerReader< ::sparse_net_library::Service_slot>* reader, ::sparse_net_library::Slot_status* response);
     ::grpc::Status update_slot(::grpc::ServerContext* context, ::grpc::ServerReader< ::sparse_net_library::Service_slot>* reader, ::sparse_net_library::Slot_status* response);
     ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReader< ::sparse_net_library::Slot_request>* reader, ::sparse_net_library::Slot_status* response);
