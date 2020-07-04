@@ -1,5 +1,7 @@
 # Makefile
-LIBS = `pkg-config --cflags --libs protobuf grpc` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
+LIBS = `pkg-config --cflags --libs protobuf grpc++` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
+LIB_DIR = ../lib
+LIB_OUTPUT = $(LIB_DIR)/libsparsenetlib.a
 
 DEBUG_FLAGS = -DNDEBUG #no debug
 #DEBUG_FLAGS = -g #debug information added
@@ -8,10 +10,7 @@ DEBUG_FLAGS = -DNDEBUG #no debug
 #DEBUG_FLAGS += -fsanitize=address #address sanitizer check
 #DEBUG_FLAGS += -static-libasan #enables debug data to be shown in valgrind and gdb with addresssanitizer
 CPPFLAGS = -Wall $(LIBS) -std=c++14 $(DEBUG_FLAGS)
-CPPFLAGS_TEST = -Wall -std=c++14 -L../lib/ -lsparsenetlib $(DEBUG_FLAGS)
-
-LIB_DIR = ../lib
-LIB_OUTPUT = $(LIB_DIR)/libsparsenetlib.a
+CPPFLAGS_DEPLOY = $(CPPFLAGS) -L$(LIB_DIR) -lsparsenetlib
 
 ##########################################################################################################
 # Source files
@@ -30,6 +29,8 @@ HELPER_SOURCES =  ../cxx/models/src/neuron_info.cc ../cxx/models/src/transfer_fu
 
 SERVER_SOURCES = ../cxx/services/src/deep_learning_server.cc
 
+MAINFRAME_SOURCES = ../cxx/rafko_deep_learning_mainframe.cc
+
 LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(SERVER_SOURCES) $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst ../cxx/gen/,,$(GENERATED_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(BUILDER_SOURCES:.cc=.o))
@@ -38,10 +39,15 @@ LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(SERVER_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(TRAINER_SOURCES:.cc=.o)))
 LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(HELPER_SOURCES:.cc=.o)))
 
+MAINFRAME_OBJECTS = $(subst ../cxx/,,$(MAINFRAME_SOURCES:.cc=.o))
+
 GENERATED_FILES_INCLUDE_DIR = -I ../cxx/gen
 SOURCES_INCLUDE_DIR = -I ../cxx
 
 .PHONY: build_library clean gen
+build_mainframe: $(LIB_OUTPUT)
+	g++ $(GENERATED_SOURCES) $(SERVER_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o rafko_mainframe
+
 build_library: clean gen $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
 
@@ -98,14 +104,13 @@ TEST_LOOPS = 100
 
 .PHONY: test build-tests run-tests test-solution-builder test-only loop-tests
 $(TEST_RESULT): $(TEST_OBJECTS)
-	@rm -f $(TEST_RESULT)
-	g++ $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 
 test: clean build_library
 	make run-tests
 
 test-only: $(TEST_OBJECTS)
-	g++ $(TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 	make run-tests
 
 run-tests: $(TEST_RESULT)
@@ -116,12 +121,12 @@ loop-tests:
 
 test-solution-builder: clean build_library
 	@rm -f $(TEST_RESULT)
-	g++ $(TEST_BASE) ../cxx/test/solution_builder_test.cc ../cxx/test/neuron_router_test.cc $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_BASE) ../cxx/test/solution_builder_test.cc ../cxx/test/neuron_router_test.cc $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 	./$(TEST_RESULT)
 
 test-opt: clean build_library #as in optimization or approximization
 	@rm -f $(TEST_RESULT)
-	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_TEST) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
 	./$(TEST_RESULT) [approximize]
 
 $(TEST_OBJECTS):

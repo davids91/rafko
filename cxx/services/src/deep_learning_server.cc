@@ -19,28 +19,32 @@
 
 #include "gen/common.pb.h"
 
-namespace sparse_net_library{
+namespace rafko_mainframe{
 
 void Deep_learning_server::loop(void){
   /* Go through the server slots */
   /* run each of them */
 }
 
-::grpc::Status Deep_learning_server::add_slot(::grpc::ServerContext* context, const ::sparse_net_library::Service_slot* request, ::sparse_net_library::Slot_response* response){
+::grpc::Status Deep_learning_server::add_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response){
   return ::grpc::Status::OK;
 }
 
-::grpc::Status Deep_learning_server::update_slot(::grpc::ServerContext* context, const ::sparse_net_library::Service_slot* request, ::sparse_net_library::Slot_response* response){
+::grpc::Status Deep_learning_server::update_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response){
   return ::grpc::Status::OK;
 }
 
-::grpc::Status Deep_learning_server::request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::sparse_net_library::Slot_response, ::sparse_net_library::Slot_request>* stream){
+::grpc::Status Deep_learning_server::request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response, ::rafko_mainframe::Slot_request>* stream){
   return ::grpc::Status::OK;
 }
 
-::grpc::Status Deep_learning_server::get_network(::grpc::ServerContext* context, const ::sparse_net_library::Slot_request* request, ::sparse_net_library::SparseNet* response){
+::grpc::Status Deep_learning_server::get_network(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::sparse_net_library::SparseNet* response){
   return ::grpc::Status::OK;
 }
 
+Deep_learning_server::~Deep_learning_server(void){
+  server_slots.clear(); 
+}
 
-} /* namespace sparse_net_library */
+
+} /* namespace rafko_mainframe */

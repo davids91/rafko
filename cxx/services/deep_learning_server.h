@@ -23,7 +23,10 @@
 
 #include "models/server_slot.h"
 
-namespace sparse_net_library{
+namespace rafko_mainframe{
+
+using std::vector;
+using std::unique_ptr;
 
 /**
  * @brief      This class describes a server for deep learning related tasks. The supported operations are described in
@@ -32,10 +35,16 @@ namespace sparse_net_library{
 class Deep_learning_server final : public Rafko_deep_learning::Service{
 public:
   ~Deep_learning_server(void);
-  ::grpc::Status add_slot(::grpc::ServerContext* context, const ::sparse_net_library::Service_slot* request, ::sparse_net_library::Slot_response* response);
-  ::grpc::Status update_slot(::grpc::ServerContext* context, const ::sparse_net_library::Service_slot* request, ::sparse_net_library::Slot_response* response);
-  ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::sparse_net_library::Slot_response, ::sparse_net_library::Slot_request>* stream);
-  ::grpc::Status get_network(::grpc::ServerContext* context, const ::sparse_net_library::Slot_request* request, ::sparse_net_library::SparseNet* response);
+  Deep_learning_server(void){}
+  Deep_learning_server(const Deep_learning_server& other) = delete;/* Copy constructor */
+  Deep_learning_server(Deep_learning_server&& other) = delete; /* Move constructor */
+  Deep_learning_server& operator=(const Deep_learning_server& other) = delete; /* Copy assignment */
+  Deep_learning_server& operator=(Deep_learning_server&& other) = delete; /* Move assignment */
+
+  ::grpc::Status add_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response);
+  ::grpc::Status update_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response);
+  ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response, ::rafko_mainframe::Slot_request>* stream);
+  ::grpc::Status get_network(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::sparse_net_library::SparseNet* response);
 
   /**
    * @brief      The main loop of the server to run to be able to provide the service
@@ -47,6 +56,6 @@ private:
 
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_mainframe */
 
 #endif /* DEEP_LEARNING_SERVER_H */

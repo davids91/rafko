@@ -26,6 +26,8 @@ namespace sparse_net_library{
 
 using google::protobuf::Arena;
 
+using rafko_mainframe::Service_hyperparameters;
+
 class Service_context{
 public:
   uint16 get_max_solve_threads(void) const{

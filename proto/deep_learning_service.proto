@@ -18,7 +18,7 @@
 syntax = "proto3";
 option cc_enable_arenas = true;
 
-package sparse_net_library;
+package rafko_mainframe;
 
 import "common.proto";
 import "sparse_net.proto";
@@ -94,10 +94,10 @@ message Service_slot{
   string slot_id = 1; /* A unique identifier for each service slot */
   uint32 state = 2; /* A bitfield storing 0 or 1 at the positions given in enum @Slot_state_values, except when everything is fine, then the value @SERV_SLOT_OK is used */
   Slot_type type = 10;
-  SparseNet network = 11;
-  Data_set training_set = 12;
-  Data_set test_set = 13;
-  weight_updaters weight_updater = 14;
+  sparse_net_library.SparseNet network = 11;
+  sparse_net_library.Data_set training_set = 12;
+  sparse_net_library.Data_set test_set = 13;
+  sparse_net_library.weight_updaters weight_updater = 14;
 }
 
 /**
@@ -124,5 +124,5 @@ service Rafko_deep_learning{
   rpc add_slot(Service_slot) returns (Slot_response) {} /* If possible adds a new slot into the server, then retudrns the status and ID of it */
   rpc update_slot(Service_slot) returns (Slot_response) {} /* Modify existing slot; the ID must be provided */
   rpc request_action(stream Slot_request) returns (stream Slot_response) {} /* Make requests for the target service_slot, and return with the status after each request is completed */
-  rpc get_network(Slot_request) returns (SparseNet) {} /* Provides the Loaded network into the slot */
+  rpc get_network(Slot_request) returns (sparse_net_library.SparseNet) {} /* Provides the Loaded network into the slot */
 }

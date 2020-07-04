@@ -105,7 +105,7 @@ public:
     weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
   };
 
-  ~Sparse_net_optimizer(){ solvers.clear(); }
+  ~Sparse_net_optimizer(void){ solvers.clear(); }
   Sparse_net_optimizer(const Sparse_net_optimizer& other) = delete;/* Copy constructor */
   Sparse_net_optimizer(Sparse_net_optimizer&& other) = delete; /* Move constructor */
   Sparse_net_optimizer& operator=(const Sparse_net_optimizer& other) = delete; /* Copy assignment */
@@ -120,14 +120,14 @@ public:
   /**
    * @brief      Gives back the error of the configured Network based on the training dataset
    */
-  sdouble32 get_train_error() const{
+  sdouble32 get_train_error(void) const{
    return train_set.get_error();
   }
 
   /**
    * @brief      Gives back the error of the configured Network based on the test set
    */
-  sdouble32 get_test_error() const{
+  sdouble32 get_test_error(void) const{
    return test_set.get_error();
   }
 

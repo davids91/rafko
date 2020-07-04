@@ -20,8 +20,11 @@
 
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
+#include "gen/deep_learning_service.pb.h"
 
-namespace sparse_net_library{
+namespace rafko_mainframe{
+
+using sparse_net_library::SparseNet;
 
 /**
  * @brief      This class describes a common ancestor and interface of whatever 
@@ -69,9 +72,9 @@ public:
    *
    * @return     The status, described in the file @proto/deep_learning_service.proto
    */
-  virtual Slot_status get_status() const = 0;
+  virtual Slot_response get_status() const = 0;
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_mainframe */
 
 #endif /* SERVER_SLOT_H */
