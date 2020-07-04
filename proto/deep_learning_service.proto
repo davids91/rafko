@@ -17,7 +17,6 @@
 
 syntax = "proto3";
 option cc_enable_arenas = true;
-option cc_generic_services = true;
 
 package sparse_net_library;
 
@@ -94,6 +93,7 @@ message Service_slot{
   Data_set training_set = 12;
   Data_set test_set = 13;
 }
+
 
 /**
  * @brief      Describes a Rafko Deep Learning Service
