@@ -49,13 +49,17 @@ enum Slot_state_values{
  */
 enum Slot_action{
   SERV_SLOT_NOOP = 0;
-  SERV_SLOT_RUN_ONCE = 1;
-  SERV_SLOT_TO_START = 2;
-  SERV_SLOT_TO_STOP = 3;
-  SERV_SLOT_TO_RESET = 4;
-  SERV_SLOT_TO_TAKEOVER_NET = 5;
-  SERV_SLOT_TO_APPEND_TRAINING_SET = 6;
-  SERV_SLOT_TO_APPEND_TEST_SET = 7;
+  SERV_SLOT_RUN_ONCE = 1; /* Run network one time. Uses the attached @data_stream of the request */
+  SERV_SLOT_TO_START = 2; /* This action makes the server call the @loop of the @target_slot_id every time its @loop is called */
+  SERV_SLOT_TO_STOP = 3; /* This action disables the behavior introduced by @SERV_SLOT_TO_START */
+  SERV_SLOT_TO_RESET = 4; /* Depending on the slot, it could reset the attached networks data, the test/training error scores or whatever is implemented in the slot's @reset function */
+  SERV_SLOT_TO_TAKEOVER_NET = 5; /* Takes a copy from the source slot, and overwrites the network in the target slot in it */
+  SERV_SLOT_TO_APPEND_TRAINING_SET = 6; /* Adds the provided data_stream as an element of the training set attached to the server slot */
+  SERV_SLOT_TO_APPEND_TEST_SET = 7; /* Adds the provided data_stream as an element of the test set attached to the server slot */
+  SERV_SLOT_TO_DISTILL_NETWORK = 8; /* For the network attached to the slot: removes the zero, or insignificantly small weights with connections. */
+  /*!Note: The removal/duplication threshold is based on the @beta parameter in the service hyperparameters */
+  SERV_SLOT_TO_AMPLIFY_NETWORK = 9; /* For the network attached to the slot: duplicates the significant neurons. */
+  /*!Note: A neuron proves to be significant if the output of it is paired with greater weights, than other neurons.*/
   SERV_SLOT_TO_DIE = 65536;
 }
 
@@ -126,10 +130,11 @@ message Service_hyperparameters{
   uint32 minibatch_size = 11;
   uint32 memory_truncation = 12;
 
-  double alpha = 21;
+  double alpha = 20;
+  double beta = 21;
   double gamma = 22;
-  double epsilon = 23; /* very small positive value almost greater, than zero */
-  double lambda = 24;
+  double epsilon = 24; /* very small positive value almost greater, than zero */
+  double lambda = 31;
 };
 
 /**

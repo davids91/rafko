@@ -47,6 +47,11 @@ public:
   virtual void loop(void) = 0;
 
   /**
+   * @brief      Resets the object.
+   */
+  virtual void reset(void) = 0;
+
+  /**
    * @brief      Update the currently loaded network with the provided one
    *
    * @param[in]  net   The network to overwrite the current one

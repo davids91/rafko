@@ -62,6 +62,10 @@ public:
     return hypers.alpha();
   }
 
+  sdouble32 get_beta(void) const{
+    return hypers.beta();
+  }
+
   sdouble32 get_gamma(void) const{
     return hypers.gamma();
   }
@@ -114,6 +118,11 @@ public:
     return *this;
   }
 
+  Service_context& set_beta(sdouble32 beta_){
+    hypers.set_beta(beta_);
+    return *this;
+  }
+
   Service_context& set_gamma(sdouble32 gamma_){
     hypers.set_gamma(gamma_);
     return *this;
@@ -132,6 +141,18 @@ public:
   Service_context& set_hypers(Service_hyperparameters hypers_){
     hypers = hypers_;
     return *this;
+  }
+
+  Service_context(void){
+    hypers.set_step_size(double_literal(1e-6));
+    hypers.set_minibatch_size(64);
+    hypers.set_memory_truncation(2);
+
+    hypers.set_alpha(double_literal(1.6732));
+    hypers.set_beta(double_literal(1e-5));
+    hypers.set_gamma(double_literal(0.9));
+    hypers.set_epsilon(1e-15); /* very small positive value almost greater, than double_literal(0.0) */
+    hypers.set_lambda(double_literal(1.0507));
   }
 
 private:
