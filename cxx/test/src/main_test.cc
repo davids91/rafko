@@ -34,8 +34,6 @@ int main( int argc, char* argv[] ) {
 
 namespace sparse_net_library_test{
 
-using sparse_net_library::sint32;
-using sparse_net_library::sdouble32;
 using sparse_net_library::Transfer_function;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::Input_synapse_interval;

@@ -28,8 +28,7 @@
 namespace sparse_net_library_test {
 
 using std::unique_ptr;
-using sparse_net_library::uint32;
-using sparse_net_library::sdouble32;
+
 using sparse_net_library::Data_set;
 using sparse_net_library::Data_aggregate;
 using sparse_net_library::Cost_function_mse;

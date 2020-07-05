@@ -33,8 +33,6 @@ namespace sparse_net_library_test {
   using std::make_unique;
   using std::vector;
 
-  using sparse_net_library::uint32;
-  using sparse_net_library::sint32;
   using sparse_net_library::SparseNet;
   using sparse_net_library::Sparse_net_builder;
   using sparse_net_library::Index_synapse_interval;

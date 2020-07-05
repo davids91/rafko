@@ -36,6 +36,8 @@ using std::atomic;
 using std::thread;
 using std::unique_ptr;
 
+using rafko_mainframe::Service_context;
+
 /**
  * @brief      Base implementation for updating weights for netowrks based on weight gradients
  */

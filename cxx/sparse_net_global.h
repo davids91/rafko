@@ -18,8 +18,6 @@
 #ifndef sparse_net_global_H
 #define sparse_net_global_H
 
-namespace sparse_net_library {
-
 /**
  * GLOBAL TYPES
  */
@@ -37,5 +35,4 @@ typedef sdouble32* p_sdouble32;
 
 #define double_literal(number) (number) /* double precision floating point number literals should have these wrappers to make transition to float, or long literals easier */
 
-} /* namespace sparse_net_library */
 #endif /* defined sparse_net_global_H */

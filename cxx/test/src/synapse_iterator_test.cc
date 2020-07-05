@@ -28,8 +28,6 @@ namespace sparse_net_library_test {
 using std::abs;
 using std::vector;
 
-using sparse_net_library::uint32;
-using sparse_net_library::sint32;
 using sparse_net_library::Neuron;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Input_synapse_interval;

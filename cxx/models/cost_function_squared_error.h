@@ -26,6 +26,8 @@ namespace sparse_net_library{
 
 using std::vector;
 
+using rafko_mainframe::Service_context;
+
 /**
  * @brief      Error function handling and utilities for Squared Error: C0 = ((y-y')^2)/2 */
 class Cost_function_squared_error : public Cost_function{

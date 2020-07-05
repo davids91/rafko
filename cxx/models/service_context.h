@@ -22,7 +22,7 @@
 #include "gen/common.pb.h"
 #include "gen/deep_learning_service.pb.h"
 
-namespace sparse_net_library{
+namespace rafko_mainframe{
 
 using google::protobuf::Arena;
 
@@ -163,6 +163,6 @@ private:
   Service_hyperparameters hypers = Service_hyperparameters();
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_mainframe */
 
 #endif /* SERVICE_CONTEXT_H */

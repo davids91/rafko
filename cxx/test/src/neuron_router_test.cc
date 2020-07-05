@@ -32,8 +32,6 @@ using std::make_unique;
 using std::deque;
 using std::vector;
 
-using sparse_net_library::uint16;
-using sparse_net_library::uint32;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Neuron_router;

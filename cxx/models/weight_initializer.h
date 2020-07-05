@@ -26,9 +26,11 @@
 
 namespace sparse_net_library {
 
-  using std::min;
-  using std::max;
-  using std::numeric_limits;
+using std::min;
+using std::max;
+using std::numeric_limits;
+
+using rafko_mainframe::Service_context;
 
 class Weight_initializer
 {

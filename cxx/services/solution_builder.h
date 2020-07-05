@@ -33,6 +33,7 @@
 namespace sparse_net_library {
 
 using std::vector;
+using rafko_mainframe::Service_context;
 
 /**
  * @brief      Front-end to create a @Soltuion to solve a @SparseNet. @max_solve_threads

@@ -28,6 +28,8 @@ namespace sparse_net_library {
 using std::min;
 using std::max;
 
+using rafko_mainframe::Service_context;
+
 Dense_net_weight_initializer::Dense_net_weight_initializer(bool seed){
   if(seed)srand(static_cast<uint32>(time(nullptr)));
 }

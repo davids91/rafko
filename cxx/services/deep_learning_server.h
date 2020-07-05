@@ -21,7 +21,7 @@
 #include "sparse_net_global.h"
 #include "gen/deep_learning_service.grpc.pb.h"
 
-#include "models/server_slot.h"
+#include "services/server_slot.h"
 
 namespace rafko_mainframe{
 

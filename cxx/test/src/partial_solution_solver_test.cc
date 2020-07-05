@@ -32,11 +32,6 @@ namespace sparse_net_library_test {
 using std::vector;
 using std::reference_wrapper;
 
-using sparse_net_library::sdouble32;
-using sparse_net_library::uint8;
-using sparse_net_library::uint16;
-using sparse_net_library::uint32;
-using sparse_net_library::sint32;
 using sparse_net_library::transfer_functions;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::Data_ringbuffer;

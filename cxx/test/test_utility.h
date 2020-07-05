@@ -32,13 +32,11 @@ namespace sparse_net_library_test {
 using std::vector;
 using std::unique_ptr;
 
-using sparse_net_library::uint32;
-using sparse_net_library::sdouble32;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Solution;
 using sparse_net_library::Partial_solution;
-using sparse_net_library::Service_context;
 using sparse_net_library::Data_aggregate;
+using rafko_mainframe::Service_context;
 
 /**
  * @brief      generates a partial partial_solution manually based on the Neural Network structure:

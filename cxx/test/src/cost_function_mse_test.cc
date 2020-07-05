@@ -25,9 +25,6 @@
 
 namespace sparse_net_library_test {
 
-using sparse_net_library::uint16;
-using sparse_net_library::uint32;
-using sparse_net_library::sdouble32;
 using sparse_net_library::Cost_function_mse;
 
 /*###############################################################################################

@@ -33,9 +33,6 @@ namespace sparse_net_library_test {
   using std::make_unique;
   using std::vector;
 
-  using sparse_net_library::sint32;
-  using sparse_net_library::uint32;
-  using sparse_net_library::sdouble32;
   using sparse_net_library::Neuron;
   using sparse_net_library::SparseNet;
   using sparse_net_library::transfer_functions;

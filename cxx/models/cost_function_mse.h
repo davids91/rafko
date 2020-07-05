@@ -26,6 +26,8 @@ namespace sparse_net_library{
 
 using std::vector;
 
+using rafko_mainframe::Service_context;
+
 /**
  * @brief      Error function handling and utilities for MSE: C0 = 1/2n(y-y')^2 */
 class Cost_function_mse : public Cost_function{

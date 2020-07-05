@@ -27,6 +27,7 @@
 namespace sparse_net_library{
 
 using std::vector;
+using rafko_mainframe::Service_context;
 
 /**
  * @brief      Transfer function handling and utilities

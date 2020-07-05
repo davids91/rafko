@@ -25,6 +25,8 @@
 
 namespace sparse_net_library{
 
+using rafko_mainframe::Service_context;
+
 /**
  * @brief      Wrapper function to generate Backpropagation_queue objects from @SparseNet
  *             objects

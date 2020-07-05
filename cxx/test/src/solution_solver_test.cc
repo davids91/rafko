@@ -38,14 +38,10 @@ namespace sparse_net_library_test{
 using std::reference_wrapper;
 using std::unique_ptr;
 using std::make_unique;
+
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::SparseNet;
-using sparse_net_library::uint8;
-using sparse_net_library::uint16;
-using sparse_net_library::uint32;
-using sparse_net_library::sint32;
-using sparse_net_library::sdouble32;
 using sparse_net_library::Data_ringbuffer;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Partial_solution_solver;
@@ -56,9 +52,9 @@ using sparse_net_library::Input_synapse_interval;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Transfer_function;
 using sparse_net_library::COST_FUNCTION_MSE;
-using sparse_net_library::Service_context;
 using sparse_net_library::NETWORK_RECURRENCE_TO_SELF;
 using sparse_net_library::NETWORK_RECURRENCE_TO_LAYER;
+using rafko_mainframe::Service_context;
 
 /*###############################################################################################
  * Testing if the solution solver produces a correct output, given a manually constructed

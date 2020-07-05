@@ -36,6 +36,8 @@ using std::mutex;
 using std::lock_guard;
 using std::thread;
 
+using rafko_mainframe::Service_context;
+
 /**
  * @brief      Error function handling and utilities, provides a hook for a computation
  *             function to be run on every sample by feature.

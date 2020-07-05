@@ -4,6 +4,8 @@
 
 namespace sparse_net_library{
 
+using rafko_mainframe::Service_context;
+
 void Weight_updater::calculate_velocity(const vector<unique_ptr<atomic<sdouble32>>>& gradients){
   uint32 weight_index = 0;
   const uint32 weight_number = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());

@@ -37,9 +37,6 @@ using std::flush;
 using std::chrono::steady_clock;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
-using sparse_net_library::uint32;
-using sparse_net_library::sint32;
-using sparse_net_library::sdouble32;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::COST_FUNCTION_MSE;
@@ -53,12 +50,12 @@ using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
 using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
 using sparse_net_library::WEIGHT_UPDATER_NESTEROV;
 using sparse_net_library::Sparse_net_approximizer;
-using sparse_net_library::Service_context;
 using sparse_net_library::Data_aggregate;
 using sparse_net_library::Function_factory;
 using sparse_net_library::Solution;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::Solution_solver;
+using rafko_mainframe::Service_context;
 
 /*###############################################################################################
  * Testing if the gradients are added to the fragment correctly
