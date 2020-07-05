@@ -45,6 +45,8 @@ public:
   ::grpc::Status update_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response);
   ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response, ::rafko_mainframe::Slot_request>* stream);
   ::grpc::Status get_network(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::sparse_net_library::SparseNet* response);
+  ::grpc::Status build_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response);
+  ::grpc::Status build_one_neuron_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response);
 
   /**
    * @brief      The main loop of the server to run to be able to provide the service

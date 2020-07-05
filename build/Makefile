@@ -2,6 +2,7 @@
 LIBS = `pkg-config --cflags --libs protobuf grpc++` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
 LIB_DIR = ../lib
 LIB_OUTPUT = $(LIB_DIR)/libsparsenetlib.a
+MAINFRAME_OUTPUT = rafko_mainframe
 
 DEBUG_FLAGS = -DNDEBUG #no debug
 #DEBUG_FLAGS = -g #debug information added
@@ -46,7 +47,7 @@ SOURCES_INCLUDE_DIR = -I ../cxx
 
 .PHONY: build_library clean gen
 build_mainframe: $(LIB_OUTPUT) $(GENERATED_SOURCES)
-	g++ $(GENERATED_SOURCES) $(SERVER_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o rafko_mainframe
+	g++ $(GENERATED_SOURCES) $(SERVER_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(MAINFRAME_OUTPUT)
 
 $(LIB_OUTPUT): clean gen $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
@@ -80,7 +81,6 @@ clean:
 ##########################################################################################################
 # Testing
 ##########################################################################################################
-
 TEST_BASE_SOURCE = ../cxx/test/src/main_test.cc
 TEST_SOURCES = $(TEST_BASE_SOURCE)
 TEST_SOURCES += ../cxx/test/src/net_builder_test.cc ../cxx/test/src/solution_builder_test.cc
@@ -104,13 +104,13 @@ TEST_LOOPS = 100
 
 .PHONY: test build-tests run-tests test-solution-builder test-only loop-tests
 $(TEST_RESULT): $(TEST_OBJECTS)
-	g++ $(TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 
-test: clean build_library
+test: clean gen $(LIB_OUTPUT)
 	make run-tests
 
 test-only: $(TEST_OBJECTS)
-	g++ $(TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 	make run-tests
 
 run-tests: $(TEST_RESULT)
@@ -119,14 +119,14 @@ run-tests: $(TEST_RESULT)
 loop-tests:
 	while true; do ./$(TEST_RESULT) --use-colour yes; done
 
-test-solution-builder: clean build_library
+test-solution-builder: clean gen $(LIB_OUTPUT)
 	@rm -f $(TEST_RESULT)
-	g++ $(TEST_BASE) ../cxx/test/solution_builder_test.cc ../cxx/test/neuron_router_test.cc $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_BASE) ../cxx/test/solution_builder_test.cc ../cxx/test/neuron_router_test.cc $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 	./$(TEST_RESULT)
 
-test-opt: clean build_library #as in optimization or approximization
+test-opt: clean gen $(LIB_OUTPUT) #as in optimization or approximization
 	@rm -f $(TEST_RESULT)
-	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) $(CPPFLAGS) -o $(TEST_RESULT)
+	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 	./$(TEST_RESULT) [approximize]
 
 $(TEST_OBJECTS):

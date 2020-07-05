@@ -57,6 +57,8 @@ using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Transfer_function;
 using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::Service_context;
+using sparse_net_library::NETWORK_RECURRENCE_TO_SELF;
+using sparse_net_library::NETWORK_RECURRENCE_TO_LAYER;
 
 /*###############################################################################################
  * Testing if the solution solver produces a correct output, given a manually constructed
@@ -279,9 +281,9 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   /* Build the above described net */
   Sparse_net_builder net_builder = Sparse_net_builder();
   net_builder.input_size(5).expected_input_range(double_literal(5.0)).cost_function(COST_FUNCTION_MSE);
-  if(0x01 == recurrence)
+  if(NETWORK_RECURRENCE_TO_SELF == recurrence)
     net_builder.set_recurrence_to_self();
-  else if(0x02 == recurrence)
+  else if(NETWORK_RECURRENCE_TO_LAYER == recurrence)
     net_builder.set_recurrence_to_layer();
 
   unique_ptr<SparseNet> net(net_builder.dense_layers(net_structure));

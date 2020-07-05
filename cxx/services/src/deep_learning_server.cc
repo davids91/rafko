@@ -42,6 +42,15 @@ void Deep_learning_server::loop(void){
   return ::grpc::Status::OK;
 }
 
+::grpc::Status Deep_learning_server::build_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response){
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status Deep_learning_server::build_one_neuron_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response){
+  return ::grpc::Status::OK;
+}
+
+
 Deep_learning_server::~Deep_learning_server(void){
   server_slots.clear(); 
 }

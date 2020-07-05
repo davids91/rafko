@@ -177,7 +177,7 @@ public:
    * @return     builder reference for chaining
    */
   Sparse_net_builder& set_recurrence_to_self(void){
-    recurrence = 0x01;
+    recurrence = NETWORK_RECURRENCE_TO_SELF;
     return *this;
   }
 
@@ -188,7 +188,7 @@ public:
    * @return     builder reference for chaining
    */
   Sparse_net_builder& set_recurrence_to_layer(void){
-    recurrence = 0x02;
+    recurrence = NETWORK_RECURRENCE_TO_LAYER;
     return *this;
   }
 
@@ -241,7 +241,7 @@ private:
   bool is_neuron_array_set = false;
   bool is_allowed_transfer_functions_by_layer_set = false;
   bool is_cost_function_set = false;
-  uint32 recurrence = 0x0;
+  uint32 recurrence = NETWORK_RECURRENCE_UNKNOWN;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.

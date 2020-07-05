@@ -23,6 +23,17 @@ package sparse_net_library;
 
 import "common.proto";
 
+/** @brief      Network basically describes the connections a recurrent network has
+ *              with the past runs. This enumeration is for a utility which is for
+ *              testing purposes only. Recurrences described here affect
+ *              only the rpc @build_network in the service @Rafko_deep_learning
+ */
+enum Network_recurrence{
+  NETWORK_RECURRENCE_UNKNOWN = 0;
+  NETWORK_RECURRENCE_TO_SELF = 1;
+  NETWORK_RECURRENCE_TO_LAYER = 2;
+}
+
 /** @brief      Takes input, assignes weights to them and processes
  *              the weigthed sums with a bias, transfer function and a memory filter.
  */

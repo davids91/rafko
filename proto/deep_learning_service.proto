@@ -78,6 +78,19 @@ message Slot_request{
   Neural_io_stream data_stream = 20; /* May be a part of a data-set or a run-once request */
 }
 
+/** @brief      Provides the parameters for the rpc @build_network in the service @Rafko_deep_learning
+ *              This message is a utility for a rpc which is planned to be in the service temporarily.
+ */
+message Build_network_request{
+  string target_slot_id = 2;
+  uint32 input_size = 10;
+  double expected_input_range = 11;
+  sparse_net_library.cost_functions cost_function = 12;
+  sparse_net_library.weight_updaters weight_updater = 13;
+  repeated sparse_net_library.transfer_functions allowed_transfers_by_layer = 14;
+  repeated uint32 layer_sizes = 15;
+}
+
 /** @brief      Requests to a server reply with the following response package. Some fields may
  *              be left blank.
  */
@@ -126,5 +139,8 @@ service Rafko_deep_learning{
   rpc add_slot(Service_slot) returns (Slot_response) {} /* If possible adds a new slot into the server, then retudrns the status and ID of it */
   rpc update_slot(Service_slot) returns (Slot_response) {} /* Modify existing slot; the ID must be provided */
   rpc request_action(stream Slot_request) returns (stream Slot_response) {} /* Make requests for the target service_slot, and return with the status after each request is completed */
+
   rpc get_network(Slot_request) returns (sparse_net_library.SparseNet) {} /* Provides the Loaded network into the slot */
+  rpc build_network(Build_network_request) returns (Slot_response) {} /* Builds a Neural network with the given parameters into the provided slot */
+  rpc build_one_neuron_network(Build_network_request) returns (Slot_response) {} /* Builds a 1 Neuron network into the provided slot. Ignores @layer_sizes */
 }

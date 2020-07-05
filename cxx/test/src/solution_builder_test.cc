@@ -41,6 +41,8 @@ using sparse_net_library::Solution;
 using sparse_net_library::Solution_solver;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::COST_FUNCTION_MSE;
+using sparse_net_library::NETWORK_RECURRENCE_TO_SELF;
+using sparse_net_library::NETWORK_RECURRENCE_TO_LAYER;
 
 /*###############################################################################################
  * Testing Solution generation using the @Sparse_net_builder and the @Solution_builder
@@ -53,9 +55,9 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
     .output_neuron_number(2).arena_ptr(arena)
     .cost_function(COST_FUNCTION_MSE);
 
-  if(0x01 == recursion){
+  if(NETWORK_RECURRENCE_TO_SELF == recursion){
     builder.set_recurrence_to_self();
-  }else if(0x02 == recursion){
+  }else if(NETWORK_RECURRENCE_TO_LAYER == recursion){
     builder.set_recurrence_to_layer();
   }
 
