@@ -17,7 +17,8 @@
 
 syntax = "proto3";
 option cc_enable_arenas = true;
-
+option java_package = "org.rafko.sparse_net_library";
+option java_outer_classname = "RafkoSparseNet";
 package sparse_net_library;
 
 import "common.proto";

@@ -16,7 +16,9 @@
  */
 
 syntax = "proto3";
-
+option cc_enable_arenas = true;
+option java_package = "org.rafko.sparse_net_library";
+option java_outer_classname = "RafkoCommon";
 package sparse_net_library;
 
 /** @brief      Indexes of the transfer function a neuron is able to use

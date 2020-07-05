@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="control.DashboardController">
+   <children>
+      <TextField fx:id="serverAddress_textField" layoutX="14.0" layoutY="14.0" text="127.0.0.1:50052" GridPane.columnIndex="1" />
+      <Label layoutY="18.0" text="Server Address" />
+      <Button fx:id="connect_btn" layoutX="163.0" layoutY="14.0" mnemonicParsing="false" text="Create Client" GridPane.columnIndex="2" />
+      <Label text="Server status:" GridPane.rowIndex="3" />
+      <Label fx:id="serverStatus_label" maxHeight="64.0" text="==UNKNOWN==" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+      <Button fx:id="test_btn" disable="true" mnemonicParsing="false" onAction="#ping_server" text="Test Connection" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+   </children>
+   <columnConstraints>
+      <ColumnConstraints />
+      <ColumnConstraints />
+      <ColumnConstraints />
+      <ColumnConstraints />
+   </columnConstraints>
+   <rowConstraints>
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints />
+   </rowConstraints>
+</GridPane>

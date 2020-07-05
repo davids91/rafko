@@ -45,10 +45,10 @@ GENERATED_FILES_INCLUDE_DIR = -I ../cxx/gen
 SOURCES_INCLUDE_DIR = -I ../cxx
 
 .PHONY: build_library clean gen
-build_mainframe: $(LIB_OUTPUT)
+build_mainframe: $(LIB_OUTPUT) $(GENERATED_SOURCES)
 	g++ $(GENERATED_SOURCES) $(SERVER_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o rafko_mainframe
 
-build_library: clean gen $(LIBRARY_OBJECTS)
+$(LIB_OUTPUT): clean gen $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
 
 ##########################################################################################################

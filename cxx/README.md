@@ -15,8 +15,9 @@ providing services for:
   - The main focus of the framework is to train networks of previously unseen architectures, so it oftentimes encounters network architectures in which the optimization is sub-optimal or incorrect due to the complicated formulae and mathematical structure of it. Because of this a gradient approximation method is to be used, in which the gradients are approximated, instead of calculated.
 
 ## Dependencies: 
-
+The following dependencies are the ones development use, but that doesn't neccesarily mean that other versions can't be used. 
  - pkg-config
- - protocol buffers (proto3 compatible)
- - gRPC 
+ - protocol buffers 3.12.2
+ - gRPC 1.30.1
   - At the time of writing this [gRPC does not support WSL for C++](https://github.com/grpc/grpc/issues/23314). 
+  - Anyhoo if you install gRPC in your system you should be good to go, as its dependencies fulfill Rafkos.

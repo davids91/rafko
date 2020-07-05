@@ -17,6 +17,8 @@
 
 syntax = "proto3";
 option cc_enable_arenas = true;
+option java_package = "org.rafko.mainframe";
+option java_outer_classname = "RafkoDeepLearningService";
 
 package rafko_mainframe;
 
