@@ -2,3 +2,4 @@ lib/*
 build/*.o
 build/*.out
 build/rafko_mainframe
+build/run.log

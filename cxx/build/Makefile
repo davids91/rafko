@@ -120,7 +120,7 @@ run-tests: $(TEST_RESULT)
 	./$< --use-colour yes
 
 loop-tests:
-	while true; do ./$(TEST_RESULT) --use-colour yes; done
+	./loop-tests.sh
 
 test-solution-builder: clean gen $(LIB_OUTPUT)
 	@rm -f $(TEST_RESULT)

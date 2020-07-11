@@ -124,11 +124,30 @@ public:
   bool confirm_first_subset_element_ommitted(uint32 neuron_index){
     bool ret = false;
     if((0 < net_subset.size())&&(neuron_index == net_subset.front())){
-      (neuron_states[neuron_index])->store(0);
-      net_subset.pop_front();
+      omit_from_subset(neuron_index);
       ret = true;
     }
     return ret;
+  }
+
+  /**
+   * @brief      Resets the neurons in the subset for all but the ones provided in the 
+   *             argument. The list has to match the subset exactly, or the function 
+   *             throws an exception.
+   *
+   * @param[in]  the_front  The front
+   */
+  void reset_all_except(vector<uint32> the_front){
+    uint32 front_index = 0;
+    for(uint32 subset_index : net_subset){
+      if(the_front.size() == front_index)
+        break; /* Only go through the front, for checking. The remaining Neurons shall be resetted */
+      if(subset_index != the_front[front_index]){ /* The indices have to match */
+        throw new std::runtime_error("Subset mismatch!");
+      }else ++front_index;
+    }
+    /* This point is not reachable if there is a mismatch */
+    net_subset.resize(the_front.size()); /* This also means, that the front is an exact first part of the subset */
   }
 
   /**
@@ -255,6 +274,13 @@ private:
    * @param      visiting_next  The Next Neuron Candidate, which might be the same as the latest visit ( that means no candidates found to move to)
    */
   void add_neuron_into_subset(uint32 neuron_index);
+
+  /**
+   * @brief      Removes a Neuron and its dependants from the subset.
+   *
+   * @param[in]  neuron_index  The neuron index to remove from the subset
+   */
+  void omit_from_subset(uint32 neuron_index);
 
   /**
    * @brief      Decides the next Neuron to iterate to and increases the output layer iterator if needed

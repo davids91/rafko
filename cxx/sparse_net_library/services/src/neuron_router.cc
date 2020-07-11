@@ -80,7 +80,8 @@ void Neuron_router::collect_subset_thread(uint8 arg_max_solve_threads, sdouble32
     &&(net_subset_size_bytes/* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */ < arg_device_max_megabytes) /* Or there is enough collected Neurons for a Partial solution */
   ){
     visiting_next = get_next_neuron(visiting, strict);
-    add_neuron_into_subset(visiting.back());
+    if(visiting.back() == visiting_next)
+      add_neuron_into_subset(visiting.back());
     step(visiting, visiting_next);
   }
 }
@@ -100,17 +101,17 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
   ){
     Synapse_iterator<Input_synapse_interval> iter(net.neuron_array(visiting.back()).input_indices());
     expected_neuron_state = *neuron_states[visiting.back()];
-    number_of_processed_inputs = std::min(
-      static_cast<uint32>(*neuron_states[visiting.back()]),
-      neuron_number_of_inputs[visiting.back()]
-    );
     if(is_neuron_in_progress(visiting.back())){ /* If the Neuron is in progess still */
+      number_of_processed_inputs = std::min(
+        static_cast<uint32>(*neuron_states[visiting.back()]),
+        neuron_number_of_inputs[visiting.back()]
+      );
       iter.skim_terminatable([&](Input_synapse_interval input_synapse){
         if((start_input_index_from + input_synapse.interval_size()) < number_of_processed_inputs){
           ++start_synapse_iteration_from; /* Skip this synapse */
           start_input_index_from += input_synapse.interval_size();
-          return true;
-        }else return false;
+          return true; /* start_input_index_from was still smaller, than number_of_processed_inputs, so the synapse can be skipped */
+        }else return false; /* Can't skip anymore synapses, as Neuron state implies, current synapse is in progress */
       }); /* Skim through its input synapses */
     }
     number_of_processed_inputs = start_input_index_from;
@@ -155,12 +156,12 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
 void Neuron_router::add_neuron_into_subset(uint32 neuron_index){
   uint32 tmp_number = neuron_number_of_inputs[neuron_index];
   sdouble32 tmp_size = 0;
-
+  std::lock_guard<std::mutex> lock(net_subset_mutex);
   if(
+    /* (0 == (rand()%50))&& Uncomment this to test the roboustness of the network creation */
     is_neuron_solvable(neuron_index) /* If Neuron is solvable, and lock is successful */
     &&((neuron_states[neuron_index])->compare_exchange_strong(tmp_number,neuron_state_reserved_value(neuron_index)))
   ){ /* Push it into the Neuron subset */
-    std::lock_guard<std::mutex> lock(net_subset_mutex);
     for(uint32 subset_neuron_index : net_subset){
       if(subset_neuron_index == neuron_index){
         return;
@@ -202,27 +203,62 @@ void Neuron_router::step(vector<uint32>& visiting, uint32 visiting_next){
   } /* (1 == visiting.size()) */
 }
 
-  bool Neuron_router::is_neuron_without_dependency(uint32 neuron_index){
-    bool ret = true;
-    if(!is_neuron_processed(neuron_index)){
-      deque<uint32>::iterator neuron_in_subset = std::find(net_subset.begin(), net_subset.end(), neuron_index);
-      if(net_subset.end() != neuron_in_subset){ /* The Neuron must be included in the subset if it's not processed already to not have any dependencies */
-        /* The Neuron is not processed, but included in the subset. Check its inputs! */
-        Synapse_iterator<Input_synapse_interval>::iterate_terminatable(net.neuron_array(neuron_index).input_indices(),
-        [&](Input_synapse_interval input_synapse, sint32 synapse_input_index){
-          if(!is_neuron_processed(synapse_input_index)){ /* If Neuron input is not processed */
-            /* then the input must be in front of the Neuron inside the subset */
-            for(deque<uint32>::iterator iter = net_subset.begin(); iter != neuron_in_subset; ++iter){
-              if(static_cast<sint32>(*iter) == synapse_input_index)
-                return true; /* Found the Neuron input before its parent! Input OK, but continue searching. */
-            }
-            ret = false; /* Could not find Neuron input before the Neuron in the subset */
-            return false; /* No need to continue the search, because the Neuron has pending dependencies! */
-          }else return true; /* The Neuron input is processed, continue the examination.. */
-        });
-        return ret;
-      }else return false; /* The Neuron is not even in the subset while being unprocessed, it has dependencies. */
-    }return true; /* Neuron is already processed, theoritically it shouldn't have any pending dependecies.. */
+bool Neuron_router::is_neuron_without_dependency(uint32 neuron_index){
+  bool ret = true;
+  if(!is_neuron_processed(neuron_index)){
+    deque<uint32>::iterator neuron_in_subset = std::find(net_subset.begin(), net_subset.end(), neuron_index);
+    if(net_subset.end() != neuron_in_subset){ /* The Neuron must be included in the subset if it's not processed already to not have any dependencies */
+      /* The Neuron is not processed, but included in the subset. Check its inputs! */
+      Synapse_iterator<Input_synapse_interval>::iterate_terminatable(net.neuron_array(neuron_index).input_indices(),
+      [&](Input_synapse_interval input_synapse, sint32 synapse_input_index){
+        if(!is_neuron_processed(synapse_input_index)){ /* If Neuron input is not processed */
+          /* then the input must be in front of the Neuron inside the subset */
+          for(deque<uint32>::iterator iter = net_subset.begin(); iter != neuron_in_subset; ++iter){
+            if(static_cast<sint32>(*iter) == synapse_input_index)
+              return true; /* Found the Neuron input before its parent! Input OK, but continue searching. */
+          }
+          ret = false; /* Could not find Neuron input before the Neuron in the subset */
+          return false; /* No need to continue the search, because the Neuron has pending dependencies! */
+        }else return true; /* The Neuron input is processed, continue the examination.. */
+      });
+      return ret;
+    }else return false; /* The Neuron is not even in the subset while being unprocessed, it has dependencies. */
+  }return true; /* Neuron is already processed, theoritically it shouldn't have any pending dependecies.. */
+}
+
+void Neuron_router::omit_from_subset(uint32 neuron_index){
+  if(collection_running)throw new std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
+  if(0 < net_subset.size()){
+    /* Find Neuron in subset */
+    uint32 subset_index = net_subset.size();
+    for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
+      if(neuron_index == net_subset[subset_iterator]){
+        subset_index = subset_iterator;
+        break;
+      }
+    }
+
+    if(subset_index < net_subset.size()){ /* Neuron was found in subset! */
+      (neuron_states[neuron_index])->store(0); /* set its state back to 0 */
+      net_subset.erase(net_subset.begin() + subset_index);
+      vector<uint32> others_to_remove = vector<uint32>();
+
+      for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
+        /* go through the subset and omit the Neurons who have this one as a dependency */
+        Synapse_iterator<Input_synapse_interval>::iterate(
+          net.neuron_array(net_subset[subset_iterator]).input_indices(),
+          [&](Input_synapse_interval input_synapse, sint32 synapse_index){
+            if(synapse_index == static_cast<sint32>(neuron_index))
+              others_to_remove.push_back(net_subset[subset_iterator]);
+          }
+        );
+      }
+
+      for(uint32 neuron_to_remove : others_to_remove)
+        omit_from_subset(neuron_to_remove);
+
+    } /* else neuron index was not found in the subset! */
   }
+}
 
 } /* namespace sparse_net_library */

@@ -89,11 +89,12 @@ Solution* Solution_builder::build(const SparseNet& net ){
         neuron_router.confirm_first_subset_element_processed(neuron_index_in_row);
       }
       neurons_in_row.clear();
+      neuron_router.reset_remaining_subset();
       placed_neurons_in_row = 0;
+
       if(0 == partial_matrix.back().back()->internal_neuron_number()){
         partial_matrix.back().pop_back(); /* Remove the last column, since it's empty */
       }else current_partial = google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
-
       if(0 == partial_matrix.back().size()) partial_matrix.pop_back(); /* The last @Partial_solution row has zero elements */
       partial_matrix.push_back(vector<Partial_solution*>(1,current_partial));
       partial_builder.reset();
@@ -109,6 +110,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
       /*!Note: A new partial shall never reset the subset, as it the contents of the subset store which 
        * Neurons can be solved in paralell. Resetting this would make the Builder disregard transitive dependencies.
        * */
+      neuron_router.reset_all_except(neurons_in_row);
       current_partial = google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
       partial_matrix[row_iterator].push_back(current_partial); /* In case the @Partial_solution reached the size limit, push in a new one */
       partial_builder.reset();
