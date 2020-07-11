@@ -31,26 +31,26 @@ TRAINER_SOURCES += ../sparse_net_library/services/src/backpropagation_queue_wrap
 TRAINER_SOURCES += ../sparse_net_library/services/src/sparse_net_optimizer.cc ../sparse_net_library/services/src/sparse_net_approximizer.cc
 HELPER_SOURCES =  ../sparse_net_library/models/src/neuron_info.cc ../sparse_net_library/models/src/transfer_function.cc
 
-SERVER_SOURCES = ../rafko_mainframe/services/src/deep_learning_server.cc
-
-MAINFRAME_SOURCES = ../rafko_deep_learning_mainframe.cc
-
-LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(SERVER_SOURCES) $(HELPER_SOURCES)
+LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES)  $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst $(CXX_GEN_FILES_DIR)/,,$(GENERATED_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../sparse_net_library/services/src/,,$(BUILDER_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../sparse_net_library/services/src/,,$(SOLVER_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../sparse_net_library/models/src/,,$(subst ../sparse_net_library/services/src/,,$(TRAINER_SOURCES:.cc=.o)))
 LIBRARY_OBJECTS += $(subst ../sparse_net_library/models/src/,,$(subst ../sparse_net_library/services/src/,,$(HELPER_SOURCES:.cc=.o)))
-LIBRARY_OBJECTS += $(subst ../rafko_mainframe/services/src/,,$(SERVER_SOURCES:.cc=.o))
 
-MAINFRAME_OBJECTS = $(subst ../,,$(MAINFRAME_SOURCES:.cc=.o))
+###########################
+SERVER_SOURCES = ../rafko_mainframe/services/src/deep_learning_server.cc
+MAINFRAME_SOURCES = $(SERVER_SOURCES)
+MAINFRAME_SOURCES += ../rafko_deep_learning_mainframe.cc
+
+MAINFRAME_OBJECTS = $(subst ../rafko_mainframe/services/src/,,$(subst ../,,$(MAINFRAME_SOURCES:.cc=.o))))
 
 GENERATED_FILES_INCLUDE_DIR = -I $(CXX_GEN_FILES_DIR)
 SOURCES_INCLUDE_DIR = -I ../
 
 .PHONY: build_library clean gen
 build_mainframe: $(LIB_OUTPUT) $(GENERATED_SOURCES)
-	g++ $(GENERATED_SOURCES) $(SERVER_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(MAINFRAME_OUTPUT)
+	g++ $(GENERATED_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(MAINFRAME_OUTPUT)
 
 $(LIB_OUTPUT): $(LIB_DIR) clean gen $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
