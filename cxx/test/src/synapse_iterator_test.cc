@@ -19,7 +19,7 @@
 
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
-#include "services/synapse_iterator.h"
+#include "sparse_net_library/services/synapse_iterator.h"
 
 
 

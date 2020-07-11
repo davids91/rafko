@@ -1,12 +1,12 @@
 #include <iostream>
 
-#include "services/deep_learning_server.h"
-
 #include <grpc/grpc.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
+
+#include "rafko_mainframe/services/deep_learning_server.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -19,7 +19,7 @@ using grpc::Status;
 using rafko_mainframe::Deep_learning_server;
 
 int main(int argc, char *argv[]){
-  std::string server_address("0.0.0.0:500052");
+  std::string server_address("0.0.0.0:50052");
   Deep_learning_server service;
 
   ServerBuilder builder;

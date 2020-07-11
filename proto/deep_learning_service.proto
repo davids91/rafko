@@ -30,9 +30,9 @@ import "sparse_net.proto";
  */
 enum Slot_type{
   SERV_SLOT_UNKNOWN = 0;
-  SERV_SLOT_TO_RUN = 1;
-  SERV_SLOT_TO_OPTIMIZE = 2;
-  SERV_SLOT_TO_APPROXIMIZE = 3;
+  SERV_SLOT_TO_RUN = 1; /* Simply runs a network, provides output on demand. Ignores @data_set and @test_set in @Service_slot */
+  SERV_SLOT_TO_OPTIMIZE = 2; /* Optimizes the attached network in it's loop based on the custom implementation of the Stochastic Gradient descent algorithm */
+  SERV_SLOT_TO_APPROXIMIZE = 3; /* Approximizes the attached network in it's loop based on an approximation of its gradient from the provided data sets */
 }
 
 /** @brief      A service slot can have different states, all of which are contained in the below enum

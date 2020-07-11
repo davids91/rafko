@@ -18,8 +18,8 @@
 #include "test/catch.hpp"
 
 #include "sparse_net_global.h"
-#include "models/cost_function.h"
-#include "models/cost_function_mse.h"
+#include "sparse_net_library/models/cost_function.h"
+#include "sparse_net_library/models/cost_function_mse.h"
 
 #include <random>
 

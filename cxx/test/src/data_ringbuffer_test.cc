@@ -18,7 +18,7 @@
 #include "test/catch.hpp"
 
 #include "sparse_net_global.h"
-#include "models/data_ringbuffer.h"
+#include "sparse_net_library/models/data_ringbuffer.h"
 
 #include <vector>
 

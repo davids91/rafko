@@ -21,10 +21,10 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/training.pb.h"
 
-#include "services/sparse_net_builder.h"
-#include "services/synapse_iterator.h"
-#include "services/backpropagation_queue_wrapper.h"
-#include "services/neuron_router.h"
+#include "sparse_net_library/services/sparse_net_builder.h"
+#include "sparse_net_library/services/synapse_iterator.h"
+#include "sparse_net_library/services/backpropagation_queue_wrapper.h"
+#include "sparse_net_library/services/neuron_router.h"
 
 #include <memory>
 

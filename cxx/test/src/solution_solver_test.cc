@@ -24,14 +24,14 @@
 
 #include "gen/solution.pb.h"
 #include "gen/sparse_net.pb.h"
-#include "models/transfer_function.h"
-#include "models/service_context.h"
-#include "models/data_ringbuffer.h"
-#include "services/solution_solver.h"
-#include "services/partial_solution_solver.h"
-#include "services/synapse_iterator.h"
-#include "services/sparse_net_builder.h"
-#include "services/solution_builder.h"
+#include "sparse_net_library/models/transfer_function.h"
+#include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/models/data_ringbuffer.h"
+#include "sparse_net_library/services/solution_solver.h"
+#include "sparse_net_library/services/partial_solution_solver.h"
+#include "sparse_net_library/services/synapse_iterator.h"
+#include "sparse_net_library/services/sparse_net_builder.h"
+#include "sparse_net_library/services/solution_builder.h"
 
 namespace sparse_net_library_test{
 

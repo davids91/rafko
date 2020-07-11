@@ -20,9 +20,9 @@
 
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
-#include "services/sparse_net_builder.h"
-#include "services/solution_builder.h"
-#include "services/solution_solver.h"
+#include "sparse_net_library/services/sparse_net_builder.h"
+#include "sparse_net_library/services/solution_builder.h"
+#include "sparse_net_library/services/solution_solver.h"
 
 namespace sparse_net_library_test {
 

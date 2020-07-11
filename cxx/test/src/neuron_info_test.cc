@@ -19,8 +19,8 @@
 
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
-#include "models/neuron_info.h"
-#include "services/synapse_iterator.h"
+#include "sparse_net_library/models/neuron_info.h"
+#include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library_test {
 

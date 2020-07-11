@@ -19,8 +19,8 @@
 
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
-#include "models/data_aggregate.h"
-#include "models/cost_function_mse.h"
+#include "sparse_net_library/models/data_aggregate.h"
+#include "sparse_net_library/models/cost_function_mse.h"
 
 #include <vector>
 #include <memory>

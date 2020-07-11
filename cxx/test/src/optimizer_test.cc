@@ -21,12 +21,12 @@
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
-#include "models/service_context.h"
-#include "models/data_aggregate.h"
-#include "models/cost_function_mse.h"
-#include "services/sparse_net_builder.h"
-#include "services/sparse_net_optimizer.h"
-#include "services/function_factory.h"
+#include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/models/data_aggregate.h"
+#include "sparse_net_library/models/cost_function_mse.h"
+#include "sparse_net_library/services/sparse_net_builder.h"
+#include "sparse_net_library/services/sparse_net_optimizer.h"
+#include "sparse_net_library/services/function_factory.h"
 
 #include <iostream>
 #include <cstdlib>

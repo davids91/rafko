@@ -20,25 +20,25 @@ GENERATED_SOURCES = ../cxx/gen/common.pb.cc
 GENERATED_SOURCES += ../cxx/gen/sparse_net.pb.cc ../cxx/gen/solution.pb.cc ../cxx/gen/training.pb.cc
 GENERATED_SOURCES += ../cxx/gen/deep_learning_service.pb.cc ../cxx/gen/deep_learning_service.grpc.pb.cc
 
-BUILDER_SOURCES = ../cxx/services/src/sparse_net_builder.cc ../cxx/services/src/neuron_router.cc
-BUILDER_SOURCES += ../cxx/services/src/solution_builder.cc ../cxx/services/src/partial_solution_builder.cc
-SOLVER_SOURCES = ../cxx/services/src/partial_solution_solver.cc ../cxx/services/src/solution_solver.cc
-TRAINER_SOURCES = ../cxx/models/src/dense_net_weight_initializer.cc ../cxx/services/src/weight_updater.cc
-TRAINER_SOURCES += ../cxx/services/src/backpropagation_queue_wrapper.cc
-TRAINER_SOURCES += ../cxx/services/src/sparse_net_optimizer.cc ../cxx/services/src/sparse_net_approximizer.cc
-HELPER_SOURCES =  ../cxx/models/src/neuron_info.cc ../cxx/models/src/transfer_function.cc
+BUILDER_SOURCES = ../cxx/sparse_net_library/services/src/sparse_net_builder.cc ../cxx/sparse_net_library/services/src/neuron_router.cc
+BUILDER_SOURCES += ../cxx/sparse_net_library/services/src/solution_builder.cc ../cxx/sparse_net_library/services/src/partial_solution_builder.cc
+SOLVER_SOURCES = ../cxx/sparse_net_library/services/src/partial_solution_solver.cc ../cxx/sparse_net_library/services/src/solution_solver.cc
+TRAINER_SOURCES = ../cxx/sparse_net_library/models/src/dense_net_weight_initializer.cc ../cxx/sparse_net_library/services/src/weight_updater.cc
+TRAINER_SOURCES += ../cxx/sparse_net_library/services/src/backpropagation_queue_wrapper.cc
+TRAINER_SOURCES += ../cxx/sparse_net_library/services/src/sparse_net_optimizer.cc ../cxx/sparse_net_library/services/src/sparse_net_approximizer.cc
+HELPER_SOURCES =  ../cxx/sparse_net_library/models/src/neuron_info.cc ../cxx/sparse_net_library/models/src/transfer_function.cc
 
-SERVER_SOURCES = ../cxx/services/src/deep_learning_server.cc
+SERVER_SOURCES = ../cxx/rafko_mainframe/services/src/deep_learning_server.cc
 
 MAINFRAME_SOURCES = ../cxx/rafko_deep_learning_mainframe.cc
 
 LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(SERVER_SOURCES) $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst ../cxx/gen/,,$(GENERATED_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(BUILDER_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(SOLVER_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../cxx/services/src/,,$(SERVER_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(TRAINER_SOURCES:.cc=.o)))
-LIBRARY_OBJECTS += $(subst ../cxx/models/src/,,$(subst ../cxx/services/src/,,$(HELPER_SOURCES:.cc=.o)))
+LIBRARY_OBJECTS += $(subst ../cxx/sparse_net_library/services/src/,,$(BUILDER_SOURCES:.cc=.o))
+LIBRARY_OBJECTS += $(subst ../cxx/sparse_net_library/services/src/,,$(SOLVER_SOURCES:.cc=.o))
+LIBRARY_OBJECTS += $(subst ../cxx/sparse_net_library/models/src/,,$(subst ../cxx/sparse_net_library/services/src/,,$(TRAINER_SOURCES:.cc=.o)))
+LIBRARY_OBJECTS += $(subst ../cxx/sparse_net_library/models/src/,,$(subst ../cxx/sparse_net_library/services/src/,,$(HELPER_SOURCES:.cc=.o)))
+LIBRARY_OBJECTS += $(subst ../cxx/rafko_mainframe/services/src/,,$(SERVER_SOURCES:.cc=.o))
 
 MAINFRAME_OBJECTS = $(subst ../cxx/,,$(MAINFRAME_SOURCES:.cc=.o))
 

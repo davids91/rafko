@@ -22,10 +22,10 @@
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
-#include "models/transfer_function.h"
-#include "models/data_ringbuffer.h"
-#include "services/partial_solution_solver.h"
-#include "services/synapse_iterator.h"
+#include "sparse_net_library/models/transfer_function.h"
+#include "sparse_net_library/models/data_ringbuffer.h"
+#include "sparse_net_library/services/partial_solution_solver.h"
+#include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library_test {
 
