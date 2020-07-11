@@ -222,7 +222,7 @@ TEST_CASE("Solution solver manual testing","[solve][small][manual-solve]"){
  * Testing if the solution solver produces a correct output, given a built @SparseNet
  */
 void testing_solution_solver_manually(google::protobuf::Arena* arena){
-  vector<uint32> net_structure = {2,4,3,1,2};
+  vector<uint32> net_structure = {20,40,30,10,20};
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the described net */

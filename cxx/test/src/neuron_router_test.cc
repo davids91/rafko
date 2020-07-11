@@ -17,12 +17,12 @@
 
 #include "test/catch.hpp"
 
+#include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
-#include "sparse_net_library/services/sparse_net_builder.h"
-
 #include "gen/solution.pb.h"
-#include "sparse_net_library/services/solution_builder.h"
 
+#include "sparse_net_library/services/sparse_net_builder.h"
+#include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/neuron_router.h"
 
 namespace sparse_net_library_test {
@@ -37,6 +37,7 @@ using sparse_net_library::SparseNet;
 using sparse_net_library::Neuron_router;
 using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::Synapse_iterator;
+using sparse_net_library::Input_synapse_interval;
 
 /*###############################################################################################
  * Testing if the iteration is correctly processing the Sparse net
@@ -45,7 +46,7 @@ using sparse_net_library::Synapse_iterator;
  *    Because of the structure of a fully connected Net, one iteration would involve one layer exactly
  * */
 TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small]" ){
-  /* Build a net */
+  /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};
   unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
   net_builder->input_size(5).output_neuron_number(5)
@@ -58,17 +59,19 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
   uint16 iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
 
   uint32 layer_start = 0;
-  uint32 tmp_index;
+  uint32 neuron_index;
+  vector<uint32>::iterator neuron_in_subset;
+  bool found = false;
   bool last_run = false;
   CHECK( false == net_iterator.finished() );
   while(!net_iterator.finished()){ /* Until the whole output layer is processed */
-    net_iterator.collect_subset(iteration,1,double_literal(500.0));
+    net_iterator.collect_subset(1,double_literal(500.0),true);
 
     /* For a fully connected Dense Layer, each iteration subset should be the actual layer */
     vector<uint32> subset;
-    while(net_iterator.get_first_neuron_index_from_subset(tmp_index)){
-      subset.push_back(tmp_index);
-      net_iterator.confirm_first_subset_element_processed(tmp_index);
+    while(net_iterator.get_first_neuron_index_from_subset(neuron_index)){
+      subset.push_back(neuron_index);
+      net_iterator.confirm_first_subset_element_processed(neuron_index);
     }
     REQUIRE((
       (iteration <= layer_structure.size()) /* Has to finish sooner, than there are layers */
@@ -77,7 +80,26 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
     /*!Note: Iteration starts from 1! so equality is needed here */
     if(0 < subset.size()){
       for(uint32 i = 0; i < layer_structure[iteration-1]; ++i){ /* Find all indexes inside the layer in the current subset */
-        CHECK( std::find(subset.begin(), subset.end(), layer_start + i) != subset.end() );
+        neuron_in_subset = std::find(subset.begin(), subset.end(), layer_start + i);
+        REQUIRE( neuron_in_subset != subset.end() );
+
+        /* And check its dependencies */
+        Synapse_iterator<Input_synapse_interval>::iterate(net->neuron_array(layer_start + i).input_indices(),
+        [&](Input_synapse_interval input_synapse, sint32 synapse_input_index){
+          if( /* Every net-internal Neuron input.. */
+            (!Synapse_iterator<>::is_index_input(synapse_input_index))
+            &&(!net_iterator.is_neuron_processed(synapse_input_index))
+          ){ /* ..should be already solved.. */
+            found = false;
+            for(vector<uint32>::iterator iter = subset.begin(); iter != neuron_in_subset; ++iter){
+              if(static_cast<sint32>(*iter) == synapse_input_index){
+                found = true;
+                break;
+              }
+            }
+            REQUIRE( true == found ); /* .. or must be found before its parent in the subset, if it's not processed already */
+          }
+        });
       }
     }else{
       last_run = true;
@@ -90,6 +112,44 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
      ++iteration;
   }
 
+}
+
+/*###############################################################################################
+ * Testing if the dependency calculations are correct inside the interface @is_neuron_without_dependency
+ *  by building a Neuron network, ommiting neurons from the subset, and then checking return values
+ * */
+TEST_CASE( "Testing Neural Network router dependency interface", "[neuron-iteration][neuron-dependency]" ){
+  /* Build a net and router */
+  vector<uint32> layer_structure = {2,3,3,5};
+  unique_ptr<SparseNet> net(
+    Sparse_net_builder()
+    .input_size(5).output_neuron_number(5)
+    .cost_function(COST_FUNCTION_MSE).expected_input_range(double_literal(5.0))
+    .dense_layers(layer_structure)
+  );
+  Neuron_router net_iterator(*net);
+
+  /* Collect the whole network into one big subset */
+  while(static_cast<sint32>(net_iterator.get_subset_size()) < net->neuron_array_size()){ /* Until the whole network is processed */
+    net_iterator.collect_subset(1,double_literal(500.0),false);
+  }
+
+  /* Go through the second layer of the network */
+  /* All Neurons in the current layer should display to be without any dependency */
+  for(uint32 i = 0; i < layer_structure[1]; ++i)
+    REQUIRE( true == net_iterator.is_neuron_without_dependency(layer_structure[0] + i) );
+
+  /* Omit some Neurons from the previous layer */
+  for(uint32 i = 0; i < layer_structure[0]; ++i){
+    if(0 == (i%2)){
+      net_iterator.confirm_first_subset_element_ommitted(i);
+    }
+  }
+
+  /* No Neurons in the current layer should display to be without any dependency now */
+  for(uint32 i = 0; i < layer_structure[1]; ++i){
+    REQUIRE( false == net_iterator.is_neuron_without_dependency(layer_structure[0] + i) );
+  }
 }
 
 } /* namespace sparse_net_library_test */

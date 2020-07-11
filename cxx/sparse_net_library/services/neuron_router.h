@@ -169,6 +169,18 @@ public:
       &&(is_neuron_processed(output_layer_iterator))
     );
   }
+
+  /**
+   * @brief      Determines whether the specified neuron is without any pending dependencies.
+   *             A Neuron is without dependency if it's every child is either already processed,
+   *             or inside the currently collected subset, in front of the neuron.
+   *
+   * @param[in]  neuron_index  The index of the Neuron to examine
+   *
+   * @return     True if the specified neuron index is without pending dependency, False otherwise.
+   */
+  bool is_neuron_without_dependency(uint32 neuron_index);
+
   bool is_neuron_in_progress(uint32 neuron_index) const{
     return (neuron_number_of_inputs[neuron_index] > *neuron_states[neuron_index]);
   }
@@ -259,19 +271,19 @@ private:
    *
    * @return     Information depending on the function
    */
-   uint32 neuron_state_reserved_value(uint32 neuron_index) const{
+  uint32 neuron_state_reserved_value(uint32 neuron_index) const{
     return neuron_number_of_inputs[neuron_index] + 1u;
   }
-   uint32 neuron_state_processed_value(uint32 neuron_index) const{
+  uint32 neuron_state_processed_value(uint32 neuron_index) const{
     return neuron_number_of_inputs[neuron_index] + 2u;
   }
-   sint32 neuron_state_iteration_value(uint32 neuron_index) const{
+  sint32 neuron_state_iteration_value(uint32 neuron_index) const{
     return (*neuron_states[neuron_index] - neuron_state_processed_value(neuron_index));
   }
-   uint32 neuron_iteration_relevance(uint32 neuron_index) const{
+  uint32 neuron_iteration_relevance(uint32 neuron_index) const{
     return static_cast<uint32>(std::max( 0, neuron_state_iteration_value(neuron_index) ));
   }
-   sint32 neuron_state_next_iteration_value(uint32 neuron_index, uint16 iteration) const{
+  sint32 neuron_state_next_iteration_value(uint32 neuron_index, uint16 iteration) const{
     return (neuron_state_processed_value(neuron_index) + iteration + 1u);
   }
    bool is_neuron_subset_candidate(uint32 neuron_index, uint16 iteration) const{

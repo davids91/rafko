@@ -2,7 +2,7 @@
 LIBS = `pkg-config --cflags --libs protobuf grpc++` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
 LIB_DIR = ../lib
 LIB_OUTPUT = $(LIB_DIR)/libsparsenetlib.a
-MAINFRAME_OUTPUT = rafko_mainframe
+MAINFRAME_OUTPUT = rafko-mainframe
 
 DEBUG_FLAGS = -DNDEBUG #no debug
 #DEBUG_FLAGS = -g #debug information added

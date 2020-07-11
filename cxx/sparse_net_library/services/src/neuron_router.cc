@@ -202,4 +202,27 @@ void Neuron_router::step(vector<uint32>& visiting, uint32 visiting_next){
   } /* (1 == visiting.size()) */
 }
 
+  bool Neuron_router::is_neuron_without_dependency(uint32 neuron_index){
+    bool ret = true;
+    if(!is_neuron_processed(neuron_index)){
+      deque<uint32>::iterator neuron_in_subset = std::find(net_subset.begin(), net_subset.end(), neuron_index);
+      if(net_subset.end() != neuron_in_subset){ /* The Neuron must be included in the subset if it's not processed already to not have any dependencies */
+        /* The Neuron is not processed, but included in the subset. Check its inputs! */
+        Synapse_iterator<Input_synapse_interval>::iterate_terminatable(net.neuron_array(neuron_index).input_indices(),
+        [&](Input_synapse_interval input_synapse, sint32 synapse_input_index){
+          if(!is_neuron_processed(synapse_input_index)){ /* If Neuron input is not processed */
+            /* then the input must be in front of the Neuron inside the subset */
+            for(deque<uint32>::iterator iter = net_subset.begin(); iter != neuron_in_subset; ++iter){
+              if(static_cast<sint32>(*iter) == synapse_input_index)
+                return true; /* Found the Neuron input before its parent! Input OK, but continue searching. */
+            }
+            ret = false; /* Could not find Neuron input before the Neuron in the subset */
+            return false; /* No need to continue the search, because the Neuron has pending dependencies! */
+          }else return true; /* The Neuron input is processed, continue the examination.. */
+        });
+        return ret;
+      }else return false; /* The Neuron is not even in the subset while being unprocessed, it has dependencies. */
+    }return true; /* Neuron is already processed, theoritically it shouldn't have any pending dependecies.. */
+  }
+
 } /* namespace sparse_net_library */
