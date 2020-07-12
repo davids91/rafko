@@ -35,11 +35,13 @@ enum Slot_type{
   SERV_SLOT_TO_APPROXIMIZE = 3; /* Approximizes the attached network in it's loop based on an approximation of its gradient from the provided data sets */
 }
 
-/** @brief      A service slot can have different states, all of which are contained in the below enum
+/** @brief      A service slot can have different states, all of which are contained in the below enum.
+ *              The states shall be summarized in a unit32 field as a bitstring, except when everything is okay,
+ *              in which case the value shall be SERV_SLOT_OK
  */
 enum Slot_state_values{
   SERV_SLOT_STATE_UNKNOWN = 0;
-  SERV_SLOT_MISSING_NET = 1;
+  SERV_SLOT_MISSING_NET = 1; /* Missing or empty Neural network attached to the Server slot */
   SERV_SLOT_MISSING_TRAINING_SET = 2;
   SERV_SLOT_MISSING_TEST_SET = 4;
   SERV_SLOT_OK = 65536;

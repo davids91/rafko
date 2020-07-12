@@ -31,7 +31,7 @@ TRAINER_SOURCES += ../sparse_net_library/services/src/backpropagation_queue_wrap
 TRAINER_SOURCES += ../sparse_net_library/services/src/sparse_net_optimizer.cc ../sparse_net_library/services/src/sparse_net_approximizer.cc
 HELPER_SOURCES =  ../sparse_net_library/models/src/neuron_info.cc ../sparse_net_library/models/src/transfer_function.cc
 
-LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES)  $(HELPER_SOURCES)
+LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst $(CXX_GEN_FILES_DIR)/,,$(GENERATED_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../sparse_net_library/services/src/,,$(BUILDER_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../sparse_net_library/services/src/,,$(SOLVER_SOURCES:.cc=.o))
@@ -40,6 +40,8 @@ LIBRARY_OBJECTS += $(subst ../sparse_net_library/models/src/,,$(subst ../sparse_
 
 ###########################
 SERVER_SOURCES = ../rafko_mainframe/services/src/deep_learning_server.cc
+SERVER_SOURCES += ../rafko_mainframe/services/src/server_slot.cc
+
 MAINFRAME_SOURCES = $(SERVER_SOURCES)
 MAINFRAME_SOURCES += ../rafko_deep_learning_mainframe.cc
 
@@ -60,6 +62,9 @@ $(LIB_OUTPUT): $(LIB_DIR) clean gen $(LIBRARY_OBJECTS)
 ##########################################################################################################
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
+
+$(GENERATED_SOURCES):
+	make gen
 
 gen: #as in generate models; Can't be bothered to type something like `make generate-protocol-buffer-files` every time...
 	protoc common.proto --proto_path="$(PROTO_FILES_DIR)" --cpp_out="$(CXX_GEN_FILES_DIR)/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)

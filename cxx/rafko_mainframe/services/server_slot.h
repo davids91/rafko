@@ -20,10 +20,14 @@
 
 #include "sparse_net_global.h"
 
+#include <string>
+
 #include "gen/sparse_net.pb.h"
 #include "gen/deep_learning_service.pb.h"
 
 namespace rafko_mainframe{
+
+using std::string;
 
 using sparse_net_library::SparseNet;
 
@@ -38,9 +42,9 @@ public:
   /**
    * @brief      Initializes based on the provided backbone
    *
-   * @param[in]  service_slot  The service slot
+   * @param[in]  service_slot_  The service slot
    */
-  virtual void initialize(Service_slot service_slot) = 0;
+  virtual void initialize(Service_slot&& service_slot_) = 0;
 
   /**
    * @brief      The main loop of the server to run to be able to provide the service
@@ -55,30 +59,56 @@ public:
   /**
    * @brief      Update the currently loaded network with the provided one
    *
-   * @param[in]  net   The network to overwrite the current one
+   * @param[in]  net_   The network to overwrite the current one
    */
-  virtual void update_network(SparseNet net) = 0;
+  virtual void update_network(SparseNet&& net_) = 0;
 
   /**
    * @brief      Accept the request provided in the argument. Implementation may vary.
    *
-   * @param[in]  request  The request to be accepted
+   * @param[in]  request_  The request to be accepted
    */
-  virtual void accept_request(Slot_request request) = 0;
+  virtual void accept_request(Slot_request&& request_) = 0;
+
+  /**
+   * @brief      Runs the attached network, if it's valid, and uploads the result in the 
+   *             reference
+   *
+   * @param      data_stream  the data to be taken as input, and the data to upload the result to
+   */
+  virtual void run_net_once(Neural_io_stream& data_stream) = 0;
 
   /**
    * @brief      Provide the loaded network
    *
    * @return     The network currently loaded in the configuration
    */
-  virtual SparseNet get_network() const = 0;
+  virtual SparseNet get_network(void) const = 0;
 
   /**
    * @brief      Provides the status of the server slot.
    *
    * @return     The status, described in the file @proto/deep_learning_service.proto
    */
-  virtual Slot_response get_status() const = 0;
+  virtual Slot_response get_status(void) const = 0;
+
+  /**
+   * @brief      Gets the identifier of the slot
+   *
+   * @return     The uuid.
+   */
+  virtual string get_uuid(void) const = 0;
+
+protected:
+
+  /**
+   * @brief      Generates a unique identifier, with a guarantee that the currently 
+   *             saved slot Identifiers shall be left out.
+   *
+   * @return     A random unique Identifier string
+   */
+  string generate_uuid(void);
+
 };
 
 } /* namespace rafko_mainframe */
