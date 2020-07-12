@@ -41,6 +41,7 @@ LIBRARY_OBJECTS += $(subst ../sparse_net_library/models/src/,,$(subst ../sparse_
 ###########################
 SERVER_SOURCES = ../rafko_mainframe/services/src/deep_learning_server.cc
 SERVER_SOURCES += ../rafko_mainframe/services/src/server_slot.cc
+SERVER_SOURCES += ../rafko_mainframe/services/src/server_slot_run_net.cc
 
 MAINFRAME_SOURCES = $(SERVER_SOURCES)
 MAINFRAME_SOURCES += ../rafko_deep_learning_mainframe.cc

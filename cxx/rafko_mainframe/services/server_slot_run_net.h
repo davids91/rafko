@@ -18,13 +18,25 @@
 #ifndef SERVER_SLOT_RUN_NET_H
 #define SERVER_SLOT_RUN_NET_H
 
+#include "gen/solution.pb.h"
+
 #include "rafko_mainframe/services/server_slot.h"
+#include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/services/solution_builder.h"
+#include "sparse_net_library/services/solution_solver.h"
+
+#include <memory>
+#include <string>
 
 namespace rafko_mainframe{
 
 using std::vector;
 using sparse_net_library::SparseNet;
+using sparse_net_library::Solution;
 using sparse_net_library::Solution_solver;
+
+using std::string;
+using std::unique_ptr;
 
 /**
  * @brief      This class describes a server slot which runs a Neural network
@@ -32,21 +44,51 @@ using sparse_net_library::Solution_solver;
  */
 class Server_slot_run_net : public Server_slot{
 public:
-  Server_slot_run_net(Service_context context_);
-  void initialize(Service_slot service_slot);
+  Server_slot_run_net(Service_context context_)
+  : context(context_)
+  , network_input()
+  , has_solution(false)
+  , service_slot()
+  , network()
+  , network_solution()
+  , network_solver()
+  { }
+
+  void initialize(Service_slot&& service_slot_);
   void loop(void);
   void reset(void);
-  void update_network(SparseNet net);
-  void accept_request(Slot_request request);
-  SparseNet get_network() const;
-  Slot_response get_status() const;
-  ~Server_slot_run_net();
+  void update_network(SparseNet&& net_);
+  void accept_request(Slot_request&& request_);
+  void run_net_once(Neural_io_stream& data_stream);
+  SparseNet get_network(void) const;
+  Slot_response get_status(void) const;
+  string get_uuid(void) const;
+
+  ~Server_slot_run_net(void){ }
 
 private:
   Service_context& context;
-  SparseNet network;
-  Solution_solver network_solver;
   vector<sdouble32> network_input;
+  bool has_solution;
+
+  Service_slot service_slot;
+  SparseNet network;
+  Solution network_solution;
+  unique_ptr<Solution_solver> network_solver;
+
+  /**
+   * @brief      Builds the solution and solver for the attached network.
+   */
+  void initialize_network(void);
+
+  /**
+   * @brief      Updates status stored in @Service_slot based on the current flags set
+   */
+  void finalize_state(){
+    if(0 == service_slot.state()) /* No issues found, great! */
+      service_slot.set_state(SERV_SLOT_OK);
+  }
+
 };
 
 } /* namespace rafko_mainframe */
