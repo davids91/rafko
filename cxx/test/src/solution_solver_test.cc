@@ -51,7 +51,6 @@ using sparse_net_library::Index_synapse_interval;
 using sparse_net_library::Input_synapse_interval;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Transfer_function;
-using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::NETWORK_RECURRENCE_TO_SELF;
 using sparse_net_library::NETWORK_RECURRENCE_TO_LAYER;
 using rafko_mainframe::Service_context;
@@ -226,10 +225,11 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the described net */
-  Sparse_net_builder net_builder = Sparse_net_builder();
-  net_builder.input_size(5).expected_input_range(double_literal(5.0))
-  .cost_function(COST_FUNCTION_MSE).arena_ptr(arena);
-  unique_ptr<SparseNet> net(net_builder.dense_layers(net_structure));
+  unique_ptr<SparseNet> net(
+    Sparse_net_builder().input_size(5)
+    .expected_input_range(double_literal(5.0))
+    .arena_ptr(arena).dense_layers(net_structure)
+  );
 
   /* Generate solution from Net */
   unique_ptr<Solution_builder> solution_builder = make_unique<Solution_builder>();
@@ -276,7 +276,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
 
   /* Build the above described net */
   Sparse_net_builder net_builder = Sparse_net_builder();
-  net_builder.input_size(5).expected_input_range(double_literal(5.0)).cost_function(COST_FUNCTION_MSE);
+  net_builder.input_size(5).expected_input_range(double_literal(5.0));
   if(NETWORK_RECURRENCE_TO_SELF == recurrence)
     net_builder.set_recurrence_to_self();
   else if(NETWORK_RECURRENCE_TO_LAYER == recurrence)

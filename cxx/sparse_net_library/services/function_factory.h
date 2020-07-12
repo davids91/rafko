@@ -43,9 +43,9 @@ public:
    * @return     The cost function.
    */
   static unique_ptr<Cost_function> build_cost_function(
-    const SparseNet& net, uint32 sample_number, Service_context context = Service_context()
+    const SparseNet& net, cost_functions the_function, uint32 sample_number, Service_context context = Service_context()
   ){
-    return build_cost_function(net.output_neuron_number(), sample_number, net.cost_function(), context);
+    return build_cost_function(net.output_neuron_number(), sample_number, the_function, context);
   }
 
   /**

@@ -62,8 +62,6 @@ message Neuron{
  *              Neurons and optimization cache files
  */
 message SparseNet{
-  cost_functions cost_function = 1;
-
   uint32 input_data_size = 10; /* Number of inputs (floating point numbers) accepted by the Neural network */
   uint32 output_neuron_number = 11; /* Number of outputs the Neural network has */
 

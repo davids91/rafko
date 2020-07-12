@@ -89,7 +89,6 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
-    .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_SELU}}
     ).dense_layers({1})
@@ -113,7 +112,6 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
-    .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_SELU},
        {TRANSFER_FUNCTION_SELU},
@@ -133,9 +131,8 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   nets[2]->set_weight_table(18,0.5);
 
   /* Create data-set and test-set and optimize networks */
-  Data_aggregate train_set = create_addition_dataset(number_of_samples,*nets[0]);
-
-  Data_aggregate test_set = create_addition_dataset(number_of_samples,*nets[0]);
+  Data_aggregate train_set = create_addition_dataset(number_of_samples,*nets[0], COST_FUNCTION_SQUARED_ERROR);
+  Data_aggregate test_set = create_addition_dataset(number_of_samples,*nets[0], COST_FUNCTION_SQUARED_ERROR);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -176,8 +173,8 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
     *nets[1], train_set, test_set, WEIGHT_UPDATER_MOMENTUM, Service_context().set_step_size(1e-1)
   ); /* .set_max_processing_threads(1)) for single-threaded tests */
   std::cout << "Optimizing bigger net.." << std::endl;
-  train_set.reset_errors();
-  test_set.reset_errors();
+  train_set = create_addition_dataset(number_of_samples,*nets[0], COST_FUNCTION_MSE);
+  test_set = create_addition_dataset(number_of_samples,*nets[0], COST_FUNCTION_MSE);
   train_error = 1.0;
   test_error = 1.0;
   number_of_steps = 0;
@@ -307,7 +304,6 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
     .set_recurrence_to_self()
-    .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
       {
         {TRANSFER_FUNCTION_SELU},
@@ -317,8 +313,12 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
-  Data_aggregate train_set = create_sequenced_addition_dataset(number_of_samples, sequence_size, *nets[0]);
-  Data_aggregate test_set = create_sequenced_addition_dataset(number_of_samples, sequence_size, *nets[0]);
+  Data_aggregate train_set = create_sequenced_addition_dataset(
+    number_of_samples, sequence_size, *nets[0], COST_FUNCTION_SQUARED_ERROR
+  );
+  Data_aggregate test_set = create_sequenced_addition_dataset(
+    number_of_samples, sequence_size, *nets[0], COST_FUNCTION_SQUARED_ERROR
+  );
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;

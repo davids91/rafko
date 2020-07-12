@@ -70,7 +70,7 @@ public:
   Data_aggregate(
     vector<vector<sdouble32>>&& input_samples_,
     vector<vector<sdouble32>>&& label_samples_,
-    SparseNet& net,
+    SparseNet& net, cost_functions the_function,
     uint32 sequence_size_ = 1, Service_context context = Service_context()
   ):  sample_number(input_samples_.size())
   ,  sequence_size(std::max(1u,sequence_size_))
@@ -78,7 +78,7 @@ public:
   ,  label_samples(label_samples_)
   ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
   ,  error_sum(double_literal(1.0))
-  ,  cost_function(Function_factory::build_cost_function(net, sample_number, context))
+  ,  cost_function(Function_factory::build_cost_function(net, the_function, sample_number, context))
   { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
   /**

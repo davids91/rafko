@@ -92,7 +92,7 @@ clean:
 ##########################################################################################################
 TEST_BASE_SOURCE = ../test/src/main_test.cc
 TEST_SOURCES = $(TEST_BASE_SOURCE)
-TEST_SOURCES += ../test/src/net_builder_test.cc ../test/src/solution_builder_test.cc
+TEST_SOURCES += ../test/src/sparse_net_builder_test.cc ../test/src/solution_builder_test.cc
 TEST_SOURCES += ../test/src/partial_solution_solver_test.cc ../test/src/solution_solver_test.cc
 TEST_SOURCES += ../test/src/synapse_iterator_test.cc ../test/src/neuron_router_test.cc
 TEST_SOURCES += ../test/src/neuron_info_test.cc ../test/src/cost_function_mse_test.cc

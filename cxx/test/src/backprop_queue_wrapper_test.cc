@@ -38,7 +38,6 @@ namespace sparse_net_library_test {
   using sparse_net_library::Index_synapse_interval;
   using sparse_net_library::Input_synapse_interval;
   using sparse_net_library::Synapse_iterator;
-  using sparse_net_library::COST_FUNCTION_MSE;
   using sparse_net_library::Backpropagation_queue;
   using sparse_net_library::Backpropagation_queue_wrapper;
   using sparse_net_library::Neuron_router;
@@ -52,7 +51,7 @@ namespace sparse_net_library_test {
  * */
 TEST_CASE( "Testing backpropagation queue", "" ) {
   unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>());
-  builder->input_size(10).expected_input_range(double_literal(5.0)).cost_function(COST_FUNCTION_MSE);
+  builder->input_size(10).expected_input_range(double_literal(5.0));
 
   SparseNet* net(builder->dense_layers({20,10,3,5,5}));
   Neuron_router router(*net);

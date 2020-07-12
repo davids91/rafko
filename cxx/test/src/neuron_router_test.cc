@@ -35,7 +35,6 @@ using std::vector;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Neuron_router;
-using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Input_synapse_interval;
 
@@ -49,8 +48,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
   /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};
   unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
-  net_builder->input_size(5).output_neuron_number(5)
-  .cost_function(COST_FUNCTION_MSE).expected_input_range(double_literal(5.0));
+  net_builder->input_size(5).output_neuron_number(5).expected_input_range(double_literal(5.0));
   SparseNet* net(net_builder->dense_layers(layer_structure));
   net_builder.reset();
   Neuron_router net_iterator(*net);
@@ -124,7 +122,7 @@ TEST_CASE( "Testing Neural Network router dependency interface", "[neuron-iterat
   unique_ptr<SparseNet> net(
     Sparse_net_builder()
     .input_size(5).output_neuron_number(5)
-    .cost_function(COST_FUNCTION_MSE).expected_input_range(double_literal(5.0))
+    .expected_input_range(double_literal(5.0))
     .dense_layers(layer_structure)
   );
   Neuron_router net_iterator(*net);

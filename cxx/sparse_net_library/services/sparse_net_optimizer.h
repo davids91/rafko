@@ -52,7 +52,8 @@ class Sparse_net_optimizer{
 public:
   Sparse_net_optimizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-    weight_updaters weight_updater_, Service_context service_context = Service_context()
+    cost_functions the_function, weight_updaters weight_updater_,
+    Service_context service_context = Service_context()
   ): net(neural_network)
   ,  context(service_context)
   ,  transfer_function(context)
@@ -64,7 +65,7 @@ public:
   ,  loops_unchecked(50)
   ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
-  ,  cost_function(Function_factory::build_cost_function(net, train_set.get_number_of_samples(), context))
+  ,  cost_function(Function_factory::build_cost_function(net, the_function, train_set.get_number_of_samples(), context))
   ,  solve_threads()
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
   ,  neuron_data_sequences()

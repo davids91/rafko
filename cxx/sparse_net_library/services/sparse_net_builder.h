@@ -156,21 +156,6 @@ public:
   }
 
   /**
-   * @brief      Sets the cost function for the build network
-   *
-   * @param[in]  cost_function  The cost function
-   *
-   * @return     builder reference for chaining
-   */
-  Sparse_net_builder& cost_function(cost_functions cost_function){
-    if(COST_FUNCTION_UNKNOWN != cost_function){
-      arg_cost_function = cost_function;
-      is_cost_function_set = true;
-    }
-    return *this;
-  }
-
-  /**
    * @brief      If supported, produced network will also contain for every @Neuron
    *             its previous input, in case this function is called
    *
@@ -240,7 +225,6 @@ private:
   bool is_weight_initializer_set = false;
   bool is_neuron_array_set = false;
   bool is_allowed_transfer_functions_by_layer_set = false;
-  bool is_cost_function_set = false;
   uint32 recurrence = NETWORK_RECURRENCE_UNKNOWN;
 
   /**
@@ -280,8 +264,6 @@ private:
    * a more effective net allocation.
    */
   google::protobuf::Arena* arg_arena = nullptr;
-
-  cost_functions arg_cost_function = COST_FUNCTION_UNKNOWN;
 
   /**
    * @brief Sparse_net_builder::set_neuron_array: moves the neuron_array argument into the SparseNet

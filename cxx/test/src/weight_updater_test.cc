@@ -36,7 +36,6 @@ using std::unique_ptr;
 using std::make_unique;
 
 using sparse_net_library::Sparse_net_builder;
-using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Partial_solution;
@@ -56,8 +55,7 @@ TEST_CASE("Weight updater test","[build][weight-update]"){
 
   /* Build the above described net, solution and a Weight updater */
   unique_ptr<SparseNet> net(
-    Sparse_net_builder().input_size(5).expected_input_range(double_literal(5.0))
-    .cost_function(COST_FUNCTION_MSE).dense_layers(net_structure)
+    Sparse_net_builder().input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure)
   );
   Weight_updater weight_updater(*net);
   Solution solution = *Solution_builder().service_context().build(*net);

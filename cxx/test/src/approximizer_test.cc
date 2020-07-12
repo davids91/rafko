@@ -39,7 +39,6 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Sparse_net_builder;
-using sparse_net_library::COST_FUNCTION_MSE;
 using sparse_net_library::Cost_function_mse;
 using sparse_net_library::COST_FUNCTION_SQUARED_ERROR;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
@@ -65,7 +64,6 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
-    .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
       {
         {TRANSFER_FUNCTION_SELU}
@@ -74,8 +72,8 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   ));
 
   /* Create dataset, test set and aprroximizer */
-  Data_aggregate train_set = create_addition_dataset(5, *nets[0]);
-  Data_aggregate test_set = create_addition_dataset(5, *nets[0]);
+  Data_aggregate train_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR);
+  Data_aggregate test_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR);
   Service_context context = Service_context().set_step_size(1e-4);
   Sparse_net_approximizer approximizer(*nets[0],train_set,test_set,WEIGHT_UPDATER_NESTEROV,context);
 
@@ -123,7 +121,6 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
     .input_size(2).expected_input_range(double_literal(1.0))
     .set_recurrence_to_layer()
-    .cost_function(COST_FUNCTION_SQUARED_ERROR)
     .allowed_transfer_functions_by_layer(
       {
         {TRANSFER_FUNCTION_SELU}
@@ -132,8 +129,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
-  Data_aggregate train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0]);
-  Data_aggregate test_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0]);
+  Data_aggregate train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR);
+  Data_aggregate test_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
