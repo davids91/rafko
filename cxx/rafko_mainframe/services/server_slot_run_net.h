@@ -47,8 +47,6 @@ public:
   Server_slot_run_net(Service_context context_)
   : context(context_)
   , network_input()
-  , has_solution(false)
-  , service_slot()
   , network()
   , network_solution()
   , network_solver()
@@ -66,29 +64,13 @@ public:
 
   ~Server_slot_run_net(void){ }
 
-private:
+protected:
   Service_context& context;
   vector<sdouble32> network_input;
-  bool has_solution;
 
-  Service_slot service_slot;
   SparseNet network;
   Solution network_solution;
   unique_ptr<Solution_solver> network_solver;
-
-  /**
-   * @brief      Builds the solution and solver for the attached network.
-   */
-  void initialize_network(void);
-
-  /**
-   * @brief      Updates status stored in @Service_slot based on the current flags set
-   */
-  void finalize_state(){
-    if(0 == service_slot.state()) /* No issues found, great! */
-      service_slot.set_state(SERV_SLOT_OK);
-  }
-
 };
 
 } /* namespace rafko_mainframe */

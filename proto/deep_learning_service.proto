@@ -42,8 +42,9 @@ enum Slot_type{
 enum Slot_state_values{
   SERV_SLOT_STATE_UNKNOWN = 0;
   SERV_SLOT_MISSING_NET = 1; /* Missing or empty Neural network attached to the Server slot */
-  SERV_SLOT_MISSING_TRAINING_SET = 2;
-  SERV_SLOT_MISSING_TEST_SET = 4;
+  SERV_SLOT_MISSING_SOLUTION = 2; /* Despite Network state, a Solution was not built based on the attached network ( if any ) */
+  SERV_SLOT_MISSING_TRAINING_SET = 4;
+  SERV_SLOT_MISSING_TEST_SET = 8;
   SERV_SLOT_OK = 65536;
 }
 

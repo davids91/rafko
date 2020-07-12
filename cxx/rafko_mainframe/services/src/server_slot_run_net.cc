@@ -37,7 +37,6 @@ void Server_slot_run_net::initialize(Service_slot&& service_slot_){
     if(0 < network.neuron_array_size()){
       update_network(std::move(*service_slot.mutable_network()));
     }
-    finalize_state();
   }
 }
 
@@ -47,13 +46,19 @@ void Server_slot_run_net::loop(void){
 
 void Server_slot_run_net::reset(void){
   update_network(SparseNet());
-  finalize_state();
 }
 
 void Server_slot_run_net::update_network(SparseNet&& net_){
-  service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_NET);
+  expose_state();
   network = std::move(net_);
-  initialize_network();
+  service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_NET);
+  service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_SOLUTION);
+  if(0 < network.neuron_array_size()){
+    service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_NET);
+    network_solution = *Solution_builder().service_context(context).build(network);
+    network_solver = std::make_unique<Solution_solver>(network_solution);
+    service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_SOLUTION);
+  }
   finalize_state();
 }
 
@@ -62,7 +67,10 @@ void Server_slot_run_net::accept_request(Slot_request&& request_){
 }
 
 void Server_slot_run_net::run_net_once(Neural_io_stream& data_stream){
-  if(has_solution){
+  if(
+    (SERV_SLOT_OK == service_slot.state())
+    ||(0 == (SERV_SLOT_MISSING_SOLUTION & service_slot.state()))
+  ){
     uint32 sequence_start_index = 0;
     vector<sdouble32> result_package = vector<sdouble32>( /* reserve enough space for the result.. */
       network.output_neuron_number() * data_stream.sequence_size()
@@ -73,7 +81,7 @@ void Server_slot_run_net::run_net_once(Neural_io_stream& data_stream){
         data_stream.mutable_package()->begin() + sequence_start_index + data_stream.feature_size(),
       });
       std::copy(
-        network_solver->get_neuron_data(0).end() - network_solver.get_output_size(),
+        network_solver->get_neuron_data(0).end() - network_solver->get_output_size(),
         network_solver->get_neuron_data(0).end(),
         result_package.begin() + sequence_start_index
       );
@@ -101,15 +109,6 @@ Slot_response Server_slot_run_net::get_status(void) const{
 string Server_slot_run_net::get_uuid(void) const{
   if(0 != service_slot.slot_id().compare("")) return service_slot.slot_id();
     else throw new std::runtime_error("Empty UUID is queried!");
-}
-
-void Server_slot_run_net::initialize_network(void){
-  if(0 < network.neuron_array_size()){
-    service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_NET);
-    network_solution = *Solution_builder().service_context(context).build(network);
-    network_solver = std::make_unique<Solution_solver>(network_solution);
-    has_solution = true;
-  }else has_solution = false;
 }
 
 } /* rafko_mainframe */
