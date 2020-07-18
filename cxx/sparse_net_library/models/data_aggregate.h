@@ -78,7 +78,7 @@ public:
   ,  label_samples(label_samples_)
   ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
   ,  error_sum(double_literal(1.0))
-  ,  cost_function(Function_factory::build_cost_function(net, the_function, sample_number, context))
+  ,  cost_function(Function_factory::build_cost_function(net, the_function, context))
   { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
   /**
@@ -92,7 +92,7 @@ public:
     if(label_samples.size() > sample_index){
       error_sum -= sample_errors[sample_index];
       sample_errors[sample_index] = cost_function->get_feature_error(
-        label_samples[sample_index], neuron_data
+        label_samples[sample_index], neuron_data, get_number_of_samples()
       );
       error_sum += sample_errors[sample_index];
     }else throw std::runtime_error("Sample index out of bounds!");

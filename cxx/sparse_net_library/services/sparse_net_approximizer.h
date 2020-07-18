@@ -57,7 +57,7 @@ public:
   ,  gradient_fragment()
   ,  loops_unchecked(50)
   ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
-  ,  cost_function(Function_factory::build_cost_function(net, the_function, train_set.get_number_of_samples(), context))
+  ,  cost_function(Function_factory::build_cost_function(net, the_function, context))
   ,  solve_threads()
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
   /* Cache variables */

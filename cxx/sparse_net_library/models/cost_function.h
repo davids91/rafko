@@ -59,7 +59,7 @@ public:
    *
    * @return     The error.
    */
-  sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data){
+  sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 sample_number){
     lock_guard<mutex> error_lock(error_mutex);
     error_value.store(0);
     uint32 feature_start_index = neuron_data.size() - feature_size;
@@ -78,7 +78,7 @@ public:
         feature_start_index += feature_number;
     }
     wait_for_threads(process_threads);
-    return error_post_process(error_value);
+    return error_post_process(error_value, sample_number);
   }
 
   /**
@@ -90,13 +90,12 @@ public:
    *
    * @return     The gradient of the cost function in regards to its input
    */
-  sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const vector<sdouble32>& label, const vector<sdouble32>& neuron_data) const{
-    return error_post_process(
-      get_d_cost_over_d_feature(label[feature_index],
-      neuron_data[neuron_data.size() - feature_size + feature_index])
-    );
+  sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const vector<sdouble32>& label, const vector<sdouble32>& neuron_data, uint32 sample_number) const{
+    return error_post_process(get_d_cost_over_d_feature(
+      label[feature_index], neuron_data[neuron_data.size() - feature_size + feature_index], sample_number
+    ), sample_number);
   }
-  virtual ~Cost_function() = default;
+  virtual ~Cost_function(void) = default;
 
 protected:
   Service_context context;
@@ -105,9 +104,9 @@ protected:
   mutex error_mutex;
   atomic<sdouble32> error_value;
 
-  virtual sdouble32 error_post_process(sdouble32 error_value) const = 0;
+  virtual sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const = 0;
   virtual sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
-  virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value) const = 0;
+  virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const = 0;
 
   /**
    * @brief      Summarizes the errors given back by @get_cell_error for all of the features. It's called

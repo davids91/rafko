@@ -225,7 +225,8 @@ void Sparse_net_optimizer::calculate_output_errors_thread(uint32 solve_thread_in
     addition = cost_function->get_d_cost_over_d_feature(
       ((neuron_index + neuron_iterator) - (net.neuron_array_size() - net.output_neuron_number())),
       train_set.get_label_sample(sample_index),
-      neuron_data_sequences[solve_thread_index].get_const_element(sequence_index,Input_synapse_interval())
+      neuron_data_sequences[solve_thread_index].get_const_element(sequence_index,Input_synapse_interval()),
+      train_set.get_number_of_samples()
     ) * transfer_function.get_derivative(
       net.neuron_array(neuron_index + neuron_iterator).transfer_function_idx(),
       transfer_function_input[solve_thread_index][sequence_index][neuron_index + neuron_iterator]

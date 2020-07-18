@@ -37,33 +37,31 @@ public:
    * @brief      Builds a cost function.
    *
    * @param[in]  net            The @SparseNet that decides which cost function to build
-   * @param[in]  sample_number  Number of samples to evaluate with the cost function
    * @param[in]  context        The service context
    *
    * @return     The cost function.
    */
   static unique_ptr<Cost_function> build_cost_function(
-    const SparseNet& net, cost_functions the_function, uint32 sample_number, Service_context context = Service_context()
+    const SparseNet& net, cost_functions the_function, Service_context context = Service_context()
   ){
-    return build_cost_function(net.output_neuron_number(), sample_number, the_function, context);
+    return build_cost_function(net.output_neuron_number(), the_function, context);
   }
 
   /**
    * @brief      Builds a cost function.
    *
    * @param[in]  feature_size   The size of one feature
-   * @param[in]  sample_number  Number of samples to evaluate with the cost function
    * @param[in]  the_function   The cost function to build
    * @param[in]  context        The service context
    *
    * @return     The cost function.
    */
   static unique_ptr<Cost_function> build_cost_function(
-    uint32 feature_size, uint32 sample_number, cost_functions the_function, Service_context context = Service_context()
+    uint32 feature_size, cost_functions the_function, Service_context context = Service_context()
   ){
     switch(the_function){
       case COST_FUNCTION_MSE: 
-        return std::make_unique<Cost_function_mse>(feature_size, sample_number, context);
+        return std::make_unique<Cost_function_mse>(feature_size, context);
       case COST_FUNCTION_SQUARED_ERROR: 
         return std::make_unique<Cost_function_squared_error>(feature_size, context);
       default: throw std::runtime_error("Unknown cost function requested from builder!");

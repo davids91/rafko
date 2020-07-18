@@ -54,7 +54,7 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   }
 
   /* Create @Data_aggregate from @Data_set */
-  Data_aggregate data_agr(data_set, std::make_unique<Cost_function_mse>(1,sample_number));
+  Data_aggregate data_agr(data_set, std::make_unique<Cost_function_mse>(1));
 
   /* Test statistics for it */
   CHECK(double_literal(1.0) == data_agr.get_error() ); /* Initial error should be exactly 1.0 */

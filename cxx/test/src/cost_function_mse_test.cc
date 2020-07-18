@@ -54,14 +54,16 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   }
 
   /* one feature distance should be (double_literal(0.5) * (distance)^2 ) */
-  Cost_function_mse cost(feature_size, dataset_size);
+  Cost_function_mse cost(feature_size);
   /*CHECK(
     Approx(cost.get_error(dataset,featureset) / static_cast<sdouble32>(dataset_size)).epsilon(double_literal(0.00000000000001))
     == (double_literal(0.5) * pow(distance,2))
   ); issue #59 */
   for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
     CHECK(
-      Approx(cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator])).epsilon(double_literal(0.00000000000001))
+      Approx(
+        cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator], dataset_size)
+      ).epsilon(double_literal(0.00000000000001))
       == (double_literal(0.5 * feature_size) * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
     );
   }
