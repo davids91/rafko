@@ -23,7 +23,6 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "gen/training.pb.h"
-#include "sparse_net_library/models/cost_function.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/solution_solver.h"
@@ -44,10 +43,9 @@ using std::min;
  */
 class Sparse_net_approximizer{
 public:
-    Sparse_net_approximizer(
+  Sparse_net_approximizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-    cost_functions the_function, weight_updaters weight_updater_,
-    Service_context service_context = Service_context()
+    weight_updaters weight_updater_, Service_context service_context = Service_context()
   ): net(neural_network)
   ,  context(service_context)
   ,  net_solution(Solution_builder().service_context(context).build(net))
@@ -57,7 +55,6 @@ public:
   ,  gradient_fragment()
   ,  loops_unchecked(50)
   ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
-  ,  cost_function(Function_factory::build_cost_function(net, the_function, context))
   ,  solve_threads()
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
   /* Cache variables */
@@ -142,7 +139,6 @@ private:
 
   uint32 loops_unchecked;
   uint32 sequence_truncation;
-  unique_ptr<Cost_function> cost_function;
   unique_ptr<Weight_updater> weight_updater;
 
   vector<thread> solve_threads; /* The threads to be started during optimizing the network */

@@ -31,6 +31,7 @@
 #include "sparse_net_library/services/solution_solver.h"
 #include "sparse_net_library/services/backpropagation_queue_wrapper.h"
 #include "sparse_net_library/services/updater_factory.h"
+#include "sparse_net_library/services/function_factory.h"
 
 #include <vector>
 #include <memory>
@@ -39,6 +40,7 @@
 namespace sparse_net_library{
 
 using std::vector;
+using std::shared_ptr;
 using std::unique_ptr;
 using std::make_unique;
 using std::min;
@@ -54,6 +56,16 @@ public:
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
     cost_functions the_function, weight_updaters weight_updater_,
     Service_context service_context = Service_context()
+  ): Sparse_net_optimizer(
+    neural_network, train_set_, test_set,
+    Function_factory::build_cost_function(net, the_function, context),
+    weight_updater_, service_context
+  ){ }
+
+  Sparse_net_optimizer(
+    SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
+    shared_ptr<Cost_function> the_function, weight_updaters weight_updater_,
+    Service_context service_context = Service_context()
   ): net(neural_network)
   ,  context(service_context)
   ,  transfer_function(context)
@@ -65,7 +77,7 @@ public:
   ,  loops_unchecked(50)
   ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
   ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
-  ,  cost_function(Function_factory::build_cost_function(net, the_function, context))
+  ,  cost_function(the_function)
   ,  solve_threads()
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
   ,  neuron_data_sequences()
@@ -155,7 +167,7 @@ private:
   uint32 loops_unchecked;
   uint32 sequence_truncation;
   Backpropagation_queue gradient_step; /* Defines the neuron order during back-propagation */
-  unique_ptr<Cost_function> cost_function;
+  shared_ptr<Cost_function> cost_function;
   unique_ptr<Weight_updater> weight_updater;
 
   vector<thread> solve_threads; /* The threads to be started during optimizing the network */

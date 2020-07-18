@@ -47,7 +47,7 @@ public:
   ,  label_samples(sample_number)
   ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
   ,  error_sum(double_literal(1.0))
-  ,  cost_function(move(cost_function_))
+  ,  cost_function(cost_function_)
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_); 
