@@ -21,12 +21,16 @@
 #include "sparse_net_global.h"
 #include "gen/deep_learning_service.grpc.pb.h"
 
+#include "rafko_mainframe/models/service_context.h"
 #include "rafko_mainframe/services/server_slot.h"
+
+#include <string>
 
 namespace rafko_mainframe{
 
 using std::vector;
 using std::unique_ptr;
+using std::string;
 
 /**
  * @brief      This class describes a server for deep learning related tasks. The supported operations are described in
@@ -34,8 +38,10 @@ using std::unique_ptr;
  */
 class Deep_learning_server final : public Rafko_deep_learning::Service{
 public:
-  ~Deep_learning_server(void);
-  Deep_learning_server(void){}
+  Deep_learning_server(void)
+  :  server_slots()
+  ,  started()
+  { }
   Deep_learning_server(const Deep_learning_server& other) = delete;/* Copy constructor */
   Deep_learning_server(Deep_learning_server&& other) = delete; /* Move constructor */
   Deep_learning_server& operator=(const Deep_learning_server& other) = delete; /* Copy assignment */
@@ -46,16 +52,26 @@ public:
   ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response, ::rafko_mainframe::Slot_request>* stream);
   ::grpc::Status get_network(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::sparse_net_library::SparseNet* response);
   ::grpc::Status build_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response);
-  ::grpc::Status build_one_neuron_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response);
 
   /**
    * @brief      The main loop of the server to run to be able to provide the service
    */
   void loop(void);
+  ~Deep_learning_server(void){ server_slots.clear(); }
 
 private:
   vector<unique_ptr<Server_slot>> server_slots; /* points to different implementations of a @Server_slot */
+  vector<bool> started;
+  Service_context service_context;
 
+  /**
+   * @brief      Tries to find the index of the server slot with the given identifier
+   *
+   * @param[in]  id    The identifier
+   *
+   * @return     Index of the slot in @server_slots
+   */
+  uint32 find_id(string id);
 };
 
 } /* namespace rafko_mainframe */

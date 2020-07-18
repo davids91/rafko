@@ -37,6 +37,9 @@ using sparse_net_library::SparseNet;
  */
 class Server_slot{
 public: 
+  Server_slot(void)
+  : service_slot()
+  { service_slot.set_slot_id(generate_uuid()); }
   virtual ~Server_slot() = default;
 
   /**

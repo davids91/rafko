@@ -153,5 +153,4 @@ service Rafko_deep_learning{
 
   rpc get_network(Slot_request) returns (sparse_net_library.SparseNet) {} /* Provides the Loaded network into the slot */
   rpc build_network(Build_network_request) returns (Slot_response) {} /* Builds a Neural network with the given parameters into the provided slot */
-  rpc build_one_neuron_network(Build_network_request) returns (Slot_response) {} /* Builds a 1 Neuron network into the provided slot. Ignores @layer_sizes */
 }

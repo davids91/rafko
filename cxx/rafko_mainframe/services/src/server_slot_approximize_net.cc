@@ -34,7 +34,6 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
   if(SERV_SLOT_TO_APPROXIMIZE != service_slot.type())
     throw new std::runtime_error("Incorrecty Server slot initialization!");
   else{
-    service_slot.set_slot_id(generate_uuid());
     service_slot.set_state(0u); /* Reset state */
     /* ####################################################################
      * NEURAL NETWORK
@@ -66,10 +65,14 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
       training_set = std::make_shared<Data_aggregate>(*service_slot_.mutable_training_set(), cost_function);
       if(training_set)
         service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_DATA_SET);
+    }
+    if(
+      (cost_function) /* Data aggreaget requires a cost function */
+      &&(0 < service_slot_.test_set().inputs_size())
+    ){
       if(test_set)test_set.reset();
       if(
-        (0 < service_slot_.test_set().labels_size())
-        &&(service_slot_.training_set().inputs_size() == service_slot_.test_set().inputs_size())
+        (service_slot_.training_set().inputs_size() == service_slot_.test_set().inputs_size())
         &&(service_slot_.training_set().labels_size() == service_slot_.test_set().labels_size())
       ){
         training_set = std::make_shared<Data_aggregate>(*service_slot_.mutable_test_set(), cost_function);

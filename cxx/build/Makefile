@@ -45,7 +45,7 @@ SERVER_SOURCES += ../rafko_mainframe/services/src/server_slot_run_net.cc
 SERVER_SOURCES += ../rafko_mainframe/services/src/server_slot_approximize_net.cc
 
 MAINFRAME_SOURCES = $(SERVER_SOURCES)
-MAINFRAME_SOURCES += ../rafko_deep_learning_mainframe.cc
+MAINFRAME_SOURCES += ../rafko_mainframe/src/rafko_deep_learning_mainframe.cc
 
 MAINFRAME_OBJECTS = $(subst ../rafko_mainframe/services/src/,,$(subst ../,,$(MAINFRAME_SOURCES:.cc=.o))))
 
