@@ -44,11 +44,12 @@ using rafko_mainframe::Service_context;
  */
 class Cost_function{
 public:
-  Cost_function(uint32 feature_size_, Service_context service_context = Service_context())
-  :  context(service_context)
-  ,  process_threads()
-  ,  feature_size(feature_size_)
-  ,  error_value()
+  Cost_function(uint32 feature_size_, cost_functions the_function_, Service_context service_context = Service_context())
+  : context(service_context)
+  , process_threads()
+  , feature_size(feature_size_)
+  , error_value()
+  , the_function(the_function_)
   { process_threads.reserve(service_context.get_max_processing_threads()); };
 
   /**
@@ -95,6 +96,16 @@ public:
       label[feature_index], neuron_data[neuron_data.size() - feature_size + feature_index], sample_number
     ), sample_number);
   }
+
+  /**
+   * @brief      Gets the type of the implemented cost function.
+   *
+   * @return     The type.
+   */
+  cost_functions get_type(void){
+    return the_function;
+  }
+
   virtual ~Cost_function(void) = default;
 
 protected:
@@ -144,6 +155,8 @@ protected:
       }
     }
   }
+private:
+  cost_functions the_function; /* cost function type */
 };
 
 } /* namespace sparse_net_library */
