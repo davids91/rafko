@@ -24,16 +24,12 @@ namespace rafko_mainframe{
 using sparse_net_library::Solution_builder;
 
 void Server_slot_run_net::initialize(Service_slot&& service_slot_){
-  /* Save service slot */
   service_slot.set_type(service_slot_.type());
   if(SERV_SLOT_TO_RUN != service_slot.type())
     throw new std::runtime_error("Incorrecty Server slot initialization!");
   else{
-    /* generate an id */
     service_slot.set_slot_id(generate_uuid());
-
-    /* Update network and collect state */
-    service_slot.set_state(0u); /* State is basically the availability of the network */
+    service_slot.set_state(0u); /* Reset state and update accordingly */
     if(0 < network.neuron_array_size()){
       update_network(std::move(*service_slot.mutable_network()));
     }

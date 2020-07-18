@@ -153,7 +153,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   std::cout << "Optimizing net.." << std::endl;
   while(abs(train_error) > 1e-2){
     start = steady_clock::now();
-    approximizer.collect();
+    approximizer.collect_fragment();
     approximizer.apply_fragment();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;

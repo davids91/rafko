@@ -28,14 +28,16 @@ namespace rafko_mainframe{
  */
 class Server_slot_optimize_net : public Server_slot{
 public:
-  void initialize(Service_slot service_slot);
+  void initialize(Service_slot&& service_slot_);
   void loop(void);
   void reset(void);
-  void update_network(SparseNet net);
-  void accept_request(Slot_request request);
-  SparseNet get_network() const;
-  Slot_response get_status() const;
-  ~Server_slot_optimize_net();
+  void update_network(SparseNet&& net_);
+  void accept_request(Slot_request&& request_);
+  void run_net_once(Neural_io_stream& data_stream);
+  SparseNet get_network(void) const;
+  Slot_response get_status(void) const;
+  string get_uuid(void) const;
+  ~Server_slot_optimize_net(void);
 };
 
 } /* namespace rafko_mainframe */

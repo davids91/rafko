@@ -100,6 +100,7 @@ public:
   virtual string get_uuid(void) const = 0;
 
 protected:
+Service_slot service_slot;
 
   /**
    * @brief      Generates a unique identifier, with a guarantee that the currently 
@@ -108,6 +109,25 @@ protected:
    * @return     A random unique Identifier string
    */
   string generate_uuid(void);
+
+  /**
+   * @brief      Updates status of the service slot so it shall store the induvidual status bits
+   *             instead of the final status value. It's safe to call multiple times.
+   */
+  void expose_state(void){
+    if(SERV_SLOT_OK == service_slot.state())
+      service_slot.set_state(0);
+  }
+
+  /**
+   * @brief      Updates status of the service slot based on the object state.
+   *             In order to set the correct state value, the state needs to be exposed
+   *             by @expose_state to update the status flags
+   */
+  void finalize_state(void){
+    if(0 == service_slot.state()) /* No issues found, great! */
+      service_slot.set_state(SERV_SLOT_OK);
+  }
 
 };
 

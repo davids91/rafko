@@ -22,7 +22,7 @@
 
 namespace sparse_net_library{
 
-void Sparse_net_approximizer::collect(void){
+void Sparse_net_approximizer::collect_fragment(void){
   uint32 sequence_index;
   const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
 
@@ -162,7 +162,6 @@ void Sparse_net_approximizer::apply_fragment(void){
     );
     ++fragment_value_index;
   });
-
   gradient_fragment = Gradient_fragment();
 }
 

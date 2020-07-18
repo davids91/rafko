@@ -81,12 +81,19 @@ public:
   /**
    * @brief      Step the net in the opposite direction of the gradient slope
    */
-  void collect(void);
+  void collect_fragment(void);
 
   /**
    * @brief      Applies the colleted gradient fragment to the configured network
    */
   void apply_fragment(void);
+
+  /**
+   * @brief      Discards the gradient fragment collected in the past
+   */
+  void discard_fragment(void){
+    gradient_fragment = Gradient_fragment();
+  }
 
   /**
    * @brief      Adds the given values to the stored fragment.

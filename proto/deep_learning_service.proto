@@ -43,8 +43,9 @@ enum Slot_state_values{
   SERV_SLOT_STATE_UNKNOWN = 0;
   SERV_SLOT_MISSING_NET = 1; /* Missing or empty Neural network attached to the Server slot */
   SERV_SLOT_MISSING_SOLUTION = 2; /* Despite Network state, a Solution was not built based on the attached network ( if any ) */
-  SERV_SLOT_MISSING_TRAINING_SET = 4;
-  SERV_SLOT_MISSING_TEST_SET = 8;
+  SERV_SLOT_MISSING_DATA_SET = 4;
+  SERV_SLOT_MISSING_COST_FUNCTION = 16;
+  SERV_SLOT_MISSING_TRAINER = 32;
   SERV_SLOT_OK = 65536;
 }
 
@@ -109,19 +110,6 @@ message Slot_response{
   Neural_io_stream data_stream = 30; /* May be a part of a data-set or a run-once request */
 }
 
-/** @brief      The structure of a service slot encapsulating a channel in which deep learning related requests
- *              can be run.
- */
-message Service_slot{
-  string slot_id = 1; /* A unique identifier for each service slot */
-  uint32 state = 2; /* A bitfield storing 0 or 1 at the positions given in enum @Slot_state_values, except when everything is fine, then the value @SERV_SLOT_OK is used */
-  Slot_type type = 10;
-  sparse_net_library.SparseNet network = 11;
-  sparse_net_library.Data_set training_set = 12;
-  sparse_net_library.Data_set test_set = 13;
-  sparse_net_library.weight_updaters weight_updater = 14;
-}
-
 /**
  * @brief      Service hyperparameters describe the context in which deep learning services
  *             operate. It contains all the neccessary set of variables to function in the 
@@ -139,6 +127,21 @@ message Service_hyperparameters{
   double epsilon = 24; /* very small positive value almost greater, than zero */
   double lambda = 31;
 };
+
+/** @brief      The structure of a service slot encapsulating a channel in which deep learning related requests
+ *              can be run.
+ */
+message Service_slot{
+  string slot_id = 1; /* A unique identifier for each service slot */
+  uint32 state = 2; /* A bitfield storing 0 or 1 at the positions given in enum @Slot_state_values, except when everything is fine, then the value @SERV_SLOT_OK is used */
+  Slot_type type = 10;
+  Service_hyperparameters hypers = 11;
+  sparse_net_library.SparseNet network = 12;
+  sparse_net_library.Data_set test_set = 13;
+  sparse_net_library.Data_set training_set = 14;
+  sparse_net_library.cost_functions cost_function = 15;
+  sparse_net_library.weight_updaters weight_updater = 16;
+}
 
 /**
  * @brief      Describes a Rafko Deep Learning Service
