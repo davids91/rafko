@@ -74,12 +74,13 @@ public:
   virtual void accept_request(Slot_request&& request_) = 0;
 
   /**
-   * @brief      Runs the attached network, if it's valid, and uploads the result in the 
-   *             reference
+   * @brief      Runs the attached network if it's valied
    *
-   * @param      data_stream  the data to be taken as input, and the data to upload the result to
+   * @param      data_stream  The input data stream
+   *
+   * @return     The output data stream.
    */
-  virtual void run_net_once(Neural_io_stream& data_stream) = 0;
+  virtual Neural_io_stream run_net_once(const Neural_io_stream& data_stream) = 0;
 
   /**
    * @brief      Queries relevant information about the @Server_slot.

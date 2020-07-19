@@ -62,19 +62,20 @@ void Server_slot_run_net::accept_request(Slot_request&& request_){
   throw new std::runtime_error("Direct Requests not supported in a network runner slot!");
 }
 
-void Server_slot_run_net::run_net_once(Neural_io_stream& data_stream){
+Neural_io_stream Server_slot_run_net::run_net_once(const Neural_io_stream& data_stream){
   if(
     (SERV_SLOT_OK == service_slot.state())
     ||(0 == (SERV_SLOT_MISSING_SOLUTION & service_slot.state()))
   ){
+    Neural_io_stream result;
     uint32 sequence_start_index = 0;
     vector<sdouble32> result_package = vector<sdouble32>( /* reserve enough space for the result.. */
       network.output_neuron_number() * data_stream.sequence_size()
     ); /* ..which is the output of the network multiplied by the sequence size */
     for(uint32 sequence = 0; sequence < data_stream.sequence_size(); ++sequence){
       network_solver->solve({ /* Solve based on input */
-        data_stream.mutable_package()->begin() + sequence_start_index,
-        data_stream.mutable_package()->begin() + sequence_start_index + data_stream.feature_size(),
+        data_stream.package().begin() + sequence_start_index,
+        data_stream.package().begin() + sequence_start_index + data_stream.feature_size(),
       });
       std::copy(
         network_solver->get_neuron_data(0).end() - network_solver->get_output_size(),
@@ -84,11 +85,12 @@ void Server_slot_run_net::run_net_once(Neural_io_stream& data_stream){
       sequence_start_index += data_stream.feature_size();
     } /* for every sequence */
 
-    /* Writing back the reult into the argument */
-    data_stream.set_feature_size(network.output_neuron_number());
-    data_stream.set_sequence_size(data_stream.sequence_size());
-    *data_stream.mutable_package() = {result_package.begin(), result_package.end()};
-  }
+    /* Compiling the result into the argument */
+    result.set_feature_size(network.output_neuron_number());
+    result.set_sequence_size(data_stream.sequence_size());
+    *result.mutable_package() = {result_package.begin(), result_package.end()};
+    return result;
+  }throw new std::runtime_error("Invalid attached network run attempt!");
 }
 
 Slot_info Server_slot_run_net::get_info(Slot_request request){
