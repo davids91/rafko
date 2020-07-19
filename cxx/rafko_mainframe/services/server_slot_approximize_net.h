@@ -52,6 +52,7 @@ public:
   void reset(void);
   void update_network(SparseNet&& net_);
   void accept_request(Slot_request&& request_);
+  Slot_info get_info(Slot_request request);
   ~Server_slot_approximize_net(void){
     network_approximizer.reset();
     test_set.reset();

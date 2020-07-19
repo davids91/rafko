@@ -51,20 +51,28 @@ enum Slot_state_values{
 
 /** @brief      Available actions to request from a service slot
  */
-enum Slot_action{
+enum Slot_action_field{
   SERV_SLOT_NOOP = 0;
   SERV_SLOT_RUN_ONCE = 1; /* Run network one time. Uses the attached @data_stream of the request */
   SERV_SLOT_TO_START = 2; /* This action makes the server call the @loop of the @target_slot_id every time its @loop is called */
-  SERV_SLOT_TO_STOP = 3; /* This action disables the behavior introduced by @SERV_SLOT_TO_START */
-  SERV_SLOT_TO_RESET = 4; /* Depending on the slot, it could reset the attached networks data, the test/training error scores or whatever is implemented in the slot's @reset function */
-  SERV_SLOT_TO_TAKEOVER_NET = 5; /* Takes a copy from the source slot, and overwrites the network in the target slot in it */
-  SERV_SLOT_TO_APPEND_TRAINING_SET = 6; /* Adds the provided data_stream as an element of the training set attached to the server slot */
-  SERV_SLOT_TO_APPEND_TEST_SET = 7; /* Adds the provided data_stream as an element of the test set attached to the server slot */
-  SERV_SLOT_TO_DISTILL_NETWORK = 8; /* For the network attached to the slot: removes the zero, or insignificantly small weights with connections. */
+  SERV_SLOT_TO_STOP = 4; /* This action disables the behavior introduced by @SERV_SLOT_TO_START */
+  SERV_SLOT_TO_RESET = 8; /* Depending on the slot, it could reset the attached networks data, the test/training error scores or whatever is implemented in the slot's @reset function */
+  SERV_SLOT_TO_TAKEOVER_NET = 16; /* Takes a copy from the source slot, and overwrites the network in the target slot in it */
+  SERV_SLOT_TO_APPEND_TRAINING_SET = 32; /* Adds the provided data_stream as an element of the training set attached to the server slot */
+  SERV_SLOT_TO_APPEND_TEST_SET = 64; /* Adds the provided data_stream as an element of the test set attached to the server slot */
+  SERV_SLOT_TO_DISTILL_NETWORK = 128; /* For the network attached to the slot: removes the zero, or insignificantly small weights with connections. */
   /*!Note: The removal/duplication threshold is based on the @beta parameter in the service hyperparameters */
-  SERV_SLOT_TO_AMPLIFY_NETWORK = 9; /* For the network attached to the slot: duplicates the significant neurons. */
+  SERV_SLOT_TO_AMPLIFY_NETWORK = 256; /* For the network attached to the slot: duplicates the significant neurons. */
   /*!Note: A neuron proves to be significant if the output of it is paired with greater weights, than other neurons.*/
   SERV_SLOT_TO_DIE = 65536;
+}
+
+/** @brief      Available information fields to query from a service slot
+ */
+enum Slot_info_field{
+  SLOT_INFO_UNKNOWN = 0;
+  SLOT_INFO_TRAINING_ERROR = 1;
+  SLOT_INFO_TEST_ERROR = 2;
 }
 
 /** @brief      Certain slots may require raw I/O data form the network to operate.
@@ -82,7 +90,7 @@ message Neural_io_stream{
 message Slot_request{
   string source_slot_id = 1; /* In case of action requests involving 2 service slots, this field shall be used as the source slot */
   string target_slot_id = 2; /* In case of action requests involving only one slot this field shall be used */
-  Slot_action action = 10;
+  uint32 request_bitstring = 10; /* Either an action or an info request */
   Neural_io_stream data_stream = 20; /* May be a part of a data-set or a run-once request */
 }
 
@@ -93,8 +101,6 @@ message Build_network_request{
   string target_slot_id = 2;
   uint32 input_size = 10;
   double expected_input_range = 11;
-  sparse_net_library.cost_functions cost_function = 12;
-  sparse_net_library.weight_updaters weight_updater = 13;
   repeated sparse_net_library.transfer_functions allowed_transfers_by_layer = 14;
   repeated uint32 layer_sizes = 15;
 }
@@ -105,9 +111,15 @@ message Build_network_request{
 message Slot_response{
   string slot_id = 1; /* A string id to query existing service slots by */
   uint32 slot_state = 10; /* a bitfield representing the status of the slot */
-  double training_error = 20; /* Error values stored for the loaded training data set */
-  double test_error = 21; /* Error values stored for the loaded test data set */
   Neural_io_stream data_stream = 30; /* May be a part of a data-set or a run-once request */
+}
+
+/**
+ * @brief      This class describes a packet of slot information.
+ */
+message Slot_info{
+  repeated Slot_info_field info_field = 10;
+  repeated double info_package = 11;
 }
 
 /**
@@ -149,8 +161,9 @@ message Service_slot{
 service Rafko_deep_learning{
   rpc add_slot(Service_slot) returns (Slot_response) {} /* If possible adds a new slot into the server, then retudrns the status and ID of it */
   rpc update_slot(Service_slot) returns (Slot_response) {} /* Modify existing slot; the ID must be provided */
-  rpc request_action(stream Slot_request) returns (stream Slot_response) {} /* Make requests for the target service_slot, and return with the status after each request is completed */
 
-  rpc get_network(Slot_request) returns (sparse_net_library.SparseNet) {} /* Provides the Loaded network into the slot */
   rpc build_network(Build_network_request) returns (Slot_response) {} /* Builds a Neural network with the given parameters into the provided slot */
+  rpc request_action(stream Slot_request) returns (stream Slot_response) {} /* Make requests for the target service_slot, and return with the status after each request is completed */
+  rpc get_info(Slot_request) returns (Slot_info) {}
+  rpc get_network(Slot_request) returns (sparse_net_library.SparseNet) {} /* Provides the Loaded network into the slot */
 }

@@ -82,6 +82,15 @@ public:
   virtual void run_net_once(Neural_io_stream& data_stream) = 0;
 
   /**
+   * @brief      Queries relevant information about the @Server_slot.
+   *
+   * @param[in]  request  uses @request_bitstring to ask for @Slot_info_field values
+   *
+   * @return     Information packets returned in the order given by @Slot_info_field.
+   */
+  virtual Slot_info get_info(Slot_request request) = 0;
+
+  /**
    * @brief      Provide the loaded network
    *
    * @return     The network currently loaded in the configuration
@@ -89,18 +98,18 @@ public:
   virtual SparseNet get_network(void) const = 0;
 
   /**
-   * @brief      Provides the status of the server slot.
-   *
-   * @return     The status, described in the file @proto/deep_learning_service.proto
-   */
-  virtual Slot_response get_status(void) const = 0;
-
-  /**
    * @brief      Gets the identifier of the slot
    *
    * @return     The uuid.
    */
   virtual string get_uuid(void) const = 0;
+
+  /**
+   * @brief      Provides the status of the server slot.
+   *
+   * @return     The status, described in the file @proto/deep_learning_service.proto
+   */
+  Slot_response get_status(void);
 
 protected:
 Service_slot service_slot;

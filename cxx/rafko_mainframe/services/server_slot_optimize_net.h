@@ -34,6 +34,7 @@ public:
   void update_network(SparseNet&& net_);
   void accept_request(Slot_request&& request_);
   void run_net_once(Neural_io_stream& data_stream);
+  Slot_info get_info(Slot_request request);
   SparseNet get_network(void) const;
   Slot_response get_status(void) const;
   string get_uuid(void) const;

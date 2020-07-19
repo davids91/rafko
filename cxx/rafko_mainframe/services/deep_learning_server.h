@@ -25,12 +25,14 @@
 #include "rafko_mainframe/services/server_slot.h"
 
 #include <string>
+#include <mutex>
 
 namespace rafko_mainframe{
 
 using std::vector;
 using std::unique_ptr;
 using std::string;
+using std::mutex;
 
 /**
  * @brief      This class describes a server for deep learning related tasks. The supported operations are described in
@@ -40,7 +42,8 @@ class Deep_learning_server final : public Rafko_deep_learning::Service{
 public:
   Deep_learning_server(void)
   :  server_slots()
-  ,  started()
+  ,  server_slot_mutexs()
+  ,  is_server_slot_running()
   { }
   Deep_learning_server(const Deep_learning_server& other) = delete;/* Copy constructor */
   Deep_learning_server(Deep_learning_server&& other) = delete; /* Move constructor */
@@ -49,9 +52,11 @@ public:
 
   ::grpc::Status add_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response);
   ::grpc::Status update_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response);
-  ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response, ::rafko_mainframe::Slot_request>* stream);
-  ::grpc::Status get_network(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::sparse_net_library::SparseNet* response);
+
   ::grpc::Status build_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response);
+  ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response, ::rafko_mainframe::Slot_request>* stream);
+  ::grpc::Status get_info(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::rafko_mainframe::Slot_info* response);
+  ::grpc::Status get_network(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::sparse_net_library::SparseNet* response);
 
   /**
    * @brief      The main loop of the server to run to be able to provide the service
@@ -61,7 +66,9 @@ public:
 
 private:
   vector<unique_ptr<Server_slot>> server_slots; /* points to different implementations of a @Server_slot */
-  vector<bool> started;
+  vector<unique_ptr<mutex>> server_slot_mutexs;
+  vector<bool> is_server_slot_running;
+
   Service_context service_context;
 
   /**

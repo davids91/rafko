@@ -133,4 +133,17 @@ void Server_slot_approximize_net::accept_request(Slot_request&& request_){
   throw new std::runtime_error("Unimplemented operation!");
 }
 
+Slot_info Server_slot_approximize_net::get_info(Slot_request request){
+  Slot_info response;
+  if(0 < (request.request_bitstring() & SLOT_INFO_TRAINING_ERROR)){
+    response.add_info_field(SLOT_INFO_TRAINING_ERROR);
+    response.add_info_package(training_set->get_error());
+  }
+  if(0 < (request.request_bitstring() & SLOT_INFO_TEST_ERROR)){
+    response.add_info_field(SLOT_INFO_TEST_ERROR);
+    response.add_info_package(test_set->get_error());
+  }
+  return response;
+}
+
 } /* rafko_mainframe */

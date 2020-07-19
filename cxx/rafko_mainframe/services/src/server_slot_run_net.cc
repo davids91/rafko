@@ -91,6 +91,10 @@ void Server_slot_run_net::run_net_once(Neural_io_stream& data_stream){
   }
 }
 
+Slot_info Server_slot_run_net::get_info(Slot_request request){
+  return Slot_info(); /* No implemented info packet to be provided */
+}
+
 SparseNet Server_slot_run_net::get_network(void) const{
   return network;
 }

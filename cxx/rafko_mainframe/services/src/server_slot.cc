@@ -27,21 +27,28 @@ using std::mt19937;
 using std::uniform_int_distribution;
 
 string Server_slot::generate_uuid(void){
-    static random_device dev;
-    static mt19937 rng(dev());
+  static random_device dev;
+  static mt19937 rng(dev());
 
-    uniform_int_distribution<int> dist(0, 15);
+  uniform_int_distribution<int> dist(0, 15);
 
-    const char *v = "0123456789abcdef";
-    const bool dash[] = { 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 };
+  const char *v = "0123456789abcdef";
+  const bool dash[] = { 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 };
 
-    string res;
-    for (int i = 0; i < 16; i++) {
-        if (dash[i]) res += "-";
-        res += v[dist(rng)];
-        res += v[dist(rng)];
-    }
-    return res;
+  string res;
+  for (int i = 0; i < 16; i++) {
+      if (dash[i]) res += "-";
+      res += v[dist(rng)];
+      res += v[dist(rng)];
+  }
+  return res;
+}
+
+Slot_response Server_slot::get_status(void){
+  Slot_response response;
+  response.set_slot_id(get_uuid());
+  response.set_slot_state(service_slot.state());
+  return response;
 }
 
 } /* rafko_mainframe */
