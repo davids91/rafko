@@ -53,6 +53,7 @@ public:
   ::grpc::Status add_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response);
   ::grpc::Status update_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response);
 
+  ::grpc::Status ping(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::rafko_mainframe::Slot_response* response);
   ::grpc::Status build_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response);
   ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response, ::rafko_mainframe::Slot_request>* stream);
   ::grpc::Status get_info(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::rafko_mainframe::Slot_info* response);

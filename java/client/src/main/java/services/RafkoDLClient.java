@@ -20,9 +20,10 @@ public class RafkoDLClient {
     public boolean ping(){
         /* if any commend is successful, then server is online! */
         RafkoDeepLearningService.Slot_request request = RafkoDeepLearningService.Slot_request
-            .newBuilder().setTargetSlotId("MOOT").setAction(RafkoDeepLearningService.Slot_action.SERV_SLOT_NOOP).build();
+            .newBuilder().setTargetSlotId("MOOT").build();
         try {
-            org.rafko.sparse_net_library.RafkoSparseNet.SparseNet dummy = server_stub.getNetwork(request);
+            RafkoDeepLearningService.Slot_response answer = server_stub.ping(request);
+            System.out.println("Response ID: " + answer.getSlotId());
         } catch (StatusRuntimeException e) {
             logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
             return false;

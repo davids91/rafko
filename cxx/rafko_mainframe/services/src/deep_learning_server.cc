@@ -64,6 +64,19 @@ void Deep_learning_server::loop(void){
   }else return ::grpc::Status::CANCELLED;
 }
 
+::grpc::Status Deep_learning_server::ping(
+  ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
+  ::rafko_mainframe::Slot_response* response
+){
+  uint32 slot_index = find_id(request->target_slot_id());
+  if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
+    lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+    response->CopyFrom(server_slots[slot_index]->get_status());
+  }
+  return ::grpc::Status::OK;
+}
+
+
 ::grpc::Status Deep_learning_server::build_network(
   ::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request,
   ::rafko_mainframe::Slot_response* response

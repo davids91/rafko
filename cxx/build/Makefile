@@ -1,5 +1,6 @@
 # Makefile
-LIBS = `pkg-config --cflags --libs protobuf grpc++` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
+LIBS = `pkg-config --cflags --libs protobuf grpc++ grpc` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
+
 LIB_DIR = ../lib
 LIB_OUTPUT = $(LIB_DIR)/libsparsenetlib.a
 MAINFRAME_OUTPUT = rafko-mainframe
@@ -67,6 +68,10 @@ GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 
 $(GENERATED_SOURCES):
 	make gen
+
+run: $(MAINFRAME_OUTPUT)
+	@ip addr | grep 192.
+	./$(MAINFRAME_OUTPUT)
 
 gen: #as in generate models; Can't be bothered to type something like `make generate-protocol-buffer-files` every time...
 	protoc common.proto --proto_path="$(PROTO_FILES_DIR)" --cpp_out="$(CXX_GEN_FILES_DIR)/" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)

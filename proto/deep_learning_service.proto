@@ -162,6 +162,7 @@ service Rafko_deep_learning{
   rpc add_slot(Service_slot) returns (Slot_response) {} /* If possible adds a new slot into the server, then retudrns the status and ID of it */
   rpc update_slot(Service_slot) returns (Slot_response) {} /* Modify existing slot; the ID must be provided */
 
+  rpc ping(Slot_request) returns (Slot_response) {} /* Pings a slot, the response repeats the slot id and state if valid */
   rpc build_network(Build_network_request) returns (Slot_response) {} /* Builds a Neural network with the given parameters into the provided slot */
   rpc request_action(stream Slot_request) returns (stream Slot_response) {} /* Make requests for the target service_slot, and return with the status after each request is completed */
   rpc get_info(Slot_request) returns (Slot_info) {}
