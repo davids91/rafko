@@ -10,11 +10,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import services.RafkoDLClient;
 
@@ -25,10 +24,33 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class DashboardController implements Initializable {
+    public Rectangle rect_train_0;
+    public Rectangle rect_train_1;
+    public Rectangle rect_train_2;
+    public Rectangle rect_train_3;
+    public Rectangle rect_train_4;
+    public Rectangle rect_output_0;
+    public Rectangle rect_output_1;
+    public Rectangle rect_output_2;
+    public Rectangle rect_output_3;
+    public Rectangle rect_output_4;
+    public TextArea dataset_size_textfield;
     public TextField serverAddress_textField;
-    public Button connect_btn;
+    public Label network_folder_label;
     public Label serverStatus_label;
+    public Button connect_btn;
     public Button test_btn;
+    public Button dataset_load_btn;
+    public Button dataset_create_btn;
+    public Button network_load_btn;
+    public Button network_create_btn;
+    public Button save_network_btn;
+    public Button gen_sequence_btn;
+    public Button start_training_btn;
+    public Button play_sequence_btn;
+    public Button dataset_save_btn;
+    public Slider sample_index_slider;
+    public Slider sequence_index_slider;
 
     RafkoDLClient client;
 
@@ -69,5 +91,10 @@ public class DashboardController implements Initializable {
             serverStatus_label.setGraphic(img);
             serverStatus_label.setText("");
         }
+    }
+
+    @FXML
+    void create_network(){
+
     }
 }

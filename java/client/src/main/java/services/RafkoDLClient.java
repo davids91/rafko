@@ -4,7 +4,6 @@ import io.grpc.Channel;
 import io.grpc.StatusRuntimeException;
 import org.rafko.mainframe.RafkoDeepLearningService;
 import org.rafko.mainframe.Rafko_deep_learningGrpc;
-import rafko_mainframe.DeepLearningService;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

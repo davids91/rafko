@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.shape.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<GridPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="control.DashboardController">
+<GridPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="control.DashboardController">
    <children>
       <TextField fx:id="serverAddress_textField" layoutX="14.0" layoutY="14.0" text="127.0.0.1:50052" GridPane.columnIndex="1" />
       <Label layoutY="18.0" text="Server Address" />
@@ -14,14 +16,107 @@
       <Label text="Server status:" GridPane.rowIndex="3" />
       <Label fx:id="serverStatus_label" maxHeight="64.0" text="==UNKNOWN==" GridPane.columnIndex="1" GridPane.rowIndex="3" />
       <Button fx:id="test_btn" disable="true" mnemonicParsing="false" onAction="#ping_server" text="Test Connection" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+      <TabPane prefHeight="540.0" prefWidth="677.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnSpan="5" GridPane.rowIndex="4">
+        <tabs>
+          <Tab text="Sequential sin(x) dataset Test">
+            <content>
+              <VBox maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0">
+                     <children>
+                        <HBox layoutX="14.0" layoutY="11.0" maxWidth="1.7976931348623157E308">
+                           <children>
+                              <Button fx:id="dataset_load_btn" layoutX="192.0" layoutY="11.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Load Dataset" />
+                              <Button fx:id="dataset_create_btn" layoutX="103.0" layoutY="11.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="New Dataset" />
+                              <Label alignment="CENTER" layoutX="14.0" layoutY="15.0" maxHeight="1.7976931348623157E308" text="Size:" />
+                              <TextArea fx:id="dataset_size_textfield" layoutX="49.0" layoutY="11.0" prefHeight="25.0" prefWidth="45.0" text="0&#10;" />
+                              <Button fx:id="dataset_save_btn" layoutX="282.0" layoutY="11.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Save Dataset" />
+                           </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="36.0">
+                           <children>
+                              <Label layoutX="10.0" layoutY="36.0" text="Sample index: " />
+                              <Slider fx:id="sample_index_slider" layoutX="96.0" layoutY="38.0" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                              <Label layoutX="394.0" layoutY="37.0" text="0/0" />
+                           </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="50.0">
+                           <children>
+                              <Label layoutX="10.0" layoutY="50.0" text="Sequence index:" />
+                              <Slider fx:id="sequence_index_slider" layoutX="103.0" layoutY="52.0" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                              <Label layoutX="394.0" layoutY="51.0" text="0/0" />
+                           </children>
+                        </HBox>
+                        <HBox layoutX="14.0" layoutY="72.0">
+                           <children>
+                              <VBox layoutX="14.0" layoutY="72.0">
+                                 <children>
+                                    <Rectangle fx:id="rect_train_0" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="14.0" layoutY="72.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                    <Rectangle fx:id="rect_train_1" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="14.0" layoutY="119.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                    <Rectangle fx:id="rect_train_2" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="14.0" layoutY="166.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                    <Rectangle fx:id="rect_train_3" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="14.0" layoutY="213.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                    <Rectangle fx:id="rect_train_4" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="14.0" layoutY="260.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                 </children>
+                              </VBox>
+                              <VBox layoutX="87.0" layoutY="72.0">
+                                 <children>
+                                    <Button fx:id="play_sequence_btn" layoutX="87.0" layoutY="72.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Play Sequence" />
+                                    <Button fx:id="gen_sequence_btn" layoutX="87.0" layoutY="107.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Gen Sequence" />
+                                    <Button fx:id="start_training_btn" layoutX="87.0" layoutY="143.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Start Training" />
+                                    <Label layoutX="92.0" layoutY="181.0" prefHeight="17.0" prefWidth="214.0" text="Left: Training data" />
+                                    <Label text="Right: Net Output" />
+                                 </children>
+                              </VBox>
+                              <VBox layoutX="332.0" layoutY="72.0">
+                                 <children>
+                                    <Rectangle fx:id="rect_output_0" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="332.0" layoutY="72.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                    <Rectangle fx:id="rect_output_1" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="332.0" layoutY="119.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                    <Rectangle fx:id="rect_output_2" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="332.0" layoutY="166.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                    <Rectangle fx:id="rect_output_3" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="332.0" layoutY="213.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                    <Rectangle fx:id="rect_output_4" arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="64.0" layoutX="332.0" layoutY="260.0" stroke="BLACK" strokeType="INSIDE" width="64.0" />
+                                 </children>
+                              </VBox>
+                              <VBox>
+                                 <children>
+                                    <Label text="Training error:" />
+                                    <LineChart>
+                                      <xAxis>
+                                        <CategoryAxis side="BOTTOM" />
+                                      </xAxis>
+                                      <yAxis>
+                                        <NumberAxis side="LEFT" />
+                                      </yAxis>
+                                    </LineChart>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+            </content>
+          </Tab>
+        </tabs>
+      </TabPane>
+      <HBox GridPane.columnIndex="4" GridPane.rowIndex="3">
+         <children>
+            <Button fx:id="network_load_btn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Load" GridPane.columnIndex="4" GridPane.rowIndex="3" />
+            <Button fx:id="save_network_btn" mnemonicParsing="false" text="Save" />
+            <Button fx:id="network_create_btn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#create_network" text="Create" GridPane.columnIndex="4" GridPane.rowIndex="3" />
+         </children>
+      </HBox>
+      <Label fx:id="network_folder_label" text="&lt;No Network Loaded&gt;" GridPane.columnIndex="4" />
+      <Separator orientation="VERTICAL" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+      <Separator orientation="VERTICAL" GridPane.columnIndex="3" />
    </children>
    <columnConstraints>
       <ColumnConstraints />
       <ColumnConstraints />
       <ColumnConstraints />
       <ColumnConstraints />
+      <ColumnConstraints />
+      <ColumnConstraints />
+      <ColumnConstraints />
    </columnConstraints>
    <rowConstraints>
+      <RowConstraints />
       <RowConstraints />
       <RowConstraints />
       <RowConstraints />
