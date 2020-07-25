@@ -59,9 +59,19 @@ dependencies {
     runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
     implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
 
+    /* https://mvnrepository.com/artifact/org.datavec/datavec-api */
+    compile group: 'org.datavec', name: 'datavec-api', version: '1.0.0-beta7'
+    compile group: 'org.datavec', name: 'datavec-data', version: '1.0.0-beta7'
+    /*compile group: 'org.datavec', name: 'datavec-data-image', version: '1.0.0-beta7'
+    compile group: 'org.datavec', name: 'datavec-data-codec', version: '1.0.0-beta7'
+    compile group: 'org.datavec', name: 'datavec-excel', version: '1.0.0-beta7'
+    compile group: 'org.datavec', name: 'datavec-local', version: '1.0.0-beta7' */
+
+
     testImplementation "io.grpc:grpc-testing:${grpcVersion}"
     testImplementation "junit:junit:4.12"
     testImplementation "org.mockito:mockito-core:2.28.2"
+
 }
 
 protobuf {

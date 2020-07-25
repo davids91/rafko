@@ -1,5 +1,6 @@
 # Makefile
-LIBS = `pkg-config --cflags --libs protobuf grpc++ grpc` #-pthread -IC:/msys64/mingw64/include -LC:/msys64/mingw64/lib -lprotobuf
+LIBFLAGS = `pkg-config --cflags protobuf grpc++`
+LIBS = `pkg-config --libs protobuf grpc++`
 
 LIB_DIR = ../lib
 LIB_OUTPUT = $(LIB_DIR)/libsparsenetlib.a
@@ -11,7 +12,7 @@ DEBUG_FLAGS = -DNDEBUG #no debug
 #DEBUG_FLAGS += -v # verbose compile information
 #DEBUG_FLAGS += -fsanitize=address #address sanitizer check
 #DEBUG_FLAGS += -static-libasan #enables debug data to be shown in valgrind and gdb with addresssanitizer
-CPPFLAGS = -Wall $(LIBS) -std=c++14 $(DEBUG_FLAGS)
+CPPFLAGS = -Wall $(LIBFLAGS) $(LIBS) -std=c++14 $(DEBUG_FLAGS)
 CPPFLAGS_DEPLOY = $(CPPFLAGS) -L$(LIB_DIR) -lsparsenetlib
 
 PROTO_FILES_DIR = ../../proto
@@ -20,7 +21,7 @@ CXX_GEN_FILES_DIR = ../gen
 ##########################################################################################################
 # Source files
 ##########################################################################################################
-GENERATED_SOURCES = $(CXX_GEN_FILES_DIR)/common.pb.cc 
+GENERATED_SOURCES = $(CXX_GEN_FILES_DIR)/common.pb.cc
 GENERATED_SOURCES += $(CXX_GEN_FILES_DIR)/sparse_net.pb.cc $(CXX_GEN_FILES_DIR)/solution.pb.cc $(CXX_GEN_FILES_DIR)/training.pb.cc
 GENERATED_SOURCES += $(CXX_GEN_FILES_DIR)/deep_learning_service.pb.cc $(CXX_GEN_FILES_DIR)/deep_learning_service.grpc.pb.cc
 
@@ -53,7 +54,7 @@ MAINFRAME_OBJECTS = $(subst ../rafko_mainframe/services/src/,,$(subst ../,,$(MAI
 GENERATED_FILES_INCLUDE_DIR = -I $(CXX_GEN_FILES_DIR)
 SOURCES_INCLUDE_DIR = -I ../
 
-.PHONY: build_library clean gen
+.PHONY: lib clean gen
 build_mainframe: $(LIB_OUTPUT) $(GENERATED_SOURCES)
 	g++ $(GENERATED_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(MAINFRAME_OUTPUT)
 

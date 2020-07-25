@@ -82,7 +82,7 @@ public:
    */
   virtual Neural_io_stream run_net_once(const Neural_io_stream& data_stream) = 0;
 
-  /**
+  /** 
    * @brief      Queries relevant information about the @Server_slot.
    *
    * @param[in]  request  uses @request_bitstring to ask for @Slot_info_field values
