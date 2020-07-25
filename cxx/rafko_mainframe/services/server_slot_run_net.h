@@ -44,12 +44,12 @@ using std::unique_ptr;
  */
 class Server_slot_run_net : public Server_slot{
 public:
-  Server_slot_run_net(Service_context context_)
-  : context(context_)
-  , network_input()
-  , network()
-  , network_solution()
-  , network_solver()
+  Server_slot_run_net(Service_context& context_)
+  :  context(context_)
+  ,  network_input()
+  ,  network()
+  ,  network_solution()
+  ,  network_solver()
   { }
 
   void initialize(Service_slot&& service_slot_);
@@ -61,7 +61,6 @@ public:
   Slot_info get_info(Slot_request request);
   SparseNet get_network(void) const;
   Slot_response get_status(void) const;
-  string get_uuid(void) const;
 
   ~Server_slot_run_net(void){ }
 

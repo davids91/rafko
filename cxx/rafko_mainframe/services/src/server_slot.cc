@@ -44,11 +44,17 @@ string Server_slot::generate_uuid(void){
   return res;
 }
 
-Slot_response Server_slot::get_status(void){
+Slot_response Server_slot::get_status(void) const{
   Slot_response response;
   response.set_slot_id(get_uuid());
   response.set_slot_state(service_slot.state());
   return response;
+}
+
+
+string Server_slot::get_uuid(void) const{
+  if(0 != service_slot.slot_id().compare("")) return service_slot.slot_id();
+    else throw new std::runtime_error("Empty UUID is queried!");
 }
 
 } /* rafko_mainframe */

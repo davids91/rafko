@@ -27,8 +27,9 @@ using sparse_net_library::Sparse_net_builder;
 using std::lock_guard;
 
 void Deep_learning_server::loop(void){
+  lock_guard<mutex> my_lock(server_mutex);
   for(uint32 i = 0; i < server_slots.size(); ++i){
-    if(is_server_slot_running[i]){
+    if(0 < is_server_slot_running[i]){
       lock_guard<mutex> my_lock(*server_slot_mutexs[i]);
       server_slots[i]->loop();
     }
@@ -39,14 +40,17 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request,
   ::rafko_mainframe::Slot_response* response
 ){
-  server_slots.push_back(std::move(Server_slot_factory::build_server_slot(request->type(),service_context)));
+  std::cout << "Trying to add a slot.." << std::endl;
+  lock_guard<mutex> my_lock(server_mutex);
   server_slot_mutexs.push_back(std::make_unique<mutex>());
-  is_server_slot_running.push_back(false);
-  uint32 slot_index = find_id(request->slot_id());
-  if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
-    lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
-    server_slots[slot_index]->initialize(Service_slot(*request));
-    response->CopyFrom(server_slots[slot_index]->get_status());
+  server_slots.push_back(unique_ptr<Server_slot>(
+    Server_slot_factory::build_server_slot(request->type(),service_context)
+  ));
+  is_server_slot_running.push_back(0);
+  if(server_slots.back()){ /* If Item successfully added */
+    lock_guard<mutex> my_lock(*server_slot_mutexs.back());
+    server_slots.back()->initialize(Service_slot(*request));
+    response->CopyFrom(server_slots.back()->get_status());
     return ::grpc::Status::OK;
   }else return ::grpc::Status::CANCELLED;
 }
@@ -55,6 +59,7 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request,
   ::rafko_mainframe::Slot_response* response
 ){
+  std::cout << "Trying to update a slot.." << std::endl;
   uint32 slot_index = find_id(request->slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
@@ -68,6 +73,7 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
   ::rafko_mainframe::Slot_response* response
 ){
+  std::cout << "Ping.." << std::endl;
   uint32 slot_index = find_id(request->target_slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
@@ -81,6 +87,7 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request,
   ::rafko_mainframe::Slot_response* response
 ){
+  std::cout << "Trying to build a network.." << std::endl;
   uint32 slot_index = find_id(request->target_slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
@@ -107,6 +114,7 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, 
   ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response,::rafko_mainframe::Slot_request>* stream
 ){
+  std::cout << "Trying to action.." << std::endl;
   Slot_request current_request;
   while(stream->Read(&current_request)){
     Neural_io_stream temp_output_data;
@@ -115,10 +123,10 @@ void Deep_learning_server::loop(void){
       uint32 request_bitstring = current_request.request_bitstring();
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
       if(0 < (request_bitstring & SERV_SLOT_TO_START)){
-        is_server_slot_running[slot_index] = true;
+        is_server_slot_running[slot_index] = 1;
       }
       if(0 < (request_bitstring & SERV_SLOT_TO_STOP)){
-        is_server_slot_running[slot_index] = false;
+        is_server_slot_running[slot_index] = 0;
       }
       if(0 < (request_bitstring & SERV_SLOT_TO_RESET)){
         server_slots[slot_index]->reset();
@@ -147,6 +155,7 @@ void Deep_learning_server::loop(void){
         stream->Write(response);
       }
       if(0 < (request_bitstring & SERV_SLOT_TO_DIE)){
+        lock_guard<mutex> my_lock(server_mutex);
         return ::grpc::Status::CANCELLED; /* Not implemented yet */
       }
     }else return ::grpc::Status::CANCELLED; /* Server slot not found */
@@ -158,6 +167,7 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
   ::rafko_mainframe::Slot_info* response
 ){
+  std::cout << "Trying to get info.." << std::endl;
   uint32 slot_index = find_id(request->target_slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
@@ -172,6 +182,7 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
   ::sparse_net_library::SparseNet* response
 ){
+  std::cout << "Trying to get network.." << std::endl;
   uint32 slot_index = find_id(request->target_slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);

@@ -103,14 +103,14 @@ public:
    *
    * @return     The uuid.
    */
-  virtual string get_uuid(void) const = 0;
+  string get_uuid(void) const;
 
   /**
    * @brief      Provides the status of the server slot.
    *
    * @return     The status, described in the file @proto/deep_learning_service.proto
    */
-  Slot_response get_status(void);
+  Slot_response get_status(void) const;
 
 protected:
 Service_slot service_slot;

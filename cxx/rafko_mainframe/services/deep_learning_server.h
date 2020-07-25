@@ -44,7 +44,9 @@ public:
   :  server_slots()
   ,  server_slot_mutexs()
   ,  is_server_slot_running()
+  ,  server_mutex()
   { }
+
   Deep_learning_server(const Deep_learning_server& other) = delete;/* Copy constructor */
   Deep_learning_server(Deep_learning_server&& other) = delete; /* Move constructor */
   Deep_learning_server& operator=(const Deep_learning_server& other) = delete; /* Copy assignment */
@@ -68,8 +70,8 @@ public:
 private:
   vector<unique_ptr<Server_slot>> server_slots; /* points to different implementations of a @Server_slot */
   vector<unique_ptr<mutex>> server_slot_mutexs;
-  vector<bool> is_server_slot_running;
-
+  vector<uint8> is_server_slot_running;
+  mutex server_mutex; /* Aims to protect modification of the state of the server ( mainly Server_slots ) */
   Service_context service_context;
 
   /**

@@ -38,7 +38,7 @@ using std::shared_ptr;
  */
 class Server_slot_approximize_net : public Server_slot_run_net{
 public:
-  Server_slot_approximize_net(Service_context context_)
+  Server_slot_approximize_net(Service_context& context_)
   :  Server_slot_run_net(context_)
   ,  cost_function()
   ,  training_set()

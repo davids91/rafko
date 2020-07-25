@@ -14,9 +14,11 @@ import java.util.logging.Logger;
 public class RafkoDLClient {
     private static final Logger logger = Logger.getLogger(services.RafkoDLClient.class.getName());
     private Rafko_deep_learningGrpc.Rafko_deep_learningBlockingStub server_stub;
+    private Runnable on_disconnect;
 
-    public RafkoDLClient(Channel channel){
+    public RafkoDLClient(Channel channel, Runnable on_disconnect_){
         server_stub = Rafko_deep_learningGrpc.newBlockingStub(channel);
+        on_disconnect = on_disconnect_;
     }
 
     public RafkoDeepLearningService.Slot_response ping(){
@@ -29,45 +31,73 @@ public class RafkoDLClient {
             logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
         } catch(Exception e){
             e.printStackTrace();
+            on_disconnect.run();
         }
         return null;
     }
 
-    public String add_server_slot(
+    public RafkoDeepLearningService.Slot_response add_server_slot(
         RafkoDeepLearningService.Service_slot attempt
     ) throws StatusRuntimeException{
-        return server_stub.addSlot(attempt).getSlotId();
+        try {
+            return server_stub.addSlot(attempt);
+        } catch (StatusRuntimeException e){
+            e.printStackTrace();
+            on_disconnect.run();
+            throw e;
+        }
     }
 
     public RafkoDeepLearningService.Slot_response update_server_slot(
         RafkoDeepLearningService.Service_slot service_slot
     ) throws StatusRuntimeException{
-        return server_stub.updateSlot(service_slot);
+        try {
+            return server_stub.updateSlot(service_slot);
+        } catch (StatusRuntimeException e){
+            e.printStackTrace();
+            on_disconnect.run();
+            throw e;
+        }
     }
 
     public RafkoSparseNet.SparseNet get_network(
             String slot_id
     ) throws StatusRuntimeException{
-        RafkoDeepLearningService.Slot_request get_network_request = RafkoDeepLearningService.Slot_request.newBuilder()
-                .setTargetSlotId(slot_id)
-                .build();
-        return server_stub.getNetwork(get_network_request);
+        try {
+            RafkoDeepLearningService.Slot_request get_network_request = RafkoDeepLearningService.Slot_request.newBuilder()
+                    .setTargetSlotId(slot_id)
+                    .build();
+            return server_stub.getNetwork(get_network_request);
+        } catch (StatusRuntimeException e){
+            e.printStackTrace();
+            on_disconnect.run();
+            throw e;
+        }
     }
 
     public RafkoSparseNet.SparseNet create_network(
         String slot_id, int input_size, double expected_input_range,
-        ArrayList<RafkoCommon.transfer_functions> allowed_transfer_funtions, ArrayList<Integer> layer_sizes
+        ArrayList<RafkoCommon.transfer_functions> allowed_transfer_functions, ArrayList<Integer> layer_sizes
     ) throws StatusRuntimeException{
-        RafkoDeepLearningService.Build_network_request build_request = RafkoDeepLearningService.Build_network_request.newBuilder()
-            .setTargetSlotId(slot_id).setInputSize(input_size).setExpectedInputRange(expected_input_range)
-            .addAllAllowedTransfersByLayer(allowed_transfer_funtions)
-            .addAllLayerSizes(layer_sizes)
-            .build();
+        try {
+            System.out.print(",,,");
+            RafkoDeepLearningService.Build_network_request build_request = RafkoDeepLearningService.Build_network_request.newBuilder()
+                    .setTargetSlotId(slot_id).setInputSize(input_size).setExpectedInputRange(expected_input_range)
+                    .addAllAllowedTransfersByLayer(allowed_transfer_functions)
+                    .addAllLayerSizes(layer_sizes)
+                    .build();
 
-        RafkoDeepLearningService.Slot_response answer = server_stub.buildNetwork(build_request);
-        System.out.println("Built Network in: " + answer.getSlotId());
+            System.out.print("...");
+            RafkoDeepLearningService.Slot_response answer = server_stub.buildNetwork(build_request);
 
-        return get_network(slot_id);
+            System.out.println("Built Network in: " + answer.getSlotId());
+
+            return get_network(slot_id);
+        } catch (StatusRuntimeException e){
+            e.printStackTrace();
+            on_disconnect.run();
+            throw e;
+        }
     }
 
 }

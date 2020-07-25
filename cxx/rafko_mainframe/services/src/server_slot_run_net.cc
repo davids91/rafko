@@ -108,9 +108,4 @@ Slot_response Server_slot_run_net::get_status(void) const{
   return ret;
 }
 
-string Server_slot_run_net::get_uuid(void) const{
-  if(0 != service_slot.slot_id().compare("")) return service_slot.slot_id();
-    else throw new std::runtime_error("Empty UUID is queried!");
-}
-
 } /* rafko_mainframe */

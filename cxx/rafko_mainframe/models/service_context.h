@@ -139,7 +139,7 @@ public:
   }
 
   Service_context& set_hypers(Service_hyperparameters hypers_){
-    hypers = hypers_;
+    hypers.CopyFrom(hypers_);
     return *this;
   }
 

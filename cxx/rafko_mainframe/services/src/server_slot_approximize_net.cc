@@ -39,19 +39,20 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
      * NEURAL NETWORK
      * #################################################################### */
     if(0 < network.neuron_array_size())
-      update_network(std::move(*service_slot.mutable_network()));
+      update_network(std::move(*service_slot_.mutable_network()));
     /* ####################################################################
      * COST FUNCTION
      * #################################################################### */
     if(COST_FUNCTION_UNKNOWN != service_slot_.cost_function()){
       service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_COST_FUNCTION);
-      service_slot.set_cost_function(service_slot.cost_function());
       if(cost_function) cost_function.reset();
       cost_function = std::move(Function_factory::build_cost_function(
-        network, service_slot.cost_function(), context
+        network, service_slot_.cost_function(), context
       ));
-      if(cost_function)
+      if(cost_function){
+        service_slot.set_cost_function(service_slot_.cost_function());
         service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_COST_FUNCTION);
+      }
     }/* if(COST_FUNCTION_UNKNOWN != service_slot_.cost_function()) */
     /* ####################################################################
      * DATA SETS
@@ -81,19 +82,22 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
     /* ####################################################################
      * TRAINER
      * #################################################################### */
-    (void)context.set_hypers(service_slot.hypers());
-    service_slot.set_weight_updater(service_slot.weight_updater());
+    if(service_slot_.has_hypers())
+      (void)context.set_hypers(Service_hyperparameters());
     service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_TRAINER);
     if(network_approximizer)
       network_approximizer.reset();
     if(WEIGHT_UPDATER_UNKNOWN != service_slot.weight_updater()){
       network_approximizer = std::make_unique<Sparse_net_approximizer>(
-        network, *training_set, *test_set, service_slot.weight_updater(), context
+        network, *training_set, *test_set, service_slot_.weight_updater(), context
       );
-      if(network_approximizer)
+      if(network_approximizer){
         service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_TRAINER);
+        service_slot.set_weight_updater(service_slot_.weight_updater());
+      }
     }
     finalize_state();
+    std::cout << "final state: " << service_slot.state() <<std::endl;
   }
 }
 

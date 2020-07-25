@@ -25,14 +25,14 @@
       <RowConstraints />
    </rowConstraints>
    <children>
-      <TextField fx:id="serverAddress_textField" layoutX="14.0" layoutY="14.0" text="127.0.0.1:50052" GridPane.columnIndex="1" />
-      <Label layoutY="18.0" maxHeight="1.7976931348623157E308" text="Server Address" />
-      <Button fx:id="connect_btn" layoutX="163.0" layoutY="14.0" mnemonicParsing="false" text="Create Client" GridPane.columnIndex="2" />
-      <Label text="Server status:" GridPane.rowIndex="3" />
+      <TextField fx:id="serverAddress_textField" layoutX="14.0" layoutY="14.0" text="192.168.83.128:50052" GridPane.columnIndex="1" />
+      <Label alignment="CENTER" layoutY="18.0" maxHeight="1.7976931348623157E308" text="Server Address" />
+      <Button fx:id="connect_btn" alignment="CENTER" layoutX="163.0" layoutY="14.0" mnemonicParsing="false" text="Create Client" GridPane.columnIndex="2" />
+      <Label alignment="CENTER" text="Server status:" GridPane.rowIndex="3" />
       <HBox GridPane.columnIndex="1" GridPane.rowIndex="3">
          <children>
-            <Label fx:id="server_state_label" maxHeight="1.7976931348623157E308" text="==UNKNOWN==" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-            <Button fx:id="test_btn" disable="true" mnemonicParsing="false" onAction="#ping_server" text="?" />
+            <Label fx:id="server_state_label" alignment="CENTER" maxHeight="1.7976931348623157E308" text="==UNKNOWN==" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <Button fx:id="test_btn" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#ping_server" text="?" />
          </children>
       </HBox>
       <TabPane prefHeight="540.0" prefWidth="677.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnSpan="5" GridPane.rowIndex="4">
@@ -117,23 +117,26 @@
       </TabPane>
       <HBox GridPane.columnIndex="4" GridPane.rowIndex="3">
          <children>
-            <Label maxHeight="1.7976931348623157E308" text="Server Slot:" />
-            <ComboBox fx:id="server_slot_combo" disable="true" prefWidth="150.0" />
-            <Label fx:id="server_slot_state_label" maxHeight="1.7976931348623157E308" text="==UNKNOWN==" />
-            <Button fx:id="server_slot_state_query" disable="true" mnemonicParsing="false" text="?" />
+            <Label alignment="CENTER" maxHeight="1.7976931348623157E308" text="Server Slot:" />
+            <ComboBox fx:id="server_slot_combo" disable="true" />
+            <Label fx:id="server_slot_state_label" alignment="CENTER" maxHeight="1.7976931348623157E308" text="==UNKNOWN==">
+               <tooltip>
+                  <Tooltip fx:id="slot_state_tooltip" text="tooltip" />
+               </tooltip></Label>
+            <Button fx:id="server_slot_state_query" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#query_slot_sate" text="?" />
          </children>
       </HBox>
       <HBox GridPane.columnIndex="4">
          <children>
-            <Label fx:id="network_folder_label" maxHeight="1.7976931348623157E308" text="&lt;No Network Loaded&gt;" GridPane.columnIndex="4" />
-            <Button fx:id="read_network_from_slot_btn" disable="true" mnemonicParsing="false" text="Read from Slot" />
-            <Button fx:id="network_load_btn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Load" />
-            <Button fx:id="save_network_btn" disable="true" mnemonicParsing="false" text="Save" />
-            <Button fx:id="network_create_btn" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#create_network" text="Create" />
+            <Label fx:id="network_folder_label" alignment="CENTER" maxHeight="1.7976931348623157E308" text="&lt;No Network Loaded&gt;" GridPane.columnIndex="4" />
+            <Button fx:id="read_network_from_slot_btn" alignment="CENTER" disable="true" mnemonicParsing="false" text="Read from Slot" />
+            <Button fx:id="network_load_btn" alignment="CENTER" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Load" />
+            <Button fx:id="save_network_btn" alignment="CENTER" disable="true" mnemonicParsing="false" text="Save" />
+            <Button fx:id="network_create_btn" alignment="CENTER" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#create_network" text="Create" />
          </children>
       </HBox>
       <Separator orientation="VERTICAL" GridPane.columnIndex="3" GridPane.rowIndex="3" />
       <Separator orientation="VERTICAL" GridPane.columnIndex="3" />
-      <Button fx:id="create_slot_btn" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#create_server_slot" text="Create Slot" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+      <Button fx:id="create_slot_btn" alignment="CENTER" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#create_server_slot" text="Create Slot" GridPane.columnIndex="2" GridPane.rowIndex="3" />
    </children>
 </GridPane>
