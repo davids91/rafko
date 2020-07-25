@@ -23,6 +23,8 @@
 
 namespace rafko_mainframe{
 
+using sparse_net_library::transfer_functions;
+using sparse_net_library::transfer_functions_IsValid;
 using sparse_net_library::Sparse_net_builder;
 using std::lock_guard;
 
@@ -40,7 +42,6 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request,
   ::rafko_mainframe::Slot_response* response
 ){
-  std::cout << "Trying to add a slot.." << std::endl;
   lock_guard<mutex> my_lock(server_mutex);
   server_slot_mutexs.push_back(std::make_unique<mutex>());
   server_slots.push_back(unique_ptr<Server_slot>(
@@ -59,7 +60,6 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request,
   ::rafko_mainframe::Slot_response* response
 ){
-  std::cout << "Trying to update a slot.." << std::endl;
   uint32 slot_index = find_id(request->slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
@@ -73,7 +73,6 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
   ::rafko_mainframe::Slot_response* response
 ){
-  std::cout << "Ping.." << std::endl;
   uint32 slot_index = find_id(request->target_slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
@@ -87,15 +86,21 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request,
   ::rafko_mainframe::Slot_response* response
 ){
-  std::cout << "Trying to build a network.." << std::endl;
   uint32 slot_index = find_id(request->target_slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
     if(0 < request->allowed_transfers_by_layer_size()){
+      uint32 layer_index = 0;
+      vector<vector<transfer_functions>> allowed_transfers(request->allowed_transfers_by_layer_size());
+      for(const sint32& allowed : request->allowed_transfers_by_layer()){
+        if(transfer_functions_IsValid(static_cast<transfer_functions>(allowed)))
+          allowed_transfers[layer_index++] = vector<transfer_functions>(1, static_cast<transfer_functions>(allowed));
+        else throw new std::runtime_error("Unknown transfer function detected!");
+      }
       server_slots[slot_index]->update_network(SparseNet(
         *Sparse_net_builder().input_size(request->input_size())
         .expected_input_range(request->expected_input_range())
-        .allowed_transfer_functions_by_layer({request->allowed_transfers_by_layer().begin(),request->allowed_transfers_by_layer().end()})
+        .allowed_transfer_functions_by_layer(allowed_transfers)
         .dense_layers({request->layer_sizes().begin(),request->layer_sizes().end()})
       ));
     }else{
@@ -114,7 +119,6 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, 
   ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response,::rafko_mainframe::Slot_request>* stream
 ){
-  std::cout << "Trying to action.." << std::endl;
   Slot_request current_request;
   while(stream->Read(&current_request)){
     Neural_io_stream temp_output_data;
@@ -167,7 +171,6 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
   ::rafko_mainframe::Slot_info* response
 ){
-  std::cout << "Trying to get info.." << std::endl;
   uint32 slot_index = find_id(request->target_slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
@@ -182,7 +185,6 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
   ::sparse_net_library::SparseNet* response
 ){
-  std::cout << "Trying to get network.." << std::endl;
   uint32 slot_index = find_id(request->target_slot_id());
   if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
     lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);

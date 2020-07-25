@@ -37,7 +37,7 @@ using std::unique_ptr;
  */
 class Server_slot_factory{
 public:
-  static unique_ptr<Server_slot> build_server_slot(Slot_type slot_type, Service_context service_context_){
+  static unique_ptr<Server_slot> build_server_slot(Slot_type slot_type, Service_context& service_context_){
     switch(slot_type){
       case SERV_SLOT_TO_RUN: return std::make_unique<Server_slot_run_net>(service_context_);
       case SERV_SLOT_TO_APPROXIMIZE: return std::make_unique<Server_slot_approximize_net>(service_context_);

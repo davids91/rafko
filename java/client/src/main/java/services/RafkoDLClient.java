@@ -8,6 +8,7 @@ import org.rafko.sparse_net_library.RafkoCommon;
 import org.rafko.sparse_net_library.RafkoSparseNet;
 
 import java.util.ArrayList;
+import java.util.InvalidPropertiesFormatException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,10 +22,10 @@ public class RafkoDLClient {
         on_disconnect = on_disconnect_;
     }
 
-    public RafkoDeepLearningService.Slot_response ping(){
+    public RafkoDeepLearningService.Slot_response ping(String id){
         /* if any commend is successful, then server is online! */
         RafkoDeepLearningService.Slot_request request = RafkoDeepLearningService.Slot_request
-            .newBuilder().setTargetSlotId("MOOT").build();
+                .newBuilder().setTargetSlotId(id).build();
         try {
             return server_stub.ping(request);
         } catch (StatusRuntimeException e) {
@@ -34,6 +35,10 @@ public class RafkoDLClient {
             on_disconnect.run();
         }
         return null;
+    }
+
+    public RafkoDeepLearningService.Slot_response ping(){
+        return ping("MOOT");
     }
 
     public RafkoDeepLearningService.Slot_response add_server_slot(
@@ -78,7 +83,10 @@ public class RafkoDLClient {
     public RafkoSparseNet.SparseNet create_network(
         String slot_id, int input_size, double expected_input_range,
         ArrayList<RafkoCommon.transfer_functions> allowed_transfer_functions, ArrayList<Integer> layer_sizes
-    ) throws StatusRuntimeException{
+    ) throws StatusRuntimeException, InvalidPropertiesFormatException {
+        if(allowed_transfer_functions.size() != layer_sizes.size()){
+            throw new InvalidPropertiesFormatException("Number of layers doesn't match allower transfer functions per layer");
+        }
         try {
             System.out.print(",,,");
             RafkoDeepLearningService.Build_network_request build_request = RafkoDeepLearningService.Build_network_request.newBuilder()
