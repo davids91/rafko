@@ -24,8 +24,8 @@
 
 #include "gen/solution.pb.h"
 #include "gen/sparse_net.pb.h"
-#include "sparse_net_library/models/transfer_function.h"
 #include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
 #include "sparse_net_library/services/solution_solver.h"
 #include "sparse_net_library/services/partial_solution_solver.h"
@@ -65,6 +65,7 @@ using rafko_mainframe::Service_context;
  * - @Partial_solution [1][1]: takes half from each previous @Partial_solution
  */
 void test_solution_solver_multithread(uint16 threads){
+  Service_context service_context;
 
   /* Define the input, @Solution and partial solution table */
   Data_ringbuffer neuron_data(1,8);
@@ -93,32 +94,32 @@ void test_solution_solver_multithread(uint16 threads){
   temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
   temp_input_interval.set_interval_size(network_inputs.size());
   *partial_solutions[0][0].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(partial_solutions[0][0], neuron_data);
+  Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(partial_solutions[0][0], neuron_data, service_context);
 
   /* [0][1]: Half of the input */
   manual_2_neuron_partial_solution(partial_solutions[0][1], network_inputs.size()/2,2);
   temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(network_inputs.size()/2));
   temp_input_interval.set_interval_size(network_inputs.size()/2);
   *partial_solutions[0][1].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(partial_solutions[0][1], neuron_data);
+  Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(partial_solutions[0][1], neuron_data, service_context);
 
   /* [1][0]: Whole of the previous row's data --> neuron [0] to [3] */
   manual_2_neuron_partial_solution(partial_solutions[1][0],4,4);
   temp_input_interval.set_starts(0);
   temp_input_interval.set_interval_size(4);
   *partial_solutions[1][0].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(partial_solutions[1][0], neuron_data);
+  Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(partial_solutions[1][0], neuron_data, service_context);
 
   /* [1][1]: Half of the previous row's data ( in the middle) --> neuron [1] to [2] */
   manual_2_neuron_partial_solution(partial_solutions[1][1],2,6);
   temp_input_interval.set_starts(1);
   temp_input_interval.set_interval_size(2);
   *partial_solutions[1][1].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(partial_solutions[1][1], neuron_data);
+  Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(partial_solutions[1][1], neuron_data, service_context);
 
   /* Solve the compiled Solution */
   srand (time(nullptr));
-  Solution_solver solution_solver(solution,context);
+  Solution_solver solution_solver(solution, service_context);
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(solution.neuron_number());
   vector<sdouble32> network_output;
 
@@ -221,22 +222,23 @@ TEST_CASE("Solution solver manual testing","[solve][small][manual-solve]"){
  * Testing if the solution solver produces a correct output, given a built @SparseNet
  */
 void testing_solution_solver_manually(google::protobuf::Arena* arena){
+  Service_context service_context;
   vector<uint32> net_structure = {20,40,30,10,20};
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the described net */
   unique_ptr<SparseNet> net(
-    Sparse_net_builder().input_size(5)
+    Sparse_net_builder(service_context).input_size(5)
     .expected_input_range(double_literal(5.0))
     .arena_ptr(arena).dense_layers(net_structure)
   );
 
   /* Generate solution from Net */
-  unique_ptr<Solution_builder> solution_builder = make_unique<Solution_builder>();
+  unique_ptr<Solution_builder> solution_builder = make_unique<Solution_builder>(service_context);
   Solution solution = *solution_builder->max_solve_threads(4).device_max_megabytes(2048).arena_ptr(arena).build(*net);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  Solution_solver solver(solution);
+  Solution_solver solver(solution, service_context);
   solver.solve(net_input);
   vector<sdouble32> result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size());
@@ -251,7 +253,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   /* Re-veriy with guaranteed multiple partial solutions */
   sdouble32 solution_size = solution.SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
   Solution solution2 = *solution_builder->max_solve_threads(4).device_max_megabytes(solution_size/double_literal(4.0)).arena_ptr(arena).build(*net);
-  Solution_solver solver2(solution2);
+  Solution_solver solver2(solution2, service_context);
   solver2.solve(net_input);
   result = {solver2.get_neuron_data().end() - solver2.get_output_size(),solver2.get_neuron_data().end()};
   
@@ -275,7 +277,8 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   };
 
   /* Build the above described net */
-  Sparse_net_builder net_builder = Sparse_net_builder();
+  Service_context service_context;
+  Sparse_net_builder net_builder = Sparse_net_builder(service_context);
   net_builder.input_size(5).expected_input_range(double_literal(5.0));
   if(NETWORK_RECURRENCE_TO_SELF == recurrence)
     net_builder.set_recurrence_to_self();
@@ -286,9 +289,9 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
 
   /* Generate solution from Net */
   unique_ptr<Solution> solution = unique_ptr<Solution>(
-    Solution_builder().service_context().device_max_megabytes(max_space_mb).build(*net)
+    Solution_builder(service_context).device_max_megabytes(max_space_mb).build(*net)
   );
-  Solution_solver solver(*solution);
+  Solution_solver solver(*solution, service_context);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   solver.solve(net_input);

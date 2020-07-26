@@ -18,6 +18,7 @@
 #include "test/catch.hpp"
 
 #include "sparse_net_global.h"
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
 
 #include <vector>
@@ -29,6 +30,7 @@ using std::copy;
 
 using sparse_net_library::Data_ringbuffer;
 using sparse_net_library::Input_synapse_interval;
+using rafko_mainframe::Service_context;
 
 /*###############################################################################################
  * Testing Ringbuffer implementation by creating a ringbuffer object and adding new entries in
@@ -42,6 +44,7 @@ void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& ringbuf
 }
 
 TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
+  Service_context service_context;
   uint32 buffer_number = 5;
   uint32 buffer_size = 30;
   vector<sdouble32> data_sample(buffer_size, double_literal(0.0));
@@ -77,6 +80,7 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
  * - get_sequence_index
  * */
 TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-handling]"){
+  Service_context service_context;
   uint32 sequence_number = 5;
   uint32 buffer_size = 30;
   Data_ringbuffer buffer(sequence_number, buffer_size);

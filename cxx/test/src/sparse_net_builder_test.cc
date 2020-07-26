@@ -21,6 +21,7 @@
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "sparse_net_library/models/neuron_info.h"
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 
@@ -28,24 +29,27 @@
 
 namespace sparse_net_library_test {
 
-  using std::shared_ptr;
-  using std::unique_ptr;
-  using std::make_unique;
-  using std::vector;
+using sparse_net_library::Neuron;
+using sparse_net_library::SparseNet;
+using sparse_net_library::transfer_functions;
+using sparse_net_library::Sparse_net_builder;
+using sparse_net_library::Neuron_info;
+using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
+using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
+using sparse_net_library::TRANSFER_FUNCTION_TANH;
+using sparse_net_library::TRANSFER_FUNCTION_RELU;
+using sparse_net_library::TRANSFER_FUNCTION_SELU;
+using sparse_net_library::Input_synapse_interval;
+using sparse_net_library::Index_synapse_interval;
+using sparse_net_library::Synapse_iterator;
+using rafko_mainframe::Service_context;
 
-  using sparse_net_library::Neuron;
-  using sparse_net_library::SparseNet;
-  using sparse_net_library::transfer_functions;
-  using sparse_net_library::Sparse_net_builder;
-  using sparse_net_library::Neuron_info;
-  using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
-  using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
-  using sparse_net_library::TRANSFER_FUNCTION_TANH;
-  using sparse_net_library::TRANSFER_FUNCTION_RELU;
-  using sparse_net_library::TRANSFER_FUNCTION_SELU;
-  using sparse_net_library::Input_synapse_interval;
-  using sparse_net_library::Index_synapse_interval;
-  using sparse_net_library::Synapse_iterator;
+using std::make_shared;
+using std::shared_ptr;
+using std::unique_ptr;
+using std::make_unique;
+using std::vector;
+
 
 /*###############################################################################################
  * Testing Manual Net creation
@@ -56,8 +60,7 @@ namespace sparse_net_library_test {
  * 1st and 2nd neurons will have the first as input both
  * */
 SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
-
-  using std::make_shared;
+  Service_context service_context;
 
   /* Create the single Weight Table */
   Index_synapse_interval temp_index_interval;
@@ -106,7 +109,7 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[2]) );
 
   /* Pass the net into the builder */
-  shared_ptr<Sparse_net_builder> builder(make_shared<Sparse_net_builder>());
+  shared_ptr<Sparse_net_builder> builder(make_shared<Sparse_net_builder>(service_context));
   builder->input_size(1)
     .expected_input_range(double_literal(1.0))
     .output_neuron_number(2)
@@ -205,7 +208,8 @@ TEST_CASE("Constructing small net manually using arena","[build][arena][small][m
  * And check manually the connections
  */
 SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
-  unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>());
+  Service_context service_context;
+  unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>(service_context));
   builder->input_size(5)
     .output_neuron_number(2)
     .expected_input_range(double_literal(5.0))

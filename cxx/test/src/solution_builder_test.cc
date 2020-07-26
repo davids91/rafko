@@ -20,16 +20,12 @@
 
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/solution_solver.h"
 
 namespace sparse_net_library_test {
-
-using std::unique_ptr;
-using std::shared_ptr;
-using std::make_unique;
-using std::vector;
 
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::SparseNet;
@@ -39,13 +35,21 @@ using sparse_net_library::Solution_solver;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::NETWORK_RECURRENCE_TO_SELF;
 using sparse_net_library::NETWORK_RECURRENCE_TO_LAYER;
+using rafko_mainframe::Service_context;
+
+using std::unique_ptr;
+using std::shared_ptr;
+using std::make_unique;
+using std::vector;
 
 /*###############################################################################################
  * Testing Solution generation using the @Sparse_net_builder and the @Solution_builder
  * */
 unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, uint32 recursion){
+  Service_context service_context;
+
   vector<uint32> net_structure = {20,20,30,10,2}; /* Build a net of this structure */
-  Sparse_net_builder builder = Sparse_net_builder();
+  Sparse_net_builder builder = Sparse_net_builder(service_context);
 
   builder.input_size(50).expected_input_range(double_literal(5.0))
     .output_neuron_number(2).arena_ptr(arena);
@@ -64,7 +68,7 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
    unique_ptr<Solution> solution;
 
    REQUIRE_NOTHROW(
-      solution = unique_ptr<Solution>(Solution_builder()
+      solution = unique_ptr<Solution>(Solution_builder(service_context)
         .max_solve_threads(4).device_max_megabytes(device_max_megabytes)
         .arena_ptr(arena).build(net)
       )

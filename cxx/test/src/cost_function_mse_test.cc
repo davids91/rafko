@@ -17,6 +17,7 @@
 
 #include "test/catch.hpp"
 
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_global.h"
 #include "sparse_net_library/models/cost_function.h"
 #include "sparse_net_library/models/cost_function_mse.h"
@@ -26,6 +27,9 @@
 namespace sparse_net_library_test {
 
 using sparse_net_library::Cost_function_mse;
+using rafko_mainframe::Service_context;
+
+using std::vector;
 
 /*###############################################################################################
  * Testing Error function
@@ -33,8 +37,7 @@ using sparse_net_library::Cost_function_mse;
  * - Calculate the distances to it
  * */
 TEST_CASE( "Error function test", "[training][error-function]" ) {
-
-  using std::vector;
+  Service_context service_context;
 
   /* create fake data and fake features with a given distance */
   uint16 dataset_size = 500;
@@ -54,7 +57,7 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   }
 
   /* one feature distance should be (double_literal(0.5) * (distance)^2 ) */
-  Cost_function_mse cost(feature_size);
+  Cost_function_mse cost(feature_size, service_context);
   /*CHECK(
     Approx(cost.get_error(dataset,featureset) / static_cast<sdouble32>(dataset_size)).epsilon(double_literal(0.00000000000001))
     == (double_literal(0.5) * pow(distance,2))

@@ -32,7 +32,7 @@ using rafko_mainframe::Service_context;
  * @brief      Error function handling and utilities for MSE: C0 = 1/2n(y-y')^2 */
 class Cost_function_mse : public Cost_function{
 public:
-  Cost_function_mse(uint32 feature_size_, Service_context service_context = Service_context())
+  Cost_function_mse(uint32 feature_size_, Service_context& service_context)
   : Cost_function(feature_size_, COST_FUNCTION_MSE, service_context)
   { };
 

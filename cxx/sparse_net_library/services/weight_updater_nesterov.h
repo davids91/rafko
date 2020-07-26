@@ -24,7 +24,7 @@ namespace sparse_net_library{
 
 class Weight_updater_nesterov : public Weight_updater{
 public:
-  Weight_updater_nesterov(SparseNet& sparse_net, Service_context service_context = Service_context())
+  Weight_updater_nesterov(SparseNet& sparse_net, Service_context& service_context)
   :  Weight_updater(sparse_net, service_context, 2)
   { }
 

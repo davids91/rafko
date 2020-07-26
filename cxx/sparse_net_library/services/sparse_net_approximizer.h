@@ -45,10 +45,10 @@ class Sparse_net_approximizer{
 public:
   Sparse_net_approximizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-    weight_updaters weight_updater_, Service_context service_context = Service_context()
+    weight_updaters weight_updater_, Service_context& service_context
   ): net(neural_network)
   ,  context(service_context)
-  ,  net_solution(Solution_builder().service_context(context).build(net))
+  ,  net_solution(Solution_builder(context).service_context(context).build(net))
   ,  solvers()
   ,  train_set(train_set_)
   ,  test_set(test_set_)
@@ -137,7 +137,7 @@ public:
 
 private:
   SparseNet& net;
-  Service_context context;
+  Service_context& context;
   unique_ptr<Solution> net_solution;
   vector<unique_ptr<Solution_solver>> solvers;
   Data_aggregate& train_set;

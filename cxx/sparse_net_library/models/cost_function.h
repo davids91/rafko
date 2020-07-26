@@ -44,7 +44,7 @@ using rafko_mainframe::Service_context;
  */
 class Cost_function{
 public:
-  Cost_function(uint32 feature_size_, cost_functions the_function_, Service_context service_context = Service_context())
+  Cost_function(uint32 feature_size_, cost_functions the_function_, Service_context& service_context)
   : context(service_context)
   , process_threads()
   , feature_size(feature_size_)
@@ -109,7 +109,7 @@ public:
   virtual ~Cost_function(void) = default;
 
 protected:
-  Service_context context;
+  Service_context& context;
   vector<thread> process_threads;
   uint32 feature_size;
   mutex error_mutex;

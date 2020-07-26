@@ -24,7 +24,7 @@
 
 namespace sparse_net_library{
 
-Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net, Service_context context){
+Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net, Service_context& context){
 
   using std::vector;
   using std::deque;

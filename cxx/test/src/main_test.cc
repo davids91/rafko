@@ -24,6 +24,7 @@
 #include "gen/solution.pb.h"
 #include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/data_aggregate.h"
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 
 int main( int argc, char* argv[] ) {
@@ -41,6 +42,7 @@ using sparse_net_library::Input_synapse_interval;
 using sparse_net_library::Index_synapse_interval;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Neuron;
+using rafko_mainframe::Service_context;
 
 void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset){
 
@@ -105,7 +107,8 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
 }
 
 void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdouble32>& prev_neuron_output, const Partial_solution& partial_solution, uint32 neuron_offset){
-  Transfer_function trasfer_function;
+  Service_context service_context;
+  Transfer_function trasfer_function(service_context);
 
   /* Neuron 1 = transfer_function( ( input0 * weight0 + input1 * weight1 ... inputN * weightN ) + bias0 )*/
   sdouble32 neuron1_result = 0;
@@ -130,7 +133,9 @@ void manaual_fully_connected_network_result(
   vector<sdouble32>& inputs, vector<sdouble32> previous_data, vector<sdouble32>& neuron_data,
   vector<uint32> layer_structure, SparseNet network
 ){
-  Transfer_function trasfer_function;
+  Service_context service_context;
+  Transfer_function trasfer_function(service_context);
+
   uint32 neuron_number = 0;
   for(uint32 layer_iterator = 0; layer_iterator < layer_structure.size(); ++layer_iterator){ /* Go through all of the layers, count the number of Neurons */
     neuron_number += layer_structure[layer_iterator]; /* Sum the number of neurons accoding to the given layer structure */
@@ -280,7 +285,7 @@ void print_weights(SparseNet& net, Solution& solution){
   }
 }
 
-Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net, cost_functions the_function, Service_context service_context){
+Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net, cost_functions the_function, Service_context& service_context){
 
   using std::vector;
 
@@ -304,13 +309,14 @@ Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net,
   }
 
   return Data_aggregate(
+    service_context,
     vector<vector<sdouble32>>(net_inputs),
     vector<vector<sdouble32>>(addition_dataset),
     net, the_function
   );
 }
 
-Data_aggregate create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function, Service_context service_context){
+Data_aggregate create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function, Service_context& service_context){
   uint32 carry_bit;
   vector<vector<sdouble32>> net_inputs(sequence_size * number_of_samples);
   vector<vector<sdouble32>> addition_dataset(sequence_size * number_of_samples);
@@ -338,6 +344,7 @@ Data_aggregate create_sequenced_addition_dataset(uint32 number_of_samples, uint3
   }
 
   return Data_aggregate(
+    service_context,
     vector<vector<sdouble32>>(net_inputs),
     vector<vector<sdouble32>>(addition_dataset),
     net, the_function, sequence_size

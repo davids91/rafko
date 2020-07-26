@@ -35,10 +35,24 @@ public:
    *             To srand with time(nullptr), the constructor needs to be called with
    *             a true boolean argument or given a seed value.
    */
-  Dense_net_weight_initializer(bool seed);
-  Dense_net_weight_initializer(sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0));
-  Dense_net_weight_initializer(uint32 seed, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0));
+  Dense_net_weight_initializer(bool seed, Service_context& service_context)
+  :  Weight_initializer(service_context)
+  { if(seed)srand(static_cast<uint32>(time(nullptr))); }
 
+  Dense_net_weight_initializer(
+    Service_context& service_context, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0)
+  ): Weight_initializer(service_context)
+  {
+    memMin = max(double_literal(0.0), min(double_literal(1.0), memRatioMin));
+    memMax = min(double_literal(1.0), max(memMin,memRatioMax));
+  }
+
+  Dense_net_weight_initializer(
+    uint32 seed, Service_context& service_context,
+    sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0)
+  ): Dense_net_weight_initializer(service_context, memRatioMin, memRatioMax)
+  { srand(seed); }
+  
   /**
    * @brief      Configuration functions
    */

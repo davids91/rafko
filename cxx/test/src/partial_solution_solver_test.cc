@@ -22,6 +22,7 @@
 #include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
 #include "sparse_net_library/services/partial_solution_solver.h"
@@ -41,6 +42,7 @@ using sparse_net_library::Transfer_function;
 using sparse_net_library::Index_synapse_interval;
 using sparse_net_library::Input_synapse_interval;
 using sparse_net_library::Synapse_iterator;
+using rafko_mainframe::Service_context;
 
 /*###############################################################################################
  * Testing if the solver processes a partial_solution detail correctly
@@ -55,6 +57,7 @@ using sparse_net_library::Synapse_iterator;
  */
 
 TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-solution][manual]" ){
+  Service_context service_context;
   Data_ringbuffer neuron_data(1,2);
   Partial_solution partial_solution;
   vector<uint32> helper_vector_uint;
@@ -71,7 +74,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   *partial_solution.add_input_data() = temp_synapse_interval;
 
   /* Test the partial_solution */
-  Partial_solution_solver solver(partial_solution, neuron_data);
+  Partial_solution_solver solver(partial_solution, neuron_data, service_context);
   solver.collect_input_data(network_inputs);
   REQUIRE( network_inputs.size() == solver.get_input_size() );
 
@@ -125,6 +128,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
  * - see if the input is collected correctly
  */
 TEST_CASE("Test Partial solution input collection","[solve][partial-solution][input_collection]"){
+  Service_context service_context;
   Partial_solution partial_solution;
   vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
   Index_synapse_interval temp_index_interval;
@@ -176,7 +180,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Prepare the partial solution */
-  Partial_solution_solver solver(partial_solution, neuron_data);
+  Partial_solution_solver solver(partial_solution, neuron_data, service_context);
 
   REQUIRE( network_inputs.size() == solver.get_input_size() );
   solver.collect_input_data(network_inputs);

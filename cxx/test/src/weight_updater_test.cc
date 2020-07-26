@@ -25,6 +25,7 @@
 #include "gen/solution.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/solution_builder.h"
@@ -42,6 +43,7 @@ using sparse_net_library::Partial_solution;
 using sparse_net_library::Solution;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Weight_updater;
+using rafko_mainframe::Service_context;
 
 /*###############################################################################################
  * Testing if the weight updater are updating a generated solution correctly
@@ -50,15 +52,16 @@ using sparse_net_library::Weight_updater;
  * - Check if the updated weights match the ones copied to the solution
  */
 TEST_CASE("Weight updater test","[build][weight-update]"){
+  Service_context service_context;
   vector<uint32> net_structure = {2,4,3,1,2};
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the above described net, solution and a Weight updater */
   unique_ptr<SparseNet> net(
-    Sparse_net_builder().input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure)
+    Sparse_net_builder(service_context).input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure)
   );
-  Weight_updater weight_updater(*net);
-  Solution solution = *Solution_builder().service_context().build(*net);
+  Weight_updater weight_updater(*net, service_context);
+  Solution solution = *Solution_builder(service_context).build(*net);
   check_if_the_same(*net, solution);
 
   /* Change the weights in the network */

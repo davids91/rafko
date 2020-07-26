@@ -41,9 +41,7 @@ public:
    *
    * @return     The cost function.
    */
-  static unique_ptr<Cost_function> build_cost_function(
-    const SparseNet& net, cost_functions the_function, Service_context context = Service_context()
-  ){
+  static unique_ptr<Cost_function> build_cost_function(const SparseNet& net, cost_functions the_function, Service_context& context){
     return build_cost_function(net.output_neuron_number(), the_function, context);
   }
 
@@ -56,9 +54,7 @@ public:
    *
    * @return     The cost function.
    */
-  static unique_ptr<Cost_function> build_cost_function(
-    uint32 feature_size, cost_functions the_function, Service_context context = Service_context()
-  ){
+  static unique_ptr<Cost_function> build_cost_function(uint32 feature_size, cost_functions the_function, Service_context& context){
     switch(the_function){
       case COST_FUNCTION_MSE: 
         return std::make_unique<Cost_function_mse>(feature_size, context);

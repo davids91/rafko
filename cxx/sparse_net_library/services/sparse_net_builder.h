@@ -43,6 +43,10 @@ using std::shared_ptr;
  */
 class Sparse_net_builder{
 public:
+  Sparse_net_builder(Service_context& service_context_)
+  :  context(service_context_)
+  { }
+
   /**
    * @brief      Sparse_net_builder::input_size: sets the number of expected inputs for the SparseNet object to be built
    *
@@ -215,6 +219,8 @@ public:
   SparseNet* build();
 
 private:
+  Service_context& context;
+
   /**
    * Helper variables to see if different required arguments are set inside the builder
    */

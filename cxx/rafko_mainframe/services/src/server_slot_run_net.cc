@@ -51,8 +51,8 @@ void Server_slot_run_net::update_network(SparseNet&& net_){
   service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_SOLUTION);
   if(0 < network.neuron_array_size()){
     service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_NET);
-    network_solution = *Solution_builder().service_context(context).build(network);
-    network_solver = std::make_unique<Solution_solver>(network_solution);
+    network_solution = *Solution_builder(context).build(network);
+    network_solver = std::make_unique<Solution_solver>(network_solution, context);
     service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_SOLUTION);
   }
   finalize_state();

@@ -21,6 +21,7 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/neuron_router.h"
@@ -37,6 +38,7 @@ using sparse_net_library::SparseNet;
 using sparse_net_library::Neuron_router;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Input_synapse_interval;
+using rafko_mainframe::Service_context;
 
 /*###############################################################################################
  * Testing if the iteration is correctly processing the Sparse net
@@ -45,9 +47,10 @@ using sparse_net_library::Input_synapse_interval;
  *    Because of the structure of a fully connected Net, one iteration would involve one layer exactly
  * */
 TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small]" ){
+  Service_context service_context;
   /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};
-  unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>();
+  unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>(service_context);
   net_builder->input_size(5).output_neuron_number(5).expected_input_range(double_literal(5.0));
   SparseNet* net(net_builder->dense_layers(layer_structure));
   net_builder.reset();
@@ -117,10 +120,12 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
  *  by building a Neuron network, ommiting neurons from the subset, and then checking return values
  * */
 TEST_CASE( "Testing Neural Network router dependency interface", "[neuron-iteration][neuron-dependency]" ){
+  Service_context service_context;
+
   /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};
   unique_ptr<SparseNet> net(
-    Sparse_net_builder()
+    Sparse_net_builder(service_context)
     .input_size(5).output_neuron_number(5)
     .expected_input_range(double_literal(5.0))
     .dense_layers(layer_structure)

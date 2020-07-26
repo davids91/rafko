@@ -44,7 +44,7 @@ using rafko_mainframe::Service_context;
 class Weight_updater{
 public:
   Weight_updater(
-    SparseNet& sparse_net, Service_context service_context = Service_context(), uint32 required_iterations_for_step_ = 1
+    SparseNet& sparse_net, Service_context& service_context, uint32 required_iterations_for_step_ = 1
   ): net(sparse_net)
   ,  context(service_context)
   ,  required_iterations_for_step(required_iterations_for_step_)
@@ -70,7 +70,7 @@ public:
    * @param      gradients           The gradients
    * @param      solution            The solution
    */
-  void iterate(vector<unique_ptr<atomic<sdouble32>>>& gradients,Solution& solution){
+  void iterate(vector<unique_ptr<atomic<sdouble32>>>& gradients, Solution& solution){
     calculate_velocity(gradients);
     update_weights_with_velocity();
     update_solution_with_weights(solution);
@@ -110,7 +110,7 @@ public:
 
 protected:
   SparseNet& net;
-  Service_context context;
+  Service_context& context;
   const uint32 required_iterations_for_step;
   uint32 iteration;
   bool finished;

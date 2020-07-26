@@ -68,10 +68,10 @@ public:
   { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
   Data_aggregate(
+    Service_context& context,
     vector<vector<sdouble32>>&& input_samples_,
     vector<vector<sdouble32>>&& label_samples_,
-    SparseNet& net, cost_functions the_function,
-    uint32 sequence_size_ = 1, Service_context context = Service_context()
+    SparseNet& net, cost_functions the_function, uint32 sequence_size_ = 1
   ):  sample_number(input_samples_.size())
   ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(input_samples_)

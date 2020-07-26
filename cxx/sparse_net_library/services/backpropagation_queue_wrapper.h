@@ -33,7 +33,7 @@ using rafko_mainframe::Service_context;
  */
 class Backpropagation_queue_wrapper{
 public:
-  Backpropagation_queue_wrapper(SparseNet& net, Service_context context = Service_context());
+  Backpropagation_queue_wrapper(SparseNet& net, Service_context& context);
   Backpropagation_queue operator()(){
     return gradient_step;
   }

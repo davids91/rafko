@@ -55,7 +55,7 @@ public:
   Sparse_net_optimizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
     cost_functions the_function, weight_updaters weight_updater_,
-    Service_context service_context = Service_context()
+    Service_context& service_context
   ): Sparse_net_optimizer(
     neural_network, train_set_, test_set,
     Function_factory::build_cost_function(net, the_function, context),
@@ -64,19 +64,18 @@ public:
 
   Sparse_net_optimizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-    shared_ptr<Cost_function> the_function, weight_updaters weight_updater_,
-    Service_context service_context = Service_context()
+    shared_ptr<Cost_function> the_function, weight_updaters weight_updater_, Service_context& service_context
   ): net(neural_network)
   ,  context(service_context)
   ,  transfer_function(context)
-  ,  net_solution(Solution_builder().service_context(context).build(net))
+  ,  net_solution(Solution_builder(context).service_context(context).build(net))
   ,  solvers()
   ,  train_set(train_set_)
   ,  test_set(test_set_)
   ,  set_mutex()
   ,  loops_unchecked(50)
   ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
-  ,  gradient_step(Backpropagation_queue_wrapper(neural_network)())
+  ,  gradient_step(Backpropagation_queue_wrapper(neural_network, context)())
   ,  cost_function(the_function)
   ,  solve_threads()
   ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
@@ -155,7 +154,7 @@ public:
 
 private:
   SparseNet& net;
-  Service_context context;
+  Service_context& context;
   Transfer_function transfer_function;
 
   unique_ptr<Solution> net_solution;

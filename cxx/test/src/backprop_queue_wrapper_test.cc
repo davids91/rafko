@@ -21,6 +21,7 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/training.pb.h"
 
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 #include "sparse_net_library/services/backpropagation_queue_wrapper.h"
@@ -29,18 +30,21 @@
 #include <memory>
 
 namespace sparse_net_library_test {
-  using std::unique_ptr;
-  using std::make_unique;
-  using std::vector;
 
-  using sparse_net_library::SparseNet;
-  using sparse_net_library::Sparse_net_builder;
-  using sparse_net_library::Index_synapse_interval;
-  using sparse_net_library::Input_synapse_interval;
-  using sparse_net_library::Synapse_iterator;
-  using sparse_net_library::Backpropagation_queue;
-  using sparse_net_library::Backpropagation_queue_wrapper;
-  using sparse_net_library::Neuron_router;
+using sparse_net_library::SparseNet;
+using sparse_net_library::Sparse_net_builder;
+using sparse_net_library::Index_synapse_interval;
+using sparse_net_library::Input_synapse_interval;
+using sparse_net_library::Synapse_iterator;
+using sparse_net_library::Backpropagation_queue;
+using sparse_net_library::Backpropagation_queue_wrapper;
+using sparse_net_library::Neuron_router;
+using rafko_mainframe::Service_context;
+
+using std::unique_ptr;
+using std::make_unique;
+using std::vector;
+
 
 /*###############################################################################################
  * Testing Backpropagation order:
@@ -50,14 +54,15 @@ namespace sparse_net_library_test {
  *   that means no input of a neuron shall be calulated before it
  * */
 TEST_CASE( "Testing backpropagation queue", "" ) {
-  unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>());
+  Service_context service_context;
+  unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>(service_context));
   builder->input_size(10).expected_input_range(double_literal(5.0));
 
   SparseNet* net(builder->dense_layers({20,10,3,5,5}));
   Neuron_router router(*net);
 
   /* Create a backrpop queue */
-  Backpropagation_queue_wrapper queue_wrapper(*net);
+  Backpropagation_queue_wrapper queue_wrapper(*net, service_context);
   Backpropagation_queue queue = queue_wrapper();
 
   /* Check integrity */

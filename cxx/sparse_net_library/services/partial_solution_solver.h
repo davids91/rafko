@@ -35,11 +35,8 @@ using std::vector;
 class Partial_solution_solver{
 
 public:
-  Partial_solution_solver(
-    const Partial_solution& partial_solution,
-    Data_ringbuffer& neuron_data_,
-    Service_context service_context = Service_context()
-  ): detail(partial_solution)
+  Partial_solution_solver(const Partial_solution& partial_solution, Data_ringbuffer& neuron_data_, Service_context& service_context)
+  :  detail(partial_solution)
   ,  neuron_data(neuron_data_)
   ,  internal_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())

@@ -58,7 +58,7 @@ public:
    *
    * @param[in]  context  The Service context
    */
-  Solution_builder(Service_context context = Service_context())
+  Solution_builder(Service_context& context)
   :  reach_past_loops_maximum(0)
   {
     (void)service_context(context);
@@ -101,7 +101,7 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  Solution_builder& service_context(Service_context context = Service_context()){
+  Solution_builder& service_context(Service_context& context){
     return max_solve_threads(context.get_max_solve_threads())
     .device_max_megabytes(context.get_device_max_megabytes())
     .arena_ptr(context.get_arena_ptr());

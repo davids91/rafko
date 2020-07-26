@@ -70,7 +70,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
     previous_size = arg_input_size;
 
     if(!is_weight_initializer_set){
-      weight_initializer(std::make_shared<Dense_net_weight_initializer>());
+      weight_initializer(std::make_shared<Dense_net_weight_initializer>(context));
     }
 
     arg_weight_table = vector<sdouble32>(numWeights);

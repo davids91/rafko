@@ -30,20 +30,6 @@ using std::max;
 
 using rafko_mainframe::Service_context;
 
-Dense_net_weight_initializer::Dense_net_weight_initializer(bool seed){
-  if(seed)srand(static_cast<uint32>(time(nullptr)));
-}
-
-Dense_net_weight_initializer::Dense_net_weight_initializer(sdouble32 memRatioMin, sdouble32 memRatioMax){
-  memMin = max(double_literal(0.0), min(double_literal(1.0), memRatioMin));
-  memMax = min(double_literal(1.0), max(memMin,memRatioMax));
-}
-
-Dense_net_weight_initializer::Dense_net_weight_initializer(uint32 seed, sdouble32 memRatioMin, sdouble32 memRatioMax){
-  Dense_net_weight_initializer(memRatioMin,memRatioMax);
-  srand(seed);
-}
-
 sdouble32 Dense_net_weight_initializer::get_weight_amplitude(transfer_functions used_transfer_function) const{
   sdouble32 amplitude;
   switch(used_transfer_function){

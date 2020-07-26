@@ -34,7 +34,7 @@ using rafko_mainframe::Service_context;
  */
 class Transfer_function{
 public:
-  Transfer_function(Service_context service_context = Service_context())
+  Transfer_function(Service_context& service_context)
   : context(service_context)
   { }
 
@@ -83,7 +83,7 @@ public:
    */
   sdouble32 get_derivative(transfer_functions function, sdouble32 data);
 private:
-  Service_context context;
+  Service_context& context;
 };
 
 } /* namespace sparse_net_library */

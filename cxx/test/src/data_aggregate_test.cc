@@ -19,6 +19,7 @@
 
 #include "sparse_net_global.h"
 #include "gen/common.pb.h"
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/models/cost_function_mse.h"
 
@@ -32,12 +33,14 @@ using std::unique_ptr;
 using sparse_net_library::Data_set;
 using sparse_net_library::Data_aggregate;
 using sparse_net_library::Cost_function_mse;
+using rafko_mainframe::Service_context;
 
 /*###############################################################################################
  * Testing Data aggregate implementation and seeing if it converts @Data_set correctly
  * into the data item wih statistics, and take care of statistic error data correctly
  * */
 TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" ) {
+  Service_context service_context;
   uint32 sample_number = 50;
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
@@ -54,7 +57,7 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   }
 
   /* Create @Data_aggregate from @Data_set */
-  Data_aggregate data_agr(data_set, std::make_unique<Cost_function_mse>(1));
+  Data_aggregate data_agr(data_set, std::make_unique<Cost_function_mse>(1, service_context));
 
   /* Test statistics for it */
   CHECK(double_literal(1.0) == data_agr.get_error() ); /* Initial error should be exactly 1.0 */

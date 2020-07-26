@@ -38,7 +38,7 @@ public:
   /**
    * @brief      Constructs the object.
    */
-  Weight_initializer(Service_context service_context = Service_context()) noexcept
+  Weight_initializer(Service_context& service_context) noexcept
   : context(service_context)
   { };
 
@@ -97,7 +97,7 @@ public:
   }
 protected:
 
-  Service_context context;
+  Service_context& context;
 
   /**
    * @brief      Limits the given weight into the limits used in the Neural Network

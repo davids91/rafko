@@ -98,14 +98,14 @@ void Deep_learning_server::loop(void){
         else throw new std::runtime_error("Unknown transfer function detected!");
       }
       server_slots[slot_index]->update_network(SparseNet(
-        *Sparse_net_builder().input_size(request->input_size())
+        *Sparse_net_builder(service_context).input_size(request->input_size())
         .expected_input_range(request->expected_input_range())
         .allowed_transfer_functions_by_layer(allowed_transfers)
         .dense_layers({request->layer_sizes().begin(),request->layer_sizes().end()})
       ));
     }else{
       server_slots[slot_index]->update_network(SparseNet(
-        *Sparse_net_builder().input_size(request->input_size())
+        *Sparse_net_builder(service_context).input_size(request->input_size())
         .expected_input_range(request->expected_input_range())
         .dense_layers({request->layer_sizes().begin(),request->layer_sizes().end()})
       ));

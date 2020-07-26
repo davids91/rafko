@@ -24,7 +24,7 @@ namespace sparse_net_library{
 
 using std::swap_ranges;
 
-Solution_solver::Solution_solver(const Solution& to_solve, Service_context context)
+Solution_solver::Solution_solver(const Solution& to_solve, Service_context& context)
 :  solution(to_solve)
 ,  neuron_data(std::max(1u,solution.network_memory_length()), solution.neuron_number())
 ,  transfer_function_input(solution.neuron_number(),double_literal(0.0))
@@ -37,7 +37,7 @@ Solution_solver::Solution_solver(const Solution& to_solve, Service_context conte
     partial_solvers.push_back(vector<Partial_solution_solver>());
     for(uint32 column_index = 0; column_index < solution.cols(row_iterator); ++column_index){
       partial_solvers[row_iterator].push_back( Partial_solution_solver(
-        get_partial(row_iterator,column_index,solution), neuron_data
+        get_partial(row_iterator,column_index,solution), neuron_data, context
       )); /* Initialize a solver for this partial solution element */
     }
   } /* loop through every partial solution and initialize solvers and output maps for them */
