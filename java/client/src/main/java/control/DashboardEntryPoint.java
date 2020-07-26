@@ -8,6 +8,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import models.Global;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -19,6 +20,7 @@ public class DashboardEntryPoint extends Application {
         FXMLLoader loader = new FXMLLoader();
         Parent root = loader.load(getClass().getResource("../fxml/main.fxml").openStream());
         DashboardController controller = loader.getController();
+        Global.primaryStage = primaryStage;
         primaryStage.setTitle("Rafko Deep Learning Client Dashboard");
         primaryStage.setScene(new Scene(root,800,600));
         primaryStage.show();

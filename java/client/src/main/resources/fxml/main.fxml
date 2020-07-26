@@ -118,8 +118,8 @@
       <HBox GridPane.columnIndex="4" GridPane.rowIndex="3">
          <children>
             <Label alignment="CENTER" maxHeight="1.7976931348623157E308" text="Server Slot:" />
-            <ComboBox fx:id="server_slot_combo" disable="true" />
-            <Label fx:id="server_slot_state_label" alignment="CENTER" maxHeight="1.7976931348623157E308" text="==UNKNOWN==">
+            <ComboBox fx:id="server_slot_combo" disable="true" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+            <Label fx:id="server_slot_state_label" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="==UNKNOWN==" HBox.hgrow="ALWAYS">
                <tooltip>
                   <Tooltip fx:id="slot_state_tooltip" text="tooltip" />
                </tooltip></Label>
@@ -128,10 +128,9 @@
       </HBox>
       <HBox GridPane.columnIndex="4">
          <children>
-            <Label fx:id="network_folder_label" alignment="CENTER" maxHeight="1.7976931348623157E308" text="&lt;No Network Loaded&gt;" GridPane.columnIndex="4" />
-            <Button fx:id="read_network_from_slot_btn" alignment="CENTER" disable="true" mnemonicParsing="false" text="Read from Slot" />
-            <Button fx:id="network_load_btn" alignment="CENTER" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Load" />
-            <Button fx:id="save_network_btn" alignment="CENTER" disable="true" mnemonicParsing="false" text="Save" />
+            <Label fx:id="network_folder_label" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="&lt;No Network Loaded&gt;" GridPane.columnIndex="4" HBox.hgrow="ALWAYS" />
+            <Button fx:id="network_load_btn" alignment="CENTER" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#load_network_from_fs" text="Load" />
+            <Button fx:id="save_network_btn" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#save_network_to_fs" text="Save" />
             <Button fx:id="network_create_btn" alignment="CENTER" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#create_network" text="Create" />
          </children>
       </HBox>
