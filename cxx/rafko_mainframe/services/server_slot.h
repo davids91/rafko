@@ -20,12 +20,12 @@
 
 #include "sparse_net_global.h"
 
+#include <string>
+#include <memory>
+
 #include "gen/sparse_net.pb.h"
 #include "gen/deep_learning_service.pb.h"
 #include "sparse_net_library/models/data_aggregate.h"
-
-#include <string>
-#include <memory>
 
 namespace rafko_mainframe{
 

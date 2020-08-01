@@ -19,14 +19,15 @@
 #define SPARSE_NET_BUILDER_H
 
 #include "sparse_net_global.h"
-#include "gen/sparse_net.pb.h"
-#include "sparse_net_library/models/transfer_function.h"
-#include "sparse_net_library/models/weight_initializer.h"
-#include "sparse_net_library/models/neuron_info.h"
 
 #include <vector>
 #include <memory>
 #include <stdexcept>
+
+#include "gen/sparse_net.pb.h"
+#include "sparse_net_library/models/transfer_function.h"
+#include "sparse_net_library/models/weight_initializer.h"
+#include "sparse_net_library/models/neuron_info.h"
 
 namespace sparse_net_library {
 

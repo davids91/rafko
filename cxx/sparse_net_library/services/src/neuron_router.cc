@@ -21,6 +21,7 @@
 #include <thread>
 
 #include "sparse_net_library/models/neuron_info.h"
+
 #include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library{

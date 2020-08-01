@@ -15,10 +15,11 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
+#include <time.h>
+
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
-#include <time.h>
 
 #include "sparse_net_library/models/dense_net_weight_initializer.h"
 #include "sparse_net_library/models/transfer_function.h"

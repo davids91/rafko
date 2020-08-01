@@ -19,14 +19,16 @@
 #define DATA_AGGREGATE_H
 
 #include "sparse_net_global.h"
-#include "gen/common.pb.h"
-#include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/cost_function.h"
-#include "sparse_net_library/services/function_factory.h"
 
 #include <vector>
 #include <memory>
 #include <stdexcept>
+
+#include "gen/common.pb.h"
+#include "sparse_net_library/services/function_factory.h"
+
+#include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/models/cost_function.h"
 
 namespace sparse_net_library{
 

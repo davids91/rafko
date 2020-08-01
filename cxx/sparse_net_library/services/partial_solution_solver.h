@@ -19,14 +19,16 @@
 #define Partial_solution_H
 
 #include "sparse_net_global.h"
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
-#include "sparse_net_library/models/transfer_function.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
-#include "sparse_net_library/services/synapse_iterator.h"
 
 #include <vector>
 #include <stdexcept>
+
+#include "gen/sparse_net.pb.h"
+#include "gen/solution.pb.h"
+
+#include "sparse_net_library/models/transfer_function.h"
+#include "sparse_net_library/models/data_ringbuffer.h"
+#include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library {
 

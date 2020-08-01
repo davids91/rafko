@@ -18,10 +18,12 @@
 #ifndef TRANSFER_FUNCTION_H
 #define TRANSFER_FUNCTION_H
 
+#include "sparse_net_global.h"
+
 #include <vector>
 
-#include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
+
 #include "rafko_mainframe/models/service_context.h"
 
 namespace sparse_net_library{

@@ -18,14 +18,17 @@
 #ifndef FUNCTION_FACTORY_H
 #define FUNCTION_FACTORY_H
 
-#include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
-#include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/cost_function_squared_error.h"
-#include "sparse_net_library/models/cost_function_mse.h"
+#include "sparse_net_global.h"
 
 #include <memory>
 #include <stdexcept>
+
+#include "gen/common.pb.h"
+#include "gen/sparse_net.pb.h"
+#include "rafko_mainframe/models/service_context.h"
+
+#include "sparse_net_library/models/cost_function_squared_error.h"
+#include "sparse_net_library/models/cost_function_mse.h"
 
 namespace sparse_net_library{
 

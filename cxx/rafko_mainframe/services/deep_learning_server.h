@@ -19,13 +19,14 @@
 #define DEEP_LEARNING_SERVER_H
 
 #include "sparse_net_global.h"
-#include "gen/deep_learning_service.grpc.pb.h"
-
-#include "rafko_mainframe/models/service_context.h"
-#include "rafko_mainframe/services/server_slot.h"
 
 #include <string>
 #include <mutex>
+
+#include "gen/deep_learning_service.grpc.pb.h"
+#include "rafko_mainframe/models/service_context.h"
+
+#include "rafko_mainframe/services/server_slot.h"
 
 namespace rafko_mainframe{
 

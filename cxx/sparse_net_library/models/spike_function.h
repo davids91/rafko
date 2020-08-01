@@ -18,9 +18,9 @@
 #ifndef SPIKE_FUNCTION_H
 #define SPIKE_FUNCTION_H
 
-#include <vector>
-
 #include "sparse_net_global.h"
+
+#include <vector>
 
 namespace sparse_net_library{
 

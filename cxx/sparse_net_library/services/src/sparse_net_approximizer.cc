@@ -18,6 +18,7 @@
 #include "sparse_net_library/services/sparse_net_approximizer.h"
 
 #include "gen/common.pb.h"
+
 #include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library{

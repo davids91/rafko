@@ -16,12 +16,13 @@
  */
 
 #include "sparse_net_library/services/sparse_net_optimizer.h"
-#include "sparse_net_library/models/spike_function.h"
 
 #include <atomic>
 #include <thread>
 #include <cmath>
 #include <stdexcept>
+
+#include "sparse_net_library/models/spike_function.h"
 
 namespace sparse_net_library{
 

@@ -16,18 +16,18 @@
  */
 
 #include "test/catch.hpp"
-#include "sparse_net_global.h"
+#include "test/test_utility.h"
+
+#include <memory>
+
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/training.pb.h"
-
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 #include "sparse_net_library/services/backpropagation_queue_wrapper.h"
 #include "sparse_net_library/services/neuron_router.h"
-
-#include <memory>
 
 namespace sparse_net_library_test {
 

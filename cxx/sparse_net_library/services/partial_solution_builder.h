@@ -19,11 +19,13 @@
 #define PARTIAL_SOLUTION_BUILDER_H
 
 #include "sparse_net_global.h"
+#include <functional>
+
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+
 #include "sparse_net_library/services/synapse_iterator.h"
 
-#include <functional>
 
 namespace sparse_net_library{
 

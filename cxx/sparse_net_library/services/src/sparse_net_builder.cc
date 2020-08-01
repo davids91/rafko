@@ -17,11 +17,13 @@
 
 #include "sparse_net_library/services/sparse_net_builder.h"
 
-#include "sparse_net_library/models/dense_net_weight_initializer.h"
-#include "sparse_net_library/services/synapse_iterator.h"
+#include <time.h>
 
 #include <stdexcept>
-#include <time.h>
+
+#include "sparse_net_library/models/dense_net_weight_initializer.h"
+
+#include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library {
 

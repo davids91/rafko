@@ -19,6 +19,7 @@
 #define SERVICE_CONTEXT_H
 
 #include "sparse_net_global.h"
+
 #include "gen/common.pb.h"
 #include "gen/deep_learning_service.pb.h"
 

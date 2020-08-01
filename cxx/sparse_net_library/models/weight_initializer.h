@@ -18,10 +18,13 @@
 #ifndef weight_initializer_H
 #define weight_initializer_H
 
-#include <cmath>
 
 #include "sparse_net_global.h"
+
+#include <cmath>
+
 #include "gen/sparse_net.pb.h"
+
 #include "rafko_mainframe/models/service_context.h"
 
 namespace sparse_net_library {

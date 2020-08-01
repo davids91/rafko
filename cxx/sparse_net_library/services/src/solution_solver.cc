@@ -16,9 +16,10 @@
  */
 
 #include "sparse_net_library/services/solution_solver.h"
-#include "sparse_net_library/services/synapse_iterator.h"
 
 #include <cmath>
+
+#include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library{
 

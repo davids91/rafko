@@ -16,6 +16,7 @@
  */
 
 #include "test/catch.hpp"
+#include "test/test_utility.h"
 
 namespace sparse_net_library_test {
 

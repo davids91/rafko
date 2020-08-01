@@ -18,13 +18,13 @@
 #define CATCH_CONFIG_RUNNER
 
 #include "test/catch.hpp"
-
 #include "test/test_utility.h"
+
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/data_aggregate.h"
-#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 
 int main( int argc, char* argv[] ) {

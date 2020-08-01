@@ -16,13 +16,14 @@
  */
 
 #include "test/catch.hpp"
+#include "test/test_utility.h"
+
+#include <random>
 
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_global.h"
 #include "sparse_net_library/models/cost_function.h"
 #include "sparse_net_library/models/cost_function_mse.h"
 
-#include <random>
 
 namespace sparse_net_library_test {
 

@@ -18,15 +18,15 @@
 #ifndef SERVER_SLOT_RUN_NET_H
 #define SERVER_SLOT_RUN_NET_H
 
-#include "gen/solution.pb.h"
-
-#include "rafko_mainframe/services/server_slot.h"
-#include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/services/solution_builder.h"
-#include "sparse_net_library/services/solution_solver.h"
-
 #include <memory>
 #include <string>
+
+#include "gen/solution.pb.h"
+#include "sparse_net_library/services/solution_builder.h"
+#include "sparse_net_library/services/solution_solver.h"
+#include "rafko_mainframe/models/service_context.h"
+
+#include "rafko_mainframe/services/server_slot.h"
 
 namespace rafko_mainframe{
 

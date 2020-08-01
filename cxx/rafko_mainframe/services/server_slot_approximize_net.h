@@ -18,10 +18,11 @@
 #ifndef SERVER_SLOT_APPROXIMIZE_NET_H
 #define SERVER_SLOT_APPROXIMIZE_NET_H
 
-#include "rafko_mainframe/services/server_slot_run_net.h"
 #include "sparse_net_library/models/cost_function.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/services/sparse_net_approximizer.h"
+
+#include "rafko_mainframe/services/server_slot_run_net.h"
 
 namespace rafko_mainframe{
 

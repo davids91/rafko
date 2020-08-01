@@ -17,12 +17,13 @@
 
 #include "sparse_net_library/services/solution_builder.h"
 
-#include "sparse_net_library/models/neuron_info.h"
-#include "sparse_net_library/services/neuron_router.h"
-#include "sparse_net_library/services/partial_solution_builder.h"
-
 #include <memory>
 #include <stdexcept>
+
+#include "sparse_net_library/models/neuron_info.h"
+
+#include "sparse_net_library/services/neuron_router.h"
+#include "sparse_net_library/services/partial_solution_builder.h"
 
 namespace sparse_net_library{
 

@@ -18,8 +18,9 @@
 #include "rafko_mainframe/services/deep_learning_server.h"
 
 #include "gen/common.pb.h"
-#include "rafko_mainframe/services/server_slot_factory.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
+
+#include "rafko_mainframe/services/server_slot_factory.h"
 
 namespace rafko_mainframe{
 

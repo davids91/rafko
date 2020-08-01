@@ -19,14 +19,15 @@
 #define WEIGHT_UPDATER_H
 
 #include "sparse_net_global.h"
-#include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
-#include "rafko_mainframe/models/service_context.h"
 
 #include <thread>
 #include <atomic>
 #include <vector>
+
+#include "gen/common.pb.h"
+#include "gen/sparse_net.pb.h"
+#include "gen/solution.pb.h"
+#include "rafko_mainframe/models/service_context.h"
 
 namespace sparse_net_library{
 

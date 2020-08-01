@@ -16,9 +16,22 @@
  */
 
 #include "test/catch.hpp"
-
 #include "test/test_utility.h"
-#include "sparse_net_global.h"
+
+#include <time.h>
+#include <float.h>
+
+#include <iostream>
+#include <cstdlib>
+#include <vector>
+#include <cmath>
+#include <memory>
+#include <limits>
+#include <chrono>
+#include <string>
+#include <iostream>
+#include <fstream>
+
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
@@ -27,19 +40,6 @@
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/sparse_net_optimizer.h"
 #include "sparse_net_library/services/function_factory.h"
-
-#include <iostream>
-#include <cstdlib>
-#include <time.h>
-#include <vector>
-#include <float.h>
-#include <cmath>
-#include <memory>
-#include <limits>
-#include <chrono>
-#include <string>
-#include <iostream>
-#include <fstream>
 
 namespace sparse_net_library_test{
 

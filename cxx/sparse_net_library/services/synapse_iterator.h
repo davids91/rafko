@@ -19,12 +19,13 @@
 #define SYNAPSE_ITERATOR_H
 
 #include "sparse_net_global.h"
-#include "gen/common.pb.h"
 
 #include <functional>
 #include <stdexcept>
+
 #include <google/protobuf/repeated_field.h>
 
+#include "gen/common.pb.h"
 
 namespace sparse_net_library{
 

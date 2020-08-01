@@ -29,6 +29,7 @@
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
+
 #include "sparse_net_library/services/partial_solution_solver.h"
 
 namespace sparse_net_library{

@@ -19,6 +19,11 @@
 #define SPARSE_NET_OPTIMIZER_H
 
 #include "sparse_net_global.h"
+
+#include <vector>
+#include <memory>
+#include <mutex>
+
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
@@ -27,15 +32,12 @@
 #include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
+
 #include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/solution_solver.h"
 #include "sparse_net_library/services/backpropagation_queue_wrapper.h"
 #include "sparse_net_library/services/updater_factory.h"
 #include "sparse_net_library/services/function_factory.h"
-
-#include <vector>
-#include <memory>
-#include <mutex>
 
 namespace sparse_net_library{
 

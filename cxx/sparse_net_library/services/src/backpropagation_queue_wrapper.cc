@@ -16,11 +16,12 @@
  */
 
 #include "sparse_net_library/services/backpropagation_queue_wrapper.h"
-#include "sparse_net_library/services/neuron_router.h"
 
 #include <atomic>
 #include <thread>
 #include <deque>
+
+#include "sparse_net_library/services/neuron_router.h"
 
 namespace sparse_net_library{
 

@@ -19,7 +19,6 @@
 
 #include <random>
 
-#include "sparse_net_global.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"

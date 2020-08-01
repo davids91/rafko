@@ -19,7 +19,6 @@
 #define COST_FUNCTION_H
 
 #include "sparse_net_global.h"
-#include "rafko_mainframe/models/service_context.h"
 
 #include <vector>
 #include <thread>
@@ -27,6 +26,8 @@
 #include <future>
 #include <functional>
 #include <cmath>
+
+#include "rafko_mainframe/models/service_context.h"
 
 namespace sparse_net_library{
 

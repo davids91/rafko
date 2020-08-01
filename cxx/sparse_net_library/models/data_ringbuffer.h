@@ -19,10 +19,11 @@
 #define DATA_RINGBUFFER_H
 
 #include "sparse_net_global.h"
-#include "gen/common.pb.h"
 
 #include <vector>
 #include <stdexcept>
+
+#include "gen/common.pb.h"
 
 namespace sparse_net_library{
 

@@ -19,13 +19,15 @@
 #define UPDATER_FACTORY_H
 
 #include "gen/common.pb.h"
+
+#include <memory>
+
 #include "gen/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
+
 #include "sparse_net_library/services/weight_updater.h"
 #include "sparse_net_library/services/weight_updater_momentum.h"
 #include "sparse_net_library/services/weight_updater_nesterov.h"
-
-#include <memory>
 
 namespace sparse_net_library{
 

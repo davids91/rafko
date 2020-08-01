@@ -19,14 +19,16 @@
 #define NEURON_ROUTER_H
 
 #include "sparse_net_global.h"
-#include "gen/sparse_net.pb.h"
-#include "sparse_net_library/services/synapse_iterator.h"
 
 #include <deque>
 #include <mutex>
 #include <atomic>
 #include <functional>
 #include <stdexcept>
+
+#include "gen/sparse_net.pb.h"
+
+#include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library {
 

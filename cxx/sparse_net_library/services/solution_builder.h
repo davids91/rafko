@@ -28,6 +28,7 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
+
 #include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library {

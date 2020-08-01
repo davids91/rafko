@@ -16,12 +16,12 @@
  */
 
 #include "test/catch.hpp"
-
-#include "sparse_net_global.h"
-#include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
+#include "test/test_utility.h"
 
 #include <vector>
+
+#include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/models/data_ringbuffer.h"
 
 namespace sparse_net_library_test {
 

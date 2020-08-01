@@ -16,11 +16,10 @@
  */
 
 #include "test/catch.hpp"
+#include "test/test_utility.h"
 
 #include <vector>
 #include <memory>
-
-#include "test/test_utility.h"
 
 #include "gen/solution.pb.h"
 #include "gen/sparse_net.pb.h"
