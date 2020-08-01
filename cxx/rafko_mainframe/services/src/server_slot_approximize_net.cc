@@ -127,8 +127,8 @@ Slot_info Server_slot_approximize_net::get_info(Slot_request request){
       response.add_info_field(SLOT_INFO_TRAINING_ERROR);
       response.add_info_package(training_set->get_error());
     }
-    if(0 < (request.request_bitstring() & SLOT_INFO_TRAINING_SET_SEQUENCE_NUMBER)){
-      response.add_info_field(SLOT_INFO_TRAINING_SET_SEQUENCE_NUMBER);
+    if(0 < (request.request_bitstring() & SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT)){
+      response.add_info_field(SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT);
       response.add_info_package(training_set->get_number_of_sequences());
     }
   }
@@ -137,8 +137,8 @@ Slot_info Server_slot_approximize_net::get_info(Slot_request request){
       response.add_info_field(SLOT_INFO_TEST_ERROR);
       response.add_info_package(test_set->get_error());
     }
-    if(0 < (request.request_bitstring() & SLOT_INFO_TEST_SET_SEQUENCE_NUMBER)){
-      response.add_info_field(SLOT_INFO_TEST_SET_SEQUENCE_NUMBER);
+    if(0 < (request.request_bitstring() & SLOT_INFO_TEST_SET_SEQUENCE_COUNT)){
+      response.add_info_field(SLOT_INFO_TEST_SET_SEQUENCE_COUNT);
       response.add_info_package(test_set->get_number_of_sequences());
     }
   }

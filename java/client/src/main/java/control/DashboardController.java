@@ -66,6 +66,7 @@ public class DashboardController implements Initializable {
 
     RafkoDLClient client;
     RafkoSparseNet.SparseNet loaded_neural_network;
+    final int prefill_size = 2;
     final int sequence_size = 25;
     final int sample_number = 500;
     boolean server_online;
@@ -157,14 +158,15 @@ public class DashboardController implements Initializable {
         rect_input_3.setFill(ColorMap.getColor(sample.getPackage(2)));
         rect_input_4.setFill(ColorMap.getColor(sample.getPackage(3)));
         rect_input_5.setFill(ColorMap.getColor(sample.getPackage(4)));
+        rect_input_5.setFill(ColorMap.getColor(sample.getPackage(5)));
+        rect_input_5.setFill(ColorMap.getColor(sample.getPackage(6)));
 
         /* Read in the output */
-        rect_output_1.setFill(ColorMap.getColor(sample.getPackage(5)));
-        rect_output_2.setFill(ColorMap.getColor(sample.getPackage(6)));
-        rect_output_3.setFill(ColorMap.getColor(sample.getPackage(7)));
-        rect_output_4.setFill(ColorMap.getColor(sample.getPackage(8)));
-        rect_output_5.setFill(ColorMap.getColor(sample.getPackage(9)));
-
+        rect_output_1.setFill(ColorMap.getColor(sample.getPackage(7)));
+        rect_output_2.setFill(ColorMap.getColor(sample.getPackage(8)));
+        rect_output_3.setFill(ColorMap.getColor(sample.getPackage(9)));
+        rect_output_4.setFill(ColorMap.getColor(sample.getPackage(10)));
+        rect_output_5.setFill(ColorMap.getColor(sample.getPackage(11)));
     }
 
     void correct_ui_state(){
@@ -190,7 +192,7 @@ public class DashboardController implements Initializable {
             dataset_save_btn.setDisable(false);
             RafkoDeepLearningService.Slot_info slot_info = client.get_info(RafkoDeepLearningService.Slot_request.newBuilder()
                 .setTargetSlotId(server_slot_combo.getValue().getName())
-                .setRequestBitstring(RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_SET_SEQUENCE_NUMBER_VALUE)
+                .setRequestBitstring(RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT.ordinal())
                 .build());
             sample_index_slider.setMax(slot_info.getInfoPackage(    0));
             sample_index_slider.setDisable(false);
@@ -360,6 +362,11 @@ public class DashboardController implements Initializable {
         ArrayList<Double> sin_labels = new ArrayList<>(sequence_size * sample_number);
         for(int sample_index = 0; sample_index < sample_number; ++sample_index){
             sin_value = rnd.nextDouble();
+            for(int prefill_index = 0; prefill_index < prefill_size; ++prefill_index){
+                prev_sin_value = sin_value;
+                sin_value += sin_step;
+                sin_inputs.add(Math.sin(prev_sin_value));
+            }
             for(int sequence_index = 0; sequence_index < sequence_size; ++sequence_index){
                 prev_sin_value = sin_value;
                 sin_value += sin_step;

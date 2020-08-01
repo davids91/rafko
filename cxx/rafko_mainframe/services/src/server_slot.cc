@@ -64,7 +64,7 @@ Neural_io_stream Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_se
     (data_set)
     &&(sample_index < data_set->get_number_of_label_samples())
   ){ /* And the index is not out of bounds */
-    unit32 number_of_input_arrays = data_set->get_sequence_size() + data_set->get_prefill_inputs_number();
+    uint32 number_of_input_arrays = data_set->get_sequence_size() + data_set->get_prefill_inputs_number();
     uint32 inputs_index = (sample_index * number_of_input_arrays);
     uint32 labels_index = (sample_index * data_set->get_sequence_size());
     result.set_feature_size(0);
