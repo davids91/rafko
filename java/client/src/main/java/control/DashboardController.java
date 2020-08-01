@@ -67,7 +67,7 @@ public class DashboardController implements Initializable {
     RafkoDLClient client;
     RafkoSparseNet.SparseNet loaded_neural_network;
     final int prefill_size = 2;
-    final int sequence_size = 25;
+    final int sequence_size = 5;
     final int sample_number = 500;
     boolean server_online;
     int selected_slot_state;
@@ -83,10 +83,6 @@ public class DashboardController implements Initializable {
             new FileChooser.ExtensionFilter("Rafko Neural Network files (*.rnn)", "*.rnn")
         );
         network_filechooser.setInitialDirectory(new File("D:/casdev/temp"));
-
-        sample_index_slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            sample_index_label.setText(sample_index_slider.getValue() + "/" + sample_index_slider.getMax());
-        });
 
         connect_btn.setOnAction(event -> {
             String target = serverAddress_textField.getText();
@@ -134,6 +130,7 @@ public class DashboardController implements Initializable {
         });
 
         sample_index_slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            sample_index_label.setText((int)sample_index_slider.getValue() + "/" + (int)sample_index_slider.getMax());
             if(
                     (0 < selected_slot_state)
                     &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
@@ -158,15 +155,15 @@ public class DashboardController implements Initializable {
         rect_input_3.setFill(ColorMap.getColor(sample.getPackage(2)));
         rect_input_4.setFill(ColorMap.getColor(sample.getPackage(3)));
         rect_input_5.setFill(ColorMap.getColor(sample.getPackage(4)));
-        rect_input_5.setFill(ColorMap.getColor(sample.getPackage(5)));
-        rect_input_5.setFill(ColorMap.getColor(sample.getPackage(6)));
+        rect_input_6.setFill(ColorMap.getColor(sample.getPackage(5)));
+        rect_input_7.setFill(ColorMap.getColor(sample.getPackage(6)));
 
         /* Read in the output */
-        rect_output_1.setFill(ColorMap.getColor(sample.getPackage(7)));
-        rect_output_2.setFill(ColorMap.getColor(sample.getPackage(8)));
-        rect_output_3.setFill(ColorMap.getColor(sample.getPackage(9)));
-        rect_output_4.setFill(ColorMap.getColor(sample.getPackage(10)));
-        rect_output_5.setFill(ColorMap.getColor(sample.getPackage(11)));
+        rect_output_3.setFill(ColorMap.getColor(sample.getPackage(7)));
+        rect_output_4.setFill(ColorMap.getColor(sample.getPackage(8)));
+        rect_output_5.setFill(ColorMap.getColor(sample.getPackage(9)));
+        rect_output_6.setFill(ColorMap.getColor(sample.getPackage(10)));
+        rect_output_7.setFill(ColorMap.getColor(sample.getPackage(11)));
     }
 
     void correct_ui_state(){
@@ -194,7 +191,7 @@ public class DashboardController implements Initializable {
                 .setTargetSlotId(server_slot_combo.getValue().getName())
                 .setRequestBitstring(RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT.ordinal())
                 .build());
-            sample_index_slider.setMax(slot_info.getInfoPackage(    0));
+            sample_index_slider.setMax(Math.max(1,slot_info.getInfoPackage(    0)-1));
             sample_index_slider.setDisable(false);
             dataset_load_btn.setDisable(false);
             dataset_create_btn.setDisable(false);
@@ -375,8 +372,11 @@ public class DashboardController implements Initializable {
             }
         }
 
+        System.out.println("Inputs size: " + sin_inputs.size());
+        System.out.println("Labels size: " + sin_labels.size());
+
         upload_dataset(RafkoCommon.Data_set.newBuilder()
-            .setInputSize(5).setFeatureSize(5).setSequenceSize(sequence_size)
+            .setInputSize(1).setFeatureSize(1).setSequenceSize(sequence_size)
             .addAllInputs(sin_inputs).addAllLabels(sin_labels)
             .build()
         );

@@ -49,7 +49,7 @@
                               <TextArea fx:id="dataset_size_textfield" editable="false" layoutX="49.0" layoutY="11.0" prefHeight="25.0" prefWidth="32.0" text="0&#10;" HBox.hgrow="NEVER" />
                               <Button fx:id="dataset_save_btn" disable="true" layoutX="282.0" layoutY="11.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Save Dataset" />
                               <Label maxHeight="1.7976931348623157E308" text="Sample index: " />
-                              <Slider fx:id="sample_index_slider" disable="true" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                              <Slider fx:id="sample_index_slider" disable="true" majorTickUnit="10.0" maxWidth="1.7976931348623157E308" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" HBox.hgrow="ALWAYS" />
                               <Label fx:id="sample_index_label" text="0/0" />
                            </children>
                         </HBox>

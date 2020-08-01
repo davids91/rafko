@@ -46,13 +46,14 @@ class Data_aggregate{
 public:
   Data_aggregate(Data_set& samples_, shared_ptr<Cost_function> cost_function_)
   :  sequence_size(std::max(1u,samples_.sequence_size()))
-  ,  prefill_sequences(static_cast<uint32>((samples_.inputs_size() - samples_.labels_size()) / sequence_size))
-  ,  input_samples(samples_.inputs_size() / sequence_size)
-  ,  label_samples(samples_.labels_size() / sequence_size)
+  ,  input_samples(samples_.inputs_size() / samples_.input_size())
+  ,  label_samples(samples_.labels_size() / samples_.feature_size())
+  ,  prefill_sequences(static_cast<uint32>((samples_.inputs_size() - samples_.labels_size()) / (samples_.labels_size() / sequence_size)))
   ,  sample_errors(label_samples.size(),(double_literal(1.0)/label_samples.size()))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(cost_function_)
   {
+    std::cout << "prefill size for dataset:" << prefill_sequences << std::endl;
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_);
   }
@@ -61,13 +62,15 @@ public:
     vector<vector<sdouble32>>&& input_samples_,vector<vector<sdouble32>>&& label_samples_,
     shared_ptr<Cost_function> cost_function_, uint32 sequence_size_ = 1
   ): sequence_size(std::max(1u,sequence_size_))
-  ,  prefill_sequences(static_cast<uint32>((input_samples_.size() - label_samples_.size()) / sequence_size))
   ,  input_samples(move(input_samples_))
   ,  label_samples(move(label_samples_))
+  ,  prefill_sequences(static_cast<uint32>((input_samples_.size() - label_samples_.size()) / (label_samples_.size() / sequence_size)))
   ,  sample_errors(label_samples.size(),(double_literal(1.0)/label_samples.size()))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(cost_function_)
-  { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
+  {
+      std::cout << "prefill size for dataset:" << prefill_sequences << std::endl;
+   if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
   Data_aggregate(
     Service_context& service_context_,
@@ -109,9 +112,9 @@ public:
    *
    * @return     The input sample.
    */
-  const vector<sdouble32>& get_input_sample(uint32 input_sample_index) const{
-    if(input_samples.size() > input_sample_index)
-      return input_samples[input_sample_index];
+  const vector<sdouble32>& get_input_sample(uint32 raw_input_index) const{
+    if(input_samples.size() > raw_input_index)
+      return input_samples[raw_input_index];
       else throw std::runtime_error("Sample index out of bounds!");
   }
 
@@ -122,9 +125,9 @@ public:
    *
    * @return     The label sample.
    */
-  const vector<sdouble32>& get_label_sample(uint32 sample_index) const{
-    if(label_samples.size() > sample_index)
-      return label_samples[sample_index];
+  const vector<sdouble32>& get_label_sample(uint32 raw_label_index) const{
+    if(label_samples.size() > raw_label_index)
+      return label_samples[raw_label_index];
       else throw std::runtime_error("Sample index out of bounds!");
   }
 
@@ -208,9 +211,9 @@ public:
 
 private:
   uint32 sequence_size;
-  uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;
+  uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
   vector<sdouble32> sample_errors;
   sdouble32 error_sum;
   shared_ptr<Cost_function> cost_function;
@@ -223,15 +226,18 @@ private:
   void fill(Data_set& samples){
     uint32 feature_start_index = 0;
     uint32 input_start_index = 0;
-    for(uint32 sample_iterator = 0; sample_iterator < input_samples.size(); ++ sample_iterator){
-      input_samples[sample_iterator] = vector<sdouble32>(samples.input_size());
-      label_samples[sample_iterator] = vector<sdouble32>(samples.feature_size());
+    /*!Note: One cycle can be used for both, because there will always be at least as many inputs as labels */
+    for(uint32 raw_sample_iterator = 0; raw_sample_iterator < input_samples.size(); ++ raw_sample_iterator){
+      input_samples[raw_sample_iterator] = vector<sdouble32>(samples.input_size());
       for(uint32 input_iterator = 0; input_iterator < samples.input_size(); ++input_iterator)
-        input_samples[sample_iterator][input_iterator] = samples.inputs(input_start_index + input_iterator);
-      for(uint32 feature_iterator = 0; feature_iterator < samples.feature_size(); ++feature_iterator)
-        label_samples[sample_iterator][feature_iterator] = samples.labels(feature_start_index + feature_iterator);
+        input_samples[raw_sample_iterator][input_iterator] = samples.inputs(input_start_index + input_iterator);
       input_start_index += samples.input_size();
-      feature_start_index += samples.feature_size();
+      if(raw_sample_iterator < label_samples.size()){
+        label_samples[raw_sample_iterator] = vector<sdouble32>(samples.feature_size());
+        for(uint32 feature_iterator = 0; feature_iterator < samples.feature_size(); ++feature_iterator)
+          label_samples[raw_sample_iterator][feature_iterator] = samples.labels(feature_start_index + feature_iterator);
+        feature_start_index += samples.feature_size();
+      }
     }
   }
 };

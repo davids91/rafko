@@ -68,8 +68,8 @@ Neural_io_stream Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_se
     uint32 inputs_index = (sample_index * number_of_input_arrays);
     uint32 labels_index = (sample_index * data_set->get_sequence_size());
     result.set_feature_size(0);
-    result.set_input_size(data_set->get_input_sample(labels_index).size()); /* set the size based on the first array in the sequence */
-    result.set_label_size(data_set->get_label_sample(inputs_index).size());
+    result.set_input_size(data_set->get_input_sample(inputs_index).size()); /* set the size based on the first array in the sequence */
+    result.set_label_size(data_set->get_label_sample(labels_index).size());
     result.set_sequence_size(data_set->get_sequence_size());
     result.mutable_package()->Reserve( /* Reserve the needed space for the element */
       (result.input_size() * number_of_input_arrays) + (result.label_size() * result.sequence_size())
@@ -78,19 +78,21 @@ Neural_io_stream Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_se
     /* Add the input into the field */
     for(uint32 sequence_iterator = 0; sequence_iterator < number_of_input_arrays; ++sequence_iterator){
       std::copy(
-        data_set->get_input_sample(inputs_index + sequence_iterator).begin(),
-        data_set->get_input_sample(inputs_index + sequence_iterator).end(),
+        data_set->get_input_sample(inputs_index).begin(),
+        data_set->get_input_sample(inputs_index).end(),
         RepeatedFieldBackInserter(result.mutable_package())
       );
+      ++inputs_index;
     }
 
     /* Add the label into the field */
     for(uint32 sequence_iterator = 0; sequence_iterator < result.sequence_size(); ++sequence_iterator){
       std::copy(
-        data_set->get_label_sample(labels_index + sequence_iterator).begin(),
-        data_set->get_label_sample(labels_index + sequence_iterator).end(),
+        data_set->get_label_sample(labels_index).begin(),
+        data_set->get_label_sample(labels_index).end(),
         RepeatedFieldBackInserter(result.mutable_package())
       );
+      ++labels_index;
     }
   }
   return result;
