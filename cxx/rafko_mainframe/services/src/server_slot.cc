@@ -64,34 +64,30 @@ Neural_io_stream Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_se
     (data_set)
     &&(sample_index < data_set->get_number_of_samples())
   ){ /* And the index is not out of bounds */
-    uint32 filled_numbers = 0;
     result.set_feature_size(0);
     result.set_input_size(data_set->get_input_sample(sample_index).size());
     result.set_label_size(data_set->get_label_sample(sample_index).size());
     result.set_sequence_size(data_set->get_sequence_size());
-    result.mutable_package()->Resize( /* Reserve the needed space for the element */
-      (
-        (result.input_size() * result.sequence_size()) 
-        + (result.label_size() * result.sequence_size())
-      ), double_literal(0)
+    result.mutable_package()->Reserve( /* Reserve the needed space for the element */
+      (result.input_size() * result.sequence_size()) + (result.label_size() * result.sequence_size())
     );
 
     /* Add the input into the field */
     for(uint32 sequence_iterator = 0; sequence_iterator < result.sequence_size(); ++sequence_iterator){
-      result.mutable_package()[filled_numbers + (result.input_size() * result.sequence_size())] = {
+      std::copy(
         data_set->get_input_sample(sample_index + sequence_iterator).begin(),
-        data_set->get_input_sample(sample_index + sequence_iterator).end()
-      };
-      filled_numbers += result.input_size();
+        data_set->get_input_sample(sample_index + sequence_iterator).end(),
+        RepeatedFieldBackInserter(result.mutable_package())
+      );
     }
 
     /* Add the label into the field */
     for(uint32 sequence_iterator = 0; sequence_iterator < result.sequence_size(); ++sequence_iterator){
-      result.mutable_package()[filled_numbers + (result.label_size() * result.sequence_size())] = {
+      std::copy(
         data_set->get_label_sample(sample_index + sequence_iterator).begin(),
-        data_set->get_label_sample(sample_index + sequence_iterator).end()
-      };
-      filled_numbers += result.input_size();
+        data_set->get_label_sample(sample_index + sequence_iterator).end(),
+        RepeatedFieldBackInserter(result.mutable_package())
+      );
     }
   }
   return result;

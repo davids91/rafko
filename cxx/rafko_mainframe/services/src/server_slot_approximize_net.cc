@@ -31,8 +31,8 @@ using std::make_unique;
 
 void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
   service_slot.set_type(service_slot_.type());
-  if(SERV_SLOT_TO_APPROXIMIZE != service_slot.type())
-    throw new std::runtime_error("Incorrecty Server slot initialization!");
+  if(SERV_SLOT_TO_APPROXIMIZE != service_slot_.type())
+    throw new std::runtime_error("Incorrect Server slot initialization!");
   else{
     service_slot.set_state(0u); /* Reset state */
     /* ####################################################################
@@ -57,11 +57,11 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
     /* ####################################################################
      * DATA SETS
      * #################################################################### */
+    service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_DATA_SET);
     if(
       (cost_function) /* Data aggreaget requires a cost function */
       &&(0 < service_slot_.training_set().inputs_size())
     ){
-      service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_DATA_SET);
       if(training_set)training_set.reset();
       training_set = std::make_shared<Data_aggregate>(*service_slot_.mutable_training_set(), cost_function);
       if(training_set)
@@ -97,13 +97,12 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
       }
     }
     finalize_state();
-    std::cout << "final state: " << service_slot.state() <<std::endl;
   }
 }
 
 void Server_slot_approximize_net::update_network(SparseNet&& net_){
-  expose_state();
   Server_slot_run_net::update_network(std::move(net_));
+  expose_state();
   if(network_approximizer)
     network_approximizer.reset();
   service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_TRAINER);

@@ -69,16 +69,22 @@ enum Slot_action_field{
   SERV_SLOT_TO_DIE = 65536;
 }
 
-/** @brief      Available information fields to query from a service slot
+/** @brief      Available information fields to query from a service slot. The data is given back in the order of the enumerations
+ *              e.g.: in case the info (SLOT_INFO_TRAINING_ERROR & SLOT_INFO_TEST_SET_SEQUENCE_NUMBER) is be queried, 
+ *                    SLOT_INFO_TRAINING_ERROR is be under index 1
+ *                    SLOT_INFO_TEST_SET_SEQUENCE_NUMBER shall be under index 2
+ *              e.g.: in case the info (SLOT_INFO_TEST_SET_SAMPLE_NUMBER & SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER) is queried
+ *                    SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER is be under index 1
+ *                    SLOT_INFO_TEST_SET_SAMPLE_NUMBER shall be under index 2
  */
-enum Slot_info_field{
+enum Slot_info_field{ 
   SLOT_INFO_UNKNOWN = 0;
   SLOT_INFO_TRAINING_ERROR = 1;
-  SLOT_INFO_TEST_ERROR = 2;
-  SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER = 4;
-  SLOT_INFO_TRAINING_SET_SEQUENCE_NUMBER = 8;
-  SLOT_INFO_TEST_SET_SAMPLE_NUMBER = 16;
-  SLOT_INFO_TEST_SET_SEQUENCE_NUMBER = 32;
+  SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER = 2;
+  SLOT_INFO_TRAINING_SET_SEQUENCE_NUMBER = 4;
+  SLOT_INFO_TEST_ERROR = 1024;
+  SLOT_INFO_TEST_SET_SAMPLE_NUMBER = 2048;
+  SLOT_INFO_TEST_SET_SEQUENCE_NUMBER = 4096;
 }
 
 /** @brief      Certain slots may require raw I/O data form the network to operate.
@@ -155,13 +161,13 @@ message Service_hyperparameters{
 message Service_slot{
   string slot_id = 1; /* A unique identifier for each service slot */
   uint32 state = 2; /* A bitfield storing 0 or 1 at the positions given in enum @Slot_state_values, except when everything is fine, then the value @SERV_SLOT_OK is used */
-  Slot_type type = 10;
-  Service_hyperparameters hypers = 11;
-  sparse_net_library.SparseNet network = 12;
-  sparse_net_library.Data_set test_set = 13;
-  sparse_net_library.Data_set training_set = 14;
-  sparse_net_library.cost_functions cost_function = 15;
-  sparse_net_library.weight_updaters weight_updater = 16;
+  Slot_type type = 10; /* Must be set on client side */
+  Service_hyperparameters hypers = 21;
+  sparse_net_library.SparseNet network = 22;
+  sparse_net_library.Data_set test_set = 23;
+  sparse_net_library.Data_set training_set = 24;
+  sparse_net_library.cost_functions cost_function = 25;
+  sparse_net_library.weight_updaters weight_updater = 26;
 }
 
 /**
