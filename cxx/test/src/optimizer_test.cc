@@ -100,7 +100,6 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
 
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
-    .cost_function(COST_FUNCTION_MSE)
     .allowed_transfer_functions_by_layer(
       {{TRANSFER_FUNCTION_SELU},{TRANSFER_FUNCTION_SELU}}
     ).dense_layers({2,1})
@@ -148,9 +147,7 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   number_of_steps = 0;
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
-  Sparse_net_optimizer optimizer(
-    *nets[0],train_set,test_set,WEIGHT_UPDATER_DEFAULT,service_context
-  );
+  Sparse_net_optimizer optimizer(*nets[0], train_set, test_set, COST_FUNCTION_SQUARED_ERROR, WEIGHT_UPDATER_DEFAULT, service_context);
 
   std::cout << "Optimizing net.." << std::endl;
   while(abs(train_error) > 1e-1){
@@ -171,7 +168,7 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
-  Sparse_net_optimizer optimizer2(*nets[1], train_set, test_set, WEIGHT_UPDATER_MOMENTUM, service_context); 
+  Sparse_net_optimizer optimizer2(*nets[1], train_set, test_set, COST_FUNCTION_MSE, WEIGHT_UPDATER_MOMENTUM, service_context); 
   std::cout << "Optimizing bigger net.." << std::endl;
   train_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_MSE, service_context);
   test_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_MSE, service_context);
@@ -197,7 +194,7 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
-  Sparse_net_optimizer optimizer3(*nets[2], train_set, test_set, WEIGHT_UPDATER_NESTEROV, service_context);
+  Sparse_net_optimizer optimizer3(*nets[2], train_set, test_set, COST_FUNCTION_MSE, WEIGHT_UPDATER_NESTEROV, service_context);
   cout << "Optimizing biggest net.." << std::endl;
   train_set.reset_errors();
   test_set.reset_errors();
@@ -228,20 +225,14 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   Solution_solver after_solver3(*Solution_builder(service_context).build(*nets[2]), service_context);
 
   sdouble32 error_summary[3] = {0,0,0};
-  Cost_function_mse after_cost(1,number_of_samples, service_context);
+  Cost_function_mse after_cost(1,service_context);
   for(uint32 i = 0; i < number_of_samples; ++i){
     after_solver.solve(test_set.get_input_sample(i));
     after_solver2.solve(test_set.get_input_sample(i));
     after_solver3.solve(test_set.get_input_sample(i));
-    error_summary[0] += after_cost.get_feature_error(
-      after_solver.get_neuron_data(), test_set.get_label_sample(i)
-    );
-    error_summary[1] +=after_cost.get_feature_error(
-      after_solver2.get_neuron_data(), test_set.get_label_sample(i)
-    );
-    error_summary[2] += after_cost.get_feature_error(
-      after_solver3.get_neuron_data(), test_set.get_label_sample(i)
-    );
+    error_summary[0] += after_cost.get_feature_error(after_solver.get_neuron_data(), test_set.get_label_sample(i), number_of_samples);
+    error_summary[1] += after_cost.get_feature_error(after_solver2.get_neuron_data(), test_set.get_label_sample(i), number_of_samples);
+    error_summary[2] += after_cost.get_feature_error(after_solver3.get_neuron_data(), test_set.get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"
   << "\t"  << error_summary[0]
@@ -293,6 +284,7 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
 }
 
 TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
+  Service_context service_context;
   uint32 sequence_size = 5;
   uint32 number_of_samples = 50;
   uint32 epoch = 100;
@@ -328,9 +320,7 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   average_duration = 0;
   iteration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
-  Sparse_net_optimizer optimizer(
-    *nets[0],train_set,test_set,WEIGHT_UPDATER_NESTEROV,service_context
-  );
+  Sparse_net_optimizer optimizer(*nets[0], train_set, test_set, COST_FUNCTION_MSE, WEIGHT_UPDATER_NESTEROV, service_context);
 
   for(uint32 sample_sequence = 0; sample_sequence < number_of_samples; ++sample_sequence)
     print_training_sample(sample_sequence, train_set, *nets[0], service_context);
@@ -362,12 +352,10 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   Solution_solver after_solver(*Solution_builder(service_context).build(*nets[0]), service_context);
 
   sdouble32 error_summary[3] = {0,0,0};
-  Cost_function_mse after_cost(1,number_of_samples, service_context);
+  Cost_function_mse after_cost(1, service_context);
   for(uint32 i = 0; i < number_of_samples; ++i){
     after_solver.solve(test_set.get_input_sample(i));
-    error_summary[0] += after_cost.get_feature_error(
-      after_solver.get_neuron_data(), test_set.get_label_sample(i)
-    );
+    error_summary[0] += after_cost.get_feature_error(after_solver.get_neuron_data(), test_set.get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"
   << "\t"  << error_summary[0]

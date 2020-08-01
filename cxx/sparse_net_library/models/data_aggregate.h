@@ -37,49 +37,42 @@ using std::move;
 /**
  * @brief      A Data set container complete with adaptive error statistics, which is 
  *             not thread safe!!
+ *             It is possible to have more input samples, than label samples; In those cases
+ *             the extra inputs are to be used to initialize the network before training.
  */
 class Data_aggregate{
 public:
   Data_aggregate(Data_set& samples_, shared_ptr<Cost_function> cost_function_)
-  :  sample_number(static_cast<uint32>(samples_.labels_size()/samples_.feature_size()))
-  ,  sequence_size(std::max(1u,samples_.sequence_size()))
-  ,  input_samples(sample_number)
-  ,  label_samples(sample_number)
-  ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
+  :  sequence_size(std::max(1u,samples_.sequence_size()))
+  ,  prefill_sequences(static_cast<uint32>((samples_.inputs_size() - samples_.labels_size()) / sequence_size))
+  ,  input_samples(samples_.inputs_size() / sequence_size)
+  ,  label_samples(samples_.labels_size() / sequence_size)
+  ,  sample_errors(label_samples.size(),(double_literal(1.0)/label_samples.size()))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(cost_function_)
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
-    else fill(samples_); 
+    else fill(samples_);
   }
 
   Data_aggregate(
-    vector<vector<sdouble32>>&& input_samples_,
-    vector<vector<sdouble32>>&& label_samples_,
-    shared_ptr<Cost_function> cost_function_,
-    uint32 sequence_size_ = 1
-  ):  sample_number(input_samples_.size())
-  ,  sequence_size(std::max(1u,sequence_size_))
-  ,  input_samples(sample_number)
-  ,  label_samples(sample_number)
-  ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
+    vector<vector<sdouble32>>&& input_samples_,vector<vector<sdouble32>>&& label_samples_,
+    shared_ptr<Cost_function> cost_function_, uint32 sequence_size_ = 1
+  ): sequence_size(std::max(1u,sequence_size_))
+  ,  prefill_sequences(static_cast<uint32>((input_samples_.size() - label_samples_.size()) / sequence_size))
+  ,  input_samples(move(input_samples_))
+  ,  label_samples(move(label_samples_))
+  ,  sample_errors(label_samples.size(),(double_literal(1.0)/label_samples.size()))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(cost_function_)
   { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
   Data_aggregate(
-    Service_context& context,
-    vector<vector<sdouble32>>&& input_samples_,
-    vector<vector<sdouble32>>&& label_samples_,
+    Service_context& service_context_,
+    vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
     SparseNet& net, cost_functions the_function, uint32 sequence_size_ = 1
-  ):  sample_number(input_samples_.size())
-  ,  sequence_size(std::max(1u,sequence_size_))
-  ,  input_samples(input_samples_)
-  ,  label_samples(label_samples_)
-  ,  sample_errors(sample_number,(double_literal(1.0)/sample_number))
-  ,  error_sum(double_literal(1.0))
-  ,  cost_function(Function_factory::build_cost_function(net, the_function, context))
-  { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
+  ): Data_aggregate(move(input_samples_), move(label_samples_), Function_factory::build_cost_function(net, the_function, service_context_), sequence_size_)
+  { }
 
   /**
    * @brief      Sets the approximated value for an observed value,
@@ -92,7 +85,7 @@ public:
     if(label_samples.size() > sample_index){
       error_sum -= sample_errors[sample_index];
       sample_errors[sample_index] = cost_function->get_feature_error(
-        label_samples[sample_index], neuron_data, get_number_of_samples()
+        label_samples[sample_index], neuron_data, get_number_of_sequences()
       );
       error_sum += sample_errors[sample_index];
     }else throw std::runtime_error("Sample index out of bounds!");
@@ -103,7 +96,7 @@ public:
    */
   void reset_errors(void){
     for(sdouble32& sample_error : sample_errors)
-      sample_error = (double_literal(1.0)/sample_number);
+      sample_error = (double_literal(1.0)/label_samples.size());
     error_sum = double_literal(1.0);
   }
 
@@ -114,9 +107,9 @@ public:
    *
    * @return     The input sample.
    */
-  const vector<sdouble32>& get_input_sample(uint32 sample_index) const{
-    if(sample_number > sample_index)
-      return input_samples[sample_index];
+  const vector<sdouble32>& get_input_sample(uint32 input_sample_index) const{
+    if(input_samples.size() > input_sample_index)
+      return input_samples[input_sample_index];
       else throw std::runtime_error("Sample index out of bounds!");
   }
 
@@ -128,7 +121,7 @@ public:
    * @return     The label sample.
    */
   const vector<sdouble32>& get_label_sample(uint32 sample_index) const{
-    if(sample_number > sample_index)
+    if(label_samples.size() > sample_index)
       return label_samples[sample_index];
       else throw std::runtime_error("Sample index out of bounds!");
   }
@@ -165,21 +158,32 @@ public:
   }
 
   /**
-   * @brief      Gets the number of samples
+   * @brief      Gets the number of raw input arrays stored in the pbject
    *
-   * @return     The number of samples.
+   * @return     The number of input samples.
    */
-  uint32 get_number_of_samples(void) const{
-    return sample_number;
+  uint32 get_number_of_input_samples(void) const{
+    return input_samples.size();
   }
 
   /**
-   * @brief      Gets the number of sequences.
+   * @brief      The number of raw label arrays stored in the object
+   *
+   * @return     The number of labels.
+   */
+  uint32 get_number_of_label_samples(void) const{
+    return label_samples.size();
+  }
+
+  /**
+   * @brief      Gets the number of sequences stored in the object. One sequence contains
+   *             a number of input and label sample arrays. There might be more input arrays,
+   *             than label arrays in one sequences. The difference is given by @get_prefill_inputs_number
    *
    * @return     The number of sequences.
    */
   uint32 get_number_of_sequences(void) const{
-    return (sample_number / sequence_size);
+    return (get_number_of_label_samples() / sequence_size);
   }
 
   /**
@@ -191,9 +195,18 @@ public:
     return sequence_size;
   }
 
+  /**
+   * @brief      Gets the number of inputs to be used as initializing the network during a training run
+   *
+   * @return     The number of inputs to be used for network initialization during training
+   */
+  uint32 get_prefill_inputs_number(void) const{
+    return prefill_sequences;
+  }
+
 private:
-  uint32 sample_number;
   uint32 sequence_size;
+  uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;
   vector<sdouble32> sample_errors;

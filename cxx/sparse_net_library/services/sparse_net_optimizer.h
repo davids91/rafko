@@ -57,8 +57,8 @@ public:
     cost_functions the_function, weight_updaters weight_updater_,
     Service_context& service_context
   ): Sparse_net_optimizer(
-    neural_network, train_set_, test_set,
-    Function_factory::build_cost_function(net, the_function, context),
+    neural_network, train_set_, test_set_,
+    Function_factory::build_cost_function(neural_network, the_function, service_context),
     weight_updater_, service_context
   ){ }
 
@@ -202,20 +202,22 @@ private:
    *
    * @param[in]  solve_thread_index  The solve thread index
    * @param[in]  sequence_index      The sequence index
-   * @param[in]  sample_index        The sample index
+   * @param[in]  raw_inputs_index    The index of the input array the network was calculated with
+   * @param[in]  raw_sample_index    The sample index in-between the sequences of the data-set
    */
-  void calculate_derivatives(uint32 solve_thread_index, uint32 sequence_index, uint32 sample_index);
+  void calculate_derivatives(uint32 solve_thread_index, uint32 sequence_index, uint32 raw_inputs_index, uint32 raw_sample_index);
 
   /**
-   * @brief      Calculates the output layer deviation from the given sample under @sample_index.
+   * @brief      Calculates the output layer deviation from the given sample under @raw_sample_index.
    *             Starts @calculate_output_errors_thread-s simultaniously, almost equally dividing 
    *             the number of output neurons to be calculated in one thread.
    *             The number of threads to be started depends on @Service_context::get_max_solve_threads
    *
    * @param[in]  solve_thread_index  The solve thread index
-   * @param[in]  sample_index        The sample index
+   * @param[in]  raw_inputs_index    The index of the input array the network was calculated with
+   * @param[in]  raw_sample_index    The sample index in-between the sequences of the data-set
    */
-  void calculate_output_errors(uint32 solve_thread_index, uint32 sequence_index, uint32 sample_index);
+  void calculate_output_errors(uint32 solve_thread_index, uint32 sequence_index, uint32 raw_inputs_index, uint32 raw_sample_index);
 
   /**
    * @brief      Propagates the error back to the hidden Neurons. Starts one thread for each Neuron
@@ -235,10 +237,9 @@ private:
    *             The number of threads to be started depends on @Service_context::get_max_solve_threads
    *
    * @param[in]  solve_thread_index  The solve thread index
-   * @param[in]  sample_index        The index of the sequence currently processed
-   * @param[in]  sample_index        The sample index
+   * @param[in]  sequence_index      The index of the sequence currently processed
    */
-  void accumulate_weight_gradients(uint32 solve_thread_index, uint32 sample_index, uint32 sequence_index);
+  void accumulate_weight_gradients(uint32 solve_thread_index, uint32 sequence_index);
 
   /**
    * @brief      Divides all weight gradients with the minibatch size, so the weights are being updated 
@@ -252,12 +253,13 @@ private:
    * @brief      The thread for calculating the derivative part for each weights
    *
    * @param[in]  solve_thread_index  The solve thread index
-   * @param[in]  sample_index        The sample index
    * @param[in]  sequence_index      The index of the currently evaluated sequence
+   * @param[in]  raw_inputs_index    The index of the input array the network was calculated with
+   * @param[in]  raw_sample_index    The sample index in-between the sequences of the data-set
    * @param[in]  neuron_index        The neuron index to start calculatin output errors from
    * @param[in]  neuron_number       The number of neurons to include in this thread
    */
-  void calculate_derivatives_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 sample_index, uint32 neuron_index, uint32 neuron_number);
+  void calculate_derivatives_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 raw_inputs_index, uint32 raw_sample_index, uint32 neuron_index, uint32 neuron_number);
 
   /**
    * @brief      The thread call for calculating the output errors. MUltiple Output Neurons are calculated in one thread
@@ -267,12 +269,13 @@ private:
    *             The number of threads to be started depends on @Service_context::get_max_solve_threads
    *
    * @param[in]  solve_thread_index  The solve thread index
-   * @param[in]  sample_index        The sample index
    * @param[in]  sequence_index      The index of the currently evaluated sequence
+   * @param[in]  raw_inputs_index    The index of the input array the network was calculated with
+   * @param[in]  raw_sample_index    The sample index in-between the sequences of the data-set
    * @param[in]  neuron_index        The neuron index to start calculatin output errors from
    * @param[in]  neuron_number       The number of neurons to include in this thread
    */
-  void calculate_output_errors_thread(uint32 solve_thread_index, uint32 sample_index, uint32 sequence_index, uint32 neuron_index, uint32 neuron_number);
+  void calculate_output_errors_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 raw_inputs_index, uint32 raw_sample_index, uint32 neuron_index, uint32 neuron_number);
 
   /**
    * @brief      The thread used by @propagate_output_errors_back. For its every input node
@@ -290,10 +293,9 @@ private:
    *             the weights based on the given input arguments.
    *
    * @param[in]  solve_thread_index  The solve thread index
-   * @param[in]  sample_index        The sample index
    * @param[in]  neuron_index        The neuron index
    */
-  void accumulate_weight_gradients_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 sample_index, uint32 neuron_index);
+  void accumulate_weight_gradients_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 neuron_index);
 
   /**
    * @brief      The thread used by @normalize_weight_gradients, it iterates through 

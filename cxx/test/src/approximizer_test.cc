@@ -74,8 +74,8 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   ));
 
   /* Create dataset, test set and aprroximizer */
-  Data_aggregate train_set = create_addition_dataset(service_context, 5, *nets[0], COST_FUNCTION_SQUARED_ERROR);
-  Data_aggregate test_set = create_addition_dataset(service_context, 5, *nets[0], COST_FUNCTION_SQUARED_ERROR);
+  Data_aggregate train_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
+  Data_aggregate test_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
   Sparse_net_approximizer approximizer(*nets[0],train_set,test_set,WEIGHT_UPDATER_NESTEROV, service_context);
 
   /* adding a simple-weight-gradient fragment */
@@ -94,7 +94,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   REQUIRE( static_cast<sint32>(gradient_value_index) < nets[0]->weight_table_size() );
 
   approximizer.apply_fragment(); /* Add the negative gradient */
-  REQUIRE( (nets[0]->weight_table(weight_index) + (weight_gradient * context.get_step_size())) == weight_old_value );
+  REQUIRE( (nets[0]->weight_table(weight_index) + (weight_gradient * service_context.get_step_size())) == weight_old_value );
 
   /* adding 2 weight-gradient fragments, independent ones */
   /* adding 2 weight-gradient fragments, one after another */
@@ -120,7 +120,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   /* Create nets */
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
-  nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder()
+  nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
@@ -178,12 +178,10 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   Solution_solver after_solver(*Solution_builder(service_context).build(*nets[0]), service_context);
 
   sdouble32 error_summary[3] = {0,0,0};
-  Cost_function_mse after_cost(1,number_of_samples, service_context);
+  Cost_function_mse after_cost(1, service_context);
   for(uint32 i = 0; i < number_of_samples; ++i){
     after_solver.solve(test_set.get_input_sample(i));
-    error_summary[0] += after_cost.get_feature_error(
-      after_solver.get_neuron_data(), test_set.get_label_sample(i)
-    );
+    error_summary[0] += after_cost.get_feature_error(after_solver.get_neuron_data(), test_set.get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"
   << "\t"  << error_summary[0]

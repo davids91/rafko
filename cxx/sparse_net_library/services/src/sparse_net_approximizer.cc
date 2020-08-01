@@ -76,20 +76,31 @@ void Sparse_net_approximizer::collect_fragment(void){
 }
 
 void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 sequences_to_evaluate){
-  uint32 sample_index;
+  uint32 raw_inputs_index;
+  uint32 raw_sample_index;
 
   if(train_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
     throw std::runtime_error("Network output size doesn't match size of provided labels!");
 
   for(uint32 sample = 0; sample < sequences_to_evaluate; ++sample){
-    sample_index = (rand()%(train_set.get_number_of_sequences())) * train_set.get_sequence_size();
+    raw_sample_index = rand()%(train_set.get_number_of_sequences());
+    raw_inputs_index = raw_sample_index * (train_set.get_sequence_size() + train_set.get_prefill_inputs_number());
+    raw_sample_index = raw_sample_index * train_set.get_sequence_size();
+
+    /* Prefill network with the initial inputs */
+    for(uint32 prefill_iterator = 0; prefill_iterator < train_set.get_prefill_inputs_number(); ++prefill_iterator){
+      solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index));
+      ++raw_sample_index;
+      ++raw_inputs_index;
+    }
 
     /* Evaluate the current sequence step by step */
     solvers[solve_thread_index]->reset();
     for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
-      solvers[solve_thread_index]->solve(train_set.get_input_sample(sample_index)); /* Solve the network for the sampled labels input */
-      train_set.set_feature_for_label(sample_index, solvers[0]->get_neuron_data(0)); /* Re-calculate error for the training set */
-      ++sample_index;
+      solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
+      train_set.set_feature_for_label(raw_sample_index, solvers[0]->get_neuron_data(0)); /* Re-calculate error for the training set */
+      ++raw_sample_index;
+      ++raw_inputs_index;
     }
     solvers[solve_thread_index]->reset();
   }

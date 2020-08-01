@@ -31,6 +31,7 @@ namespace rafko_mainframe{
 
 using std::vector;
 using std::unique_ptr;
+using std::shared_ptr;
 using std::string;
 using std::mutex;
 

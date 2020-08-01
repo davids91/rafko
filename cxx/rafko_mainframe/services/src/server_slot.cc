@@ -62,21 +62,24 @@ Neural_io_stream Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_se
   Neural_io_stream result; /* Create the resulting message and set header data for it */
   if( /* In case the attached training set is valid */
     (data_set)
-    &&(sample_index < data_set->get_number_of_samples())
+    &&(sample_index < data_set->get_number_of_label_samples())
   ){ /* And the index is not out of bounds */
+    unit32 number_of_input_arrays = data_set->get_sequence_size() + data_set->get_prefill_inputs_number();
+    uint32 inputs_index = (sample_index * number_of_input_arrays);
+    uint32 labels_index = (sample_index * data_set->get_sequence_size());
     result.set_feature_size(0);
-    result.set_input_size(data_set->get_input_sample(sample_index).size());
-    result.set_label_size(data_set->get_label_sample(sample_index).size());
+    result.set_input_size(data_set->get_input_sample(labels_index).size()); /* set the size based on the first array in the sequence */
+    result.set_label_size(data_set->get_label_sample(inputs_index).size());
     result.set_sequence_size(data_set->get_sequence_size());
     result.mutable_package()->Reserve( /* Reserve the needed space for the element */
-      (result.input_size() * result.sequence_size()) + (result.label_size() * result.sequence_size())
+      (result.input_size() * number_of_input_arrays) + (result.label_size() * result.sequence_size())
     );
 
     /* Add the input into the field */
-    for(uint32 sequence_iterator = 0; sequence_iterator < result.sequence_size(); ++sequence_iterator){
+    for(uint32 sequence_iterator = 0; sequence_iterator < number_of_input_arrays; ++sequence_iterator){
       std::copy(
-        data_set->get_input_sample(sample_index + sequence_iterator).begin(),
-        data_set->get_input_sample(sample_index + sequence_iterator).end(),
+        data_set->get_input_sample(inputs_index + sequence_iterator).begin(),
+        data_set->get_input_sample(inputs_index + sequence_iterator).end(),
         RepeatedFieldBackInserter(result.mutable_package())
       );
     }
@@ -84,8 +87,8 @@ Neural_io_stream Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_se
     /* Add the label into the field */
     for(uint32 sequence_iterator = 0; sequence_iterator < result.sequence_size(); ++sequence_iterator){
       std::copy(
-        data_set->get_label_sample(sample_index + sequence_iterator).begin(),
-        data_set->get_label_sample(sample_index + sequence_iterator).end(),
+        data_set->get_label_sample(labels_index + sequence_iterator).begin(),
+        data_set->get_label_sample(labels_index + sequence_iterator).end(),
         RepeatedFieldBackInserter(result.mutable_package())
       );
     }

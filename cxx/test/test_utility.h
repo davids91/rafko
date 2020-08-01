@@ -36,6 +36,7 @@ using sparse_net_library::SparseNet;
 using sparse_net_library::Solution;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Data_aggregate;
+using sparse_net_library::cost_functions;
 using rafko_mainframe::Service_context;
 
 /**
@@ -102,7 +103,7 @@ extern void print_weights(SparseNet& net, Solution& solution);
  *
  * @return     The addition dataset. For each sample: Inputs: [a][b]; Outputs: [a+b]
  */
-extern Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net, Service_context& service_context);
+extern Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net, cost_functions the_function, Service_context& service_context);
 
 /**
  * @brief      Creates a normalized dataset for adding binary numbers: each number is stored
@@ -116,7 +117,7 @@ extern Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNe
  *
  * @return     The addition dataset. For each sample: Inputs: [[a0][...][an]][[b0][...][bn]]; Outputs: [[result0][...][resultn]]
  */
-extern Data_aggregate create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size, SparseNet& net, Service_context& service_context);
+extern Data_aggregate create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function, Service_context& service_context);
 
 };
 
