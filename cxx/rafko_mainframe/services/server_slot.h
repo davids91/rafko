@@ -20,15 +20,19 @@
 
 #include "sparse_net_global.h"
 
-#include <string>
-
 #include "gen/sparse_net.pb.h"
 #include "gen/deep_learning_service.pb.h"
+#include "sparse_net_library/models/data_aggregate.h"
+
+#include <string>
+#include <memory>
 
 namespace rafko_mainframe{
 
 using std::string;
+using std::shared_ptr;
 
+using sparse_net_library::Data_aggregate;
 using sparse_net_library::SparseNet;
 
 /**
@@ -81,6 +85,24 @@ public:
    * @return     The output data stream.
    */
   virtual Neural_io_stream run_net_once(const Neural_io_stream& data_stream) = 0;
+
+  /**
+   * @brief      Gets a sample from the attached training dataset
+   *
+   * @param[in]  index  The index of the sample to get
+   *
+   * @return     The training sample as a packed stream: First the input, then the label.
+   */
+  virtual Neural_io_stream get_training_sample(uint32 sample_index) const = 0;
+
+  /**
+   * @brief      Gets a sample from the attached testing dataset
+   *
+   * @param[in]  index  The index of the sample to get
+   *
+   * @return     The testing sample as a packed stream: First the input, then the label.
+   */
+  virtual Neural_io_stream get_testing_sample(uint32 sample_index) const = 0;
 
   /** 
    * @brief      Queries relevant information about the @Server_slot.
@@ -141,6 +163,17 @@ Service_slot service_slot;
     if(0 == service_slot.state()) /* No issues found, great! */
       service_slot.set_state(SERV_SLOT_OK);
   }
+
+  /**
+   * @brief      Utility function to convert a sample of the provided data set into a data stream
+   *
+   * @param[in]  data_set      The data set to get the sample from
+   * @param[in]  sample_index  The sample index
+   *
+   * @return     The data sample converted to a @Neural_io_stream
+   */
+  Neural_io_stream get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sample_index) const;
+
 
 };
 

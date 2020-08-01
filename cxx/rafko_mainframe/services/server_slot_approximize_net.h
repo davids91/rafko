@@ -48,11 +48,38 @@ public:
   { }
 
   void initialize(Service_slot&& service_slot_);
-  void loop(void);
-  void reset(void);
   void update_network(SparseNet&& net_);
   void accept_request(Slot_request&& request_);
   Slot_info get_info(Slot_request request);
+
+  void loop(void){
+    if(SERV_SLOT_OK == service_slot.state()){
+      network_approximizer->collect_fragment();
+      network_approximizer->apply_fragment();
+      ++iteration;
+    }else throw new std::runtime_error("Loop called of an invalid server slot!");
+  }
+
+  void reset(void){
+    if(0 < service_slot.state()){
+      training_set->reset_errors();
+      test_set->reset_errors();
+      network_approximizer->discard_fragment();
+    }else throw new std::runtime_error("Reset called of an invalid server slot!");
+  }
+
+  Neural_io_stream get_training_sample(uint32 sample_index) const{
+    if((training_set)&&(0 < service_slot.state())){
+      return get_data_sample(training_set, sample_index);
+    }else throw std::runtime_error("Invalid training set queried for sample!");
+  }
+
+  Neural_io_stream get_test_sample(uint32 sample_index) const{
+    if((training_set)&&(0 < service_slot.state())){
+      return get_data_sample(test_set, sample_index);
+    }else throw std::runtime_error("Invalid training set queried for sample!");
+  }
+
   ~Server_slot_approximize_net(void){
     network_approximizer.reset();
     test_set.reset();

@@ -101,22 +101,6 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
   }
 }
 
-void Server_slot_approximize_net::loop(void){
-  if(SERV_SLOT_OK == service_slot.state()){
-    network_approximizer->collect_fragment();
-    network_approximizer->apply_fragment();
-    ++iteration;
-  }else throw new std::runtime_error("Loop called of an invalid server slot!");
-}
-
-void Server_slot_approximize_net::reset(void){
-  if(SERV_SLOT_OK == service_slot.state()){
-    training_set->reset_errors();
-    test_set->reset_errors();
-    network_approximizer->discard_fragment();
-  }else throw new std::runtime_error("Reset called of an invalid server slot!");
-}
-
 void Server_slot_approximize_net::update_network(SparseNet&& net_){
   expose_state();
   Server_slot_run_net::update_network(std::move(net_));
@@ -139,13 +123,33 @@ void Server_slot_approximize_net::accept_request(Slot_request&& request_){
 
 Slot_info Server_slot_approximize_net::get_info(Slot_request request){
   Slot_info response;
-  if(0 < (request.request_bitstring() & SLOT_INFO_TRAINING_ERROR)){
-    response.add_info_field(SLOT_INFO_TRAINING_ERROR);
-    response.add_info_package(training_set->get_error());
+  if(training_set){
+    if(0 < (request.request_bitstring() & SLOT_INFO_TRAINING_ERROR)){
+      response.add_info_field(SLOT_INFO_TRAINING_ERROR);
+      response.add_info_package(training_set->get_error());
+    }
+    if(0 < (request.request_bitstring() & SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER)){
+      response.add_info_field(SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER);
+      response.add_info_package(training_set->get_number_of_samples());
+    }
+    if(0 < (request.request_bitstring() & SLOT_INFO_TRAINING_SET_SEQUENCE_NUMBER)){
+      response.add_info_field(SLOT_INFO_TRAINING_SET_SEQUENCE_NUMBER);
+      response.add_info_package(training_set->get_number_of_sequences());
+    }
   }
-  if(0 < (request.request_bitstring() & SLOT_INFO_TEST_ERROR)){
-    response.add_info_field(SLOT_INFO_TEST_ERROR);
-    response.add_info_package(test_set->get_error());
+  if(test_set){
+    if(0 < (request.request_bitstring() & SLOT_INFO_TEST_ERROR)){
+      response.add_info_field(SLOT_INFO_TEST_ERROR);
+      response.add_info_package(test_set->get_error());
+    }
+    if(0 < (request.request_bitstring() & SLOT_INFO_TEST_SET_SAMPLE_NUMBER)){
+      response.add_info_field(SLOT_INFO_TEST_SET_SAMPLE_NUMBER);
+      response.add_info_package(test_set->get_number_of_samples());
+    }
+    if(0 < (request.request_bitstring() & SLOT_INFO_TEST_SET_SEQUENCE_NUMBER)){
+      response.add_info_field(SLOT_INFO_TEST_SET_SEQUENCE_NUMBER);
+      response.add_info_package(test_set->get_number_of_sequences());
+    }
   }
   return response;
 }

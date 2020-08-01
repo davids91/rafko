@@ -36,14 +36,6 @@ void Server_slot_run_net::initialize(Service_slot&& service_slot_){
   }
 }
 
-void Server_slot_run_net::loop(void){
-  throw new std::runtime_error("Loop operation not supported in a network runner slot!");
-}
-
-void Server_slot_run_net::reset(void){
-  update_network(SparseNet());
-}
-
 void Server_slot_run_net::update_network(SparseNet&& net_){
   expose_state();
   network = std::move(net_);
@@ -56,10 +48,6 @@ void Server_slot_run_net::update_network(SparseNet&& net_){
     service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_SOLUTION);
   }
   finalize_state();
-}
-
-void Server_slot_run_net::accept_request(Slot_request&& request_){
-  throw new std::runtime_error("Direct Requests not supported in a network runner slot!");
 }
 
 Neural_io_stream Server_slot_run_net::run_net_once(const Neural_io_stream& data_stream){
@@ -91,21 +79,6 @@ Neural_io_stream Server_slot_run_net::run_net_once(const Neural_io_stream& data_
     *result.mutable_package() = {result_package.begin(), result_package.end()};
     return result;
   }throw new std::runtime_error("Invalid attached network run attempt!");
-}
-
-Slot_info Server_slot_run_net::get_info(Slot_request request){
-  return Slot_info(); /* No implemented info packet to be provided */
-}
-
-SparseNet Server_slot_run_net::get_network(void) const{
-  return network;
-}
-
-Slot_response Server_slot_run_net::get_status(void) const{
-  Slot_response ret;
-  ret.set_slot_id(service_slot.slot_id());
-  ret.set_slot_state(service_slot.state());
-  return ret;
 }
 
 } /* rafko_mainframe */

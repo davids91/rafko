@@ -53,16 +53,47 @@ public:
   { }
 
   void initialize(Service_slot&& service_slot_);
-  void loop(void);
-  void reset(void);
   void update_network(SparseNet&& net_);
-  void accept_request(Slot_request&& request_);
+
+  void reset(void){
+    update_network(SparseNet());
+  }
+
   Neural_io_stream run_net_once(const Neural_io_stream& data_stream);
-  Slot_info get_info(Slot_request request);
-  SparseNet get_network(void) const;
-  Slot_response get_status(void) const;
+
+  Slot_info get_info(Slot_request request){
+    return Slot_info(); /* No implemented info packet to be provided */
+  }
+  
+  SparseNet get_network(void) const{
+    return network;
+  }
+
+  Slot_response get_status(void) const{
+    Slot_response ret;
+    ret.set_slot_id(service_slot.slot_id());
+    ret.set_slot_state(service_slot.state());
+    return ret;
+  }
 
   ~Server_slot_run_net(void){ }
+
+  /* Not supported interfaces */
+  void loop(void){
+    throw new std::runtime_error("Loop operation not supported in a network runner slot!");
+  }
+
+  void accept_request(Slot_request&& request_){
+    throw new std::runtime_error("Direct Requests not supported in a network runner slot!");
+  }
+
+  Neural_io_stream get_training_sample(uint32 sample_index) const{
+    throw new std::runtime_error("Data sets not supported in a network runner slot!");
+  }
+
+  Neural_io_stream get_testing_sample(uint32 sample_index) const{
+    throw new std::runtime_error("Data sets not supported in a network runner slot!");
+  }
 
 protected:
   Service_context& context;

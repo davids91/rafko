@@ -64,6 +64,8 @@ enum Slot_action_field{
   SERV_SLOT_TO_AMPLIFY_NETWORK = 128; /* For the network attached to the slot: duplicates the significant neurons. */
   /*!Note: A neuron proves to be significant if the output of it is paired with greater weights, than other neurons.*/
   SERV_SLOT_RUN_ONCE = 256; /* Run network one time. Uses the attached @data_stream of the request */
+  SERV_SLOT_TO_GET_TRAINING_SAMPLE = 512; /* Provides a training sample[@request_index] from the training set attached to the target slot: first, the input, then the label packed together */
+  SERV_SLOT_TO_GET_TEST_SAMPLE = 1024; /* Provides a training sample[@request_index] from the training set attached to the target slot: first, the input, then the label packed together */
   SERV_SLOT_TO_DIE = 65536;
 }
 
@@ -73,6 +75,10 @@ enum Slot_info_field{
   SLOT_INFO_UNKNOWN = 0;
   SLOT_INFO_TRAINING_ERROR = 1;
   SLOT_INFO_TEST_ERROR = 2;
+  SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER = 4;
+  SLOT_INFO_TRAINING_SET_SEQUENCE_NUMBER = 8;
+  SLOT_INFO_TEST_SET_SAMPLE_NUMBER = 16;
+  SLOT_INFO_TEST_SET_SEQUENCE_NUMBER = 32;
 }
 
 /** @brief      Certain slots may require raw I/O data form the network to operate.
@@ -80,8 +86,10 @@ enum Slot_info_field{
  *              or output data, depending on the recipient. 
  */
 message Neural_io_stream{
-  uint32 feature_size = 1; /* Number of float numbers in one feature array of the network */
-  uint32 sequence_size = 2; /* Number of feature arrays in a package */
+  uint32 sequence_size = 1; /* Number of feature sequenced arrays in a package; sequence lengths for each types of data are set below */
+  uint32 feature_size = 2; /* Number of floating point numbers that a Neuron network produced */
+  uint32 input_size = 3; /* Number of floating point numbers that a Neuron network takes as input */
+  uint32 label_size = 4; /* Number of floating point numbers that a test or training set stores */
   repeated double package = 10; /* The packed data */
 }
 
@@ -90,7 +98,8 @@ message Neural_io_stream{
 message Slot_request{
   string source_slot_id = 1; /* In case of action requests involving 2 service slots, this field shall be used as the source slot */
   string target_slot_id = 2; /* In case of action requests involving only one slot this field shall be used */
-  uint32 request_bitstring = 10; /* Either an action or an info request */
+  uint32 request_index = 10; /* In case of datasets, the index of the data sample */
+  uint32 request_bitstring = 11; /* Either an action or an info request */
   Neural_io_stream data_stream = 20; /* May be a part of a data-set or a run-once request */
 }
 

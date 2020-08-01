@@ -34,6 +34,8 @@ public:
   void update_network(SparseNet&& net_);
   void accept_request(Slot_request&& request_);
   Slot_info get_info(Slot_request request);
+  Neural_io_stream get_training_sample(uint32 sample_index) const;
+  Neural_io_stream get_testing_sample(uint32 sample_index) const;
   ~Server_slot_optimize_net(void);
 };
 

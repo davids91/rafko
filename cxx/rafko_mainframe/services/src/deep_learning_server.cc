@@ -125,6 +125,7 @@ void Deep_learning_server::loop(void){
     uint32 slot_index = find_id(current_request.target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       uint32 request_bitstring = current_request.request_bitstring();
+      uint32 request_index = current_request.request_index();
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
       if(0 < (request_bitstring & SERV_SLOT_TO_START)){
         is_server_slot_running[slot_index] = 1;
@@ -149,6 +150,20 @@ void Deep_learning_server::loop(void){
       }
       if(0 < (request_bitstring & SERV_SLOT_TO_AMPLIFY_NETWORK)){
         return ::grpc::Status::CANCELLED; /* Not implemented yet */
+      }
+      if(0 < (request_bitstring & SERV_SLOT_TO_GET_TRAINING_SAMPLE)){
+        Slot_response response(server_slots[slot_index]->get_status());
+        response.mutable_data_stream()->CopyFrom(
+          server_slots[slot_index]->get_training_sample(request_index)
+        );
+        stream->Write(response);
+      }
+      if(0 < (request_bitstring & SERV_SLOT_TO_GET_TEST_SAMPLE)){
+        Slot_response response(server_slots[slot_index]->get_status());
+        response.mutable_data_stream()->CopyFrom(
+          server_slots[slot_index]->get_testing_sample(request_index)
+        );
+        stream->Write(response);
       }
       if(0 < (request_bitstring & SERV_SLOT_RUN_ONCE)){
         Slot_response response(server_slots[slot_index]->get_status());
