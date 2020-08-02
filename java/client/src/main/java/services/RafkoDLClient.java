@@ -15,6 +15,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.rafko.mainframe.RafkoDeepLearningService.Slot_action_field.SERV_SLOT_RUN_ONCE_VALUE;
+import static org.rafko.mainframe.RafkoDeepLearningService.Slot_action_field.SERV_SLOT_TO_REFRESH_SOLUTION_VALUE;
+
 public class RafkoDLClient {
     private static final Logger logger = Logger.getLogger(services.RafkoDLClient.class.getName());
     private Rafko_deep_learningGrpc.Rafko_deep_learningBlockingStub server_rpc;
@@ -40,6 +43,79 @@ public class RafkoDLClient {
             on_disconnect.run();
         }
         return null;
+    }
+
+    public RafkoDeepLearningService.Neural_io_stream run_net_once(String slot_id, int dataset_index){
+        final RafkoDeepLearningService.Slot_response[] response = new RafkoDeepLearningService.Slot_response[1];
+        final CountDownLatch finishLatch = new CountDownLatch(1);
+        StreamObserver<RafkoDeepLearningService.Slot_request> request = server_async_rpc.requestAction(new StreamObserver<>(){
+
+            @Override
+            public void onNext(RafkoDeepLearningService.Slot_response value) {
+                response[0] = value;
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                finishLatch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                finishLatch.countDown();
+            }
+        });
+        request.onNext(
+                RafkoDeepLearningService.Slot_request.newBuilder()
+                        .setTargetSlotId(slot_id).setRequestBitstring( SERV_SLOT_TO_REFRESH_SOLUTION_VALUE | SERV_SLOT_RUN_ONCE_VALUE )
+                        .setRequestIndex(dataset_index)
+                        .build()
+        );
+        request.onCompleted();
+        try {
+            finishLatch.await(1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            on_disconnect.run();
+        }
+        System.out.println("request finished!");
+        return response[0].getDataStream();
+    }
+
+    public RafkoDeepLearningService.Neural_io_stream run_net_once(String slot_id, RafkoDeepLearningService.Neural_io_stream input){
+        final RafkoDeepLearningService.Slot_response[] response = new RafkoDeepLearningService.Slot_response[1];
+        final CountDownLatch finishLatch = new CountDownLatch(1);
+        StreamObserver<RafkoDeepLearningService.Slot_request> request = server_async_rpc.requestAction(new StreamObserver<>(){
+
+            @Override
+            public void onNext(RafkoDeepLearningService.Slot_response value) {
+                response[0] = value;
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                finishLatch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                finishLatch.countDown();
+            }
+        });
+        request.onNext(
+                RafkoDeepLearningService.Slot_request.newBuilder()
+                .setTargetSlotId(slot_id).setRequestBitstring( SERV_SLOT_TO_REFRESH_SOLUTION_VALUE | SERV_SLOT_RUN_ONCE_VALUE )
+                .setDataStream(input)
+                .build()
+        );
+        request.onCompleted();
+        try {
+            finishLatch.await(1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            on_disconnect.run();
+        }
+        return response[0].getDataStream();
     }
 
     public RafkoDeepLearningService.Slot_response request_one_action(String slot_id, int request_bitstring, int request_index){

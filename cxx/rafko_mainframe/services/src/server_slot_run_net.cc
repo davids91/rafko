@@ -26,7 +26,7 @@ using sparse_net_library::Solution_builder;
 void Server_slot_run_net::initialize(Service_slot&& service_slot_){
   service_slot.set_type(service_slot_.type());
   if(SERV_SLOT_TO_RUN != service_slot.type())
-    throw new std::runtime_error("Incorrecty Server slot initialization!");
+    throw new std::runtime_error("Incorrect Server slot initialization!");
   else{
     service_slot.set_slot_id(generate_uuid());
     service_slot.set_state(0u); /* Reset state and update accordingly */
@@ -36,17 +36,27 @@ void Server_slot_run_net::initialize(Service_slot&& service_slot_){
   }
 }
 
-void Server_slot_run_net::update_network(SparseNet&& net_){
+void Server_slot_run_net::refresh_solution(void){
   expose_state();
-  network = std::move(net_);
-  service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_NET);
   service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_SOLUTION);
   if(0 < network.neuron_array_size()){
-    service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_NET);
     network_solution = *Solution_builder(context).build(network);
     network_solver = std::make_unique<Solution_solver>(network_solution, context);
     service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_SOLUTION);
+  }else service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_NET);
+  finalize_state();
+}
+
+void Server_slot_run_net::update_network(SparseNet&& net_){
+  expose_state();
+  std::cout << "{run1:"<< service_slot.state() <<"}";
+  if(0 < net_.neuron_array_size()){
+    network = std::move(net_);
+    service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_NET);
+    std::cout << "{run2:"<< service_slot.state() <<"}";
+    refresh_solution();
   }
+  std::cout << "{run3:"<< service_slot.state() <<"}";     
   finalize_state();
 }
 

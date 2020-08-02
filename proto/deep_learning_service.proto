@@ -66,6 +66,7 @@ enum Slot_action_field{
   SERV_SLOT_RUN_ONCE = 256; /* Run network one time. Uses the attached @data_stream of the request */
   SERV_SLOT_TO_GET_TRAINING_SAMPLE = 512; /* Provides a training sample[@request_index] from the training set attached to the target slot: first, the input, then the label packed together */
   SERV_SLOT_TO_GET_TEST_SAMPLE = 1024; /* Provides a training sample[@request_index] from the training set attached to the target slot: first, the input, then the label packed together */
+  SERV_SLOT_TO_REFRESH_SOLUTION = 2048; /* Re-generates the solution attached to the server slot based on the attached network */
   SERV_SLOT_TO_DIE = 65536;
 }
 
@@ -77,7 +78,7 @@ enum Slot_action_field{
  *                    SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER is be under index 1
  *                    SLOT_INFO_TEST_SET_SAMPLE_NUMBER shall be under index 2
  */
-enum Slot_info_field{ 
+enum Slot_info_field{
   SLOT_INFO_UNKNOWN = 0;
   SLOT_INFO_TRAINING_ERROR = 1;
   SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT = 2;
@@ -87,13 +88,18 @@ enum Slot_info_field{
 
 /** @brief      Certain slots may require raw I/O data form the network to operate.
  *              The message @Neural_io_stream provides either Neural network input data
- *              or output data, depending on the recipient. 
+ *              or output data, depending on the recipient. One sample of the packet shall 
+ *              arrive in the order they are defined here. i.e.: first the input, then the labels,
+ *              then the features. COmponents might be left empty, in which case the corresponding 
+ *              descriptor shall remain empty.
  */
 message Neural_io_stream{
+  /* +++ Size components +++ */
   uint32 sequence_size = 1; /* Number of feature sequenced arrays in a package; sequence lengths for each types of data are set below */
-  uint32 feature_size = 2; /* Number of floating point numbers that a Neuron network produced */
-  uint32 input_size = 3; /* Number of floating point numbers that a Neuron network takes as input */
-  uint32 label_size = 4; /* Number of floating point numbers that a test or training set stores */
+  uint32 input_size = 2; /* Number of floating point numbers that a Neuron network takes as input */
+  uint32 label_size = 3; /* Number of floating point numbers that a test or training set stores */
+  uint32 feature_size = 4; /* Number of floating point numbers that a Neuron network produced */
+  /* --- Size components --- */
   repeated double package = 10; /* The packed data */
 }
 

@@ -31,23 +31,23 @@ using std::lock_guard;
 
 void Deep_learning_server::loop(void){
   lock_guard<mutex> my_lock(server_mutex);
-  std::cout << "\r";
   for(uint32 i = 0; i < server_slots.size(); ++i){
     if(0 < is_server_slot_running[i]){
       lock_guard<mutex> my_lock(*server_slot_mutexs[i]);
+      std::cout << "\r";
       server_slots[i]->loop();
       std::cout << "["<< 
         server_slots[i]->get_info(SLOT_INFO_TRAINING_ERROR).info_package(0)
       <<"]";
     }
   }
-  std::cout << "  ";
 }
 
 ::grpc::Status Deep_learning_server::add_slot(
   ::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request,
   ::rafko_mainframe::Slot_response* response
 ){
+  std::cout << "Deep_learning_server::add_slot " << std::endl;
   try{
     lock_guard<mutex> my_lock(server_mutex);
     server_slot_mutexs.push_back(std::make_unique<mutex>());
@@ -66,16 +66,19 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() <<std::endl;
     return ::grpc::Status::CANCELLED;
   }
+  std::cout << std::endl;
 }
 
 ::grpc::Status Deep_learning_server::update_slot(
   ::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request,
   ::rafko_mainframe::Slot_response* response
 ){
+  std::cout << "Deep_learning_server::update_slot " << std::endl;
   try{
     uint32 slot_index = find_id(request->slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+      std::cout << " on slot["<< slot_index <<"]";
       server_slots[slot_index]->initialize(Service_slot(*request));
       response->CopyFrom(server_slots[slot_index]->get_status());
       return ::grpc::Status::OK;
@@ -85,16 +88,19 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() <<std::endl;
     return ::grpc::Status::CANCELLED;
   }
+  std::cout << std::endl;
 }
 
 ::grpc::Status Deep_learning_server::ping(
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
   ::rafko_mainframe::Slot_response* response
 ){
+  std::cout << "Deep_learning_server::ping " << std::endl;
   try{
     uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+      std::cout << " on slot["<< slot_index <<"]";
       response->CopyFrom(server_slots[slot_index]->get_status());
     }
     return ::grpc::Status::OK;
@@ -103,16 +109,19 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() <<std::endl;
     return ::grpc::Status::CANCELLED;
   }
+  std::cout << std::endl;
 }
 
 
 ::grpc::Status Deep_learning_server::build_network(
   ::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request,
   ::rafko_mainframe::Slot_response* response
-){ 
+){
+  std::cout << "Deep_learning_server::build_network ";
   try {
     uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
+      std::cout << " on slot["<< slot_index <<"]";
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
       if(0 < request->allowed_transfers_by_layer_size()){
         uint32 layer_index = 0;
@@ -143,21 +152,23 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() <<std::endl;
     return ::grpc::Status::CANCELLED;
   }
+  std::cout << std::endl;
 }
 
 ::grpc::Status Deep_learning_server::request_action(
   ::grpc::ServerContext* context, 
   ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response,::rafko_mainframe::Slot_request>* stream
 ){
+  std::cout << "Deep_learning_server::request_action " << std::endl;
   try{
     Slot_request current_request;
     while(stream->Read(&current_request)){
-      Neural_io_stream temp_output_data;
       uint32 slot_index = find_id(current_request.target_slot_id());
       if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
         uint32 request_bitstring = current_request.request_bitstring();
         uint32 request_index = current_request.request_index();
         lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+        std::cout << " on slot["<< slot_index <<"]";
         if(0 < (request_bitstring & SERV_SLOT_TO_START)){
           is_server_slot_running[slot_index] = 1;
         }
@@ -185,23 +196,31 @@ void Deep_learning_server::loop(void){
         if(0 < (request_bitstring & SERV_SLOT_TO_GET_TRAINING_SAMPLE)){
           Slot_response response(server_slots[slot_index]->get_status());
           response.mutable_data_stream()->CopyFrom(
-            server_slots[slot_index]->get_training_sample(request_index)
+            server_slots[slot_index]->get_training_sample(request_index, true, true)
           );
           stream->Write(response);
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_GET_TEST_SAMPLE)){
           Slot_response response(server_slots[slot_index]->get_status());
           response.mutable_data_stream()->CopyFrom(
-            server_slots[slot_index]->get_testing_sample(request_index)
+            server_slots[slot_index]->get_testing_sample(request_index, true, true)
           );
           stream->Write(response);
         }
+        if(0 < (request_bitstring & SERV_SLOT_TO_REFRESH_SOLUTION)){
+          server_slots[slot_index]->accept_request(request_bitstring & SERV_SLOT_TO_REFRESH_SOLUTION);
+        }
         if(0 < (request_bitstring & SERV_SLOT_RUN_ONCE)){
           Slot_response response(server_slots[slot_index]->get_status());
-          temp_output_data.CopyFrom(
-            server_slots[slot_index]->run_net_once(current_request.data_stream())
-          );
-          response.set_allocated_data_stream(&temp_output_data);
+          if(0 == current_request.data_stream().input_size()){ /* No input data specified */
+            response.mutable_data_stream()->CopyFrom(server_slots[slot_index]->run_net_once(
+              server_slots[slot_index]->get_training_sample(request_index, true, false)
+            ));
+          }else{ /* Some input data is specified, run the network based on the data provided from the request */
+            response.mutable_data_stream()->CopyFrom(
+              server_slots[slot_index]->run_net_once(current_request.data_stream())
+            );
+          }
           stream->Write(response);
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_DIE)){
@@ -216,16 +235,19 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() <<std::endl;
     return ::grpc::Status::CANCELLED;
   }
+  std::cout << std::endl;
 }
 
 ::grpc::Status Deep_learning_server::get_info(
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
   ::rafko_mainframe::Slot_info* response
 ){
+  std::cout << "Deep_learning_server::get_info " << std::endl;
   try{
     uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+      std::cout << " on slot["<< slot_index <<"]";
       response->CopyFrom(server_slots[slot_index]->get_info(request->request_bitstring()));
       return ::grpc::Status::OK;
     }else return ::grpc::Status::CANCELLED;
@@ -235,6 +257,7 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() <<std::endl;
     return ::grpc::Status::CANCELLED;
   }
+  std::cout << std::endl;
 }
 
 
@@ -242,10 +265,12 @@ void Deep_learning_server::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
   ::sparse_net_library::SparseNet* response
 ){
+  std::cout << "Deep_learning_server::get_network " << std::endl;
   try{
     uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+      std::cout << " on slot["<< slot_index <<"]";
       response->CopyFrom(server_slots[slot_index]->get_network());
       return ::grpc::Status::OK;
     }else return ::grpc::Status::CANCELLED;
@@ -254,6 +279,7 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() <<std::endl;
     return ::grpc::Status::CANCELLED;
   }
+  std::cout << std::endl;
 }
 
 uint32 Deep_learning_server::find_id(string id){

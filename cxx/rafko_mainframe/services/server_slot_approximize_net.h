@@ -50,7 +50,7 @@ public:
 
   void initialize(Service_slot&& service_slot_);
   void update_network(SparseNet&& net_);
-  void accept_request(Slot_request&& request_);
+  void accept_request(uint32 request_bitstring);
   Slot_info get_info(uint32 request_bitstring);
 
   void loop(void){
@@ -69,15 +69,27 @@ public:
     }else throw new std::runtime_error("Reset called of an invalid server slot!");
   }
 
-  Neural_io_stream get_training_sample(uint32 sample_index) const{
+  Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const{
     if((training_set)&&(0 < service_slot.state())){
-      return get_data_sample(training_set, sample_index);
+      Neural_io_stream result;
+      result.set_sequence_size(training_set->get_sequence_size());
+      if(get_input)result.set_input_size(training_set->get_input_sample(0).size());
+      if(get_label)result.set_label_size(training_set->get_label_sample(0).size());
+      /*!Note: since all inputs should have the same size, 0 is okay here */
+      if(get_input || get_label)get_data_sample(training_set, sample_index, result);
+      return result;
     }else throw std::runtime_error("Invalid training set queried for sample!");
   }
 
-  Neural_io_stream get_test_sample(uint32 sample_index) const{
+  Neural_io_stream get_test_sample(uint32 sample_index, bool get_input, bool get_label) const{
     if((training_set)&&(0 < service_slot.state())){
-      return get_data_sample(test_set, sample_index);
+      Neural_io_stream result;
+      result.set_sequence_size(test_set->get_sequence_size());
+      if(get_input)result.set_input_size(test_set->get_input_sample(0).size());
+      if(get_label)result.set_label_size(test_set->get_label_sample(0).size());
+      /*!Note: since all inputs should have the same size, 0 is okay here */
+      if(get_input || get_label)get_data_sample(test_set, sample_index, result);
+      return result;
     }else throw std::runtime_error("Invalid training set queried for sample!");
   }
 

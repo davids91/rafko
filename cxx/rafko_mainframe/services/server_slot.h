@@ -73,9 +73,9 @@ public:
   /**
    * @brief      Accept the request provided in the argument. Implementation may vary.
    *
-   * @param[in]  request_  The request to be accepted
+   * @param[in]  request_bitstring  The requests packed into a bitstring
    */
-  virtual void accept_request(Slot_request&& request_) = 0;
+  virtual void accept_request(uint32 request_bitstring) = 0;
 
   /**
    * @brief      Runs the attached network if it's valied
@@ -93,7 +93,7 @@ public:
    *
    * @return     The training sample as a packed stream: First the input, then the label.
    */
-  virtual Neural_io_stream get_training_sample(uint32 sample_index) const = 0;
+  virtual Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const = 0;
 
   /**
    * @brief      Gets a sample from the attached testing dataset
@@ -102,7 +102,7 @@ public:
    *
    * @return     The testing sample as a packed stream: First the input, then the label.
    */
-  virtual Neural_io_stream get_testing_sample(uint32 sample_index) const = 0;
+  virtual Neural_io_stream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const = 0;
 
   /** 
    * @brief      Queries relevant information about the @Server_slot.
@@ -169,11 +169,12 @@ Service_slot service_slot;
    *
    * @param[in]  data_set      The data set to get the sample from
    * @param[in]  sample_index  The sample index
-   *
-   * @return     The data sample converted to a @Neural_io_stream
+   * @param      target        The target stream to copy the data into. It shall have the
+   *                           size components of the requested dataset to sizes matching
+   *                           the sizes inside the @data_set to copy the information from.
+   *                           Whichever size components are not set correctly shall not be copied
    */
-  Neural_io_stream get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sample_index) const;
-
+  void get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sample_index, Neural_io_stream& target) const;
 
 };
 

@@ -32,10 +32,10 @@ public:
   void loop(void);
   void reset(void);
   void update_network(SparseNet&& net_);
-  void accept_request(Slot_request&& request_);
+  void accept_request(uint32 accept_request);
   Slot_info get_info(uint32 request_bitstring);
-  Neural_io_stream get_training_sample(uint32 sample_index) const;
-  Neural_io_stream get_testing_sample(uint32 sample_index) const;
+  Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const;
+  Neural_io_stream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const;
   ~Server_slot_optimize_net(void);
 };
 
