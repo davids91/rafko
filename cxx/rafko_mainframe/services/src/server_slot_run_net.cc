@@ -49,14 +49,11 @@ void Server_slot_run_net::refresh_solution(void){
 
 void Server_slot_run_net::update_network(SparseNet&& net_){
   expose_state();
-  std::cout << "{run1:"<< service_slot.state() <<"}";
   if(0 < net_.neuron_array_size()){
     network = std::move(net_);
     service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_NET);
-    std::cout << "{run2:"<< service_slot.state() <<"}";
     refresh_solution();
   }
-  std::cout << "{run3:"<< service_slot.state() <<"}";     
   finalize_state();
 }
 
@@ -70,11 +67,13 @@ Neural_io_stream Server_slot_run_net::run_net_once(const Neural_io_stream& data_
     vector<sdouble32> result_package = vector<sdouble32>( /* reserve enough space for the result.. */
       network.output_neuron_number() * data_stream.sequence_size()
     ); /* ..which is the output of the network multiplied by the sequence size */
+    vector<sdouble32> input;
     for(uint32 sequence = 0; sequence < data_stream.sequence_size(); ++sequence){
-      network_solver->solve({ /* Solve based on input */
+      input = { /* Copy the input data to a temporary */
         data_stream.package().begin() + sequence_start_index,
-        data_stream.package().begin() + sequence_start_index + data_stream.feature_size(),
-      });
+        data_stream.package().begin() + sequence_start_index + data_stream.input_size(),
+      };
+      network_solver->solve(input);
       std::copy(
         network_solver->get_neuron_data(0).end() - network_solver->get_output_size(),
         network_solver->get_neuron_data(0).end(),
@@ -82,7 +81,6 @@ Neural_io_stream Server_slot_run_net::run_net_once(const Neural_io_stream& data_
       );
       sequence_start_index += data_stream.feature_size();
     } /* for every sequence */
-
     /* Compiling the result into the argument */
     result.set_feature_size(network.output_neuron_number());
     result.set_sequence_size(data_stream.sequence_size());

@@ -45,7 +45,7 @@ public class DashboardController implements Initializable {
     public TextArea dataset_size_textfield;
     public TextField serverAddress_textField;
     public Label network_folder_label;
-    public Button connect_btn;
+    public Button create_client_btn;
     public Button test_btn;
     public Button dataset_load_btn;
     public Button dataset_create_btn;
@@ -84,7 +84,7 @@ public class DashboardController implements Initializable {
         );
         network_filechooser.setInitialDirectory(new File("D:/casdev/temp"));
 
-        connect_btn.setOnAction(event -> {
+        create_client_btn.setOnAction(event -> {
             String target = serverAddress_textField.getText();
             // Create a communication channel to the server, known as a Channel. Channels are thread-safe
             // and reusable. It is common to create channels at the beginning of your application and reuse
@@ -95,12 +95,11 @@ public class DashboardController implements Initializable {
                     .usePlaintext()
                     .build();
             client = new RafkoDLClient(com_channel, () -> {
+                server_slot_combo.getItems().clear();
                 server_online = false;
                 server_slot_combo.getItems().clear();
-                System.out.println("on disconnect..");
                 correct_ui_state();
             });
-            System.out.println("Client created!");
             test_btn.setDisable(false);
             ping_server();
         });
@@ -125,7 +124,6 @@ public class DashboardController implements Initializable {
             ){
                 load_network_from_slot();
             }
-            System.out.println("on combobox selection changed..");
             correct_ui_state();
         });
 
@@ -143,7 +141,6 @@ public class DashboardController implements Initializable {
                     newValue.intValue()
                 ).getDataStream());
             }
-            System.out.println("on slider change..");
             correct_ui_state();
         });
     }
@@ -158,17 +155,20 @@ public class DashboardController implements Initializable {
         rect_input_6.setFill(ColorMap.getColor(sample.getPackage(5)));
         rect_input_7.setFill(ColorMap.getColor(sample.getPackage(6)));
 
-        /* Read in the output */
-        rect_output_3.setFill(ColorMap.getColor(sample.getPackage(7)));
-        rect_output_4.setFill(ColorMap.getColor(sample.getPackage(8)));
-        rect_output_5.setFill(ColorMap.getColor(sample.getPackage(9)));
-        rect_output_6.setFill(ColorMap.getColor(sample.getPackage(10)));
-        rect_output_7.setFill(ColorMap.getColor(sample.getPackage(11)));
+        display_output(sample);
+    }
+
+    void display_output(RafkoDeepLearningService.Neural_io_stream sample){
+        /* Display the data from the end of the package */
+        rect_output_3.setFill(ColorMap.getColor(sample.getPackage(sample.getPackageCount() - 5)));
+        rect_output_4.setFill(ColorMap.getColor(sample.getPackage(sample.getPackageCount() - 4)));
+        rect_output_5.setFill(ColorMap.getColor(sample.getPackage(sample.getPackageCount() - 3)));
+        rect_output_6.setFill(ColorMap.getColor(sample.getPackage(sample.getPackageCount() - 2)));
+        rect_output_7.setFill(ColorMap.getColor(sample.getPackage(sample.getPackageCount() - 1)));
     }
 
     void correct_ui_state(){
         ImageView img;
-        System.out.println("Correct ui state..");
         if(
             (0 < selected_slot_state)
             &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
@@ -181,38 +181,42 @@ public class DashboardController implements Initializable {
             save_network_btn.setDisable(true);
         }
 
-        if(
-            (0 < selected_slot_state)
-            &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
-            ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_DATA_SET_VALUE)))
-        ){
-            RafkoDeepLearningService.Slot_info slot_info = client.get_info(RafkoDeepLearningService.Slot_request.newBuilder()
-                .setTargetSlotId(server_slot_combo.getValue().getName())
-                .setRequestBitstring(RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT.ordinal())
-                .build());
-            dataset_save_btn.setDisable(false);
-            sample_index_slider.setMax(Math.max(1,slot_info.getInfoPackage(    0)-1));
-            sample_index_slider.setDisable(false);
-            dataset_load_btn.setDisable(false);
-            dataset_create_btn.setDisable(false);
-        }else{
-            dataset_load_btn.setDisable(true);
-            dataset_create_btn.setDisable(true);
-            dataset_save_btn.setDisable(true);
-            sample_index_slider.setMax(0);
-            sample_index_slider.setDisable(true);
-        }
-
         if(server_online){
-            System.out.println("Server is online!");
             server_slot_combo.setDisable(false);
             if(null != server_slot_combo.getValue()){
                 server_slot_state_query.setDisable(false);
                 selected_slot_state = client.ping(server_slot_combo.getValue().getName()).getSlotState();
+                RafkoDeepLearningService.Slot_info slot_info = client.get_info(RafkoDeepLearningService.Slot_request.newBuilder()
+                        .setTargetSlotId(server_slot_combo.getValue().getName())
+                        .setRequestBitstring(RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT.ordinal())
+                        .build());
+                if(
+                        (0 < selected_slot_state)
+                                &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
+                                ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_DATA_SET_VALUE)))
+                                &&(1 == slot_info.getInfoPackageCount())
+                ){
+                    dataset_save_btn.setDisable(false);
+                    sample_index_slider.setMax(Math.max(1,slot_info.getInfoPackage(    0)-1));
+                    sample_index_slider.setDisable(false);
+                    dataset_load_btn.setDisable(false);
+                    dataset_create_btn.setDisable(false);
+                }else{
+                    dataset_load_btn.setDisable(true);
+                    dataset_create_btn.setDisable(true);
+                    dataset_save_btn.setDisable(true);
+                    sample_index_slider.setMax(0);
+                    sample_index_slider.setDisable(true);
+                }
+
             }else{
                 server_slot_state_query.setDisable(true);
+                dataset_load_btn.setDisable(true);
+                dataset_create_btn.setDisable(true);
+                dataset_save_btn.setDisable(true);
+                sample_index_slider.setMax(0);
+                sample_index_slider.setDisable(true);
             }
-            System.out.println("Selected slot state:" + selected_slot_state);
             if(
                 (0 < selected_slot_state)
                 &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
@@ -285,6 +289,7 @@ public class DashboardController implements Initializable {
             test_btn.setDisable(true);
             create_slot_btn.setDisable(true);
             gen_sequence_btn.setDisable(true);
+            server_slot_combo.getItems().clear();
             server_slot_combo.setDisable(true);
         }
         img.setPreserveRatio(true);
@@ -302,7 +307,6 @@ public class DashboardController implements Initializable {
             }else{
                 server_online = false;
             }
-            System.out.println("on ping..");
             correct_ui_state();
         }
     }
@@ -341,7 +345,7 @@ public class DashboardController implements Initializable {
                 ))
             )
         ){
-            client.run_net_once(server_slot_combo.getValue().getName(),(int)sample_index_slider.getValue());
+            display_output(client.run_net_once(server_slot_combo.getValue().getName(),(int)sample_index_slider.getValue()));
         }
     }
 
@@ -364,7 +368,6 @@ public class DashboardController implements Initializable {
 
                 if(0 < loaded_neural_network.getNeuronArrayCount()){
                     selected_slot_state = client.ping(server_slot_combo.getValue().getName()).getSlotState();
-                    System.out.println("on create net success..");
                     correct_ui_state();
                     return;
                 }
@@ -374,13 +377,11 @@ public class DashboardController implements Initializable {
             }
         }
         selected_slot_state = client.ping(server_slot_combo.getValue().getName()).getSlotState();
-        System.out.println("on create net fail..");
         correct_ui_state();
     }
 
     @FXML
     void create_new_dataset() {
-        System.out.println("creating dataset..");
         double sin_value = 0;
         double prev_sin_value = 0;
         Random rnd = new Random();
@@ -401,10 +402,6 @@ public class DashboardController implements Initializable {
                 sin_labels.add(Math.sin(sin_value));
             }
         }
-
-        System.out.println("Inputs size: " + sin_inputs.size());
-        System.out.println("Labels size: " + sin_labels.size());
-
         upload_dataset(RafkoCommon.Data_set.newBuilder()
             .setInputSize(1).setFeatureSize(1).setSequenceSize(sequence_size)
             .addAllInputs(sin_inputs).addAllLabels(sin_labels)
@@ -419,15 +416,12 @@ public class DashboardController implements Initializable {
             &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
             ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_DATA_SET_VALUE)))
         ){
-            System.out.println("on load dataset to be implemented..");
         }else {
-            System.out.println("on load dataset fail..");
             correct_ui_state();
         }
     }
 
     void upload_dataset(RafkoCommon.Data_set data_set) {
-        System.out.println("on creating dataset..");
         if(
             (null != data_set)
             &&(0 < selected_slot_state)
@@ -439,10 +433,8 @@ public class DashboardController implements Initializable {
                     .build();
 
             selected_slot_state = client.update_server_slot(request).getSlotState();
-            System.out.println("on upload dataset..");
             correct_ui_state();
         }
-        System.out.println("on failed upload dataset..");
     }
 
     void load_network_from_slot(){
@@ -453,12 +445,10 @@ public class DashboardController implements Initializable {
         ){
             loaded_neural_network = client.get_network(server_slot_combo.getValue().getName());
             if((null != loaded_neural_network)&&(0 < loaded_neural_network.getNeuronArrayCount())){
-                System.out.println("on load network success..");
                 correct_ui_state();
                 return;
             }
         }
-        System.out.println("on load network fail..");
         correct_ui_state();
     }
 
@@ -475,7 +465,6 @@ public class DashboardController implements Initializable {
                                 .setNetwork(loaded_neural_network)
                                 .build()
                         );
-                        System.out.println("on read network success..");
                         correct_ui_state();
                     }
                 }
@@ -487,7 +476,6 @@ public class DashboardController implements Initializable {
                 new Alert(Alert.AlertType.ERROR,"File unavailable").showAndWait();
             }
         }
-        System.out.println("on read network fail..");
         correct_ui_state();
     }
 
@@ -506,17 +494,16 @@ public class DashboardController implements Initializable {
                 e.printStackTrace();
             }
         }else{
-            System.out.println("on save network failed..");
             correct_ui_state();
         }
     }
 
     @FXML
     void create_server_slot() {
-        System.out.println("Creating server slot.");
         RafkoDeepLearningService.Service_slot.Builder builder = RafkoDeepLearningService.Service_slot.newBuilder()
             .setType(RafkoDeepLearningService.Slot_type.SERV_SLOT_TO_APPROXIMIZE)
             .setHypers(RafkoDeepLearningService.Service_hyperparameters.newBuilder()
+                    .setAlpha(1.6732).setLambda(1.0507)
                     .setStepSize(1e-4).setMinibatchSize(64).setMemoryTruncation(3)
                     .build())
             .setCostFunction(RafkoCommon.cost_functions.COST_FUNCTION_MSE)
@@ -528,18 +515,15 @@ public class DashboardController implements Initializable {
             ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_NET_VALUE)))
         ){
             builder.setNetwork(loaded_neural_network);
-            System.out.println("network is valid.");
         }
 
         RafkoDeepLearningService.Service_slot slot_attempt = builder.build();
         RafkoDeepLearningService.Slot_response slot_state = client.add_server_slot(slot_attempt);
-        System.out.println("finished trying to add slot.");
 
         if(
             (0 < slot_state.getSlotState())
             &&(!slot_state.getSlotId().isEmpty())
         ){
-            System.out.println("slot created.");
             /* server_slot_combo.add */
             server_slot_combo.getItems().add(new Server_slot_data(slot_state.getSlotId()));
             server_slot_combo.getSelectionModel().selectLast();
@@ -554,7 +538,6 @@ public class DashboardController implements Initializable {
     void query_slot_sate(){
         if(server_online && (null != client) && (null != server_slot_combo.getValue().getName())){
             selected_slot_state = client.ping(server_slot_combo.getValue().getName()).getSlotState();
-            System.out.println("on query slot state..");
             correct_ui_state();
         }else selected_slot_state = 0;
     }

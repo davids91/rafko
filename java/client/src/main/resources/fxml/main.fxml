@@ -27,7 +27,7 @@
    <children>
       <TextField fx:id="serverAddress_textField" layoutX="14.0" layoutY="14.0" text="192.168.83.128:50052" GridPane.columnIndex="1" />
       <Label alignment="CENTER" layoutY="18.0" maxHeight="1.7976931348623157E308" text="Server Address" />
-      <Button fx:id="connect_btn" alignment="CENTER" layoutX="163.0" layoutY="14.0" mnemonicParsing="false" text="Create Client" GridPane.columnIndex="2" />
+      <Button fx:id="create_client_btn" alignment="CENTER" layoutX="163.0" layoutY="14.0" mnemonicParsing="false" text="Create Client" GridPane.columnIndex="2" />
       <Label alignment="CENTER" text="Server status:" GridPane.rowIndex="3" />
       <HBox GridPane.columnIndex="1" GridPane.rowIndex="3">
          <children>

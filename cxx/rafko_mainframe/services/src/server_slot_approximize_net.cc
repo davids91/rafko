@@ -24,6 +24,7 @@ namespace rafko_mainframe{
 
 using sparse_net_library::Solution_builder;
 using sparse_net_library::Function_factory;
+using sparse_net_library::cost_functions_IsValid;
 using sparse_net_library::COST_FUNCTION_UNKNOWN;
 using sparse_net_library::WEIGHT_UPDATER_UNKNOWN;
 
@@ -37,7 +38,6 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
     /* ####################################################################
      * NEURAL NETWORK
      * #################################################################### */
-    std::cout << "("<< service_slot_.network().neuron_array_size() << ")";
     if(0 < service_slot_.network().neuron_array_size()){ /* If the given network is not empty */
       update_network(std::move(*service_slot_.mutable_network()));
     }else if(0 == service_slot.network().neuron_array_size()){
@@ -47,6 +47,11 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
     /* ####################################################################
      * COST FUNCTION
      * #################################################################### */
+    if(!cost_functions_IsValid(service_slot.cost_function()))
+      cost_function.reset();
+    if(cost_function)
+      service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_COST_FUNCTION);
+
     if(COST_FUNCTION_UNKNOWN != service_slot_.cost_function()){
       service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_COST_FUNCTION);
       if(cost_function) cost_function.reset();
@@ -57,12 +62,18 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
         service_slot.set_cost_function(service_slot_.cost_function());
         service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_COST_FUNCTION);
       }
-    }/* if(COST_FUNCTION_UNKNOWN != service_slot_.cost_function()) */
+      service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_COST_FUNCTION);
+    }
+
     /* ####################################################################
      * DATA SETS
      * #################################################################### */
+    if( /* In case any set pointers are invalid, r point to empty sets */
+      (!training_set)||(0 == training_set->get_number_of_sequences())
+      ||(!test_set)||(0 == test_set->get_number_of_sequences()) /* invalidate state */
+    )service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_DATA_SET);
     if(
-      (cost_function) /* Data aggreaget requires a cost function */
+      (cost_function) /* Data aggregate requires a cost function */
       &&(0 < service_slot_.training_set().inputs_size())
     ){
       service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_DATA_SET);
@@ -72,7 +83,7 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
         service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_DATA_SET);
     }
     if(
-      (cost_function) /* Data aggreaget requires a cost function */
+      (cost_function) /* Data aggregate requires a cost function */
       &&(0 < service_slot_.test_set().inputs_size())
     ){
       if(test_set)test_set.reset();
@@ -86,10 +97,9 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
     /* ####################################################################
      * TRAINER
      * #################################################################### */
-    std::cout << "<state:"<< service_slot.state() << ">" << std::endl;
     if(WEIGHT_UPDATER_UNKNOWN != service_slot_.weight_updater())
       service_slot.set_weight_updater(service_slot_.weight_updater());
-    if(service_slot_.has_hypers())(void)context.set_hypers(Service_hyperparameters());
+    if(service_slot_.has_hypers())(void)context.set_hypers(service_slot_.hypers());
     if(
       (WEIGHT_UPDATER_UNKNOWN != service_slot.weight_updater())
       &&(0 == (service_slot.state() & SERV_SLOT_MISSING_DATA_SET))
@@ -114,7 +124,6 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
 void Server_slot_approximize_net::update_network(SparseNet&& net_){
   Server_slot_run_net::update_network(std::move(net_));
   expose_state();
-  std::cout << "{appr1:"<< service_slot.state() <<"}";
   if(network_approximizer)network_approximizer.reset();
   service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_TRAINER);
   if(WEIGHT_UPDATER_UNKNOWN != service_slot.weight_updater()){
@@ -124,7 +133,6 @@ void Server_slot_approximize_net::update_network(SparseNet&& net_){
     if(network_approximizer)
       service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_TRAINER);
   }
-  std::cout << "{appr2:"<< service_slot.state() <<"}";
   finalize_state();
 }
 
