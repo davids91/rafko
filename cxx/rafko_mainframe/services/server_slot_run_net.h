@@ -50,7 +50,7 @@ public:
   ,  network()
   ,  network_solution()
   ,  network_solver()
-  { }
+  { service_slot.set_type(SERV_SLOT_TO_RUN); }
 
   void initialize(Service_slot&& service_slot_);
   void update_network(SparseNet&& net_);

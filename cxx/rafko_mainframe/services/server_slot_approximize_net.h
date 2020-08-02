@@ -46,7 +46,7 @@ public:
   ,  test_set()
   ,  network_approximizer()
   ,  iteration(0)
-  { }
+  { service_slot.set_type(SERV_SLOT_TO_APPROXIMIZE); }
 
   void initialize(Service_slot&& service_slot_);
   void update_network(SparseNet&& net_);

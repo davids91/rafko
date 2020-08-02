@@ -130,7 +130,7 @@ public class RafkoDLClient {
         ArrayList<RafkoCommon.transfer_functions> allowed_transfer_functions, ArrayList<Integer> layer_sizes
     ) throws StatusRuntimeException, InvalidPropertiesFormatException {
         if(allowed_transfer_functions.size() != layer_sizes.size()){
-            throw new InvalidPropertiesFormatException("Number of layers doesn't match allower transfer functions per layer");
+            throw new InvalidPropertiesFormatException("Number of layers doesn't match allowed transfer functions per layer");
         }
         try {
             System.out.print(",,,");

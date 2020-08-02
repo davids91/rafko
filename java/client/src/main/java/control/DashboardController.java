@@ -514,6 +514,7 @@ public class DashboardController implements Initializable {
             server_slot_combo.getItems().add(new Server_slot_data(slot_state.getSlotId()));
             server_slot_combo.getSelectionModel().selectLast();
             create_new_dataset();
+            create_network();
         }else ping_server();
 
     }

@@ -30,16 +30,19 @@ using sparse_net_library::WEIGHT_UPDATER_UNKNOWN;
 using std::make_unique;
 
 void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
-  service_slot.set_type(service_slot_.type());
   if(SERV_SLOT_TO_APPROXIMIZE != service_slot_.type())
     throw new std::runtime_error("Incorrect Server slot initialization!");
   else{
-    service_slot.set_state(0u); /* Reset state */
+    service_slot.set_state(0u); /* Reset state, implicitly has the effect of @expose_state */
     /* ####################################################################
      * NEURAL NETWORK
      * #################################################################### */
-    if(0 < network.neuron_array_size())
+    if(0 < service_slot_.network().neuron_array_size()){ /* If the new network is not empty */
       update_network(std::move(*service_slot_.mutable_network()));
+    }else if(0 == service_slot.network().neuron_array_size()){
+      service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_NET);
+    }
+
     /* ####################################################################
      * COST FUNCTION
      * #################################################################### */
@@ -87,7 +90,8 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
     service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_TRAINER);
     if(network_approximizer)
       network_approximizer.reset();
-    if(WEIGHT_UPDATER_UNKNOWN != service_slot.weight_updater()){
+    if(WEIGHT_UPDATER_UNKNOWN != service_slot_.weight_updater()){
+      service_slot.set_weight_updater(service_slot_.weight_updater());
       network_approximizer = std::make_unique<Sparse_net_approximizer>(
         network, *training_set, *test_set, service_slot_.weight_updater(), context
       );
@@ -105,13 +109,13 @@ void Server_slot_approximize_net::update_network(SparseNet&& net_){
   expose_state();
   if(network_approximizer)
     network_approximizer.reset();
-  service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_TRAINER);
+  service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_NET);
   if(WEIGHT_UPDATER_UNKNOWN != service_slot.weight_updater()){
     network_approximizer = std::make_unique<Sparse_net_approximizer>(
       network, *training_set, *test_set, service_slot.weight_updater(), context
     );
     if(network_approximizer)
-      service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_TRAINER);
+      service_slot.set_state(service_slot.state() & ~SERV_SLOT_MISSING_NET);
   }
   finalize_state();
 }
@@ -120,24 +124,24 @@ void Server_slot_approximize_net::accept_request(Slot_request&& request_){
   throw new std::runtime_error("Unimplemented operation!");
 }
 
-Slot_info Server_slot_approximize_net::get_info(Slot_request request){
+Slot_info Server_slot_approximize_net::get_info(uint32 request_bitstring){
   Slot_info response;
   if(training_set){
-    if(0 < (request.request_bitstring() & SLOT_INFO_TRAINING_ERROR)){
+    if(0 < (request_bitstring & SLOT_INFO_TRAINING_ERROR)){
       response.add_info_field(SLOT_INFO_TRAINING_ERROR);
       response.add_info_package(training_set->get_error());
     }
-    if(0 < (request.request_bitstring() & SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT)){
+    if(0 < (request_bitstring & SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT)){
       response.add_info_field(SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT);
       response.add_info_package(training_set->get_number_of_sequences());
     }
   }
   if(test_set){
-    if(0 < (request.request_bitstring() & SLOT_INFO_TEST_ERROR)){
+    if(0 < (request_bitstring & SLOT_INFO_TEST_ERROR)){
       response.add_info_field(SLOT_INFO_TEST_ERROR);
       response.add_info_package(test_set->get_error());
     }
-    if(0 < (request.request_bitstring() & SLOT_INFO_TEST_SET_SEQUENCE_COUNT)){
+    if(0 < (request_bitstring & SLOT_INFO_TEST_SET_SEQUENCE_COUNT)){
       response.add_info_field(SLOT_INFO_TEST_SET_SEQUENCE_COUNT);
       response.add_info_package(test_set->get_number_of_sequences());
     }
