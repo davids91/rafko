@@ -51,7 +51,7 @@ public:
   void initialize(Service_slot&& service_slot_);
   void update_network(SparseNet&& net_);
   void accept_request(Slot_request&& request_);
-  Slot_info get_info(Slot_request request);
+  Slot_info get_info(uint32 request_bitstring);
 
   void loop(void){
     if(SERV_SLOT_OK == service_slot.state()){

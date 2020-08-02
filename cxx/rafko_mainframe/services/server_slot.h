@@ -111,7 +111,7 @@ public:
    *
    * @return     Information packets returned in the order given by @Slot_info_field.
    */
-  virtual Slot_info get_info(Slot_request request) = 0;
+  virtual Slot_info get_info(uint32 request_bitstring) = 0;
 
   /**
    * @brief      Provide the loaded network

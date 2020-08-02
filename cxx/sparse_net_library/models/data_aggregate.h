@@ -53,7 +53,6 @@ public:
   ,  error_sum(double_literal(1.0))
   ,  cost_function(cost_function_)
   {
-    std::cout << "prefill size for dataset:" << prefill_sequences << std::endl;
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_);
   }
@@ -69,7 +68,6 @@ public:
   ,  error_sum(double_literal(1.0))
   ,  cost_function(cost_function_)
   {
-      std::cout << "prefill size for dataset:" << prefill_sequences << std::endl;
    if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
   Data_aggregate(

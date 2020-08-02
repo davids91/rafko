@@ -31,12 +31,17 @@ using std::lock_guard;
 
 void Deep_learning_server::loop(void){
   lock_guard<mutex> my_lock(server_mutex);
+  std::cout << "\r";
   for(uint32 i = 0; i < server_slots.size(); ++i){
     if(0 < is_server_slot_running[i]){
       lock_guard<mutex> my_lock(*server_slot_mutexs[i]);
       server_slots[i]->loop();
+      std::cout << "["<< 
+        server_slots[i]->get_info(SLOT_INFO_TRAINING_ERROR).info_package(0)
+      <<"]";
     }
   }
+  std::cout << "  ";
 }
 
 ::grpc::Status Deep_learning_server::add_slot(
@@ -221,7 +226,7 @@ void Deep_learning_server::loop(void){
     uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
-      response->CopyFrom(server_slots[slot_index]->get_info(*request));
+      response->CopyFrom(server_slots[slot_index]->get_info(request->request_bitstring()));
       return ::grpc::Status::OK;
     }else return ::grpc::Status::CANCELLED;
     return ::grpc::Status::CANCELLED;

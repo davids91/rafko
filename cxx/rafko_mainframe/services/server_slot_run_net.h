@@ -61,8 +61,8 @@ public:
 
   Neural_io_stream run_net_once(const Neural_io_stream& data_stream);
 
-  Slot_info get_info(Slot_request request){
-    return Slot_info(); /* No implemented info packet to be provided */
+  Slot_info get_info(uint32 request_bitstring){
+    return Slot_info(); /* No info to be provided */
   }
   
   SparseNet get_network(void) const{

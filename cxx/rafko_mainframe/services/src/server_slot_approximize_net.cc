@@ -37,7 +37,7 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
     /* ####################################################################
      * NEURAL NETWORK
      * #################################################################### */
-    if(0 < service_slot_.network().neuron_array_size()){ /* If the new network is not empty */
+    if(0 < service_slot_.network().neuron_array_size()){ /* If the given network is not empty */
       update_network(std::move(*service_slot_.mutable_network()));
     }else if(0 == service_slot.network().neuron_array_size()){
       service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_NET);
@@ -90,7 +90,11 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
     service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_TRAINER);
     if(network_approximizer)
       network_approximizer.reset();
-    if(WEIGHT_UPDATER_UNKNOWN != service_slot_.weight_updater()){
+    if(
+      (WEIGHT_UPDATER_UNKNOWN != service_slot_.weight_updater())
+      &&(0 == (service_slot.state() & SERV_SLOT_MISSING_DATA_SET))
+      &&(0 == (service_slot.state() & SERV_SLOT_MISSING_NET))
+    ){
       service_slot.set_weight_updater(service_slot_.weight_updater());
       network_approximizer = std::make_unique<Sparse_net_approximizer>(
         network, *training_set, *test_set, service_slot_.weight_updater(), context
