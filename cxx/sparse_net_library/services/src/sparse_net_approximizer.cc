@@ -101,6 +101,9 @@ void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 s
     for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
       solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
       lock_guard<mutex> my_lock(dataset_mutex);
+      if(0 == sequence_index)
+       //  std::cout << "feature: " << solvers[solve_thread_index]->get_neuron_data(0)[0]
+       // << "<>" << train_set.get_label_sample(raw_sample_index)[0] << std::endl;
       train_set.set_feature_for_label(raw_sample_index, solvers[solve_thread_index]->get_neuron_data(0)); /* Re-calculate error for the training set */
       ++raw_sample_index;
       ++raw_inputs_index;

@@ -18,7 +18,6 @@ import models.ColorMap;
 import models.Global;
 import models.Server_slot_data;
 import org.rafko.mainframe.RafkoDeepLearningService;
-import org.rafko.mainframe.Rafko_deep_learningGrpc;
 import org.rafko.sparse_net_library.RafkoCommon;
 import org.rafko.sparse_net_library.RafkoSparseNet;
 import services.RafkoDLClient;
@@ -68,7 +67,7 @@ public class DashboardController implements Initializable {
     RafkoSparseNet.SparseNet loaded_neural_network;
     final int prefill_size = 2;
     final int sequence_size = 5;
-    final int sample_number = 500;
+    final int sample_number = 50;
     boolean server_online;
     boolean training_started;
     int selected_slot_state;
@@ -171,23 +170,23 @@ public class DashboardController implements Initializable {
 
     void correct_ui_state(){
         ImageView img;
-        if(
-            (0 < selected_slot_state)
-            &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
-            ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_NET_VALUE)))
-        ){
-            network_folder_label.setText(decide_network_name());
-            save_network_btn.setDisable(false);
-        }else{
-            network_folder_label.setText("<No Network Loaded>");
-            save_network_btn.setDisable(true);
-        }
-
         if(server_online){
             server_slot_combo.setDisable(false);
             if(null != server_slot_combo.getValue()){
                 server_slot_state_query.setDisable(false);
                 selected_slot_state = client.ping(server_slot_combo.getValue().getName()).getSlotState();
+                if(
+                    (0 < selected_slot_state)
+                    &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
+                    ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_NET_VALUE)))
+                ){
+                    network_folder_label.setText(decide_network_name());
+                    save_network_btn.setDisable(false);
+                }else{
+                    network_folder_label.setText("<No Network Loaded>");
+                    save_network_btn.setDisable(true);
+                }
+
                 RafkoDeepLearningService.Slot_info slot_info = client.get_info(RafkoDeepLearningService.Slot_request.newBuilder()
                         .setTargetSlotId(server_slot_combo.getValue().getName())
                         .setRequestBitstring(RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT.ordinal())
@@ -223,6 +222,8 @@ public class DashboardController implements Initializable {
                 dataset_save_btn.setDisable(true);
                 sample_index_slider.setMax(0);
                 sample_index_slider.setDisable(true);
+                network_folder_label.setText("<No Network Loaded>");
+                save_network_btn.setDisable(true);
             }
             if(
                 (0 < selected_slot_state)
@@ -370,7 +371,7 @@ public class DashboardController implements Initializable {
                         RafkoCommon.transfer_functions.TRANSFER_FUNCTION_SELU,
                         RafkoCommon.transfer_functions.TRANSFER_FUNCTION_SELU
                     )),
-                    new ArrayList<>(Arrays.asList(5,10,5)) /* Layer sizes */
+                    new ArrayList<>(Arrays.asList(4,2,1)) /* Layer sizes */
                 );
 
                 if(0 < loaded_neural_network.getNeuronArrayCount()){
