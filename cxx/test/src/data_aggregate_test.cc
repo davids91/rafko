@@ -45,7 +45,7 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
-  /* Create @Data_set for non-sequential data and fill it with data */
+  /* Create a @Data_set and fill it with data */
   Data_set data_set = Data_set();
   data_set.set_input_size(1);
   data_set.set_feature_size(1);
@@ -63,6 +63,11 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
 
   /* Test statistics for it */
   CHECK(double_literal(1.0) == data_agr.get_error() ); /* Initial error should be exactly 1.0 */
+  sdouble32 error_sum = double_literal(0.0);
+  for(uint32 i = 0; i < data_agr.get_number_of_label_samples(); ++i){
+    error_sum += data_agr.get_error(i);
+  }
+  CHECK( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error() );
 
   /* Set all features to the given distance */
   for(uint32 i = 0; i < sample_number; ++i){
@@ -74,6 +79,32 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
       pow(set_distance,2)/double_literal(2.0)
     ).epsilon(0.00000000000001) == data_agr.get_error()
   );
+
+  /* test if setting to different labels correclty updates the error sum */
+  sdouble32 previous_error = data_agr.get_error();
+  error_sum = previous_error;
+  sdouble32 faulty_feature;
+  uint32 label_index;
+  for(uint32 variant = 0;variant < 100; ++variant){
+    label_index = rand()%(data_agr.get_number_of_label_samples());
+    previous_error = data_agr.get_error(label_index);
+    faulty_feature = ( data_agr.get_label_sample(label_index)[0] + set_distance );
+    error_sum = (
+      error_sum - previous_error /* remove the current label from the sum */
+      + (
+        (pow((expected_label - faulty_feature),2)/(double_literal(2.0)*sample_number))
+      ) /* and add the new error to it */
+    );
+    data_agr.set_feature_for_label(label_index, {faulty_feature});
+    CHECK(
+      data_agr.get_error(label_index)
+      == (
+        (pow((expected_label - faulty_feature),2)/(double_literal(2.0)*sample_number))
+      )
+    );
+  }
+  CHECK( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error() );
+
 }
 
 } /* namespace sparse_net_library_test */

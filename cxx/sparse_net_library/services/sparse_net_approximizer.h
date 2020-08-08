@@ -22,6 +22,8 @@
 
 #include <cmath>
 
+#include <mutex>
+
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
@@ -38,6 +40,7 @@ using std::unique_ptr;
 using std::make_unique;
 using std::max;
 using std::min;
+using std::mutex;
 
 /**
  * @brief      This class approximates gradients for a @Dataset and @Sparse_net.
@@ -62,6 +65,7 @@ public:
   /* Cache variables */
   ,  tmp_synapse_interval()
   ,  initial_error(0)
+  ,  dataset_mutex()
   {
     (void)context.set_minibatch_size(max(1u,min(
       train_set.get_number_of_sequences(),context.get_minibatch_size()
@@ -155,6 +159,7 @@ private:
 
   Index_synapse_interval tmp_synapse_interval;
   sdouble32 initial_error;
+  mutex dataset_mutex;
 
   /**
    * @brief      A thread to approximate the gradient for a weight for a given number of samples.

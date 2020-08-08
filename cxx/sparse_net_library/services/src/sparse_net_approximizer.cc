@@ -23,9 +23,11 @@
 
 namespace sparse_net_library{
 
+using std::lock_guard;
+
 void Sparse_net_approximizer::collect_fragment(void){
   uint32 sequence_index = 0;
-  const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
+  const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(train_set.get_number_of_sequences()/context.get_max_solve_threads());
 
   /* Collect the error value for the current network */
   for( /* As long as there are threads to open or remaining weights */
@@ -36,7 +38,7 @@ void Sparse_net_approximizer::collect_fragment(void){
   ){
     solve_threads.push_back(thread(
       &Sparse_net_approximizer::collect_thread, this, thread_index, sequence_index,
-      std::min(sequences_in_one_thread, (net.weight_table_size() - sequence_index))
+      std::min(sequences_in_one_thread, (train_set.get_number_of_sequences() - sequence_index))
     ));
     sequence_index += sequences_in_one_thread;
   }
@@ -46,11 +48,12 @@ void Sparse_net_approximizer::collect_fragment(void){
   /* Modify a random weight */
   uint32 weight_index = rand()%(net.weight_table_size());
   net.set_weight_table(
-    weight_index, (net.weight_table(weight_index) + context.get_step_size() / 10.0)
+    weight_index, (net.weight_table(weight_index) + context.get_step_size() )
   );
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate its gradient */
+  sequence_index = 0;
   for( /* As long as there are threads to open or remaining weights */
     uint32 thread_index = 0; 
     ( (thread_index < context.get_max_solve_threads())
@@ -59,18 +62,17 @@ void Sparse_net_approximizer::collect_fragment(void){
   ){
     solve_threads.push_back(thread(
       &Sparse_net_approximizer::collect_thread, this, thread_index, sequence_index,
-      std::min(sequences_in_one_thread, (net.weight_table_size() - sequence_index))
+      std::min(sequences_in_one_thread, (train_set.get_number_of_sequences() - sequence_index))
     ));
     sequence_index += sequences_in_one_thread;
   }
   wait_for_threads(solve_threads);
 
   /* Add the collected gradient into the fragment */
-  add_to_fragment(weight_index, (initial_error - train_set.get_error()));
+  add_to_fragment(weight_index, (train_set.get_error() - initial_error));
 
-  /* Revert weight modification */
-  net.set_weight_table(
-    weight_index, (net.weight_table(weight_index) - context.get_step_size() / 10.0)
+  net.set_weight_table( /* Revert weight modification */
+    weight_index, (net.weight_table(weight_index) - context.get_step_size())
   );
   weight_updater->update_solution_with_weights(*net_solution);
 }
@@ -83,25 +85,26 @@ void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 s
     throw std::runtime_error("Network output size doesn't match size of provided labels!");
 
   for(uint32 sample = 0; sample < sequences_to_evaluate; ++sample){
-    raw_sample_index = rand()%(train_set.get_number_of_sequences());
+    raw_sample_index = sequence_index + sample;
     raw_inputs_index = raw_sample_index * (train_set.get_sequence_size() + train_set.get_prefill_inputs_number());
     raw_sample_index = raw_sample_index * train_set.get_sequence_size();
 
     /* Prefill network with the initial inputs */
+    solvers[solve_thread_index]->reset();
     for(uint32 prefill_iterator = 0; prefill_iterator < train_set.get_prefill_inputs_number(); ++prefill_iterator){
       solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index));
       ++raw_inputs_index;
     }
 
     /* Evaluate the current sequence step by step */
-    solvers[solve_thread_index]->reset();
+
     for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
       solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
-      train_set.set_feature_for_label(raw_sample_index, solvers[0]->get_neuron_data(0)); /* Re-calculate error for the training set */
+      lock_guard<mutex> my_lock(dataset_mutex);
+      train_set.set_feature_for_label(raw_sample_index, solvers[solve_thread_index]->get_neuron_data(0)); /* Re-calculate error for the training set */
       ++raw_sample_index;
       ++raw_inputs_index;
     }
-    solvers[solve_thread_index]->reset();
   }
 }
 

@@ -135,7 +135,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
  * - For each dataset test if the each Net converges
  * */
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
-  Service_context service_context = Service_context().set_step_size(1e-9);
+  Service_context service_context = Service_context().set_step_size(1e-4);
   uint32 number_of_samples = 50;
 
   /* Create nets */
@@ -176,14 +176,14 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   while(abs(train_error) > 1e-2){
     start = steady_clock::now();
     approximizer.collect_fragment();
-    if(0 == (iteration%(nets[0]->weight_table_size() * 2)))
+    if(0 == (iteration%500))
       approximizer.apply_fragment();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     train_error = approximizer.get_train_error();
     test_error = approximizer.get_test_error();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
-    cout << "\r Error:"
+    cout << "\rError:"
     <<" training:[" << train_error << "]; "
     <<" test:[" << test_error << "]; "
     << "Minimum: ["<< minimum_error <<"]"
