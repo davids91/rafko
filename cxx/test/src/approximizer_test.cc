@@ -94,13 +94,33 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   REQUIRE( static_cast<sint32>(gradient_value_index) < nets[0]->weight_table_size() );
 
   approximizer.apply_fragment(); /* Add the negative gradient */
-  REQUIRE( (nets[0]->weight_table(weight_index) + (weight_gradient * service_context.get_step_size())) == weight_old_value );
+  REQUIRE( 
+    (nets[0]->weight_table(weight_index) + (weight_gradient * service_context.get_step_size())) 
+    == Approx(weight_old_value).epsilon(0.00000000000001)
+  );
 
-  /* adding 2 weight-gradient fragments, independent ones */
-  /* adding 2 weight-gradient fragments, one after another */
-  /* adding 2 weight-gradient fragments, one before another */
-  /* adding 2 weight-gradient fragments, one inside another */
-
+  /* Continously adding gradients into a single fragment, while redundantly collecting them to see that the effect is the same */
+  vector<sdouble32> correct_weight_delta(nets[0]->weight_table_size(), double_literal(0.0));
+  vector<sdouble32> initial_weights = {nets[0]->weight_table().begin(),nets[0]->weight_table().end()};
+  for(uint32 variant = 0; variant < 10; ++variant){
+    weight_index = rand()%(nets[0]->weight_table_size());
+    weight_gradient = double_literal(10.0)/static_cast<sdouble32>(rand()%10 + 1);
+    correct_weight_delta[weight_index] += weight_gradient;
+    approximizer.add_to_fragment(weight_index, weight_gradient);
+  }
+  for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
+    REQUIRE(
+      nets[0]->weight_table(weight_index) 
+      == Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
+    );
+  }
+  approximizer.apply_fragment();
+  for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
+    CHECK(
+      Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
+      == (initial_weights[weight_index] - (correct_weight_delta[weight_index] * service_context.get_step_size()))
+    );
+  }
 }
 
 /*###############################################################################################
@@ -115,7 +135,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
  * - For each dataset test if the each Net converges
  * */
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
-  Service_context service_context = Service_context().set_step_size(1e-4);
+  Service_context service_context = Service_context().set_step_size(1e-9);
   uint32 number_of_samples = 50;
 
   /* Create nets */
@@ -156,7 +176,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   while(abs(train_error) > 1e-2){
     start = steady_clock::now();
     approximizer.collect_fragment();
-    approximizer.apply_fragment();
+    if(0 == (iteration%(nets[0]->weight_table_size() * 2)))
+      approximizer.apply_fragment();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     train_error = approximizer.get_train_error();
