@@ -144,6 +144,10 @@ void Server_slot_approximize_net::accept_request(uint32 request_bitstring){
 
 Slot_info Server_slot_approximize_net::get_info(uint32 request_bitstring){
   Slot_info response;
+  if(0 < (request_bitstring & SLOT_INFO_ITERATION)){
+    response.add_info_field(SLOT_INFO_ITERATION);
+    response.add_info_package(iteration);
+  }
   if(training_set){
     if(0 < (request_bitstring & SLOT_INFO_TRAINING_ERROR)){
       response.add_info_field(SLOT_INFO_TRAINING_ERROR);

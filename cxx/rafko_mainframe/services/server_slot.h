@@ -135,7 +135,7 @@ public:
   Slot_response get_status(void) const;
 
 protected:
-Service_slot service_slot;
+  Service_slot service_slot;
 
   /**
    * @brief      Generates a unique identifier, with a guarantee that the currently 

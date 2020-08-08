@@ -2,17 +2,19 @@ package control;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 import models.ColorMap;
 import models.Global;
@@ -41,7 +43,6 @@ public class DashboardController implements Initializable {
     public Rectangle rect_output_5;
     public Rectangle rect_output_6;
     public Rectangle rect_output_7;
-    public TextArea dataset_size_textfield;
     public TextField serverAddress_textField;
     public Label network_folder_label;
     public Button create_client_btn;
@@ -62,6 +63,7 @@ public class DashboardController implements Initializable {
     public Button create_slot_btn;
     public Tooltip slot_state_tooltip;
     public Label sample_index_label;
+    public LineChart<Integer,Double> error_chart;
 
     RafkoDLClient client;
     RafkoSparseNet.SparseNet loaded_neural_network;
@@ -72,7 +74,8 @@ public class DashboardController implements Initializable {
     boolean training_started;
     int selected_slot_state;
     FileChooser network_filechooser;
-    RafkoDeepLearningService.Neural_io_stream selected_sample;
+    XYChart.Series<Integer, Double> error_series;
+    Timeline chart_timeline;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -84,6 +87,14 @@ public class DashboardController implements Initializable {
             new FileChooser.ExtensionFilter("Rafko Neural Network files (*.rnn)", "*.rnn")
         );
         network_filechooser.setInitialDirectory(new File("D:/casdev/temp"));
+        error_chart.setTitle("Training errors / iteration");
+        error_series = new XYChart.Series<>();
+        error_chart.getData().add(error_series);
+        chart_timeline = new Timeline(new KeyFrame(Duration.millis(500), event -> {
+            System.out.println(".");
+            ask_for_progress();
+        }));
+        chart_timeline.setCycleCount(Animation.INDEFINITE);
 
         create_client_btn.setOnAction(event -> {
             String target = serverAddress_textField.getText();
@@ -131,9 +142,9 @@ public class DashboardController implements Initializable {
         sample_index_slider.valueProperty().addListener((observable, oldValue, newValue) -> {
             sample_index_label.setText((int)sample_index_slider.getValue() + "/" + (int)sample_index_slider.getMax());
             if(
-                    (0 < selected_slot_state)
-                    &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
-                    ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_DATA_SET_VALUE)))
+                (0 < selected_slot_state)
+                &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
+                ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_DATA_SET_VALUE)))
             ){
                 /* Set data from solution  */
                 display_sample(client.request_one_action(
@@ -144,6 +155,35 @@ public class DashboardController implements Initializable {
             }
             correct_ui_state();
         });
+    }
+
+    void ask_for_progress(){
+        if(
+            (0 < selected_slot_state)
+            &&(
+                (selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
+                ||(
+                    (0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_NET_VALUE))
+                    &&(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_TRAINER_VALUE))
+                )
+            )
+        ){
+            RafkoDeepLearningService.Slot_info progress = client.get_info(
+                RafkoDeepLearningService.Slot_request.newBuilder()
+                .setTargetSlotId(server_slot_combo.getValue().getName())
+                .setRequestBitstring(
+                        RafkoDeepLearningService.Slot_info_field.SLOT_INFO_ITERATION_VALUE
+                        | RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_ERROR_VALUE
+                )
+                .build()
+            );
+            System.out.println("Iteration: " + progress.getInfoPackage(0) + "; Error: " +  progress.getInfoPackage(1));
+            error_series.getData().add(new XYChart.Data<>(
+                (int)progress.getInfoPackage(0), /* Iteration */
+                progress.getInfoPackage(1)) /* Training error */
+            );
+
+        }
     }
 
     void display_sample(RafkoDeepLearningService.Neural_io_stream sample){
@@ -189,7 +229,7 @@ public class DashboardController implements Initializable {
 
                 RafkoDeepLearningService.Slot_info slot_info = client.get_info(RafkoDeepLearningService.Slot_request.newBuilder()
                         .setTargetSlotId(server_slot_combo.getValue().getName())
-                        .setRequestBitstring(RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT.ordinal())
+                        .setRequestBitstring(RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT_VALUE)
                         .build());
                 if(training_started){
                     start_training_btn.setText("Stop Training");
@@ -224,6 +264,7 @@ public class DashboardController implements Initializable {
                 sample_index_slider.setDisable(true);
                 network_folder_label.setText("<No Network Loaded>");
                 save_network_btn.setDisable(true);
+                chart_timeline.stop();
             }
             if(
                 (0 < selected_slot_state)
@@ -245,7 +286,9 @@ public class DashboardController implements Initializable {
                 if(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_TRAINER_VALUE )) {
                     start_training_btn.setDisable(false);
                 }else{
+                    chart_timeline.stop();
                     start_training_btn.setDisable(true);
+                    error_series.getData().clear();
                 }
             }else{
                 start_training_btn.setDisable(true);
@@ -299,6 +342,7 @@ public class DashboardController implements Initializable {
             gen_sequence_btn.setDisable(true);
             server_slot_combo.getItems().clear();
             server_slot_combo.setDisable(true);
+            chart_timeline.stop();
         }
         img.setPreserveRatio(true);
         img.setFitWidth(32);
@@ -559,6 +603,7 @@ public class DashboardController implements Initializable {
                 server_slot_combo.getValue().getName(),
                 RafkoDeepLearningService.Slot_action_field.SERV_SLOT_TO_START_VALUE,0
             );
+            chart_timeline.play();
             training_started = true;
         }else correct_ui_state();
     }
@@ -572,6 +617,7 @@ public class DashboardController implements Initializable {
                 server_slot_combo.getValue().getName(),
                 RafkoDeepLearningService.Slot_action_field.SERV_SLOT_TO_STOP_VALUE,0
             );
+            chart_timeline.stop();
             training_started = false;
         }else correct_ui_state();
     }
