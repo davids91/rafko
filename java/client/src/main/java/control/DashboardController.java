@@ -70,6 +70,7 @@ public class DashboardController implements Initializable {
     final int sequence_size = 5;
     final int sample_number = 500;
     boolean server_online;
+    boolean training_started;
     int selected_slot_state;
     FileChooser network_filechooser;
     RafkoDeepLearningService.Neural_io_stream selected_sample;
@@ -77,6 +78,7 @@ public class DashboardController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         server_online = false;
+        training_started = false;
         selected_slot_state = 0;
         network_filechooser = new FileChooser();
         network_filechooser.getExtensionFilters().add(
@@ -190,11 +192,16 @@ public class DashboardController implements Initializable {
                         .setTargetSlotId(server_slot_combo.getValue().getName())
                         .setRequestBitstring(RafkoDeepLearningService.Slot_info_field.SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT.ordinal())
                         .build());
+                if(training_started){
+                    start_training_btn.setText("Stop Training");
+                }else{
+                    start_training_btn.setText("Start Training");
+                }
                 if(
-                        (0 < selected_slot_state)
-                                &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
-                                ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_DATA_SET_VALUE)))
-                                &&(1 == slot_info.getInfoPackageCount())
+                    (0 < selected_slot_state)
+                    &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
+                    ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_DATA_SET_VALUE)))
+                    &&(1 == slot_info.getInfoPackageCount())
                 ){
                     dataset_save_btn.setDisable(false);
                     sample_index_slider.setMax(Math.max(1,slot_info.getInfoPackage(    0)-1));
@@ -540,5 +547,41 @@ public class DashboardController implements Initializable {
             selected_slot_state = client.ping(server_slot_combo.getValue().getName()).getSlotState();
             correct_ui_state();
         }else selected_slot_state = 0;
+    }
+
+    void start_training(){
+        if(
+            (0 < selected_slot_state)
+            &&(selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
+        ){
+            client.request_one_action(
+                server_slot_combo.getValue().getName(),
+                RafkoDeepLearningService.Slot_action_field.SERV_SLOT_TO_START_VALUE,0
+            );
+            training_started = true;
+        }else correct_ui_state();
+    }
+
+    void stop_training(){
+        if(
+            (0 < selected_slot_state)
+            &&(selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
+        ){
+            client.request_one_action(
+                server_slot_combo.getValue().getName(),
+                RafkoDeepLearningService.Slot_action_field.SERV_SLOT_TO_STOP_VALUE,0
+            );
+            training_started = false;
+        }else correct_ui_state();
+    }
+
+    @FXML
+    void training_start_stop(){
+        if(!training_started){
+            start_training();
+        }else{
+            stop_training();
+        }
+        correct_ui_state();
     }
 }

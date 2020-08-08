@@ -24,7 +24,7 @@
 namespace sparse_net_library{
 
 void Sparse_net_approximizer::collect_fragment(void){
-  uint32 sequence_index;
+  uint32 sequence_index = 0;
   const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
 
   /* Collect the error value for the current network */
@@ -91,7 +91,6 @@ void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 s
     /* Prefill network with the initial inputs */
     for(uint32 prefill_iterator = 0; prefill_iterator < train_set.get_prefill_inputs_number(); ++prefill_iterator){
       solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index));
-      ++raw_sample_index;
       ++raw_inputs_index;
     }
 

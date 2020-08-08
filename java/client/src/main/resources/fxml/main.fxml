@@ -61,7 +61,7 @@
                                        <children>
                                           <Button fx:id="play_sequence_btn" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Play Sequence" />
                                           <Button fx:id="gen_sequence_btn" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#generate_from_selected_inputs" text="Run for Inputs" />
-                                          <Button fx:id="start_training_btn" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Start Training" />
+                                          <Button fx:id="start_training_btn" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#training_start_stop" text="Start Training" />
                                           <HBox alignment="CENTER" VBox.vgrow="ALWAYS">
                                              <children>
                                                 <VBox alignment="CENTER" layoutX="14.0" layoutY="72.0">

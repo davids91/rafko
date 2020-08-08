@@ -49,7 +49,7 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
      * #################################################################### */
     if(!cost_functions_IsValid(service_slot.cost_function()))
       cost_function.reset();
-    if(cost_function)
+    if(!cost_function)
       service_slot.set_state(service_slot.state() | SERV_SLOT_MISSING_COST_FUNCTION);
 
     if(COST_FUNCTION_UNKNOWN != service_slot_.cost_function()){

@@ -63,18 +63,23 @@ public:
   ): sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))
   ,  label_samples(move(label_samples_))
-  ,  prefill_sequences(static_cast<uint32>((input_samples_.size() - label_samples_.size()) / (label_samples_.size() / sequence_size)))
+  ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
   ,  sample_errors(label_samples.size(),(double_literal(1.0)/label_samples.size()))
   ,  error_sum(double_literal(1.0))
   ,  cost_function(cost_function_)
-  {
-   if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
+  { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
   Data_aggregate(
     Service_context& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
     SparseNet& net, cost_functions the_function, uint32 sequence_size_ = 1
-  ): Data_aggregate(move(input_samples_), move(label_samples_), Function_factory::build_cost_function(net, the_function, service_context_), sequence_size_)
+  ): sequence_size(std::max(1u,sequence_size_))
+  ,  input_samples(move(input_samples_))
+  ,  label_samples(move(label_samples_))
+  ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
+  ,  sample_errors(label_samples.size(),(double_literal(1.0)/label_samples.size()))
+  ,  error_sum(double_literal(1.0))
+  ,  cost_function(Function_factory::build_cost_function(net, the_function, service_context_))
   { }
 
   /**

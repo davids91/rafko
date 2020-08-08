@@ -150,7 +150,6 @@ public class RafkoDLClient {
             e.printStackTrace();
             on_disconnect.run();
         }
-        System.out.println("request finished!");
         return response[0];
     }
 
