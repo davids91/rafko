@@ -78,7 +78,6 @@ public class RafkoDLClient {
             e.printStackTrace();
             on_disconnect.run();
         }
-        System.out.println("request finished!");
         return response[0].getDataStream();
     }
 
@@ -208,18 +207,12 @@ public class RafkoDLClient {
             throw new InvalidPropertiesFormatException("Number of layers doesn't match allowed transfer functions per layer");
         }
         try {
-            System.out.print(",,,");
             RafkoDeepLearningService.Build_network_request build_request = RafkoDeepLearningService.Build_network_request.newBuilder()
                     .setTargetSlotId(slot_id).setInputSize(input_size).setExpectedInputRange(expected_input_range)
                     .addAllAllowedTransfersByLayer(allowed_transfer_functions)
                     .addAllLayerSizes(layer_sizes)
                     .build();
-
-            System.out.print("...");
             RafkoDeepLearningService.Slot_response answer = server_rpc.buildNetwork(build_request);
-
-            System.out.println("Built Network in: " + answer.getSlotId());
-
             return get_network(slot_id);
         } catch (StatusRuntimeException e){
             e.printStackTrace();

@@ -27,6 +27,7 @@ import services.RafkoDLClient;
 
 import java.io.*;
 import java.net.URL;
+import java.sql.Time;
 import java.util.*;
 
 public class DashboardController implements Initializable {
@@ -77,6 +78,9 @@ public class DashboardController implements Initializable {
     FileChooser network_filechooser;
     XYChart.Series<Integer, Double> error_series;
     Timeline chart_timeline;
+    Timeline chart_supervisor_timeline;
+    double error_moving_average;
+    double error_moving_average_last_value;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -91,11 +95,12 @@ public class DashboardController implements Initializable {
         error_chart.setTitle("Training errors / iteration");
         error_series = new XYChart.Series<>();
         error_chart.getData().add(error_series);
-        chart_timeline = new Timeline(new KeyFrame(Duration.millis(500), event -> {
-            System.out.println(".");
-            ask_for_progress();
-        }));
+        chart_timeline = new Timeline(new KeyFrame(Duration.millis(500), event -> ask_for_progress()));
         chart_timeline.setCycleCount(Animation.INDEFINITE);
+        chart_supervisor_timeline = new Timeline(new KeyFrame(Duration.millis(1000), event -> evaluate_chart_timings()));
+        chart_supervisor_timeline.setCycleCount(Animation.INDEFINITE);
+        error_moving_average = 0;
+        error_moving_average_last_value = 0;
 
         create_client_btn.setOnAction(event -> {
             String target = serverAddress_textField.getText();
@@ -158,6 +163,21 @@ public class DashboardController implements Initializable {
         });
     }
 
+    void evaluate_chart_timings(){
+        double next_interval = Math.max(300,Math.min(7200,
+            1000 / (Math.max(0.01, Math.abs(error_moving_average - error_moving_average_last_value)))
+        )) * 1000; /* convert to seconds */
+        chart_timeline.stop();
+        chart_timeline = new Timeline((new KeyFrame(
+            Duration.millis(next_interval), event_ -> ask_for_progress())
+        ));
+        error_moving_average_last_value = error_moving_average;
+        chart_supervisor_timeline.stop();
+        chart_supervisor_timeline = new Timeline(new KeyFrame(Duration.millis(next_interval / 10.0), event -> evaluate_chart_timings()));
+        chart_supervisor_timeline.setCycleCount(Animation.INDEFINITE);
+        if(training_started)chart_supervisor_timeline.play();
+    }
+
     void ask_for_progress(){
         if(
             (0 < selected_slot_state)
@@ -178,12 +198,11 @@ public class DashboardController implements Initializable {
                 )
                 .build()
             );
-            System.out.println("Iteration: " + progress.getInfoPackage(0) + "; Error: " +  progress.getInfoPackage(1));
+            error_moving_average = (error_moving_average + progress.getInfoPackage(1)) / 2.0;
             error_series.getData().add(new XYChart.Data<>(
                 (int)progress.getInfoPackage(0), /* Iteration */
                 progress.getInfoPackage(1)) /* Training error */
             );
-
         }
     }
 
@@ -582,6 +601,7 @@ public class DashboardController implements Initializable {
             server_slot_combo.getSelectionModel().selectLast();
             create_new_dataset();
             create_network();
+            correct_ui_state();
             sample_index_slider.setValue(0);
         }else ping_server();
 
@@ -605,6 +625,7 @@ public class DashboardController implements Initializable {
                 RafkoDeepLearningService.Slot_action_field.SERV_SLOT_TO_START_VALUE,0
             );
             chart_timeline.play();
+            chart_supervisor_timeline.play();
             training_started = true;
         }else correct_ui_state();
     }
@@ -619,6 +640,7 @@ public class DashboardController implements Initializable {
                 RafkoDeepLearningService.Slot_action_field.SERV_SLOT_TO_STOP_VALUE,0
             );
             chart_timeline.stop();
+            chart_supervisor_timeline.stop();
             training_started = false;
         }else correct_ui_state();
     }
