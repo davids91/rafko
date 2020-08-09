@@ -61,9 +61,7 @@ public:
    */
   Solution_builder(Service_context& context)
   :  reach_past_loops_maximum(0)
-  {
-    (void)service_context(context);
-  }
+  { (void)service_context(context); }
 
   /**
    * @brief      Set the number of threads to be used while generating the solution to the given @SparseNet

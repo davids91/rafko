@@ -32,6 +32,7 @@ TRAINER_SOURCES = ../sparse_net_library/models/src/dense_net_weight_initializer.
 TRAINER_SOURCES += ../sparse_net_library/services/src/backpropagation_queue_wrapper.cc
 TRAINER_SOURCES += ../sparse_net_library/services/src/sparse_net_optimizer.cc ../sparse_net_library/services/src/sparse_net_approximizer.cc
 HELPER_SOURCES =  ../sparse_net_library/models/src/neuron_info.cc ../sparse_net_library/models/src/transfer_function.cc
+HELPER_SOURCES +=  ../sparse_net_library/models/src/cost_function.cc ../sparse_net_library/models/src/data_aggregate.cc
 
 LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst $(CXX_GEN_FILES_DIR)/,,$(GENERATED_SOURCES:.cc=.o))

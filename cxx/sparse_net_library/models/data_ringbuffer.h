@@ -231,13 +231,9 @@ private:
    * @return     The buffer index.
    */
   uint32 get_buffer_index(uint32 past_index) const{
-    if(data.size() <= past_index)
-      throw std::runtime_error("Older data queried, than memory capacity.");
-    uint32 loop_index = current_index;
-    for(uint32 i = 0; i < past_index; ++i)
-      if(0 < loop_index)--loop_index;
-        else loop_index = data.size()-1;
-    return loop_index;
+    if(data.size() <= past_index) throw std::runtime_error("Older data queried, than memory capacity.");
+    if(past_index > current_index) return (data.size() + current_index - past_index);
+      else return(current_index - past_index);
   }
 };
 

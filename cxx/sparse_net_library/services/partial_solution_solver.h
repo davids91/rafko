@@ -55,7 +55,9 @@ public:
    *
    * @return     The input size in number of elements ( @sdouble32 ).
    */
-  uint32 get_input_size(void) const;
+  uint32 get_input_size(void) const{
+    return collected_input_data.size();
+  }
 
   /**
    * @brief      Collects the input stated inside the @Partial_solution into @collected_input_data
@@ -77,25 +79,7 @@ public:
    * @param      transfer_function_input_   The reference to transfer function input
    * @param      transfer_function_output_  The reference to transfer function output
    */
-  void provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_){
-    if(transfer_function_input.size() != transfer_function_output.size()) throw std::runtime_error("Neuron gradient data Incompatible!");
-    uint32 output_index_start = 0;
-    vector<sdouble32> transfer_function_input_copy(transfer_function_input);
-    vector<sdouble32> transfer_function_output_copy(transfer_function_output);
-    output_iterator.skim([&](Index_synapse_interval weight_synapse){
-      swap_ranges(
-        transfer_function_input_copy.begin() + output_index_start,
-        transfer_function_input_copy.begin() + output_index_start + weight_synapse.interval_size(),
-        transfer_function_input_.begin() + weight_synapse.starts()
-      );
-      swap_ranges(
-        transfer_function_output_copy.begin() + output_index_start,
-        transfer_function_output_copy.begin() + output_index_start + weight_synapse.interval_size(),
-        transfer_function_output_.begin() + weight_synapse.starts()
-      );
-      output_index_start += weight_synapse.interval_size();
-    });
-  }
+  void provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_) const;
 
   /**
    * @brief      Solves the partial solution in the given argument

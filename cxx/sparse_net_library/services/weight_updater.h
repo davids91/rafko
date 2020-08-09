@@ -198,7 +198,7 @@ private:
    */
   void copy_weight_to_solution(
     uint32 neuron_index, uint32 inner_neuron_index, Partial_solution& partial, uint32 inner_neuron_weight_index_starts
-  );
+  ) const;
 
   /**
    * @brief      This function waits for the given threads to finish, ensures that every thread

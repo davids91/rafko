@@ -77,7 +77,7 @@ void Weight_updater::update_solution_with_weights(Solution& solution){
 
 void Weight_updater::copy_weight_to_solution(
   uint32 neuron_index, uint32 inner_neuron_index, Partial_solution& partial, uint32 inner_neuron_weight_index_starts 
-){ /*!Note: After shared weight optimization, this part is to be re-worked */
+) const{ /*!Note: After shared weight optimization, this part is to be re-worked */
   uint32 weights_copied = 0;
   partial.set_weight_table(
     partial.memory_filter_index(inner_neuron_index),

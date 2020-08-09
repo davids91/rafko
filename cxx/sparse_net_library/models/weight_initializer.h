@@ -77,7 +77,6 @@ public:
    */
   void set(uint32 expected_input_number_, sdouble32 expected_input_maximum_value_){
     expected_input_number = max(1u,expected_input_number_);
-
     if( /* Primitive check if the given number causes overflow or not */
       (numeric_limits<sdouble32>::max() > (expected_input_number_ * std::abs(expected_input_maximum_value_)))
     ){

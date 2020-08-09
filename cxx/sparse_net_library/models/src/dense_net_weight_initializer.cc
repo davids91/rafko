@@ -14,6 +14,7 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
+#include "sparse_net_library/models/dense_net_weight_initializer.h"
 
 #include <time.h>
 
@@ -21,7 +22,6 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include "sparse_net_library/models/dense_net_weight_initializer.h"
 #include "sparse_net_library/models/transfer_function.h"
 
 namespace sparse_net_library {

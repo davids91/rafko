@@ -107,8 +107,24 @@ void Partial_solution_solver::solve(){
   } /* Go through the neurons */
 }
 
-uint32 Partial_solution_solver::get_input_size(void) const{
-  return collected_input_data.size();
+void Partial_solution_solver::provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_) const{
+  if(transfer_function_input.size() != transfer_function_output.size()) throw std::runtime_error("Neuron gradient data Incompatible!");
+  uint32 output_index_start = 0;
+  vector<sdouble32> transfer_function_input_copy(transfer_function_input);
+  vector<sdouble32> transfer_function_output_copy(transfer_function_output);
+  output_iterator.skim([&](Index_synapse_interval weight_synapse){
+    swap_ranges(
+      transfer_function_input_copy.begin() + output_index_start,
+      transfer_function_input_copy.begin() + output_index_start + weight_synapse.interval_size(),
+      transfer_function_input_.begin() + weight_synapse.starts()
+    );
+    swap_ranges(
+      transfer_function_output_copy.begin() + output_index_start,
+      transfer_function_output_copy.begin() + output_index_start + weight_synapse.interval_size(),
+      transfer_function_output_.begin() + weight_synapse.starts()
+    );
+    output_index_start += weight_synapse.interval_size();
+  });
 }
 
 bool Partial_solution_solver::is_valid(void) const{

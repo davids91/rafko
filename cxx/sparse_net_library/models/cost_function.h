@@ -34,7 +34,6 @@ namespace sparse_net_library{
 using std::vector;
 using std::atomic;
 using std::mutex;
-using std::lock_guard;
 using std::thread;
 
 using rafko_mainframe::Service_context;
@@ -61,27 +60,7 @@ public:
    *
    * @return     The error.
    */
-  sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 sample_number){
-    lock_guard<mutex> error_lock(error_mutex);
-    error_value.store(0);
-    uint32 feature_start_index = neuron_data.size() - feature_size;
-    const uint32 feature_number = 1 + static_cast<uint32>(labels.size()/context.get_max_processing_threads());
-    for(
-      uint32 thread_index = 0;
-      ( (thread_index < context.get_max_processing_threads())
-        &&(neuron_data.size() > feature_start_index) );
-      ++thread_index
-    ){ /* For every provided sample */
-        process_threads.push_back(thread(
-          &Cost_function::summarize_errors, this,
-          ref(labels), ref(neuron_data), feature_start_index, 
-          std::min(feature_number, static_cast<uint32>(neuron_data.size() - feature_start_index))
-        ));
-        feature_start_index += feature_number;
-    }
-    wait_for_threads(process_threads);
-    return error_post_process(error_value, sample_number);
-  }
+  sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 sample_number);
 
   /**
    * @brief      Gets the the Cost function function derivative for a feature compared to a selected label set
@@ -130,32 +109,8 @@ protected:
    * @param[in]  start_index    The start index of in the neuron data
    * @param[in]  number_to_add  The number of features to calculate
    */
-  void summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add){
-    sdouble32 buffer = error_value;
-    sdouble32 local_error = 0;
-    for(uint32 feature_iterator = 0; feature_iterator < number_to_add; ++feature_iterator){
-      local_error += get_cell_error( /* (start + feature - netsize) gives back the index in the label */
-        labels[start_index + feature_iterator + feature_size - neuron_data.size()],
-        neuron_data[start_index + feature_iterator]
-      );
-    }
-    while(!error_value.compare_exchange_weak(buffer,(buffer + local_error)))buffer = error_value;
-  }
+  void summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add);
 
-  /**
-   * @brief      This function waits for the given threads to finish, ensures that every thread
-   *             in the reference vector is finished, before it does.
-   *
-   * @param      calculate_threads  The calculate threads
-   *//*!TODO: Find a better solution for these snippets */
-  static void wait_for_threads(vector<thread>& threads){
-    while(0 < threads.size()){
-      if(threads.back().joinable()){
-        threads.back().join();
-        threads.pop_back();
-      }
-    }
-  }
 private:
   cost_functions the_function; /* cost function type */
 };

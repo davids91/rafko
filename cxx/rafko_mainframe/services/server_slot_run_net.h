@@ -77,7 +77,6 @@ public:
     return ret;
   }
 
-
   ~Server_slot_run_net(void){ }
 
   /* Not supported interfaces */

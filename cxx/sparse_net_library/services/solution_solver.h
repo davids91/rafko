@@ -160,22 +160,6 @@ private:
   sdouble32 initial_error;
 
   /**
-   * @brief      Gets a @Partial_Solution reference from the solution based on the given coordinates.
-   *
-   * @param[in]  row       The row
-   * @param[in]  col       The col
-   * @param[in]  solution  The solution
-   *
-   * @return     The @Partial_solution reference.
-   */
-  static const Partial_solution& get_partial(uint32 row, uint32 col, const Solution& solution){
-    if(solution.cols_size() <= static_cast<int>(row)) throw std::runtime_error("Row index out of bounds!");
-    uint32 index = 0;
-    for(uint32 i = 0;i < row; ++i) index += solution.cols(i);
-    return solution.partial_solutions(index + col);
-  }
-
-  /**
    * @brief      Utility to help solve a @Partial_solution
    *
    * @param      input                   The input

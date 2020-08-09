@@ -67,57 +67,7 @@ public:
   Sparse_net_optimizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
     shared_ptr<Cost_function> the_function, weight_updaters weight_updater_, Service_context& service_context
-  ): net(neural_network)
-  ,  context(service_context)
-  ,  transfer_function(context)
-  ,  net_solution(Solution_builder(context).service_context(context).build(net))
-  ,  solvers()
-  ,  train_set(train_set_)
-  ,  test_set(test_set_)
-  ,  set_mutex()
-  ,  loops_unchecked(50)
-  ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
-  ,  gradient_step(Backpropagation_queue_wrapper(neural_network, context)())
-  ,  cost_function(the_function)
-  ,  solve_threads()
-  ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
-  ,  neuron_data_sequences()
-  ,  transfer_function_input(context.get_max_solve_threads())
-  ,  error_values(context.get_max_solve_threads())
-  ,  weight_derivatives(context.get_max_solve_threads())
-  ,  weight_gradient()
-  {
-    (void)context.set_minibatch_size(max(1u,min(
-      train_set.get_number_of_sequences(),context.get_minibatch_size()
-    )));
-    solve_threads.reserve(context.get_max_solve_threads());
-    for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
-      solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
-      neuron_data_sequences.push_back(Data_ringbuffer(train_set_.get_sequence_size(), neural_network.neuron_array_size()));
-      error_values[threads] = vector<unique_ptr<atomic<sdouble32>>>();
-      error_values[threads].reserve(net.neuron_array_size());
-      weight_derivatives[threads] = vector<vector<unique_ptr<atomic<sdouble32>>>>(sequence_truncation);
-      transfer_function_input[threads] = vector<vector<sdouble32>>(train_set.get_sequence_size());
-      for(sint32 i = 0; i < net.neuron_array_size(); ++i)
-        error_values[threads].push_back(make_unique<atomic<sdouble32>>());
-      for(uint32 sequence_index = 0; sequence_index < train_set.get_sequence_size(); ++sequence_index){
-        transfer_function_input[threads][sequence_index] = vector<sdouble32>();
-        transfer_function_input[threads][sequence_index].reserve(net.neuron_array_size());
-        if(sequence_index < sequence_truncation){
-          weight_derivatives[threads][sequence_index] = vector<unique_ptr<atomic<sdouble32>>>();
-          for(sint32 i = 0; i < net.weight_table_size(); ++i)
-            weight_derivatives[threads][sequence_index].push_back(make_unique<atomic<sdouble32>>());
-
-        }
-      }
-      process_threads[threads].reserve(context.get_max_processing_threads());
-    }
-    weight_gradient.reserve(net.weight_table_size());
-    for(sint32 i = 0; i < net.weight_table_size(); ++i){
-      weight_gradient.push_back(make_unique<atomic<sdouble32>>());
-    }
-    weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
-  };
+  );
 
   ~Sparse_net_optimizer(void){ solvers.clear(); }
   Sparse_net_optimizer(const Sparse_net_optimizer& other) = delete;/* Copy constructor */

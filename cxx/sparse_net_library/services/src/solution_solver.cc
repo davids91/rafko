@@ -34,13 +34,15 @@ Solution_solver::Solution_solver(const Solution& to_solve, Service_context& cont
 ,  number_of_threads(context.get_max_solve_threads())
 {
   partial_solvers = vector<vector<Partial_solution_solver>>();
+  uint32 partial_index_at_row_start = 0;
   for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
     partial_solvers.push_back(vector<Partial_solution_solver>());
     for(uint32 column_index = 0; column_index < solution.cols(row_iterator); ++column_index){
       partial_solvers[row_iterator].push_back( Partial_solution_solver(
-        get_partial(row_iterator,column_index,solution), neuron_data, context
+        solution.partial_solutions(partial_index_at_row_start + column_index), neuron_data, context
       )); /* Initialize a solver for this partial solution element */
     }
+    partial_index_at_row_start += solution.cols(row_iterator);
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
 

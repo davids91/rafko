@@ -51,32 +51,7 @@ public:
   Sparse_net_approximizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
     weight_updaters weight_updater_, Service_context& service_context
-  ): net(neural_network)
-  ,  context(service_context)
-  ,  net_solution(Solution_builder(context).service_context(context).build(net))
-  ,  solvers()
-  ,  train_set(train_set_)
-  ,  test_set(test_set_)
-  ,  gradient_fragment()
-  ,  loops_unchecked(50)
-  ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
-  ,  solve_threads()
-  ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
-  /* Cache variables */
-  ,  tmp_synapse_interval()
-  ,  initial_error(0)
-  ,  dataset_mutex()
-  {
-    (void)context.set_minibatch_size(max(1u,min(
-      train_set.get_number_of_sequences(),context.get_minibatch_size()
-    )));
-    solve_threads.reserve(context.get_max_solve_threads());
-    for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
-      solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
-      process_threads[threads].reserve(context.get_max_processing_threads());
-    }
-    weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
-  };
+  );
 
   ~Sparse_net_approximizer(void){ solvers.clear(); }
   Sparse_net_approximizer(const Sparse_net_approximizer& other) = delete;/* Copy constructor */
