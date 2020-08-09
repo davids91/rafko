@@ -161,7 +161,7 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
     cout << "\r Error:"
     <<" training:[" << train_error << "]; "
     <<" test:[" << test_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                                           "
+    << "Minimum: ["<< minimum_error <<"];   "
     << flush;
   }
   average_duration /= number_of_steps;
@@ -187,7 +187,7 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
     cout << "\r Error:"
     <<" training:[" << train_error << "]; "
     <<" test:[" << test_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                                           "
+    << "Minimum: ["<< minimum_error <<"];   "
     << flush;
   }
   average_duration /= number_of_steps;
@@ -213,7 +213,7 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
     cout << "\r Error:"
     <<" training:[" << train_error << "]; "
     <<" test:[" << test_error << "]; "
-    << "Minimum: ["<< minimum_error <<"];                                           "
+    << "Minimum: ["<< minimum_error <<"];   "
     << flush;
   }
   average_duration /= number_of_steps;
@@ -284,10 +284,10 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
 }
 
 TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
-  Service_context service_context;
+  Service_context service_context = Service_context().set_step_size(1e-1);
   uint32 sequence_size = 5;
   uint32 number_of_samples = 50;
-  uint32 epoch = 100;
+  uint32 epoch = 10000;
 
   /* Create nets */
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
@@ -338,7 +338,7 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
     <<" training:[" << train_error << "]; "
     <<" test:[" << test_error << "]; "
     << "Minimum: ["<< minimum_error <<"]"
-    << "Iteration: ["<< iteration <<"];                                           "
+    << "Iteration: ["<< iteration <<"];   "
     << flush;
     ++iteration;
     if(0 == (iteration % epoch))

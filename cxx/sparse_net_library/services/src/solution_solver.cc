@@ -51,6 +51,7 @@ void Solution_solver::solve(const vector<sdouble32>& input){
 
   if(0 < solution.cols_size()){
     uint32 col_iterator;
+    neuron_data.step(); /* move the iterator forward for the next one and store the current data */
     for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
       col_iterator = 0;
       if(0 == solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
@@ -69,7 +70,6 @@ void Solution_solver::solve(const vector<sdouble32>& input){
         solve_threads.clear();
       }
     } /* for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator) */
-    neuron_data.step(); /* move the iterator forward for the next one and store the current data */
   }else throw std::runtime_error("A solution of 0 rows!");
 }
 
