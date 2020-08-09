@@ -171,7 +171,7 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
       set_mutex.lock();
       train_set.set_feature_for_label(raw_sample_index, neuron_data_sequences[solve_thread_index].get_const_element(0)); /* Re-calculate error for the training set */
       set_mutex.unlock();
-      
+
       /* Only calculate the derivatives for the first un-truncated sequences */
       if(sequence_iterator < sequence_truncation){ /* Since the network will be the same, the derivatives can be re-used for the later sequences */
         for(unique_ptr<atomic<sdouble32>>& derivative_value : weight_derivatives[solve_thread_index][sequence_iterator]) *derivative_value = 0;

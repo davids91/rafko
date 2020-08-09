@@ -23,8 +23,6 @@
 
 namespace sparse_net_library{
 
-using std::swap_ranges;
-
 Solution_solver::Solution_solver(const Solution& to_solve, Service_context& context)
 :  solution(to_solve)
 ,  neuron_data(std::max(1u,solution.network_memory_length()), solution.neuron_number())
@@ -71,9 +69,7 @@ void Solution_solver::solve(const vector<sdouble32>& input){
         solve_threads.clear();
       }
     } /* for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator) */
-    /* Store the current data and move the iterator forward for the next one */
-    neuron_data.step();
-
+    neuron_data.step(); /* move the iterator forward for the next one and store the current data */
   }else throw std::runtime_error("A solution of 0 rows!");
 }
 

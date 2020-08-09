@@ -39,13 +39,12 @@ void Partial_solution_solver::collect_input_data(const vector<sdouble32>& input_
 
 void Partial_solution_solver::provide_output_data(){
   uint32 output_index_start = 0;
-  vector<sdouble32> neuron_output_copy(neuron_output);
   output_iterator.skim([&](Index_synapse_interval weight_synapse){
     if(neuron_data.buffer_size() < (weight_synapse.starts() + weight_synapse.interval_size()))
       throw std::runtime_error("Neuron data out of Bounds!");
-    swap_ranges( /* Save output into the internal neuron memory */
-      neuron_output_copy.begin() + output_index_start,
-      neuron_output_copy.begin() + output_index_start + weight_synapse.interval_size(),
+    std::copy( /* Save output into the internal neuron memory */
+      neuron_output.begin() + output_index_start,
+      neuron_output.begin() + output_index_start + weight_synapse.interval_size(),
       neuron_data.get_element(0).begin() + weight_synapse.starts()
     );
     output_index_start += weight_synapse.interval_size();
@@ -110,17 +109,15 @@ void Partial_solution_solver::solve(){
 void Partial_solution_solver::provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_) const{
   if(transfer_function_input.size() != transfer_function_output.size()) throw std::runtime_error("Neuron gradient data Incompatible!");
   uint32 output_index_start = 0;
-  vector<sdouble32> transfer_function_input_copy(transfer_function_input);
-  vector<sdouble32> transfer_function_output_copy(transfer_function_output);
   output_iterator.skim([&](Index_synapse_interval weight_synapse){
-    swap_ranges(
-      transfer_function_input_copy.begin() + output_index_start,
-      transfer_function_input_copy.begin() + output_index_start + weight_synapse.interval_size(),
+    std::copy(
+      transfer_function_input.begin() + output_index_start,
+      transfer_function_input.begin() + output_index_start + weight_synapse.interval_size(),
       transfer_function_input_.begin() + weight_synapse.starts()
     );
-    swap_ranges(
-      transfer_function_output_copy.begin() + output_index_start,
-      transfer_function_output_copy.begin() + output_index_start + weight_synapse.interval_size(),
+    std::copy(
+      transfer_function_output.begin() + output_index_start,
+      transfer_function_output.begin() + output_index_start + weight_synapse.interval_size(),
       transfer_function_output_.begin() + weight_synapse.starts()
     );
     output_index_start += weight_synapse.interval_size();
