@@ -22,6 +22,7 @@ import models.Server_slot_data;
 import org.rafko.mainframe.RafkoDeepLearningService;
 import org.rafko.sparse_net_library.RafkoCommon;
 import org.rafko.sparse_net_library.RafkoSparseNet;
+import org.rafko.sparse_net_library.RafkoTraining;
 import services.RafkoDLClient;
 
 import java.io.*;
@@ -454,7 +455,7 @@ public class DashboardController implements Initializable {
                 sin_labels.add(Math.sin(sin_value));
             }
         }
-        upload_dataset(RafkoCommon.Data_set.newBuilder()
+        upload_dataset(RafkoTraining.Data_set.newBuilder()
             .setInputSize(1).setFeatureSize(1).setSequenceSize(sequence_size)
             .addAllInputs(sin_inputs).addAllLabels(sin_labels)
             .build()
@@ -473,7 +474,7 @@ public class DashboardController implements Initializable {
         }
     }
 
-    void upload_dataset(RafkoCommon.Data_set data_set) {
+    void upload_dataset(RafkoTraining.Data_set data_set) {
         if(
             (null != data_set)
             &&(0 < selected_slot_state)

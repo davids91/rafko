@@ -24,6 +24,7 @@ package rafko_mainframe;
 
 import "common.proto";
 import "sparse_net.proto";
+import "training.proto";
 
 /** @brief      A service consists of slots on which different Neural related tasks can run.
  *              The differetn kinds of tasks are contained in the enum @Slot_type

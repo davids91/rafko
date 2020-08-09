@@ -49,9 +49,14 @@ public:
   { service_slot.set_type(SERV_SLOT_TO_APPROXIMIZE); }
 
   void initialize(Service_slot&& service_slot_);
-  void update_network(SparseNet&& net_);
   void accept_request(uint32 request_bitstring);
   Slot_info get_info(uint32 request_bitstring);
+
+  void update_network(SparseNet&& net_){
+    Server_slot_run_net::update_network(std::move(net_));
+    update_cost_function();
+    update_trainer();
+  }
 
   void loop(void){
     if(SERV_SLOT_OK == service_slot.state()){
@@ -107,6 +112,9 @@ private:
   unique_ptr<Sparse_net_approximizer> network_approximizer;
 
   uint32 iteration;
+
+  void update_cost_function(void);
+  void update_trainer(void);
 };
 
 } /* namespace rafko_mainframe */

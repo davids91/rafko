@@ -76,7 +76,7 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() << std::endl;
     return_value = ::grpc::Status::CANCELLED;
   }
-  std::cout << "                                          --- add_slot --- " << std::endl;
+  std::cout << " --- add_slot --- " << std::endl;
   return return_value;
 }
 
@@ -100,7 +100,7 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() << std::endl;
     return_value = ::grpc::Status::CANCELLED;
   }
-  std::cout << "                                          --- update_slot --- " << std::endl;
+  std::cout << " --- update_slot --- " << std::endl;
   return return_value;
 }
 
@@ -123,7 +123,7 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() << std::endl;
     return_value = ::grpc::Status::CANCELLED;
   }
-  std::cout << "                                          --- ping --- " << std::endl;
+  std::cout << " --- ping --- " << std::endl;
   return return_value;
 }
 
@@ -168,7 +168,7 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() << std::endl;
     return_value = ::grpc::Status::CANCELLED;
   }
-  std::cout << "                                          --- build_network --- " << std::endl;
+  std::cout << " --- build_network --- " << std::endl;
   return return_value;
 }
 
@@ -197,23 +197,23 @@ void Deep_learning_server::loop(void){
           server_slots[slot_index]->reset();
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_TAKEOVER_NET)){
-          std::cout << "                                          --- request_action --- " << std::endl;
+          std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_APPEND_TRAINING_SET)){
-          std::cout << "                                          --- request_action --- " << std::endl;
+          std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_APPEND_TEST_SET)){
-          std::cout << "                                          --- request_action --- " << std::endl;
+          std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_DISTILL_NETWORK)){
-          std::cout << "                                          --- request_action --- " << std::endl;
+          std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_AMPLIFY_NETWORK)){
-          std::cout << "                                          --- request_action --- " << std::endl;
+          std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_GET_TRAINING_SAMPLE)){
@@ -248,11 +248,11 @@ void Deep_learning_server::loop(void){
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_DIE)){
           lock_guard<mutex> my_lock(server_mutex);
-          std::cout << "                                          --- request_action --- " << std::endl;
+          std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
       }else{
-        std::cout << "                                          --- request_action --- " << std::endl;
+        std::cout << " --- request_action --- " << std::endl;
         return ::grpc::Status::CANCELLED; /* Server slot not found */
       }
     }/* Until all the requests are processed */
@@ -262,7 +262,7 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() << std::endl;
     return_value = ::grpc::Status::CANCELLED;
   }
-  std::cout << "                                          --- request_action --- " << std::endl;
+  std::cout << " --- request_action --- " << std::endl;
   return return_value;
 }
 
@@ -285,7 +285,7 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() << std::endl;
     return_value = ::grpc::Status::CANCELLED;
   }
-  std::cout << "                                          --- get_info --- " << std::endl;
+  std::cout << " --- get_info --- " << std::endl;
   return return_value;
 }
 
@@ -309,7 +309,7 @@ void Deep_learning_server::loop(void){
     std::cout << exc.what() << std::endl;
     return_value = ::grpc::Status::CANCELLED;
   }
-  std::cout << "                                          --- get_network --- " << std::endl;
+  std::cout << " --- get_network --- " << std::endl;
   return return_value;
 }
 

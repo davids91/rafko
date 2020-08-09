@@ -145,9 +145,10 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
       {
+        {TRANSFER_FUNCTION_SELU},
         {TRANSFER_FUNCTION_SELU}
       }
-    ).dense_layers({1})
+    ).dense_layers({2,1})
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */

@@ -24,6 +24,21 @@ package sparse_net_library;
 
 import "common.proto";
 
+
+/** @brief      Describes a data-set to train or test Neural Networks
+ *              The input and label arrays contain @input_size and @feature_size floating point numbers
+ *              respectively, repeated after one another.
+ *              In case of sequential data, label-input pairs of @sequence_size are considered one sequence.
+ *              By desgin the number of  @labels should  be a multiple of @sequence_size * @feature_size.
+ */
+message Data_set{
+  uint32 input_size = 1;
+  uint32 feature_size = 2;
+  uint32 sequence_size = 3;
+  repeated double inputs = 10;
+  repeated double labels = 11;
+}
+
 /**
  * @brief      Neuron indices who can be calcuated in paralell to one another
  *             while calculating backpropagation.

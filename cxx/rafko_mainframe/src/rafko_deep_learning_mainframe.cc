@@ -27,6 +27,7 @@ int main(int argc, char *argv[]){
   builder.RegisterService(&service);
   std::unique_ptr<Server> server(builder.BuildAndStart());
   std::cout << "Server listening on " << server_address << std::endl;
+  std::cout.precision(17);
   while(true){
     service.loop();
   }
