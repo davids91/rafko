@@ -141,33 +141,22 @@ bool Partial_solution_builder::look_for_neuron_input(sint32 neuron_input_index, 
 }
 
 bool Partial_solution_builder::look_for_neuron_input_internally(uint32 neuron_input_index){
-
-  using std::for_each;
-  
-  Synapse_iterator<> partial_neuron_output_index(partial.output_data());
-
-  if(0 < partial_neuron_output_index.size()){
-    uint32 inner_neuron_index = 0;
-    for(uint32 internal_neuron_iterator = 0; internal_neuron_iterator < partial.internal_neuron_number(); ++internal_neuron_iterator){
-      if(static_cast<sint32>(neuron_input_index) != partial_neuron_output_index[internal_neuron_iterator])++inner_neuron_index;
-      else{
-        if(0 < neuron_synapse_count){
-          if(
-            (neuron_input_internal != previous_neuron_input_source)
-            ||(static_cast<int>(inner_neuron_index)-1 != previous_neuron_input_index)
-          )neuron_synapse_count = 0; /* Close synapse! */
-        }
-        previous_neuron_input_index = inner_neuron_index;
-        previous_neuron_input_source = neuron_input_internal;
-        add_to_synapse( /* The Neuron input points to an internal Neuron (no conversion to input synapse index) */
-          inner_neuron_index, 0, neuron_synapse_count, partial.mutable_inside_indices()
-        );
-        return true;
-      }
-    }
-
-  }
-  return false;
+  if(
+    (static_cast<sint32>(neuron_input_index) >= partial.output_data().starts())
+    &&(neuron_input_index < (partial.output_data().starts() + partial.output_data().interval_size()))
+  ){
+    const uint32 inner_neuron_index = (neuron_input_index - partial.output_data().starts());
+    if( /* there is a synapse already open for the current Neuron input */
+      (0 < neuron_synapse_count) /* ..and the current found index can not continue it */
+      &&((neuron_input_internal != previous_neuron_input_source)||(static_cast<int>(inner_neuron_index)-1 != previous_neuron_input_index))
+    )neuron_synapse_count = 0; /* Close synapse! */
+    previous_neuron_input_index = inner_neuron_index;
+    previous_neuron_input_source = neuron_input_internal;
+    add_to_synapse( /* The Neuron input points to an internal Neuron (no conversion to input synapse index) */
+      inner_neuron_index, 0, neuron_synapse_count, partial.mutable_inside_indices()
+    );
+    return true;
+  }else return false;
 }
 
 } /* namespace sparse_net_library */

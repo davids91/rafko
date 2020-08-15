@@ -48,7 +48,6 @@ void Weight_updater::update_solution_with_weights(Solution& solution){
   uint32 inner_neuron_weight_index_starts = 0;
   uint32 neuron_index;
   for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
-    Synapse_iterator<> output_iterator(solution.partial_solutions(partial_index).output_data());
     inner_neuron_iterator = 0;
     neuron_weight_synapse_starts = 0;
     inner_neuron_weight_index_starts = 0;
@@ -57,7 +56,7 @@ void Weight_updater::update_solution_with_weights(Solution& solution){
         (context.get_max_processing_threads() > calculate_threads.size())
         &&(inner_neuron_iterator < solution.partial_solutions(partial_index).internal_neuron_number())
       ){
-        neuron_index = output_iterator[inner_neuron_iterator];
+        neuron_index = solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_iterator;
         calculate_threads.push_back(thread(
           &Weight_updater::copy_weight_to_solution, this, neuron_index, inner_neuron_iterator,
           ref(*solution.mutable_partial_solutions(partial_index)), inner_neuron_weight_index_starts

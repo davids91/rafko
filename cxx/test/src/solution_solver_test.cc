@@ -173,22 +173,18 @@ void test_solution_solver_multithread(uint16 threads){
     /* row 0, column 0 */
     partial_solution_solver_0_0.collect_input_data(network_inputs);
     partial_solution_solver_0_0.solve();
-    partial_solution_solver_0_0.provide_output_data();
 
     /* row 0, column 1 */
     partial_solution_solver_0_1.collect_input_data(network_inputs);
     partial_solution_solver_0_1.solve();
-    partial_solution_solver_0_1.provide_output_data();
 
     /* row 1, column 0 */
     partial_solution_solver_1_0.collect_input_data(network_inputs);
     partial_solution_solver_1_0.solve();
-    partial_solution_solver_1_0.provide_output_data();
 
     /* row 1, column 1 */
     partial_solution_solver_1_1.collect_input_data(network_inputs);
     partial_solution_solver_1_1.solve();
-    partial_solution_solver_1_1.provide_output_data();
 
     solution_solver.solve(network_inputs);
 

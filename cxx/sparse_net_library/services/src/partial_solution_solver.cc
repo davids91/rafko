@@ -37,20 +37,6 @@ void Partial_solution_solver::collect_input_data(const vector<sdouble32>& input_
   });
 }
 
-void Partial_solution_solver::provide_output_data(){
-  uint32 output_index_start = 0;
-  output_iterator.skim([&](Index_synapse_interval output_synapse){
-    if(neuron_data.buffer_size() < (output_synapse.starts() + output_synapse.interval_size()))
-      throw std::runtime_error("Neuron data out of Bounds!");
-    std::copy( /* Save output into the internal neuron memory */
-      neuron_output.begin() + output_index_start,
-      neuron_output.begin() + output_index_start + output_synapse.interval_size(),
-      neuron_data.get_element(0).begin() + output_synapse.starts()
-    );
-    output_index_start += output_synapse.interval_size();
-  });
-}
-
 void Partial_solution_solver::solve(){
   sdouble32 new_neuron_data = 0;
   sdouble32 new_neuron_input;
@@ -68,8 +54,8 @@ void Partial_solution_solver::solve(){
           new_neuron_input = collected_input_data[Synapse_iterator<>::input_index_from_synapse_index(
             detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts() - input_index_offset
           )];
-        else new_neuron_input = neuron_output[ /* Neuron gets its input internaly */
-          detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts() + input_index_offset
+        else new_neuron_input = neuron_data.get_element(0)[ /* Neuron gets its input internaly */
+          detail.output_data().starts() + detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts() + input_index_offset
         ]; 
         ++input_index_offset; /* Step the input index to the next input */
         if(input_index_offset >= detail.inside_indices(input_synapse_iterator_start + input_synapse_index).interval_size()){
@@ -98,10 +84,10 @@ void Partial_solution_solver::solve(){
 
     /* Save transfer funtion output value and apply spike function */
     transfer_function_output[neuron_iterator] = new_neuron_data;
-    neuron_output[neuron_iterator] = Spike_function::get_value(
+    neuron_data.get_element(0)[detail.output_data().starts() + neuron_iterator] = Spike_function::get_value(
       detail.weight_table(detail.memory_filter_index(neuron_iterator)),
       new_neuron_data,
-      neuron_output[neuron_iterator]
+      neuron_data.get_const_element(0)[detail.output_data().starts() + neuron_iterator]
     );
   } /* Go through the neurons */
 }
@@ -109,19 +95,16 @@ void Partial_solution_solver::solve(){
 void Partial_solution_solver::provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_) const{
   if(transfer_function_input.size() != transfer_function_output.size()) throw std::runtime_error("Neuron gradient data Incompatible!");
   uint32 output_index_start = 0;
-  output_iterator.skim([&](Index_synapse_interval weight_synapse){
     std::copy(
       transfer_function_input.begin() + output_index_start,
-      transfer_function_input.begin() + output_index_start + weight_synapse.interval_size(),
-      transfer_function_input_.begin() + weight_synapse.starts()
+      transfer_function_input.begin() + output_index_start + detail.output_data().interval_size(),
+      transfer_function_input_.begin() + detail.output_data().starts()
     );
     std::copy(
       transfer_function_output.begin() + output_index_start,
-      transfer_function_output.begin() + output_index_start + weight_synapse.interval_size(),
-      transfer_function_output_.begin() + weight_synapse.starts()
+      transfer_function_output.begin() + output_index_start + detail.output_data().interval_size(),
+      transfer_function_output_.begin() + detail.output_data().starts()
     );
-    output_index_start += weight_synapse.interval_size();
-  });
 }
 
 bool Partial_solution_solver::is_valid(void) const{

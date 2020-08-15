@@ -113,9 +113,9 @@ Solution* Solution_builder::build(const SparseNet& net ){
         (0 < neuron_count_in_partial)
         &&(net.neuron_array_size() > static_cast<sint32>(first_neuron_in_partial))
       ){
-        *solution->mutable_partial_solutions(partial_index_in_solution)->add_output_data() = Index_synapse_interval();
-        solution->mutable_partial_solutions(partial_index_in_solution)->mutable_output_data(0)->set_starts(first_neuron_in_partial);
-        solution->mutable_partial_solutions(partial_index_in_solution)->mutable_output_data(0)->set_interval_size(neuron_count_in_partial);
+        *solution->mutable_partial_solutions(partial_index_in_solution)->mutable_output_data() = Index_synapse_interval();
+        solution->mutable_partial_solutions(partial_index_in_solution)->mutable_output_data()->set_starts(first_neuron_in_partial);
+        solution->mutable_partial_solutions(partial_index_in_solution)->mutable_output_data()->set_interval_size(neuron_count_in_partial);
       }
     } /* for( partial_index : last_index_in_partial.size()) */
     while(0 < neuron_router.get_subset_size()){ /* trying to confirm the first element until the subset is gone */

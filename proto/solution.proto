@@ -36,7 +36,7 @@ message Partial_solution{
   uint32 internal_neuron_number = 1; /* number of neurons used in this partial solution */
   repeated double weight_table = 2; /* stores the weights paired to @inside_indexes for the inputs of the Neurons; Ranges [0.0,1.0) */
   repeated Input_synapse_interval input_data = 3; /* @Partial_solution input: negative intervals are network inputs, positives are inner neuron data */
-  repeated Index_synapse_interval output_data = 4; /* @Partial_solution output; The inner Neurons mapped to Neuron indices in the @SparseNet */
+  Index_synapse_interval output_data = 4; /* @Partial_solution output; The inner Neurons mapped to Neuron indices in the @SparseNet */
 
   /** ################################################################################################
    * A representation of the actual neuron to be used in this intermediate solution

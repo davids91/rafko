@@ -79,7 +79,6 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
 
   /* The result should be according to the calculations */
   solver.solve();
-  solver.provide_output_data();
   expected_neuron_output = vector<sdouble32>(2);
   manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
   CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
@@ -95,25 +94,21 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
     },1u,1u); /* Mess with the weights of the second Neuron */
 
     solver.solve();
-    solver.provide_output_data();
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
     solver.solve();
-    solver.provide_output_data();
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
     partial_solution.set_weight_table(partial_solution.memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     partial_solution.set_weight_table(partial_solution.memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     solver.solve();
-    solver.provide_output_data();
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
     partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),Transfer_function::next());
     solver.solve();
-    solver.provide_output_data();
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
   }
@@ -136,7 +131,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
 
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(network_inputs.size());
-  *partial_solution.add_output_data() = temp_index_interval;
+  *partial_solution.mutable_output_data() = temp_index_interval;
   partial_solution.set_internal_neuron_number(network_inputs.size());
   partial_solution.add_weight_table(double_literal(0.0));  /* A weight for the memory filter */
   for(uint32 i = 0; i < network_inputs.size(); ++i){
@@ -183,8 +178,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
 
   REQUIRE( network_inputs.size() == solver.get_input_size() );
   solver.collect_input_data(network_inputs);
-  solver.solve(); /* Since the network just spits the inputs back out */
-  solver.provide_output_data(); /* the input collection is testable through it */
+  solver.solve(); /* Since the network just spits the inputs back out so the input collection is testable through it*/
   for(uint32 i = 0; i < network_inputs.size(); ++i){
     CHECK( Approx(network_inputs[i]).epsilon(0.00000000000001) == neuron_data.get_element(i,0));
   }

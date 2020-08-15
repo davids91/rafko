@@ -79,19 +79,15 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
   for(sint32 neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator){
     found = false;
     for(sint32 partial_solution_iterator = 0; partial_solution_iterator < solution->partial_solutions_size(); ++partial_solution_iterator){
-      Synapse_iterator<> output_neurons(solution->partial_solutions(partial_solution_iterator).output_data());
       for(
         uint32 internal_neuron_iterator = 0;
         internal_neuron_iterator < solution->partial_solutions(partial_solution_iterator).internal_neuron_number();
         ++internal_neuron_iterator
       ){
-        if(0 < internal_neuron_iterator){
-          CHECK(
-            output_neurons[internal_neuron_iterator - 1]
-            == output_neurons[internal_neuron_iterator] - 1
-          );
-        }
-        if(output_neurons[internal_neuron_iterator] == neuron_iterator){
+        if(
+          (solution->partial_solutions(partial_solution_iterator).output_data().starts() + internal_neuron_iterator)
+          == neuron_iterator
+        ){
           found = true;
           goto Solution_search_over; /* don't judge */
         }

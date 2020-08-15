@@ -76,7 +76,6 @@ void Solution_solver::solve(const vector<sdouble32>& input){
 void Solution_solver::solve_a_partial(const vector<sdouble32>& input, uint32 row_iterator, uint32 col_iterator){
   partial_solvers[row_iterator][col_iterator].collect_input_data(input);
   partial_solvers[row_iterator][col_iterator].solve();
-  partial_solvers[row_iterator][col_iterator].provide_output_data();
   partial_solvers[row_iterator][col_iterator].provide_gradient_data(
     transfer_function_input, transfer_function_output
   );
