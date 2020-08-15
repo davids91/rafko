@@ -227,38 +227,68 @@ bool Neuron_router::is_neuron_without_dependency(uint32 neuron_index){
   }return true; /* Neuron is already processed, theoritically it shouldn't have any pending dependecies.. */
 }
 
-void Neuron_router::omit_from_subset(uint32 neuron_index){
-  if(collection_running)throw new std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
+vector<uint32> Neuron_router::get_dependents_in_subset_of(uint32 neuron_index){
+  vector<uint32> result;
   if(0 < net_subset.size()){
     /* Find Neuron in subset */
     uint32 subset_index = net_subset.size();
     for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
       if(neuron_index == net_subset[subset_iterator]){
         subset_index = subset_iterator;
+        result.push_back(neuron_index);
         break;
       }
     }
-
     if(subset_index < net_subset.size()){ /* Neuron was found in subset! */
-      (neuron_states[neuron_index])->store(0); /* set its state back to 0 */
-      net_subset.erase(net_subset.begin() + subset_index);
-      vector<uint32> others_to_remove = vector<uint32>();
-
       for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
         /* go through the subset and omit the Neurons who have this one as a dependency */
         Synapse_iterator<Input_synapse_interval>::iterate(
           net.neuron_array(net_subset[subset_iterator]).input_indices(),
           [&](Input_synapse_interval input_synapse, sint32 synapse_index){
-            if(synapse_index == static_cast<sint32>(neuron_index))
-              others_to_remove.push_back(net_subset[subset_iterator]);
+            if(synapse_index == static_cast<sint32>(neuron_index)){
+              result.push_back(net_subset[subset_iterator]);
+            }
           }
         );
       }
-
-      for(uint32 neuron_to_remove : others_to_remove)
-        omit_from_subset(neuron_to_remove);
-
     } /* else neuron index was not found in the subset! */
+  }
+  return result;
+}
+
+void Neuron_router::omit_from_subset(uint32 neuron_index){
+  if(collection_running)throw new std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
+  vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
+  for(uint32 neuron : to_remove){
+    (neuron_states[neuron])->store(0); /* set its state back to 0 */
+    for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
+      if(net_subset[subset_iterator] == neuron){ /* And then erase it from the subset finally */
+        net_subset.erase(net_subset.begin() + subset_iterator);
+        break;
+      }
+    }
+  }
+  for(uint32 neuron : to_remove){
+    omit_from_subset(neuron);
+  }
+}
+
+void Neuron_router::omit_from_subset(uint32 neuron_index, vector<uint32>& paired_array){
+  if(collection_running)throw new std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
+  if(get_subset_size() != paired_array.size()) throw new std::runtime_error("Subset size doesn't match with the paired array!");
+  vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
+  for(uint32 neuron : to_remove){
+    (neuron_states[neuron])->store(0); /* set its state back to 0 */
+    for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
+      if(net_subset[subset_iterator] == neuron){ /* And then erase it from the subset finally */
+        net_subset.erase(net_subset.begin() + subset_iterator);
+        paired_array.erase(paired_array.begin() + subset_iterator);
+        break;
+      }
+    }
+  }
+  for(uint32 neuron : to_remove){
+    omit_from_subset(neuron, paired_array);
   }
 }
 

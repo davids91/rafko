@@ -124,12 +124,31 @@ public:
    * @return     Operation success
    */
   bool confirm_first_subset_element_ommitted(uint32 neuron_index){
-    bool ret = false;
     if((0 < net_subset.size())&&(neuron_index == net_subset.front())){
       omit_from_subset(neuron_index);
-      ret = true;
-    }
-    return ret;
+      return true;
+    } else return false;
+  }
+
+  /**
+   * @brief      Same functionality as the other function with the same name, except it
+   *             accepts a helper array which is intended to store information related to
+   *             the subset, so by modifying the subset, it needs to be modified as well.
+   *             Sizes must always equal!
+   *
+   * @param[in]  neuron_index  The neuron index to be removed
+   * @param      paired_array  The helper array to be modified in accordance with the subset
+   *
+   * @return     { description_of_the_return_value }
+   */
+  bool confirm_first_subset_element_ommitted(uint32 neuron_index, vector<uint32>& paired_array){
+    if(
+      (0 < net_subset.size())&&(neuron_index == net_subset.front())
+      &&(net_subset.size() == paired_array.size())
+    ){
+      omit_from_subset(neuron_index, paired_array);
+      return true;
+    } else return false;
   }
 
   /**
@@ -283,6 +302,25 @@ private:
    * @param[in]  neuron_index  The neuron index to remove from the subset
    */
   void omit_from_subset(uint32 neuron_index);
+
+  /**
+   * @brief      Removes the Neuron and dependants from the subset, including a paired array
+   *             of the same size.
+   *
+   * @param[in]  neuron_index  The neuron index
+   * @param      paired_array  The paired array
+   */
+  void omit_from_subset(uint32 neuron_index, vector<uint32>& paired_array);
+
+  /**
+   * @brief      Gets the elements in the current subset depending on the given Neuron index
+   *             Including itself.
+   *
+   * @param[in]  neuron_index  The neuron index
+   *
+   * @return     A list of the neuron indices inside the subset depending on this one.
+   */
+  vector<uint32> get_dependents_in_subset_of(uint32 neuron_index);
 
   /**
    * @brief      Decides the next Neuron to iterate to and increases the output layer iterator if needed
