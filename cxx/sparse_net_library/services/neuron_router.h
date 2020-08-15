@@ -75,7 +75,7 @@ public:
    *
    * @return     The neuron index from subset.
    */
-  uint32 get_neuron_index_from_subset(uint32 subset_index){
+  uint32 get_neuron_index_from_subset(uint32 subset_index) const{
     if((!collection_running)&&(0 < net_subset.size())){
       return net_subset[subset_index];
     }else throw std::runtime_error("Invalid usage or Index out of bounds!");
@@ -88,7 +88,7 @@ public:
    *
    * @return     Operation success
    */
-  bool get_first_neuron_index_from_subset(uint32& put_it_here){
+  bool get_first_neuron_index_from_subset(uint32& put_it_here) const{
     if((!collection_running)&&(0 < net_subset.size())){
       put_it_here = net_subset.front();
       return true;
@@ -141,7 +141,7 @@ public:
    *
    * @return     { description_of_the_return_value }
    */
-  bool confirm_first_subset_element_ommitted(uint32 neuron_index, vector<uint32>& paired_array){
+  bool confirm_first_subset_element_ommitted(uint32 neuron_index, deque<uint32>& paired_array){
     if(
       (0 < net_subset.size())&&(neuron_index == net_subset.front())
       &&(net_subset.size() == paired_array.size())
@@ -310,7 +310,7 @@ private:
    * @param[in]  neuron_index  The neuron index
    * @param      paired_array  The paired array
    */
-  void omit_from_subset(uint32 neuron_index, vector<uint32>& paired_array);
+  void omit_from_subset(uint32 neuron_index, deque<uint32>& paired_array);
 
   /**
    * @brief      Gets the elements in the current subset depending on the given Neuron index

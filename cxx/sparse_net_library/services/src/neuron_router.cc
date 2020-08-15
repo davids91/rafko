@@ -122,8 +122,9 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
         ||(0 < input_synapse.reach_past_loops()) /* Inputs from the past count as already processed */
         ||(is_neuron_processed(synapse_input_index))
         ||((!strict)&&(is_neuron_reserved(synapse_input_index)))
-        /*!Note: In non-strict mode usually the whole of the net is collected into the subset, which might be undesirable compared
-         *       compared to the Neurons being collected into smaller non-dependent subsets.
+        /*!Note: In non-strict mode usually the whole of the net is collected into the subset in order,
+         * 
+         * which might be undesirable compared to the Neurons being collected into smaller non-dependent subsets.
          **/
       ){
         ++number_of_processed_inputs;
@@ -273,7 +274,7 @@ void Neuron_router::omit_from_subset(uint32 neuron_index){
   }
 }
 
-void Neuron_router::omit_from_subset(uint32 neuron_index, vector<uint32>& paired_array){
+void Neuron_router::omit_from_subset(uint32 neuron_index, deque<uint32>& paired_array){
   if(collection_running)throw new std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
   if(get_subset_size() != paired_array.size()) throw new std::runtime_error("Subset size doesn't match with the paired array!");
   vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);

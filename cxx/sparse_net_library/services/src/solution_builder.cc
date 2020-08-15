@@ -17,128 +17,120 @@
 
 #include "sparse_net_library/services/solution_builder.h"
 
+#include <cmath>
 #include <memory>
 #include <stdexcept>
 
 #include "sparse_net_library/models/neuron_info.h"
 
-#include "sparse_net_library/services/neuron_router.h"
 #include "sparse_net_library/services/partial_solution_builder.h"
 
 namespace sparse_net_library{
 
+using std::unique_ptr;
+using std::ref;
+using std::lock_guard;
+
 Solution* Solution_builder::build(const SparseNet& net ){
 
-  using std::ref;
-  using std::unique_ptr;
-
-  Partial_solution* current_partial = google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
-  Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(arg_arena_ptr);
-  vector<vector<Partial_solution*>> partial_matrix = vector<vector<Partial_solution*>>(
-    1, vector<Partial_solution*>(1,current_partial)
-  );
-  unique_ptr<Partial_solution_builder> partial_builder =
-    std::make_unique<Partial_solution_builder>(net, *current_partial);
-  vector<uint32> neurons_in_row = vector<uint32>();
-  uint32 row_iterator = 0;
   Neuron_router neuron_router(net);
-  uint32 placed_neurons_in_partial = 0;
-  uint32 placed_neurons_in_row = 0;
-  uint32 partial_output_synapse_count = 0;
-  uint32 latest_placed_neuron_index = net.neuron_array_size();
+  Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(arg_arena_ptr);
+  deque<uint32> partial_indices_in_row;
+  vector<uint32> last_index_in_partial; /* Contains the last valid index to be included into the partial solution */
+  /*!Note: This also implicitly implies that the size of this array also represents the number of partial solutions
+   * to be built in the current row. */
   uint32 reach_back;
-  bool strict_mode = false;
+  uint32 reach_back_max = 0;
+  uint32 partial_index_in_row;
+  uint32 partial_index_in_solution = 0;
+  uint32 first_neuron_in_partial;
+  uint32 neuron_count_in_partial;
 
   if(0 == net.output_neuron_number()) throw std::runtime_error("Can't build a solution with 0 output Neurons!");
   while(!neuron_router.finished()){ /* Until the whole output layer is processed */
-    neuron_router.collect_subset(arg_max_solve_threads,arg_device_max_megabytes, strict_mode); /* Collect solvable neuron indices */
-    placed_neurons_in_partial = 1; /* To enter the placement loop.. */
-    while (
-      ((current_partial->SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */) <= arg_device_max_megabytes)
-      &&(0 < placed_neurons_in_partial)
-    ){ /* no Neurons were placed in the current loop and there's still some space left: let's try to place some Neurons! */
-      placed_neurons_in_partial = 0;
-      while( /* While there is space and.. */
-        ((current_partial->SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */) <= arg_device_max_megabytes)
-        &&(placed_neurons_in_row < neuron_router.get_subset_size()) /* ..There are Neurons from the subset to place */
-      ){ /* Put as many collected Neurons into the current @Partial_solution as feasible */
-        reach_back = partial_builder->add_neuron_to_partial_solution(neuron_router[placed_neurons_in_row]);
-        if(reach_past_loops_maximum < reach_back)
-          reach_past_loops_maximum = reach_back;
-        neurons_in_row.push_back(neuron_router[placed_neurons_in_row]);
-        if(
-          (0 < partial_output_synapse_count)
-          &&(0 < neuron_router[placed_neurons_in_row])
-          &&(neuron_router[placed_neurons_in_row]-1) != latest_placed_neuron_index
-        ){ /* If last placed Neuron is not the one at the previous index */
-          partial_output_synapse_count = 0;
+    neuron_router.collect_subset(arg_max_solve_threads,arg_device_max_megabytes, true); /* Collect solvable neuron indices */
+    /* Decide the place for every Neuron in the current subset by adssigning a partial solution column index to it */
+    partial_indices_in_row = deque<uint32>(neuron_router.get_subset_size());
+    last_index_in_partial = vector<uint32>();
+    for(uint32 subset_index = 0; subset_index < neuron_router.get_subset_size(); ++subset_index){
+      /* Try to find the suitable partial of the current subset item */
+      for(partial_index_in_row = 0; partial_index_in_row < last_index_in_partial.size(); ++partial_index_in_row){
+        if(( /* if the neuron index under subset_index is the next one after the previous top for this partial */
+            neuron_router.get_neuron_index_from_subset(subset_index) 
+            == (last_index_in_partial[partial_index_in_row] + 1)
+          )||(0 == subset_index) /* Or this is the very first neuron in the subset */
+        ){ /* assign the current partial index to it */
+          break;
         }
-        latest_placed_neuron_index = neuron_router[placed_neurons_in_row];
-        Partial_solution_builder::add_to_synapse( /* Neural input shall be added from the input of the @Partial_solution */
-          neuron_router[placed_neurons_in_row], partial_output_synapse_count,
-          current_partial->mutable_output_data()
-        );
-        ++placed_neurons_in_row;
-        ++placed_neurons_in_partial;
       }
-    } /* Loop for placing the Neurons from the subset into the Partial Solutions */
-    if( /* If no Neurons could be placed inside the partial_matrix, or there's no space left */
-      (current_partial->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */) > arg_device_max_megabytes
-      ||(0 == placed_neurons_in_partial)
-    ){ /* A new row shall be added into the @Solution */
-      for(uint32 neuron_index_in_row : neurons_in_row){
-        neuron_router.confirm_first_subset_element_processed(neuron_index_in_row);
+      if(partial_index_in_row < last_index_in_partial.size()){ /* If a suitable partial have been found for the subset */
+        ++last_index_in_partial[partial_index_in_row]; /* Essentially this means that the new index is taken over */
+        partial_indices_in_row[subset_index] = partial_index_in_row; /* assign the partial index to the subset item */
+      }else{ /* unable to find a suitable partial, add a new one! */
+        partial_indices_in_row[subset_index] = last_index_in_partial.size();
+        last_index_in_partial.push_back(subset_index);
       }
-      neurons_in_row.clear();
-      neuron_router.reset_remaining_subset();
-      placed_neurons_in_row = 0;
+    }/* for(subset_index : neuron_router.get_subset_size()) */
 
-      if(0 == partial_matrix.back().back()->internal_neuron_number()){
-        partial_matrix.back().pop_back(); /* Remove the last column, since it's empty */
-      }else current_partial = google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
-      if(0 == partial_matrix.back().size()) partial_matrix.pop_back(); /* The last @Partial_solution row has zero elements */
-      partial_matrix.push_back(vector<Partial_solution*>(1,current_partial));
-      partial_builder.reset();
-      partial_builder = std::make_unique<Partial_solution_builder>(net, *current_partial);
-      placed_neurons_in_partial = 0;
-      strict_mode = false;
-      ++row_iterator;
-    }else if( /* If there is space left and there are still Neurons left to place in the subset */
-      ((current_partial->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */) < arg_device_max_megabytes)
-      &&(placed_neurons_in_row < neuron_router.get_subset_size())
-    ){
-      /* Put a new Partial_solution into the current row if the memory limit is reached */
-      /*!Note: A new partial shall never reset the subset, as it the contents of the subset store which 
-       * Neurons can be solved in paralell. Resetting this would make the Builder disregard transitive dependencies.
-       * */
-      neuron_router.reset_all_except(neurons_in_row);
-      current_partial = google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
-      partial_matrix[row_iterator].push_back(current_partial); /* In case the @Partial_solution reached the size limit, push in a new one */
-      partial_builder.reset();
-      partial_builder = std::make_unique<Partial_solution_builder>(net, *current_partial);
-      placed_neurons_in_partial = 0;
-      strict_mode = true;
+    /* Build the partial solutions based on the assigned indices */
+    if(0 < last_index_in_partial.size())solution->add_cols(last_index_in_partial.size());
+    for(partial_index_in_row = 0; partial_index_in_row < last_index_in_partial.size(); ++partial_index_in_row){ /* for every assigned partial index */
+
+      /* Add a new partial to the solution, and create a builder for it */
+      *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
+      partial_index_in_solution = solution->partial_solutions_size() - 1; /* It's basically guaranteed by the preceeding line, that (size > 0) */
+      Partial_solution_builder partial_builder(net, *solution->mutable_partial_solutions(partial_index_in_solution));
+
+      /* Scan the subset for Neurons assigned to the current partial index */
+      neuron_count_in_partial = 0;
+      first_neuron_in_partial = net.neuron_array_size();
+      for(uint32 subset_index = 0; subset_index < partial_indices_in_row.size(); ++subset_index){
+        if(partial_indices_in_row[subset_index] == partial_index_in_row){ /* if a Neuron in the subset is assigned for the current partial index */
+          if(
+            ( /* If there is enough space left to put the Neuron into the partial solution */
+              solution->partial_solutions(partial_index_in_solution).SpaceUsedLong()
+              /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */ 
+            )
+            <= arg_device_max_megabytes
+          ){
+            reach_back = partial_builder.add_neuron_to_partial_solution(
+              neuron_router.get_neuron_index_from_subset(subset_index)
+            );
+            if(reach_back_max < reach_back)reach_back_max = reach_back;
+            partial_indices_in_row[subset_index] = partial_indices_in_row.size() + 1;
+            /*!Note: Worst case there will be as many partial solutions as neurons in the current row,
+             * so the theoritical maximum of the number of partial solutions in the current wor is the size of the subset.
+             * Every Neuron successfully placed shall be marked by this value assignment,
+             * so the Neurons left out from partials can be detected.
+             **/
+            ++neuron_count_in_partial;
+            if(net.neuron_array_size() == static_cast<sint32>(first_neuron_in_partial))
+              first_neuron_in_partial = neuron_router.get_neuron_index_from_subset(subset_index);
+          }/* else no space left in the partial to put the Neuron in! */
+        } /* If neuron is placable.. */
+      } /* for( subset_index : partial_indices_in_row.size() ) */
+      if(
+        (0 < neuron_count_in_partial)
+        &&(net.neuron_array_size() > static_cast<sint32>(first_neuron_in_partial))
+      ){
+        *solution->mutable_partial_solutions(partial_index_in_solution)->add_output_data() = Index_synapse_interval();
+        solution->mutable_partial_solutions(partial_index_in_solution)->mutable_output_data(0)->set_starts(first_neuron_in_partial);
+        solution->mutable_partial_solutions(partial_index_in_solution)->mutable_output_data(0)->set_interval_size(neuron_count_in_partial);
+      }
+    } /* for( partial_index : last_index_in_partial.size()) */
+    while(0 < neuron_router.get_subset_size()){ /* trying to confirm the first element until the subset is gone */
+      if(partial_indices_in_row.size() < partial_indices_in_row[0]){ /* If the Neuron is placed */
+        neuron_router.confirm_first_subset_element_processed(neuron_router.get_subset()[0]);
+        partial_indices_in_row.pop_front(); /* Also remove the coreresponding partial index from the helper array */
+      }else{ /* Neuron could not be placed, omit it */
+        neuron_router.confirm_first_subset_element_ommitted(neuron_router.get_subset()[0], partial_indices_in_row);
+      }
     }
   } /* while(!neuron_router.finished()) */
-  if(0 == partial_matrix.back().back()->internal_neuron_number()) /* The last @Partial_solution has zero Neurons in it */
-  {
-    partial_matrix.back().pop_back();
-  }
-
-  if(0 == partial_matrix.back().size()) /* The last @Partial_solution row has zero elements */
-  {
-    partial_matrix.pop_back();
-  }
 
   solution->set_output_neuron_number(net.output_neuron_number());
   solution->set_neuron_number(net.neuron_array_size());
-  solution->set_network_memory_length(reach_past_loops_maximum + 1); /* Current loop is "0" reachback, so length should be at least 1 */
-  for(vector<Partial_solution*> row : partial_matrix){
-    solution->add_cols(row.size());
-    for(Partial_solution* cell : row){
-      *solution->add_partial_solutions() = *cell;
-    }
-  } /* Build the @Solution from the @Partial_Solution matrix */
+  solution->set_network_memory_length(reach_back_max + 1); /* Current loop is "0" reachback, so length should be at least 1 */
   return solution;
 }
 

@@ -75,7 +75,6 @@ Sparse_net_optimizer::Sparse_net_optimizer(
         weight_derivatives[threads][sequence_index] = vector<unique_ptr<atomic<sdouble32>>>();
         for(sint32 i = 0; i < net.weight_table_size(); ++i)
           weight_derivatives[threads][sequence_index].push_back(make_unique<atomic<sdouble32>>());
-
       }
     }
     process_threads[threads].reserve(context.get_max_processing_threads());

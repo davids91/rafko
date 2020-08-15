@@ -39,15 +39,15 @@ void Partial_solution_solver::collect_input_data(const vector<sdouble32>& input_
 
 void Partial_solution_solver::provide_output_data(){
   uint32 output_index_start = 0;
-  output_iterator.skim([&](Index_synapse_interval weight_synapse){
-    if(neuron_data.buffer_size() < (weight_synapse.starts() + weight_synapse.interval_size()))
+  output_iterator.skim([&](Index_synapse_interval output_synapse){
+    if(neuron_data.buffer_size() < (output_synapse.starts() + output_synapse.interval_size()))
       throw std::runtime_error("Neuron data out of Bounds!");
     std::copy( /* Save output into the internal neuron memory */
       neuron_output.begin() + output_index_start,
-      neuron_output.begin() + output_index_start + weight_synapse.interval_size(),
-      neuron_data.get_element(0).begin() + weight_synapse.starts()
+      neuron_output.begin() + output_index_start + output_synapse.interval_size(),
+      neuron_data.get_element(0).begin() + output_synapse.starts()
     );
-    output_index_start += weight_synapse.interval_size();
+    output_index_start += output_synapse.interval_size();
   });
 }
 

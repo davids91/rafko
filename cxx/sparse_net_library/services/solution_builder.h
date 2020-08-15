@@ -21,19 +21,23 @@
 #include "sparse_net_global.h"
 
 #include <memory>
-#include <deque>
 #include <vector>
-#include <atomic>
+#include <deque>
+#include <thread>
 
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 
+#include "sparse_net_library/services/neuron_router.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library {
 
 using std::vector;
+using std::deque;
+using std::thread;
+
 using rafko_mainframe::Service_context;
 
 /**
@@ -59,9 +63,9 @@ public:
    *
    * @param[in]  context  The Service context
    */
-  Solution_builder(Service_context& context)
-  :  reach_past_loops_maximum(0)
-  { (void)service_context(context); }
+  Solution_builder(Service_context& context){
+    (void)service_context(context);
+  }
 
   /**
    * @brief      Set the number of threads to be used while generating the solution to the given @SparseNet
@@ -123,7 +127,6 @@ private:
   google::protobuf::Arena* arg_arena_ptr = nullptr;
   uint8 arg_max_solve_threads = 1;
   sdouble32 arg_device_max_megabytes = double_literal(2.0) /* GB */ * double_literal(1024.0)/* MB */;
-  uint32 reach_past_loops_maximum;
 };
 
 } /* namespace sparse_net_library */

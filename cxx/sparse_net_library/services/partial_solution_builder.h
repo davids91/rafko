@@ -53,6 +53,7 @@ public:
    */
   uint32 add_neuron_to_partial_solution(uint32 neuron_index);
 
+private:
   /**
    * @brief      Adds the given index to the given synapse
    *
@@ -94,8 +95,6 @@ public:
       current_synapse_count = 1;
     }
   }
-
-private:
 
   /**
    * @brief      Looks for the given Neuron index in the @Partial_solution input,
