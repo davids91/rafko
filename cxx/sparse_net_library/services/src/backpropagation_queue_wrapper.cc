@@ -17,28 +17,19 @@
 
 #include "sparse_net_library/services/backpropagation_queue_wrapper.h"
 
-#include <atomic>
-#include <thread>
-#include <deque>
-
 #include "sparse_net_library/services/neuron_router.h"
 
 namespace sparse_net_library{
 
+using std::vector;
+using std::deque;
+
 Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net, Service_context& context){
-
-  using std::vector;
-  using std::deque;
-  using std::atomic;
-  using std::thread;
-
   deque<vector<uint32>> neuron_queue = deque<vector<uint32>>(1,vector<uint32>(0));
-  vector<thread> sort_threads = vector<thread>();
   Neuron_router neuron_router(net);
   uint32 neuron_index;
   uint32 neuron_depth = 0;
   uint32 neurons_done = 0;
-  uint32 neuron_depth_done = 0;
   gradient_step = Backpropagation_queue();
 
   while(net.neuron_array_size() > static_cast<int>(neurons_done)){
@@ -51,19 +42,13 @@ Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net, Ser
     }
 
     if(0 < neuron_queue.back().size()){ /* Add them into the queue */
-      sort_threads.push_back(thread([&](){ /* Sort the thread in ascending for synapse compression */
-        std::sort(neuron_queue[neuron_depth].begin(),neuron_queue[neuron_depth].begin());
-        ++neuron_depth_done;
-      }));
+      std::sort( /* sort the them in ascending for synapse compression*/
+        neuron_queue[neuron_depth].begin(),neuron_queue[neuron_depth].begin()
+      );
       ++neuron_depth;
       neuron_queue.push_back(vector<uint32>());
     }
   } /* while(net.neuron_array_size() > static_cast<int>(neurons_done)) */
-
-  while(0 < sort_threads.size()){
-    sort_threads.back().join();
-    sort_threads.pop_back();
-  }
 
   /* Push queue array into gradient step */
   uint32 previous_added_index = -1;
