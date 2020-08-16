@@ -21,7 +21,18 @@
 
 namespace sparse_net_library{
 
-uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_index){
+uint32 Partial_solution_builder::neuron_synapse_count = 0;
+uint32 Partial_solution_builder::partial_input_synapse_count = 0;
+sint32 Partial_solution_builder::previous_neuron_input_index;
+uint8 Partial_solution_builder::previous_neuron_input_source;
+
+uint32 Partial_solution_builder::add_neuron_to_partial_solution(const SparseNet& net, uint32 neuron_index, Partial_solution& partial){
+  Synapse_iterator<Input_synapse_interval> input_synapse(partial.input_data());
+  previous_neuron_input_index = input_synapse.size();
+  previous_neuron_input_source = neuron_input_none;
+  partial_input_synapse_count = 0;
+  neuron_synapse_count = 0;
+
   if(net.neuron_array_size() > static_cast<int>(neuron_index)){
     uint32 max_reach_back = 0;
     Index_synapse_interval temp_synapse_interval;
@@ -55,11 +66,11 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_in
       if(interval_synapse.reach_past_loops() > max_reach_back)
          max_reach_back = interval_synapse.reach_past_loops();
     },[&](Input_synapse_interval interval_synapse, sint32 neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
-      if(!look_for_neuron_input(neuron_input_index, interval_synapse.reach_past_loops())){
+      if(!look_for_neuron_input(neuron_input_index, interval_synapse.reach_past_loops(), input_synapse, partial)){
         /* Check if the partial input synapse needs to be closed */
         if( /* if the Neuron has any inputs from the past or not found internally */
           (0 < interval_synapse.reach_past_loops())
-          ||(!look_for_neuron_input_internally(neuron_input_index))
+          ||(!look_for_neuron_input_internally(neuron_input_index, partial))
         ){
           if( /* Close input synapse if */
             (0 < partial_input_synapse_count) /* There is one open already */
@@ -107,9 +118,11 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(uint32 neuron_in
   }else throw std::runtime_error("Neuron index is out of bounds from net neuron array!");
 }
 
-bool Partial_solution_builder::look_for_neuron_input(sint32 neuron_input_index, uint32 input_reach_back){
+bool Partial_solution_builder::look_for_neuron_input(
+  sint32 neuron_input_index, uint32 input_reach_back,
+  Synapse_iterator<Input_synapse_interval>& input_synapse, Partial_solution& partial
+){
   uint32 candidate_synapse_index = input_synapse.size();
-
   input_synapse.iterate_terminatable([&](Input_synapse_interval interval_synapse, sint32 synapse_index){
     if(candidate_synapse_index == input_synapse.size()) candidate_synapse_index = 0;
     if( /* If the index as well as the time of input matches */
@@ -140,7 +153,7 @@ bool Partial_solution_builder::look_for_neuron_input(sint32 neuron_input_index, 
   }else return false; /* couldn't find the Neuron input in the @Partial solution input synapses */
 }
 
-bool Partial_solution_builder::look_for_neuron_input_internally(uint32 neuron_input_index){
+bool Partial_solution_builder::look_for_neuron_input_internally(uint32 neuron_input_index, Partial_solution& partial){
   if(
     (static_cast<sint32>(neuron_input_index) >= partial.output_data().starts())
     &&(neuron_input_index < (partial.output_data().starts() + partial.output_data().interval_size()))

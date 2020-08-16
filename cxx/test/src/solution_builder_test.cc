@@ -85,8 +85,9 @@ unique_ptr<Solution> test_solution_builder_manually(google::protobuf::Arena* are
         ++internal_neuron_iterator
       ){
         if(
-          (solution->partial_solutions(partial_solution_iterator).output_data().starts() + internal_neuron_iterator)
-          == neuron_iterator
+          static_cast<sint32>(
+            solution->partial_solutions(partial_solution_iterator).output_data().starts() + internal_neuron_iterator
+          ) == neuron_iterator
         ){
           found = true;
           goto Solution_search_over; /* don't judge */

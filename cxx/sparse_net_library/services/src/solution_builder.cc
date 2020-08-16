@@ -79,7 +79,6 @@ Solution* Solution_builder::build(const SparseNet& net ){
       /* Add a new partial to the solution, and create a builder for it */
       *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
       partial_index_in_solution = solution->partial_solutions_size() - 1; /* It's basically guaranteed by the preceeding line, that (size > 0) */
-      Partial_solution_builder partial_builder(net, *solution->mutable_partial_solutions(partial_index_in_solution));
 
       /* Scan the subset for Neurons assigned to the current partial index */
       neuron_count_in_partial = 0;
@@ -93,8 +92,9 @@ Solution* Solution_builder::build(const SparseNet& net ){
             )
             <= arg_device_max_megabytes
           ){
-            reach_back = partial_builder.add_neuron_to_partial_solution(
-              neuron_router.get_neuron_index_from_subset(subset_index)
+            reach_back = Partial_solution_builder::add_neuron_to_partial_solution(
+              net, neuron_router.get_neuron_index_from_subset(subset_index),
+              *solution->mutable_partial_solutions(partial_index_in_solution)
             );
             if(reach_back_max < reach_back)reach_back_max = reach_back;
             partial_indices_in_row[subset_index] = partial_indices_in_row.size() + 1;

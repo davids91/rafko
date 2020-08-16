@@ -35,23 +35,8 @@ using google::protobuf::RepeatedPtrField;
  * @brief      Front-end to create partial solution objects by adding Neurons into them.
  */
 class Partial_solution_builder{
-
 public:
-  Partial_solution_builder(const SparseNet& net, Partial_solution& partial_ref)
-  : net(net)
-  , partial(partial_ref)
-  , input_synapse(partial_ref.input_data())
-  , previous_neuron_input_source(neuron_input_none)
-  { };
-
-  /**
-   * @brief      Adds a neuron to partial solution.
-   *
-   * @param[in]  neuron_index  The neuron index
-   *
-   * @return     Returns with the maximum reach-back value of the neuron ( How far it takes its input from previous runs )
-   */
-  uint32 add_neuron_to_partial_solution(uint32 neuron_index);
+  static uint32 add_neuron_to_partial_solution(const SparseNet& net, uint32 neuron_index, Partial_solution& partial);
 
 private:
   /**
@@ -105,7 +90,10 @@ private:
    *
    * @return     returns true if the neuron index was found in the @Partial_solution input
    */
-  bool look_for_neuron_input(sint32 neuron_input_index, uint32 input_reach_back);
+  static bool look_for_neuron_input(
+    sint32 neuron_input_index, uint32 input_reach_back,
+    Synapse_iterator<Input_synapse_interval>& input_synapse, Partial_solution& partial
+  );
 
   /**
    * @brief      Looks for the given Neuron index in the @Partial_solution internally,
@@ -115,23 +103,20 @@ private:
    *
    * @return     returns true if the neuron index was found in the @Partial_solution Inner Neurons
    */
-  bool look_for_neuron_input_internally(uint32 neuron_input_index);
-
-  /**
-   * Global references to help build the solution
-   */
-  const SparseNet& net;
-  Partial_solution& partial;
-  Synapse_iterator<Input_synapse_interval> input_synapse;
+  static bool look_for_neuron_input_internally(uint32 neuron_input_index, Partial_solution& partial);
 
   /**
    * Temporary helper variables used only during Neuron mapping which is started by @add_neuron_to_partial_solution
    * but used additionally in @look_for_neuron_input_internally and @look_for_neuron_input
    */
-  uint32 neuron_synapse_count = 0;
-  uint32 partial_input_synapse_count = 0;
-  sint32 previous_neuron_input_index;
-  uint8 previous_neuron_input_source;
+  static uint32 neuron_synapse_count;
+  static uint32 partial_input_synapse_count;
+  static sint32 previous_neuron_input_index;
+  static uint8 previous_neuron_input_source;
+
+  /**
+   *  definitions to assign a source of a neurons input upon building up the partial solution
+   */
   static const uint8 neuron_input_none = 0;
   static const uint8 neuron_input_internal = 1;
   static const uint8 neuron_input_external = 2;
