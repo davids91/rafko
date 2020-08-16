@@ -127,6 +127,10 @@ private:
   google::protobuf::Arena* arg_arena_ptr = nullptr;
   uint8 arg_max_solve_threads = 1;
   sdouble32 arg_device_max_megabytes = double_literal(2.0) /* GB */ * double_literal(1024.0)/* MB */;
+
+  static sdouble32 get_size_in_mb(const Partial_solution& partial){
+    return partial.SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */;
+  }
 };
 
 } /* namespace sparse_net_library */

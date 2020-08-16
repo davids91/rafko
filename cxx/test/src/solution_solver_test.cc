@@ -246,7 +246,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
     CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
 
   /* Re-veriy with guaranteed multiple partial solutions */
-  sdouble32 solution_size = solution.SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
+  sdouble32 solution_size = solution.SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
   Solution solution2 = *solution_builder->max_solve_threads(4).device_max_megabytes(solution_size/double_literal(4.0)).arena_ptr(arena).build(*net);
   Solution_solver solver2(solution2, service_context);
   solver2.solve(net_input);
@@ -319,7 +319,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   }
 
   /* Return with the size of the overall solution */
-  return solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
+  return solution->SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
 }
 
 TEST_CASE("Solution Solver test with memory", "[solve][memory]"){
@@ -327,9 +327,9 @@ TEST_CASE("Solution Solver test with memory", "[solve][memory]"){
   sdouble32 megabytes_used = testing_nets_with_memory_manually(nullptr, (double_literal(4.0) * double_literal(1024.0)), 0x01);
   (void)testing_nets_with_memory_manually(nullptr, megabytes_used / double_literal(4.0),0x01); /* Even if the net needs to be splitted */
 
-  // /* Test if the network is producing correct results when neurons take past-inputs from their layers ( 0x02 ID given to builder ) */
-  // megabytes_used = testing_nets_with_memory_manually(nullptr, (double_literal(4.0) * double_literal(1024.0)), 0x02);
-  // (void)testing_nets_with_memory_manually(nullptr, megabytes_used / double_literal(4.0),0x02); /* Even if the net needs to be splitted */
+  /* Test if the network is producing correct results when neurons take past-inputs from their layers ( 0x02 ID given to builder ) */
+  megabytes_used = testing_nets_with_memory_manually(nullptr, (double_literal(4.0) * double_literal(1024.0)), 0x02);
+  (void)testing_nets_with_memory_manually(nullptr, megabytes_used / double_literal(4.0),0x02); /* Even if the net needs to be splitted */
 }
 
 }
