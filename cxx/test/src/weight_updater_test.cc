@@ -60,8 +60,8 @@ TEST_CASE("Weight updater test","[build][weight-update]"){
     Sparse_net_builder(service_context).input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure)
   );
   Weight_updater weight_updater(*net, service_context);
-  Solution solution = *Solution_builder(service_context).build(*net);
-  check_if_the_same(*net, solution);
+  unique_ptr<Solution> solution = unique_ptr<Solution>(Solution_builder(service_context).build(*net));
+  check_if_the_same(*net, *solution);
 
   /* Change the weights in the network */
   srand (time(nullptr));
@@ -70,9 +70,9 @@ TEST_CASE("Weight updater test","[build][weight-update]"){
   }
 
   /* Copy the weights into the Solution */
-  weight_updater.update_solution_with_weights(solution);
+  weight_updater.update_solution_with_weights(*solution);
   
-  check_if_the_same(*net, solution);
+  check_if_the_same(*net, *solution);
 }
 
 } /* namespace sparse_net_library_test */

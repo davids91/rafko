@@ -230,10 +230,10 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
 
   /* Generate solution from Net */
   unique_ptr<Solution_builder> solution_builder = make_unique<Solution_builder>(service_context);
-  Solution solution = *solution_builder->max_solve_threads(4).device_max_megabytes(2048).arena_ptr(arena).build(*net);
+  Solution* solution = solution_builder->max_solve_threads(4).device_max_megabytes(2048).arena_ptr(arena).build(*net);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  Solution_solver solver(solution, service_context);
+  Solution_solver solver(*solution, service_context);
   solver.solve(net_input);
   vector<sdouble32> result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size());
@@ -246,15 +246,23 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
     CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
 
   /* Re-veriy with guaranteed multiple partial solutions */
-  sdouble32 solution_size = solution.SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
-  Solution solution2 = *solution_builder->max_solve_threads(4).device_max_megabytes(solution_size/double_literal(4.0)).arena_ptr(arena).build(*net);
-  Solution_solver solver2(solution2, service_context);
+  sdouble32 solution_size = solution->SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
+  Solution* solution2 = solution_builder->max_solve_threads(4)
+    .device_max_megabytes(solution_size/double_literal(4.0))
+    .arena_ptr(arena).build(*net);
+
+  Solution_solver solver2(*solution2, service_context);
   solver2.solve(net_input);
   result = {solver2.get_neuron_data().end() - solver2.get_output_size(),solver2.get_neuron_data().end()};
   
   /* Verify once more if the calculated values match the expected ones */
   for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
     CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+
+  if(nullptr == arena){
+    delete solution;
+    delete solution2;
+  }
 }
 
 TEST_CASE("Solution Solver test based on Fully Connected Dense Net", "[solve][build-solve]"){

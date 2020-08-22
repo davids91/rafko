@@ -138,7 +138,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
       /* Build the partial solutions based on the assigned indices */
       for(partial_index_in_row = 0; partial_index_in_row < last_index_in_partial.size(); ++partial_index_in_row){ /* for every assigned partial index */
         /* Add a new partial to the solution, and create a builder for it */
-        *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
+        *solution->add_partial_solutions() = Partial_solution();
         partial_index_in_solution = solution->partial_solutions_size() - 1; /* It's basically guaranteed by the preceeding line, that (size > 0) */
 
         /* Scan the subset for Neurons assigned to the current partial index */

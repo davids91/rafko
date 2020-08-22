@@ -193,9 +193,8 @@ public:
    * @brief      Clears the subset and sets the neuron states of the items in it to be in progress.
    */
   void reset_remaining_subset(void){
-    for(uint32 neuron_index : net_subset){
-      confirm_first_subset_element_ommitted(neuron_index);
-    }
+    while(0 < net_subset.size())
+      confirm_first_subset_element_ommitted(net_subset.front());
   }
 
   /**
