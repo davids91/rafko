@@ -80,41 +80,36 @@ void test_solution_solver_multithread(uint16 threads){
   *solution.add_partial_solutions() = Partial_solution();
   *solution.add_partial_solutions() = Partial_solution();
 
-  vector<vector<reference_wrapper<Partial_solution>>> partial_solutions= {
-    {*solution.mutable_partial_solutions(0),*solution.mutable_partial_solutions(1)},
-    {*solution.mutable_partial_solutions(2),*solution.mutable_partial_solutions(3)}
-  };
-
   vector<sdouble32> network_inputs = {double_literal(5.1),double_literal(10.3),double_literal(3.2),double_literal(9.4)};
   Input_synapse_interval temp_input_interval;
 
   /* [0][0]: Whole of the input */
-  manual_2_neuron_partial_solution(partial_solutions[0][0], network_inputs.size(),0);
+  manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(0), network_inputs.size(),0);
   temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
   temp_input_interval.set_interval_size(network_inputs.size());
-  *partial_solutions[0][0].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(partial_solutions[0][0], neuron_data, service_context);
+  *solution.mutable_partial_solutions(0)->add_input_data() = temp_input_interval;
+  Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(solution.partial_solutions(0), neuron_data, service_context);
 
   /* [0][1]: Half of the input */
-  manual_2_neuron_partial_solution(partial_solutions[0][1], network_inputs.size()/2,2);
+  manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(1), network_inputs.size()/2,2);
   temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(network_inputs.size()/2));
   temp_input_interval.set_interval_size(network_inputs.size()/2);
-  *partial_solutions[0][1].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(partial_solutions[0][1], neuron_data, service_context);
+  *solution.mutable_partial_solutions(1)->add_input_data() = temp_input_interval;
+  Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(solution.partial_solutions(1), neuron_data, service_context);
 
   /* [1][0]: Whole of the previous row's data --> neuron [0] to [3] */
-  manual_2_neuron_partial_solution(partial_solutions[1][0],4,4);
+  manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(2),4,4);
   temp_input_interval.set_starts(0);
   temp_input_interval.set_interval_size(4);
-  *partial_solutions[1][0].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(partial_solutions[1][0], neuron_data, service_context);
+  *solution.mutable_partial_solutions(2)->add_input_data() = temp_input_interval;
+  Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(solution.partial_solutions(2), neuron_data, service_context);
 
   /* [1][1]: Half of the previous row's data ( in the middle) --> neuron [1] to [2] */
-  manual_2_neuron_partial_solution(partial_solutions[1][1],2,6);
+  manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(3),2,6);
   temp_input_interval.set_starts(1);
   temp_input_interval.set_interval_size(2);
-  *partial_solutions[1][1].get().add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(partial_solutions[1][1], neuron_data, service_context);
+  *solution.mutable_partial_solutions(3)->add_input_data() = temp_input_interval;
+  Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(solution.partial_solutions(3), neuron_data, service_context);
 
   /* Solve the compiled Solution */
   srand (time(nullptr));
@@ -124,49 +119,49 @@ void test_solution_solver_multithread(uint16 threads){
 
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights biases and memory filters */
-      for(int i = 0; i < partial_solutions[0][0].get().weight_table_size(); ++i){
-        partial_solutions[0][0].get().set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      for(int i = 0; i < solution.partial_solutions(0).weight_table_size(); ++i){
+        solution.mutable_partial_solutions(0)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
-      for(int i = 0; i < partial_solutions[0][1].get().weight_table_size(); ++i){
-        partial_solutions[0][1].get().set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      for(int i = 0; i < solution.partial_solutions(1).weight_table_size(); ++i){
+        solution.mutable_partial_solutions(1)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
-      for(int i = 0; i < partial_solutions[1][0].get().weight_table_size(); ++i){
-        partial_solutions[1][0].get().set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      for(int i = 0; i < solution.partial_solutions(2).weight_table_size(); ++i){
+        solution.mutable_partial_solutions(2)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
-      for(int i = 0; i < partial_solutions[1][1].get().weight_table_size(); ++i){
-        partial_solutions[1][1].get().set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      for(int i = 0; i < solution.partial_solutions(3).weight_table_size(); ++i){
+        solution.mutable_partial_solutions(3)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
 
       /* Modify memory filters and transfer functions */
-      partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      partial_solutions[0][0].get().set_weight_table(partial_solutions[0][0].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      partial_solutions[0][0].get().set_neuron_transfer_functions(rand()%(partial_solutions[0][0].get().neuron_transfer_functions_size()),Transfer_function::next());
+      solution.mutable_partial_solutions(0)->set_weight_table(solution.partial_solutions(0).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      solution.mutable_partial_solutions(0)->set_weight_table(solution.partial_solutions(0).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      solution.mutable_partial_solutions(0)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(0).neuron_transfer_functions_size()),Transfer_function::next());
 
-      partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      partial_solutions[0][1].get().set_weight_table(partial_solutions[0][1].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      partial_solutions[0][1].get().set_neuron_transfer_functions(rand()%(partial_solutions[0][1].get().neuron_transfer_functions_size()),Transfer_function::next());
+      solution.mutable_partial_solutions(1)->set_weight_table(solution.partial_solutions(1).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      solution.mutable_partial_solutions(1)->set_weight_table(solution.partial_solutions(1).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      solution.mutable_partial_solutions(1)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(1).neuron_transfer_functions_size()),Transfer_function::next());
 
-      partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      partial_solutions[1][0].get().set_weight_table(partial_solutions[1][0].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      partial_solutions[1][0].get().set_neuron_transfer_functions(rand()%(partial_solutions[1][0].get().neuron_transfer_functions_size()),Transfer_function::next());
+      solution.mutable_partial_solutions(2)->set_weight_table(solution.partial_solutions(2).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      solution.mutable_partial_solutions(2)->set_weight_table(solution.partial_solutions(2).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      solution.mutable_partial_solutions(2)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(2).neuron_transfer_functions_size()),Transfer_function::next());
 
-      partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      partial_solutions[1][1].get().set_weight_table(partial_solutions[1][1].get().memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      partial_solutions[1][1].get().set_neuron_transfer_functions(rand()%(partial_solutions[1][1].get().neuron_transfer_functions_size()),Transfer_function::next());
+      solution.mutable_partial_solutions(3)->set_weight_table(solution.partial_solutions(3).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      solution.mutable_partial_solutions(3)->set_weight_table(solution.partial_solutions(3).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      solution.mutable_partial_solutions(3)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(3).neuron_transfer_functions_size()),Transfer_function::next());
     }
 
     /* Calculate the expected output */
     manual_2_neuron_result(
-      network_inputs,expected_neuron_data,partial_solutions[0][0],0
+      network_inputs,expected_neuron_data,solution.partial_solutions(0),0
     ); /* row 0, column 0 */
     manual_2_neuron_result(
-      {network_inputs.begin()+2,network_inputs.end()},expected_neuron_data,partial_solutions[0][1],2
+      {network_inputs.begin()+2,network_inputs.end()},expected_neuron_data,solution.partial_solutions(1),2
     ); /* row 0, column 1 */
     manual_2_neuron_result(
-      {expected_neuron_data.begin(),expected_neuron_data.begin() + 4},expected_neuron_data,partial_solutions[1][0],4
+      {expected_neuron_data.begin(),expected_neuron_data.begin() + 4},expected_neuron_data,solution.partial_solutions(2),4
     ); /* row 1, column 0 */
     manual_2_neuron_result(
-      {expected_neuron_data.begin() + 1,expected_neuron_data.begin() + 3},expected_neuron_data,partial_solutions[1][1],6
+      {expected_neuron_data.begin() + 1,expected_neuron_data.begin() + 3},expected_neuron_data,solution.partial_solutions(3),6
     ); /* row 1, column 1 */
 
     /* Solve the net */
