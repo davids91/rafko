@@ -246,9 +246,12 @@ private:
    *             the weights based on the given input arguments.
    *
    * @param[in]  solve_thread_index  The solve thread index
-   * @param[in]  neuron_index        The neuron index
+   * @param[in]  neuron_index        The starting neuron index
+   * @param[in]  neuron_number       The number of neurpons to process in this thread
    */
-  void accumulate_weight_gradients_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 neuron_index);
+  void accumulate_weight_gradients_thread(
+    uint32 solve_thread_index, uint32 sequence_index, uint32 neuron_index, uint32 neuron_number
+  );
 
   /**
    * @brief      The thread used by @normalize_weight_gradients, it iterates through 

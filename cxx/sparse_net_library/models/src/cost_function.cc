@@ -27,16 +27,15 @@ sdouble32 Cost_function::get_feature_error(const vector<sdouble32>& labels, cons
   const uint32 feature_number = 1 + static_cast<uint32>(labels.size()/context.get_max_processing_threads());
   for(
     uint32 thread_index = 0;
-    ( (thread_index < context.get_max_processing_threads())
-      &&(neuron_data.size() > feature_start_index) );
+    ( (thread_index < context.get_max_processing_threads()) && (neuron_data.size() > feature_start_index) );
     ++thread_index
   ){ /* For every provided sample */
-      process_threads.push_back(thread(
-        &Cost_function::summarize_errors, this,
-        ref(labels), ref(neuron_data), feature_start_index, 
-        std::min(feature_number, static_cast<uint32>(neuron_data.size() - feature_start_index))
-      ));
-      feature_start_index += feature_number;
+    process_threads.push_back(thread(
+      &Cost_function::summarize_errors, this,
+      ref(labels), ref(neuron_data), feature_start_index, 
+      std::min(feature_number, static_cast<uint32>(neuron_data.size() - feature_start_index))
+    ));
+    feature_start_index += feature_number;
   }
   while(0 < process_threads.size()){ /* wait for threads */
     if(process_threads.back().joinable()){

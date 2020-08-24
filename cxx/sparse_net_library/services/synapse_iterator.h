@@ -100,13 +100,16 @@ public:
   ){
     uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
     for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator){
-      if(!is_index_input(arg_synapse_interval[synapse_iterator].starts()))
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator){
-          do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() + input_iterator);
+      uint32 this_interval_size = arg_synapse_interval[synapse_iterator].interval_size();
+      uint32 this_interval_start = arg_synapse_interval[synapse_iterator].starts();
+      if(!is_index_input(this_interval_start)){
+        for(uint32 input_iterator = 0; input_iterator < this_interval_size ;++input_iterator){
+          do_for_each_index( arg_synapse_interval[synapse_iterator], (this_interval_start + input_iterator) );
         }
+      }
       else /* current @starts. element is from the input, iterate in a negative way */
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator){
-          do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() - input_iterator);
+        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator){
+          do_for_each_index( arg_synapse_interval[synapse_iterator], (this_interval_start - input_iterator) );
         }
     } /* For every synapse */
   }
@@ -120,13 +123,15 @@ public:
     uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
     for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator){
       do_for_each_synapse(arg_synapse_interval[synapse_iterator]);
-      if(!is_index_input(arg_synapse_interval[synapse_iterator].starts())){
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator){
-          do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() + input_iterator);
+      uint32 this_interval_size = arg_synapse_interval[synapse_iterator].interval_size();
+      uint32 this_interval_start = arg_synapse_interval[synapse_iterator].starts();
+      if(!is_index_input(this_interval_start)){
+        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator){
+          do_for_each_index( arg_synapse_interval[synapse_iterator], (this_interval_start + input_iterator) );
         }
       }else{ /* current @starts. element is from the input, iterate in a negative way */
-        for(sint32 input_iterator = 0; static_cast<uint32>(input_iterator) < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator){
-          do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() - input_iterator);
+        for(sint32 input_iterator = 0; static_cast<uint32>(input_iterator) < this_interval_size;++input_iterator){
+          do_for_each_index( arg_synapse_interval[synapse_iterator], (this_interval_start - input_iterator) );
         }
       }
     } /* For every synapse */
@@ -150,13 +155,15 @@ public:
   ){
     uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
     for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator){
-      if(!is_index_input(arg_synapse_interval[synapse_iterator].starts())){
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
-          if(!do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() + input_iterator))
+      uint32 this_interval_size = arg_synapse_interval[synapse_iterator].interval_size();
+      uint32 this_interval_start = arg_synapse_interval[synapse_iterator].starts();
+      if(!is_index_input(this_interval_start)){
+        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
+          if(!do_for_each_index( arg_synapse_interval[synapse_iterator], (this_interval_start + input_iterator)) )
             return;
       }else{ /* current @starts. element is from the input, iterate in a negative way */
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
-          if(!do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() - input_iterator))
+        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
+          if(!do_for_each_index( arg_synapse_interval[synapse_iterator], (this_interval_start - input_iterator)) )
             return;
       }
     } /* For every synapse */
@@ -172,13 +179,15 @@ public:
     for(uint32 synapse_iterator = interval_start; synapse_iterator < (interval_start + interval_size); ++synapse_iterator){
       if(!do_for_each_synapse(arg_synapse_interval[synapse_iterator]))
         return;
-      if(!is_index_input(arg_synapse_interval[synapse_iterator].starts())){
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
-          if(!do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() + input_iterator))
+      uint32 this_interval_size = arg_synapse_interval[synapse_iterator].interval_size();
+      uint32 this_interval_start = arg_synapse_interval[synapse_iterator].starts();
+      if(!is_index_input(this_interval_start)){
+        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
+          if(!do_for_each_index( arg_synapse_interval[synapse_iterator], (this_interval_start + input_iterator)) )
             return;
       }else{ /* current @starts. element is from the input, iterate in a negative way */
-        for(uint32 input_iterator = 0; input_iterator < arg_synapse_interval[synapse_iterator].interval_size();++input_iterator)
-          if(!do_for_each_index(arg_synapse_interval[synapse_iterator], arg_synapse_interval[synapse_iterator].starts() - input_iterator))
+        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
+          if(!do_for_each_index( arg_synapse_interval[synapse_iterator], (this_interval_start - input_iterator)) )
             return;
       }
     } /* For every synapse */
@@ -351,7 +360,7 @@ private:
    *
    */
   static uint32 get_number_of_synapses_to_iterate(const RepeatedPtrField<Interval_type>& arg_synapse_interval, uint32 interval_start, uint32 interval_size_){
-    if( (0 == arg_synapse_interval.size())&&(0 == interval_start) )
+    if(0 == arg_synapse_interval.size())
       return 0;
     else if( (0 == interval_size_)&&(arg_synapse_interval.size() > static_cast<sint32>(interval_start)) )
       return (arg_synapse_interval.size() - interval_start);
