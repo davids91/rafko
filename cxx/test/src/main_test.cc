@@ -288,7 +288,10 @@ void print_weights(SparseNet& net, Solution& solution){
   }
 }
 
-Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net, cost_functions the_function, Service_context& service_context){
+Data_aggregate* create_addition_dataset(
+  uint32 number_of_samples, SparseNet& net, cost_functions the_function,
+  google::protobuf::Arena* arena, Service_context& service_context
+){
 
   using std::vector;
 
@@ -311,7 +314,8 @@ Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net,
     addition_dataset[i].push_back(net_inputs[i][0] + net_inputs[i][1]);
   }
 
-  return Data_aggregate(
+  return google::protobuf::Arena::Create<Data_aggregate>(
+    arena,
     service_context,
     vector<vector<sdouble32>>(net_inputs),
     vector<vector<sdouble32>>(addition_dataset),
@@ -319,7 +323,10 @@ Data_aggregate create_addition_dataset(uint32 number_of_samples, SparseNet& net,
   );
 }
 
-Data_aggregate create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function, Service_context& service_context){
+Data_aggregate* create_sequenced_addition_dataset(
+  uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function,
+  google::protobuf::Arena* arena, Service_context& service_context
+){
   uint32 carry_bit;
   vector<vector<sdouble32>> net_inputs(sequence_size * number_of_samples);
   vector<vector<sdouble32>> addition_dataset(sequence_size * number_of_samples);
@@ -346,7 +353,8 @@ Data_aggregate create_sequenced_addition_dataset(uint32 number_of_samples, uint3
     }
   }
 
-  return Data_aggregate(
+  return google::protobuf::Arena::Create<Data_aggregate>(
+    arena,
     service_context,
     vector<vector<sdouble32>>(net_inputs),
     vector<vector<sdouble32>>(addition_dataset),

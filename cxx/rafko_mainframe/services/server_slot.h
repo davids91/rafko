@@ -42,8 +42,11 @@ using sparse_net_library::SparseNet;
 class Server_slot{
 public: 
   Server_slot(void)
-  : service_slot()
-  { service_slot.set_slot_id(generate_uuid()); }
+  : arena()
+  {
+    service_slot = google::protobuf::Arena::CreateMessage<Service_slot>(&arena);
+    service_slot->set_slot_id(generate_uuid());
+  }
   virtual ~Server_slot() = default;
 
   /**
@@ -135,7 +138,8 @@ public:
   Slot_response get_status(void) const;
 
 protected:
-  Service_slot service_slot;
+  google::protobuf::Arena arena;
+  Service_slot* service_slot;
 
   /**
    * @brief      Generates a unique identifier, with a guarantee that the currently 
@@ -150,8 +154,8 @@ protected:
    *             instead of the final status value. It's safe to call multiple times.
    */
   void expose_state(void){
-    if(SERV_SLOT_OK == service_slot.state())
-      service_slot.set_state(0);
+    if(SERV_SLOT_OK == service_slot->state())
+      service_slot->set_state(0);
   }
 
   /**
@@ -160,8 +164,8 @@ protected:
    *             by @expose_state to update the status flags
    */
   void finalize_state(void){
-    if(0 == service_slot.state()) /* No issues found, great! */
-      service_slot.set_state(SERV_SLOT_OK);
+    if(0 == service_slot->state()) /* No issues found, great! */
+      service_slot->set_state(SERV_SLOT_OK);
   }
 
   /**

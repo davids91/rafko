@@ -72,6 +72,7 @@ using sparse_net_library::Solution_solver;
 using sparse_net_library::Cost_function_mse;
 using rafko_mainframe::Service_context;
 
+
 /*###############################################################################################
  * Testing if the Sparse net library optimization convegres the network
  * - Generate dataset for addition
@@ -84,6 +85,7 @@ using rafko_mainframe::Service_context;
  * - For each dataset test if the each Net converges
  * */
 TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]"){
+  google::protobuf::Arena arena;
   /* .set_max_processing_threads(1)) for single-threaded tests */
   Service_context service_context = Service_context().set_step_size(1e-1);
   uint32 number_of_samples = 500;
@@ -132,8 +134,8 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   nets[2]->set_weight_table(18,0.5);
 
   /* Create data-set and test-set and optimize networks */
-  Data_aggregate train_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
-  Data_aggregate test_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
+  Data_aggregate* train_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_SQUARED_ERROR, &arena, service_context);
+  Data_aggregate* test_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_SQUARED_ERROR, &arena, service_context);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -147,7 +149,10 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   number_of_steps = 0;
   average_duration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
-  Sparse_net_optimizer optimizer(*nets[0], train_set, test_set, COST_FUNCTION_SQUARED_ERROR, WEIGHT_UPDATER_DEFAULT, service_context);
+  Sparse_net_optimizer optimizer(
+    *nets[0], *train_set, *test_set, COST_FUNCTION_SQUARED_ERROR, WEIGHT_UPDATER_DEFAULT,
+    &arena, service_context
+  );
 
   std::cout << "Optimizing net.." << std::endl;
   while(abs(train_error) > 1e-1){
@@ -168,10 +173,14 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
-  Sparse_net_optimizer optimizer2(*nets[1], train_set, test_set, COST_FUNCTION_MSE, WEIGHT_UPDATER_MOMENTUM, service_context); 
+  Sparse_net_optimizer optimizer2(
+    *nets[1], *train_set, *test_set, COST_FUNCTION_MSE, WEIGHT_UPDATER_MOMENTUM,
+    &arena, service_context
+  );
+
   std::cout << "Optimizing bigger net.." << std::endl;
-  train_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_MSE, service_context);
-  test_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_MSE, service_context);
+  train_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_MSE, &arena, service_context);
+  test_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_MSE, &arena, service_context);
   train_error = 1.0;
   test_error = 1.0;
   number_of_steps = 0;
@@ -194,10 +203,14 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
-  Sparse_net_optimizer optimizer3(*nets[2], train_set, test_set, COST_FUNCTION_MSE, WEIGHT_UPDATER_NESTEROV, service_context);
+  Sparse_net_optimizer optimizer3(
+    *nets[2], *train_set, *test_set, COST_FUNCTION_MSE, WEIGHT_UPDATER_NESTEROV,
+    &arena, service_context
+  );
+
   cout << "Optimizing biggest net.." << std::endl;
-  train_set.reset_errors();
-  test_set.reset_errors();
+  train_set->reset_errors();
+  test_set->reset_errors();
   train_error = 1.0;
   test_error = 1.0;
   number_of_steps = 0;
@@ -227,12 +240,12 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
   sdouble32 error_summary[3] = {0,0,0};
   Cost_function_mse after_cost(1,service_context);
   for(uint32 i = 0; i < number_of_samples; ++i){
-    after_solver.solve(test_set.get_input_sample(i));
-    after_solver2.solve(test_set.get_input_sample(i));
-    after_solver3.solve(test_set.get_input_sample(i));
-    error_summary[0] += after_cost.get_feature_error(after_solver.get_neuron_data(), test_set.get_label_sample(i), number_of_samples);
-    error_summary[1] += after_cost.get_feature_error(after_solver2.get_neuron_data(), test_set.get_label_sample(i), number_of_samples);
-    error_summary[2] += after_cost.get_feature_error(after_solver3.get_neuron_data(), test_set.get_label_sample(i), number_of_samples);
+    after_solver.solve(test_set->get_input_sample(i));
+    after_solver2.solve(test_set->get_input_sample(i));
+    after_solver3.solve(test_set->get_input_sample(i));
+    error_summary[0] += after_cost.get_feature_error(after_solver.get_neuron_data(), test_set->get_label_sample(i), number_of_samples);
+    error_summary[1] += after_cost.get_feature_error(after_solver2.get_neuron_data(), test_set->get_label_sample(i), number_of_samples);
+    error_summary[2] += after_cost.get_feature_error(after_solver3.get_neuron_data(), test_set->get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"
   << "\t"  << error_summary[0]
@@ -284,6 +297,7 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
 }
 
 TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
+  google::protobuf::Arena arena;
   Service_context service_context = Service_context().set_step_size(1e-1);
   uint32 sequence_size = 5;
   uint32 number_of_samples = 50;
@@ -292,7 +306,7 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   /* Create nets */
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
   nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder(service_context)
-    .input_size(2).expected_input_range(double_literal(1.0))
+    .input_size(2).expected_input_range(double_literal(1.0)).arena_ptr(&arena)
     .set_recurrence_to_self()
     .allowed_transfer_functions_by_layer(
       {
@@ -303,8 +317,8 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
-  Data_aggregate train_set = create_sequenced_addition_dataset(number_of_samples, sequence_size, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
-  Data_aggregate test_set = create_sequenced_addition_dataset(number_of_samples, sequence_size, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
+  Data_aggregate* train_set = create_sequenced_addition_dataset(number_of_samples, sequence_size, *nets[0], COST_FUNCTION_SQUARED_ERROR, &arena, service_context);
+  Data_aggregate* test_set = create_sequenced_addition_dataset(number_of_samples, sequence_size, *nets[0], COST_FUNCTION_SQUARED_ERROR, &arena, service_context);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -320,10 +334,13 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   average_duration = 0;
   iteration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
-  Sparse_net_optimizer optimizer(*nets[0], train_set, test_set, COST_FUNCTION_MSE, WEIGHT_UPDATER_NESTEROV, service_context);
+  Sparse_net_optimizer optimizer(
+    *nets[0], *train_set, *test_set, COST_FUNCTION_MSE, WEIGHT_UPDATER_NESTEROV,
+    &arena, service_context
+  );
 
   for(uint32 sample_sequence = 0; sample_sequence < number_of_samples; ++sample_sequence)
-    print_training_sample(sample_sequence, train_set, *nets[0], service_context);
+    print_training_sample(sample_sequence, *train_set, *nets[0], service_context);
 
   std::cout << "Optimizing net.." << std::endl;
   while(abs(train_error) > 1e-2){
@@ -336,26 +353,27 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
     cout << "\r Error:"
     <<" training:[" << train_error << "]; "
-    <<" test:[" << test_error << "]; "
-    << "Minimum: ["<< minimum_error <<"]"
+    // <<" test:[" << test_error << "]; "
+    // << "Minimum: ["<< minimum_error <<"]"
+    << "avg run: " << (average_duration / static_cast<sdouble32>(number_of_steps)) << " ms "
     << "Iteration: ["<< iteration <<"];   "
     << flush;
     ++iteration;
     if(0 == (iteration % epoch))
-      print_training_sample((rand()%number_of_samples), train_set, *nets[0], service_context);
+      print_training_sample((rand()%number_of_samples), *train_set, *nets[0], service_context);
     
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
-  Solution_solver after_solver(*Solution_builder(service_context).build(*nets[0]), service_context);
+  Solution_solver after_solver(*Solution_builder(service_context).arena_ptr(&arena).build(*nets[0]), service_context);
 
   sdouble32 error_summary[3] = {0,0,0};
   Cost_function_mse after_cost(1, service_context);
   for(uint32 i = 0; i < number_of_samples; ++i){
-    after_solver.solve(test_set.get_input_sample(i));
-    error_summary[0] += after_cost.get_feature_error(after_solver.get_neuron_data(), test_set.get_label_sample(i), number_of_samples);
+    after_solver.solve(test_set->get_input_sample(i));
+    error_summary[0] += after_cost.get_feature_error(after_solver.get_neuron_data(), test_set->get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"
   << "\t"  << error_summary[0]

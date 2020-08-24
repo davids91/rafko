@@ -57,16 +57,17 @@ public:
   Sparse_net_optimizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
     cost_functions the_function, weight_updaters weight_updater_,
-    Service_context& service_context
+    google::protobuf::Arena* arena, Service_context& service_context
   ): Sparse_net_optimizer(
     neural_network, train_set_, test_set_,
     Function_factory::build_cost_function(neural_network, the_function, service_context),
-    weight_updater_, service_context
+    weight_updater_, arena, service_context
   ){ }
 
   Sparse_net_optimizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-    shared_ptr<Cost_function> the_function, weight_updaters weight_updater_, Service_context& service_context
+    shared_ptr<Cost_function> the_function, weight_updaters weight_updater_,
+    google::protobuf::Arena* arena, Service_context& service_context
   );
 
   ~Sparse_net_optimizer(void){ solvers.clear(); }

@@ -34,11 +34,12 @@ using std::max;
 
 Sparse_net_optimizer::Sparse_net_optimizer(
   SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-  shared_ptr<Cost_function> the_function, weight_updaters weight_updater_, Service_context& service_context
+  shared_ptr<Cost_function> the_function, weight_updaters weight_updater_,
+  google::protobuf::Arena* arena, Service_context& service_context
 ): net(neural_network)
 ,  context(service_context)
 ,  transfer_function(context)
-,  net_solution(Solution_builder(context).service_context(context).build(net))
+,  net_solution(Solution_builder(context).arena_ptr(arena).service_context(context).build(net))
 ,  solvers()
 ,  train_set(train_set_)
 ,  test_set(test_set_)
@@ -61,6 +62,12 @@ Sparse_net_optimizer::Sparse_net_optimizer(
   solve_threads.reserve(context.get_max_solve_threads());
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
     solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
+    
+    if(train_set.get_feature_size() != solvers.back()->get_output_size()){
+      std::cout << train_set.get_feature_size() << "!=" << solvers.back()->get_output_size() << std::endl;
+      throw std::runtime_error("Network output size doesn't match size of provided training labels!");
+    }
+
     neuron_data_sequences.push_back(Data_ringbuffer(train_set_.get_sequence_size(), neural_network.neuron_array_size()));
     error_values[threads] = vector<unique_ptr<atomic<sdouble32>>>();
     error_values[threads].reserve(net.neuron_array_size());
@@ -147,9 +154,6 @@ void Sparse_net_optimizer::evaluate_thread(uint32 solve_thread_index, uint32 sam
 void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate){
   uint32 raw_sample_index;
   uint32 raw_inputs_index;
-
-  if(train_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
-    throw std::runtime_error("Network output size doesn't match size of provided training labels!");
 
   for(uint32 sample = 0; sample < samples_to_evaluate; ++sample){
     raw_sample_index = rand()%(train_set.get_number_of_sequences()); /* decide on the index of a random sample */

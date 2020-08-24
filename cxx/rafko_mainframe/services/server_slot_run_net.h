@@ -46,11 +46,13 @@ class Server_slot_run_net : public Server_slot{
 public:
   Server_slot_run_net(Service_context& context_)
   :  context(context_)
-  ,  network_input()
   ,  network()
   ,  network_solution()
   ,  network_solver()
-  { service_slot.set_type(SERV_SLOT_TO_RUN); }
+  { 
+    service_slot->set_type(SERV_SLOT_TO_RUN);
+    network = google::protobuf::Arena::CreateMessage<SparseNet>(&arena);
+  }
 
   void initialize(Service_slot&& service_slot_);
   void update_network(SparseNet&& net_);
@@ -67,13 +69,13 @@ public:
   }
   
   SparseNet get_network(void) const{
-    return network;
+    return *network;
   }
 
   Slot_response get_status(void) const{
     Slot_response ret;
-    ret.set_slot_id(service_slot.slot_id());
-    ret.set_slot_state(service_slot.state());
+    ret.set_slot_id(service_slot->slot_id());
+    ret.set_slot_state(service_slot->state());
     return ret;
   }
 
@@ -98,9 +100,8 @@ public:
 
 protected:
   Service_context& context;
-  vector<sdouble32> network_input;
-  SparseNet network;
-  Solution network_solution;
+  SparseNet* network;
+  Solution* network_solution;
   unique_ptr<Solution_solver> network_solver;
 };
 

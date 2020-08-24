@@ -46,7 +46,7 @@ public:
   ,  test_set()
   ,  network_approximizer()
   ,  iteration(0)
-  { service_slot.set_type(SERV_SLOT_TO_APPROXIMIZE); }
+  { service_slot->set_type(SERV_SLOT_TO_APPROXIMIZE); }
 
   void initialize(Service_slot&& service_slot_);
   void accept_request(uint32 request_bitstring);
@@ -59,7 +59,7 @@ public:
   }
 
   void loop(void){
-    if(SERV_SLOT_OK == service_slot.state()){
+    if(SERV_SLOT_OK == service_slot->state()){
       network_approximizer->collect_fragment();
       network_approximizer->apply_fragment();
       ++iteration;
@@ -67,7 +67,7 @@ public:
   }
 
   void reset(void){
-    if(0 < service_slot.state()){
+    if(0 < service_slot->state()){
       training_set->reset_errors();
       test_set->reset_errors();
       network_approximizer->discard_fragment();
@@ -75,7 +75,7 @@ public:
   }
 
   Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const{
-    if((training_set)&&(0 < service_slot.state())){
+    if((training_set)&&(0 < service_slot->state())){
       Neural_io_stream result;
       result.set_sequence_size(training_set->get_sequence_size());
       if(get_input)result.set_input_size(training_set->get_input_sample(0).size());
@@ -87,7 +87,7 @@ public:
   }
 
   Neural_io_stream get_test_sample(uint32 sample_index, bool get_input, bool get_label) const{
-    if((training_set)&&(0 < service_slot.state())){
+    if((training_set)&&(0 < service_slot->state())){
       Neural_io_stream result;
       result.set_sequence_size(test_set->get_sequence_size());
       if(get_input)result.set_input_size(test_set->get_input_sample(0).size());
