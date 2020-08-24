@@ -142,18 +142,18 @@ bool Partial_solution_solver::is_valid(void) const{
       for(uint32 neuron_iterator = 0; neuron_iterator < detail.internal_neuron_number(); neuron_iterator++){
         count_of_input_indexes = 0;
         count_of_input_weights = 0;
-        for(uint32 neuron_input_iterator = 0; neuron_input_iterator < detail.index_synapse_number(neuron_iterator); ++neuron_input_iterator){
-          count_of_input_indexes += detail.inside_indices(index_synapse_iterator_start + neuron_input_iterator).interval_size();
+        for(uint32 input_iterator = 0; input_iterator < detail.index_synapse_number(neuron_iterator); ++input_iterator){
+          count_of_input_indexes += detail.inside_indices(index_synapse_iterator_start + input_iterator).interval_size();
           if( /* If a synapse input in a Neuron points after the neurons index */
-            (detail.inside_indices(index_synapse_iterator_start + neuron_input_iterator).starts()
-             + detail.inside_indices(index_synapse_iterator_start + neuron_input_iterator).interval_size() ) >= neuron_iterator
+            (detail.inside_indices(index_synapse_iterator_start + input_iterator).starts()
+             + detail.inside_indices(index_synapse_iterator_start + input_iterator).interval_size() ) >= neuron_iterator
           ){ /* Self-recurrence is simulated by adding the current data of a neuron as an input into the solution detail */
             return false;
           }
 
           /* Check if the number of weights match the number of input indexes for every Neuron */
-          for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < detail.weight_synapse_number(neuron_iterator); ++neuron_weight_iterator){
-            count_of_input_weights +=  detail.weight_indices(weight_synapse_iterator_start + neuron_weight_iterator).interval_size();
+          for(uint32 input_iterator = 0; input_iterator < detail.weight_synapse_number(neuron_iterator); ++input_iterator){
+            count_of_input_weights +=  detail.weight_indices(weight_synapse_iterator_start + input_iterator).interval_size();
           }
           weight_synapse_iterator_start += detail.weight_synapse_number(neuron_iterator);
           index_synapse_iterator_start += detail.index_synapse_number(neuron_iterator);

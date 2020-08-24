@@ -119,16 +119,16 @@ void test_solution_solver_multithread(uint16 threads){
 
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights biases and memory filters */
-      for(int i = 0; i < solution.partial_solutions(0).weight_table_size(); ++i){
+      for(sint32 i = 0; i < solution.partial_solutions(0).weight_table_size(); ++i){
         solution.mutable_partial_solutions(0)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
-      for(int i = 0; i < solution.partial_solutions(1).weight_table_size(); ++i){
+      for(sint32 i = 0; i < solution.partial_solutions(1).weight_table_size(); ++i){
         solution.mutable_partial_solutions(1)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
-      for(int i = 0; i < solution.partial_solutions(2).weight_table_size(); ++i){
+      for(sint32 i = 0; i < solution.partial_solutions(2).weight_table_size(); ++i){
         solution.mutable_partial_solutions(2)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
-      for(int i = 0; i < solution.partial_solutions(3).weight_table_size(); ++i){
+      for(sint32 i = 0; i < solution.partial_solutions(3).weight_table_size(); ++i){
         solution.mutable_partial_solutions(3)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
 

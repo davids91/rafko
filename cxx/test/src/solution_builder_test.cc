@@ -76,15 +76,15 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
   bool found;
   for(sint32 neuron_iterator = 0; neuron_iterator < net->neuron_array_size(); ++neuron_iterator){
     found = false;
-    for(sint32 partial_solution_iterator = 0; partial_solution_iterator < solution->partial_solutions_size(); ++partial_solution_iterator){
+    for(sint32 partial_iterator = 0; partial_iterator < solution->partial_solutions_size(); ++partial_iterator){
       for(
         uint32 internal_neuron_iterator = 0;
-        internal_neuron_iterator < solution->partial_solutions(partial_solution_iterator).internal_neuron_number();
+        internal_neuron_iterator < solution->partial_solutions(partial_iterator).internal_neuron_number();
         ++internal_neuron_iterator
       ){
         if(
           static_cast<sint32>(
-            solution->partial_solutions(partial_solution_iterator).output_data().starts() + internal_neuron_iterator
+            solution->partial_solutions(partial_iterator).output_data().starts() + internal_neuron_iterator
           ) == neuron_iterator
         ){
           found = true;

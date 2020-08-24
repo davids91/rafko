@@ -97,8 +97,8 @@ public:
   sdouble32 next_weight() const{
     return next_weight_for(TRANSFER_FUNCTION_IDENTITY);
   }
-protected:
 
+protected:
   Service_context& context;
 
   /**

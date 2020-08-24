@@ -240,42 +240,42 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     REQUIRE( 0 < net->neuron_array(i).input_indices_size() );
     CHECK( 1 == net->neuron_array(i).input_indices_size() ); /* One synapse ==> the previous layer */
     number_of_input_indexes = 0;
-    for(int index_synapse_iterator = 0; index_synapse_iterator < net->neuron_array(i).input_indices_size(); ++index_synapse_iterator){
+    for(sint32 index_syn_iter = 0; index_syn_iter < net->neuron_array(i).input_indices_size(); ++index_syn_iter){
       REQUIRE( /* Every index synapse element has to point inside the neuron array */
         net->neuron_array_size() >
-        static_cast<sint32>( net->neuron_array(i).input_indices(index_synapse_iterator).starts()
-          + net->neuron_array(i).input_indices(index_synapse_iterator).interval_size() )
+        static_cast<sint32>( net->neuron_array(i).input_indices(index_syn_iter).starts()
+          + net->neuron_array(i).input_indices(index_syn_iter).interval_size() )
       );
-      number_of_input_indexes += net->neuron_array(i).input_indices(index_synapse_iterator).interval_size();
+      number_of_input_indexes += net->neuron_array(i).input_indices(index_syn_iter).interval_size();
     }
 
 
     /* Check Weight indexes */
     number_of_input_weights = 0;
     REQUIRE( 0 < net->neuron_array(i).input_weights_size() );
-    for(int weight_synapse_iterator = 0; weight_synapse_iterator < net->neuron_array(i).input_weights_size(); ++weight_synapse_iterator){
+    for(sint32 weight_syn_iterator = 0; weight_syn_iterator < net->neuron_array(i).input_weights_size(); ++weight_syn_iterator){
       /* Bias and memory filter index has to point inside the weight table array*/
       REQUIRE( net->weight_table_size() > static_cast<sint32>(net->neuron_array(i).memory_filter_idx()) );
 
       /* Weights */
       REQUIRE( /* Every weight synapse element has to point inside the weight table array */
         net->weight_table_size() >= /* Equality is permitted here, because the interval iterates from (start) to (start + size - 1) */
-        static_cast<sint32>( net->neuron_array(i).input_weights(weight_synapse_iterator).starts()
-          + net->neuron_array(i).input_weights(weight_synapse_iterator).interval_size() )
+        static_cast<sint32>( net->neuron_array(i).input_weights(weight_syn_iterator).starts()
+          + net->neuron_array(i).input_weights(weight_syn_iterator).interval_size() )
       );
-      for(uint32 weight_iterator = 0; weight_iterator < net->neuron_array(i).input_weights(weight_synapse_iterator).interval_size(); ++weight_iterator){
+      for(uint32 weight_iterator = 0; weight_iterator < net->neuron_array(i).input_weights(weight_syn_iterator).interval_size(); ++weight_iterator){
         CHECK( /* The weights of the Neuron has to be inbetween (-1;1) */
           -double_literal(1.0) <= net->weight_table(
-            net->neuron_array(i).input_weights(weight_synapse_iterator).starts() + weight_iterator
+            net->neuron_array(i).input_weights(weight_syn_iterator).starts() + weight_iterator
           )
         );
         CHECK(
           double_literal(1.0) >= net->weight_table(
-            net->neuron_array(i).input_weights(weight_synapse_iterator).starts() + weight_iterator
+            net->neuron_array(i).input_weights(weight_syn_iterator).starts() + weight_iterator
           )
         );
       }
-      number_of_input_weights += net->neuron_array(i).input_weights(weight_synapse_iterator).interval_size();
+      number_of_input_weights += net->neuron_array(i).input_weights(weight_syn_iterator).interval_size();
     }
 
     /* See if number on inputs are the same for indexes and weights */
