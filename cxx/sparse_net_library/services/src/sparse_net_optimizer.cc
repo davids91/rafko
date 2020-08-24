@@ -117,7 +117,10 @@ void Sparse_net_optimizer::step(void){
     const uint32 samples_to_evaluate = 1 + static_cast<uint32>(train_set.get_number_of_sequences()/context.get_max_solve_threads());
     for(
       uint32 thread_index = 0;
-      thread_index < min(test_set.get_number_of_sequences(),static_cast<uint32>(context.get_max_solve_threads()));
+      thread_index < min(
+        static_cast<uint32>(test_set.get_number_of_sequences()/samples_to_evaluate),
+        static_cast<uint32>(context.get_max_solve_threads())
+      );
       ++thread_index
     ){
       solve_threads.push_back(thread(
