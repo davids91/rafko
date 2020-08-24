@@ -166,7 +166,7 @@ public class DashboardController implements Initializable {
     void evaluate_chart_timings(){
         double next_interval = Math.max(300,Math.min(7200,
             1000 / (Math.max(0.01, Math.abs(error_moving_average - error_moving_average_last_value)))
-        )) * 1000; /* convert to seconds */
+        ));// * 1000; /* convert to seconds */
         chart_timeline.stop();
         chart_timeline = new Timeline((new KeyFrame(
             Duration.millis(next_interval), event_ -> ask_for_progress())
@@ -175,7 +175,10 @@ public class DashboardController implements Initializable {
         chart_supervisor_timeline.stop();
         chart_supervisor_timeline = new Timeline(new KeyFrame(Duration.millis(next_interval / 10.0), event -> evaluate_chart_timings()));
         chart_supervisor_timeline.setCycleCount(Animation.INDEFINITE);
-        if(training_started)chart_supervisor_timeline.play();
+        if(training_started){
+            chart_supervisor_timeline.play();
+            chart_timeline.play();
+        }
     }
 
     void ask_for_progress(){
@@ -558,7 +561,7 @@ public class DashboardController implements Initializable {
             &&((selected_slot_state == RafkoDeepLearningService.Slot_state_values.SERV_SLOT_OK_VALUE)
             ||(0 == (selected_slot_state & RafkoDeepLearningService.Slot_state_values.SERV_SLOT_MISSING_NET_VALUE)))
         ){
-            File network_file = network_filechooser.showOpenDialog(Global.primaryStage);
+            File network_file = network_filechooser.showSaveDialog(Global.primaryStage);
             try (FileOutputStream stream = new FileOutputStream(network_file)){
                 stream.write(loaded_neural_network.toByteArray());
             } catch (IOException e) {
