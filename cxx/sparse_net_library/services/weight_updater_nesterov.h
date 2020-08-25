@@ -38,7 +38,7 @@ public:
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity_at_start.begin());
   }
 
-protected: 
+private:
   sdouble32 get_new_velocity(uint32 weight_index, const vector<unique_ptr<atomic<sdouble32>>>& gradients){
     if(!is_finished()) return (
       (previous_velocity[weight_index] * context.get_gamma())
@@ -50,7 +50,6 @@ protected:
     );
   }
 
-private:
   vector<sdouble32> previous_velocity_at_start;
   vector<sdouble32> previous_velocity;
 };
