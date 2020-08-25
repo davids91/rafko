@@ -31,6 +31,7 @@ public:
   void initialize(Service_slot&& service_slot_);
   void loop(void);
   void reset(void);
+  void update_network(Build_network_request&& request);
   void update_network(SparseNet&& net_);
   void accept_request(uint32 accept_request);
   Slot_info get_info(uint32 request_bitstring);

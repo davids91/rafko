@@ -38,9 +38,6 @@ using std::shared_ptr;
  * There are Two ways to use this class. One is to add the required building blocks of a Network
  * manually. The Other is to use one of the higher level construction functions like @Sparse_net_builder::dense_layers.
  * Some parameters needed to be added unconditionally, which is checked by @Sparse_net_builder::io_pre_requisites_set.
- * Ownership of the returned built SparseNet depends on the arena argument value:
- * - In case the arena is a nullptr, the ownership is of the caller of the function
- * - In case the arena is valid, it has the ownership
  */
 class Sparse_net_builder{
 public:
@@ -130,20 +127,6 @@ public:
       arg_weight_table = table;
       is_weight_table_set = true;
     }else is_weight_table_set = false;
-    return *this;
-  }
-
-  /**
-   * @brief    Sets the Google protobuffer arena reference in the builder, to
-   *           make allocation more effective, assign built net ownership automatically.
-   *           It's an optional parameter
-   *
-   * @param    arena  The pointer to a protobuf arena
-   *
-   * @return   builder reference for chaining
-   */
-  Sparse_net_builder& arena_ptr(google::protobuf::Arena* arena){
-    arg_arena = arena;
     return *this;
   }
 
@@ -265,12 +248,6 @@ private:
   uint32 arg_output_neuron_number = 0;
 
   vector<vector<transfer_functions> > arg_allowed_transfer_functions_by_layer;
-
-  /**
-   * Points to the Arena which may be optionally given to the builder for
-   * a more effective net allocation.
-   */
-  google::protobuf::Arena* arg_arena = nullptr;
 
   /**
    * @brief Sparse_net_builder::set_neuron_array: moves the neuron_array argument into the SparseNet

@@ -197,7 +197,7 @@ void Server_slot_approximize_net::update_trainer(void){
     service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_TRAINER);
     service_slot->set_weight_updater(service_slot->weight_updater());
     network_approximizer = std::make_unique<Sparse_net_approximizer>(
-      *network, *training_set, *test_set, service_slot->weight_updater(), &arena, context
+      *network, *training_set, *test_set, service_slot->weight_updater(), context
     );
     if(network_approximizer){
       service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_TRAINER);

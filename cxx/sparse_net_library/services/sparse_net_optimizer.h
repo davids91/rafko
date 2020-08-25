@@ -56,21 +56,23 @@ class Sparse_net_optimizer{
 public:
   Sparse_net_optimizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-    cost_functions the_function, weight_updaters weight_updater_,
-    google::protobuf::Arena* arena, Service_context& service_context
+    cost_functions the_function, weight_updaters weight_updater_, Service_context& service_context
   ): Sparse_net_optimizer(
     neural_network, train_set_, test_set_,
     Function_factory::build_cost_function(neural_network, the_function, service_context),
-    weight_updater_, arena, service_context
+    weight_updater_, service_context
   ){ }
 
   Sparse_net_optimizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-    shared_ptr<Cost_function> the_function, weight_updaters weight_updater_,
-    google::protobuf::Arena* arena, Service_context& service_context
+    shared_ptr<Cost_function> the_function, weight_updaters weight_updater_, Service_context& service_context
   );
 
-  ~Sparse_net_optimizer(void){ solvers.clear(); }
+  ~Sparse_net_optimizer(void){
+    solvers.clear();
+    if(nullptr == context.get_arena_ptr())
+      delete net_solution;
+  }
   Sparse_net_optimizer(const Sparse_net_optimizer& other) = delete;/* Copy constructor */
   Sparse_net_optimizer(Sparse_net_optimizer&& other) = delete; /* Move constructor */
   Sparse_net_optimizer& operator=(const Sparse_net_optimizer& other) = delete; /* Copy assignment */
@@ -110,7 +112,7 @@ private:
   Service_context& context;
   Transfer_function transfer_function;
 
-  unique_ptr<Solution> net_solution;
+  Solution* net_solution;
   vector<unique_ptr<Solution_solver>> solvers;
   Data_aggregate& train_set;
   Data_aggregate& test_set;

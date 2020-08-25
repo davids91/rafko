@@ -44,25 +44,50 @@ using std::unique_ptr;
  */
 class Server_slot_run_net : public Server_slot{
 public:
-  Server_slot_run_net(Service_context& context_)
-  :  context(context_)
+  Server_slot_run_net()
+  :  Server_slot()
   ,  network()
   ,  network_solution()
   ,  network_solver()
   { 
     service_slot->set_type(SERV_SLOT_TO_RUN);
-    network = google::protobuf::Arena::CreateMessage<SparseNet>(&arena);
+    network = google::protobuf::Arena::CreateMessage<SparseNet>(context.get_arena_ptr());
   }
 
   void initialize(Service_slot&& service_slot_);
-  void update_network(SparseNet&& net_);
   void refresh_solution(void);
+  Neural_io_stream run_net_once(const Neural_io_stream& data_stream);
+  ~Server_slot_run_net(void){ }
+
+  /* Inlinable interfaces */
+  void update_network(Build_network_request&& request){
+    expose_state();
+    service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_NET);
+
+    if((0 == request.layer_sizes_size())||(request.layer_sizes_size() != request.allowed_transfers_by_layer_size()))
+      throw new std::runtime_error("Invalid network build request!");
+
+    if(get_uuid() == request.target_slot_id()){
+      *network = *build_network_from_request(std::move(request));
+      if(nullptr != network) service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_NET);
+      refresh_solution();
+    }
+    finalize_state();
+  }
+
+  void update_network(SparseNet&& net_){
+    expose_state();
+    if(0 < net_.neuron_array_size()){
+      *network = std::move(net_);
+      service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_NET);
+      refresh_solution();
+    }
+    finalize_state();
+  }
 
   void reset(void){
     update_network(SparseNet());
   }
-
-  Neural_io_stream run_net_once(const Neural_io_stream& data_stream);
 
   Slot_info get_info(uint32 request_bitstring){
     return Slot_info(); /* No info to be provided */
@@ -78,8 +103,6 @@ public:
     ret.set_slot_state(service_slot->state());
     return ret;
   }
-
-  ~Server_slot_run_net(void){ }
 
   /* Not supported interfaces */
   void loop(void){
@@ -99,7 +122,6 @@ public:
   }
 
 protected:
-  Service_context& context;
   SparseNet* network;
   Solution* network_solution;
   unique_ptr<Solution_solver> network_solver;

@@ -19,6 +19,10 @@
 
 #include <random>
 #include <memory>
+#include <vector>
+
+#include "gen/common.pb.h"
+#include "sparse_net_library/services/sparse_net_builder.h"
 
 namespace rafko_mainframe{
 
@@ -26,6 +30,11 @@ using std::string;
 using std::random_device;
 using std::mt19937;
 using std::uniform_int_distribution;
+using std::vector;
+
+using sparse_net_library::Sparse_net_builder;
+using sparse_net_library::transfer_functions;
+using sparse_net_library::transfer_functions_IsValid;
 
 string Server_slot::generate_uuid(void){
   static random_device dev;
@@ -96,6 +105,26 @@ void Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sa
       }
     }
     target.set_feature_size(0); /* Not filling that up this time.. */
+  }
+}
+
+SparseNet* Server_slot::build_network_from_request(Build_network_request&& request){
+  if(0 < request.allowed_transfers_by_layer_size()){
+    uint32 layer_index = 0;
+    vector<vector<transfer_functions>> allowed_transfers(request.allowed_transfers_by_layer_size());
+    for(const sint32& allowed : request.allowed_transfers_by_layer()){
+      if(transfer_functions_IsValid(static_cast<transfer_functions>(allowed)))
+        allowed_transfers[layer_index++] = vector<transfer_functions>(1, static_cast<transfer_functions>(allowed));
+      else throw new std::runtime_error("Unknown transfer function detected!");
+    }
+    return Sparse_net_builder(context).input_size(request.input_size())
+      .expected_input_range(request.expected_input_range())
+      .allowed_transfer_functions_by_layer(allowed_transfers)
+      .dense_layers({request.layer_sizes().begin(),request.layer_sizes().end()});
+  }else{
+    return Sparse_net_builder(context).input_size(request.input_size())
+      .expected_input_range(request.expected_input_range())
+      .dense_layers({request.layer_sizes().begin(),request.layer_sizes().end()});
   }
 }
 

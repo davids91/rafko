@@ -43,7 +43,9 @@ class Server_slot{
 public: 
   Server_slot(void)
   : arena()
+  , context()
   {
+    (void)context.set_arena_ptr(&arena);
     service_slot = google::protobuf::Arena::CreateMessage<Service_slot>(&arena);
     service_slot->set_slot_id(generate_uuid());
   }
@@ -65,6 +67,13 @@ public:
    * @brief      Resets the object.
    */
   virtual void reset(void) = 0;
+
+  /**
+   * @brief      Build a new network in place of the current one based on the build request
+   *
+   * @param      request  The request containing the parameters of the network to be built
+   */
+  virtual void update_network(Build_network_request&& request) = 0;
 
   /**
    * @brief      Update the currently loaded network with the provided one
@@ -137,9 +146,21 @@ public:
    */
   Slot_response get_status(void) const;
 
-protected:
+private:
   google::protobuf::Arena arena;
+
+protected:
+  Service_context context;
   Service_slot* service_slot;
+
+  /**
+   * @brief      Builds a network from the given request
+   *
+   * @param      request  The request containing the parameters of the network to be built
+   *
+   * @return     The built network, belonging to the arena in the service slot
+   */
+  SparseNet* build_network_from_request(Build_network_request&& request);
 
   /**
    * @brief      Generates a unique identifier, with a guarantee that the currently 

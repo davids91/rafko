@@ -34,12 +34,11 @@ using std::max;
 
 Sparse_net_optimizer::Sparse_net_optimizer(
   SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-  shared_ptr<Cost_function> the_function, weight_updaters weight_updater_,
-  google::protobuf::Arena* arena, Service_context& service_context
+  shared_ptr<Cost_function> the_function, weight_updaters weight_updater_, Service_context& service_context
 ): net(neural_network)
 ,  context(service_context)
 ,  transfer_function(context)
-,  net_solution(Solution_builder(context).arena_ptr(arena).service_context(context).build(net))
+,  net_solution(Solution_builder(context).build(net))
 ,  solvers()
 ,  train_set(train_set_)
 ,  test_set(test_set_)

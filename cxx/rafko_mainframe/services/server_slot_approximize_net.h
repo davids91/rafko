@@ -39,8 +39,8 @@ using std::shared_ptr;
  */
 class Server_slot_approximize_net : public Server_slot_run_net{
 public:
-  Server_slot_approximize_net(Service_context& context_)
-  :  Server_slot_run_net(context_)
+  Server_slot_approximize_net()
+  :  Server_slot_run_net()
   ,  cost_function()
   ,  training_set()
   ,  test_set()
@@ -51,6 +51,12 @@ public:
   void initialize(Service_slot&& service_slot_);
   void accept_request(uint32 request_bitstring);
   Slot_info get_info(uint32 request_bitstring);
+
+  void update_network(Build_network_request&& request){
+    Server_slot_run_net::update_network(std::move(request));
+    update_cost_function();
+    update_trainer();
+  }
 
   void update_network(SparseNet&& net_){
     Server_slot_run_net::update_network(std::move(net_));

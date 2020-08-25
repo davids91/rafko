@@ -61,7 +61,7 @@ using rafko_mainframe::Service_context;
  * */
 TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context().set_step_size(1e-4);
+  Service_context service_context = Service_context().set_step_size(1e-4).set_arena_ptr(&arena);
 
   /* Create nets */
   vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
@@ -75,9 +75,9 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   ));
 
   /* Create dataset, test set and aprroximizer */
-  Data_aggregate* train_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, &arena, service_context);
-  Data_aggregate* test_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, &arena, service_context);
-  Sparse_net_approximizer approximizer(*nets[0],*train_set,*test_set,WEIGHT_UPDATER_NESTEROV, &arena, service_context);
+  Data_aggregate* train_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
+  Data_aggregate* test_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
+  Sparse_net_approximizer approximizer(*nets[0],*train_set,*test_set,WEIGHT_UPDATER_NESTEROV, service_context);
 
   /* adding a simple-weight-gradient fragment */
   uint32 weight_index = rand()%(nets[0]->weight_table_size());
@@ -137,7 +137,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
  * */
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context().set_step_size(1e-4);
+  Service_context service_context = Service_context().set_step_size(1e-4).set_arena_ptr(&arena);
   uint32 number_of_samples = 50;
 
   /* Create nets */
@@ -154,8 +154,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   ));
 
   /* Create dataset, test set and optimizers; optimize nets */
-  Data_aggregate* train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, &arena, service_context);
-  Data_aggregate* test_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, &arena, service_context);
+  Data_aggregate* train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
+  Data_aggregate* test_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -172,7 +172,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   iteration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_approximizer approximizer(
-    *nets[0], *train_set, *test_set, WEIGHT_UPDATER_NESTEROV, &arena, service_context
+    *nets[0], *train_set, *test_set, WEIGHT_UPDATER_NESTEROV, service_context
   );
 
   std::cout << "Optimizing net.." << std::endl;

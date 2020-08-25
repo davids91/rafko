@@ -74,7 +74,6 @@ private:
   vector<unique_ptr<mutex>> server_slot_mutexs;
   vector<uint8> is_server_slot_running;
   mutex server_mutex; /* Aims to protect modification of the state of the server ( mainly Server_slots ) */
-  Service_context service_context;
 
   /**
    * @brief      Tries to find the index of the server slot with the given identifier

@@ -40,20 +40,10 @@ void Server_slot_run_net::refresh_solution(void){
   expose_state();
   service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_SOLUTION);
   if(0 < network->neuron_array_size()){
-    network_solution = Solution_builder(context).arena_ptr(&arena).build(*network);
+    network_solution = Solution_builder(context).build(*network);
     network_solver = std::make_unique<Solution_solver>(*network_solution, context);
     service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_SOLUTION);
   }else service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_NET);
-  finalize_state();
-}
-
-void Server_slot_run_net::update_network(SparseNet&& net_){
-  expose_state();
-  if(0 < net_.neuron_array_size()){
-    *network = std::move(net_);
-    service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_NET);
-    refresh_solution();
-  }
   finalize_state();
 }
 

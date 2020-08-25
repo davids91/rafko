@@ -60,7 +60,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
       ||(arg_output_neuron_number == layer_sizes.back()) /* Or compliant to the Dense layer */
     )
   ){
-    SparseNet* ret(google::protobuf::Arena::CreateMessage<SparseNet>(arg_arena));
+    SparseNet* ret = google::protobuf::Arena::CreateMessage<SparseNet>(context.get_arena_ptr());
     uint32 layer_input_starts_at = 0;
     uint64 weightIt = 0;
     uint64 neurIt = 0;
@@ -202,7 +202,7 @@ SparseNet* Sparse_net_builder::build(void){
     &&(0 < arg_weight_table.size())&&(0 < arg_neuron_array.size()) /* There are at least some Neurons and Weights */
     &&(arg_output_neuron_number <= arg_neuron_array.size()) /* Output size isn't too big */
   ){
-    SparseNet* ret = google::protobuf::Arena::CreateMessage<SparseNet>(arg_arena);
+    SparseNet* ret = google::protobuf::Arena::CreateMessage<SparseNet>(context.get_arena_ptr());
     ret->set_input_data_size(arg_input_size);
     ret->set_output_neuron_number(arg_output_neuron_number);
     set_weight_table(ret);

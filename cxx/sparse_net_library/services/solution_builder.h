@@ -63,52 +63,9 @@ public:
    *
    * @param[in]  context  The Service context
    */
-  Solution_builder(Service_context& context){
-    (void)service_context(context);
-  }
-
-  /**
-   * @brief      Set the number of threads to be used while generating the solution to the given @SparseNet
-   *
-   * @param[in]  number  The number of threads to be used
-   *
-   * @return     Builder reference for chaining
-   */
-  Solution_builder& max_solve_threads(uint8 number){
-    arg_max_solve_threads = number;
-    is_max_solve_threads_set = true;
-    return *this;
-  }
-
-  Solution_builder& device_max_megabytes(sdouble32 megabytes){
-    arg_device_max_megabytes = megabytes;
-    return *this;
-  }
-
-  /**
-   * @brief      Set the used arena pointer
-   *
-   * @param      arena  The arena
-   *
-   * @return     Builder reference for chaining
-   */
-  Solution_builder& arena_ptr(google::protobuf::Arena* arena){
-    arg_arena_ptr = arena;
-    return *this;
-  }
-
-  /**
-   * @brief      Sets parameters providable from a service context
-   *
-   * @param[in]  context  The context
-   *
-   * @return     Builder reference for chaining
-   */
-  Solution_builder& service_context(Service_context& context){
-    return max_solve_threads(context.get_max_solve_threads())
-    .device_max_megabytes(context.get_device_max_megabytes())
-    .arena_ptr(context.get_arena_ptr());
-  }
+  Solution_builder(Service_context& context_)
+  :  context(context_)
+  { }
 
   /**
    * @brief      Build the Solution to be solved by @Solution_solver
@@ -120,13 +77,7 @@ public:
   Solution* build(const SparseNet& net);
 
 private:
-  /**
-   * Helper variables to see if different required arguments are set inside the builder
-   */
-  bool is_max_solve_threads_set = false;
-  google::protobuf::Arena* arg_arena_ptr = nullptr;
-  uint8 arg_max_solve_threads = 1;
-  sdouble32 arg_device_max_megabytes = double_literal(2.0) /* GB */ * double_literal(1024.0)/* MB */;
+  Service_context& context;
 
   static sdouble32 get_size_in_mb(const Partial_solution& partial){
     return partial.SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */;

@@ -20,7 +20,6 @@
 #include <thread>
 
 #include "gen/common.pb.h"
-#include "sparse_net_library/services/sparse_net_builder.h"
 
 #include "rafko_mainframe/services/server_slot_factory.h"
 
@@ -28,7 +27,6 @@ namespace rafko_mainframe{
 
 using sparse_net_library::transfer_functions;
 using sparse_net_library::transfer_functions_IsValid;
-using sparse_net_library::Sparse_net_builder;
 using std::lock_guard;
 using std::thread;
 
@@ -62,7 +60,7 @@ void Deep_learning_server::loop(void){
     lock_guard<mutex> my_lock(server_mutex);
     server_slot_mutexs.push_back(std::make_unique<mutex>());
     server_slots.push_back(unique_ptr<Server_slot>(
-      Server_slot_factory::build_server_slot(request->type(),service_context)
+      Server_slot_factory::build_server_slot(request->type())
     ));
     is_server_slot_running.push_back(0);
     if(server_slots.back()){ /* If Item successfully added */
@@ -139,27 +137,7 @@ void Deep_learning_server::loop(void){
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
-      if(0 < request->allowed_transfers_by_layer_size()){
-        uint32 layer_index = 0;
-        vector<vector<transfer_functions>> allowed_transfers(request->allowed_transfers_by_layer_size());
-        for(const sint32& allowed : request->allowed_transfers_by_layer()){
-          if(transfer_functions_IsValid(static_cast<transfer_functions>(allowed)))
-            allowed_transfers[layer_index++] = vector<transfer_functions>(1, static_cast<transfer_functions>(allowed));
-          else throw new std::runtime_error("Unknown transfer function detected!");
-        }
-        server_slots[slot_index]->update_network(SparseNet(
-          *Sparse_net_builder(service_context).input_size(request->input_size())
-          .expected_input_range(request->expected_input_range())
-          .allowed_transfer_functions_by_layer(allowed_transfers)
-          .dense_layers({request->layer_sizes().begin(),request->layer_sizes().end()})
-        ));
-      }else{
-        server_slots[slot_index]->update_network(SparseNet(
-          *Sparse_net_builder(service_context).input_size(request->input_size())
-          .expected_input_range(request->expected_input_range())
-          .dense_layers({request->layer_sizes().begin(),request->layer_sizes().end()})
-        ));
-      }
+      server_slots[slot_index]->update_network(Build_network_request(*request));
       response->CopyFrom(server_slots[slot_index]->get_status());
       return_value = ::grpc::Status::OK;
     }else return_value = ::grpc::Status::CANCELLED;

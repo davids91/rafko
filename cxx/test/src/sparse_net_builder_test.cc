@@ -60,7 +60,7 @@ using std::vector;
  * 1st and 2nd neurons will have the first as input both
  * */
 SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
-  Service_context service_context;
+  Service_context service_context = Service_context().set_arena_ptr(arena);
 
   /* Create the single Weight Table */
   Index_synapse_interval temp_index_interval;
@@ -110,12 +110,9 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 
   /* Pass the net into the builder */
   shared_ptr<Sparse_net_builder> builder(make_shared<Sparse_net_builder>(service_context));
-  builder->input_size(1)
-    .expected_input_range(double_literal(1.0))
-    .output_neuron_number(2)
-    .arena_ptr(arena)
-    .neuron_array(neuron_table)
-    .weight_table(weight_table);
+  builder->input_size(1).expected_input_range(double_literal(1.0)).output_neuron_number(2)
+    .neuron_array(neuron_table).weight_table(weight_table);
+
   try{
     /* Build the net with the given parameters */
     SparseNet* net(builder->build());
@@ -208,12 +205,11 @@ TEST_CASE("Constructing small net manually using arena","[build][arena][small][m
  * And check manually the connections
  */
 SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
-  Service_context service_context;
+  Service_context service_context = Service_context().set_arena_ptr(arena);
   unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>(service_context));
   builder->input_size(5)
     .output_neuron_number(2)
-    .expected_input_range(double_literal(5.0))
-    .arena_ptr(arena);
+    .expected_input_range(double_literal(5.0));
 
   SparseNet* net(builder->dense_layers(
     {2,3,2},{

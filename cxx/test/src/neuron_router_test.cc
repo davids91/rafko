@@ -53,7 +53,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
   vector<uint32> layer_structure = {2,3,3,5};
   unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>(service_context);
   net_builder->input_size(5).output_neuron_number(5).expected_input_range(double_literal(5.0));
-  SparseNet* net(net_builder->dense_layers(layer_structure));
+  unique_ptr<SparseNet> net = unique_ptr<SparseNet>(net_builder->dense_layers(layer_structure));
   net_builder.reset();
   Neuron_router net_iterator(*net);
 
@@ -113,7 +113,6 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
 
      ++iteration;
   }
-
 }
 
 /*###############################################################################################

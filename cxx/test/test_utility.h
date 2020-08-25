@@ -105,8 +105,7 @@ extern void print_weights(SparseNet& net, Solution& solution);
  * @return     The addition dataset. For each sample: Inputs: [a][b]; Outputs: [a+b]
  */
 extern Data_aggregate* create_addition_dataset(
-  uint32 number_of_samples, SparseNet& net, cost_functions the_function,
-  google::protobuf::Arena* arena, Service_context& service_context
+  uint32 number_of_samples, SparseNet& net, cost_functions the_function, Service_context& service_context
 );
 
 /**
@@ -122,8 +121,7 @@ extern Data_aggregate* create_addition_dataset(
  * @return     The addition dataset. For each sample: Inputs: [[a0][...][an]][[b0][...][bn]]; Outputs: [[result0][...][resultn]]
  */
 extern Data_aggregate* create_sequenced_addition_dataset(
-  uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function,
-  google::protobuf::Arena* arena, Service_context& service_context
+  uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function, Service_context& service_context
 );
 
 };

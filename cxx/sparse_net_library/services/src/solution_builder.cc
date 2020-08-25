@@ -31,10 +31,10 @@ using std::unique_ptr;
 using std::ref;
 using std::lock_guard;
 
-Solution* Solution_builder::build(const SparseNet& net ){
+Solution* Solution_builder::build(const SparseNet& net){
   if(0 == net.output_neuron_number()) throw std::runtime_error("Can't build a solution with 0 output Neurons!");
   Neuron_router neuron_router(net);
-  Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(arg_arena_ptr);
+  Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(context.get_arena_ptr());
   deque<uint32> partial_indices_in_row;
   vector<uint32> last_index_in_partial; /* Contains the last valid index to be included into the partial solution */
   /*!Note: This also implicitly implies that the size of this array also represents the number of partial solutions
@@ -54,10 +54,10 @@ Solution* Solution_builder::build(const SparseNet& net ){
     if( /* Try to extend upon a single partial solution built previously.. */
       (1 == (*(solution->cols().end()-1)))/* There is only one partial solution in this row */
       &&( /* If there is enough space left to put the Neuron into the partial solution */
-        get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) <= arg_device_max_megabytes
+        get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) <= context.get_device_max_megabytes()
       )
     ){ /* Collect solvable neuron indices with loose dependency restrictions */
-      neuron_router.collect_subset(arg_max_solve_threads,arg_device_max_megabytes, false);
+      neuron_router.collect_subset(context.get_max_solve_threads(),context.get_device_max_megabytes(), false);
       if(0 == neuron_router.get_subset_size()){
         add_new_col = true; /* unable to extend the current partial, so a new row is needed */
       }
@@ -67,7 +67,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
         /* as long as it can be continued with the first index of the current subset */
         &&((last_index_in_partial[0] + 1u) == neuron_router.get_neuron_index_from_subset(0))
         &&( /* ..and there is enough space left to put the Neuron into the partial solution */
-          get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) <= arg_device_max_megabytes
+          get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) <= context.get_device_max_megabytes()
         )
       ){
         reach_back = Partial_solution_builder::add_neuron_to_partial_solution(
@@ -90,14 +90,14 @@ Solution* Solution_builder::build(const SparseNet& net ){
       }
       neuron_router.reset_remaining_subset(); /* Subset collection need to restart, because of changed dependencies */
     }else{ /* collect a strict subset, as there is no partial solution to build upon */
-      neuron_router.collect_subset(arg_max_solve_threads,arg_device_max_megabytes, true);
+      neuron_router.collect_subset(context.get_max_solve_threads(),context.get_device_max_megabytes(), true);
       add_new_col = false;
     }
     if( /* There is only one partial solution in the current row as noted by the @cols repeated field */
       (1 == (*(solution->cols().end()-1)))
       &&( /* and the neuron router subset is empty .. */
         (0 == neuron_router.get_subset_size()) /* ..or there is not enough space left in the partial solution */
-        ||(get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) >= arg_device_max_megabytes)
+        ||(get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) >= context.get_device_max_megabytes())
       )
     ){ /* Close the lone partial solution */
       /*!Note: If there is an empty subset, while there is only one partial solution,
@@ -138,7 +138,11 @@ Solution* Solution_builder::build(const SparseNet& net ){
       /* Build the partial solutions based on the assigned indices */
       for(partial_index_in_row = 0; partial_index_in_row < last_index_in_partial.size(); ++partial_index_in_row){ /* for every assigned partial index */
         /* Add a new partial to the solution, and create a builder for it */
-        *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<Partial_solution>(arg_arena_ptr);
+        if(nullptr == context.get_arena_ptr() ){
+          *solution->add_partial_solutions() = Partial_solution();
+        }else{
+          *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<Partial_solution>(context.get_arena_ptr());
+        }
         partial_index_in_solution = solution->partial_solutions_size() - 1; /* It's basically guaranteed by the preceeding line, that (size > 0) */
 
         /* Scan the subset for Neurons assigned to the current partial index */
@@ -148,7 +152,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
           if(
             (partial_indices_in_row[subset_index] == partial_index_in_row) /* if a Neuron in the subset is assigned for the current partial index */
             &&( /* If there is enough space left to put the Neuron into the partial solution */
-              get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) <= arg_device_max_megabytes)
+              get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) <= context.get_device_max_megabytes())
           ){
             reach_back = Partial_solution_builder::add_neuron_to_partial_solution(
               net, neuron_router.get_neuron_index_from_subset(subset_index),
@@ -181,7 +185,7 @@ Solution* Solution_builder::build(const SparseNet& net ){
         (1 < last_index_in_partial.size())
         ||( /* Or there is a single partial solution, but */
           (1 == last_index_in_partial.size()) /* there isn't enoguh space left to put Neurons in it */
-          &&(get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) >= arg_device_max_megabytes)
+          &&(get_size_in_mb(solution->partial_solutions(partial_index_in_solution)) >= context.get_device_max_megabytes())
         )
       ){ /* add a new row by adding a new field under @cols */
         add_new_col = true; /* because it's impossible to extend the solutions without breaking some dependencies */

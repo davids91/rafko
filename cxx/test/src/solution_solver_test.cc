@@ -34,10 +34,6 @@
 
 namespace sparse_net_library_test{
 
-using std::reference_wrapper;
-using std::unique_ptr;
-using std::make_unique;
-
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::SparseNet;
@@ -212,20 +208,18 @@ TEST_CASE("Solution solver manual testing","[solve][small][manual-solve]"){
  * Testing if the solution solver produces a correct output, given a built @SparseNet
  */
 void testing_solution_solver_manually(google::protobuf::Arena* arena){
-  Service_context service_context;
+  Service_context service_context = Service_context()
+  .set_max_solve_threads(4).set_device_max_megabytes(2048)
+  .set_arena_ptr(arena);
   vector<uint32> net_structure = {20,40,30,10,20};
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the described net */
-  unique_ptr<SparseNet> net(
-    Sparse_net_builder(service_context).input_size(5)
-    .expected_input_range(double_literal(5.0))
-    .arena_ptr(arena).dense_layers(net_structure)
-  );
+  SparseNet* net = Sparse_net_builder(service_context).input_size(5)
+    .expected_input_range(double_literal(5.0)).dense_layers(net_structure);
 
   /* Generate solution from Net */
-  unique_ptr<Solution_builder> solution_builder = make_unique<Solution_builder>(service_context);
-  Solution* solution = solution_builder->max_solve_threads(4).device_max_megabytes(2048).arena_ptr(arena).build(*net);
+  Solution* solution = Solution_builder(service_context).build(*net);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   Solution_solver solver(*solution, service_context);
@@ -241,10 +235,9 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
     CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
 
   /* Re-veriy with guaranteed multiple partial solutions */
-  sdouble32 solution_size = solution->SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
-  Solution* solution2 = solution_builder->max_solve_threads(4)
-    .device_max_megabytes(solution_size/double_literal(4.0))
-    .arena_ptr(arena).build(*net);
+  sdouble32 solution_size_mb = solution->SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
+  (void)service_context.set_device_max_megabytes(solution_size_mb/double_literal(4.0));
+  Solution* solution2 = Solution_builder(service_context).build(*net);
 
   Solution_solver solver2(*solution2, service_context);
   solver2.solve(net_input);
@@ -255,8 +248,9 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
     CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
 
   if(nullptr == arena){
-    delete solution;
     delete solution2;
+    delete solution;
+    delete net;
   }
 }
 
@@ -275,7 +269,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   };
 
   /* Build the above described net */
-  Service_context service_context;
+  Service_context service_context = Service_context().set_device_max_megabytes(max_space_mb);
   Sparse_net_builder net_builder = Sparse_net_builder(service_context);
   net_builder.input_size(5).expected_input_range(double_literal(5.0));
   if(NETWORK_RECURRENCE_TO_SELF == recurrence)
@@ -283,12 +277,10 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   else if(NETWORK_RECURRENCE_TO_LAYER == recurrence)
     net_builder.set_recurrence_to_layer();
 
-  unique_ptr<SparseNet> net(net_builder.dense_layers(net_structure));
+  SparseNet* net = net_builder.dense_layers(net_structure);
 
   /* Generate solution from Net */
-  unique_ptr<Solution> solution = unique_ptr<Solution>(
-    Solution_builder(service_context).device_max_megabytes(max_space_mb).build(*net)
-  );
+  Solution* solution = Solution_builder(service_context).build(*net);
   Solution_solver solver(*solution, service_context);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
@@ -322,7 +314,14 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   }
 
   /* Return with the size of the overall solution */
-  return solution->SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
+  sdouble32 space_used_mb = solution->SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
+  
+  if(nullptr == service_context.get_arena_ptr()){
+    delete solution;
+    delete net;
+  }
+
+  return space_used_mb;
 }
 
 TEST_CASE("Solution Solver test with memory", "[solve][memory]"){

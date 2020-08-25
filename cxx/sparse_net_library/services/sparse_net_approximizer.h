@@ -50,7 +50,7 @@ class Sparse_net_approximizer{
 public:
   Sparse_net_approximizer(
     SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-    weight_updaters weight_updater_, google::protobuf::Arena* arena, Service_context& service_context
+    weight_updaters weight_updater_, Service_context& service_context
   );
 
   ~Sparse_net_approximizer(void){ solvers.clear(); }
