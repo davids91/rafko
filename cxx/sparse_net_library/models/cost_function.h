@@ -21,11 +21,7 @@
 #include "sparse_net_global.h"
 
 #include <vector>
-#include <thread>
-#include <mutex>
 #include <future>
-#include <functional>
-#include <cmath>
 
 #include "rafko_mainframe/models/service_context.h"
 
@@ -33,8 +29,7 @@ namespace sparse_net_library{
 
 using std::vector;
 using std::atomic;
-using std::mutex;
-using std::thread;
+using std::future;
 
 using rafko_mainframe::Service_context;
 
@@ -46,19 +41,20 @@ class Cost_function{
 public:
   Cost_function(uint32 feature_size_, cost_functions the_function_, Service_context& service_context)
   : context(service_context)
-  , process_threads()
+  , thread_results()
   , feature_size(feature_size_)
-  , error_value()
   , the_function(the_function_)
-  { process_threads.reserve(service_context.get_max_processing_threads()); };
+  { thread_results.reserve(service_context.get_max_processing_threads()); };
 
   /**
    * @brief      Gets the error for a feature for a label set under the given index
    *
-   * @param[in]  sample_index   The index of the sample in the dataset
-   * @param[in]  label_index    The index of the datapoint inside the sample
+   * @param[in]  labels         The array containing the labels to compare the given neuron data to
+   * @param[in]  neuron_data    The neuron data to compare for the given labels array
+   * @param[in]  sample_number  The overall count of the samples to be used in the final calculations(e.g. in mean squared error)
+   * @param[in]  thread_index   The index to be used for this processing run
    *
-   * @return     The error.
+   * @return     The feature error.
    */
   sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 sample_number);
 
@@ -90,10 +86,8 @@ public:
 
 protected:
   Service_context& context;
-  vector<thread> process_threads;
+  vector<future<sdouble32>> thread_results;
   uint32 feature_size;
-  mutex error_mutex;
-  atomic<sdouble32> error_value;
 
   virtual sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const = 0;
   virtual sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
@@ -108,8 +102,10 @@ protected:
    * @param[in]  neuron_data    The neuron data
    * @param[in]  start_index    The start index of in the neuron data
    * @param[in]  number_to_add  The number of features to calculate
+   *
+   * @return     returns with the error summary under the range {start_index;(start_index + number_to_add)}
    */
-  void summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add);
+  sdouble32 summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add);
 
 private:
   cost_functions the_function; /* cost function type */
