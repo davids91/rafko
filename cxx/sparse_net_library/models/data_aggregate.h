@@ -49,8 +49,10 @@ public:
   ,  input_samples(samples_.inputs_size() / samples_.input_size())
   ,  label_samples(samples_.labels_size() / samples_.feature_size())
   ,  prefill_sequences(static_cast<uint32>((samples_.inputs_size() - samples_.labels_size()) / (samples_.labels_size() / sequence_size)))
-  ,  sample_errors(label_samples.size(),(double_literal(1.0)/label_samples.size()))
-  ,  error_sum(double_literal(1.0))
+  ,  error_state(1,{
+       vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
+       double_literal(1.0)
+     })
   ,  cost_function(cost_function_)
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
@@ -64,8 +66,10 @@ public:
   ,  input_samples(move(input_samples_))
   ,  label_samples(move(label_samples_))
   ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
-  ,  sample_errors(label_samples.size(),(double_literal(1.0)/label_samples.size()))
-  ,  error_sum(double_literal(1.0))
+  ,  error_state(1,{
+       vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
+       double_literal(1.0)
+     })
   ,  cost_function(cost_function_)
   { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
 
@@ -77,8 +81,10 @@ public:
   ,  input_samples(move(input_samples_))
   ,  label_samples(move(label_samples_))
   ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
-  ,  sample_errors(label_samples.size(),(double_literal(1.0)/label_samples.size()))
-  ,  error_sum(double_literal(1.0))
+  ,  error_state(1,{
+       vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
+       double_literal(1.0)
+     })
   ,  cost_function(Function_factory::build_cost_function(net, the_function, service_context_))
   { }
 
@@ -91,11 +97,11 @@ public:
    */
   void set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data){
     if(label_samples.size() > sample_index){
-      error_sum -= sample_errors[sample_index];
-      sample_errors[sample_index] = cost_function->get_feature_error(
+      error_state.back().error_sum -= error_state.back().sample_errors[sample_index];
+      error_state.back().sample_errors[sample_index] = cost_function->get_feature_error(
         label_samples[sample_index], neuron_data, get_number_of_sequences()
       );
-      error_sum += sample_errors[sample_index];
+      error_state.back().error_sum += error_state.back().sample_errors[sample_index];
     }else throw std::runtime_error("Sample index out of bounds!");
   }
 
@@ -112,9 +118,24 @@ public:
    * @brief      Sets the error values to the default value
    */
   void reset_errors(void){
-    for(sdouble32& sample_error : sample_errors)
+    for(sdouble32& sample_error : error_state.back().sample_errors)
       sample_error = (double_literal(1.0)/label_samples.size());
-    error_sum = double_literal(1.0);
+    error_state.back().error_sum = double_literal(1.0);
+  }
+
+  /**
+   * @brief      Stores the current error values for later re-use
+   */
+  void push_state(void){
+    error_state.push_back(error_state.back());
+  }
+
+  /**
+   * @brief      Restores the previously stored state, if there is any
+   */
+  void pop_state(void){
+    if(1 < error_state.size())
+      error_state.pop_back();
   }
 
   /**
@@ -151,8 +172,8 @@ public:
    * @return     The error.
    */
   sdouble32 get_error(uint32 index) const{
-    if(sample_errors.size() > index)
-      return sample_errors[index];
+    if(error_state.back().sample_errors.size() > index)
+      return error_state.back().sample_errors[index];
     else throw std::runtime_error("Sample index out of bounds!");
   }
 
@@ -162,7 +183,7 @@ public:
    * @return     The sum of the errors for all of the samples.
    */
   sdouble32 get_error(void) const{
-    return error_sum;
+    return error_state.back().error_sum;
   }
 
   /**
@@ -222,12 +243,16 @@ public:
   }
 
 private:
+  struct error_state_type{
+    vector<sdouble32> sample_errors;
+    sdouble32 error_sum;
+  };
+
   uint32 sequence_size;
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;
   uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
-  vector<sdouble32> sample_errors;
-  sdouble32 error_sum;
+  vector<error_state_type> error_state;
   shared_ptr<Cost_function> cost_function;
 
   /**

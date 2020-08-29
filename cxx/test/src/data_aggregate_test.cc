@@ -110,9 +110,10 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   data_agr.set_features_for_labels(neuron_data_simulation,0,sample_number/2); /* set the error for the first half */
   data_agr.set_features_for_labels(neuron_data_simulation,sample_number/2, sample_number/2); /* set the error for the second half */
 
-  // for(uint32 i = 0; i < sample_number; ++i)
-  //   data_agr.set_feature_for_label(i,{expected_label - set_distance});
-
+  Catch::StringMaker<sdouble32>::precision  = 15;
+  /*!Note: THe below sometimes fail with the deviation of 0.000000000000099,
+   * but I can't figure out any sync issues which might cause this. Improvements welcome.
+   */
   for(uint32 i = 0; i < sample_number; ++i)
   CHECK( /* Error: (distance^2)/2 */
     Approx(
