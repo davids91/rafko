@@ -20,6 +20,8 @@
 
 #include "sparse_net_global.h"
 
+#include <cmath>
+
 #include "gen/common.pb.h"
 #include "gen/deep_learning_service.pb.h"
 
@@ -37,6 +39,10 @@ public:
 
   uint16 get_max_processing_threads(void) const{
     return max_processing_threads;
+  }
+
+  uint16 get_sqrt_of_process_threads(void) const{
+    return sqrt_of_process_threads;
   }
 
   sdouble32 get_device_max_megabytes(void) const{
@@ -96,6 +102,9 @@ public:
 
   Service_context& set_max_processing_threads(uint16 max_processing_threads_){
     max_processing_threads = max_processing_threads_;
+    sqrt_of_process_threads = static_cast<uint16>(std::max(
+      double_literal(1.0), sqrt(static_cast<sdouble32>(max_processing_threads))
+    ));
     return *this;
   }
 
@@ -159,6 +168,7 @@ public:
 private:
   uint16 max_solve_threads = 2;
   uint16 max_processing_threads = 4;
+  uint16 sqrt_of_process_threads = 2;
   sdouble32 device_max_megabytes = double_literal(2048);
   Arena* arena_ptr = nullptr;
   Service_hyperparameters hypers = Service_hyperparameters();

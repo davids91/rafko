@@ -72,7 +72,16 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
     );
   }
 
-  /* overall feature ditance should be  */
+  /* Test is the whole dataset can be processed in one function call */
+  vector<sdouble32> label_errors(dataset_size,0);
+  cost.get_feature_errors(dataset,featureset,label_errors,0,dataset_size);
+  for(const sdouble32 label_error : label_errors){
+    CHECK(
+      Approx(label_error).epsilon(double_literal(0.00000000000001))
+      == (double_literal(0.5 * feature_size) * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
+    );
+  }
+
 }
 
 } /* namespace sparse_net_library_test */
