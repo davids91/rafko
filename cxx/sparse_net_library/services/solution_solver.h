@@ -43,7 +43,7 @@ using std::thread;
  */
 class Solution_solver{
 public:
-  Solution_solver(const Solution& to_solve, Service_context& context);
+  Solution_solver(const Solution& to_solve, Service_context& context, uint32 memory_loops_needed_for_training = 1);
   Solution_solver(const Solution_solver& other) = delete;/* Copy constructor */
   Solution_solver(Solution_solver&& other) = delete; /* Move constructor */
   Solution_solver& operator=(const Solution_solver& other) = delete; /* Copy assignment */

@@ -126,7 +126,6 @@ private:
 
   vector<thread> solve_threads; /* The threads to be started during optimizing the network */
   vector<vector<thread>> process_threads; /* The inner process thread to be started during net optimization */
-  vector<Data_ringbuffer> neuron_data_sequences; /* neuron activation data at every sequence(for every solve thread). Non-sequential data has only 1 sequence */
   vector<vector<vector<sdouble32>>> transfer_function_input; /* Copy of the Neurons data before the transfer function processed them in the structure of [Threads][Sequences(at most: @sequence_truncation)][Neurons] */
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values; /* Calculated error values: [Threads][Neurons] */
   vector<vector<vector<unique_ptr<atomic<sdouble32>>>>> weight_derivatives; /* Calculated derivatives for each weights [Threads][Sequences][Weights] */

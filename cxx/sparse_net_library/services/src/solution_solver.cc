@@ -23,9 +23,9 @@
 
 namespace sparse_net_library{
 
-Solution_solver::Solution_solver(const Solution& to_solve, Service_context& context)
+Solution_solver::Solution_solver(const Solution& to_solve, Service_context& context, uint32 memory_loops_needed_for_training)
 :  solution(to_solve)
-,  neuron_data(std::max(1u,solution.network_memory_length()), solution.neuron_number())
+,  neuron_data(std::max(memory_loops_needed_for_training,solution.network_memory_length()), solution.neuron_number())
 ,  transfer_function_input(solution.neuron_number(),double_literal(0.0))
 ,  transfer_function_output(solution.neuron_number(),double_literal(0.0))
 ,  solve_threads()

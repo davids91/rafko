@@ -49,7 +49,6 @@ Sparse_net_optimizer::Sparse_net_optimizer(
 ,  cost_function(the_function)
 ,  solve_threads()
 ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
-,  neuron_data_sequences()
 ,  transfer_function_input(context.get_max_solve_threads())
 ,  error_values(context.get_max_solve_threads())
 ,  weight_derivatives(context.get_max_solve_threads())
@@ -60,15 +59,14 @@ Sparse_net_optimizer::Sparse_net_optimizer(
   )));
   solve_threads.reserve(context.get_max_solve_threads());
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
-    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
-    
+    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context, train_set.get_sequence_size()));
+
     if(train_set.get_feature_size() != solvers.back()->get_output_size())
       throw std::runtime_error("Network output size doesn't match size of provided training labels!");
 
     if(test_set.get_feature_size() != solvers.back()->get_output_size())
       throw std::runtime_error("Network output size doesn't match size of provided testing labels!");
 
-    neuron_data_sequences.push_back(Data_ringbuffer(train_set_.get_sequence_size(), neural_network.neuron_array_size()));
     error_values[threads] = vector<unique_ptr<atomic<sdouble32>>>();
     error_values[threads].reserve(net.neuron_array_size());
     weight_derivatives[threads] = vector<vector<unique_ptr<atomic<sdouble32>>>>(sequence_truncation);
@@ -173,10 +171,8 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
       ++raw_inputs_index;
     }
     for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
-      neuron_data_sequences[solve_thread_index].step();
       solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
       transfer_function_input[solve_thread_index][sequence_iterator] = solvers[solve_thread_index]->get_transfer_function_input();
-      neuron_data_sequences[solve_thread_index].copy_latest(solvers[solve_thread_index]->get_neuron_memory());
 
       /* Only calculate the derivatives for the first un-truncated sequences */
       if(sequence_iterator < sequence_truncation){ /* Since the network will be the same, the derivatives can be re-used for the later sequences */
@@ -189,7 +185,7 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
 
     set_mutex.lock();
     train_set.set_features_for_labels(
-      neuron_data_sequences[solve_thread_index].get_whole_buffer(),
+      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(),
       raw_sample_start_index, (train_set.get_sequence_size() * train_set.get_feature_size())
     ); /* Re-calculate error for the training set */
     set_mutex.unlock();
@@ -207,7 +203,6 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
       accumulate_weight_gradients(solve_thread_index, sequence_iterator);
     }
     solvers[solve_thread_index]->reset();
-    neuron_data_sequences[solve_thread_index].reset();
   }
 }
 
@@ -268,7 +263,7 @@ void Sparse_net_optimizer::calculate_derivatives_thread(uint32 solve_thread_inde
             net.neuron_array(neuron_iterator).input_indices(input_synapse_index).starts() - input_index_offset
           )];
         }else{ /* Neuron input from another internal Neuron input! */
-          addition = neuron_data_sequences[solve_thread_index].get_const_element(
+          addition = solvers[solve_thread_index]->get_neuron_memory().get_const_element(
             net.neuron_array(neuron_iterator).input_indices(input_synapse_index).reach_past_loops()
           )[net.neuron_array(neuron_iterator).input_indices(input_synapse_index).starts() + input_index_offset];
         }
@@ -309,7 +304,7 @@ void Sparse_net_optimizer::calculate_output_errors_thread(uint32 solve_thread_in
     addition = cost_function->get_d_cost_over_d_feature(
       ((neuron_index + neuron_iterator) - (net.neuron_array_size() - net.output_neuron_number())),
       train_set.get_label_sample(raw_sample_index),
-      neuron_data_sequences[solve_thread_index].get_const_element(sequence_index,Input_synapse_interval()),
+      solvers[solve_thread_index]->get_neuron_memory().get_const_element(sequence_index,Input_synapse_interval()),
       train_set.get_number_of_sequences()
     ) * transfer_function.get_derivative(
       net.neuron_array(neuron_index + neuron_iterator).transfer_function_idx(),
