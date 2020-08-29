@@ -62,10 +62,11 @@ Sparse_net_optimizer::Sparse_net_optimizer(
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
     solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
     
-    if(train_set.get_feature_size() != solvers.back()->get_output_size()){
-      std::cout << train_set.get_feature_size() << "!=" << solvers.back()->get_output_size() << std::endl;
+    if(train_set.get_feature_size() != solvers.back()->get_output_size())
       throw std::runtime_error("Network output size doesn't match size of provided training labels!");
-    }
+
+    if(test_set.get_feature_size() != solvers.back()->get_output_size())
+      throw std::runtime_error("Network output size doesn't match size of provided testing labels!");
 
     neuron_data_sequences.push_back(Data_ringbuffer(train_set_.get_sequence_size(), neural_network.neuron_array_size()));
     error_values[threads] = vector<unique_ptr<atomic<sdouble32>>>();
@@ -134,26 +135,28 @@ void Sparse_net_optimizer::step(void){
 }
 
 void Sparse_net_optimizer::evaluate_thread(uint32 solve_thread_index, uint32 sample_start, uint32 samples_to_evaluate){
-  if(test_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
-    throw std::runtime_error("Network output size doesn't match size of provided testing labels!");
+  uint32 raw_label_start_index;
   for(uint32 sample_iterator = 0; sample_iterator < samples_to_evaluate; ++sample_iterator){
     uint32 inputs_index = (sample_start + sample_iterator) * (train_set.get_sequence_size() + train_set.get_prefill_inputs_number());
     for(uint32 prefill_iterator = 0; prefill_iterator < test_set.get_prefill_inputs_number(); ++prefill_iterator){
       solvers[solve_thread_index]->solve(test_set.get_input_sample(inputs_index));
       ++inputs_index;
     }
+    raw_label_start_index = (sample_start + sample_iterator);
     for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
       solvers[solve_thread_index]->solve(test_set.get_input_sample(inputs_index));
-      test_set.set_feature_for_label(
-        (sample_start + sample_iterator + sequence_iterator), solvers[solve_thread_index]->get_neuron_memory().get_const_element(0)
-      ); /* Re-calculate error for the training set */
       ++inputs_index;
     }
+    test_set.set_features_for_labels(
+      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(),
+      raw_label_start_index, (test_set.get_sequence_size() * test_set.get_feature_size())
+    ); /* Re-calculate error for the training set for this run */
     solvers[solve_thread_index]->reset();
   }
 }
 
 void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate){
+  uint32 raw_sample_start_index;
   uint32 raw_sample_index;
   uint32 raw_inputs_index;
 
@@ -161,6 +164,7 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
     raw_sample_index = rand()%(train_set.get_number_of_sequences()); /* decide on the index of a random sample */
     raw_inputs_index = raw_sample_index * (train_set.get_sequence_size() + train_set.get_prefill_inputs_number()); /* calculate the raw input arrays index */
     raw_sample_index *= train_set.get_sequence_size(); /* calculate the raw labels array index */
+    raw_sample_start_index = raw_sample_index;
 
     /* Evaluate the current sequence step by step */
     solvers[solve_thread_index]->reset();
@@ -173,9 +177,6 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
       solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
       transfer_function_input[solve_thread_index][sequence_iterator] = solvers[solve_thread_index]->get_transfer_function_input();
       neuron_data_sequences[solve_thread_index].copy_latest(solvers[solve_thread_index]->get_neuron_memory());
-      set_mutex.lock();
-      train_set.set_feature_for_label(raw_sample_index, neuron_data_sequences[solve_thread_index].get_const_element(0)); /* Re-calculate error for the training set */
-      set_mutex.unlock();
 
       /* Only calculate the derivatives for the first un-truncated sequences */
       if(sequence_iterator < sequence_truncation){ /* Since the network will be the same, the derivatives can be re-used for the later sequences */
@@ -185,6 +186,13 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
       ++raw_sample_index;
       ++raw_inputs_index;
     }
+
+    set_mutex.lock();
+    train_set.set_features_for_labels(
+      neuron_data_sequences[solve_thread_index].get_whole_buffer(),
+      raw_sample_start_index, (train_set.get_sequence_size() * train_set.get_feature_size())
+    ); /* Re-calculate error for the training set */
+    set_mutex.unlock();
 
     /* Calculate the gradients from the current sequence */
     for(sint32 sequence_iterator = train_set.get_sequence_size()-1; sequence_iterator >= 0 ; --sequence_iterator){

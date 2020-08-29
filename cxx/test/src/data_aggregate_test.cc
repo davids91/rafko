@@ -70,9 +70,8 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   CHECK( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error() );
 
   /* Set all features to the given distance */
-  for(uint32 i = 0; i < sample_number; ++i){
+  for(uint32 i = 0; i < sample_number; ++i)
     data_agr.set_feature_for_label(i,{expected_label - set_distance});
-  }
 
   CHECK( /* Error: (distance^2)/2 */
     Approx(
@@ -105,6 +104,27 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   }
   CHECK( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error() );
 
+  /* test if the error is stored correctly even when the data is provided in bulk */
+  set_distance *= (rand()%10 / double_literal(10.0)); /* modify the set distance just to be sure */
+  vector<vector<sdouble32>> neuron_data_simulation((sample_number/2), {(expected_label - set_distance)}); /* create dummy neuron data with the configured distance */
+  data_agr.set_features_for_labels(neuron_data_simulation,0,sample_number/2); /* set the error for the first half */
+  data_agr.set_features_for_labels(neuron_data_simulation,sample_number/2, sample_number/2); /* set the error for the second half */
+
+  // for(uint32 i = 0; i < sample_number; ++i)
+  //   data_agr.set_feature_for_label(i,{expected_label - set_distance});
+
+  for(uint32 i = 0; i < sample_number; ++i)
+  CHECK( /* Error: (distance^2)/2 */
+    Approx(
+      pow(set_distance,2)/(double_literal(2.0)*sample_number)
+    ).epsilon(0.00000000000001) == data_agr.get_error(i)
+  );
+
+  CHECK( /* Error: (distance^2)/2 */
+    Approx(
+      pow(set_distance,2)/double_literal(2.0)
+    ).epsilon(0.00000000000001) == data_agr.get_error()
+  );
 }
 
 } /* namespace sparse_net_library_test */

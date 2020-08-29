@@ -90,6 +90,15 @@ public:
   }
 
   /**
+   * @brief      Gets the whole o the underlying data as a constant reference
+   *
+   * @return     The non-modifyable raw buffer data
+   */
+  const vector<vector<sdouble32>>& get_whole_buffer(void) const{
+    return data;
+  }
+
+  /**
    * @brief      Gets the data element in the..
    *
    * @param[in]  data_index  ..past @past_index th loop .. 
@@ -217,6 +226,15 @@ public:
    */
   uint32 buffer_size(void) const{
     return data[0].size();
+  }
+
+  /**
+   * @brief      Returns the number of available vectors
+   *
+   * @return     number of buffers available
+   */
+  uint32 buffer_number(void) const{
+    return data.size();
   }
 
 private:

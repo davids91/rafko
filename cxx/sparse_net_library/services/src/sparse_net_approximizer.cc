@@ -49,7 +49,7 @@ Sparse_net_approximizer::Sparse_net_approximizer(
   )));
   solve_threads.reserve(context.get_max_solve_threads());
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
-    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
+    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context, train_set.get_sequence_size()));
     process_threads[threads].reserve(context.get_max_processing_threads());
   }
   weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
@@ -99,17 +99,14 @@ void Sparse_net_approximizer::collect_fragment(void){
   wait_for_threads(solve_threads);
 }
 
-void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 sequences_to_evaluate){
+void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 sequence_start_index, uint32 sequences_to_evaluate){
   uint32 raw_inputs_index;
-  uint32 raw_sample_index;
-
-  if(train_set.get_feature_size() != solvers[solve_thread_index]->get_output_size())
-    throw std::runtime_error("Network output size doesn't match size of provided labels!");
+  uint32 raw_label_index;
 
   for(uint32 sample = 0; sample < sequences_to_evaluate; ++sample){
-    raw_sample_index = sequence_index + sample;
-    raw_inputs_index = raw_sample_index * (train_set.get_sequence_size() + train_set.get_prefill_inputs_number());
-    raw_sample_index = raw_sample_index * train_set.get_sequence_size();
+    raw_label_index = sequence_start_index + sample;
+    raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + train_set.get_prefill_inputs_number());
+    raw_label_index = raw_label_index * train_set.get_sequence_size();
 
     /* Prefill network with the initial inputs */
     solvers[solve_thread_index]->reset();
@@ -119,15 +116,17 @@ void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 s
     }
 
     /* Evaluate the current sequence step by step */
-
-    for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
+    for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
       solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
-      lock_guard<mutex> my_lock(dataset_mutex);
-      if(0 == sequence_index)
-      train_set.set_feature_for_label(raw_sample_index, solvers[solve_thread_index]->get_neuron_data(0)); /* Re-calculate error for the training set */
-      ++raw_sample_index;
+      ++raw_label_index;
       ++raw_inputs_index;
     }
+    lock_guard<mutex> my_lock(dataset_mutex);
+    train_set.set_features_for_labels(
+      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(),
+      (sequence_start_index + sample * train_set.get_sequence_size()),
+      train_set.get_sequence_size()
+    ); /* Re-calculate error for the training set */
   }
 }
 

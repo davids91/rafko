@@ -59,26 +59,22 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
 
   /* one feature distance should be (double_literal(0.5) * (distance)^2 ) */
   Cost_function_mse cost(feature_size, service_context);
-  /*CHECK(
-    Approx(cost.get_error(dataset,featureset) / static_cast<sdouble32>(dataset_size)).epsilon(double_literal(0.00000000000001))
-    == (double_literal(0.5) * pow(distance,2))
-  ); issue #59 */
   for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
     CHECK(
       Approx(
         cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator], dataset_size)
       ).epsilon(double_literal(0.00000000000001))
-      == (double_literal(0.5 * feature_size) * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
+      == (double_literal(0.5) * feature_size * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
     );
   }
 
-  /* Test is the whole dataset can be processed in one function call */
+  /* Test if the whole dataset can be processed in one function call */
   vector<sdouble32> label_errors(dataset_size,0);
   cost.get_feature_errors(dataset,featureset,label_errors,0,dataset_size);
   for(const sdouble32 label_error : label_errors){
     CHECK(
       Approx(label_error).epsilon(double_literal(0.00000000000001))
-      == (double_literal(0.5 * feature_size) * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
+      == (double_literal(0.5) * feature_size * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
     );
   }
 

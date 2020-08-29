@@ -100,6 +100,15 @@ public:
   }
 
   /**
+   * @brief      Same as @set_feature_for_label but in bulk
+   *
+   * @param[in]  neuron_data         The neuron data
+   * @param[in]  raw_start_index     The raw start index
+   * @param[in]  labels_to_evaluate  The labels to evaluate
+   */
+  void set_features_for_labels(const vector<vector<sdouble32>>& neuron_data, uint32 raw_start_index, uint32 labels_to_evaluate);
+
+  /**
    * @brief      Sets the error values to the default value
    */
   void reset_errors(void){
