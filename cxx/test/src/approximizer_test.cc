@@ -29,7 +29,6 @@
 
 namespace sparse_net_library_test {
 
-using std::unique_ptr;
 using std::vector;
 using std::cout;
 using std::endl;
@@ -61,18 +60,21 @@ using rafko_mainframe::Service_context;
  * */
 TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context().set_step_size(1e-4).set_arena_ptr(&arena);
+  Service_context service_context = Service_context().set_step_size(1e-1).set_arena_ptr(&arena);
 
   /* Create nets */
-  vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
-  nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder(service_context)
+  vector<SparseNet*> nets = vector<SparseNet*>();
+  /*!Note: no need for smart pointers, because ownership is in the arena.
+    * The builder automatically uses the arena pointer provided in the context.
+    */
+  nets.push_back(Sparse_net_builder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
     .allowed_transfer_functions_by_layer(
       {
         {TRANSFER_FUNCTION_SELU}
       }
     ).dense_layers({1})
-  ));
+  );
 
   /* Create dataset, test set and aprroximizer */
   Data_aggregate* train_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
@@ -137,12 +139,12 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
  * */
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context().set_step_size(1e-4).set_arena_ptr(&arena);
+  Service_context service_context = Service_context().set_step_size(5e-3).set_arena_ptr(&arena);
   uint32 number_of_samples = 50;
 
   /* Create nets */
-  vector<unique_ptr<SparseNet>> nets = vector<unique_ptr<SparseNet>>();
-  nets.push_back(unique_ptr<SparseNet>(Sparse_net_builder(service_context)
+  vector<SparseNet*> nets = vector<SparseNet*>();
+  nets.push_back(Sparse_net_builder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
@@ -151,7 +153,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
         {TRANSFER_FUNCTION_SELU}
       }
     ).dense_layers({2,1})
-  ));
+  );
 
   /* Create dataset, test set and optimizers; optimize nets */
   Data_aggregate* train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
@@ -176,11 +178,10 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   );
 
   std::cout << "Optimizing net.." << std::endl;
-  while(abs(train_error) > 1e-2){
+  while(abs(train_error) > service_context.get_step_size()){
     start = steady_clock::now();
     approximizer.collect_fragment();
-    if(0 == (iteration%500))
-      approximizer.apply_fragment();
+    approximizer.apply_fragment();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     train_error = approximizer.get_train_error();

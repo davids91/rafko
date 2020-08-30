@@ -43,7 +43,7 @@ Sparse_net_optimizer::Sparse_net_optimizer(
 ,  train_set(train_set_)
 ,  test_set(test_set_)
 ,  set_mutex()
-,  loops_unchecked(50)
+,  loops_unchecked(context.get_insignificant_iteration_count())
 ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
 ,  gradient_step(Backpropagation_queue_wrapper(neural_network, context)())
 ,  cost_function(the_function)
@@ -110,7 +110,10 @@ void Sparse_net_optimizer::step(void){
   } /* while(!weight_updater->finished()) */
   ++loops_unchecked;
 
-  if(loops_unchecked > std::min(double_literal(50.0),(test_set.get_error()/context.get_step_size()))){
+  if( /* re-evaluate the test set after a number of steps */
+    (loops_unchecked >= context.get_insignificant_iteration_count())
+    ||(loops_unchecked >= (test_set.get_error()/context.get_step_size())) /* .. or sooner if the error value justifies it */
+  ){
     uint32 sample_start_index = 0;
     const uint32 samples_to_evaluate = 1 + static_cast<uint32>(train_set.get_number_of_sequences()/context.get_max_solve_threads());
     for(

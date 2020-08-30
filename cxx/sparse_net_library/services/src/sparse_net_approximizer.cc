@@ -35,7 +35,7 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  train_set(train_set_)
 ,  test_set(test_set_)
 ,  gradient_fragment()
-,  loops_unchecked(50)
+,  loops_unchecked(context.get_insignificant_iteration_count())
 ,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
 ,  solve_threads()
 ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
@@ -60,8 +60,22 @@ void Sparse_net_approximizer::collect_fragment(void){
   const uint32 sequences_to_evaluate = std::min(train_set.get_number_of_sequences(), context.get_minibatch_size());
   const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(sequences_to_evaluate/context.get_max_solve_threads());
 
+  if(loops_unchecked >= context.get_insignificant_iteration_count()){
+    /* calculate the error value for the current network */
+    for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(sequences_to_evaluate > sequence_index)); ++thread_index){
+      solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
+        &Sparse_net_approximizer::collect_thread, this, thread_index, sequence_index,
+        std::min(sequences_in_one_thread, (train_set.get_number_of_sequences() - sequence_index))
+      ));
+      sequence_index += sequences_in_one_thread;
+    }
+    wait_for_threads(solve_threads);
+    loops_unchecked = 0;
+  }
+
   /* Save error from the initial network */
   initial_error = train_set.get_error();
+  train_set.push_state();
 
   /* Modify a random weight */
   uint32 weight_index = rand()%(net.weight_table_size());
@@ -83,20 +97,15 @@ void Sparse_net_approximizer::collect_fragment(void){
 
   /* Add the collected gradient into the fragment */
   add_to_fragment(weight_index, (train_set.get_error() - initial_error));
-  net.set_weight_table( /* Revert weight modification */
+
+  /* Revert weight modification and the error state with it */
+  train_set.pop_state();
+
+  net.set_weight_table( 
     weight_index, (net.weight_table(weight_index) - context.get_step_size())
   );
   weight_updater->update_solution_with_weights(*net_solution);
-
-  /* re-collect the error value for the current network */
-  for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(sequences_to_evaluate > sequence_index)); ++thread_index){
-    solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
-      &Sparse_net_approximizer::collect_thread, this, thread_index, sequence_index,
-      std::min(sequences_in_one_thread, (train_set.get_number_of_sequences() - sequence_index))
-    ));
-    sequence_index += sequences_in_one_thread;
-  }
-  wait_for_threads(solve_threads);
+  ++loops_unchecked;
 }
 
 void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 sequence_start_index, uint32 sequences_to_evaluate){
@@ -204,6 +213,7 @@ void Sparse_net_approximizer::apply_fragment(void){
     ++fragment_value_index;
   });
   gradient_fragment = Gradient_fragment();
+  loops_unchecked = context.get_insignificant_iteration_count();
 }
 
 } /* namespace sparse_net_library */

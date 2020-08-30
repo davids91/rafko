@@ -53,7 +53,11 @@ public:
     weight_updaters weight_updater_, Service_context& service_context
   );
 
-  ~Sparse_net_approximizer(void){ solvers.clear(); }
+  ~Sparse_net_approximizer(void){
+    solvers.clear();
+    if(nullptr == context.get_arena_ptr())
+      delete net_solution;
+  }
   Sparse_net_approximizer(const Sparse_net_approximizer& other) = delete;/* Copy constructor */
   Sparse_net_approximizer(Sparse_net_approximizer&& other) = delete; /* Move constructor */
   Sparse_net_approximizer& operator=(const Sparse_net_approximizer& other) = delete; /* Copy assignment */
@@ -119,7 +123,7 @@ public:
 private:
   SparseNet& net;
   Service_context& context;
-  unique_ptr<Solution> net_solution;
+  Solution* net_solution;
   vector<unique_ptr<Solution_solver>> solvers;
   Data_aggregate& train_set;
   Data_aggregate& test_set;

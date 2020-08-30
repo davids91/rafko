@@ -45,6 +45,10 @@ public:
     return sqrt_of_process_threads;
   }
 
+  uint32 get_insignificant_iteration_count(void) const{
+    return insignificant_iteration_count;
+  }
+
   sdouble32 get_device_max_megabytes(void) const{
     return device_max_megabytes;
   }
@@ -108,6 +112,10 @@ public:
     return *this;
   }
 
+  void set_insignificant_iteration_count(uint32 insignificant_iteration_count_){
+    insignificant_iteration_count = insignificant_iteration_count_;
+  }
+
   Service_context& set_device_max_megabytes(sdouble32 device_max_megabytes_){
     device_max_megabytes = device_max_megabytes_;
     return *this;
@@ -169,6 +177,7 @@ private:
   uint16 max_solve_threads = 2;
   uint16 max_processing_threads = 4;
   uint16 sqrt_of_process_threads = 2;
+  uint32 insignificant_iteration_count = 100;
   sdouble32 device_max_megabytes = double_literal(2048);
   Arena* arena_ptr = nullptr;
   Service_hyperparameters hypers = Service_hyperparameters();
