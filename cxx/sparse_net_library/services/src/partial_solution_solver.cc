@@ -101,18 +101,16 @@ void Partial_solution_solver::solve(){
 }
 
 void Partial_solution_solver::provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_) const{
-  if(transfer_function_input.size() != transfer_function_output.size()) throw std::runtime_error("Neuron gradient data Incompatible!");
-  uint32 output_index_start = 0;
-    std::copy(
-      transfer_function_input.begin() + output_index_start,
-      transfer_function_input.begin() + output_index_start + detail.output_data().interval_size(),
-      transfer_function_input_.begin() + detail.output_data().starts()
-    );
-    std::copy(
-      transfer_function_output.begin() + output_index_start,
-      transfer_function_output.begin() + output_index_start + detail.output_data().interval_size(),
-      transfer_function_output_.begin() + detail.output_data().starts()
-    );
+  std::copy(
+    transfer_function_input.begin(),
+    transfer_function_input.begin() + detail.output_data().interval_size(),
+    transfer_function_input_.begin() + detail.output_data().starts()
+  );
+  std::copy(
+    transfer_function_output.begin(),
+    transfer_function_output.begin() + detail.output_data().interval_size(),
+    transfer_function_output_.begin() + detail.output_data().starts()
+  );
 }
 
 bool Partial_solution_solver::is_valid(void) const{
@@ -123,8 +121,8 @@ bool Partial_solution_solver::is_valid(void) const{
     &&(static_cast<int>(detail.internal_neuron_number()) == detail.neuron_transfer_functions_size())
     &&(static_cast<int>(detail.internal_neuron_number()) == detail.memory_filter_index_size())
   ){
-    int weight_synapse_number = 0;
-    int index_synapse_number = 0;
+    uint32 weight_synapse_number = 0;
+    uint32 index_synapse_number = 0;
 
     for(uint16 neuron_iterator = 0u; neuron_iterator < detail.internal_neuron_number(); ++neuron_iterator){
       weight_synapse_number += detail.weight_synapse_number(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
@@ -166,8 +164,8 @@ bool Partial_solution_solver::is_valid(void) const{
     }else return false;
 
     return(
-      (index_synapse_number == detail.inside_indices_size())
-      &&(weight_synapse_number == detail.weight_indices_size())
+      (static_cast<sint32>(index_synapse_number) == detail.inside_indices_size())
+      &&(static_cast<sint32>(weight_synapse_number) == detail.weight_indices_size())
     );
   }else return false;
 }

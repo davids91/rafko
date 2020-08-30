@@ -74,12 +74,11 @@ void Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sa
     &&(data_set->get_sequence_size() == target.sequence_size()) /* Sequence sizes should match as a safeguard, or should it?  */
     &&(0 == target.package_size()) /* Only copy data into empty packages */
   ){ /* And the index is not out of bounds */
-    uint32 number_of_input_arrays = data_set->get_sequence_size() + data_set->get_prefill_inputs_number();
+    const uint32 number_of_input_arrays = data_set->get_sequence_size() + data_set->get_prefill_inputs_number();
     target.mutable_package()->Reserve( /* Reserve the needed space for the element */
       (target.input_size() * number_of_input_arrays)
       + (target.label_size() * target.sequence_size())
     );
-
 
     uint32 inputs_index = (sample_index * number_of_input_arrays); /* Add the input into the field */
     if(data_set->get_input_sample(inputs_index).size() == target.input_size()){ /* If the sizes match for the input field */

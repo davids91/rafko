@@ -95,7 +95,7 @@ void Sparse_net_approximizer::collect_fragment(void){
   train_set.push_state();
 
   /* Modify a random weight */
-  uint32 weight_index = rand()%(net.weight_table_size());
+  const uint32 weight_index = rand()%(net.weight_table_size());
   net.set_weight_table(
     weight_index, (net.weight_table(weight_index) + context.get_step_size() )
   );
@@ -188,15 +188,15 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
     tmp_synapse_interval.set_starts(weight_index);
     *gradient_fragment.add_weight_synapses() = tmp_synapse_interval;
   }else{
-    uint32 synapse_starts = gradient_fragment.weight_synapses(weight_synapse_index_target).starts();
-    uint32 synapse_size = gradient_fragment.weight_synapses(weight_synapse_index_target).interval_size();
-    uint32 synapse_ends = synapse_starts + synapse_size;
-    if( /* Synapse doesn't start at 0 */
-      (0 < synapse_starts)&&((synapse_starts-1) == weight_index)
-    ){ /* And the weight index points to the first index before the synapse */
-      gradient_fragment.mutable_weight_synapses(weight_synapse_index_target)->set_interval_size(
-        synapse_size + 1
-      );
+    const uint32 synapse_starts = gradient_fragment.weight_synapses(weight_synapse_index_target).starts();
+    const uint32 synapse_size = gradient_fragment.weight_synapses(weight_synapse_index_target).interval_size();
+    const uint32 synapse_ends = synapse_starts + synapse_size;
+
+    if(
+      (0 < synapse_starts) /* Synapse doesn't start at 0 */
+      &&((synapse_starts-1) == weight_index) /* And the weight index points to the first index before the synapse */
+    ){
+      gradient_fragment.mutable_weight_synapses(weight_synapse_index_target)->set_interval_size(synapse_size + 1);
       gradient_fragment.mutable_weight_synapses(weight_synapse_index_target)->set_starts(synapse_starts - 1);
       insert_element_at_position(*gradient_fragment.mutable_values(),gradient_fragment_value,values_index_target);
     }else if(

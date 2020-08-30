@@ -48,9 +48,9 @@ Solution* Solution_builder::build(const SparseNet& net){
   bool add_new_col = true;
 
   while(!neuron_router.finished()){ /* Until the whole network is processed */
-    if(add_new_col){ /* And add a new row by adding a new field under @cols */
-      solution->add_cols(0);
-    }
+    if(add_new_col) /* If the logic requests it */
+      solution->add_cols(0); /* add a new row by adding a new field under @cols */
+
     if( /* Try to extend upon a single partial solution built previously.. */
       (1 == (*(solution->cols().end()-1)))/* There is only one partial solution in this row */
       &&( /* If there is enough space left to put the Neuron into the partial solution */

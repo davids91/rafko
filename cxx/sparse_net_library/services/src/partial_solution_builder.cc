@@ -60,7 +60,7 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(const SparseNet&
     neuron_synapse_count = 0;
     previous_neuron_input_source = neuron_input_none;
     previous_neuron_input_index = input_synapse.size(); /* Input value to point above the size of the input */
-    uint32 index_synapse_previous_size = partial.inside_indices_size();
+    const uint32 index_synapse_previous_size = partial.inside_indices_size();
 
     input_iterator.iterate([&](Input_synapse_interval interval_synapse){
       if(interval_synapse.reach_past_loops() > max_reach_back)

@@ -35,7 +35,7 @@ void Deep_learning_server::loop(void){
   for(uint32 i = 0; i < server_slots.size(); ++i){
     if(0 < is_server_slot_running[i]){
       if(server_slot_mutexs[i]->try_lock()){ /* Able to lock the slot */
-        thread loop_thread([&](uint32 slot_index){ /* start a new thread for the loop operation */
+        thread loop_thread([&](const uint32 slot_index){ /* start a new thread for the loop operation */
           lock_guard<mutex> my_slot_lock_(*server_slot_mutexs[slot_index], std::adopt_lock);
           server_slots[slot_index]->loop();
           lock_guard<mutex> my_cout_lock(server_mutex);
@@ -85,7 +85,7 @@ void Deep_learning_server::loop(void){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ update_slot +++ " << std::endl;
   try{
-    uint32 slot_index = find_id(request->slot_id());
+    const uint32 slot_index = find_id(request->slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
@@ -109,7 +109,7 @@ void Deep_learning_server::loop(void){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ ping +++ " << std::endl;
   try{
-    uint32 slot_index = find_id(request->target_slot_id());
+    const uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
@@ -133,7 +133,7 @@ void Deep_learning_server::loop(void){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ build_network +++ " << std::endl;
   try {
-    uint32 slot_index = find_id(request->target_slot_id());
+    const uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
@@ -159,7 +159,7 @@ void Deep_learning_server::loop(void){
   try{
     Slot_request current_request;
     while(stream->Read(&current_request)){
-      uint32 slot_index = find_id(current_request.target_slot_id());
+      const uint32 slot_index = find_id(current_request.target_slot_id());
       if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
         uint32 request_bitstring = current_request.request_bitstring();
         uint32 request_index = current_request.request_index();
@@ -251,7 +251,7 @@ void Deep_learning_server::loop(void){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ get_info +++ " << std::endl;
   try{
-    uint32 slot_index = find_id(request->target_slot_id());
+    const uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
@@ -275,7 +275,7 @@ void Deep_learning_server::loop(void){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ get_network +++ " << std::endl;
   try{
-    uint32 slot_index = find_id(request->target_slot_id());
+    const uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
       std::cout << " on slot["<< slot_index <<"]" << std::endl;

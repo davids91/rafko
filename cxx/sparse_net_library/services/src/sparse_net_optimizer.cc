@@ -180,7 +180,7 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
       /* Only calculate the derivatives for the first un-truncated sequences */
       if(sequence_iterator < sequence_truncation){ /* Since the network will be the same, the derivatives can be re-used for the later sequences */
         for(unique_ptr<atomic<sdouble32>>& derivative_value : weight_derivatives[solve_thread_index][sequence_iterator]) *derivative_value = 0;
-        calculate_derivatives(solve_thread_index, sequence_iterator, raw_inputs_index, raw_sample_index);
+        calculate_derivatives(solve_thread_index, sequence_iterator, raw_inputs_index, raw_sample_index); 
       }
       ++raw_sample_index;
       ++raw_inputs_index;
@@ -229,8 +229,8 @@ void Sparse_net_optimizer::calculate_derivatives(uint32 solve_thread_index, uint
 void Sparse_net_optimizer::calculate_derivatives_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 raw_inputs_index, uint32 raw_sample_index, uint32 neuron_index, uint32 neuron_number){
   sdouble32 buffer;
   sdouble32 addition;
-  uint32 input_index_offset = 0;
-  uint32 input_synapse_index = 0;
+  uint32 input_index_offset;
+  uint32 input_synapse_index;
 
   for(uint32 neuron_iterator = 0; neuron_iterator < neuron_number; ++neuron_iterator){
     input_index_offset = 0;

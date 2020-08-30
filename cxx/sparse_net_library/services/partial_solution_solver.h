@@ -46,7 +46,11 @@ public:
   ,  transfer_function_output(detail.internal_neuron_number(),0)
   ,  collected_input_data(input_iterator.size())
   ,  transfer_function(service_context)
-  { reset(); }
+  { 
+    if(transfer_function_input.size() != transfer_function_output.size())
+      throw std::runtime_error("Neuron gradient data Incompatible!");
+    reset();
+  }
 
   /**
    * @brief      Gets the size of the elements taken by the configurad Patial solution.

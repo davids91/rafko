@@ -60,9 +60,9 @@ void Weight_updater::update_weights_with_velocity(){
 }
 
 void Weight_updater::update_solution_with_weights(Solution& solution){
-  uint32 inner_neuron_iterator = 0;
-  uint32 neuron_weight_synapse_starts = 0;
-  uint32 inner_neuron_weight_index_starts = 0;
+  uint32 inner_neuron_iterator;
+  uint32 neuron_weight_synapse_starts;
+  uint32 inner_neuron_weight_index_starts;
   uint32 neuron_index;
   for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
     inner_neuron_iterator = 0;
