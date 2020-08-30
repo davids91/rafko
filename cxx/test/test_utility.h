@@ -124,6 +124,14 @@ extern Data_aggregate* create_sequenced_addition_dataset(
   uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function, Service_context& service_context
 );
 
+/**
+ * @brief      Checks if the two arguments match or not
+ *
+ * @param      sample_data      The sample data
+ * @param      ringbuffer_data  The ringbuffer data
+ */
+extern void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& ringbuffer_data);
+
 };
 
 #endif /* sparse_net_TEST_MOCKUPS_H */

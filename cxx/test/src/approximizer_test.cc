@@ -24,6 +24,7 @@
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/models/cost_function_mse.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
+#include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/sparse_net_approximizer.h"
 #include "sparse_net_library/services/function_factory.h"
 

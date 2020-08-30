@@ -52,7 +52,6 @@ bool Neuron_info::is_neuron_valid(const Neuron& neuron)
       number_of_input_weights += neuron.input_weights(i).interval_size();
     }
 
-    /* Check if inputs from synapses match */
     return (number_of_input_indexes <= number_of_input_weights);
   } else return false;
 }

@@ -18,12 +18,9 @@
 #ifndef SERVER_SLOT_FACTORY_H
 #define SERVER_SLOT_FACTORY_H
 
-#include "sparse_net_global.h"
-
 #include <memory>
 
 #include "gen/deep_learning_service.pb.h"
-#include "rafko_mainframe/models/service_context.h"
 
 #include "rafko_mainframe/services/server_slot.h"
 #include "rafko_mainframe/services/server_slot_run_net.h"

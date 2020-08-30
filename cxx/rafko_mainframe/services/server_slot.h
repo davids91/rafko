@@ -23,7 +23,6 @@
 #include <string>
 #include <memory>
 
-#include "gen/sparse_net.pb.h"
 #include "gen/deep_learning_service.pb.h"
 #include "sparse_net_library/models/data_aggregate.h"
 
@@ -37,7 +36,7 @@ using sparse_net_library::SparseNet;
 
 /**
  * @brief      This class describes a common ancestor and interface of whatever 
- *             is able to run in a @DeepLearning_server.
+ *             is able to run in a @Deep_learning_server.
  */
 class Server_slot{
 public: 

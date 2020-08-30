@@ -24,7 +24,6 @@
 #include <mutex>
 
 #include "gen/deep_learning_service.grpc.pb.h"
-#include "rafko_mainframe/models/service_context.h"
 
 #include "rafko_mainframe/services/server_slot.h"
 

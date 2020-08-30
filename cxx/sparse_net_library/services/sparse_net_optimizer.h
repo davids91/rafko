@@ -23,21 +23,15 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 #include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
-#include "gen/training.pb.h"
 #include "sparse_net_library/models/cost_function.h"
 #include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/data_aggregate.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
-
-#include "sparse_net_library/services/solution_builder.h"
+#include "sparse_net_library/services/weight_updater.h"
 #include "sparse_net_library/services/solution_solver.h"
-#include "sparse_net_library/services/backpropagation_queue_wrapper.h"
-#include "sparse_net_library/services/updater_factory.h"
-#include "sparse_net_library/services/function_factory.h"
 
 namespace sparse_net_library{
 
@@ -48,6 +42,7 @@ using std::make_unique;
 using std::min;
 using std::max;
 using std::mutex;
+using std::atomic;
 
 /**
  * @brief      An optimizer to train neural networks based on calculated gradients.

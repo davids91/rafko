@@ -23,8 +23,6 @@
 
 #include <cmath>
 
-#include "gen/sparse_net.pb.h"
-
 #include "rafko_mainframe/models/service_context.h"
 
 namespace sparse_net_library {
@@ -97,6 +95,8 @@ public:
   sdouble32 next_weight() const{
     return next_weight_for(TRANSFER_FUNCTION_IDENTITY);
   }
+
+  virtual ~Weight_initializer(void) = default;
 
 protected:
   Service_context& context;

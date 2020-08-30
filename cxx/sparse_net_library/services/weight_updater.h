@@ -24,8 +24,6 @@
 #include <atomic>
 #include <vector>
 
-#include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 

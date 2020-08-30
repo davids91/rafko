@@ -25,14 +25,11 @@
 #include <mutex>
 
 #include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
-#include "gen/training.pb.h"
-#include "sparse_net_library/models/data_aggregate.h"
 
-#include "sparse_net_library/services/solution_builder.h"
+#include "sparse_net_library/models/data_aggregate.h"
+#include "sparse_net_library/services/weight_updater.h"
+
 #include "sparse_net_library/services/solution_solver.h"
-#include "sparse_net_library/services/updater_factory.h"
 
 namespace sparse_net_library{
 

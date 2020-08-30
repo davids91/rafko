@@ -20,6 +20,8 @@
 #include "gen/common.pb.h"
 
 #include "sparse_net_library/services/synapse_iterator.h"
+#include "sparse_net_library/services/solution_builder.h"
+#include "sparse_net_library/services/updater_factory.h"
 
 namespace sparse_net_library{
 

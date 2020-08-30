@@ -25,7 +25,6 @@
 
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
-#include "rafko_mainframe/models/service_context.h"
 
 #include "sparse_net_library/models/cost_function_squared_error.h"
 #include "sparse_net_library/models/cost_function_mse.h"

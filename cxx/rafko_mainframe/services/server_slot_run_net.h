@@ -21,10 +21,7 @@
 #include <memory>
 #include <string>
 
-#include "gen/solution.pb.h"
-#include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/solution_solver.h"
-#include "rafko_mainframe/models/service_context.h"
 
 #include "rafko_mainframe/services/server_slot.h"
 

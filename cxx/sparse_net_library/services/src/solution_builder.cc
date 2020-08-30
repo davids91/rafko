@@ -22,6 +22,8 @@
 #include <stdexcept>
 
 #include "sparse_net_library/models/neuron_info.h"
+#include "sparse_net_library/services/neuron_router.h"
+#include "sparse_net_library/services/synapse_iterator.h"
 
 #include "sparse_net_library/services/partial_solution_builder.h"
 

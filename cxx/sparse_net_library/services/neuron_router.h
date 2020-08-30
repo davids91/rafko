@@ -28,8 +28,6 @@
 
 #include "gen/sparse_net.pb.h"
 
-#include "sparse_net_library/services/synapse_iterator.h"
-
 namespace sparse_net_library {
 
 using std::unique_ptr;

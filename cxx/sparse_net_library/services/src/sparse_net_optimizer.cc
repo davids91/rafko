@@ -23,6 +23,11 @@
 #include <stdexcept>
 
 #include "sparse_net_library/models/spike_function.h"
+#include "sparse_net_library/services/synapse_iterator.h"
+#include "sparse_net_library/services/Solution_builder.h"
+#include "sparse_net_library/services/backpropagation_queue_wrapper.h"
+#include "sparse_net_library/services/updater_factory.h"
+#include "sparse_net_library/services/function_factory.h"
 
 namespace sparse_net_library{
 

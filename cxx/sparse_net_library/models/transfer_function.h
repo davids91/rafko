@@ -22,8 +22,6 @@
 
 #include <vector>
 
-#include "gen/sparse_net.pb.h"
-
 #include "rafko_mainframe/models/service_context.h"
 
 namespace sparse_net_library{

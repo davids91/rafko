@@ -18,10 +18,6 @@
 #ifndef BACKPROPAGATION_WRAPPER_H
 #define BACKPROPAGATION_WRAPPER_H
 
-#include "sparse_net_global.h"
-
-#include "gen/sparse_net.pb.h"
-#include "gen/training.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 
 namespace sparse_net_library{
