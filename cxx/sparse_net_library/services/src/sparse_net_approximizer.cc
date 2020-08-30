@@ -145,11 +145,14 @@ void Sparse_net_approximizer::collect_thread(Data_aggregate& data_set, uint32 so
       ++raw_label_index;
       ++raw_inputs_index;
     }
+    uint32 start_index_in_sequence = (rand()%( /* If the memory is truncated for the training */
+      data_set.get_sequence_size() - context.get_memory_truncation() + 1 /* not all result output values are evaluated */
+    )); /* only context.get_memory_truncation(), starting at a random index inside bounds */
     lock_guard<mutex> my_lock(dataset_mutex);
     data_set.set_features_for_labels(
       solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(),
-      (sequence_start_index + sample * data_set.get_sequence_size()),
-      data_set.get_sequence_size()
+      (sequence_start_index + sample * data_set.get_sequence_size()) + start_index_in_sequence,
+      context.get_memory_truncation() /* To avoid vanishing gradients, error calculation is truncated */
     ); /* Re-calculate error for the training set */
   }
 }
