@@ -98,9 +98,7 @@ void Sparse_net_approximizer::collect_fragment(void){
 
   /* Modify a random weight */
   const uint32 weight_index = rand()%(net.weight_table_size());
-  net.set_weight_table(
-    weight_index, (net.weight_table(weight_index) + context.get_step_size() )
-  );
+  net.set_weight_table(weight_index, (net.weight_table(weight_index) + (context.get_step_size()/double_literal(10.0)) ));
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate its gradient */
@@ -120,9 +118,7 @@ void Sparse_net_approximizer::collect_fragment(void){
   /* Revert weight modification and the error state with it */
   train_set.pop_state();
 
-  net.set_weight_table( 
-    weight_index, (net.weight_table(weight_index) - context.get_step_size())
-  );
+  net.set_weight_table(weight_index, ( net.weight_table(weight_index) - (context.get_step_size()/double_literal(10.0)) ));
   weight_updater->update_solution_with_weights(*net_solution);
   ++loops_unchecked;
 }

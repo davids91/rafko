@@ -579,7 +579,7 @@ public class DashboardController implements Initializable {
             .setType(RafkoDeepLearningService.Slot_type.SERV_SLOT_TO_APPROXIMIZE)
             .setHypers(RafkoDeepLearningService.Service_hyperparameters.newBuilder()
                     .setAlpha(1.6732).setLambda(1.0507)
-                    .setStepSize(1e-4).setMinibatchSize(64).setMemoryTruncation(3)
+                    .setStepSize(1e-2).setMinibatchSize(64).setMemoryTruncation(3)
                     .build())
             .setCostFunction(RafkoCommon.cost_functions.COST_FUNCTION_MSE)
             .setWeightUpdater(RafkoCommon.weight_updaters.WEIGHT_UPDATER_MOMENTUM);

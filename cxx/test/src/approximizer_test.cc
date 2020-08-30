@@ -140,7 +140,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
  * */
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context().set_step_size(5e-3).set_arena_ptr(&arena).set_max_solve_threads(8);
+  Service_context service_context = Service_context().set_step_size(1e-2).set_arena_ptr(&arena).set_max_solve_threads(8);
   uint32 number_of_samples = 50;
 
   /* Create nets */
@@ -196,6 +196,10 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     << flush;
 
     ++iteration;
+    if( /* every x iteration, until the step size if big enough to matter */
+      (0 == (iteration % 5000))
+      &&((service_context.get_epsilon() * 1000.0) < service_context.get_step_size())
+    )service_context.set_step_size(service_context.get_step_size() * service_context.get_gamma()); /* make the step size decay */
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps

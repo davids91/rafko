@@ -55,9 +55,7 @@ TEST_CASE("Weight updater test","[build][weight-update]"){
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the above described net, solution and a Weight updater */
-  unique_ptr<SparseNet> net(
-    Sparse_net_builder(service_context).input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure)
-  );
+  unique_ptr<SparseNet> net(Sparse_net_builder(service_context).input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure));
   Weight_updater weight_updater(*net, service_context);
   unique_ptr<Solution> solution = unique_ptr<Solution>(Solution_builder(service_context).build(*net));
   check_if_the_same(*net, *solution);
