@@ -141,12 +141,14 @@ private:
   mutex dataset_mutex;
 
   /**
-   * @brief      A thread to approximate the gradient for a weight for a given number of samples.
+   * @brief      A thread to calcualte the error value for the given data set
    *
-   * @param[in]  solve_thread_index   The index of the used thread
-   * @param[in]  samples_to_evaluate  The number of samples to evaluate
+   * @param      data_set               The data set to calculate the error for
+   * @param[in]  solve_thread_index     The index of the used thread
+   * @param[in]  sequence_start_index   The starting sequence index to evaluate in this
+   * @param[in]  sequences_to_evaluate  The sequences to evaluate
    */
-  void collect_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 sequences_to_evaluate);
+  void collect_thread(Data_aggregate& data_set, uint32 solve_thread_index, uint32 sequence_start_index, uint32 sequences_to_evaluate);
 
   /**
    * @brief      Insert an element to the given position into the given field by

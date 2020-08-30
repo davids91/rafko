@@ -447,8 +447,7 @@ void Sparse_net_optimizer::normalize_weight_gradients(void){
 void Sparse_net_optimizer::normalize_weight_gradients_thread(uint32 weight_index, uint32 weight_number){
   for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator)
     get_weight_gradient()[weight_index + weight_iterator]->store(
-      *get_weight_gradient()[weight_index + weight_iterator] / 
-      static_cast<sdouble32>(context.get_minibatch_size() * train_set.get_sequence_size())
+      *get_weight_gradient()[weight_index + weight_iterator] / static_cast<sdouble32>(context.get_minibatch_size())
     );
 }
 

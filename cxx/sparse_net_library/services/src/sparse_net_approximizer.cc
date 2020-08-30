@@ -24,6 +24,7 @@
 namespace sparse_net_library{
 
 using std::lock_guard;
+using std::ref;
 
 Sparse_net_approximizer::Sparse_net_approximizer(
   SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
@@ -36,7 +37,7 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  test_set(test_set_)
 ,  gradient_fragment()
 ,  loops_unchecked(context.get_insignificant_iteration_count())
-,  sequence_truncation(min(context.get_memory_truncation(),train_set.get_sequence_size()))
+,  sequence_truncation(min(context.get_memory_truncation(), train_set.get_sequence_size()))
 ,  solve_threads()
 ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
 /* Cache variables */
@@ -49,23 +50,39 @@ Sparse_net_approximizer::Sparse_net_approximizer(
   )));
   solve_threads.reserve(context.get_max_solve_threads());
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
-    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context, train_set.get_sequence_size()));
+    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
     process_threads[threads].reserve(context.get_max_processing_threads());
   }
+  if(train_set.get_feature_size() != solvers.back()->get_output_size())
+    throw std::runtime_error("Network output size doesn't match size of provided labels!");
   weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
 }
 
 void Sparse_net_approximizer::collect_fragment(void){
-  uint32 sequence_index = 0;
+  uint32 sequence_index;
   const uint32 sequences_to_evaluate = std::min(train_set.get_number_of_sequences(), context.get_minibatch_size());
   const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(sequences_to_evaluate/context.get_max_solve_threads());
 
-  if(loops_unchecked >= context.get_insignificant_iteration_count()){
-    /* calculate the error value for the current network */
+  if(
+    (loops_unchecked >= context.get_insignificant_iteration_count())
+    ||(loops_unchecked > (train_set.get_error()/context.get_step_size()))
+    ||(loops_unchecked > (test_set.get_error()/context.get_step_size()))
+  ){
+    /* calculate the error value for the current network in the testing and training datasets */
+    sequence_index = 0;
     for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(sequences_to_evaluate > sequence_index)); ++thread_index){
       solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
-        &Sparse_net_approximizer::collect_thread, this, thread_index, sequence_index,
+        &Sparse_net_approximizer::collect_thread, this, ref(train_set), thread_index, sequence_index,
         std::min(sequences_in_one_thread, (train_set.get_number_of_sequences() - sequence_index))
+      ));
+      sequence_index += sequences_in_one_thread;
+    }
+    wait_for_threads(solve_threads);
+    sequence_index = 0;
+    for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(sequences_to_evaluate > sequence_index)); ++thread_index){
+      solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
+        &Sparse_net_approximizer::collect_thread, this, ref(test_set), thread_index, sequence_index,
+        std::min(sequences_in_one_thread, (test_set.get_number_of_sequences() - sequence_index))
       ));
       sequence_index += sequences_in_one_thread;
     }
@@ -88,7 +105,7 @@ void Sparse_net_approximizer::collect_fragment(void){
   sequence_index = 0;
   for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(sequences_to_evaluate > sequence_index)); ++thread_index){
     solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
-      &Sparse_net_approximizer::collect_thread, this, thread_index, sequence_index,
+      &Sparse_net_approximizer::collect_thread, this, ref(train_set), thread_index, sequence_index,
       std::min(sequences_in_one_thread, (train_set.get_number_of_sequences() - sequence_index))
     ));
     sequence_index += sequences_in_one_thread;
@@ -108,33 +125,33 @@ void Sparse_net_approximizer::collect_fragment(void){
   ++loops_unchecked;
 }
 
-void Sparse_net_approximizer::collect_thread(uint32 solve_thread_index, uint32 sequence_start_index, uint32 sequences_to_evaluate){
+void Sparse_net_approximizer::collect_thread(Data_aggregate& data_set, uint32 solve_thread_index, uint32 sequence_start_index, uint32 sequences_to_evaluate){
   uint32 raw_inputs_index;
   uint32 raw_label_index;
 
   for(uint32 sample = 0; sample < sequences_to_evaluate; ++sample){
     raw_label_index = sequence_start_index + sample;
-    raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + train_set.get_prefill_inputs_number());
-    raw_label_index = raw_label_index * train_set.get_sequence_size();
+    raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());
+    raw_label_index = raw_label_index * data_set.get_sequence_size();
 
     /* Prefill network with the initial inputs */
     solvers[solve_thread_index]->reset();
-    for(uint32 prefill_iterator = 0; prefill_iterator < train_set.get_prefill_inputs_number(); ++prefill_iterator){
-      solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index));
+    for(uint32 prefill_iterator = 0; prefill_iterator < data_set.get_prefill_inputs_number(); ++prefill_iterator){
+      solvers[solve_thread_index]->solve(data_set.get_input_sample(raw_inputs_index));
       ++raw_inputs_index;
     }
 
     /* Evaluate the current sequence step by step */
     for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
-      solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
+      solvers[solve_thread_index]->solve(data_set.get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
       ++raw_label_index;
       ++raw_inputs_index;
     }
     lock_guard<mutex> my_lock(dataset_mutex);
-    train_set.set_features_for_labels(
+    data_set.set_features_for_labels(
       solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(),
-      (sequence_start_index + sample * train_set.get_sequence_size()),
-      train_set.get_sequence_size()
+      (sequence_start_index + sample * data_set.get_sequence_size()),
+      data_set.get_sequence_size()
     ); /* Re-calculate error for the training set */
   }
 }
