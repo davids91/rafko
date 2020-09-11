@@ -184,7 +184,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   while(abs(train_error) > service_context.get_step_size()){
     start = steady_clock::now();
     approximizer.collect_fragment();
-    approximizer.apply_fragment();
+    // if(0 == (iteration % 5))
+      approximizer.apply_fragment();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     train_error = approximizer.get_train_error();

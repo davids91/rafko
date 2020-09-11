@@ -62,7 +62,6 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 
 void Sparse_net_approximizer::collect_fragment(void){
   uint32 sequence_index;
-  sdouble32 initial_error;
   const uint32 sequences_to_evaluate = std::min(train_set.get_number_of_sequences(), context.get_minibatch_size());
   const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(sequences_to_evaluate/context.get_max_solve_threads());
 
@@ -93,12 +92,25 @@ void Sparse_net_approximizer::collect_fragment(void){
     loops_unchecked = 0;
   }
 
+  /* Approximate the gradient for every weight */
+  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
+    add_to_fragment(weight_index,get_gradient_fragment(weight_index));
+  }
+
+  ++loops_unchecked;
+}
+
+sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
+  sdouble32 gradient;
+  uint32 sequence_index;
+  sdouble32 initial_error;
+  const uint32 sequences_to_evaluate = std::min(train_set.get_number_of_sequences(), context.get_minibatch_size());
+  const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(sequences_to_evaluate/context.get_max_solve_threads());
+
   /* Save error from the initial network */
   last_error = train_set.get_error();
   train_set.push_state();
 
-  /* Select a random weight */
-  const uint32 weight_index = rand()%(net.weight_table_size());
   sequence_index = rand()%(
     train_set.get_number_of_sequences() + 1 /* +1 to avoid SIGFPE in case the whole dataset is evaluated */
     - max(1u,min(context.get_minibatch_size(), train_set.get_number_of_sequences()))
@@ -133,21 +145,14 @@ void Sparse_net_approximizer::collect_fragment(void){
   }
   wait_for_threads(solve_threads);
 
-  /* Add the collected gradient into the fragment */
-  // std::cout << "\n errors: " << initial_error << "->" << train_set.get_error()
-  // << "; gradient: " << 
-  //   (train_set.get_error() - initial_error) / (context.get_step_size() * train_set.get_number_of_label_samples())
-  // << std::endl;
-  add_to_fragment(
-    weight_index,
-    (train_set.get_error() - initial_error) / (context.get_step_size() * train_set.get_number_of_label_samples())
-  );
+  gradient = (train_set.get_error() - initial_error) / (train_set.get_number_of_label_samples());
 
   /* Revert weight modification and the error state with it */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) + (context.get_step_size()/double_literal(10.0)) ));
   weight_updater->update_solution_with_weights(*net_solution);
   train_set.pop_state();
-  ++loops_unchecked;
+
+  return gradient;
 }
 
 void Sparse_net_approximizer::collect_thread(Data_aggregate& data_set, uint32 solve_thread_index, uint32 sequence_start_index, uint32 sequences_to_evaluate){

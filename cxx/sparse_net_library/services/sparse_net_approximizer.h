@@ -66,6 +66,15 @@ public:
   void collect_fragment(void);
 
   /**
+   * @brief      Collects the approximate gradient of a single weight
+   *
+   * @param[in]  weight_index  The weight index to approximate for
+   *
+   * @return     The gradient approximation for the configured dataset
+   */
+  sdouble32 get_gradient_fragment(uint32 weight_index);
+
+  /**
    * @brief      Applies the colleted gradient fragment to the configured network
    */
   void apply_fragment(void);
