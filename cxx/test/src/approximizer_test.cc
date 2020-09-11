@@ -140,8 +140,10 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
  * */
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context().set_step_size(1e-2).set_arena_ptr(&arena).set_max_solve_threads(8);
-  uint32 number_of_samples = 50;
+  Service_context service_context = Service_context()
+    .set_step_size(1e-2).set_minibatch_size(128).set_memory_truncation(2)
+    .set_arena_ptr(&arena).set_max_solve_threads(8);
+  uint32 number_of_samples = 5;
 
   /* Create nets */
   vector<SparseNet*> nets = vector<SparseNet*>();

@@ -134,7 +134,7 @@ private:
   vector<vector<thread>> process_threads; /* The inner process thread to be started during net optimization */
 
   Index_synapse_interval tmp_synapse_interval;
-  sdouble32 initial_error;
+  sdouble32 last_error;
   mutex dataset_mutex;
 
   /**
