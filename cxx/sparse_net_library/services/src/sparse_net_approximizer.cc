@@ -57,6 +57,104 @@ Sparse_net_approximizer::Sparse_net_approximizer(
   weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
 }
 
+void Sparse_net_approximizer::collect_approximates_from_random_direction(void){
+  sdouble32 error_initial;
+  sdouble32 error_negative_direction;
+  sdouble32 error_positive_direction;
+  vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
+  vector<sdouble32> weight_steps(net.weight_table_size(),double_literal(0.0));
+  sdouble32 weight_epsilon = double_literal(0.0);
+  uint32 sequence_start_index = (rand()%(
+    train_set.get_number_of_sequences() - context.get_minibatch_size() + 1
+  ));
+  uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training */
+    train_set.get_sequence_size() - context.get_memory_truncation() + 1 /* not all result output values are evaluated */
+  )); /* only context.get_memory_truncation(), starting at a random index inside bounds */
+
+  if( /* If the net should be re-evaluated based on the iteration */
+    (loops_unchecked >= context.get_insignificant_iteration_count())
+    ||(loops_unchecked > (train_set.get_error()/context.get_step_size()))
+    ||(loops_unchecked > (test_set.get_error()/context.get_step_size()))
+  ){ 
+    evaluate(); /* calculate the error value for the current network in the testing and training datasets */
+    loops_unchecked = 0;
+  }
+  error_initial = train_set.get_error();
+  train_set.push_state();
+
+  /* decide a random direction to approximate the network on */
+  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
+    weight_steps[weight_index] = (
+      context.get_step_size() 
+      * ( (static_cast<sdouble32>(rand()%201) / double_literal(200.0)) - double_literal(1.0) )
+      * std::min(double_literal(1.0),error_initial)
+    );
+    weight_epsilon += std::pow(weight_steps[weight_index], double_literal(2.0));
+    net.set_weight_table(weight_index, (net.weight_table(weight_index) - weight_steps[weight_index]) );
+  };
+  weight_updater->update_solution_with_weights(*net_solution);
+  weight_epsilon = std::sqrt(weight_epsilon) * double_literal(2.0);
+
+  /* see the error values at the negative end of the current direction */
+  evaluate(
+    train_set,sequence_start_index,context.get_minibatch_size(),
+    start_index_inside_sequence,context.get_memory_truncation()
+  );
+  error_negative_direction = train_set.get_error();
+
+  /* see the error values at the positive end of the current direction */
+  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index)
+    net.set_weight_table(weight_index, (net.weight_table(weight_index) + (weight_steps[weight_index] * double_literal(2.0))) );
+  weight_updater->update_solution_with_weights(*net_solution);
+  evaluate(
+    train_set,sequence_start_index,context.get_minibatch_size(),
+    start_index_inside_sequence,context.get_memory_truncation()
+  );
+  error_positive_direction = train_set.get_error();
+
+  // for(uint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
+  //   std::cout << "weight index:" << weight_index
+  //   << "\n errors: (+)" << error_positive_direction << "<>(-)" << error_negative_direction
+  //   << "; step_size: " << ( context.get_step_size() )
+  //   << "; weight delta: " << ( weight_steps[weight_index] )
+  //   << "= (" << context.get_step_size() << "*" << std::min(double_literal(1.0),error_initial) << "* rand()"
+  //   << ")"
+  //   << "; error delta: " << ( error_positive_direction - error_negative_direction )
+  //   << "; current_epsilon_double: " << weight_epsilon
+  //   << "; sequences_to_evaluate: " << train_set.get_number_of_sequences()
+  //   << "; gradient: " << ( error_positive_direction - error_negative_direction ) / (weight_epsilon)
+  //   << std::endl << "=====" << std::endl;
+  // }
+
+  /* collect the fragment, revert weight changes */
+  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
+    weight_gradients[weight_index] = (
+      ( error_positive_direction - error_negative_direction ) / (weight_epsilon)
+    );
+    add_to_fragment( weight_index, (weight_gradients[weight_index] * weight_steps[weight_index]) );
+    net.set_weight_table(weight_index, (net.weight_table(weight_index) - (weight_steps[weight_index])) );
+  }
+  // if(
+  //   (error_initial > error_positive_direction)
+  //   ||(error_initial > error_negative_direction)
+  // ){
+  //   for(uint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
+  //     weight_gradients[weight_index] = (
+  //       ( error_positive_direction - error_negative_direction ) / (weight_epsilon)
+  //     );
+  //     add_to_fragment( weight_index, (weight_gradients[weight_index] * weight_steps[weight_index]) );
+  //     net.set_weight_table(weight_index, (net.weight_table(weight_index) - (weight_steps[weight_index])) );
+  //   }
+  // }else{ /* Only revert the changes because current direction did not improve */
+  //   for(uint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
+  //     net.set_weight_table(weight_index, (net.weight_table(weight_index) - (weight_steps[weight_index])) );
+  //   }
+  // }
+  weight_updater->update_solution_with_weights(*net_solution);
+  train_set.pop_state();
+  ++loops_unchecked;
+}
+
 void Sparse_net_approximizer::collect_fragment(void){
 
   if(
@@ -83,11 +181,6 @@ void Sparse_net_approximizer::collect_fragment(void){
   }
   average_gradient /= static_cast<sdouble32>(net.weight_table_size());
   add_to_fragment(index_of_biggest, (weight_gradients[index_of_biggest] / sum_gradient) );
-  // for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-  //   if(average_gradient < weight_gradients[weight_index]){
-  //     add_to_fragment(weight_index, (weight_gradients[weight_index] / sum_gradient) );
-  //   }
-  // }
   ++loops_unchecked;
 }
 

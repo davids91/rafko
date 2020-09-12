@@ -141,9 +141,9 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context()
-    .set_step_size(3e-6).set_minibatch_size(128).set_memory_truncation(2)
+    .set_step_size(3e-3).set_minibatch_size(128).set_memory_truncation(2)
     .set_arena_ptr(&arena).set_max_solve_threads(8);
-  uint32 number_of_samples = 5;
+  uint32 number_of_samples = 500;
 
   /* Create nets */
   vector<SparseNet*> nets = vector<SparseNet*>();
@@ -183,7 +183,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   std::cout << "Optimizing net.." << std::endl;
   while(abs(train_error) > service_context.get_step_size()){
     start = steady_clock::now();
-    approximizer.collect_fragment();
+    approximizer.collect_approximates_from_random_direction();
     // if(0 == (iteration % 5))
       approximizer.apply_fragment();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();

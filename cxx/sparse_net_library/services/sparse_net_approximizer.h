@@ -69,6 +69,11 @@ public:
   }
 
   /**
+   * @brief      Moves the network in a random direction and approximates the gradients based on that
+   */
+  void collect_approximates_from_random_direction(void);
+
+  /**
    * @brief      Step the net in the opposite direction of the gradient slope
    */
   void collect_fragment(void);
