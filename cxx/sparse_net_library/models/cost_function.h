@@ -79,7 +79,7 @@ public:
    */
   void get_feature_errors(
     const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data,
-    vector<sdouble32>& errors_for_labels, uint32 label_start, uint32 sample_number
+    vector<sdouble32>& errors_for_labels, uint32 label_start, uint32 labels_to_evaluate, uint32 sample_number
   );
 
   /**
