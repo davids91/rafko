@@ -154,8 +154,8 @@ void Sparse_net_optimizer::evaluate_thread(uint32 solve_thread_index, uint32 sam
       ++inputs_index;
     }
     test_set.set_features_for_labels(
-      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(),
-      raw_label_start_index, (test_set.get_sequence_size() * test_set.get_feature_size())
+      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(), 0,
+      raw_label_start_index, test_set.get_sequence_size()
     ); /* Re-calculate error for the training set for this run */
     solvers[solve_thread_index]->reset();
   }
@@ -193,8 +193,8 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
 
     set_mutex.lock();
     train_set.set_features_for_labels(
-      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(),
-      raw_sample_start_index, (train_set.get_sequence_size() * train_set.get_feature_size())
+      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(), 0,
+      raw_sample_start_index, train_set.get_sequence_size()
     ); /* Re-calculate error for the training set */
     set_mutex.unlock();
 

@@ -108,8 +108,8 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   set_distance *= (rand()%10 / double_literal(10.0)); /* modify the set distance just to be sure */
   vector<vector<sdouble32>> neuron_data_simulation((sample_number/2), {(expected_label - set_distance)}); /* create dummy neuron data with the configured distance */
   for(uint32 variant = 0; variant < 100; ++variant){
-    data_agr.set_features_for_labels(neuron_data_simulation,0,sample_number/2); /* set the error for the first half */
-    data_agr.set_features_for_labels(neuron_data_simulation,sample_number/2, sample_number/2); /* set the error for the second half */
+    data_agr.set_features_for_labels(neuron_data_simulation, 0, 0, sample_number/2); /* set the error for the first half */
+    data_agr.set_features_for_labels(neuron_data_simulation, 0, sample_number/2, sample_number/2); /* set the error for the second half */
 
     Catch::StringMaker<sdouble32>::precision  = 15;
     /*!Note: THe below sometimes fail with the deviation of 0.000000000000099,

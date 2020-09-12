@@ -25,16 +25,16 @@ using std::ref;
 using std::async;
 
 void Cost_function::get_feature_errors(
-  const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data,
-  vector<sdouble32>& errors_for_labels, uint32 label_start, uint32 labels_to_evaluate, uint32 sample_number
+  const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+  uint32 label_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
 ){
-  if((label_start + neuron_data.size()) > labels.size())
+  if((label_start + labels_to_evaluate) > labels.size())
     throw new std::runtime_error("Label index out of bounds with Neuron data!");
 
   if(neuron_data.size() < labels_to_evaluate)
     throw new std::runtime_error("Can't evaluate more labels, than there is data provided!");
 
-  uint32 neuron_data_start_index = 0;
+  uint32 neuron_data_start_index = neuron_start;
   const uint32 labels_to_do_in_a_thread = 1 + static_cast<uint32>(labels_to_evaluate/context.get_sqrt_of_process_threads());
   for(
     uint32 thread_index = 0;

@@ -49,7 +49,7 @@ Sparse_net_approximizer::Sparse_net_approximizer(
   )));
   solve_threads.reserve(context.get_max_solve_threads());
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
-    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
+    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context, train_set.get_sequence_size()));
     process_threads[threads].reserve(context.get_max_processing_threads());
   }
   if(train_set.get_feature_size() != solvers.back()->get_output_size())
@@ -65,8 +65,7 @@ void Sparse_net_approximizer::collect_fragment(void){
     ||(loops_unchecked > (test_set.get_error()/context.get_step_size()))
   ){
     /* calculate the error value for the current network in the testing and training datasets */
-    evaluate(train_set);
-    evaluate(test_set);
+    evaluate();
     loops_unchecked = 0;
   }
 
@@ -83,24 +82,41 @@ void Sparse_net_approximizer::collect_fragment(void){
       index_of_biggest = weight_index;
   }
   average_gradient /= static_cast<sdouble32>(net.weight_table_size());
-  add_to_fragment(index_of_biggest, (weight_gradients[index_of_biggest] / average_gradient) );
+  add_to_fragment(index_of_biggest, (weight_gradients[index_of_biggest] / sum_gradient) );
+  // for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
+  //   if(average_gradient < weight_gradients[weight_index]){
+  //     add_to_fragment(weight_index, (weight_gradients[weight_index] / sum_gradient) );
+  //   }
+  // }
   ++loops_unchecked;
 }
 
 sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
   sdouble32 gradient;
-  const sdouble32 current_epsilon = (std::sqrt(context.get_epsilon()));
+  const sdouble32 current_epsilon = (
+    std::sqrt(context.get_epsilon()) * (train_set.get_error()/net.weight_table_size()  )
+  );
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
 
-  /* Save error from the initial network */
+  /* Save error from the initial network, decide the minibatch and sequence truncation */
   train_set.push_state();
+  uint32 sequence_start_index = (rand()%(
+    train_set.get_number_of_sequences() - context.get_minibatch_size() + 1
+  ));
+  uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training */
+    train_set.get_sequence_size() - context.get_memory_truncation() + 1 /* not all result output values are evaluated */
+  )); /* only context.get_memory_truncation(), starting at a random index inside bounds */
+
 
   /* Push it in one direction */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate the modified weights gradient */
-  evaluate(train_set);
+  evaluate(
+    train_set,sequence_start_index,context.get_minibatch_size(),
+    start_index_inside_sequence,context.get_memory_truncation()
+  );
   gradient = train_set.get_error();
 
   /* Push it in other direction */
@@ -108,7 +124,10 @@ sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate the newly modified weights gradient */
-  evaluate(train_set);
+  evaluate(
+    train_set,sequence_start_index,context.get_minibatch_size(),
+    start_index_inside_sequence,context.get_memory_truncation()
+  );
 
   gradient = -(gradient - train_set.get_error()) / (current_epsilon_double * train_set.get_number_of_sequences());
 
@@ -120,33 +139,37 @@ sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
   return gradient;
 }
 
-void Sparse_net_approximizer::evaluate(Data_aggregate& data_set){
-  uint32 sequence_index = 0;
-  const uint32 sequences_to_evaluate = data_set.get_number_of_sequences();//std::min(data_set.get_number_of_sequences(), context.get_minibatch_size());
+void Sparse_net_approximizer::evaluate(
+  Data_aggregate& data_set, uint32 label_start_index, uint32 labels_to_eval,
+  uint32 start_index_in_sequence, uint32 sequence_truncation
+){
+  uint32 sequence_index = label_start_index;
+  const uint32 sequences_to_evaluate = std::min(data_set.get_number_of_sequences(), labels_to_eval);
   const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(sequences_to_evaluate/context.get_max_solve_threads());
 
   for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(data_set.get_number_of_sequences() > sequence_index)); ++thread_index){
     solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
-      &Sparse_net_approximizer::collect_thread, this, ref(data_set), thread_index, sequence_index,
-      std::min(sequences_in_one_thread, (data_set.get_number_of_sequences() - sequence_index))
+      &Sparse_net_approximizer::evaluate_thread, this, ref(data_set), thread_index, sequence_index,
+      std::min(sequences_in_one_thread, (data_set.get_number_of_sequences() - sequence_index)),
+      start_index_in_sequence, sequence_truncation
     ));
     sequence_index += sequences_in_one_thread;
   }
   wait_for_threads(solve_threads);
 }
 
-void Sparse_net_approximizer::collect_thread(Data_aggregate& data_set, uint32 solve_thread_index, uint32 sequence_start_index, uint32 sequences_to_evaluate){
+void Sparse_net_approximizer::evaluate_thread(
+  Data_aggregate& data_set, uint32 solve_thread_index,
+  uint32 sequence_start_index, uint32 sequences_to_evaluate,
+  uint32 start_index_in_sequence, uint32 sequence_truncation
+){
   uint32 raw_inputs_index;
   uint32 raw_label_index;
-  uint32 start_index_in_sequence;
 
   for(uint32 sample = 0; sample < sequences_to_evaluate; ++sample){
     raw_label_index = sequence_start_index + sample;
     raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());
     raw_label_index = raw_label_index * data_set.get_sequence_size();
-    start_index_in_sequence = (rand()%( /* If the memory is truncated for the training */
-      data_set.get_sequence_size() - context.get_memory_truncation() + 1 /* not all result output values are evaluated */
-    )); /* only context.get_memory_truncation(), starting at a random index inside bounds */
 
     /* Prefill network with the initial inputs */
     solvers[solve_thread_index]->reset();
@@ -163,9 +186,9 @@ void Sparse_net_approximizer::collect_thread(Data_aggregate& data_set, uint32 so
     }
     lock_guard<mutex> my_lock(dataset_mutex);
     data_set.set_features_for_labels(
-      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(),
-      (sequence_start_index + sample * data_set.get_sequence_size()) + start_index_in_sequence,
-      context.get_memory_truncation() /* To avoid vanishing gradients, error calculation is truncated */
+      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(), start_index_in_sequence,
+      ((sequence_start_index + sample) * data_set.get_sequence_size()) + start_index_in_sequence,
+      sequence_truncation /* To avoid vanishing gradients, error calculation is truncated */
     ); /* Re-calculate error for the training set */
   }
 }

@@ -64,8 +64,8 @@ public:
    * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set
    */
   void evaluate(void){
-    evaluate(train_set);
-    evaluate(test_set);
+    evaluate(train_set,0,train_set.get_number_of_sequences(),0,train_set.get_sequence_size());
+    evaluate(test_set,0,test_set.get_number_of_sequences(),0,test_set.get_sequence_size());
   }
 
   /**
@@ -155,9 +155,16 @@ private:
   /**
    * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set
    *
-   * @param      data_set  The data set to evaluate the network on
+   * @param      data_set                 The data set
+   * @param[in]  label_start_index        The raw label start
+   * @param[in]  labels_to_eval           The labels to eval
+   * @param[in]  start_index_in_sequence  The start index in sequence
+   * @param[in]  sequence_truncation      The sequence truncation
    */
-  void evaluate(Data_aggregate& data_set);
+  void evaluate(
+    Data_aggregate& data_set, uint32 label_start_index, uint32 labels_to_eval,
+    uint32 start_index_in_sequence, uint32 sequence_truncation
+  );
 
   /**
    * @brief      A thread to calcualte the error value for the given data set
@@ -166,8 +173,13 @@ private:
    * @param[in]  solve_thread_index     The index of the used thread
    * @param[in]  sequence_start_index   The starting sequence index to evaluate in this
    * @param[in]  sequences_to_evaluate  The sequences to evaluate
+   * @param[in]  sequence_truncation    The sequence truncation
    */
-  void collect_thread(Data_aggregate& data_set, uint32 solve_thread_index, uint32 sequence_start_index, uint32 sequences_to_evaluate);
+  void evaluate_thread(
+    Data_aggregate& data_set, uint32 solve_thread_index,
+    uint32 sequence_start_index, uint32 sequences_to_evaluate,
+    uint32 start_index_in_sequence, uint32 sequence_truncation
+  );
 
   /**
    * @brief      Insert an element to the given position into the given field by

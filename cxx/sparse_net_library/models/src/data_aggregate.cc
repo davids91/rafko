@@ -36,14 +36,14 @@ void Data_aggregate::fill(Data_set& samples){
   }
 }
 
-void Data_aggregate::set_features_for_labels(const vector<vector<sdouble32>>& neuron_data, uint32 raw_start_index, uint32 labels_to_evaluate){
+void Data_aggregate::set_features_for_labels(const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate){
   if((raw_start_index + labels_to_evaluate) <= error_state.back().sample_errors.size()){
     for(uint32 sample_index = raw_start_index; sample_index < (raw_start_index + labels_to_evaluate) ; ++sample_index)
       error_state.back().error_sum -= error_state.back().sample_errors[sample_index];
 
     cost_function->get_feature_errors(
       label_samples, neuron_data, error_state.back().sample_errors,
-      raw_start_index, labels_to_evaluate, get_number_of_sequences()
+      raw_start_index, labels_to_evaluate, neuron_buffer_start_index, get_number_of_sequences()
     );
 
     for(uint32 sample_index = raw_start_index; sample_index < (raw_start_index + labels_to_evaluate) ; ++sample_index)

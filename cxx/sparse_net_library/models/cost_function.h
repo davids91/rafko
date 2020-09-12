@@ -71,15 +71,17 @@ public:
   /**
    * @brief      Gets the error produced by the sequences of the given label-data pair
    *
-   * @param[in]  labels             The array containing the labels to compare the given neuron data to
-   * @param[in]  neuron_data        The neuron data to compare for the given labels array
-   * @param      errors_for_labels  The vector to load the resulting errors in, shall be of equal size to @labels
-   * @param[in]  label_start        The index of the label to start evaluating the pairs from
-   * @param[in]  sample_number      The number of overall samples, required for post-processing
+   * @param[in]  labels              The array containing the labels to compare the given neuron data to
+   * @param[in]  neuron_data         The neuron data to compare for the given labels array
+   * @param      errors_for_labels   The vector to load the resulting errors in, shall be of equal size to @labels
+   * @param[in]  label_start         The index of the label to start evaluating the pairs from
+   * @param[in]  labels_to_evaluate  The number of labels to evaluate
+   * @param[in]  neuron_start        The starting index of the neuron data outer buffer
+   * @param[in]  sample_number       The number of overall samples, required for post-processing
    */
   void get_feature_errors(
-    const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data,
-    vector<sdouble32>& errors_for_labels, uint32 label_start, uint32 labels_to_evaluate, uint32 sample_number
+    const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+    uint32 label_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
   );
 
   /**
