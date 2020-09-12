@@ -67,7 +67,6 @@ void Sparse_net_approximizer::collect_fragment(void){
     /* calculate the error value for the current network in the testing and training datasets */
     evaluate(train_set);
     evaluate(test_set);
-    // std::cout << "Evaluating.." <<std::endl;
     loops_unchecked = 0;
   }
 
@@ -84,19 +83,7 @@ void Sparse_net_approximizer::collect_fragment(void){
       index_of_biggest = weight_index;
   }
   average_gradient /= static_cast<sdouble32>(net.weight_table_size());
-
-  // std::cout << "Gradient to weight["<< index_of_biggest <<"] => "
-  // << "(" << weight_gradients[index_of_biggest]
-  // << "/" << average_gradient
-  // << ") = " << (weight_gradients[index_of_biggest] / average_gradient)
-  // << std::endl;
-  // std::cout << "=================================" << std::endl;
   add_to_fragment(index_of_biggest, (weight_gradients[index_of_biggest] / average_gradient) );
-  // add_to_fragment(index_of_biggest, (weight_gradients[index_of_biggest] / sum_gradient) );
-  // for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-  ////   if(average_gradient < weight_gradients[weight_index])
-  //     add_to_fragment(weight_index, (weight_gradients[weight_index] / sum_gradient) );
-  // }
   ++loops_unchecked;
 }
 
@@ -123,14 +110,6 @@ sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
   /* Approximate the newly modified weights gradient */
   evaluate(train_set);
 
-  // std::cout << "weight index:" << weight_index
-  // << "\n errors: (+)" << gradient << "<>(-)" << train_set.get_error()
-  // << "; error delta: " << (gradient - train_set.get_error())
-  // << "; current_epsilon_double: " << current_epsilon_double
-  // << "; sequences_to_evaluate: " << train_set.get_number_of_sequences()
-  // << "; gradient: " << 
-  //  (gradient - train_set.get_error()) / (current_epsilon_double * train_set.get_number_of_sequences())
-  // << std::endl << "=====" << std::endl;
   gradient = -(gradient - train_set.get_error()) / (current_epsilon_double * train_set.get_number_of_sequences());
 
   /* Revert weight modification and the error state with it */

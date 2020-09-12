@@ -293,7 +293,7 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
 
 TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context().set_arena_ptr(&arena).set_step_size(1e-1);
+  Service_context service_context = Service_context().set_arena_ptr(&arena).set_step_size(1e-2);
   uint32 sequence_size = 5;
   uint32 number_of_samples = 50;
   uint32 epoch = 10000;
@@ -302,7 +302,7 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   vector<SparseNet*> nets = vector<SparseNet*>();
   nets.push_back(
     Sparse_net_builder(service_context).input_size(2).expected_input_range(double_literal(1.0))
-    .set_recurrence_to_self()
+    .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
       {
         {TRANSFER_FUNCTION_SELU},
@@ -348,8 +348,8 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
     cout << "\r Error:"
     <<" training:[" << train_error << "]; "
-    // <<" test:[" << test_error << "]; "
-    // << "Minimum: ["<< minimum_error <<"]"
+    <<" test:[" << test_error << "]; "
+    << "Minimum: ["<< minimum_error <<"]"
     << "avg run: " << (average_duration / static_cast<sdouble32>(number_of_steps)) << " ms "
     << "Iteration: ["<< iteration <<"];   "
     << flush;

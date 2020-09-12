@@ -263,7 +263,7 @@ void Sparse_net_optimizer::calculate_derivatives_thread(uint32 solve_thread_inde
                 )buffer = *weight_derivatives[solve_thread_index][sequence_index][child_weight_index];
               }
             });
-          }else throw std::runtime_error("Optimizer doesn't support input types from the past of other Neurons!");
+          } /* The past input is not from itself, don't include derivative, as we are unable to. Use the past data as a simulated input value instead */
         } /* Neuron input is from the past! */
 
         if(Synapse_iterator<>::is_index_input(net.neuron_array(neuron_iterator).input_indices(input_synapse_index).starts())){ /* Neuron input from a sample! */
