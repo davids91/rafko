@@ -42,9 +42,6 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  sequence_truncation(min(context.get_memory_truncation(), train_set.get_sequence_size()))
 ,  solve_threads()
 ,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
-/* Cache variables */
-,  tmp_synapse_interval()
-,  last_error(0)
 ,  dataset_mutex()
 {
   (void)context.set_minibatch_size(max(1u,min(
@@ -61,9 +58,6 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 }
 
 void Sparse_net_approximizer::collect_fragment(void){
-  uint32 sequence_index;
-  const uint32 sequences_to_evaluate = std::min(train_set.get_number_of_sequences(), context.get_minibatch_size());
-  const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(sequences_to_evaluate/context.get_max_solve_threads());
 
   if(
     (loops_unchecked >= context.get_insignificant_iteration_count())
@@ -71,88 +65,95 @@ void Sparse_net_approximizer::collect_fragment(void){
     ||(loops_unchecked > (test_set.get_error()/context.get_step_size()))
   ){
     /* calculate the error value for the current network in the testing and training datasets */
-    sequence_index = 0;
-    for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(train_set.get_number_of_sequences() > sequence_index)); ++thread_index){
-      solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
-        &Sparse_net_approximizer::collect_thread, this, ref(train_set), thread_index, sequence_index,
-        std::min(sequences_in_one_thread, (train_set.get_number_of_sequences() - sequence_index))
-      ));
-      sequence_index += sequences_in_one_thread;
-    }
-    wait_for_threads(solve_threads);
-    sequence_index = 0;
-    for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(train_set.get_number_of_sequences() > sequence_index)); ++thread_index){
-      solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
-        &Sparse_net_approximizer::collect_thread, this, ref(test_set), thread_index, sequence_index,
-        std::min(sequences_in_one_thread, (test_set.get_number_of_sequences() - sequence_index))
-      ));
-      sequence_index += sequences_in_one_thread;
-    }
-    wait_for_threads(solve_threads);
+    evaluate(train_set);
+    evaluate(test_set);
+    // std::cout << "Evaluating.." <<std::endl;
     loops_unchecked = 0;
   }
 
   /* Approximate the gradient for every weight */
+  vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
+  uint32 index_of_biggest = double_literal(0.0);
+  sdouble32 average_gradient = double_literal(0.0);
+  sdouble32 sum_gradient = double_literal(0.0);
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-    add_to_fragment(weight_index,get_gradient_fragment(weight_index));
+    weight_gradients[weight_index] = get_gradient_fragment(weight_index);
+    average_gradient += weight_gradients[weight_index];
+    sum_gradient += weight_gradients[weight_index];
+    if(weight_gradients[index_of_biggest] < weight_gradients[weight_index])
+      index_of_biggest = weight_index;
   }
+  average_gradient /= static_cast<sdouble32>(net.weight_table_size());
 
+  // std::cout << "Gradient to weight["<< index_of_biggest <<"] => "
+  // << "(" << weight_gradients[index_of_biggest]
+  // << "/" << average_gradient
+  // << ") = " << (weight_gradients[index_of_biggest] / average_gradient)
+  // << std::endl;
+  // std::cout << "=================================" << std::endl;
+  add_to_fragment(index_of_biggest, (weight_gradients[index_of_biggest] / average_gradient) );
+  // add_to_fragment(index_of_biggest, (weight_gradients[index_of_biggest] / sum_gradient) );
+  // for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
+  ////   if(average_gradient < weight_gradients[weight_index])
+  //     add_to_fragment(weight_index, (weight_gradients[weight_index] / sum_gradient) );
+  // }
   ++loops_unchecked;
 }
 
 sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
   sdouble32 gradient;
-  uint32 sequence_index;
-  sdouble32 initial_error;
-  const uint32 sequences_to_evaluate = std::min(train_set.get_number_of_sequences(), context.get_minibatch_size());
-  const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(sequences_to_evaluate/context.get_max_solve_threads());
+  const sdouble32 current_epsilon = (std::sqrt(context.get_epsilon()));
+  const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
 
   /* Save error from the initial network */
-  last_error = train_set.get_error();
   train_set.push_state();
 
-  sequence_index = rand()%(
-    train_set.get_number_of_sequences() + 1 /* +1 to avoid SIGFPE in case the whole dataset is evaluated */
-    - max(1u,min(context.get_minibatch_size(), train_set.get_number_of_sequences()))
-  );
-
   /* Push it in one direction */
-  net.set_weight_table(weight_index, (net.weight_table(weight_index) + (context.get_step_size()/double_literal(10.0)) ));
+  net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate the modified weights gradient */
-  for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(train_set.get_number_of_sequences() > sequence_index)); ++thread_index){
-    solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
-      &Sparse_net_approximizer::collect_thread, this, ref(train_set), thread_index, sequence_index,
-      std::min(sequences_in_one_thread, (train_set.get_number_of_sequences() - sequence_index))
-    ));
-    sequence_index += sequences_in_one_thread;
-  }
-  wait_for_threads(solve_threads);
-  initial_error = last_error;
+  evaluate(train_set);
+  gradient = train_set.get_error();
 
   /* Push it in other direction */
-  net.set_weight_table(weight_index, (net.weight_table(weight_index) - (context.get_step_size()/double_literal(5.0)) ));
+  net.set_weight_table(weight_index, (net.weight_table(weight_index) - current_epsilon_double) );
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate the newly modified weights gradient */
-  for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(train_set.get_number_of_sequences() > sequence_index)); ++thread_index){
-    solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
-      &Sparse_net_approximizer::collect_thread, this, ref(train_set), thread_index, sequence_index,
-      std::min(sequences_in_one_thread, (train_set.get_number_of_sequences() - sequence_index))
-    ));
-    sequence_index += sequences_in_one_thread;
-  }
-  wait_for_threads(solve_threads);
+  evaluate(train_set);
 
-  gradient = (train_set.get_error() - initial_error) / (train_set.get_number_of_label_samples());
+  // std::cout << "weight index:" << weight_index
+  // << "\n errors: (+)" << gradient << "<>(-)" << train_set.get_error()
+  // << "; error delta: " << (gradient - train_set.get_error())
+  // << "; current_epsilon_double: " << current_epsilon_double
+  // << "; sequences_to_evaluate: " << train_set.get_number_of_sequences()
+  // << "; gradient: " << 
+  //  (gradient - train_set.get_error()) / (current_epsilon_double * train_set.get_number_of_sequences())
+  // << std::endl << "=====" << std::endl;
+  gradient = -(gradient - train_set.get_error()) / (current_epsilon_double * train_set.get_number_of_sequences());
 
   /* Revert weight modification and the error state with it */
-  net.set_weight_table(weight_index, (net.weight_table(weight_index) + (context.get_step_size()/double_literal(10.0)) ));
+  net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
   weight_updater->update_solution_with_weights(*net_solution);
   train_set.pop_state();
 
   return gradient;
+}
+
+void Sparse_net_approximizer::evaluate(Data_aggregate& data_set){
+  uint32 sequence_index = 0;
+  const uint32 sequences_to_evaluate = data_set.get_number_of_sequences();//std::min(data_set.get_number_of_sequences(), context.get_minibatch_size());
+  const uint32 sequences_in_one_thread = 1 + static_cast<uint32>(sequences_to_evaluate/context.get_max_solve_threads());
+
+  for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&(data_set.get_number_of_sequences() > sequence_index)); ++thread_index){
+    solve_threads.push_back(thread( /* As long as there are threads to open for remaining weights, open threads */
+      &Sparse_net_approximizer::collect_thread, this, ref(data_set), thread_index, sequence_index,
+      std::min(sequences_in_one_thread, (data_set.get_number_of_sequences() - sequence_index))
+    ));
+    sequence_index += sequences_in_one_thread;
+  }
+  wait_for_threads(solve_threads);
 }
 
 void Sparse_net_approximizer::collect_thread(Data_aggregate& data_set, uint32 solve_thread_index, uint32 sequence_start_index, uint32 sequences_to_evaluate){
@@ -194,6 +195,7 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
   uint32 values_index = 0;
   uint32 values_index_target = gradient_fragment.values_size();
   uint32 weight_synapse_index_target = gradient_fragment.weight_synapses_size();
+  Index_synapse_interval tmp_synapse_interval;
 
   for(uint32 weight_syn_index = 0; static_cast<sint32>(weight_syn_index) < gradient_fragment.weight_synapses_size(); ++weight_syn_index){
     if( /* If the weight synapse is at or in-between the first index before the start of the synapse.. */
@@ -258,15 +260,12 @@ void Sparse_net_approximizer::apply_fragment(void){
     Index_synapse_interval interval, sint32 weight_index
   ){  
     net.set_weight_table(
-      weight_index, (
-        net.weight_table(weight_index) 
-        - (gradient_fragment.values(fragment_value_index) * context.get_step_size())
-      )
+      weight_index, ( net.weight_table(weight_index) - (gradient_fragment.values(fragment_value_index) * context.get_step_size()) )
     );
     ++fragment_value_index;
   });
   gradient_fragment = Gradient_fragment();
-  loops_unchecked = context.get_insignificant_iteration_count();
+  loops_unchecked = context.get_insignificant_iteration_count() + 1;
 }
 
 } /* namespace sparse_net_library */

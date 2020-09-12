@@ -61,6 +61,14 @@ public:
   Sparse_net_approximizer& operator=(Sparse_net_approximizer&& other) = delete; /* Move assignment */
 
   /**
+   * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set
+   */
+  void evaluate(void){
+    evaluate(train_set);
+    evaluate(test_set);
+  }
+
+  /**
    * @brief      Step the net in the opposite direction of the gradient slope
    */
   void collect_fragment(void);
@@ -142,9 +150,14 @@ private:
   vector<thread> solve_threads; /* The threads to be started during optimizing the network */
   vector<vector<thread>> process_threads; /* The inner process thread to be started during net optimization */
 
-  Index_synapse_interval tmp_synapse_interval;
-  sdouble32 last_error;
   mutex dataset_mutex;
+
+  /**
+   * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set
+   *
+   * @param      data_set  The data set to evaluate the network on
+   */
+  void evaluate(Data_aggregate& data_set);
 
   /**
    * @brief      A thread to calcualte the error value for the given data set
