@@ -78,7 +78,7 @@ sdouble32 Cost_function::get_feature_error(const vector<sdouble32>& labels, cons
   for(uint32 thread_index = 0; ((thread_index < max_threads) && (neuron_data.size() > feature_start_index)); ++thread_index){
     thread_results[outer_thread_index].push_back(async(std::launch::async,
       &Cost_function::summarize_errors, this, ref(labels), ref(neuron_data), feature_start_index,
-      min(feature_number, static_cast<uint32>(neuron_data.size() - feature_start_index))
+      min(feature_number, static_cast<uint32>(labels.size() - feature_start_index))
     ));
     feature_start_index += feature_number;
   }
@@ -89,12 +89,15 @@ sdouble32 Cost_function::get_feature_error(const vector<sdouble32>& labels, cons
   return error_post_process(error_value, sample_number);
 }
 
-sdouble32 Cost_function::summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add){
+sdouble32 Cost_function::summarize_errors(
+  const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data,
+  uint32 neuron_data_start_index, uint32 number_to_add
+){
   sdouble32 local_error = 0;
   for(uint32 feature_iterator = 0; feature_iterator < number_to_add; ++feature_iterator){
     local_error += get_cell_error( /* (start + feature - netsize) gives back the index in the label */
-      labels[start_index + feature_iterator + feature_size - neuron_data.size()],
-      neuron_data[start_index + feature_iterator]
+      labels[neuron_data_start_index + feature_iterator + feature_size - neuron_data.size()],
+      neuron_data[neuron_data_start_index + feature_iterator]
     );
   }
   return local_error;

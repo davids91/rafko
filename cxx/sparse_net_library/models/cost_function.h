@@ -164,15 +164,17 @@ protected:
    *             by @get_feature_error, which divides the features to almost equal parts,
    *             and calls this function on them.
    *
-   * @param[in]  labels         The labels
-   * @param[in]  neuron_data    The neuron data
-   * @param[in]  start_index    The start index of in the neuron data
-   * @param[in]  number_to_add  The number of features to calculate
+   * @param[in]  labels                   The labels
+   * @param[in]  neuron_data              The neuron data
+   * @param[in]  neuron_data_start_index  The start index of in the neuron data
+   * @param[in]  number_to_add            The number of features to calculate
    *
    * @return     returns with the error summary under the range {start_index;(start_index + number_to_add)}
    */
-  sdouble32 summarize_errors(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 start_index, uint32 number_to_add);
-
+  sdouble32 summarize_errors(
+    const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data,
+    uint32 neuron_data_start_index, uint32 number_to_add
+  );
 private:
   cost_functions the_function; /* cost function type */
 
