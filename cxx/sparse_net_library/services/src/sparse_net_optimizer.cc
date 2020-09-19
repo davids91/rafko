@@ -117,7 +117,7 @@ void Sparse_net_optimizer::step(void){
 
   if( /* re-evaluate the test set after a number of steps */
     (loops_unchecked >= context.get_insignificant_iteration_count())
-    ||(loops_unchecked >= (test_set.get_error()/context.get_step_size())) /* .. or sooner if the error value justifies it */
+    ||(loops_unchecked >= (test_set.get_error_sum()/context.get_step_size())) /* .. or sooner if the error value justifies it */
   ){
     uint32 sample_start_index = 0;
     const uint32 samples_to_evaluate = 1 + static_cast<uint32>(train_set.get_number_of_sequences()/context.get_max_solve_threads());

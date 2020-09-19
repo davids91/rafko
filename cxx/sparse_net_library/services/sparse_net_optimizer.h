@@ -83,14 +83,14 @@ public:
    * @brief      Gives back the error of the configured Network based on the training dataset
    */
   sdouble32 get_train_error(void) const{
-   return train_set.get_error();
+   return train_set.get_error_sum();
   }
 
   /**
    * @brief      Gives back the error of the configured Network based on the test set
    */
   sdouble32 get_test_error(void) const{
-   return test_set.get_error();
+   return test_set.get_error_sum();
   }
 
   /**

@@ -73,13 +73,13 @@ void Sparse_net_approximizer::collect_approximates_from_random_direction(void){
 
   if( /* If the net should be re-evaluated based on the iteration */
     (loops_unchecked >= context.get_insignificant_iteration_count())
-    ||(loops_unchecked > (train_set.get_error()/context.get_step_size()))
-    ||(loops_unchecked > (test_set.get_error()/context.get_step_size()))
+    ||(loops_unchecked > (train_set.get_error_sum()/context.get_step_size()))
+    ||(loops_unchecked > (test_set.get_error_sum()/context.get_step_size()))
   ){ 
     evaluate(); /* calculate the error value for the current network in the testing and training datasets */
     loops_unchecked = 0;
   }
-  error_initial = train_set.get_error();
+  error_initial = train_set.get_error_sum();
   train_set.push_state();
 
   /* decide a random direction to approximate the network on */
@@ -100,7 +100,7 @@ void Sparse_net_approximizer::collect_approximates_from_random_direction(void){
     train_set,sequence_start_index,context.get_minibatch_size(),
     start_index_inside_sequence,context.get_memory_truncation()
   );
-  error_negative_direction = train_set.get_error();
+  error_negative_direction = train_set.get_error_sum();
 
   /* see the error values at the positive end of the current direction */
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index)
@@ -110,7 +110,7 @@ void Sparse_net_approximizer::collect_approximates_from_random_direction(void){
     train_set,sequence_start_index,context.get_minibatch_size(),
     start_index_inside_sequence,context.get_memory_truncation()
   );
-  error_positive_direction = train_set.get_error();
+  error_positive_direction = train_set.get_error_sum();
 
   // for(uint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
   //   std::cout << "weight index:" << weight_index
@@ -159,8 +159,8 @@ void Sparse_net_approximizer::collect_fragment(void){
 
   if(
     (loops_unchecked >= context.get_insignificant_iteration_count())
-    ||(loops_unchecked > (train_set.get_error()/context.get_step_size()))
-    ||(loops_unchecked > (test_set.get_error()/context.get_step_size()))
+    ||(loops_unchecked > (train_set.get_error_sum()/context.get_step_size()))
+    ||(loops_unchecked > (test_set.get_error_sum()/context.get_step_size()))
   ){
     /* calculate the error value for the current network in the testing and training datasets */
     evaluate();
@@ -187,7 +187,7 @@ void Sparse_net_approximizer::collect_fragment(void){
 sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
   sdouble32 gradient;
   const sdouble32 current_epsilon = (
-    std::sqrt(context.get_epsilon()) * (train_set.get_error()/net.weight_table_size()  )
+    std::sqrt(context.get_epsilon()) * (train_set.get_error_sum()/net.weight_table_size()  )
   );
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
 
@@ -210,7 +210,7 @@ sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
     train_set,sequence_start_index,context.get_minibatch_size(),
     start_index_inside_sequence,context.get_memory_truncation()
   );
-  gradient = train_set.get_error();
+  gradient = train_set.get_error_sum();
 
   /* Push it in other direction */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) - current_epsilon_double) );
@@ -222,7 +222,7 @@ sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
     start_index_inside_sequence,context.get_memory_truncation()
   );
 
-  gradient = -(gradient - train_set.get_error()) / (current_epsilon_double * train_set.get_number_of_sequences());
+  gradient = -(gradient - train_set.get_error_sum()) / (current_epsilon_double * train_set.get_number_of_sequences());
 
   /* Revert weight modification and the error state with it */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );

@@ -110,7 +110,7 @@ TEST_SOURCES += ../test/src/data_ringbuffer_test.cc
 TEST_SOURCES += ../test/src/weight_updater_test.cc
 
 OPTIMIZATION_TEST_SOURCES = $(TEST_BASE_SOURCE)
-OPTIMIZATION_TEST_SOURCES += ../test/src/optimizer_test.cc ../test/src/approximizer_test.cc
+OPTIMIZATION_TEST_SOURCES += ../test/src/approximizer_test.cc ../test/src/optimizer_test.cc
 
 TEST_OBJECTS = $(subst ../test/src/,,$(TEST_SOURCES:.cc=.o))
 OPTIMIZATION_TEST_OBJECTS = $(subst ../test/src/,,$(OPTIMIZATION_TEST_SOURCES:.cc=.o))

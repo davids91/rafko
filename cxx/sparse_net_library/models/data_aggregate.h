@@ -99,7 +99,7 @@ public:
     if(label_samples.size() > sample_index){
       error_state.back().error_sum -= error_state.back().sample_errors[sample_index];
       error_state.back().sample_errors[sample_index] = cost_function->get_feature_error(
-        label_samples[sample_index], neuron_data, get_number_of_sequences()
+        label_samples[sample_index], neuron_data, get_number_of_label_samples()
       );
       error_state.back().error_sum += error_state.back().sample_errors[sample_index];
     }else throw std::runtime_error("Sample index out of bounds!");
@@ -183,8 +183,17 @@ public:
    *
    * @return     The sum of the errors for all of the samples.
    */
-  sdouble32 get_error(void) const{
+  sdouble32 get_error_sum(void) const{
     return error_state.back().error_sum;
+  }
+
+  /**
+   * @brief      Gets the erro average.
+   *
+   * @return     The erro average.
+   */
+  sdouble32 get_error_avg() const{
+    return error_state.back().error_sum / get_number_of_label_samples();
   }
 
   /**

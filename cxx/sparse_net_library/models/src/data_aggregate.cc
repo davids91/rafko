@@ -43,7 +43,7 @@ void Data_aggregate::set_features_for_labels(const vector<vector<sdouble32>>& ne
 
     cost_function->get_feature_errors(
       label_samples, neuron_data, error_state.back().sample_errors,
-      raw_start_index, labels_to_evaluate, neuron_buffer_start_index, get_number_of_sequences()
+      raw_start_index, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
     );
 
     for(uint32 sample_index = raw_start_index; sample_index < (raw_start_index + labels_to_evaluate) ; ++sample_index)

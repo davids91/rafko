@@ -81,7 +81,7 @@ sdouble32 Cost_function::get_feature_error(const vector<sdouble32>& labels, cons
   for(uint32 thread_index = 0; ((thread_index < max_threads) && (neuron_data.size() > feature_start_index)); ++thread_index){
     thread_results[outer_thread_index].push_back(async(std::launch::async,
       &Cost_function::summarize_errors, this, ref(labels), ref(neuron_data), feature_start_index,
-      min(feature_number, static_cast<uint32>(labels.size() - feature_start_index))
+      min(feature_number, static_cast<uint32>(neuron_data.size() - feature_start_index))
     ));
     feature_start_index += feature_number;
   }
