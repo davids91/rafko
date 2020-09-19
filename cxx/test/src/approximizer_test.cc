@@ -141,9 +141,9 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context()
-    .set_step_size(5e-4).set_minibatch_size(128).set_memory_truncation(2)
+    .set_step_size(2e-2).set_minibatch_size(64).set_memory_truncation(2)
     .set_arena_ptr(&arena).set_max_solve_threads(8);
-  uint32 number_of_samples = 500;
+  uint32 number_of_samples = 128;
 
   /* Create nets */
   vector<SparseNet*> nets = vector<SparseNet*>();
@@ -160,7 +160,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   /* Create dataset, test set and optimizers; optimize nets */
   Data_aggregate* train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
-  Data_aggregate* test_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
+  Data_aggregate* test_set = create_sequenced_addition_dataset(number_of_samples * 2, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -169,6 +169,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   uint32 iteration;
   steady_clock::time_point start;
   uint32 average_duration;
+  sdouble32 avg_gradient;
 
   train_error = 1.0;
   test_error = 1.0;
@@ -182,25 +183,31 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   std::cout << "Optimizing net.." << std::endl;
   while(abs(train_error) > service_context.get_step_size()){
+    // std::cout << "==== Loop " << iteration << " ====" << std::endl;
     start = steady_clock::now();
-    approximizer.collect_approximates_from_random_direction();
-    // if(0 == (iteration % 50))
-      approximizer.apply_fragment();
+    approximizer.collect_approximates_from_weight_gradients();
+    avg_gradient = 0;
+    for(uint32 frag_index = 0; frag_index < approximizer.get_weight_gradient().values_size(); ++frag_index){
+      avg_gradient += approximizer.get_weight_gradient().values(frag_index);
+    }
+    avg_gradient /= static_cast<sdouble32>(approximizer.get_weight_gradient().values_size());
+    approximizer.apply_fragment();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
     train_error = approximizer.get_train_error();
     test_error = approximizer.get_test_error();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
     cout << "\rError:"
-    <<" training:[" << train_error << "]; "
-    <<" test:[" << test_error << "]; "
-    << "Minimum: ["<< minimum_error <<"]"
-    << "Iteration: ["<< iteration <<"];                                           "
-    << flush;
+    << "Training:[" << train_error << "]; "
+    << "Test:[" << test_error << "]; "
+    << "Minimum: ["<< minimum_error <<"];"
+    << "Avg_gradient: [" << avg_gradient << "]; "
+    << "Iteration: ["<< iteration <<"];   "
+    << std::endl;
 
     ++iteration;
     if( /* every x iteration, until the step size if big enough to matter */
-      (0 == (iteration % 10000))
+      (0 == (iteration % 500))
       &&((service_context.get_epsilon() * 1000.0) < service_context.get_step_size())
     )service_context.set_step_size(service_context.get_step_size() * service_context.get_gamma()); /* make the step size decay */
   }

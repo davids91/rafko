@@ -26,6 +26,7 @@
 
 namespace rafko_mainframe{
 
+using std::sqrt;
 using google::protobuf::Arena;
 
 using rafko_mainframe::Service_hyperparameters;
@@ -82,6 +83,10 @@ public:
 
   sdouble32 get_epsilon(void) const{
     return hypers.epsilon();
+  }
+
+  sdouble32 get_sqrt_epsilon() const{
+    return sqrt_epsilon;
   }
 
   sdouble32 get_lambda(void) const{
@@ -147,6 +152,7 @@ public:
 
   Service_context& set_epsilon(sdouble32 epsilon_){
     hypers.set_epsilon(epsilon_);
+    sqrt_epsilon = sqrt(epsilon_);
     return *this;
   }
 
@@ -177,6 +183,7 @@ private:
   uint16 max_processing_threads = 4;
   uint16 sqrt_of_process_threads = 2;
   uint32 insignificant_iteration_count = 100;
+  sdouble32 sqrt_epsilon = sqrt(double_literal(1e-15));
   sdouble32 device_max_megabytes = double_literal(2048);
   Arena* arena_ptr = nullptr;
   Service_hyperparameters hypers = Service_hyperparameters();

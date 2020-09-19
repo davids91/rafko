@@ -61,6 +61,21 @@ public:
   Sparse_net_approximizer& operator=(Sparse_net_approximizer&& other) = delete; /* Move assignment */
 
   /**
+   * @brief      Checks if the data-set changed enough to be re-evaluated, and if it does, it evaluates it
+   */
+  void check(void){
+    if(
+      (loops_unchecked >= context.get_insignificant_iteration_count())
+      ||(loops_unchecked > (train_set.get_error_sum()/context.get_step_size()))
+      ||(loops_unchecked > (test_set.get_error_sum()/context.get_step_size()))
+    ){
+      /* calculate the error value for the current network in the testing and training datasets */
+      evaluate();
+      loops_unchecked = 0;
+    }
+  }
+
+  /**
    * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set
    */
   void evaluate(void){
@@ -69,9 +84,24 @@ public:
   }
 
   /**
-   * @brief      Moves the network in a random direction and approximates the gradients based on that
+   * @brief      Moves the network in a random direction, approximates the gradients based on that 
+   *             and then reverts the the weight change
    */
   void collect_approximates_from_random_direction(void);
+
+  /**
+   * @brief      Moves the network in a direction based on induvidual weight gradients,
+   *             approximates the gradients based on that and then reverts the the weight change
+   */
+  void collect_approximates_from_weight_gradients(void);
+
+  /**
+   * @brief      Move the network in the given direction, collect approximate gradient for it 
+   *             and then reverts the weight change
+   *
+   * @param[in]  direction  The direction
+   */
+  void collect_approximates_from_direction(vector<sdouble32> direction);
 
   /**
    * @brief      Step the net in the opposite direction of the gradient slope
