@@ -83,14 +83,14 @@ public:
    * @brief      Gives back the error of the configured Network based on the training dataset
    */
   sdouble32 get_train_error(void) const{
-   return train_set.get_error_sum();
+   return train_set.get_error_avg();
   }
 
   /**
    * @brief      Gives back the error of the configured Network based on the test set
    */
   sdouble32 get_test_error(void) const{
-   return test_set.get_error_sum();
+   return test_set.get_error_avg();
   }
 
   /**
@@ -125,6 +125,7 @@ private:
   vector<vector<unique_ptr<atomic<sdouble32>>>> error_values; /* Calculated error values: [Threads][Neurons] */
   vector<vector<vector<unique_ptr<atomic<sdouble32>>>>> weight_derivatives; /* Calculated derivatives for each weights [Threads][Sequences][Weights] */
   vector<unique_ptr<atomic<sdouble32>>> weight_gradient; /* calculated gradient values */
+  vector<sdouble32> weight_gradient_vector; /* duplicate of @weight_gradient */
 
   /**
    * @brief      A thread to step the neural network forward

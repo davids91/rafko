@@ -23,7 +23,21 @@ namespace sparse_net_library{
 
 using rafko_mainframe::Service_context;
 
-void Weight_updater::calculate_velocity(const vector<unique_ptr<atomic<sdouble32>>>& gradients){
+void Weight_updater::calculate_velocity_thread(const vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number){
+  for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
+    current_velocity[weight_index + weight_iterator] = get_new_velocity(weight_index + weight_iterator, gradients);
+  }
+}
+
+void Weight_updater::update_weight_with_velocity(uint32 weight_index, uint32 weight_number){
+  for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
+    net.set_weight_table(
+      weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator)
+    );
+  }
+}
+
+void Weight_updater::calculate_velocity(const vector<sdouble32>& gradients){
   uint32 weight_index = 0;
   const uint32 weight_number = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
   for( /* As long as there are threads to open or remaining weights */
@@ -41,7 +55,7 @@ void Weight_updater::calculate_velocity(const vector<unique_ptr<atomic<sdouble32
   wait_for_threads(calculate_threads);
 }
 
-void Weight_updater::update_weights_with_velocity(){
+void Weight_updater::update_weights_with_velocity(void){
   uint32 weight_index = 0;
   const uint32 weight_number = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
   for( /* As long as there are threads to open or remaining weights */

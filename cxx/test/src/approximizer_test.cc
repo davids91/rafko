@@ -80,7 +80,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   /* Create dataset, test set and aprroximizer */
   Data_aggregate* train_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
   Data_aggregate* test_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
-  Sparse_net_approximizer approximizer(*nets[0],*train_set,*test_set,WEIGHT_UPDATER_NESTEROV, service_context);
+  Sparse_net_approximizer approximizer(*nets[0],*train_set,*test_set,WEIGHT_UPDATER_DEFAULT, service_context);
 
   /* adding a simple-weight-gradient fragment */
   uint32 weight_index = rand()%(nets[0]->weight_table_size());
@@ -141,7 +141,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context()
-    .set_step_size(3e-3).set_minibatch_size(128).set_memory_truncation(2)
+    .set_step_size(5e-4).set_minibatch_size(128).set_memory_truncation(2)
     .set_arena_ptr(&arena).set_max_solve_threads(8);
   uint32 number_of_samples = 500;
 
@@ -184,7 +184,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   while(abs(train_error) > service_context.get_step_size()){
     start = steady_clock::now();
     approximizer.collect_approximates_from_random_direction();
-    // if(0 == (iteration % 5))
+    // if(0 == (iteration % 50))
       approximizer.apply_fragment();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
@@ -200,7 +200,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
     ++iteration;
     if( /* every x iteration, until the step size if big enough to matter */
-      (0 == (iteration % 2000))
+      (0 == (iteration % 10000))
       &&((service_context.get_epsilon() * 1000.0) < service_context.get_step_size())
     )service_context.set_step_size(service_context.get_step_size() * service_context.get_gamma()); /* make the step size decay */
   }

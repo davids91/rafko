@@ -28,7 +28,7 @@ public:
   :  Weight_updater(sparse_net, service_context, 2)
   { }
 
-  void iterate(vector<unique_ptr<atomic<sdouble32>>>& gradients,Solution& solution){
+  void iterate(const vector<sdouble32>& gradients,Solution& solution){
     Weight_updater::iterate(gradients, solution);
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
@@ -39,14 +39,14 @@ public:
   }
 
 private:
-  sdouble32 get_new_velocity(uint32 weight_index, const vector<unique_ptr<atomic<sdouble32>>>& gradients){
+  sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
     if(!is_finished()) return (
       (previous_velocity[weight_index] * context.get_gamma())
-      + (*gradients[weight_index] * context.get_step_size())
+      + (gradients[weight_index] * context.get_step_size())
     );
     else return(
       (previous_velocity_at_start[weight_index] * context.get_gamma())
-      + (*gradients[weight_index] * context.get_step_size())
+      + (gradients[weight_index] * context.get_step_size())
     );
   }
 

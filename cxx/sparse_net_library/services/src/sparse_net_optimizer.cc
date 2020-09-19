@@ -58,6 +58,7 @@ Sparse_net_optimizer::Sparse_net_optimizer(
 ,  error_values(context.get_max_solve_threads())
 ,  weight_derivatives(context.get_max_solve_threads())
 ,  weight_gradient()
+,  weight_gradient_vector(net.weight_table_size())
 {
   (void)context.set_minibatch_size(max(1u,min(
     train_set.get_number_of_sequences(),context.get_minibatch_size()
@@ -97,8 +98,10 @@ Sparse_net_optimizer::Sparse_net_optimizer(
 }
 
 void Sparse_net_optimizer::step(void){
-  for(unique_ptr<atomic<sdouble32>>& weight_gradient : get_weight_gradient())
-    weight_gradient->store(0);
+  for(sint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
+    get_weight_gradient()[weight_index]->store(0);
+    weight_gradient_vector[weight_index] = 0;
+  }
   weight_updater->start();
   while(!weight_updater->is_finished()){
     for(
@@ -111,7 +114,7 @@ void Sparse_net_optimizer::step(void){
     ));
     wait_for_threads(solve_threads);
     normalize_weight_gradients();
-    weight_updater->iterate(get_weight_gradient(), *net_solution); /* Update the weights of the SparseNet and the solution */
+    weight_updater->iterate(weight_gradient_vector, *net_solution); /* Update the weights of the SparseNet and the solution */
   } /* while(!weight_updater->finished()) */
   ++loops_unchecked;
 
@@ -450,10 +453,12 @@ void Sparse_net_optimizer::normalize_weight_gradients(void){
 }
 
 void Sparse_net_optimizer::normalize_weight_gradients_thread(uint32 weight_index, uint32 weight_number){
-  for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator)
+  for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
     get_weight_gradient()[weight_index + weight_iterator]->store(
       *get_weight_gradient()[weight_index + weight_iterator] / static_cast<sdouble32>(context.get_minibatch_size())
     );
+    weight_gradient_vector[weight_index + weight_iterator] = *get_weight_gradient()[weight_index + weight_iterator];
+  }
 }
 
 } /* namespace sparse_net_library */

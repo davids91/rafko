@@ -58,7 +58,6 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 }
 
 void Sparse_net_approximizer::collect_approximates_from_random_direction(void){
-  sdouble32 error_initial;
   sdouble32 error_negative_direction;
   sdouble32 error_positive_direction;
   vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
@@ -79,15 +78,12 @@ void Sparse_net_approximizer::collect_approximates_from_random_direction(void){
     evaluate(); /* calculate the error value for the current network in the testing and training datasets */
     loops_unchecked = 0;
   }
-  error_initial = train_set.get_error_sum();
   train_set.push_state();
 
   /* decide a random direction to approximate the network on */
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
     weight_steps[weight_index] = (
-      context.get_step_size() 
-      * ( (static_cast<sdouble32>(rand()%201) / double_literal(200.0)) - double_literal(1.0) )
-      * std::min(double_literal(1.0),error_initial)
+      context.get_step_size() * ( (static_cast<sdouble32>(rand()%201) / double_literal(200.0)) - double_literal(1.0) )
     );
     weight_epsilon += std::pow(weight_steps[weight_index], double_literal(2.0));
     net.set_weight_table(weight_index, (net.weight_table(weight_index) - weight_steps[weight_index]) );
@@ -339,9 +335,7 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
         gradient_fragment.values(values_index_target + weight_index - synapse_starts) + gradient_fragment_value
       );
     }else{ /* The index is the first index after the synapse */
-      gradient_fragment.mutable_weight_synapses(weight_synapse_index_target)->set_interval_size(
-        synapse_size + 1
-      );
+      gradient_fragment.mutable_weight_synapses(weight_synapse_index_target)->set_interval_size(synapse_size + 1);
       insert_element_at_position(
         *gradient_fragment.mutable_values(), gradient_fragment_value, (values_index_target + synapse_size)
       );
@@ -351,14 +345,25 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
 
 void Sparse_net_approximizer::apply_fragment(void){
   uint32 fragment_value_index = 0;
-  Synapse_iterator<>::iterate(gradient_fragment.weight_synapses(), [&](
-    Index_synapse_interval interval, sint32 weight_index
-  ){  
-    net.set_weight_table(
-      weight_index, ( net.weight_table(weight_index) - (gradient_fragment.values(fragment_value_index) * context.get_step_size()) )
+  vector<sdouble32> weight_gradients(net.weight_table_size());
+
+  if(weight_updater->is_finished())weight_updater->start();
+  if(1 == gradient_fragment.weight_synapses_size()){
+    std::copy(
+      gradient_fragment.values().begin(),
+      gradient_fragment.values().begin() + gradient_fragment.weight_synapses(0).interval_size(),
+      weight_gradients.begin() + gradient_fragment.weight_synapses(0).starts()
     );
-    ++fragment_value_index;
-  });
+  }else{
+    Synapse_iterator<>::iterate(gradient_fragment.weight_synapses(), [&](
+      Index_synapse_interval interval, sint32 weight_index
+    ){
+      weight_gradients[weight_index] = gradient_fragment.values(fragment_value_index);
+      ++fragment_value_index;
+    });
+  }
+
+  weight_updater->iterate({weight_gradients.begin(),weight_gradients.end()}, *net_solution);
   gradient_fragment = Gradient_fragment();
   loops_unchecked = context.get_insignificant_iteration_count() + 1;
 }

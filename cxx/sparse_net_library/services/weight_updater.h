@@ -21,7 +21,6 @@
 #include "sparse_net_global.h"
 
 #include <thread>
-#include <atomic>
 #include <vector>
 
 #include "gen/solution.pb.h"
@@ -31,9 +30,7 @@ namespace sparse_net_library{
 
 using std::ref;
 using std::vector;
-using std::atomic;
 using std::thread;
-using std::unique_ptr;
 
 using rafko_mainframe::Service_context;
 
@@ -69,7 +66,7 @@ public:
    * @param      gradients           The gradients
    * @param      solution            The solution
    */
-  void iterate(vector<unique_ptr<atomic<sdouble32>>>& gradients, Solution& solution){
+  void iterate(const vector<sdouble32>& gradients, Solution& solution){
     calculate_velocity(gradients);
     update_weights_with_velocity();
     update_solution_with_weights(solution);
@@ -136,8 +133,8 @@ protected:
    *
    * @return     The new velocity.
    */
-  sdouble32 get_new_velocity(uint32 weight_index, const vector<unique_ptr<atomic<sdouble32>>>& gradients){
-    return (*gradients[weight_index] * context.get_step_size());
+  sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
+    return (gradients[weight_index] * context.get_step_size());
   }
 
 private:
@@ -148,7 +145,7 @@ private:
    *
    * @param[in]  gradients  The gradients array of size equal to the weights of the configured net
    */
-  void calculate_velocity(const vector<unique_ptr<atomic<sdouble32>>>& gradients);
+  void calculate_velocity(const vector<sdouble32>& gradients);
 
   /**
    * @brief      The function to update every weight of the referenced @SparseNet
@@ -164,11 +161,7 @@ private:
    * @param[in]  weight_index        The weight index
    * @param[in]  weight_number       The weight number
    */
-  void calculate_velocity_thread(const vector<unique_ptr<atomic<sdouble32>>>& gradients, uint32 weight_index, uint32 weight_number){
-    for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
-      current_velocity[weight_index + weight_iterator] = get_new_velocity(weight_index + weight_iterator, gradients);
-    }
-  }
+  void calculate_velocity_thread(const vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number);
 
   /**
    * @brief      A thread to calculate the latest velocity based on the gradients
@@ -177,13 +170,7 @@ private:
    * @param[in]  weight_index   The weight index
    * @param[in]  weight_number  The weight number
    */
-  void update_weight_with_velocity(uint32 weight_index, uint32 weight_number){
-    for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
-      net.set_weight_table(
-        weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator)
-      );
-    }
-  }
+  void update_weight_with_velocity(uint32 weight_index, uint32 weight_number);
 
   /**
    * @brief      A thread to copy a weight synapse from the referenced @SparseNet
