@@ -94,10 +94,22 @@ public:
     return finished;
   }
 
+  /**
+   * @brief      returns the current stored velocity under the given weight index
+   *
+   * @param[in]  weight_index  The weight index to query
+   *
+   * @return     The current velocity.
+   */
   sdouble32 get_current_velocity(uint32 weight_index) const{
     return current_velocity[weight_index];
   }
 
+  /**
+   * @brief      Gets the stored velocity vector which is the basis for updating the weights.
+   *
+   * @return     The current velocity.
+   */
   const vector<sdouble32>& get_current_velocity() const{
     return current_velocity;
   }

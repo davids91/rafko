@@ -345,7 +345,7 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
 
 void Sparse_net_approximizer::apply_fragment(void){
   uint32 fragment_value_index = 0;
-  vector<sdouble32> weight_gradients(net.weight_table_size());
+  vector<sdouble32> weight_gradients(net.weight_table_size(), double_literal(0.0));
 
   if(weight_updater->is_finished())weight_updater->start();
   if(1 == gradient_fragment.weight_synapses_size()){
@@ -358,7 +358,7 @@ void Sparse_net_approximizer::apply_fragment(void){
     Synapse_iterator<>::iterate(gradient_fragment.weight_synapses(), [&](
       Index_synapse_interval interval, sint32 weight_index
     ){
-      weight_gradients[weight_index] = gradient_fragment.values(fragment_value_index);
+      weight_gradients[weight_index] += gradient_fragment.values(fragment_value_index);
       ++fragment_value_index;
     });
   }
