@@ -161,6 +161,7 @@ message Service_hyperparameters{
   double gamma = 22;
   double epsilon = 24; /* very small positive value almost greater, than zero */
   double lambda = 31;
+  double beta_2 = 45; /* a second alphabet shall be started for algorithms requiring two variants of parameters */
 };
 
 /** @brief      The structure of a service slot encapsulating a channel in which deep learning related requests

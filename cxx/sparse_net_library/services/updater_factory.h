@@ -25,6 +25,7 @@
 #include "sparse_net_library/services/weight_updater.h"
 #include "sparse_net_library/services/weight_updater_momentum.h"
 #include "sparse_net_library/services/weight_updater_nesterov.h"
+#include "sparse_net_library/services/weight_updater_adam.h"
 
 namespace sparse_net_library{
 
@@ -46,11 +47,13 @@ public:
     SparseNet& net, weight_updaters weight_updater, Service_context& context
   ){
     switch(weight_updater){
-      case WEIGHT_UPDATER_MOMENTUM: 
+      case WEIGHT_UPDATER_MOMENTUM:
         return make_unique<Weight_updater_momentum>(net,context);
       case WEIGHT_UPDATER_NESTEROV:
         return make_unique<Weight_updater_nesterov>(net,context);
-      case WEIGHT_UPDATER_DEFAULT: 
+      case WEIGHT_UPDATER_ADAM:
+        return make_unique<Weight_updater_adam>(net,context);
+      case WEIGHT_UPDATER_DEFAULT:
       default: 
         return make_unique<Weight_updater>(net,context);
     };

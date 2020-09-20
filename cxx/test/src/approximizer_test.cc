@@ -48,6 +48,7 @@ using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
 using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
 using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
 using sparse_net_library::WEIGHT_UPDATER_NESTEROV;
+using sparse_net_library::WEIGHT_UPDATER_ADAM;
 using sparse_net_library::Sparse_net_approximizer;
 using sparse_net_library::Data_aggregate;
 using sparse_net_library::Function_factory;
@@ -153,9 +154,10 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     .allowed_transfer_functions_by_layer(
       {
         {TRANSFER_FUNCTION_SELU},
+        {TRANSFER_FUNCTION_SELU},
         {TRANSFER_FUNCTION_SELU}
       }
-    ).dense_layers({2,1})
+    ).dense_layers({10,5,1})
   );
 
   /* Create dataset, test set and optimizers; optimize nets */
@@ -178,7 +180,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   iteration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_approximizer approximizer(
-    *nets[0], *train_set, *test_set, WEIGHT_UPDATER_NESTEROV, service_context
+    *nets[0], *train_set, *test_set, WEIGHT_UPDATER_ADAM, service_context
   );
 
   std::cout << "Optimizing net.." << std::endl;
@@ -206,10 +208,6 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     << std::endl;
 
     ++iteration;
-    if( /* every x iteration, until the step size if big enough to matter */
-      (0 == (iteration % 500))
-      &&((service_context.get_epsilon() * 1000.0) < service_context.get_step_size())
-    )service_context.set_step_size(service_context.get_step_size() * service_context.get_gamma()); /* make the step size decay */
   }
   average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
