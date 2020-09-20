@@ -49,6 +49,9 @@ Sparse_net_approximizer::Sparse_net_approximizer(
   (void)context.set_minibatch_size(max(1u,min(
     train_set.get_number_of_sequences(),context.get_minibatch_size()
   )));
+  (void)context.set_memory_truncation(max(1u,min(
+    train_set.get_sequence_size(), context.get_memory_truncation()
+  )));
   solve_threads.reserve(context.get_max_solve_threads());
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
     solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context, train_set.get_sequence_size()));

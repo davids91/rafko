@@ -154,10 +154,9 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     .allowed_transfer_functions_by_layer(
       {
         {TRANSFER_FUNCTION_SELU},
-        {TRANSFER_FUNCTION_SELU},
         {TRANSFER_FUNCTION_SELU}
       }
-    ).dense_layers({10,5,1})
+    ).dense_layers({2,1})
   );
 
   /* Create dataset, test set and optimizers; optimize nets */
@@ -185,11 +184,10 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   std::cout << "Optimizing net.." << std::endl;
   while(abs(train_error) > service_context.get_step_size()){
-    // std::cout << "==== Loop " << iteration << " ====" << std::endl;
     start = steady_clock::now();
     approximizer.collect_approximates_from_weight_gradients();
     avg_gradient = 0;
-    for(uint32 frag_index = 0; frag_index < approximizer.get_weight_gradient().values_size(); ++frag_index){
+    for(sint32 frag_index = 0; frag_index < approximizer.get_weight_gradient().values_size(); ++frag_index){
       avg_gradient += approximizer.get_weight_gradient().values(frag_index);
     }
     avg_gradient /= static_cast<sdouble32>(approximizer.get_weight_gradient().values_size());

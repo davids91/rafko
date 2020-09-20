@@ -47,7 +47,9 @@ void Cost_function::get_feature_errors(
     process_threads.push_back(thread(
       &Cost_function::feature_errors_thread, this,
       ref(labels), ref(neuron_data), ref(errors_for_labels), label_start, neuron_data_start_index,
-      min(labels_to_do_in_a_thread, static_cast<uint32>(neuron_data.size() - neuron_data_start_index)),
+      min(labels_to_do_in_a_thread, std::min(
+        static_cast<uint32>(neuron_data.size() - neuron_data_start_index), static_cast<uint32>(labels.size() - label_start)
+      )),
       thread_index, sample_number
     ));
     neuron_data_start_index += labels_to_do_in_a_thread;
