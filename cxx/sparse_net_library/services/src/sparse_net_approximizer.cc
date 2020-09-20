@@ -105,9 +105,10 @@ void Sparse_net_approximizer::collect_approximates_from_random_direction(void){
 }
 
 void Sparse_net_approximizer::collect_approximates_from_direction(vector<sdouble32> direction){
-  if(net.weight_table_size() == direction.size()){
+  if(net.weight_table_size() == static_cast<sint32>(direction.size())){
     check();
 
+    sdouble32 dampening_value;
     sdouble32 error_negative_direction;
     sdouble32 error_positive_direction;
     vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
@@ -147,6 +148,14 @@ void Sparse_net_approximizer::collect_approximates_from_direction(vector<sdouble
     );
     error_positive_direction = train_set.get_error_sum();
 
+    /* Restore train set to previous error state, decide if dampening is needed */
+    train_set.pop_state();
+    if( /* In case the initial error is smaller, than the errors in either direction */
+      (train_set.get_error_avg() < error_positive_direction)
+      &&(train_set.get_error_avg() < error_negative_direction)
+    )dampening_value = context.get_zetta(); /* decrease the amount to move the current net */
+      else dampening_value = double_literal(1.0); /* reducing oscillation at lower error ranges */
+
     /* collect the fragment, revert weight changes */
     for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
       weight_gradients[weight_index] = (
@@ -162,27 +171,10 @@ void Sparse_net_approximizer::collect_approximates_from_direction(vector<sdouble
       //   << "= (" << weight_gradients[weight_index] << "*" << weight_steps[weight_index] << ")"
       // << std::endl;
 
-      add_to_fragment( weight_index, (weight_gradients[weight_index] * weight_steps[weight_index]) );
+      add_to_fragment( weight_index, (weight_gradients[weight_index] * weight_steps[weight_index] * dampening_value) );
       net.set_weight_table(weight_index, (net.weight_table(weight_index) - (weight_steps[weight_index])) );
     }
-    // if(
-    //   (error_initial > error_positive_direction)
-    //   ||(error_initial > error_negative_direction)
-    // ){
-    //   for(uint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
-    //     weight_gradients[weight_index] = (
-    //       ( error_positive_direction - error_negative_direction ) / (weight_epsilon)
-    //     );
-    //     add_to_fragment( weight_index, (weight_gradients[weight_index] * weight_steps[weight_index]) );
-    //     net.set_weight_table(weight_index, (net.weight_table(weight_index) - (weight_steps[weight_index])) );
-    //   }
-    // }else{ /* Only revert the changes because current direction did not improve */
-    //   for(uint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
-    //     net.set_weight_table(weight_index, (net.weight_table(weight_index) - (weight_steps[weight_index])) );
-    //   }
-    // }
     weight_updater->update_solution_with_weights(*net_solution);
-    train_set.pop_state();
     ++loops_unchecked;
   }else throw new std::runtime_error("Incompatible direction given to apprximate for!");
 }
