@@ -178,6 +178,7 @@ private:
   Data_aggregate& test_set;
   Gradient_fragment gradient_fragment;
 
+  uint32 iteration;
   uint32 loops_unchecked;
   uint32 sequence_truncation;
   unique_ptr<Weight_updater> weight_updater;

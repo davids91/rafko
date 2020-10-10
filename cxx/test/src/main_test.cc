@@ -326,6 +326,12 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
     std::cout << std::endl;
   }
 
+  std::cout << "weights: " << std::endl;
+  for(int i = 0; i < net.weight_table_size(); ++i){
+    std::cout << "[" << net.weight_table(i) << "]";
+  }
+  std::cout << std::endl;
+
   std::cout.precision(15);
 }
 

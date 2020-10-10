@@ -40,6 +40,7 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  train_set(train_set_)
 ,  test_set(test_set_)
 ,  gradient_fragment()
+,  iteration(1)
 ,  loops_unchecked(context.get_insignificant_iteration_count())
 ,  sequence_truncation(min(context.get_memory_truncation(), train_set.get_sequence_size()))
 ,  solve_threads()
@@ -86,8 +87,9 @@ void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
     // weight_gradients[weight_index] /= weight_gradients[index_of_biggest];
     // std::cout << "[ "<< weight_gradients[weight_index]
     // << "/" << sum_gradient << "*" << context.get_step_size();
+    // << "/" << std::abs(weight_gradients[index_of_biggest]);
     // if(weight_gradients[weight_index] < average_gradient)weight_gradients[weight_index] /= double_literal(2.0);
-    weight_gradients[weight_index] /= sum_gradient;
+    weight_gradients[weight_index] /= std::abs(weight_gradients[index_of_biggest]);
     weight_gradients[weight_index] *= context.get_step_size();
     // std::cout <<" = "<< weight_gradients[weight_index] << "]";
   }
@@ -107,6 +109,12 @@ void Sparse_net_approximizer::collect_approximates_from_random_direction(void){
 void Sparse_net_approximizer::collect_approximates_from_direction(vector<sdouble32> direction){
   if(net.weight_table_size() == static_cast<sint32>(direction.size())){
     check();
+
+    // std::cout << "Getting gradient from direction: ";
+    // for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
+    //   std::cout << "["<< direction[weight_index] <<"]";
+    // }
+    // std::cout << std::endl;
 
     sdouble32 dampening_value;
     sdouble32 error_negative_direction;
@@ -155,6 +163,7 @@ void Sparse_net_approximizer::collect_approximates_from_direction(vector<sdouble
       &&(train_set.get_error_avg() < error_negative_direction)
     )dampening_value = context.get_zetta(); /* decrease the amount to move the current net */
       else dampening_value = double_literal(1.0); /* reducing oscillation at lower error ranges */
+    // std::cout << "zeta-coef:" << dampening_value << std::endl;
 
     /* collect the fragment, revert weight changes */
     for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
@@ -175,7 +184,7 @@ void Sparse_net_approximizer::collect_approximates_from_direction(vector<sdouble
       net.set_weight_table(weight_index, (net.weight_table(weight_index) - (weight_steps[weight_index])) );
     }
     weight_updater->update_solution_with_weights(*net_solution);
-    ++loops_unchecked;
+    ++loops_unchecked; ++iteration;
   }else throw new std::runtime_error("Incompatible direction given to apprximate for!");
 }
 
@@ -197,7 +206,7 @@ void Sparse_net_approximizer::collect_fragment(void){
   sum_gradient = std::sqrt(sum_gradient);
   average_gradient /= static_cast<sdouble32>(net.weight_table_size());
   add_to_fragment(index_of_biggest, (weight_gradients[index_of_biggest] / sum_gradient) );
-  ++loops_unchecked;
+  ++loops_unchecked; ++iteration;
 }
 
 sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
@@ -297,6 +306,30 @@ void Sparse_net_approximizer::evaluate_thread(
       ((sequence_start_index + sample) * data_set.get_sequence_size()) + start_index_in_sequence,
       sequence_truncation /* To avoid vanishing gradients, error calculation is truncated */
     ); /* Re-calculate error for the training set */
+    // if(
+    //   (127 <= sequence_start_index)
+    //   &&(128 == data_set.get_number_of_sequences())
+    //   &&((loops_unchecked >= context.get_insignificant_iteration_count())
+    //   ||(loops_unchecked > (train_set.get_error_sum()/context.get_step_size()))
+    //   ||(loops_unchecked > (test_set.get_error_sum()/context.get_step_size())))
+    // ){
+    //   std::cout << "Neural memory for current sequence: " << std::endl;
+    //   for(const vector<sdouble32>& vector : solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer()){
+    //     for(const sdouble32& element : vector) std::cout << "[" << element << "]";
+    //     std::cout << std::endl;
+    //   }
+    //   std::cout << "initial values.." << std::endl;
+    //   for(uint32 i = 0; i < data_set.get_sequence_size(); ++i){
+    //     std::cout << "Evaluating sequence: " << (sequence_start_index + sample) << std::endl;
+    //     std::cout << "..raw index["
+    //     << ((sequence_start_index + sample) * data_set.get_sequence_size()) + i
+    //     << "]: " << data_set.get_label_sample(((sequence_start_index + sample) * data_set.get_sequence_size()) + i).back()
+    //     << " vs " << solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer()[i].back()
+    //     << " --> " << data_set.get_error(((sequence_start_index + sample) * data_set.get_sequence_size()) + i)
+    //     << std::endl;
+    //   }
+    //   std::cout << "---" << std::endl;
+    // }
   }
 }
 

@@ -40,7 +40,7 @@ public:
   { if(seed)srand(static_cast<uint32>(time(nullptr))); }
 
   Dense_net_weight_initializer(
-    Service_context& service_context, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0)
+    Service_context& service_context, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
   ): Weight_initializer(service_context)
   {
     memMin = max(double_literal(0.0), min(double_literal(1.0), memRatioMin));
@@ -63,7 +63,7 @@ public:
 
 private:
   sdouble32 memMin = double_literal(0.0);
-  sdouble32 memMax = double_literal(0.0);
+  sdouble32 memMax = double_literal(1.0);
 
   /**
    * @brief      Gets the expected amplitude for a weight with the given transfer function

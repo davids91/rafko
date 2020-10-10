@@ -265,7 +265,7 @@ TEST_CASE("Testing recurrent Networks","[optimize][recurrent]"){
   Service_context service_context = Service_context().set_arena_ptr(&arena).set_step_size(1e-1);
   uint32 sequence_size = 5;
   uint32 number_of_samples = 50;
-  uint32 epoch = 10000;
+  uint32 epoch = 1000;
 
   /* Create nets */
   vector<SparseNet*> nets = vector<SparseNet*>();
