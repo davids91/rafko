@@ -179,7 +179,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   iteration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_approximizer approximizer(
-    *nets[0], *train_set, *test_set, WEIGHT_UPDATER_ADAM, service_context
+    *nets[0], *train_set, *test_set, WEIGHT_UPDATER_MOMENTUM, service_context
   );
 
   std::cout << "Approximizing net.." << std::endl;
@@ -219,8 +219,9 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     << "Minimum: ["<< minimum_error <<"];"
     << "Avg_gradient: [" << avg_gradient << "]; "
     << "Iteration: ["<< iteration <<"];   "
-    << std::endl;
-
+    << std::flush;
+    if(0 == (iteration % 100))
+      print_training_sample((rand()%number_of_samples), *train_set, *nets[0], service_context);
     ++iteration;
   }
   average_duration /= number_of_steps;

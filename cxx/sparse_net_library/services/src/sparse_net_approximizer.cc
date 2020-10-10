@@ -73,23 +73,26 @@ void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
     weight_gradients[weight_index] = get_gradient_fragment(weight_index);
     sum_gradient += std::pow(weight_gradients[weight_index],double_literal(2.0));
-    if(weight_gradients[index_of_biggest] < weight_gradients[weight_index])
+    if(std::abs(weight_gradients[index_of_biggest]) < std::abs(weight_gradients[weight_index]))
       index_of_biggest = weight_index;
-    // std::cout << "weight_gradient[" << weight_index << "]: "<< weight_gradients[weight_index] << std::endl;
-    // std::cout << "sum: " << sum_gradient << std::endl;
+    // std::cout << "[" << weight_index << "]: "<< weight_gradients[weight_index];
+    // std::cout << "(sum: " << sum_gradient << ")";
   }
   sum_gradient = std::sqrt(sum_gradient);
   average_gradient = sum_gradient / static_cast<sdouble32>(net.weight_table_size());
   // std::cout << std::endl;
+  // std::cout << "sum: " << sum_gradient << std::endl;
+  // std::cout << "avg: " << average_gradient << std::endl;
 
   // std::cout << "weight directions:";
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-    // weight_gradients[weight_index] /= weight_gradients[index_of_biggest];
     // std::cout << "[ "<< weight_gradients[weight_index]
-    // << "/" << sum_gradient << "*" << context.get_step_size();
-    // << "/" << std::abs(weight_gradients[index_of_biggest]);
-    // if(weight_gradients[weight_index] < average_gradient)weight_gradients[weight_index] /= double_literal(2.0);
+    // << "/" << std::abs(weight_gradients[index_of_biggest])
+    // << "/" << sum_gradient 
+    // << "*" << context.get_step_size();
+    /* if(weight_gradients[weight_index] < average_gradient)weight_gradients[weight_index] /= double_literal(2.0); */
     weight_gradients[weight_index] /= std::abs(weight_gradients[index_of_biggest]);
+    /* weight_gradients[weight_index] /= sum_gradient; */
     weight_gradients[weight_index] *= context.get_step_size();
     // std::cout <<" = "<< weight_gradients[weight_index] << "]";
   }
@@ -177,7 +180,7 @@ void Sparse_net_approximizer::collect_approximates_from_direction(vector<sdouble
       // << "; error delta: " << ( error_positive_direction - error_negative_direction )
       // << "; current_epsilon_double: " << weight_epsilon
       // << "; weight delta: " << (weight_gradients[weight_index] * weight_steps[weight_index])
-      //   << "= (" << weight_gradients[weight_index] << "*" << weight_steps[weight_index] << ")"
+      // << "= (" << weight_gradients[weight_index] << "*" << weight_steps[weight_index] << ")"
       // << std::endl;
 
       add_to_fragment( weight_index, (weight_gradients[weight_index] * weight_steps[weight_index] * dampening_value) );
