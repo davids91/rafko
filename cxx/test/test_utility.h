@@ -95,6 +95,16 @@ extern void check_if_the_same(SparseNet& net, Solution& solution);
 extern void print_weights(SparseNet& net, Solution& solution);
 
 /**
+ * @brief      Prints a training sample of the given data set, under the given index. Expects 2 inputs and one output!
+ *
+ * @param[in]  sample_sequence_index  The sample sequence index
+ * @param      data_set               The data set
+ * @param      net                    The net
+ * @param      service_context        The service context
+ */
+extern void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, SparseNet& net, Service_context& service_context);
+
+/**
  * @brief      Creates a normalized dataset for addition: basically adding two numbers together.
  *             The generated dataset is adequate for testing non-recurrent neural networks
  *

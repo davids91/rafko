@@ -26,6 +26,8 @@
 #include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/services/synapse_iterator.h"
+#include "sparse_net_library/services/solution_builder.h"
+#include "sparse_net_library/services/solution_solver.h"
 
 int main( int argc, char* argv[] ) {
   int result = Catch::Session().run( argc, argv );
@@ -40,6 +42,8 @@ using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::cost_functions;
 using sparse_net_library::Input_synapse_interval;
 using sparse_net_library::Index_synapse_interval;
+using sparse_net_library::Solution_builder;
+using sparse_net_library::Solution_solver;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Neuron;
 using rafko_mainframe::Service_context;
@@ -284,6 +288,45 @@ void print_weights(SparseNet& net, Solution& solution){
     }
     std::cout << std::endl;
   }
+}
+
+void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, SparseNet& net, Service_context& service_context){
+  Solution_solver sample_solver(*Solution_builder(service_context).build(net), service_context, data_set.get_sequence_size());
+  vector<sdouble32> neuron_data(data_set.get_sequence_size());
+  std::cout.precision(2);
+  std::cout << std::endl << "Training sample["<< sample_sequence_index <<"]:" << std::endl;
+  std::cout << std::endl << "..or raw_sample["<< (data_set.get_sequence_size() * sample_sequence_index) <<"]:" << std::endl;
+  for(uint32 j = 0;j < data_set.get_sequence_size();++j){
+    std::cout << "["<< data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
+  }
+  std::cout << std::endl;
+  for(uint32 j = 0;j < data_set.get_sequence_size();++j){
+    std::cout << "["<< data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[1] <<"]";
+  }
+  std::cout << std::endl;
+  std::cout << "--------------expected:" << std::endl;
+  std::cout.precision(2);
+  sample_solver.reset();
+  for(uint32 j = 0;j < data_set.get_sequence_size();++j){
+    std::cout << "["<< data_set.get_label_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
+    sample_solver.solve(data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j));
+    neuron_data[j] = sample_solver.get_neuron_data().back();
+  }
+  std::cout << std::endl;
+  std::cout << "------<>------actual:" << std::endl;
+
+  for(uint32 j = 0;j < data_set.get_sequence_size();++j){
+    std::cout << "["<< neuron_data[j] <<"]";
+  }
+  std::cout << std::endl;
+  std::cout << "==============" << std::endl;
+  std::cout << "Neural memory for current sequence: " << std::endl;
+  for(const vector<sdouble32>& vector : sample_solver.get_neuron_memory().get_whole_buffer()){
+    for(const sdouble32& element : vector) std::cout << "[" << element << "]";
+    std::cout << std::endl;
+  }
+
+  std::cout.precision(15);
 }
 
 Data_aggregate* create_addition_dataset(

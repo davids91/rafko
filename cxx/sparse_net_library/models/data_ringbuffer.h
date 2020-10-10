@@ -63,7 +63,7 @@ public:
    * @brief      Resets every data element to all zeroes.
    */
   void reset(void){
-    current_index = 0;
+    current_index = (data.size()-1); /* Set the current index into the last index, so at the next @ */
     for(vector<sdouble32>& vector : data)
       for(sdouble32& element : vector) element = double_literal(0.0);
   }

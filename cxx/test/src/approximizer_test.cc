@@ -182,7 +182,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     *nets[0], *train_set, *test_set, WEIGHT_UPDATER_ADAM, service_context
   );
 
-  std::cout << "Optimizing net.." << std::endl;
+  std::cout << "Approximizing net.." << std::endl;
   while(abs(train_error) > service_context.get_step_size()){
     start = steady_clock::now();
     approximizer.collect_approximates_from_weight_gradients();
@@ -191,6 +191,22 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
       avg_gradient += approximizer.get_weight_gradient().values(frag_index);
     }
     avg_gradient /= static_cast<sdouble32>(approximizer.get_weight_gradient().values_size());
+
+    // std::cout << "Errors:" << std::endl;
+    // uint32 error_iter = 127*4;
+    // uint32 sample_iter = 127;
+    // while(sample_iter < train_set->get_number_of_sequences()){
+    //   for(uint32 i = 0; i <4; ++i){
+    //     std::cout << "["<<(error_iter + i)<<":" << train_set->get_error(error_iter + i) << "]";
+    //   }
+    //   std::cout << std::endl;
+    //   print_training_sample(sample_iter, *train_set, *nets[0], service_context);
+    //   std::cout << "====" << std::endl;
+    //   error_iter += 4;
+    //   ++sample_iter;
+    // }
+    // std::cout << std::endl;
+
     approximizer.apply_fragment();
     average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
     ++number_of_steps;
