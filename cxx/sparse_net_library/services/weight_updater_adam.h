@@ -53,14 +53,16 @@ private:
   sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
     return (
       context.get_step_size()
-      / std::sqrt(
-        raw_moment[weight_index]
-        / (
-          double_literal(1.0) - std::pow(
-            context.get_beta(),
-            static_cast<sdouble32>(iteration_count)
+      / (
+        std::sqrt(
+          raw_moment[weight_index]
+          / (
+            double_literal(1.0) - std::pow(
+              context.get_beta(),
+              static_cast<sdouble32>(iteration_count)
+            )
           )
-        )
+        ) + context.get_epsilon()
       ) * (
         moment[weight_index]
         / (
