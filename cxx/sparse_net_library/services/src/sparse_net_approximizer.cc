@@ -71,7 +71,7 @@ void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
   sdouble32 sum_gradient = double_literal(0.0);
   // std::cout << "weight_gradients:" <<std::endl;
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-    weight_gradients[weight_index] = get_gradient_fragment(weight_index);
+    weight_gradients[weight_index] += get_gradient_fragment(weight_index);
     sum_gradient += std::pow(weight_gradients[weight_index],double_literal(2.0));
     if(std::abs(weight_gradients[index_of_biggest]) < std::abs(weight_gradients[weight_index]))
       index_of_biggest = weight_index;
@@ -79,7 +79,7 @@ void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
     // std::cout << "(sum: " << sum_gradient << ")";
   }
   sum_gradient = std::sqrt(sum_gradient);
-  average_gradient = sum_gradient / static_cast<sdouble32>(net.weight_table_size());
+  average_gradient = std::sqrt(sum_gradient) / static_cast<sdouble32>(net.weight_table_size());
   // std::cout << std::endl;
   // std::cout << "sum: " << sum_gradient << std::endl;
   // std::cout << "avg: " << average_gradient << std::endl;
@@ -90,7 +90,6 @@ void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
     // << "/" << std::abs(weight_gradients[index_of_biggest])
     // << "/" << sum_gradient 
     // << "*" << context.get_step_size();
-    /* if(weight_gradients[weight_index] < average_gradient)weight_gradients[weight_index] /= double_literal(2.0); */
     weight_gradients[weight_index] /= std::abs(weight_gradients[index_of_biggest]);
     /* weight_gradients[weight_index] /= sum_gradient; */
     weight_gradients[weight_index] *= context.get_step_size();
@@ -166,7 +165,7 @@ void Sparse_net_approximizer::collect_approximates_from_direction(vector<sdouble
       &&(train_set.get_error_avg() < error_negative_direction)
     )dampening_value = context.get_zetta(); /* decrease the amount to move the current net */
       else dampening_value = double_literal(1.0); /* reducing oscillation at lower error ranges */
-    // std::cout << "zeta-coef:" << dampening_value << std::endl;
+    // std::cout << "zetta-coef:" << dampening_value << std::endl;
 
     /* collect the fragment, revert weight changes */
     for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
@@ -248,7 +247,7 @@ sdouble32 Sparse_net_approximizer::get_gradient_fragment(uint32 weight_index){
     start_index_inside_sequence,context.get_memory_truncation()
   );
 
-  gradient = -(gradient - train_set.get_error_sum()) / (current_epsilon_double * train_set.get_number_of_sequences());
+  gradient = -(gradient - train_set.get_error_sum()) / (current_epsilon_double * context.get_minibatch_size());
 
   /* Revert weight modification and the error state with it */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );

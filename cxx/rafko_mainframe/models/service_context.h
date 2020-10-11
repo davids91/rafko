@@ -191,7 +191,7 @@ public:
 
     hypers.set_alpha(double_literal(1.6732));
     hypers.set_beta(double_literal(0.9));
-    hypers.set_beta_2(double_literal(0.9999));
+    hypers.set_beta_2(double_literal(0.99));
     hypers.set_gamma(double_literal(0.9));
     hypers.set_epsilon(1e-8); /* very small positive value almost greater, than double_literal(0.0) */
     hypers.set_zetta(0.3);
