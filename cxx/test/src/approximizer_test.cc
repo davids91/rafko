@@ -220,7 +220,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     << "Minimum: ["<< minimum_error <<"];"
     << "Avg_gradient: [" << avg_gradient << "]; "
     << "Iteration: ["<< iteration <<"];   "
-    << std::flush;
+    << std::endl;
     if(0 == (iteration % 100))
       print_training_sample((rand()%number_of_samples), *train_set, *nets[0], service_context);
     ++iteration;

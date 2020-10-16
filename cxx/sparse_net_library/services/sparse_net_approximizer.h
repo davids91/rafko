@@ -115,7 +115,9 @@ public:
    *
    * @return     The gradient approximation for the configured dataset
    */
-  sdouble32 get_gradient_fragment(uint32 weight_index);
+  sdouble32 get_single_weight_gradient(uint32 weight_index);
+
+  sdouble32 get_gradient_for_all_weights(void);
 
   /**
    * @brief      Applies the colleted gradient fragment to the configured network
