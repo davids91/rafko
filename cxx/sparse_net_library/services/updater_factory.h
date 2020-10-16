@@ -25,6 +25,7 @@
 #include "sparse_net_library/services/weight_updater.h"
 #include "sparse_net_library/services/weight_updater_momentum.h"
 #include "sparse_net_library/services/weight_updater_nesterov.h"
+#include "sparse_net_library/services/weight_updater_amsgrad.h"
 #include "sparse_net_library/services/weight_updater_adam.h"
 
 namespace sparse_net_library{
@@ -53,6 +54,8 @@ public:
         return make_unique<Weight_updater_nesterov>(net,context);
       case WEIGHT_UPDATER_ADAM:
         return make_unique<Weight_updater_adam>(net,context);
+      case WEIGHT_UPDATER_AMSGRAD:
+        return make_unique<Weight_updater_amsgrad>(net,context);
       case WEIGHT_UPDATER_DEFAULT:
       default: 
         return make_unique<Weight_updater>(net,context);

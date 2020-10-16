@@ -49,6 +49,7 @@ using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
 using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
 using sparse_net_library::WEIGHT_UPDATER_NESTEROV;
 using sparse_net_library::WEIGHT_UPDATER_ADAM;
+using sparse_net_library::WEIGHT_UPDATER_AMSGRAD;
 using sparse_net_library::Sparse_net_approximizer;
 using sparse_net_library::Data_aggregate;
 using sparse_net_library::Function_factory;
@@ -179,7 +180,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   iteration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
   Sparse_net_approximizer approximizer(
-    *nets[0], *train_set, *test_set, WEIGHT_UPDATER_MOMENTUM, service_context
+    *nets[0], *train_set, *test_set, WEIGHT_UPDATER_AMSGRAD, service_context
   );
 
   std::cout << "Approximizing net.." << std::endl;
