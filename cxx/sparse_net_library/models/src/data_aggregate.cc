@@ -38,16 +38,24 @@ void Data_aggregate::fill(Data_set& samples){
 
 void Data_aggregate::set_features_for_labels(const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate){
   if((raw_start_index + labels_to_evaluate) <= error_state.back().sample_errors.size()){
-    for(uint32 sample_index = raw_start_index; sample_index < (raw_start_index + labels_to_evaluate) ; ++sample_index)
-      error_state.back().error_sum -= error_state.back().sample_errors[sample_index];
+    if((label_samples.size() * double_literal(0.4)) >= labels_to_evaluate){
+      for(uint32 sample_index = raw_start_index; sample_index < (raw_start_index + labels_to_evaluate) ; ++sample_index)
+        error_state.back().error_sum -= error_state.back().sample_errors[sample_index];
+    } /* changes below 40% are added as a corrective matter */
 
     cost_function->get_feature_errors(
       label_samples, neuron_data, error_state.back().sample_errors,
       raw_start_index, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
     );
 
-    for(uint32 sample_index = raw_start_index; sample_index < (raw_start_index + labels_to_evaluate) ; ++sample_index)
-      error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+    if((label_samples.size() * double_literal(0.4)) <= labels_to_evaluate){
+      error_state.back().error_sum = 0;
+      for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
+        error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+    }else{
+      for(uint32 sample_index = raw_start_index; sample_index < (raw_start_index + labels_to_evaluate) ; ++sample_index)
+        error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+    }
   }else throw new std::runtime_error("Label index out of bounds!");
 }
 

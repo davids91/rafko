@@ -108,6 +108,7 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
         (pow((expected_label - faulty_feature),2)/(double_literal(2.0)*(sample_number * sequence_size)))
       )
     );
+    REQUIRE( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
   }
   CHECK( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
 
@@ -126,10 +127,8 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
       ).epsilon(0.00000000000001) == data_agr.get_error(i)
     );
 
-    CHECK( /* Error: (distance^2)/(2 * overall number of samples) */
-      Approx(
-        pow(set_distance,2)/double_literal(2.0)
-      ).epsilon(0.00000000000001) == data_agr.get_error_sum()
+    REQUIRE( /* Error: (distance^2)/2 */
+      Approx(pow(set_distance,2)/double_literal(2.0)).epsilon(0.00000000000001) == data_agr.get_error_sum()
     );
   }
 }
