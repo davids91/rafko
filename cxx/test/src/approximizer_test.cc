@@ -187,6 +187,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   while(abs(train_error) > service_context.get_step_size()){
     start = steady_clock::now();
     approximizer.collect_approximates_from_weight_gradients();
+    //approximizer.collect_approximates_from_random_direction();
     avg_gradient = 0;
     for(sint32 frag_index = 0; frag_index < approximizer.get_weight_gradient().values_size(); ++frag_index){
       avg_gradient += approximizer.get_weight_gradient().values(frag_index);

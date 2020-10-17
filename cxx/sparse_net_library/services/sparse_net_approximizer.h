@@ -99,9 +99,10 @@ public:
    * @brief      Move the network in the given direction, collect approximate gradient for it 
    *             and then reverts the weight change
    *
-   * @param[in]  direction  The direction
+   * @param      direction         The direction
+   * @param[in]  save_to_fragment  Decides wether or not to add the results into the collected gradient fragments
    */
-  void collect_approximates_from_direction(vector<sdouble32> direction);
+  void convert_direction_to_gradient(vector<sdouble32>& direction, bool save_to_fragment);
 
   /**
    * @brief      Step the net in the opposite direction of the gradient slope
@@ -184,6 +185,7 @@ private:
   uint32 loops_unchecked;
   uint32 sequence_truncation;
   unique_ptr<Weight_updater> weight_updater;
+  vector<sdouble32> last_applied_direction; /* The weight gradients applied to the network in the last iteration */
 
   vector<thread> solve_threads; /* The threads to be started during optimizing the network */
   vector<vector<thread>> process_threads; /* The inner process thread to be started during net optimization */
