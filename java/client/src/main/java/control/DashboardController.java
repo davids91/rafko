@@ -63,6 +63,7 @@ public class DashboardController implements Initializable {
     public Label server_slot_state_label;
     public Button server_slot_state_query;
     public Button create_slot_btn;
+    public Button load_slot_btn;
     public Tooltip slot_state_tooltip;
     public Label sample_index_label;
     public LineChart<Integer,Double> error_chart;
@@ -321,6 +322,7 @@ public class DashboardController implements Initializable {
             network_create_btn.setDisable(false);
             server_slot_combo.setDisable(false);
             create_slot_btn.setDisable(false);
+            //load_slot_btn.setDisable(false);
             /* Ask the state for the selected Server slot */
             String selected_server_slot_id = "";
             if(null != server_slot_combo.getValue()) selected_server_slot_id = server_slot_combo.getValue().getName();
@@ -362,6 +364,7 @@ public class DashboardController implements Initializable {
             server_slot_combo.setDisable(true);
             test_btn.setDisable(true);
             create_slot_btn.setDisable(true);
+            load_slot_btn.setDisable(true);
             gen_sequence_btn.setDisable(true);
             server_slot_combo.getItems().clear();
             server_slot_combo.setDisable(true);
@@ -574,6 +577,11 @@ public class DashboardController implements Initializable {
     }
 
     @FXML
+    void lead_serve_slot(){
+
+    }
+
+    @FXML
     void create_server_slot() {
         RafkoDeepLearningService.Service_slot.Builder builder = RafkoDeepLearningService.Service_slot.newBuilder()
             .setType(RafkoDeepLearningService.Slot_type.SERV_SLOT_TO_APPROXIMIZE)
@@ -607,7 +615,6 @@ public class DashboardController implements Initializable {
             correct_ui_state();
             sample_index_slider.setValue(0);
         }else ping_server();
-
     }
 
     @FXML
@@ -627,6 +634,7 @@ public class DashboardController implements Initializable {
                 server_slot_combo.getValue().getName(),
                 RafkoDeepLearningService.Slot_action_field.SERV_SLOT_TO_START_VALUE,0
             );
+            System.out.println("Action done!");
             chart_timeline.play();
             chart_supervisor_timeline.play();
             training_started = true;

@@ -38,11 +38,15 @@ void Deep_learning_server::loop(void){
         thread loop_thread([&](const uint32 slot_index){ /* start a new thread for the loop operation */
           lock_guard<mutex> my_slot_lock_(*server_slot_mutexs[slot_index], std::adopt_lock);
           server_slots[slot_index]->loop();
+          ++iteration[slot_index];
           lock_guard<mutex> my_cout_lock(server_mutex);
           std::cout << "\r";
-          std::cout << "slot[" << slot_index << "]: training error: "<< 
+          std::cout << "slot[" << slot_index << "]"
+          << "; iteration:" << iteration[slot_index]
+          << ": training error: "<< 
             server_slots[slot_index]->get_info(SLOT_INFO_TRAINING_ERROR).info_package(0)
-          << "   ";
+          << "   " << std::endl;
+          if(50000 < iteration[slot_index])is_server_slot_running[slot_index] = false;
         }, i);
         loop_thread.detach();
       } /* Unable to lock the slot, as it is busy, let's try again */
@@ -63,6 +67,7 @@ void Deep_learning_server::loop(void){
       Server_slot_factory::build_server_slot(request->type())
     ));
     is_server_slot_running.push_back(0);
+    iteration.push_back(0);
     if(server_slots.back()){ /* If Item successfully added */
       lock_guard<mutex> my_lock(*server_slot_mutexs.back());
       server_slots.back()->initialize(Service_slot(*request));
@@ -170,6 +175,7 @@ void Deep_learning_server::loop(void){
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_STOP)){
           is_server_slot_running[slot_index] = 0;
+          iteration[slot_index] = 0;
         }
         if(0 < (request_bitstring & SERV_SLOT_TO_RESET)){
           server_slots[slot_index]->reset();

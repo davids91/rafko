@@ -33,6 +33,7 @@
          <children>
             <Label fx:id="server_state_label" alignment="CENTER" maxHeight="1.7976931348623157E308" text="==UNKNOWN==" GridPane.columnIndex="1" GridPane.rowIndex="3" />
             <Button fx:id="test_btn" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#ping_server" text="?" />
+            <Button fx:id="load_slot_btn" disable="true" mnemonicParsing="false" text="Load Slot" />
          </children>
       </HBox>
       <TabPane prefHeight="540.0" prefWidth="677.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnSpan="5" GridPane.rowIndex="4">

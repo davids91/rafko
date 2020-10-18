@@ -45,6 +45,7 @@ public:
   :  server_slots()
   ,  server_slot_mutexs()
   ,  is_server_slot_running()
+  ,  iteration()
   ,  server_mutex()
   { }
 
@@ -72,6 +73,7 @@ private:
   vector<unique_ptr<Server_slot>> server_slots; /* points to different implementations of a @Server_slot */
   vector<unique_ptr<mutex>> server_slot_mutexs;
   vector<uint8> is_server_slot_running;
+  vector<uint32> iteration;
   mutex server_mutex; /* Aims to protect modification of the state of the server ( mainly Server_slots ) */
 
   /**
