@@ -18,6 +18,7 @@
 #include "rafko_mainframe/services/server_slot_approximize_net.h"
 
 #include "sparse_net_library/services/sparse_net_builder.h"
+#include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/function_factory.h"
 
 namespace rafko_mainframe{
@@ -125,7 +126,7 @@ Slot_info Server_slot_approximize_net::get_info(uint32 request_bitstring){
   if(training_set){
     if(0 < (request_bitstring & SLOT_INFO_TRAINING_ERROR)){
       response.add_info_field(SLOT_INFO_TRAINING_ERROR);
-      response.add_info_package(training_set->get_error());
+      response.add_info_package(training_set->get_error_avg());
     }
     if(0 < (request_bitstring & SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT)){
       response.add_info_field(SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT);
@@ -135,7 +136,7 @@ Slot_info Server_slot_approximize_net::get_info(uint32 request_bitstring){
   if(test_set){
     if(0 < (request_bitstring & SLOT_INFO_TEST_ERROR)){
       response.add_info_field(SLOT_INFO_TEST_ERROR);
-      response.add_info_package(test_set->get_error());
+      response.add_info_package(test_set->get_error_avg());
     }
     if(0 < (request_bitstring & SLOT_INFO_TEST_SET_SEQUENCE_COUNT)){
       response.add_info_field(SLOT_INFO_TEST_SET_SEQUENCE_COUNT);
