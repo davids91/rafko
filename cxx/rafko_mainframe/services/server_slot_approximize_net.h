@@ -66,7 +66,7 @@ public:
 
   void loop(void){
     if(SERV_SLOT_OK == service_slot->state()){
-      network_approximizer->collect_fragment();
+      network_approximizer->collect_approximates_from_weight_gradients();
       network_approximizer->apply_fragment();
       ++iteration;
     }else throw new std::runtime_error("Loop called of an invalid server slot!");

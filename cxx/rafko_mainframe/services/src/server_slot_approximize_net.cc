@@ -102,7 +102,7 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
         training_set = std::make_shared<Data_aggregate>(*service_slot_.mutable_test_set(), cost_function);
       }else test_set = training_set;
       service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_TRAINER); /* data set have changed, trainer needs to be re-initialized */
-    }
+    }else test_set = training_set;
     /* ####################################################################
      * TRAINER
      * #################################################################### */
