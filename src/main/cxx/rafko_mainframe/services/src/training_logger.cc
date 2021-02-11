@@ -1,0 +1,43 @@
+/*! This file is part of davids91/Rafko.
+ *
+ *    Rafko is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    Rafko is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
+ *    <https://github.com/davids91/rafko/blob/master/LICENSE>
+ */
+
+#include "rafko_mainframe/services/training_logger.h"
+
+#include <fstream>
+
+namespace rafko_mainframe{
+
+void Training_logger::log(uint32 iteration, vector<uint32> coordinates, vector<string> tags, vector<sdouble32> data){
+  Message message;
+  message.set_iteration(iteration);
+  for(uint32& coordinate : coordinates) message.add_coordinates(coordinate);
+  for(string& tag : tags) message.add_tags(tag);
+  for(sdouble32& data_element : data) message.add_data(data_element);
+  ++changes_since;
+  if(context.get_insignificant_changes() < changes_since)
+    flush();
+}
+
+void Training_logger::flush(){
+  ofstream logfile;
+  logfile.open(id+".log", ios::out | ios::binary | ios::trunc);
+  measurement.SerializeToOstream(logfile);
+  changes_since = 0;
+  logfile.close();
+}
+
+} /* rafko_mainframe */
