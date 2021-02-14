@@ -1,6 +1,6 @@
 # Rafko [![Join the chat at https://gitter.im/rafko_deep_learning/community](https://badges.gitter.im/rafko_deep_learning/community.svg)](https://gitter.im/rafko_deep_learning/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A deep learning Framework extended with per Neuron memory capabilities with focus on 
+A deep learning Framework extended wtih per Neuron memory capabilities with focus on 
 architecture search through training.
 The Framework is of a server-client architecture, in which  a deep learning server provides 
 calculation slots for different clients. The calculations are neural network related, 
@@ -23,9 +23,9 @@ such as solving a network, calculating gradients and updating a network, etc..
    - **services:** objects providing some kind of service each
    - **test:** Unit tests based on the [Catch Framework](https://github.com/catchorg/Catch2) 
  - **/java:** Contains prototypes and the Client implementation
-   - **sandboxes:** Prototypes for experiments
+   - **sandboxes:** Prototypes for experimentations
    - **client:** the Java Client library ( missing )
  - **/proto:**
    - **models:** The building blocks of the framework 
    - **services:** Defines the commands available for the client libraries ( missing )
- - **/res:** miscellaneous resources
+ - **/res:** miscellianeous resources
