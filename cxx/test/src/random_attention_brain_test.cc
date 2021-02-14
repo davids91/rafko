@@ -47,8 +47,9 @@ using rafko_mainframe::Service_context;
 TEST_CASE("Testing Random Attention Brain on a simple dataset","[brain]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context().set_step_size(1e-2).set_arena_ptr(&arena);
-  /* Create a Network and Dataset */
+  std::cout << "Testing a simple dataset:" << std::endl;
 
+  /* Create a Network and Dataset */
   SparseNet* net = Sparse_net_builder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
     .allowed_transfer_functions_by_layer(
@@ -64,10 +65,55 @@ TEST_CASE("Testing Random Attention Brain on a simple dataset","[brain]"){
   Random_attention_brain brain(*net,*train_set,service_context);
 
   /* Add impulses into the bain until the error rate is sufficient */
+  sdouble32 min_error = double_literal(9999.0);
   while(service_context.get_step_size() <= train_set->get_error_avg()){
     brain.step();
     std::cout << "\rError: " << train_set->get_error_avg() << "   ";
+    if(min_error > train_set->get_error_avg()){
+      min_error = train_set->get_error_avg();
+      std::cout << "| minimum: " << min_error;
+    }
   }
+  std::cout << std::endl << "---" << std::endl;
+}
+
+/*###############################################################################################
+ * Testing training of a Random Attention Brain on a simple dataset
+ * */
+TEST_CASE("Testing Random Attention Brain on a more complex, time series dataset","[brain]"){
+  google::protobuf::Arena arena;
+  Service_context service_context = Service_context().set_step_size(1e-2).set_arena_ptr(&arena);
+  std::cout << "Testing a time-series dataset(binary addition):" << std::endl;
+
+  /* Create a Network and Dataset */
+  SparseNet* net = Sparse_net_builder(service_context)
+    .input_size(2).expected_input_range(double_literal(1.0))
+    .set_recurrence_to_layer()
+    .allowed_transfer_functions_by_layer(
+      {
+        {TRANSFER_FUNCTION_SELU},
+        {TRANSFER_FUNCTION_SELU}
+      }
+    ).dense_layers({2,1});
+
+  /* Create dataset, test set and aprroximizer */
+  Data_aggregate* train_set = create_sequenced_addition_dataset(5, 3, *net, COST_FUNCTION_SQUARED_ERROR, service_context);
+
+  /* Create a Brain */
+  Random_attention_brain brain(*net,*train_set,service_context);
+
+  /* Add impulses into the bain until the error rate is sufficient */
+  sdouble32 min_error = double_literal(9999.0);
+  while(service_context.get_step_size() <= train_set->get_error_avg()){
+    brain.step();
+    std::cout << "\rError: " << train_set->get_error_avg() << "   ";
+    if(min_error > train_set->get_error_avg()){
+      min_error = train_set->get_error_avg();
+      std::cout << "| minimum: " << min_error;
+    }
+  }
+  std::cout << std::endl << "---" << std::endl;
+
 }
 
 } /* namespace sparse_net_library_test */

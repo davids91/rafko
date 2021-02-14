@@ -49,6 +49,7 @@ Random_attention_brain::Random_attention_brain(SparseNet& neural_network, Data_a
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
     solvers.push_back(std::make_unique<Solution_solver>(*net_solution, service_context, training_set.get_sequence_size()));
   }
+  evaluate(0,training_set.get_number_of_sequences(),0,training_set.get_sequence_size());
 }
 
 void Random_attention_brain::step(void){
@@ -75,8 +76,8 @@ void Random_attention_brain::step(void){
   }
 
   /* Add error value as experience for the selected weight and update weights for the network */
-  /*if(context.get_step_size() >= error_value)
-    error_value = -error_value; *//* "Reward" for being correct - seems to make training unstable */
+  /*if(double_literal(0.0) == error_value)
+    error_value = double_literal(-1.0); *//*!Note: "Reward" for being correct - seems to make training unstable */
   net.set_weight_table(weight_index, weightxp_space[weight_index].add_experience(-error_value));
   weight_updater.update_solution_with_weights(*net_solution);
 
