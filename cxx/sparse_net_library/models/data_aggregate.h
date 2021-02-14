@@ -41,6 +41,31 @@ using std::move;
  *             not thread safe!!
  *             It is possible to have more input samples, than label samples; In those cases
  *             the extra inputs are to be used to initialize the network before training.
+ *             The data set consists of labels and inputs. Not every label has an input assigned to it,
+ *             as there might be some additional inputs used to "prefill" a network, setting it up to be
+ *             evaluated by the labels. It helps setting up an initial state for the training.
+ *             The Dataset is built up of multiple sequences, each input and label in the sequence
+ *             is of the same size and dimension. Each input and label can be of any size, albeit they must have
+ *             the same size or every sample.
+ *             ================================================
+ *             Example of the structure:
+ *             Dataset ( prefill 2, sequence size 6:
+ *             - Sequence (sample) 1:
+ *             - Inputs: [][][][][][]
+ *             - Labels:     [][][][]
+ *             - Sequence (sample) 2:
+ *             - Inputs: [][][][][][]
+ *             - Labels:     [][][][]
+ *             - Sequence (sample) 3:
+ *             - Inputs: [][][][][][]
+ *             - Labels:     [][][][]
+ *             - Sequence (sample) 4:
+ *             - Inputs: [][][][][][]
+ *             - Labels:     [][][][]
+ *             ================================================
+ *             Despite the above structure, for eligibility of paralellism, the inputs and labels are in a separate,
+ *             contigous array.
+
  */
 class Data_aggregate{
 public:

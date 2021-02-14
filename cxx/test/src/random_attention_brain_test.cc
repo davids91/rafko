@@ -65,8 +65,8 @@ TEST_CASE("Testing Random Attention Brain on a simple dataset","[brain]"){
 
   /* Add impulses into the bain until the error rate is sufficient */
   while(service_context.get_step_size() <= train_set->get_error_avg()){
-    std::cout << "\rError: " << train_set->get_error_avg() << "   ";
     brain.step();
+    std::cout << "\rError: " << train_set->get_error_avg() << "   ";
   }
 }
 

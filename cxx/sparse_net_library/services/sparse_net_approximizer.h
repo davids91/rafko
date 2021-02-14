@@ -26,6 +26,7 @@
 
 #include "gen/common.pb.h"
 
+#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/services/weight_updater.h"
 
@@ -38,6 +39,8 @@ using std::make_unique;
 using std::max;
 using std::min;
 using std::mutex;
+
+using rafko_mainframe::Service_context;
 
 /**
  * @brief      This class approximates gradients for a @Dataset and @Sparse_net.
@@ -187,8 +190,7 @@ private:
   unique_ptr<Weight_updater> weight_updater;
   vector<sdouble32> last_applied_direction; /* The weight gradients applied to the network in the last iteration */
 
-  vector<thread> solve_threads; /* The threads to be started during optimizing the network */
-  vector<vector<thread>> process_threads; /* The inner process thread to be started during net optimization */
+  vector<thread> solve_threads; /* The threads to be started during evaluating the network */
 
   mutex dataset_mutex;
 

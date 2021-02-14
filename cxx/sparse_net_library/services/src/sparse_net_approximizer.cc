@@ -45,7 +45,6 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  sequence_truncation(min(context.get_memory_truncation(), train_set.get_sequence_size()))
 ,  last_applied_direction(net.weight_table_size())
 ,  solve_threads()
-,  process_threads(context.get_max_solve_threads()) /* One queue for every solve thread */
 ,  dataset_mutex()
 {
   (void)context.set_minibatch_size(max(1u,min(
@@ -57,7 +56,6 @@ Sparse_net_approximizer::Sparse_net_approximizer(
   solve_threads.reserve(context.get_max_solve_threads());
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
     solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context, train_set.get_sequence_size()));
-    process_threads[threads].reserve(context.get_max_processing_threads());
   }
   if(train_set.get_feature_size() != solvers.back()->get_output_size())
     throw std::runtime_error("Network output size doesn't match size of provided labels!");

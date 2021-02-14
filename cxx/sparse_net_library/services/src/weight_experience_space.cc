@@ -17,8 +17,8 @@
 
 #include "sparse_net_library/services/weight_experience_space.h"
 
-#include <stdexcept>
 #include <cmath>
+#include <stdexcept>
 
 namespace sparse_net_library{
 
