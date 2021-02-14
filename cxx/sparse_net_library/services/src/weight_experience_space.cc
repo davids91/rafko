@@ -20,8 +20,6 @@
 #include <stdexcept>
 #include <cmath>
 
-#include <iostream>
-
 namespace sparse_net_library{
 
 using std::abs;
@@ -50,15 +48,16 @@ Weight_experience_space::Weight_experience_space(sdouble32 weight_min_, sdouble3
 
 sdouble32 Weight_experience_space::add_experience(sdouble32 value){
   experiences[best_weight_index] += value;
-  if(abs(experiences[best_weight_index]) < abs(experiences[smallest_experience]))
+  if(abs(experiences[best_weight_index]) < abs(experiences[smallest_experience])){
     smallest_experience = best_weight_index;
+    cut();
+  }
 
-  find_best_weight();
-  cut();
+  set_best_weight();
   return weight_values[best_weight_index];
 }
 
-void Weight_experience_space::find_best_weight(void){
+void Weight_experience_space::set_best_weight(void){
   best_weight_index = 0;
   for(uint32 weight_index = 1; weight_index < experiences.size(); ++weight_index){
     if(experiences[weight_index] > experiences[best_weight_index])
@@ -68,10 +67,8 @@ void Weight_experience_space::find_best_weight(void){
 
 void Weight_experience_space::cut(void){
   for(uint32 weight_index = 1; weight_index < experiences.size(); ++weight_index){
-    std::cout << "abs(" << experiences[weight_index] <<") - abs(" << experiences[weight_index] << ")" <<std::endl;
     experiences[weight_index] = std::copysign(
-      (abs(experiences[weight_index]) - abs(experiences[smallest_experience])),
-      experiences[weight_index]
+      (abs(experiences[weight_index]) - abs(experiences[smallest_experience])), experiences[weight_index]
     );
   }
 }

@@ -26,6 +26,14 @@ namespace sparse_net_library{
 
 using std::vector;
 
+/**
+ * @brief      This class describes an experience space for a single weight inside a Neural network.
+ *             Experiences can be positive or negative, all of which are stored inside the space in the @experiences
+ *             vector. The Weight space strives to always focus on the weight value with the best experience point,
+ *             while also remembering negative experiences. The experience values are stored in a relative manner,
+ *             as to avoid value overflow: Whenever an experience is added into the weight value in focus, the experience of
+ *             the smallest cardinality is set back to zero, and all other experiences are corrected for that.
+ */
 class Weight_experience_space{
 public:
   Weight_experience_space(sdouble32 weight_min_, sdouble32 weight_max_, sdouble32 weight_step_);
@@ -57,7 +65,7 @@ private:
   /**
    * @brief      Updates @best_weight_index based on the @experiences vector
    */
-  void find_best_weight(void);
+  void set_best_weight(void);
 
   /**
    * @brief      Cuts the experience vector with the value of its smallest absolute experience,

@@ -34,12 +34,11 @@ TEST_CASE("Testing weight experience space weight values","[weightxp]"){
   uint32 number_of_weights_in_space = static_cast<uint32>((weight_max - weight_min)/weight_step);
   Weight_experience_space wxp_space = Weight_experience_space(weight_min,weight_max,weight_step);
 
-
-  sdouble32 tmp_weight = weight_min;
+  sdouble32 tmp_weight = weight_min; /* Initially the weight space starts at the beginning of the weight space */
   for(uint32 bad_xp_iterator = 1; bad_xp_iterator < number_of_weights_in_space; ++bad_xp_iterator){
     CHECK(tmp_weight == wxp_space.get_best_weight());
-    CHECK((tmp_weight + weight_step) == wxp_space.add_experience(double_literal(-1.0)));
-    tmp_weight += weight_step;
+    CHECK((tmp_weight + weight_step) == wxp_space.add_experience(double_literal(-1.0))); /* See if giving negative experiences changes the weight iterator */
+    tmp_weight += weight_step; /* ..to the next best weight */
   }
 }
 

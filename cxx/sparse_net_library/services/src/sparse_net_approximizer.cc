@@ -391,7 +391,7 @@ void Sparse_net_approximizer::evaluate_thread(
     data_set.set_features_for_labels(
       solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(), start_index_in_sequence,
       ((sequence_start_index + sample) * data_set.get_sequence_size()) + start_index_in_sequence,
-      sequence_truncation /* To avoid vanishing gradients, error calculation is truncated */
+      sequence_truncation /* To avoid vanishing gradients with sequential data, error calculation is truncated */
     ); /* Re-calculate error for the training set */
     // if(
     //   (127 <= sequence_start_index)

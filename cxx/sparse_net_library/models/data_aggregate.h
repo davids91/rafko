@@ -110,7 +110,7 @@ public:
    *
    * @param[in]  neuron_data          The neuron data
    * @param[in]  neuron_buffer_index  The index of the outer neuron bufer to start evaluation from
-   * @param[in]  raw_start_index      The raw start index
+   * @param[in]  raw_start_index      The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
    * @param[in]  labels_to_evaluate   The labels to evaluate
    */
   void set_features_for_labels(const vector<vector<sdouble32>>& neuron_data,  uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate);
@@ -149,7 +149,7 @@ public:
   const vector<sdouble32>& get_input_sample(uint32 raw_input_index) const{
     if(input_samples.size() > raw_input_index)
       return input_samples[raw_input_index];
-      else throw std::runtime_error("Sample index out of bounds!");
+      else throw std::runtime_error("Input sample index out of bounds!");
   }
 
   /**
@@ -162,7 +162,7 @@ public:
   const vector<sdouble32>& get_label_sample(uint32 raw_label_index) const{
     if(label_samples.size() > raw_label_index)
       return label_samples[raw_label_index];
-      else throw std::runtime_error("Sample index out of bounds!");
+      else throw std::runtime_error("Label sample index out of bounds!");
   }
 
   /**

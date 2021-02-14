@@ -31,6 +31,7 @@ SOLVER_SOURCES = ../sparse_net_library/services/src/partial_solution_solver.cc .
 TRAINER_SOURCES = ../sparse_net_library/models/src/dense_net_weight_initializer.cc ../sparse_net_library/services/src/weight_updater.cc
 TRAINER_SOURCES += ../sparse_net_library/services/src/backpropagation_queue_wrapper.cc
 TRAINER_SOURCES += ../sparse_net_library/services/src/sparse_net_optimizer.cc ../sparse_net_library/services/src/sparse_net_approximizer.cc
+TRAINER_SOURCES += ../sparse_net_library/services/src/random_attention_brain.cc
 HELPER_SOURCES =  ../sparse_net_library/models/src/neuron_info.cc ../sparse_net_library/models/src/transfer_function.cc
 HELPER_SOURCES +=  ../sparse_net_library/models/src/cost_function.cc ../sparse_net_library/models/src/data_aggregate.cc
 HELPER_SOURCES += ../sparse_net_library/services/src/weight_experience_space.cc
@@ -113,6 +114,7 @@ TEST_SOURCES += ../test/src/weight_experience_space_test.cc
 
 OPTIMIZATION_TEST_SOURCES = $(TEST_BASE_SOURCE)
 OPTIMIZATION_TEST_SOURCES += ../test/src/approximizer_test.cc ../test/src/optimizer_test.cc
+OPTIMIZATION_TEST_SOURCES += ../test/src/random_attention_brain_test.cc
 
 TEST_OBJECTS = $(subst ../test/src/,,$(TEST_SOURCES:.cc=.o))
 OPTIMIZATION_TEST_OBJECTS = $(subst ../test/src/,,$(OPTIMIZATION_TEST_SOURCES:.cc=.o))
@@ -133,7 +135,7 @@ test-only: $(TEST_OBJECTS)
 	make run-tests
 
 run-tests: $(TEST_RESULT)
-	./$< --use-colour yes [weightxp] -s
+	./$< --use-colour yes
 
 loop-tests:
 	./loop-tests.sh
@@ -146,7 +148,7 @@ test-solution-builder: clean gen $(LIB_OUTPUT)
 test-opt: clean gen $(LIB_OUTPUT) #as in optimization or approximization
 	@rm -f $(TEST_RESULT)
 	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
-	./$(TEST_RESULT)  --use-colour yes -a [approximize]
+	./$(TEST_RESULT)  --use-colour yes -a [brain]
 
 $(TEST_OBJECTS):
 	g++ -c $(TEST_SOURCES) $(SOURCES_INCLUDE_DIR)
