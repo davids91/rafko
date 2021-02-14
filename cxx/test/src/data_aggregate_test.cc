@@ -115,9 +115,32 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   /* test if the error is stored correctly even when the data is provided in bulk */
   set_distance *= (rand()%10 / double_literal(10.0)); /* modify the set distance just to be sure */
   vector<vector<sdouble32>> neuron_data_simulation(((sample_number * sequence_size)/2), {(expected_label - set_distance)}); /* create dummy neuron data with the configured distance */
+  /*!Note: since the simulated neuron data is always at the same generated value here, it doesn't matter where the evaluation starts from inside the neuron buffer,
+   *       i.e. what is the value of neuron_buffer_index, as long as the evaluation is inside the bounds ot he array.
+   */
+
   for(uint32 variant = 0; variant < 100; ++variant){
+    /* Test if the half of the set can be updated in bulk */
     data_agr.set_features_for_labels(neuron_data_simulation, 0, 0, (sample_number * sequence_size)/2); /* set the error for the first half */
     data_agr.set_features_for_labels(neuron_data_simulation, 0, (sample_number * sequence_size)/2, (sample_number * sequence_size)/2); /* set the error for the second half */
+
+    Catch::StringMaker<sdouble32>::precision  = 15;
+    for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
+    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
+      Approx(
+        pow(set_distance,2)/(double_literal(2.0)*sample_number * sequence_size)
+      ).epsilon(0.00000000000001) == data_agr.get_error(i)
+    );
+
+    REQUIRE( /* Error: (distance^2)/2 */
+      Approx(pow(set_distance,2)/double_literal(2.0)).epsilon(0.00000000000001) == data_agr.get_error_sum()
+    );
+
+    /* Test if the quarter of the set can be updated in bulk */
+    data_agr.set_features_for_labels(neuron_data_simulation, 0, (sample_number * sequence_size * 0)/4, (sample_number * sequence_size)/4);
+    data_agr.set_features_for_labels(neuron_data_simulation, 0, (sample_number * sequence_size * 1)/4, (sample_number * sequence_size)/4);
+    data_agr.set_features_for_labels(neuron_data_simulation, 0, (sample_number * sequence_size * 2)/4, (sample_number * sequence_size)/4);
+    data_agr.set_features_for_labels(neuron_data_simulation, 0, (sample_number * sequence_size * 3)/4, (sample_number * sequence_size)/4);
 
     Catch::StringMaker<sdouble32>::precision  = 15;
     for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
