@@ -35,13 +35,14 @@ TRAINER_SOURCES += ../sparse_net_library/services/src/random_attention_brain.cc
 HELPER_SOURCES =  ../sparse_net_library/models/src/neuron_info.cc ../sparse_net_library/models/src/transfer_function.cc
 HELPER_SOURCES +=  ../sparse_net_library/models/src/cost_function.cc ../sparse_net_library/models/src/data_aggregate.cc
 HELPER_SOURCES += ../sparse_net_library/services/src/weight_experience_space.cc
+HELPER_SOURCES += ../rafko_mainframe/services/src/training_logger.cc
 
 LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(HELPER_SOURCES)
 LIBRARY_OBJECTS = $(subst $(CXX_GEN_FILES_DIR)/,,$(GENERATED_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../sparse_net_library/services/src/,,$(BUILDER_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../sparse_net_library/services/src/,,$(SOLVER_SOURCES:.cc=.o))
 LIBRARY_OBJECTS += $(subst ../sparse_net_library/models/src/,,$(subst ../sparse_net_library/services/src/,,$(TRAINER_SOURCES:.cc=.o)))
-LIBRARY_OBJECTS += $(subst ../sparse_net_library/models/src/,,$(subst ../sparse_net_library/services/src/,,$(HELPER_SOURCES:.cc=.o)))
+LIBRARY_OBJECTS += $(subst ../sparse_net_library/models/src/,,$(subst ../sparse_net_library/services/src/,,$(subst ../rafko_mainframe/services/src/,,$(HELPER_SOURCES:.cc=.o))))
 
 ###########################
 SERVER_SOURCES = ../rafko_mainframe/services/src/deep_learning_server.cc

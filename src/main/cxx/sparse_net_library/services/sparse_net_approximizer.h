@@ -68,7 +68,7 @@ public:
    */
   void check(void){
     if(
-      (loops_unchecked >= context.get_insignificant_iteration_count())
+      (loops_unchecked >= context.get_insignificant_changes())
       ||(loops_unchecked > (train_set.get_error_sum()/context.get_step_size()))
       ||(loops_unchecked > (test_set.get_error_sum()/context.get_step_size()))
     ){

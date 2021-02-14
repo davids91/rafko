@@ -41,7 +41,7 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  test_set(test_set_)
 ,  gradient_fragment()
 ,  iteration(1)
-,  loops_unchecked(context.get_insignificant_iteration_count())
+,  loops_unchecked(context.get_insignificant_changes())
 ,  sequence_truncation(min(context.get_memory_truncation(), train_set.get_sequence_size()))
 ,  last_applied_direction(net.weight_table_size())
 ,  solve_threads()
@@ -394,7 +394,7 @@ void Sparse_net_approximizer::evaluate_thread(
     // if(
     //   (127 <= sequence_start_index)
     //   &&(128 == data_set.get_number_of_sequences())
-    //   &&((loops_unchecked >= context.get_insignificant_iteration_count())
+    //   &&((loops_unchecked >= context.get_insignificant_changes())
     //   ||(loops_unchecked > (train_set.get_error_sum()/context.get_step_size()))
     //   ||(loops_unchecked > (test_set.get_error_sum()/context.get_step_size())))
     // ){
@@ -501,7 +501,7 @@ void Sparse_net_approximizer::apply_fragment(void){
 
   weight_updater->iterate(last_applied_direction, *net_solution);
   gradient_fragment = Gradient_fragment();
-  loops_unchecked = context.get_insignificant_iteration_count() + 1;
+  loops_unchecked = context.get_insignificant_changes() + 1;
 }
 
 } /* namespace sparse_net_library */
