@@ -17,25 +17,29 @@
 
 #include "rafko_mainframe/services/training_logger.h"
 
+#include <iostream>
 #include <fstream>
 
 namespace rafko_mainframe{
 
+using std::ios;
+
 void Training_logger::log(uint32 iteration, vector<uint32> coordinates, vector<string> tags, vector<sdouble32> data){
-  Message message;
-  message.set_iteration(iteration);
-  for(uint32& coordinate : coordinates) message.add_coordinates(coordinate);
-  for(string& tag : tags) message.add_tags(tag);
-  for(sdouble32& data_element : data) message.add_data(data_element);
+  Data_package measured;
+  measured.set_iteration(iteration);
+  for(uint32& coordinate : coordinates) measured.add_coordinates(coordinate);
+  for(string& tag : tags) measured.add_tags(tag);
+  for(sdouble32& data_element : data) measured.add_data(data_element);
   ++changes_since;
   if(context.get_insignificant_changes() < changes_since)
     flush();
 }
 
 void Training_logger::flush(){
-  ofstream logfile;
+  std::filebuf logfile;
   logfile.open(id+".log", ios::out | ios::binary | ios::trunc);
-  measurement.SerializeToOstream(logfile);
+  std::ostream log_stream(&logfile);
+  measurement.SerializeToOstream(&log_stream);
   changes_since = 0;
   logfile.close();
 }

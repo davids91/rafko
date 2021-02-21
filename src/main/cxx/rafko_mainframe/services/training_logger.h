@@ -45,7 +45,7 @@ public:
   ,  changes_since()
   { }
 
-  void log(uint32 iteration, vector<string> tags, vector<sdouble32> data);
+  void log(uint32 iteration,  vector<uint32> coordinates, vector<string> tags, vector<sdouble32> data);
   void flush();
 
 private:

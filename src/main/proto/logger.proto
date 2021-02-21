@@ -17,8 +17,10 @@
 
 syntax = "proto3";
 option cc_enable_arenas = true;
-option java_package = "org.rafko.sparse_net_library";
-option java_outer_classname = "RafkoTraining";
+option java_package = "org.rafko.rafko_mainframe";
+option java_outer_classname = "RafkoTrainingLog";
+
+package rafko_mainframe;
 
 /** @brief      Describes a data package for a given iteration during a training. The stored data
  *              is identified by the iteration and attached tags, most of which are use-case dependent.
