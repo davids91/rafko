@@ -28,11 +28,19 @@ using sparse_net_library::Weight_experience_space;
  * Testing whether or not the correct weight values are generated in a weight experience space
  * */
 TEST_CASE("Testing weight experience space weight values","[weightxp]"){
-  sdouble32 weight_min = double_literal(0.0);
+  sdouble32 weight_min = double_literal(-1.0);
   sdouble32 weight_max = double_literal(1.0);
   sdouble32 weight_step = double_literal(0.2);
   uint32 number_of_weights_in_space = static_cast<uint32>((weight_max - weight_min)/weight_step);
-  Weight_experience_space wxp_space = Weight_experience_space(weight_min,weight_max,weight_step);
+  Weight_experience_space wxp_space = Weight_experience_space(weight_min, weight_max, weight_step);
+
+  uint32 weight_index = 0;
+  for(sdouble32 weight = weight_min; weight < weight_max; weight += weight_step){
+    REQUIRE( wxp_space.get_weights().size() > weight_index );
+    REQUIRE( wxp_space.get_weight_experiences().size() > weight_index );
+    CHECK( weight == wxp_space.get_weight(weight_index) );
+    ++weight_index;
+  }
 
   sdouble32 tmp_weight = weight_min; /* Initially the weight space starts at the beginning of the weight space */
   for(uint32 bad_xp_iterator = 1; bad_xp_iterator < number_of_weights_in_space; ++bad_xp_iterator){

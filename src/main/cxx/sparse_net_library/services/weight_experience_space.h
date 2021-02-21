@@ -20,6 +20,7 @@
 
 #include "rafko_global.h"
 
+#include <stdexcept>
 #include <vector>
 
 namespace sparse_net_library{
@@ -54,6 +55,37 @@ public:
    * @return     the value of the weight with the best experience
    */
   sdouble32 get_best_weight(void);
+
+  /**
+   * @brief      Gets the weights stored in the range of the space
+   *
+   * @return     A const reference of the vector containing the weight values corresponding with stored experiences.
+   */
+  const vector<sdouble32> get_weights(void){
+    return weight_values;
+  }
+
+  /**
+   * @brief      Gets a single weight from the space under the provided index
+   *
+   * @param[in]  index  The index
+   *
+   * @return     The weight.
+   */
+  sdouble32 get_weight(uint32 index){
+    if(weight_values.size() > index)
+      return weight_values[index];
+    else throw new std::runtime_error("Weight index out of bounds in weight experience space!");
+  }
+
+  /**
+   * @brief      Gets the weight experiences.
+   *
+   * @return     A constant reference of the vector of the experience values corresponding to each stored weight.
+   */
+  const vector<sdouble32> get_weight_experiences(void){
+    return experiences;
+  }
 
 private:
   sdouble32 weight_min, weight_max, weight_step;

@@ -28,8 +28,8 @@ Weight_experience_space::Weight_experience_space(sdouble32 weight_min_, sdouble3
 :  weight_min(weight_min_)
 ,  weight_max(weight_max_)
 ,  weight_step(weight_step_)
-,  weight_values((weight_max - weight_min)/weight_step)
-,  experiences((weight_max - weight_min)/weight_step)
+,  weight_values(1 + (weight_max - weight_min)/weight_step)
+,  experiences(1 + (weight_max - weight_min)/weight_step)
 ,  best_weight_index(0)
 ,  smallest_experience(0)
 {
