@@ -24,6 +24,7 @@ CXX_GEN_FILES_DIR = ../gen
 GENERATED_SOURCES = $(CXX_GEN_FILES_DIR)/common.pb.cc
 GENERATED_SOURCES += $(CXX_GEN_FILES_DIR)/sparse_net.pb.cc $(CXX_GEN_FILES_DIR)/solution.pb.cc $(CXX_GEN_FILES_DIR)/training.pb.cc
 GENERATED_SOURCES += $(CXX_GEN_FILES_DIR)/deep_learning_service.pb.cc $(CXX_GEN_FILES_DIR)/deep_learning_service.grpc.pb.cc
+GENERATED_SOURCES += $(CXX_GEN_FILES_DIR)/logger.pb.cc
 
 BUILDER_SOURCES = ../sparse_net_library/services/src/sparse_net_builder.cc ../sparse_net_library/services/src/neuron_router.cc
 BUILDER_SOURCES += ../sparse_net_library/services/src/solution_builder.cc ../sparse_net_library/services/src/partial_solution_builder.cc

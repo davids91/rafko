@@ -61,7 +61,7 @@ public:
    *
    * @return     A const reference of the vector containing the weight values corresponding with stored experiences.
    */
-  const vector<sdouble32> get_weights(void){
+  const vector<sdouble32> get_weights(void) const{
     return weight_values;
   }
 
@@ -72,7 +72,7 @@ public:
    *
    * @return     The weight.
    */
-  sdouble32 get_weight(uint32 index){
+  sdouble32 get_weight(uint32 index) const{
     if(weight_values.size() > index)
       return weight_values[index];
     else throw new std::runtime_error("Weight index out of bounds in weight experience space!");
@@ -83,7 +83,7 @@ public:
    *
    * @return     A constant reference of the vector of the experience values corresponding to each stored weight.
    */
-  const vector<sdouble32> get_weight_experiences(void){
+  const vector<sdouble32> get_weight_experiences(void) const{
     return experiences;
   }
 

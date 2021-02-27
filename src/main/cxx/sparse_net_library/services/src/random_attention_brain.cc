@@ -148,4 +148,10 @@ void Random_attention_brain::evaluate_thread(
   }
 }
 
+const Weight_experience_space& Random_attention_brain::get_weight_experiences(uint32 weight_index) const{
+  if(weightxp_space.size() > weight_index){
+    return weightxp_space[weight_index];
+  }else throw std::runtime_error("Weight index out of bounds while requesting experiences!");
+}
+
 } /* namespace sparse_net_library */

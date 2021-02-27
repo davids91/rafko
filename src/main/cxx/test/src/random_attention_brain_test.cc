@@ -20,11 +20,13 @@
 
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
-#include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/Weight_experience_space.h"
 #include "sparse_net_library/services/random_attention_brain.h"
+#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/services/training_logger.h"
+
 
 namespace sparse_net_library_test {
 
@@ -39,6 +41,7 @@ using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
 using sparse_net_library::Data_aggregate;
 using sparse_net_library::Weight_experience_space;
 using sparse_net_library::Random_attention_brain;
+using rafko_mainframe::Training_logger;
 using rafko_mainframe::Service_context;
 
 /*###############################################################################################
@@ -47,6 +50,8 @@ using rafko_mainframe::Service_context;
 TEST_CASE("Testing Random Attention Brain on a simple dataset","[brain][small]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context().set_step_size(1e-2).set_arena_ptr(&arena);
+  Training_logger training_logger("RABrain_training", service_context);
+
   std::cout << "Testing a simple dataset:" << std::endl;
 
   /* Create a Network and Dataset */
@@ -66,13 +71,16 @@ TEST_CASE("Testing Random Attention Brain on a simple dataset","[brain][small]")
 
   /* Add impulses into the bain until the error rate is sufficient */
   sdouble32 min_error = double_literal(9999.0);
+  uint32 iteration = 1;
   while(service_context.get_step_size() <= train_set->get_error_avg()){
     brain.step();
+    training_logger.log(iteration,{0},{"w"},brain.get_weight_experiences(0).get_weight_experiences());
     std::cout << "\rError: " << train_set->get_error_avg() << "   ";
     if(min_error > train_set->get_error_avg()){
       min_error = train_set->get_error_avg();
       std::cout << "| minimum: " << min_error;
     }
+    ++iteration;
   }
   std::cout << std::endl << "---" << std::endl;
 }

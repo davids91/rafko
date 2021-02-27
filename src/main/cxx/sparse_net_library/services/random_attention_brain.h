@@ -50,6 +50,15 @@ public:
    */
   void step(void);
 
+  /**
+   * @brief      For the given weight, it returns with its experience space
+   *
+   * @param[in]  weight_index  The weight index
+   *
+   * @return     The weight experiences.
+   */
+  const Weight_experience_space& get_weight_experiences(uint32 weight_index) const;
+
 private:
   SparseNet& net;
   Service_context& context;

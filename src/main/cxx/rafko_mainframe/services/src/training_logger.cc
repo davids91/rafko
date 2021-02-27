@@ -24,12 +24,13 @@ namespace rafko_mainframe{
 
 using std::ios;
 
-void Training_logger::log(uint32 iteration, vector<uint32> coordinates, vector<string> tags, vector<sdouble32> data){
+void Training_logger::log(uint32 iteration, const vector<uint32>& coordinates, const vector<string>& tags, const vector<sdouble32>& data){
   Data_package measured;
   measured.set_iteration(iteration);
-  for(uint32& coordinate : coordinates) measured.add_coordinates(coordinate);
-  for(string& tag : tags) measured.add_tags(tag);
-  for(sdouble32& data_element : data) measured.add_data(data_element);
+  for(const uint32& coordinate : coordinates) measured.add_coordinates(coordinate);
+  for(const string& tag : tags) measured.add_tags(tag);
+  for(const sdouble32& data_element : data) measured.add_data(data_element);
+  *measurement.add_packs() = measured;
   ++changes_since;
   if(context.get_insignificant_changes() < changes_since)
     flush();
