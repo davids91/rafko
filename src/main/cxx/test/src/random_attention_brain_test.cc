@@ -50,7 +50,7 @@ using rafko_mainframe::Service_context;
 TEST_CASE("Testing Random Attention Brain on a simple dataset","[brain][small]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context().set_step_size(1e-2).set_arena_ptr(&arena);
-  Training_logger training_logger("RABrain_training", service_context);
+  Training_logger training_logger("../../logs/RABrain_training", service_context);
 
   std::cout << "Testing a simple dataset:" << std::endl;
 
