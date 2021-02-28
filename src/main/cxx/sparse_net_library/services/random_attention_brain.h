@@ -70,6 +70,7 @@ private:
   uint32 memory_truncation;
   vector<Weight_experience_space> weightxp_space;
   mutex dataset_mutex;
+  uint32 iteration;
 
   /**
    * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set

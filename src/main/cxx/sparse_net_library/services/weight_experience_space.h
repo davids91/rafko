@@ -92,12 +92,20 @@ private:
   vector<sdouble32> weight_values;
   vector<sdouble32> experiences;
   uint32 best_weight_index;
+  uint32 worst_weight_index;
   uint32 smallest_experience;
 
   /**
-   * @brief      Updates @best_weight_index based on the @experiences vector
+   * @brief      Updates @best_weight_index and @worst_weight_index based on the @experiences vector
    */
-  void set_best_weight(void);
+  void evaluate_weights(void);
+
+  /**
+   * @brief      Pushes the given weight in the direction of its neightbours based on the experience values
+   *
+   * @param[in]  weight_index  The weight index; must be inbetween 0 < @weight_index < @weight_values.size()
+   */
+  void adapt_weight(uint32 weight_index);
 
   /**
    * @brief      Cuts the experience vector with the value of its smallest absolute experience,

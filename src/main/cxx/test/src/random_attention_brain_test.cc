@@ -47,7 +47,7 @@ using sparse_net_library::Random_attention_brain;
 using rafko_mainframe::Training_logger;
 using rafko_mainframe::Service_context;
 
-static void test_brain(Data_aggregate* train_set, SparseNet* net, Service_context service_context, string logfile){
+static void test_brain(Data_aggregate* train_set, SparseNet* net, Service_context service_context, string logfile, uint32 tries = 0){
   /* Create a Brain */
   Random_attention_brain brain(*net,*train_set,service_context);
   Training_logger training_logger(logfile, service_context);
@@ -57,7 +57,7 @@ static void test_brain(Data_aggregate* train_set, SparseNet* net, Service_contex
   uint32 iteration = 1;
   while(service_context.get_step_size() <= train_set->get_error_avg()){
     brain.step();
-    for(uint32 weight_index = 0; weight_index < net->weight_table_size(); ++weight_index){
+    for(uint32 weight_index = 0; weight_index < static_cast<uint32>(net->weight_table_size()); ++weight_index){
       training_logger.log(iteration,{weight_index},{"w"},brain.get_weight_experiences(weight_index).get_weights());
       training_logger.log(iteration,{weight_index},{"xp"},brain.get_weight_experiences(weight_index).get_weight_experiences());
     }
@@ -67,6 +67,7 @@ static void test_brain(Data_aggregate* train_set, SparseNet* net, Service_contex
       std::cout << "| minimum: " << min_error;
     }
     ++iteration;
+    if((0 < tries)&&(iteration > tries))return;
   }
   std::cout << std::endl << "---" << std::endl;
 }
@@ -89,7 +90,7 @@ TEST_CASE("Testing Random Attention Brain on a simple dataset","[brain][small]")
   Data_aggregate* train_set = create_addition_dataset(500, *net, COST_FUNCTION_SQUARED_ERROR, service_context);
 
   std::cout << "Testing a simple dataset:" << std::endl;
-  test_brain(train_set,net,service_context,"../../logs/RABrain_training");
+  test_brain(train_set,net,service_context,"../../logs/RAB");
 }
 
 /*###############################################################################################
@@ -112,7 +113,7 @@ TEST_CASE("Testing Random Attention Brain on a more complex, time series dataset
   Data_aggregate* train_set = create_sequenced_addition_dataset(5, 3, *net, COST_FUNCTION_SQUARED_ERROR, service_context);
 
   std::cout << "Testing a time-series dataset(binary addition):" << std::endl;
-  test_brain(train_set,net,service_context,"../../logs/RABrain_training_harder");
+  test_brain(train_set,net,service_context,"../../logs/RABH",999);
 }
 
 } /* namespace sparse_net_library_test */

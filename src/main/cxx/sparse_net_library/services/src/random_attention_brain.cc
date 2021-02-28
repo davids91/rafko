@@ -37,6 +37,7 @@ Random_attention_brain::Random_attention_brain(SparseNet& neural_network, Data_a
 ,  memory_truncation(std::min(context.get_memory_truncation(), training_set.get_sequence_size()))
 ,  weightxp_space()
 ,  dataset_mutex()
+,  iteration(1)
 {
   for(sint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
     weightxp_space.push_back(
@@ -76,14 +77,18 @@ void Random_attention_brain::step(void){
   }
 
   /* Add error value as experience for the selected weight and update weights for the network */
-  /*if(double_literal(0.0) == error_value)
-    error_value = double_literal(-1.0); *//*!Note: "Reward" for being correct - seems to make training unstable */
-  net.set_weight_table(weight_index, weightxp_space[weight_index].add_experience(-error_value));
+  /* if(double_literal(0.0) == error_value)
+    error_value = double_literal(-1.0); */ /*!Note: "Reward" for being correct - seems to make training unstable */
+  net.set_weight_table(weight_index, weightxp_space[weight_index].add_experience(
+    -error_value * std::min(double_literal(1.0),std::log(iteration)))
+  );
   weight_updater.update_solution_with_weights(*net_solution);
 
   /* If error appears to be quite small, evaluate the whole training dataset */
   if(context.get_step_size() >= error_value)
     evaluate(0,training_set.get_number_of_sequences(),0,training_set.get_sequence_size());
+
+  ++iteration;
 }
 
 void Random_attention_brain::evaluate(

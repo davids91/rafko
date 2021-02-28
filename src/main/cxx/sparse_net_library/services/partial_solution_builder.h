@@ -32,7 +32,8 @@ namespace sparse_net_library{
 using google::protobuf::RepeatedPtrField;
 
 /**
- * @brief      Front-end to create partial solution objects by adding Neurons into them.
+ * @brief      Front-end to create partial solution objects by adding Neurons into them. 
+ *             Weights of a Neuron consists of: {memory_ratio, w1..wn, bias1..biasn}
  */
 class Partial_solution_builder{
 public:

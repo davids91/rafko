@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
@@ -8,8 +9,9 @@ import logger_pb2
 #read in a log from the arguments
 
 measurement = logger_pb2.Measurement()
-with open('../logs/RABrain_training.log','rb') as file:
-	measurement.ParseFromString(file.read())
+if(1 < len(sys.argv)):
+	with open(sys.argv[1],'rb') as file:
+		measurement.ParseFromString(file.read())
 
 #get bounds of the measurements
 max_coordinate = 0
@@ -34,7 +36,7 @@ def refresh_plots(iteration):
 	displayable_weights = select_datapoint(iteration,"w")
 	displayable_xps = select_datapoint(iteration,"xp")
 	for i in range(num_of_plots):
-		axs[i].collections.clear()
+		axs[i].clear()
 		axs[i].fill_between(displayable_weights[i],displayable_xps[i],color="blue")
 		axs[i].xaxis.tick_top()
 	fig.canvas.draw() #maybe not needed
@@ -43,7 +45,7 @@ def update(val):
 	refresh_plots(min(int(val), max_iteration))
 
 fig, axs = plt.subplots(1,num_of_plots)
-iter_slider = Slider(plt.axes([0.0, 0.0, 0.95, 0.05]), 'iteration', 1, max_iteration, valinit=1)
+iter_slider = Slider(plt.axes([0.0, 0.0, 0.95, 0.05]), 'iteration', 1, max_iteration-1, valinit=1)
 iter_slider.on_changed(update)
 refresh_plots(1)
 plt.show()
