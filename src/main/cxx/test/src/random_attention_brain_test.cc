@@ -75,8 +75,8 @@ TEST_CASE("Testing Random Attention Brain on a simple dataset","[brain][small]")
   while(service_context.get_step_size() <= train_set->get_error_avg()){
     brain.step();
     for(uint32 weight_index = 0; weight_index < net->weight_table_size(); ++weight_index){
-      training_logger.log(iteration,{weight_index},{"w"},brain.get_weight_experiences(0).get_weights());
-      training_logger.log(iteration,{weight_index},{"xp"},brain.get_weight_experiences(0).get_weight_experiences());
+      training_logger.log(iteration,{weight_index},{"w"},brain.get_weight_experiences(weight_index).get_weights());
+      training_logger.log(iteration,{weight_index},{"xp"},brain.get_weight_experiences(weight_index).get_weight_experiences());
     }
     std::cout << "\rError: " << train_set->get_error_avg() << "   ";
     if(min_error > train_set->get_error_avg()){

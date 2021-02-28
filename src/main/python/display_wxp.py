@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
 
 import logger_pb2
 
@@ -12,7 +13,10 @@ with open('../logs/RABrain_training.log','rb') as file:
 
 #get bounds of the measurements
 max_coordinate = 0
+max_iteration = 0
 for pack in measurement.packs:
+	if(max_iteration < pack.iteration):
+		max_iteration = pack.iteration
 	for coordinate in pack.coordinates:
 		if(max_coordinate < coordinate):
 			max_coordinate = coordinate
@@ -24,16 +28,21 @@ def select_datapoint(iteration,tag):
 		if(iteration == pack.iteration):
 			if(0 < len(pack.tags) and 0 < len(pack.coordinates) and 0 < len(pack.tags) and pack.tags[0] == tag):
 				arr[pack.coordinates[0]] = pack.data
-				print(tag,pack.data)
 	return arr
 
-displayable_weights = select_datapoint(1,"w")
-displayable_xps = select_datapoint(1,"xp")
-
-def refresh_plots():
+def refresh_plots(iteration):
+	displayable_weights = select_datapoint(iteration,"w")
+	displayable_xps = select_datapoint(iteration,"xp")
 	for i in range(num_of_plots):
-		axs[i].fill_between(displayable_weights[i],displayable_xps[i])
+		axs[i].collections.clear()
+		axs[i].fill_between(displayable_weights[i],displayable_xps[i],color="blue")
+	fig.canvas.draw() #maybe not needed
+
+def update(val):
+	refresh_plots(min(int(val), max_iteration))
 
 fig, axs = plt.subplots(1,num_of_plots)
-refresh_plots()
+iter_slider = Slider(plt.axes([0.0, 0.0, 0.95, 0.05]), 'iteration', 1, max_iteration, valinit=1)
+iter_slider.on_changed(update)
+refresh_plots(1)
 plt.show()
