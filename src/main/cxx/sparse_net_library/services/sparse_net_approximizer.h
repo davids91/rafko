@@ -21,7 +21,6 @@
 #include "rafko_global.h"
 
 #include <cmath>
-
 #include <mutex>
 
 #include "gen/common.pb.h"
@@ -82,8 +81,8 @@ public:
    * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set
    */
   void evaluate(void){
-    evaluate(train_set,0,train_set.get_number_of_sequences(),0,train_set.get_sequence_size());
-    evaluate(test_set,0,test_set.get_number_of_sequences(),0,test_set.get_sequence_size());
+    train_set.set_features_for_labels(solvers,0,train_set.get_number_of_sequences(),0,train_set.get_sequence_size());
+    test_set.set_features_for_labels(solvers,0,test_set.get_number_of_sequences(),0,test_set.get_sequence_size());
   }
 
   /**
@@ -121,6 +120,11 @@ public:
    */
   sdouble32 get_single_weight_gradient(uint32 weight_index);
 
+  /**
+   * @brief      APproximates gradient information for all weights.
+   *
+   * @return     The gradient for all weights.
+   */
   sdouble32 get_gradient_for_all_weights(void);
 
   /**
@@ -189,39 +193,7 @@ private:
   uint32 sequence_truncation;
   unique_ptr<Weight_updater> weight_updater;
   vector<sdouble32> last_applied_direction; /* The weight gradients applied to the network in the last iteration */
-
-  vector<thread> solve_threads; /* The threads to be started during evaluating the network */
-
   mutex dataset_mutex;
-
-  /**
-   * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set
-   *
-   * @param      data_set                 The data set
-   * @param[in]  label_start_index        The raw label start
-   * @param[in]  labels_to_eval           The labels to eval
-   * @param[in]  start_index_in_sequence  The start index in sequence
-   * @param[in]  sequence_truncation      The sequence truncation
-   */
-  void evaluate(
-    Data_aggregate& data_set, uint32 label_start_index, uint32 labels_to_eval,
-    uint32 start_index_in_sequence, uint32 sequence_truncation
-  );
-
-  /**
-   * @brief      A thread to calcualte the error value for the given data set
-   *
-   * @param      data_set               The data set to calculate the error for
-   * @param[in]  solve_thread_index     The index of the used thread
-   * @param[in]  sequence_start_index   The starting sequence index to evaluate in this
-   * @param[in]  sequences_to_evaluate  The sequences to evaluate
-   * @param[in]  sequence_truncation    The sequence truncation
-   */
-  void evaluate_thread(
-    Data_aggregate& data_set, uint32 solve_thread_index,
-    uint32 sequence_start_index, uint32 sequences_to_evaluate,
-    uint32 start_index_in_sequence, uint32 sequence_truncation
-  );
 
   /**
    * @brief      Insert an element to the given position into the given field by
@@ -236,21 +208,6 @@ private:
     *message_field.Add() = value;
     for(sint32 i(message_field.size() - 1); i > static_cast<sint32>(position); --i)
       message_field.SwapElements(i, i - 1);
-  }
-
-  /**
-   * @brief      This function waits for the given threads to finish, ensures that every thread
-   *             in the reference vector is finished, before it does.
-   *
-   * @param      calculate_threads  The calculate threads
-   *//*!TODO: Find a better solution for these snippets */
-  static void wait_for_threads(vector<thread>& calculate_threads){
-    while(0 < calculate_threads.size()){
-      if(calculate_threads.back().joinable()){
-        calculate_threads.back().join();
-        calculate_threads.pop_back();
-      }
-    }
   }
 };
 

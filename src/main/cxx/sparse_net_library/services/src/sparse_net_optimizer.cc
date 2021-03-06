@@ -122,45 +122,7 @@ void Sparse_net_optimizer::step(void){
     (loops_unchecked >= context.get_insignificant_changes())
     ||(loops_unchecked >= (test_set.get_error_sum()/context.get_step_size())) /* .. or sooner if the error value justifies it */
   ){
-    uint32 sample_start_index = 0;
-    const uint32 samples_to_evaluate = 1 + static_cast<uint32>(train_set.get_number_of_sequences()/context.get_max_solve_threads());
-    for(
-      uint32 thread_index = 0;
-      thread_index < min(
-        static_cast<uint32>(test_set.get_number_of_sequences()/samples_to_evaluate),
-        static_cast<uint32>(context.get_max_solve_threads())
-      );
-      ++thread_index
-    ){
-      solve_threads.push_back(thread(
-        &Sparse_net_optimizer::evaluate_thread, this, thread_index, sample_start_index,
-        min(samples_to_evaluate,(train_set.get_number_of_sequences() - sample_start_index))
-      ));
-      sample_start_index += samples_to_evaluate;
-    }
-    wait_for_threads(solve_threads);
-    loops_unchecked = 0;
-  }
-}
-
-void Sparse_net_optimizer::evaluate_thread(uint32 solve_thread_index, uint32 sample_start, uint32 samples_to_evaluate){
-  uint32 raw_label_start_index;
-  for(uint32 sample_iterator = 0; sample_iterator < samples_to_evaluate; ++sample_iterator){
-    uint32 inputs_index = (sample_start + sample_iterator) * (train_set.get_sequence_size() + train_set.get_prefill_inputs_number());
-    for(uint32 prefill_iterator = 0; prefill_iterator < test_set.get_prefill_inputs_number(); ++prefill_iterator){
-      solvers[solve_thread_index]->solve(test_set.get_input_sample(inputs_index));
-      ++inputs_index;
-    }
-    raw_label_start_index = (sample_start + sample_iterator);
-    for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
-      solvers[solve_thread_index]->solve(test_set.get_input_sample(inputs_index));
-      ++inputs_index;
-    }
-    test_set.set_features_for_labels(
-      solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(), 0,
-      raw_label_start_index, test_set.get_sequence_size()
-    ); /* Re-calculate error for the training set for this run */
-    solvers[solve_thread_index]->reset();
+    test_set.set_features_for_labels(solvers,0,test_set.get_number_of_sequences(),0,test_set.get_sequence_size());
   }
 }
 

@@ -136,15 +136,6 @@ private:
   void step_thread(uint32 solve_thread_index, uint32 samples_to_evaluate);
 
   /**
-   * @brief      A Thread to evaluate a network on all given samples
-   *
-   * @param[in]  solve_thread_index   The index of the solve thread the function is working in
-   * @param[in]  sample_start   The index of the sample to start evaluating from
-   * @param[in]  samples_to_evaluate  Number of samples to be evaluated
-   */
-  void evaluate_thread(uint32 solve_thread_index, uint32 sample_start, uint32 samples_to_evaluate);
-
-  /**
    * @brief      Calculates the derivatives part of the gradient for each weight
    *             Starts @calculate_derivatives_thread-s simultaniously, almost equally dividing 
    *             the number of output neurons to be calculated in one thread.

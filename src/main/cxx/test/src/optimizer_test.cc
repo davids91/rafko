@@ -95,8 +95,6 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
       {{TRANSFER_FUNCTION_SELU}}
     ).dense_layers({1})
   );
-  nets[0]->set_weight_table(1,0.9);
-  nets[0]->set_weight_table(2,0.9);
 
   nets.push_back(Sparse_net_builder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
@@ -104,12 +102,6 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
       {{TRANSFER_FUNCTION_SELU},{TRANSFER_FUNCTION_SELU}}
     ).dense_layers({2,1})
   );
-  nets[1]->set_weight_table(1,0.5);
-  nets[1]->set_weight_table(2,0.5);
-  nets[1]->set_weight_table(5,0.5);
-  nets[1]->set_weight_table(6,0.5);
-  nets[1]->set_weight_table(9,0.985);
-  nets[1]->set_weight_table(10,0.985);
 
   nets.push_back(Sparse_net_builder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
@@ -119,17 +111,6 @@ TEST_CASE("Testing basic optimization based on math","[optimize][feed-forward]")
        {TRANSFER_FUNCTION_SELU}}
     ).dense_layers({2,2,1})
   );
-
-  nets[2]->set_weight_table(1,0.985);
-  nets[2]->set_weight_table(2,0.985);
-  nets[2]->set_weight_table(5,0.985);
-  nets[2]->set_weight_table(6,0.985);
-  nets[2]->set_weight_table(9,0.5);
-  nets[2]->set_weight_table(10,0.5);
-  nets[2]->set_weight_table(13,0.5);
-  nets[2]->set_weight_table(14,0.5);
-  nets[2]->set_weight_table(17,0.5);
-  nets[2]->set_weight_table(18,0.5);
 
   /* Create data-set and test-set and optimize networks */
   Data_aggregate* train_set = create_addition_dataset(number_of_samples, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);

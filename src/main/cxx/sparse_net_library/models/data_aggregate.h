@@ -23,22 +23,30 @@
 #include <vector>
 #include <memory>
 #include <stdexcept>
+#include <thread>
+#include <mutex>
 
 #include "gen/common.pb.h"
-#include "sparse_net_library/services/function_factory.h"
+#include "gen/sparse_net.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
+
 #include "sparse_net_library/models/cost_function.h"
+#include "sparse_net_library/services/function_factory.h"
+#include "sparse_net_library/services/solution_solver.h"
 
 namespace sparse_net_library{
 
 using std::vector;
 using std::shared_ptr;
+using std::unique_ptr;
 using std::move;
+using std::thread;
+using std::mutex;
 
 /**
  * @brief      A Data set container complete with adaptive error statistics, which is 
- *             not thread safe!!
+ *             not thread safe for the most part.
  *             It is possible to have more input samples, than label samples; In those cases
  *             the extra inputs are to be used to initialize the network before training.
  *             The data set consists of labels and inputs. Not every label has an input assigned to it,
@@ -79,6 +87,7 @@ public:
        double_literal(1.0)
      })
   ,  cost_function(cost_function_)
+  ,  solve_threads()
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_);
@@ -96,7 +105,10 @@ public:
        double_literal(1.0)
      })
   ,  cost_function(cost_function_)
-  { if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!"); }
+  ,  solve_threads()
+  {
+    if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
+  }
 
   Data_aggregate(
     Service_context& service_context_,
@@ -111,7 +123,8 @@ public:
        double_literal(1.0)
      })
   ,  cost_function(Function_factory::build_cost_function(net, the_function, service_context_))
-  { }
+  ,  solve_threads()
+  { solve_threads.reserve(service_context_.get_max_solve_threads()); }
 
   /**
    * @brief      Sets the approximated value for an observed value,
@@ -138,7 +151,24 @@ public:
    * @param[in]  raw_start_index      The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
    * @param[in]  labels_to_evaluate   The labels to evaluate
    */
-  void set_features_for_labels(const vector<vector<sdouble32>>& neuron_data,  uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate);
+  void set_features_for_labels(
+    const vector<vector<sdouble32>>& neuron_data,
+    uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
+  );
+
+  /**
+   * @brief      Sets features for given labels calculated by the provided Neural Network.
+   *
+   * @param      network_solvers          One Network SOlver for each used thread in the evaluation
+   * @param[in]  label_start_index        The label start index
+   * @param[in]  labels_to_eval           The labels to eval
+   * @param[in]  start_index_in_sequence  The start index in sequence
+   * @param[in]  sequence_truncation      The sequence truncation
+   */
+  void set_features_for_labels(
+    vector<unique_ptr<Solution_solver>>& network_solvers, uint32 label_start_index, uint32 labels_to_eval,
+    uint32 start_index_in_sequence, uint32 sequence_truncation
+  );
 
   /**
    * @brief      Sets the error values to the default value
@@ -289,6 +319,8 @@ private:
   uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
   vector<error_state_type> error_state;
   shared_ptr<Cost_function> cost_function;
+  vector<thread> solve_threads; /* The threads to be started during evaluating the network */
+  mutex dataset_mutex;
 
   /**
    * @brief      Converting the @Data_set message to vectors
@@ -296,6 +328,12 @@ private:
    * @param      samples  The data set to parse
    */
   void fill(Data_set& samples);
+
+  void set_features_for_labels_thread(
+    vector<unique_ptr<Solution_solver>>& network_solvers, uint32 solve_thread_index,
+    uint32 sequence_start_index, uint32 sequences_to_evaluate,
+    uint32 start_index_in_sequence, uint32 sequence_truncation
+  );
 };
 
 } /* namespace sparse_net_library */
