@@ -79,6 +79,15 @@ public:
   }
 
   /**
+   * @brief      Gets the weight which was the best before the current one
+   *
+   * @return     The value of the previous best weight.
+   */
+  sdouble32 get_last_weight(void) const{
+    return weight_values[last_weight_index];
+  }
+
+  /**
    * @brief      Gets the weight experiences.
    *
    * @return     A constant reference of the vector of the experience values corresponding to each stored weight.
@@ -93,6 +102,7 @@ private:
   vector<sdouble32> experiences;
   uint32 best_weight_index;
   uint32 worst_weight_index;
+  uint32 last_weight_index;
   uint32 smallest_experience;
 
   /**

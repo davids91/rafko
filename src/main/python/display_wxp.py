@@ -38,6 +38,7 @@ def refresh_plots(iteration):
 	for i in range(num_of_plots):
 		axs[i].clear()
 		axs[i].fill_between(displayable_weights[i],displayable_xps[i],color="blue")
+		axs[i].xaxis.set_ticks(displayable_weights[i])
 		axs[i].xaxis.tick_top()
 	fig.canvas.draw() #maybe not needed
 

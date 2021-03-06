@@ -19,7 +19,7 @@
 
 #include <cmath>
 #include <stdexcept>
-#include <iostream>
+
 namespace sparse_net_library{
 
 using std::abs;
@@ -29,10 +29,11 @@ Weight_experience_space::Weight_experience_space(sdouble32 weight_min_, sdouble3
 :  weight_min(weight_min_)
 ,  weight_max(weight_max_)
 ,  weight_step(weight_step_)
-,  weight_values(1 + (weight_max - weight_min)/weight_step)
-,  experiences(1 + (weight_max - weight_min)/weight_step)
+,  weight_values(2 + (weight_max - weight_min)/weight_step)
+,  experiences(2 + (weight_max - weight_min)/weight_step)
 ,  best_weight_index(rand()%(weight_values.size()))
 ,  worst_weight_index(rand()%(weight_values.size()))
+,  last_weight_index(0)
 ,  smallest_experience(0)
 {
   if(weight_min > weight_max)
@@ -79,20 +80,6 @@ void Weight_experience_space::adapt_weight(uint32 weight_index){
       (weight_values[weight_index-1] * left_weight_xp)
       + (weight_values[weight_index+1] * right_weight_xp)
     ) / (left_weight_xp + right_weight_xp);
-
-    if(
-      (weight_values[weight_index] < weight_values[0])
-      ||(weight_values[weight_index] > weight_values[weight_values.size()-1])
-    ){
-      std::cout << "WHAT" << std::endl;
-      std::cout << weight_values[weight_index]
-      << " = ((" << weight_values[weight_index-1] << "*((" << experiences[weight_index-1] << "+" << experiences[weight_index] << ")/" << max_xp << "))"
-      << " + (" << weight_values[weight_index+1] << "*((" << experiences[weight_index+1] << "+" << experiences[weight_index] << ")/" << max_xp <<")))"
-      << "/(" << left_weight_xp << "+" << right_weight_xp << ")"
-      << std::endl;
-      std::cout << "===" << std::endl;
-    }
-
     /*!Note: Since the first and last weight values are never touched, the weight experience space remains intact.
      *       The weights inside the space might shimmy, to look for better performing weight values.
      */
@@ -100,6 +87,7 @@ void Weight_experience_space::adapt_weight(uint32 weight_index){
 }
 
 void Weight_experience_space::evaluate_weights(void){
+  last_weight_index = best_weight_index;
   best_weight_index = 0;
   worst_weight_index = 0;
   for(uint32 weight_index = 1; weight_index < experiences.size(); ++weight_index){
