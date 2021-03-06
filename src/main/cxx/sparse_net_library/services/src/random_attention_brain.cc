@@ -56,30 +56,67 @@ void Random_attention_brain::step(void){
 
   /* Choose a random sample to evaluate performance on */
   uint32 sample_index = rand()%(training_set.get_number_of_sequences());
-  uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training */
+  uint32 start_index_inside_sequence_start = (rand()%( /* If the memory is truncated for the training */
     training_set.get_sequence_size() - memory_truncation + 1 /* not all result output values are evaluated */
   )); /* only context.get_memory_truncation(), starting at a random index inside bounds */
-  uint32 index_inside_raw_labels = (sample_index * training_set.get_sequence_size()) + start_index_inside_sequence;
+  uint32 index_inside_raw_labels_start = (sample_index * training_set.get_sequence_size()) + start_index_inside_sequence_start;
 
+  /* Get the current error value */
+  sdouble32 error_value = 0;
+  sdouble32 current_error_value;
+  uint32 start_index_inside_sequence = start_index_inside_sequence_start;
+  uint32 index_inside_raw_labels = index_inside_raw_labels_start;
   training_set.set_features_for_labels(
     solvers, (sample_index * training_set.get_sequence_size()),
     training_set.get_sequence_size(), start_index_inside_sequence, memory_truncation
   );
-
-  /* Read out the collected error from the training set */
-  sdouble32 error_value = 0;
   for(uint32 labels_index = 0; labels_index < memory_truncation; ++labels_index){
     error_value += training_set.get_error(index_inside_raw_labels);
     ++index_inside_raw_labels;
   }
+  current_error_value = error_value;
 
-  /* Add error value as experience for the selected weight and update weights for the network */
-  /* if(double_literal(0.0) == error_value)
-    error_value = double_literal(-1.0); */ /*!Note: "Reward" for being correct - seems to make training unstable */
+  /* Get the error value of the left neighbour */
+  sdouble32 context_avg_error;
+  start_index_inside_sequence = start_index_inside_sequence_start;
+  index_inside_raw_labels = index_inside_raw_labels_start;
+  net.set_weight_table(weight_index, weightxp_space[weight_index].get_best_weight() - context.get_step_size());
+  weight_updater.update_solution_with_weights(*net_solution);
+
+  error_value = 0;
+  training_set.set_features_for_labels(
+    solvers, (sample_index * training_set.get_sequence_size()),
+    training_set.get_sequence_size(), start_index_inside_sequence, memory_truncation
+  );
+  for(uint32 labels_index = 0; labels_index < memory_truncation; ++labels_index){
+    error_value += training_set.get_error(index_inside_raw_labels);
+    ++index_inside_raw_labels;
+  }
+  context_avg_error = error_value;
+
+  /* Get the error value of the right neighbour */
+  start_index_inside_sequence = start_index_inside_sequence_start;
+  index_inside_raw_labels = index_inside_raw_labels_start;
+  net.set_weight_table(weight_index, weightxp_space[weight_index].get_best_weight() + context.get_step_size());
+  weight_updater.update_solution_with_weights(*net_solution);
+  error_value = 0;
+  training_set.set_features_for_labels(
+    solvers, (sample_index * training_set.get_sequence_size()),
+    training_set.get_sequence_size(), start_index_inside_sequence, memory_truncation
+  );
+  for(uint32 labels_index = 0; labels_index < memory_truncation; ++labels_index){
+    error_value += training_set.get_error(index_inside_raw_labels);
+    ++index_inside_raw_labels;
+  }
+  context_avg_error += error_value;
+  context_avg_error /= double_literal(2.0);
+
+  /* add the impulse, update the weight */
   net.set_weight_table(weight_index, weightxp_space[weight_index].add_experience(
-    -error_value * std::min(double_literal(1.0),std::log(iteration)))
+    -context_avg_error/std::abs(current_error_value) * std::min(double_literal(1.0),std::log(iteration)/double_literal(3.0)))
   );
   weight_updater.update_solution_with_weights(*net_solution);
+
 
   /* If error appears to be quite small, evaluate the whole training dataset */
   if(context.get_step_size() >= error_value)

@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
+from matplotlib.ticker import FormatStrFormatter
 
 import logger_pb2
 
@@ -39,6 +40,17 @@ def refresh_plots(iteration):
 		axs[i].clear()
 		axs[i].fill_between(displayable_weights[i],displayable_xps[i],color="blue")
 		axs[i].xaxis.set_ticks(displayable_weights[i])
+		axs[i].yaxis.set_major_formatter(FormatStrFormatter('%g'))
+		coord = []
+		max_xp_i = 0
+		for xp_i in range(len(displayable_xps[i])):
+			if(displayable_xps[i][max_xp_i] < displayable_xps[i][xp_i]):
+				max_xp_i = xp_i
+		axs[i].annotate(str("%g: %f"%(displayable_weights[i][max_xp_i],displayable_xps[i][max_xp_i])),xy=(displayable_weights[i][max_xp_i],displayable_xps[i][max_xp_i])) #best weight
+		if(0 <= max_xp_i-1):
+			axs[i].annotate(str(displayable_xps[i][max_xp_i-1]),xy=(displayable_weights[i][max_xp_i-1],displayable_xps[i][max_xp_i-1]-displayable_xps[i][max_xp_i]/20))
+		if(len(displayable_xps[i]) > max_xp_i+1):
+			axs[i].annotate(str(displayable_xps[i][max_xp_i+1]),xy=(displayable_weights[i][max_xp_i+1],displayable_xps[i][max_xp_i+1]+displayable_xps[i][max_xp_i]/20))
 		axs[i].xaxis.tick_top()
 	fig.canvas.draw() #maybe not needed
 

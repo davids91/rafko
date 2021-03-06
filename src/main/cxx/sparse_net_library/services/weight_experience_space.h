@@ -20,6 +20,7 @@
 
 #include "rafko_global.h"
 
+#include <cmath>
 #include <stdexcept>
 #include <vector>
 
@@ -85,6 +86,24 @@ public:
    */
   sdouble32 get_last_weight(void) const{
     return weight_values[last_weight_index];
+  }
+
+  /**
+   * @brief      Gets the value of the left neighbour of best weight.
+   *
+   * @return     The left neighbour of best weight, in case of the first and lest element, the weight itself is returned.
+   */
+  sdouble32 get_left_neighbour_of_best(void) const{
+    return weight_values[std::max(1u,best_weight_index)-1];
+  }
+
+  /**
+   * @brief      Gets the value of the right neighbour of best weight.
+   *
+   * @return     The right neighbour of best weight, in case of the first and lest element, the weight itself is returned.
+   */
+  sdouble32 get_right_neighbour_of_best(void) const{
+    return weight_values[std::min(static_cast<uint32>(weight_values.size())-2u,best_weight_index)+1];
   }
 
   /**
