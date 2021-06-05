@@ -20,12 +20,14 @@
 
 #include <vector>
 #include <memory>
+#include <numeric>
 
 #include "gen/solution.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
+#include "sparse_net_library/models/spike_function.h"
 #include "sparse_net_library/services/solution_solver.h"
 #include "sparse_net_library/services/partial_solution_solver.h"
 #include "sparse_net_library/services/synapse_iterator.h"
@@ -46,9 +48,19 @@ using sparse_net_library::Index_synapse_interval;
 using sparse_net_library::Input_synapse_interval;
 using sparse_net_library::Synapse_iterator;
 using sparse_net_library::Transfer_function;
+using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
+using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
+using sparse_net_library::TRANSFER_FUNCTION_TANH;
+using sparse_net_library::TRANSFER_FUNCTION_RELU;
+using sparse_net_library::TRANSFER_FUNCTION_SELU;
 using sparse_net_library::NETWORK_RECURRENCE_TO_SELF;
 using sparse_net_library::NETWORK_RECURRENCE_TO_LAYER;
+using sparse_net_library::Spike_function;
 using rafko_mainframe::Service_context;
+
+using std::unique_ptr;
+using std::make_unique;
+using std::vector;
 
 /*###############################################################################################
  * Testing if the solution solver produces a correct output, given a manually constructed
@@ -242,7 +254,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   Solution_solver solver2(*solution2, service_context);
   solver2.solve(net_input);
   result = {solver2.get_neuron_data().end() - solver2.get_output_size(),solver2.get_neuron_data().end()};
-  
+
   /* Verify once more if the calculated values match the expected ones */
   for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
     CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
@@ -259,7 +271,7 @@ TEST_CASE("Solution Solver test based on Fully Connected Dense Net", "[solve][bu
 }
 
 /*###############################################################################################
- * Testing if the solution solver produces correct data for Networks generated 
+ * Testing if the solution solver produces correct data for Networks generated
  * with connections of memories of the past
  *//* The utility function returns with the number of megabytes required for the complete Solution */
 sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdouble32 max_space_mb, uint32 recurrence){
@@ -315,7 +327,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
 
   /* Return with the size of the overall solution */
   sdouble32 space_used_mb = solution->SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
-  
+
   if(nullptr == service_context.get_arena_ptr()){
     delete solution;
     delete net;
@@ -332,6 +344,122 @@ TEST_CASE("Solution Solver test with memory", "[solve][memory]"){
   /* Test if the network is producing correct results when neurons take past-inputs from their layers ( 0x02 ID given to builder ) */
   megabytes_used = testing_nets_with_memory_manually(nullptr, (double_literal(4.0) * double_literal(1024.0)), 0x02);
   (void)testing_nets_with_memory_manually(nullptr, megabytes_used / double_literal(4.0),0x02); /* Even if the net needs to be splitted */
+}
+
+/*###############################################################################################
+ * Testing if the solution solver produces correct data for Networks generated
+ * with connections of memories of the past
+ */
+void test_generated_net_by_calculation(google::protobuf::Arena* arena){
+  Service_context service_context = Service_context().set_arena_ptr(arena);
+  vector<sdouble32> net_input = {
+    double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)
+  };
+  vector<uint32> network_layout_sizes = {10,30,20};
+
+  /* Generate a fully connected Neural network */
+  unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>(service_context));
+  builder->input_size(5)
+    .output_neuron_number(20)
+    .expected_input_range(double_literal(5.0));
+
+  SparseNet* net(builder->dense_layers(
+    network_layout_sizes,{
+      {TRANSFER_FUNCTION_IDENTITY},
+      {TRANSFER_FUNCTION_SELU,TRANSFER_FUNCTION_RELU},
+      {TRANSFER_FUNCTION_TANH,TRANSFER_FUNCTION_SIGMOID}
+    }
+  ));
+
+  /* Generate a solution */
+  Solution* solution;
+  REQUIRE_NOTHROW(
+     solution = Solution_builder(service_context).build(*net)
+  );
+
+  /* Solve the generated solution */
+  Solution_solver solver(*solution, service_context);
+
+  /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
+  solver.solve(net_input);
+
+  /* Calculate the network manually */
+  Transfer_function transfer_function(service_context);
+  const uint32 number_of_neurons = std::accumulate(network_layout_sizes.begin(),network_layout_sizes.end(),0);
+  vector<sdouble32> manual_neuron_values = vector<sdouble32>(number_of_neurons);
+  vector<bool> solved = vector<bool>(number_of_neurons, false);
+  uint32 solved_neurons = 0u;
+  uint32 solved_neurons_in_loop = -1;
+  uint32 solved_inputs_in_neuron;
+  uint32 overall_inputs_in_neuron;
+  sint32 input_index;
+  sdouble32 neuron_data;
+  uint32 neuron_input_iterator = 0;
+  while(
+    (number_of_neurons > solved_neurons) /* Until all of the Neurons are solved */
+    &&(0 < solved_neurons_in_loop) /* but in case no neurons could be solved in this loop, infinite loop is suspected */
+  ){
+    solved_neurons_in_loop = 0;
+    /* Go for each neuron */
+    for(uint32 neuron_iterator = 0; neuron_iterator < number_of_neurons; ++neuron_iterator){
+      /* if the Neuron is solvable --> all of its children are etiher inputs or solved already */
+      /* solve them, store its data and update the meta */
+      if(false == solved[neuron_iterator]){
+        Synapse_iterator<Input_synapse_interval> neuron_input_synapses(net->neuron_array(neuron_iterator).input_indices());
+        overall_inputs_in_neuron = neuron_input_synapses.size();
+        solved_inputs_in_neuron = 0;
+        neuron_input_iterator = 0;
+        neuron_data = 0;
+        Synapse_iterator<>::iterate(net->neuron_array(neuron_iterator).input_weights(),
+        [&](Index_synapse_interval weight_synapse, sint32 weight_index){
+          if(neuron_input_iterator < neuron_input_synapses.size()){
+            input_index = neuron_input_synapses[neuron_input_iterator];
+            if(
+              Synapse_iterator<>::is_index_input(input_index) /* Neuron input points to input data */
+              ||(true == solved[input_index]) /* or the current input points to a neuron which is already solved */
+            ){ /* the input counts as solved */
+              ++solved_inputs_in_neuron;
+            }
+            if(Synapse_iterator<>::is_index_input(input_index)){
+              input_index = Synapse_iterator<>::input_index_from_synapse_index(input_index);
+              neuron_data += net_input[input_index] * net->weight_table(weight_index);
+            }else{
+              neuron_data += manual_neuron_values[input_index] * net->weight_table(weight_index);
+            }
+            ++neuron_input_iterator;
+          }else{ /* After the inputs, every weight before the spike parameter is the bias */
+            neuron_data += net->weight_table(weight_index);
+          }
+        });
+        if(solved_inputs_in_neuron == overall_inputs_in_neuron){
+          neuron_data = transfer_function.get_value(
+            net->neuron_array(neuron_iterator).transfer_function_idx(),
+            neuron_data
+          );
+          manual_neuron_values[neuron_iterator] = Spike_function::get_value(
+            net->weight_table(net->neuron_array(neuron_iterator).memory_filter_idx()),
+            neuron_data,
+            manual_neuron_values[neuron_iterator]
+          );
+          solved[neuron_iterator] = true;
+          ++solved_neurons;
+          ++solved_neurons_in_loop;
+        }
+      } /*(false == solved[neuron_iterator])*//* if the condition is false, it means the neuron is already solved */
+    }
+
+  }/*while(the neurons are solved)*/
+  REQUIRE(number_of_neurons == solved_neurons);
+
+  /* Compare the calculated Neuron outputs to the values in the solution */
+  for(uint32 neuron_index = 0; neuron_index < number_of_neurons; ++neuron_index){
+    CHECK(manual_neuron_values[neuron_index] == solver.get_neuron_data()[neuron_index]);
+  }
+
+}
+
+TEST_CASE("Solution Solver test with Generated fully connected network", "[solve][full]"){
+  test_generated_net_by_calculation(nullptr);
 }
 
 }
