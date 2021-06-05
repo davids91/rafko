@@ -347,8 +347,8 @@ TEST_CASE("Solution Solver test with memory", "[solve][memory]"){
 }
 
 /*###############################################################################################
- * Testing if the solution solver produces correct data for Networks generated
- * with connections of memories of the past
+ * Calculate a generated Fully Connected dense network manually by the network description
+ * and compare the calculated results to the one provided by the solution.
  */
 void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   Service_context service_context = Service_context().set_arena_ptr(arena);

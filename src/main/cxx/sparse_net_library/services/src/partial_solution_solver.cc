@@ -52,19 +52,19 @@ void Partial_solution_solver::solve(){
   uint32 input_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   uint32 input_synapse_index = 0; /* Which synapse is being processed inside the Neuron */
   uint32 input_index_offset = 0;
+  sint32 input_index;
   for(uint16 neuron_iterator = 0; neuron_iterator < detail.internal_neuron_number(); ++neuron_iterator){
     new_neuron_data = 0;
     internal_weight_iterator.iterate([&](Index_synapse_interval weight_synapse, sint32 weight_index){
-      /* Collect input only as long as it's assigned to the current inner neuron */
-      if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){
-        /* Neuron gets its input from the partial solution input */
-        if(Synapse_iterator<>::is_index_input(detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts()))
-          new_neuron_input = collected_input_data[Synapse_iterator<>::input_index_from_synapse_index(
-            detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts() - input_index_offset
-          )];
-        else new_neuron_input = neuron_data.get_element(0)[ /* Neuron gets its input internaly */
-          detail.output_data().starts() + detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts() + input_index_offset
-        ];
+      if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
+        input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
+        if(Synapse_iterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
+          input_index = Synapse_iterator<>::input_index_from_synapse_index(input_index - input_index_offset);
+          new_neuron_input = collected_input_data[input_index];
+        }else{ /* Neuron gets its input internaly */
+          input_index = detail.output_data().starts() + input_index + input_index_offset;
+          new_neuron_input = neuron_data.get_element(0)[input_index];
+        }
         ++input_index_offset; /* Step the input index to the next input */
         if(input_index_offset >= detail.inside_indices(input_synapse_iterator_start + input_synapse_index).interval_size()){
           input_index_offset = 0; /* In case the next input would ascend above the current patition, go to next one */
