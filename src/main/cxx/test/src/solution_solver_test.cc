@@ -376,6 +376,15 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   REQUIRE_NOTHROW(
      solution = Solution_builder(service_context).build(*net)
   );
+  service_context.set_device_max_megabytes( /* Introduce segmentation into the solution to test roboustness */
+    (solution->SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */)/double_literal(4.0)
+  );
+  if(nullptr == arena){
+    delete solution;
+  }
+  REQUIRE_NOTHROW(
+     solution = Solution_builder(service_context).build(*net)
+  );
 
   /* Solve the generated solution */
   Solution_solver solver(*solution, service_context);
