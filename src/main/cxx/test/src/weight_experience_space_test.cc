@@ -41,13 +41,6 @@ TEST_CASE("Testing weight experience space weight values","[weightxp]"){
     CHECK( weight == wxp_space.get_weight(weight_index) );
     ++weight_index;
   }
-
-  sdouble32 tmp_weight = weight_min; /* Initially the weight space starts at the beginning of the weight space */
-  for(uint32 bad_xp_iterator = 1; bad_xp_iterator < number_of_weights_in_space; ++bad_xp_iterator){
-    CHECK(tmp_weight == wxp_space.get_best_weight());
-    CHECK((tmp_weight + weight_step) == wxp_space.add_experience(double_literal(-1.0))); /* See if giving negative experiences changes the weight iterator */
-    tmp_weight += weight_step; /* ..to the next best weight */
-  }
 }
 
 } /* namespace sparse_net_library_test */
