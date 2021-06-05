@@ -34,18 +34,18 @@ enum Network_recurrence{
   NETWORK_RECURRENCE_TO_LAYER = 2;
 }
 
-/** @brief      Takes input, assignes weights to them and processes
- *              the weigthed sums with a bias, transfer function and a memory filter.
+/** @brief      Takes input, assigns weights to them and processes
+ *              the weighted sums with a bias, transfer function and a memory filter.
  */
 message Neuron{
   /* index of the weight for the memory filter. 1.0: keep its previous value instead of the newly calculated one */
   uint32 memory_filter_idx = 2;  /* Value pointed at should always be 0.0 <= memory_filter < 1.0 default value is 0.0 <== as in zero memory of its previous value */
-  transfer_functions transfer_function_idx = 3; /* index of the transfer funtion this Neuron uses, empty is invalid */
+  transfer_functions transfer_function_idx = 3; /* index of the transfer function this Neuron uses, empty is invalid */
 
   /**
    * Input weights shall only contain positive intervals,
    * each interval corresponding to an index in the @weight_table in the @SparseNet
-   * Every weight above inputs in @input_indices count as a bias, and shall behave 
+   * Every weight above inputs in @input_indices count as a bias, and shall behave
    * like it has an input of 1.
    */
   repeated Index_synapse_interval input_weights = 10;
@@ -66,5 +66,5 @@ message SparseNet{
   uint32 output_neuron_number = 11; /* Number of outputs the Neural network has */
 
   repeated Neuron neuron_array = 20; /* Array of Neurons the network has */
-  repeated double weight_table = 21; /* Stores induvidual weights used by the Neurons */
+  repeated double weight_table = 21; /* Stores individual weights used by the Neurons */
 }

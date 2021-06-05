@@ -40,13 +40,13 @@ public:
   Partial_solution_solver(const Partial_solution& partial_solution, Data_ringbuffer& neuron_data_, Service_context& service_context)
   :  detail(partial_solution)
   ,  neuron_data(neuron_data_)
-  ,  internal_iterator(detail.weight_indices())
+  ,  internal_weight_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())
   ,  transfer_function_input(detail.internal_neuron_number(),0)
   ,  transfer_function_output(detail.internal_neuron_number(),0)
   ,  collected_input_data(input_iterator.size())
   ,  transfer_function(service_context)
-  { 
+  {
     if(transfer_function_input.size() != transfer_function_output.size())
       throw std::runtime_error("Neuron gradient data Incompatible!");
     reset();
@@ -113,7 +113,7 @@ private:
   /**
    * The iterator to go through the Neuron weights while solving the detail
    */
-  Synapse_iterator<> internal_iterator;
+  Synapse_iterator<> internal_weight_iterator;
 
   /**
    * The iterator to go through the I/O of the detail

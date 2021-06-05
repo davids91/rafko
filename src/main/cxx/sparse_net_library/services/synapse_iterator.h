@@ -236,7 +236,7 @@ public:
 
   /**
    * @brief      Gives back a copy of the synapse under the given index:
-   *             In a synapse with multiple intervals, the index refers to 
+   *             In a synapse with multiple intervals, the index refers to
    *             the number of indices, not the number of intervals.
    *
    * @param[in]  index  The index
