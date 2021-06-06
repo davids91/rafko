@@ -112,6 +112,7 @@ TEST_SOURCES += ../test/src/neuron_info_test.cc ../test/src/cost_function_mse_te
 TEST_SOURCES += ../test/src/backprop_queue_wrapper_test.cc
 TEST_SOURCES += ../test/src/data_aggregate_test.cc
 TEST_SOURCES += ../test/src/data_ringbuffer_test.cc
+TEST_SOURCES += ../test/src/data_pool_test.cc
 TEST_SOURCES += ../test/src/weight_updater_test.cc
 TEST_SOURCES += ../test/src/weight_experience_space_test.cc
 
