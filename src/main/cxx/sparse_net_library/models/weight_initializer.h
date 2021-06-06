@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef weight_initializer_H
-#define weight_initializer_H
+#ifndef WEIGHT_INITIALIZER_H
+#define WEIGHT_INITIALIZER_H
 
 
 #include "rafko_global.h"
@@ -33,8 +33,7 @@ using std::numeric_limits;
 
 using rafko_mainframe::Service_context;
 
-class Weight_initializer
-{
+class Weight_initializer{
 public:
   /**
    * @brief      Constructs the object.
@@ -124,4 +123,4 @@ protected:
 };
 
 } /* namespace sparse_net_library */
-#endif /* weight_initializer_H */
+#endif /* WEIGHT_INITIALIZER_H */

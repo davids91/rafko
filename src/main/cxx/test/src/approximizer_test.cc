@@ -63,7 +63,9 @@ using rafko_mainframe::Service_context;
  * */
 TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context().set_step_size(1e-1).set_arena_ptr(&arena);
+  Service_context service_context = Service_context()
+    .set_max_processing_threads(7)
+    .set_step_size(1e-1).set_arena_ptr(&arena);
 
   /* Create nets */
   vector<SparseNet*> nets = vector<SparseNet*>();
@@ -100,8 +102,8 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   REQUIRE( static_cast<sint32>(gradient_value_index) < nets[0]->weight_table_size() );
 
   approximizer.apply_fragment(); /* Add the negative gradient */
-  REQUIRE( 
-    (nets[0]->weight_table(weight_index) + (weight_gradient * service_context.get_step_size())) 
+  REQUIRE(
+    (nets[0]->weight_table(weight_index) + (weight_gradient * service_context.get_step_size()))
     == Approx(weight_old_value).epsilon(0.00000000000001)
   );
 
@@ -116,7 +118,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   }
   for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
     REQUIRE(
-      nets[0]->weight_table(weight_index) 
+      nets[0]->weight_table(weight_index)
       == Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
     );
   }
@@ -144,7 +146,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context()
     .set_step_size(2e-2).set_minibatch_size(64).set_memory_truncation(2)
-    .set_arena_ptr(&arena).set_max_solve_threads(8);
+    .set_arena_ptr(&arena).set_max_solve_threads(7);
   uint32 number_of_samples = 128;
 
   /* Create nets */

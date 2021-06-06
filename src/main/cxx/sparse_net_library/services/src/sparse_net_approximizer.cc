@@ -87,7 +87,7 @@ void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
     // std::cout << "[ "<< weight_gradients[weight_index]
     // << "/" << std::abs(weight_gradients[index_of_biggest])
-    // << "/" << sum_gradient 
+    // << "/" << sum_gradient
     // << "*" << context.get_step_size();
     weight_gradients[weight_index] = (
       ( /* Gradients normalized by the biggest value */
@@ -95,7 +95,7 @@ void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
         + gradient_overview /* plus the overview gradient */
       ) / (double_literal(1.0) + std::abs(gradient_overview)) /* normalized by the extended value */
     ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
-        * so dividing by 1.0 + gradient_overview should normalize the offseted gradients 
+        * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
         */
     // weight_gradients[weight_index] = ( /* Include the last applied direction */
     //   (weight_gradients[weight_index] + last_applied_direction[weight_index]) / double_literal(2.0)
@@ -325,7 +325,7 @@ sdouble32 Sparse_net_approximizer::get_gradient_for_all_weights(void){
   // << "= (-(" << error_positive_direction << "-" << error_negative_direction << ")/" << (current_epsilon_double * context.get_minibatch_size()) << ")"
   // << " * " << context.get_step_size()
   // << std::endl;
-    
+
   gradient = -(error_positive_direction - error_negative_direction) / (current_epsilon_double * context.get_minibatch_size());
 
   /* Revert weight modifications and the error state with it */
