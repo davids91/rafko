@@ -27,6 +27,7 @@
 #include <stdexcept>
 
 #include "gen/solution.pb.h"
+#include "sparse_net_library/models/agent.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
 
 #include "sparse_net_library/services/partial_solution_solver.h"
@@ -40,13 +41,14 @@ using std::thread;
  * @brief      This class Processes a @Solution given in its constructor and handles
  *             the distribution of the needed resources for it.
  */
-class Solution_solver{
+class Solution_solver : public Agent{
 public:
   Solution_solver(const Solution& to_solve, Service_context& context, uint32 memory_loops_needed_for_training = 1);
   Solution_solver(const Solution_solver& other) = delete;/* Copy constructor */
   Solution_solver(Solution_solver&& other) = delete; /* Move constructor */
   Solution_solver& operator=(const Solution_solver& other) = delete; /* Copy assignment */
   Solution_solver& operator=(Solution_solver&& other) = delete; /* Move assignment */
+  ~Solution_solver(void) = default;
 
   /**
    * @brief      Solves the Solution given in the constructor, considering the previous runs
@@ -61,7 +63,7 @@ public:
    *
    * @return     Number of output Neurons
    */
-  sdouble32 get_output_size(void){
+  const uint32 get_output_size(void){
     return solution.output_neuron_number();
   }
 
@@ -70,7 +72,7 @@ public:
    *
    * @return     The array for the input values for the neurons.
    */
-  const vector<sdouble32>& get_transfer_function_input(void) const{
+  const vector<sdouble32>& get_raw_activation_values(void) const{
      return transfer_function_input;
   }
 
@@ -81,7 +83,7 @@ public:
    *
    * @return     The array for the input values for the neurons.
    */
-  sdouble32 get_transfer_function_input(uint32 neuron_index) const{
+  sdouble32 get_raw_activation_values(uint32 neuron_index) const{
     if(solution.neuron_number() > neuron_index)return transfer_function_input[neuron_index];
       else throw std::runtime_error("Neuron index out of bounds!");
   }
@@ -114,8 +116,8 @@ public:
    *
    * @return     The neuron data.
    */
-  const vector<sdouble32>& get_neuron_data(uint32 past_index = 0){
-    return neuron_data.get_element(past_index);
+  const vector<sdouble32>& get_neuron_data(uint32 past_index = 0) const{
+    return neuron_data.get_const_element(past_index);
   }
 
   /**
@@ -135,7 +137,7 @@ public:
    *
    * @return     The reference to the neural memory buffer object
    */
-  const Data_ringbuffer& get_neuron_memory(void){
+  const Data_ringbuffer& get_neuron_memory(void) const{
     return neuron_data;
   }
 

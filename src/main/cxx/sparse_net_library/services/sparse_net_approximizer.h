@@ -25,6 +25,7 @@
 
 #include "gen/common.pb.h"
 
+#include "sparse_net_library/models/agent.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/services/weight_updater.h"
@@ -86,7 +87,7 @@ public:
   }
 
   /**
-   * @brief      Moves the network in a random direction, approximates the gradients based on that 
+   * @brief      Moves the network in a random direction, approximates the gradients based on that
    *             and then reverts the the weight change
    */
   void collect_approximates_from_random_direction(void);
@@ -98,7 +99,7 @@ public:
   void collect_approximates_from_weight_gradients(void);
 
   /**
-   * @brief      Move the network in the given direction, collect approximate gradient for it 
+   * @brief      Move the network in the given direction, collect approximate gradient for it
    *             and then reverts the weight change
    *
    * @param      direction         The direction
@@ -183,7 +184,7 @@ private:
   SparseNet& net;
   Service_context& context;
   Solution* net_solution;
-  vector<unique_ptr<Solution_solver>> solvers;
+  vector<unique_ptr<Agent>> solvers;
   Data_aggregate& train_set;
   Data_aggregate& test_set;
   Gradient_fragment gradient_fragment;

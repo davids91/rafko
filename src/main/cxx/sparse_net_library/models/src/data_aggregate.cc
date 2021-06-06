@@ -53,7 +53,7 @@ void Data_aggregate::set_features_for_labels(
 }
 
 void Data_aggregate::set_features_for_labels(
-  vector<unique_ptr<Solution_solver>>& network_solvers, uint32 label_start_index, uint32 labels_to_eval,
+  vector<unique_ptr<Agent>>& network_solvers, uint32 label_start_index, uint32 labels_to_eval,
   uint32 start_index_in_sequence, uint32 sequence_truncation
 ){
   uint32 sequence_index = label_start_index;
@@ -78,7 +78,7 @@ void Data_aggregate::set_features_for_labels(
 }
 
 void Data_aggregate::set_features_for_labels_thread(
-    vector<unique_ptr<Solution_solver>>& network_solvers, uint32 solve_thread_index,
+    vector<unique_ptr<Agent>>& network_solvers, uint32 solve_thread_index,
     uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
 ){

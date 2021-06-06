@@ -31,9 +31,9 @@
 
 #include "rafko_mainframe/models/service_context.h"
 
+#include "sparse_net_library/models/agent.h"
 #include "sparse_net_library/models/cost_function.h"
 #include "sparse_net_library/services/function_factory.h"
-#include "sparse_net_library/services/solution_solver.h"
 
 namespace sparse_net_library{
 
@@ -159,14 +159,14 @@ public:
   /**
    * @brief      Sets features for given labels calculated by the provided Neural Network.
    *
-   * @param      network_solvers          One Network SOlver for each used thread in the evaluation
+   * @param      network_solvers          One Agent to get reaction data for each used thread in the evaluation
    * @param[in]  label_start_index        The label start index
    * @param[in]  labels_to_eval           The labels to eval
    * @param[in]  start_index_in_sequence  The start index in sequence
    * @param[in]  sequence_truncation      The sequence truncation
    */
   void set_features_for_labels(
-    vector<unique_ptr<Solution_solver>>& network_solvers, uint32 label_start_index, uint32 labels_to_eval,
+    vector<unique_ptr<Agent>>& network_solvers, uint32 label_start_index, uint32 labels_to_eval,
     uint32 start_index_in_sequence, uint32 sequence_truncation
   );
 
@@ -252,7 +252,7 @@ public:
   }
 
   /**
-   * @brief      Gets the number of Neuron present in the output
+   * @brief      Gets the number of values present in the output
    *
    * @return     The feature size.
    */
@@ -330,7 +330,7 @@ private:
   void fill(Data_set& samples);
 
   void set_features_for_labels_thread(
-    vector<unique_ptr<Solution_solver>>& network_solvers, uint32 solve_thread_index,
+    vector<unique_ptr<Agent>>& network_solvers, uint32 solve_thread_index,
     uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
   );

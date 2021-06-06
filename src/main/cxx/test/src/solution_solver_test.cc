@@ -297,7 +297,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   solver.solve(net_input);
-  REQUIRE( net->neuron_array_size() == static_cast<sint32>(solver.get_transfer_function_input().size()) );
+  REQUIRE( net->neuron_array_size() == static_cast<sint32>(solver.get_raw_activation_values().size()) );
   REQUIRE( net->neuron_array_size() == static_cast<sint32>(solver.get_transfer_function_output().size()) );
   vector<sdouble32> result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
   vector<sdouble32> previous_neuron_data = vector<sdouble32>(net->neuron_array_size());

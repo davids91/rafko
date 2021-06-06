@@ -122,7 +122,7 @@ void Sparse_net_optimizer::step(void){
     (loops_unchecked >= context.get_insignificant_changes())
     ||(loops_unchecked >= (test_set.get_error_sum()/context.get_step_size())) /* .. or sooner if the error value justifies it */
   ){
-    test_set.set_features_for_labels(solvers,0,test_set.get_number_of_sequences(),0,test_set.get_sequence_size());
+    test_set.set_features_for_labels(solvers,0u,test_set.get_number_of_sequences(),0u,test_set.get_sequence_size());
   }
 }
 
@@ -145,12 +145,12 @@ void Sparse_net_optimizer::step_thread(uint32 solve_thread_index, uint32 samples
     }
     for(uint32 sequence_iterator = 0; sequence_iterator < train_set.get_sequence_size(); ++sequence_iterator){
       solvers[solve_thread_index]->solve(train_set.get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
-      transfer_function_input[solve_thread_index][sequence_iterator] = solvers[solve_thread_index]->get_transfer_function_input();
+      transfer_function_input[solve_thread_index][sequence_iterator] = solvers[solve_thread_index]->get_raw_activation_values();
 
       /* Only calculate the derivatives for the first un-truncated sequences */
       if(sequence_iterator < sequence_truncation){ /* Since the network will be the same, the derivatives can be re-used for the later sequences */
         for(unique_ptr<atomic<sdouble32>>& derivative_value : weight_derivatives[solve_thread_index][sequence_iterator]) *derivative_value = 0;
-        calculate_derivatives(solve_thread_index, sequence_iterator, raw_inputs_index, raw_sample_index); 
+        calculate_derivatives(solve_thread_index, sequence_iterator, raw_inputs_index, raw_sample_index);
       }
       ++raw_sample_index;
       ++raw_inputs_index;
@@ -358,7 +358,7 @@ void Sparse_net_optimizer::accumulate_weight_gradients(uint32 solve_thread_index
   const uint32 neurons_to_process = 1 + (net.neuron_array_size()/context.get_max_processing_threads());
   uint32 neuron_index = 0;
   for( /* As long as there are threads to open or remaining neurons */
-    uint32 thread_index = 0; 
+    uint32 thread_index = 0;
     ( (thread_index < context.get_max_processing_threads())
       &&(static_cast<uint32>(net.neuron_array_size()) > neuron_index) );
     ++thread_index

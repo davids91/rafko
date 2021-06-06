@@ -108,7 +108,7 @@ private:
   Transfer_function transfer_function;
 
   Solution* net_solution;
-  vector<unique_ptr<Solution_solver>> solvers;
+  vector<unique_ptr<Agent>> solvers;
   Data_aggregate& train_set;
   Data_aggregate& test_set;
   mutex set_mutex;
@@ -137,7 +137,7 @@ private:
 
   /**
    * @brief      Calculates the derivatives part of the gradient for each weight
-   *             Starts @calculate_derivatives_thread-s simultaniously, almost equally dividing 
+   *             Starts @calculate_derivatives_thread-s simultaniously, almost equally dividing
    *             the number of output neurons to be calculated in one thread.
    *             The number of threads to be started depends on @Service_context::get_max_solve_threads
    *
@@ -150,7 +150,7 @@ private:
 
   /**
    * @brief      Calculates the output layer deviation from the given sample under @raw_sample_index.
-   *             Starts @calculate_output_errors_thread-s simultaniously, almost equally dividing 
+   *             Starts @calculate_output_errors_thread-s simultaniously, almost equally dividing
    *             the number of output neurons to be calculated in one thread.
    *             The number of threads to be started depends on @Service_context::get_max_solve_threads
    *
@@ -171,9 +171,9 @@ private:
   void propagate_output_errors_back(uint32 solve_thread_index, uint32 sequence_index);
 
   /**
-   * @brief      Calculates and accumulates weight gradients for the Neuron weights 
+   * @brief      Calculates and accumulates weight gradients for the Neuron weights
    *             based on Neuron error values.
-   *             Starts @calculate_output_errors_thread-s simultaniously, almost equally dividing 
+   *             Starts @calculate_output_errors_thread-s simultaniously, almost equally dividing
    *             the number of weights to be calculated in one thread.
    *             The number of threads to be started depends on @Service_context::get_max_solve_threads
    *
@@ -183,7 +183,7 @@ private:
   void accumulate_weight_gradients(uint32 solve_thread_index, uint32 sequence_index);
 
   /**
-   * @brief      Divides all weight gradients with the minibatch size, so the weights are being updated 
+   * @brief      Divides all weight gradients with the minibatch size, so the weights are being updated
    *             with an average value instead of an absolute one.
    *             Starts Service_Context::get_max_processing_threads, almost equally dividing the
    *             number of weights to process.
@@ -205,7 +205,7 @@ private:
   /**
    * @brief      The thread call for calculating the output errors. MUltiple Output Neurons are calculated in one thread
    *             one after another.
-   *             Starts @calculate_output_errors_thread-s simultaniously, almost equally dividing 
+   *             Starts @calculate_output_errors_thread-s simultaniously, almost equally dividing
    *             the number of weights to be calculated in one thread.
    *             The number of threads to be started depends on @Service_context::get_max_solve_threads
    *
@@ -230,7 +230,7 @@ private:
   void backpropagation_thread(uint32 solve_thread_index, uint32 sequence_index, uint32 neuron_index);
 
   /**
-   * @brief      The thread used by @accumulate_weight_gradients, it iterates through 
+   * @brief      The thread used by @accumulate_weight_gradients, it iterates through
    *             the weights based on the given input arguments.
    *
    * @param[in]  solve_thread_index  The solve thread index
@@ -242,7 +242,7 @@ private:
   );
 
   /**
-   * @brief      The thread used by @normalize_weight_gradients, it iterates through 
+   * @brief      The thread used by @normalize_weight_gradients, it iterates through
    *             the weights based on the given input arguments.
    *
    * @param[in]  weight_index   The weight index

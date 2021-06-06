@@ -26,6 +26,7 @@
 #include "gen/solution.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/models/agent.h"
 #include "sparse_net_library/models/data_aggregate.h"
 
 #include "sparse_net_library/services/Solution_solver.h"
@@ -61,7 +62,7 @@ private:
   SparseNet& net;
   Service_context& context;
   Solution* net_solution;
-  vector<unique_ptr<Solution_solver>> solvers;
+  vector<unique_ptr<Agent>> solvers;
   Weight_updater weight_updater;
   Data_aggregate& training_set;
   uint32 memory_truncation;

@@ -31,14 +31,14 @@ using std::vector;
 
 /**
  * @brief      This class describes a ringbuffer designed to store the Memory of a Neural Network.
- *             At the life-cycle of a Neural network one solution counts as a "loop", where the data 
+ *             At the life-cycle of a Neural network one solution counts as a "loop", where the data
  *             of the neurons shall be calculated and copied into an array. The array stores the activation values
- *             of the Neurons from this loop, and the previous loops as well. 
- *             This class provides that array. 
+ *             of the Neurons from this loop, and the previous loops as well.
+ *             This class provides that array.
  *             At every loop, it provides Read/Write Access to the latest element in the buffer and
- *             read access to the previous data of the previous. At the start of each loop, it copies 
- *             the data from the previous loops into the current one. The data under the current loop 
- *             needs to keep its contents, while the data from previous loops also need to be stored. 
+ *             read access to the previous data of the previous. At the start of each loop, it copies
+ *             the data from the previous loops into the current one. The data under the current loop
+ *             needs to keep its contents, while the data from previous loops also need to be stored.
  */
 class Data_ringbuffer{
 public:
@@ -67,10 +67,10 @@ public:
     for(vector<sdouble32>& vector : data)
       for(sdouble32& element : vector) element = double_literal(0.0);
   }
-  
+
   /**
-   * @brief      Removes the first element from the Queue by 
-   *             filling the latest item with zeroes, and setting the 
+   * @brief      Removes the first element from the Queue by
+   *             filling the latest item with zeroes, and setting the
    *             current index one step back into the past.
    */
   void pop_front(void){
@@ -102,7 +102,7 @@ public:
   /**
    * @brief      Gets the data element in the..
    *
-   * @param[in]  data_index  ..past @past_index th loop .. 
+   * @param[in]  data_index  ..past @past_index th loop ..
    * @param[in]  past_index  .. under index @data_index
    *
    * @return     The element.
@@ -110,6 +110,21 @@ public:
   sdouble32 get_element(uint32 data_index, uint32 past_index) const{
     if(data[0].size() > data_index)return get_const_element(past_index)[data_index];
      else throw std::runtime_error("Ringbuffer data index out of bounds!");
+  }
+
+  /**
+   * @brief      Sets the data element under the given indices to the provided value
+   *
+   * @param[in]  data_index  The index of the data inside the buffer
+   * @param[in]  past_index  The buffer to set the data
+   * @param[in]  value       The value to overwrite the data with
+   */
+  void set_element(uint32 data_index, uint32 past_index, sdouble32 value){
+    if(
+      (data.size() > past_index)
+      &&(data[0].size() > data_index)
+    )get_element(past_index)[data_index] = value;
+      else throw std::runtime_error("Ringbuffer data index out of bounds!");
   }
 
   /**
@@ -139,7 +154,7 @@ public:
   }
 
   /**
-   * @brief      Utility function to get an element from the given sequence. 
+   * @brief      Utility function to get an element from the given sequence.
    *             Please also refer to the description of @get_sequence_index
    *
    * @param[in]  sequence_index             The sequence index
@@ -191,11 +206,11 @@ public:
    *             At that point, the "latest" neuron data array should be under
    *             neuron_data_sequences.get_element(0).
    *             If a Network is recurrent (has inputs "from the past"), what it would have
-   *             as input at the last sequence is at index 0. If it would have input from 
+   *             as input at the last sequence is at index 0. If it would have input from
    *             "the past", the inputs from the past would be under
-   *             neuron_data_sequences.get_element(past_index). 
-   *             In case the following data needs to be accessed: what would the network see as input 
-   *             data in the @sequence_index 'th step, if that network would take input from the 
+   *             neuron_data_sequences.get_element(past_index).
+   *             In case the following data needs to be accessed: what would the network see as input
+   *             data in the @sequence_index 'th step, if that network would take input from the
    *             past ( @past_index loops before that step ) => the below function shall be used.
    *
    * @param[in]  sequence_index  The sequence index
@@ -221,7 +236,7 @@ public:
   }
 
   /**
-   * @brief      Returns the size of the available vectors
+   * @brief      Returns the size of the available memory buffers
    *
    * @return     Number of elements
    */
@@ -230,7 +245,7 @@ public:
   }
 
   /**
-   * @brief      Returns the number of available vectors
+   * @brief      Returns the number of available memory buffer
    *
    * @return     number of buffers available
    */
