@@ -62,13 +62,20 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 
+  /* Test initial error value, then a fully errorless state */
+  CHECK( Approx(data_agr.get_error_sum()).epsilon(0.00000000000001) == double_literal(1.0) );
+  for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
+    data_agr.set_feature_for_label(i,{expected_label});
+  }
+  sdouble32 initial_error = data_agr.get_error_sum();
+  CHECK( Approx(initial_error).margin(0.00000000000001) == double_literal(0.0) );
+
   /* Test statistics for it */
-  CHECK(double_literal(1.0) == data_agr.get_error_sum() ); /* Initial error should be exactly 1.0 */
   sdouble32 error_sum = double_literal(0.0);
   for(uint32 i = 0; i < data_agr.get_number_of_label_samples(); ++i){
     error_sum += data_agr.get_error(i);
   }
-  CHECK( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
+  CHECK( Approx(error_sum).margin(0.00000000000001) == data_agr.get_error_sum() );
 
   /* Set all features to the given distance */
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
@@ -154,6 +161,57 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
       Approx(pow(set_distance,2)/double_literal(2.0)).epsilon(0.00000000000001) == data_agr.get_error_sum()
     );
   }
+}
+
+/*###############################################################################################
+ * Testing if state changes inside the data aggregate persist, and push/pop operations
+ * are working as expected
+ * */
+TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
+  Service_context service_context;
+  const uint32 sample_number = 50;
+  const uint32 sequence_size = 5;
+  const uint32 selected_index = rand()%(sample_number * sequence_size);
+  const sdouble32 expected_label = double_literal(50.0);
+  const sdouble32 set_distance = double_literal(10.0);
+  sdouble32 initial_error;
+
+  /* Create a @Data_set and fill it with data */
+  Data_set data_set = Data_set();
+  data_set.set_input_size(1);
+  data_set.set_feature_size(1);
+  data_set.set_sequence_size(sequence_size);
+
+  for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
+    data_set.add_inputs(expected_label); /* Input should be irrelevant here */
+    data_set.add_labels(expected_label);
+  }
+
+  Data_aggregate data_agr(data_set, std::make_unique<Cost_function_mse>(1, service_context));
+  REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
+  REQUIRE( sample_number == data_agr.get_number_of_sequences() );
+
+  for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
+    data_agr.set_feature_for_label(i,{expected_label});
+  }
+
+  /* Saving state, modifying a feature */
+  initial_error = data_agr.get_error_sum();
+  CHECK( Approx(double_literal(0.0)).epsilon(0.00000000000001) == data_agr.get_error(selected_index) );
+  data_agr.push_state();
+  data_agr.set_feature_for_label(selected_index,{(expected_label - set_distance)});
+  CHECK( Approx(double_literal(0.0)).epsilon(0.00000000000001) != data_agr.get_error(selected_index) );
+  CHECK(
+    Approx( /* Error: (distance^2)/(2 * overall number of samples) */
+      pow(set_distance,2)/(double_literal(2.0) * sample_number * sequence_size)
+    ).epsilon(0.00000000000001) == data_agr.get_error(selected_index)
+  );
+  CHECK( Approx(initial_error).epsilon(0.00000000000001) != data_agr.get_error_sum() );
+
+  /* Restoring state, the error should be the same */
+  data_agr.pop_state();
+  CHECK( Approx(initial_error).epsilon(0.00000000000001) == data_agr.get_error_sum() );
+  CHECK( Approx(double_literal(0.0)).epsilon(0.00000000000001) == data_agr.get_error(selected_index) );
 }
 
 } /* namespace sparse_net_library_test */

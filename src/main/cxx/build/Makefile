@@ -151,7 +151,7 @@ test-solution-builder: clean gen $(LIB_OUTPUT)
 test-opt: clean gen $(LIB_OUTPUT) #as in optimization or approximization
 	@rm -f $(TEST_RESULT)
 	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
-	./$(TEST_RESULT)  --use-colour yes -a [brain][small]
+	./$(TEST_RESULT)  --use-colour yes -a [approximize]
 
 $(TEST_OBJECTS):
 	g++ -c $(TEST_SOURCES) $(SOURCES_INCLUDE_DIR)
