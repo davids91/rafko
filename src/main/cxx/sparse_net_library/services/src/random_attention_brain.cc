@@ -45,7 +45,7 @@ Random_attention_brain::Random_attention_brain(SparseNet& neural_network, Data_a
   }
   weight_updater.update_solution_with_weights(*net_solution);
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
-    solvers.push_back(std::make_unique<Solution_solver>(*net_solution, service_context, training_set.get_sequence_size()));
+    solvers.push_back(std::make_unique<Solution_solver>(*net_solution, service_context));
   }
   training_set.set_features_for_labels(solvers,0,training_set.get_number_of_sequences(),0,training_set.get_sequence_size());
 }

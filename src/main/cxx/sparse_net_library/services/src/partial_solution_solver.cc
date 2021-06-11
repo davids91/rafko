@@ -18,6 +18,7 @@
 #include "sparse_net_library/services/partial_solution_solver.h"
 
 #include <algorithm>
+#include <stdexcept>
 #include <cmath>
 
 #include "sparse_net_library/models/transfer_function.h"
@@ -25,27 +26,9 @@
 
 namespace sparse_net_library {
 
-void Partial_solution_solver::collect_input_data(const vector<sdouble32>& input_data){
-  uint32 index = 0;
-  input_iterator.skim([&](Input_synapse_interval input_synapse){
-    if(Synapse_iterator<>::is_index_input(input_synapse.starts())){ /* If @Partial_solution input is from the network input */
-      std::copy(
-        input_data.begin() + Synapse_iterator<>::input_index_from_synapse_index(input_synapse.starts()),
-        input_data.begin() + Synapse_iterator<>::input_index_from_synapse_index(input_synapse.starts()) + input_synapse.interval_size(),
-        collected_input_data.begin() + index
-      );
-    }else if(static_cast<sint32>(neuron_data.buffer_size()) > input_synapse.starts()){  /* If @Partial_solution input is from the previous row */
-      std::copy(
-        neuron_data.get_element(input_synapse.reach_past_loops()).begin() + input_synapse.starts(),
-        neuron_data.get_element(input_synapse.reach_past_loops()).begin() + input_synapse.starts() + input_synapse.interval_size(),
-        collected_input_data.begin() + index
-      );
-    }
-    index += input_synapse.interval_size();
-  });
-}
+DataPool<sdouble32> Partial_solution_solver::common_data_pool;
 
-void Partial_solution_solver::solve(){
+void Partial_solution_solver::solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
   sdouble32 new_neuron_data = 0;
   sdouble32 new_neuron_input;
   uint32 weight_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
@@ -53,6 +36,27 @@ void Partial_solution_solver::solve(){
   uint32 input_synapse_index = 0; /* Which synapse is being processed inside the Neuron */
   uint32 input_index_offset = 0;
   sint32 input_index;
+
+  /* Collect the input data to solve the partial solution */
+  input_iterator.skim([&](Input_synapse_interval input_synapse){
+    if(Synapse_iterator<>::is_index_input(input_synapse.starts())){ /* If @Partial_solution input is from the network input */
+      std::copy(
+        input_data.begin() + Synapse_iterator<>::input_index_from_synapse_index(input_synapse.starts()),
+        input_data.begin() + Synapse_iterator<>::input_index_from_synapse_index(input_synapse.starts()) + input_synapse.interval_size(),
+        temp_data.begin() + input_index_offset
+      );
+    }else if(static_cast<sint32>(output_neuron_data.buffer_size()) > input_synapse.starts()){  /* If @Partial_solution input is from the previous row */
+      std::copy(
+        output_neuron_data.get_element(input_synapse.reach_past_loops()).begin() + input_synapse.starts(),
+        output_neuron_data.get_element(input_synapse.reach_past_loops()).begin() + input_synapse.starts() + input_synapse.interval_size(),
+        temp_data.begin() + input_index_offset
+      );
+    }
+    input_index_offset += input_synapse.interval_size();
+  });
+
+  /* Solve the Partial Solution based on the collected input data and stored operations */
+  input_index_offset = 0;
   for(uint16 neuron_iterator = 0; neuron_iterator < detail.internal_neuron_number(); ++neuron_iterator){
     new_neuron_data = 0;
     internal_weight_iterator.iterate([&](Index_synapse_interval weight_synapse, sint32 weight_index){
@@ -60,10 +64,10 @@ void Partial_solution_solver::solve(){
         input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
         if(Synapse_iterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
           input_index = Synapse_iterator<>::input_index_from_synapse_index(input_index - input_index_offset);
-          new_neuron_input = collected_input_data[input_index];
+          new_neuron_input = temp_data[input_index];
         }else{ /* Neuron gets its input internaly */
           input_index = detail.output_data().starts() + input_index + input_index_offset;
-          new_neuron_input = neuron_data.get_element(0)[input_index];
+          new_neuron_input = output_neuron_data.get_element(0)[input_index];
         }
         ++input_index_offset; /* Step the input index to the next input */
         if(input_index_offset >= detail.inside_indices(input_synapse_iterator_start + input_synapse_index).interval_size()){
@@ -84,33 +88,19 @@ void Partial_solution_solver::solve(){
     input_index_offset = 0;
     input_synapse_index = 0;
 
-    /* Save transfer function input value and apply transfer function */
-    transfer_function_input[neuron_iterator] = new_neuron_data;
-    new_neuron_data = transfer_function.get_value(
+    new_neuron_data = transfer_function.get_value( /* apply transfer function */
       detail.neuron_transfer_functions(neuron_iterator), new_neuron_data
     );
 
-    /* Save transfer funtion output value and apply spike function */
-    transfer_function_output[neuron_iterator] = new_neuron_data;
-    neuron_data.get_element(0)[detail.output_data().starts() + neuron_iterator] = Spike_function::get_value(
+    new_neuron_data = Spike_function::get_value( /* apply spike function */
       detail.weight_table(detail.memory_filter_index(neuron_iterator)),
-      new_neuron_data,
-      neuron_data.get_const_element(0)[detail.output_data().starts() + neuron_iterator]
+      new_neuron_data, output_neuron_data.get_element(0, (detail.output_data().starts() + neuron_iterator))
+    );
+
+    output_neuron_data.set_element( /* Store the resulting Neuron value */
+      0, detail.output_data().starts() + neuron_iterator, new_neuron_data
     );
   } /* Go through the neurons */
-}
-
-void Partial_solution_solver::provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_) const{
-  std::copy(
-    transfer_function_input.begin(),
-    transfer_function_input.begin() + detail.output_data().interval_size(),
-    transfer_function_input_.begin() + detail.output_data().starts()
-  );
-  std::copy(
-    transfer_function_output.begin(),
-    transfer_function_output.begin() + detail.output_data().interval_size(),
-    transfer_function_output_.begin() + detail.output_data().starts()
-  );
 }
 
 bool Partial_solution_solver::is_valid(void) const{

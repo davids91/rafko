@@ -53,9 +53,9 @@ Sparse_net_approximizer::Sparse_net_approximizer(
     train_set.get_sequence_size(), context.get_memory_truncation()
   )));
   for(uint32 threads = 0; threads < context.get_max_solve_threads(); ++threads){
-    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context, train_set.get_sequence_size()));
+    solvers.push_back(make_unique<Solution_solver>(*net_solution, service_context));
   }
-  if(train_set.get_feature_size() != solvers.back()->get_output_size())
+  if(train_set.get_feature_size() != solvers.back()->get_solution().neuron_number())
     throw std::runtime_error("Network output size doesn't match size of provided labels!");
   weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
   evaluate();

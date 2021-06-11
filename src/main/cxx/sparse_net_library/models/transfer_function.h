@@ -71,7 +71,7 @@ public:
    *
    * @return     The result of data.
    */
-  sdouble32 get_value(transfer_functions function, sdouble32 data);
+  sdouble32 get_value(transfer_functions function, sdouble32 data) const;
 
   /**
    * @brief      Gets a functions derivative calculated form the given data
@@ -81,7 +81,7 @@ public:
    *
    * @return     The derivative from data.
    */
-  sdouble32 get_derivative(transfer_functions function, sdouble32 data);
+  sdouble32 get_derivative(transfer_functions function, sdouble32 data) const;
 private:
   Service_context& context;
 };

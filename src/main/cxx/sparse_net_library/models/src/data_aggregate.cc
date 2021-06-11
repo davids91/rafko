@@ -16,6 +16,8 @@
  */
 #include "sparse_net_library/models/data_aggregate.h"
 
+#include <cmath>
+
 namespace sparse_net_library {
 
 void Data_aggregate::fill(Data_set& samples){
@@ -91,21 +93,24 @@ void Data_aggregate::set_features_for_labels_thread(
     raw_label_index = raw_label_index * get_sequence_size();
 
     /* Prefill network with the initial inputs */
-    network_solvers[solve_thread_index]->reset();
+    DataRingbuffer data_ringbuffer( /* TODO: decide required memory length */
+      std::max(get_sequence_size(), network_solvers[solve_thread_index]->get_solution().network_memory_length()),
+      network_solvers[solve_thread_index]->get_solution().neuron_number()
+    );
     for(uint32 prefill_iterator = 0; prefill_iterator < get_prefill_inputs_number(); ++prefill_iterator){
-      network_solvers[solve_thread_index]->solve(get_input_sample(raw_inputs_index));
+      network_solvers[solve_thread_index]->solve(get_input_sample(raw_inputs_index), data_ringbuffer);
       ++raw_inputs_index;
     }
 
     /* Evaluate the current sequence step by step */
     for(uint32 sequence_iterator = 0; sequence_iterator < get_sequence_size(); ++sequence_iterator){
-      network_solvers[solve_thread_index]->solve(get_input_sample(raw_inputs_index)); /* Solve the network for the sampled labels input */
+      network_solvers[solve_thread_index]->solve(get_input_sample(raw_inputs_index), data_ringbuffer); /* Solve the network for the sampled labels input */
       ++raw_label_index;
       ++raw_inputs_index;
     }
     std::lock_guard<mutex> my_lock(dataset_mutex);
     set_features_for_labels(
-      network_solvers[solve_thread_index]->get_neuron_memory().get_whole_buffer(), start_index_in_sequence,
+      data_ringbuffer.get_whole_buffer(), start_index_in_sequence,
       ((sequence_start_index + sample) * get_sequence_size()) + start_index_in_sequence,
       sequence_truncation /* To avoid vanishing gradients with sequential data, error calculation is truncated */
     ); /* Re-calculate error for the training set */

@@ -20,6 +20,7 @@
 
 #include "rafko_global.h"
 
+#include "gen/solution.pb.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
 
 namespace sparse_net_library{
@@ -30,11 +31,22 @@ namespace sparse_net_library{
  */
 class Agent{
 public:
-  virtual void solve(const vector<sdouble32>& input) = 0;
-  virtual void reset(void) = 0;
-  virtual const Data_ringbuffer& get_neuron_memory(void)const = 0;
-  virtual const vector<sdouble32>& get_raw_activation_values(void) const = 0;
-  virtual const uint32 get_output_size(void) = 0;
+
+  /**
+   * @brief      Solves the Solution given in the constructor, considering the previous runs
+   *
+   * @param[in]      input    The input data to be taken
+   * @param          output   The used Output data to write the results to
+   */
+  virtual void solve(const vector<sdouble32>& input, DataRingbuffer& output) const = 0;
+
+  /**
+   * @brief      Provide the underlying solution the solver is built to solve.
+   *
+   * @return     A const reference to the solution the solver is aiming to solve
+   */
+  virtual const Solution& get_solution(void) const = 0;
+
   virtual ~Agent(void) = default;
 };
 

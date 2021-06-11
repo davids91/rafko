@@ -28,7 +28,7 @@ namespace sparse_net_library_test {
 using std::vector;
 using std::copy;
 
-using sparse_net_library::Data_ringbuffer;
+using sparse_net_library::DataRingbuffer;
 using sparse_net_library::Input_synapse_interval;
 using rafko_mainframe::Service_context;
 
@@ -49,7 +49,7 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
   uint32 buffer_size = 30;
   vector<sdouble32> data_sample(buffer_size, double_literal(0.0));
   vector<sdouble32> previous_data_sample(buffer_size, double_literal(0.0));
-  Data_ringbuffer buffer(buffer_number, buffer_size);
+  DataRingbuffer buffer(buffer_number, buffer_size);
 
   REQUIRE( buffer.buffer_size() == buffer_size );
   REQUIRE( buffer.get_sequence_size() == buffer_number );
@@ -83,7 +83,7 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
   Service_context service_context;
   uint32 sequence_number = 5;
   uint32 buffer_size = 30;
-  Data_ringbuffer buffer(sequence_number, buffer_size);
+  DataRingbuffer buffer(sequence_number, buffer_size);
   Input_synapse_interval input_synapse;
   vector<sdouble32> data_sample(buffer_size);
 

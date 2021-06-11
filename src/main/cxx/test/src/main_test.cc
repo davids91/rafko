@@ -291,7 +291,7 @@ void print_weights(SparseNet& net, Solution& solution){
 }
 
 void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, SparseNet& net, Service_context& service_context){
-  Solution_solver sample_solver(*Solution_builder(service_context).build(net), service_context, data_set.get_sequence_size());
+  Solution_solver sample_solver(*Solution_builder(service_context).build(net), service_context);
   vector<sdouble32> neuron_data(data_set.get_sequence_size());
   std::cout.precision(2);
   std::cout << std::endl << "Training sample["<< sample_sequence_index <<"]:" << std::endl;

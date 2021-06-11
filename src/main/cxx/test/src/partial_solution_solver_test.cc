@@ -34,7 +34,7 @@ using std::reference_wrapper;
 
 using sparse_net_library::transfer_functions;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
-using sparse_net_library::Data_ringbuffer;
+using sparse_net_library::DataRingbuffer;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Partial_solution_solver;
 using sparse_net_library::Transfer_function;
@@ -57,7 +57,7 @@ using rafko_mainframe::Service_context;
 
 TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-solution][manual]" ){
   Service_context service_context;
-  Data_ringbuffer neuron_data(1,2);
+  DataRingbuffer neuron_data(1,2);
   Partial_solution partial_solution;
   vector<uint32> helper_vector_uint;
   vector<sdouble32> expected_neuron_output;
@@ -75,7 +75,6 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   /* Test the partial_solution */
   Partial_solution_solver solver(partial_solution, neuron_data, service_context);
   solver.collect_input_data(network_inputs);
-  REQUIRE( network_inputs.size() == solver.get_input_size() );
 
   /* The result should be according to the calculations */
   solver.solve();
@@ -127,7 +126,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
   Index_synapse_interval temp_index_interval;
   Input_synapse_interval temp_input_interval;
-  Data_ringbuffer neuron_data(1, network_inputs.size());
+  DataRingbuffer neuron_data(1, network_inputs.size());
 
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(network_inputs.size());
@@ -176,7 +175,6 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   /* Prepare the partial solution */
   Partial_solution_solver solver(partial_solution, neuron_data, service_context);
 
-  REQUIRE( network_inputs.size() == solver.get_input_size() );
   solver.collect_input_data(network_inputs);
   solver.solve(); /* Since the network just spits the inputs back out so the input collection is testable through it*/
   for(uint32 i = 0; i < network_inputs.size(); ++i){

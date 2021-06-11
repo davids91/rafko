@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef DATA_RINGBUFFER_H
-#define DATA_RINGBUFFER_H
+#ifndef DataRingbuffer_H
+#define DataRingbuffer_H
 
 #include "rafko_global.h"
 
@@ -40,9 +40,9 @@ using std::vector;
  *             the data from the previous loops into the current one. The data under the current loop
  *             needs to keep its contents, while the data from previous loops also need to be stored.
  */
-class Data_ringbuffer{
+class DataRingbuffer{
 public:
-  Data_ringbuffer(uint32 buffer_number, uint32 buffer_size)
+  DataRingbuffer(uint32 buffer_number, uint32 buffer_size)
   :  current_index(0)
   ,  data(buffer_number)
   {
@@ -83,7 +83,7 @@ public:
    *
    * @param[in]  other  The buffer to take the data from
    */
-  void copy_latest(const Data_ringbuffer& other){
+  void copy_latest(const DataRingbuffer& other){
     std::copy(
       other.get_const_element(0).begin(),other.get_const_element(0).end(),
       get_element(0).begin()
@@ -115,15 +115,13 @@ public:
   /**
    * @brief      Sets the data element under the given indices to the provided value
    *
-   * @param[in]  data_index  The index of the data inside the buffer
    * @param[in]  past_index  The buffer to set the data
+   * @param[in]  data_index  The index of the data inside the buffer
    * @param[in]  value       The value to overwrite the data with
    */
-  void set_element(uint32 data_index, uint32 past_index, sdouble32 value){
-    if(
-      (data.size() > past_index)
-      &&(data[0].size() > data_index)
-    )get_element(past_index)[data_index] = value;
+  void set_element(uint32 past_index, uint32 data_index, sdouble32 value){
+    if((data.size() > past_index)&&(data[0].size() > data_index))
+      get_element(past_index)[data_index] = value;
       else throw std::runtime_error("Ringbuffer data index out of bounds!");
   }
 
@@ -138,6 +136,20 @@ public:
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
     }else throw std::runtime_error("Ringbuffer index out of bounds!");
+  }
+
+  /**
+   * @brief      Gets adata value under the provided index parameters
+   *
+   * @param[in]  past_index  The past index
+   * @param[in]  data_index  The index of the data point to retrive in the buffer
+   *
+   * @return     The value of the data in the given index parameters
+   */
+  sdouble32 get_element(uint32 past_index, uint32 data_index){
+    if((data.size() > past_index)&&(data[0].size() > data_index))
+      return get_element(past_index)[data_index];
+      else throw std::runtime_error("Ringbuffer data index out of bounds!");
   }
 
   /**

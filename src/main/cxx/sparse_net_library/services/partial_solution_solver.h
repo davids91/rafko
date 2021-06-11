@@ -21,11 +21,14 @@
 #include "rafko_global.h"
 
 #include <vector>
-#include <stdexcept>
+#include <deque>
+#include <atomic>
+#include <mutex>
 
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 
+#include "sparse_net_library/models/data_pool.h"
 #include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
 #include "sparse_net_library/services/synapse_iterator.h"
@@ -33,63 +36,44 @@
 namespace sparse_net_library {
 
 using std::vector;
+using std::deque;
+using std::mutex;
+using std::atomic;
 
 class Partial_solution_solver{
 
 public:
-  Partial_solution_solver(const Partial_solution& partial_solution, Data_ringbuffer& neuron_data_, Service_context& service_context)
+  Partial_solution_solver(const Partial_solution& partial_solution, Service_context& service_context)
   :  detail(partial_solution)
-  ,  neuron_data(neuron_data_)
   ,  internal_weight_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())
-  ,  transfer_function_input(detail.internal_neuron_number(),0)
-  ,  transfer_function_output(detail.internal_neuron_number(),0)
-  ,  collected_input_data(input_iterator.size())
   ,  transfer_function(service_context)
-  {
-    if(transfer_function_input.size() != transfer_function_output.size())
-      throw std::runtime_error("Neuron gradient data Incompatible!");
-    reset();
-  }
+  { }
 
   /**
-   * @brief      Gets the size of the elements taken by the configurad Patial solution.
+   * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference;
+   *             uses the common internal data pool for storing intermediate calculations
    *
-   * @return     The input size in number of elements ( @sdouble32 ).
+   * @param      input_data           The reference to collect input data from
+   * @param      output_neuron_data   The reference to transfer function output
    */
-  uint32 get_input_size(void) const{
-    return collected_input_data.size();
-  }
+   void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data) const{
+     vector<sdouble32>& used_buffer = common_data_pool.reserve_buffer(input_iterator.size());
+     solve(input_data, output_neuron_data, used_buffer);
+   }
 
-  /**
-   * @brief      Collects the input stated inside the @Partial_solution into @collected_input_data
-   *             from the data in @input_data and the neuron data provided by @solver
-   *
-   * @param      input_data   The input data given to the network
-   */
-  void collect_input_data(const vector<sdouble32>& input_data);
-
-  /**
-   * @brief      Provides the gradient data to the given references
-   *
-   * @param      transfer_function_input_   The reference to transfer function input
-   * @param      transfer_function_output_  The reference to transfer function output
-   */
-  void provide_gradient_data(vector<sdouble32>& transfer_function_input_, vector<sdouble32>& transfer_function_output_) const;
-
-  /**
-   * @brief      Solves the partial solution in the given argument and updates the reference @neuron_data
-   *             also produces helper data through @provide_gradient_data
-   */
-  void solve();
-
-  /**
-   * @brief      Resets the data of the included Neurons.
-   */
-  void reset(void){
-    for(sdouble32& neuron_data : transfer_function_input) neuron_data = 0;
-    for(sdouble32& neuron_data : transfer_function_output) neuron_data = 0;
-  }
+   /**
+    * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference;
+    *             uses the provided data pool for storing intermediate calculations
+    *
+    * @param      input_data           The reference to collect input data from
+    * @param      output_neuron_data   The reference to transfer function output
+    * @param      used_data_pool       The reference to a datapool the partial solver may use for intermediate calculations
+    */
+   void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data, DataPool<sdouble32>& used_data_pool) const{
+     vector<sdouble32>& used_buffer = used_data_pool.reserve_buffer(input_iterator.size());
+     solve(input_data, output_neuron_data, used_buffer);
+   }
 
   /**
    * @brief      Determines if given Solution Detail is valid. Due to performance reasons
@@ -100,15 +84,12 @@ public:
   bool is_valid(void) const;
 
 private:
+  static DataPool<sdouble32> common_data_pool;
+
   /**
    * The Partial solution to solve
    */
   const Partial_solution& detail;
-
-  /**
-   * The reference from which the input can be collected, and output can be provided to
-   */
-  Data_ringbuffer& neuron_data;
 
   /**
    * The iterator to go through the Neuron weights while solving the detail
@@ -121,21 +102,19 @@ private:
   Synapse_iterator<Input_synapse_interval> input_iterator;
 
   /**
-   * For Gradient information, intermeidate results are required to be stored.
-   * The Partial solution solver shall store the some intermediate results here
-   */
-  vector<sdouble32> transfer_function_input;
-  vector<sdouble32> transfer_function_output;
-
-  /**
-   * The data collected from the @Partial_solution input
-   */
-  vector<sdouble32> collected_input_data;
-
-  /**
    * The transfer function set configured for the current session
    */
   Transfer_function transfer_function;
+
+  /**
+   * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference
+   *             and uses the provided vector for storing intermediate calculations
+   *
+   * @param      input_data           The reference to collect input data from
+   * @param      output_neuron_data   The reference to transfer function output
+   * @param      temp_data            The reference a vector allocated to keep the required collected inputs
+   */
+  void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data, vector<sdouble32>& temp_data) const;
 
 };
 

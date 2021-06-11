@@ -39,7 +39,7 @@ namespace sparse_net_library_test{
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::SparseNet;
-using sparse_net_library::Data_ringbuffer;
+using sparse_net_library::DataRingbuffer;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Partial_solution_solver;
 using sparse_net_library::Solution;
@@ -75,7 +75,7 @@ void test_solution_solver_multithread(uint16 threads){
   Service_context service_context;
 
   /* Define the input, @Solution and partial solution table */
-  Data_ringbuffer neuron_data(1,8);
+  DataRingbuffer neuron_data(1,8);
   Service_context context = Service_context().set_max_solve_threads(threads);
   Solution solution;
   solution.set_network_memory_length(1);
