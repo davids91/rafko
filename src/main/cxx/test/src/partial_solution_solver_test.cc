@@ -73,14 +73,13 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   *partial_solution.add_input_data() = temp_synapse_interval;
 
   /* Test the partial_solution */
-  Partial_solution_solver solver(partial_solution, neuron_data, service_context);
-  solver.collect_input_data(network_inputs);
+  Partial_solution_solver solver(partial_solution, service_context);
 
   /* The result should be according to the calculations */
-  solver.solve();
+  solver.solve(network_inputs, neuron_data);
   expected_neuron_output = vector<sdouble32>(2);
   manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-  CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
+  CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
   /* The result should change in accordance with the parameters */
   srand (time(nullptr));
@@ -92,24 +91,24 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },1u,1u); /* Mess with the weights of the second Neuron */
 
-    solver.solve();
+    solver.solve(network_inputs, neuron_data);
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-    CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
+    CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
-    solver.solve();
+    solver.solve(network_inputs, neuron_data);
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-    CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
+    CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
     partial_solution.set_weight_table(partial_solution.memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     partial_solution.set_weight_table(partial_solution.memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-    solver.solve();
+    solver.solve(network_inputs, neuron_data);
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-    CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
+    CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
     partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),Transfer_function::next());
-    solver.solve();
+    solver.solve(network_inputs, neuron_data);
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-    CHECK( Approx(neuron_data.get_element(1,0)).epsilon(0.00000000000001) == expected_neuron_output[1] );
+    REQUIRE( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
   }
 }
 
@@ -173,12 +172,11 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Prepare the partial solution */
-  Partial_solution_solver solver(partial_solution, neuron_data, service_context);
+  Partial_solution_solver solver(partial_solution, service_context);
 
-  solver.collect_input_data(network_inputs);
-  solver.solve(); /* Since the network just spits the inputs back out so the input collection is testable through it*/
+  solver.solve(network_inputs, neuron_data); /* Since the network just spits the inputs back out so the input collection is testable through it*/
   for(uint32 i = 0; i < network_inputs.size(); ++i){
-    CHECK( Approx(network_inputs[i]).epsilon(0.00000000000001) == neuron_data.get_element(i,0));
+    REQUIRE( Approx(network_inputs[i]).epsilon(0.00000000000001) == neuron_data.get_element(0,i));
   }
 }
 

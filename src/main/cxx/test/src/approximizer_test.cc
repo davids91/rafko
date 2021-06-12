@@ -21,6 +21,7 @@
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/models/data_ringbuffer.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/models/cost_function_mse.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
@@ -51,6 +52,7 @@ using sparse_net_library::WEIGHT_UPDATER_NESTEROV;
 using sparse_net_library::WEIGHT_UPDATER_ADAM;
 using sparse_net_library::WEIGHT_UPDATER_AMSGRAD;
 using sparse_net_library::Sparse_net_approximizer;
+using sparse_net_library::DataRingbuffer;
 using sparse_net_library::Data_aggregate;
 using sparse_net_library::Function_factory;
 using sparse_net_library::Solution;
@@ -236,9 +238,10 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   sdouble32 error_summary[3] = {0,0,0};
   Cost_function_mse after_cost(1, service_context);
+  DataRingbuffer neuron_data(after_solver.get_solution().network_memory_length(), after_solver.get_solution().neuron_number());
   for(uint32 i = 0; i < number_of_samples; ++i){
-    after_solver.solve(test_set->get_input_sample(i));
-    error_summary[0] += after_cost.get_feature_error(after_solver.get_neuron_data(), test_set->get_label_sample(i), number_of_samples);
+    after_solver.solve(test_set->get_input_sample(i), neuron_data);
+    error_summary[0] += after_cost.get_feature_error(neuron_data.get_const_element(0), test_set->get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"
   << "\t"  << error_summary[0]

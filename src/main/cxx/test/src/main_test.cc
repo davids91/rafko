@@ -24,6 +24,7 @@
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/transfer_function.h"
+#include "sparse_net_library/models/data_ringbuffer.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 #include "sparse_net_library/services/solution_builder.h"
@@ -35,8 +36,10 @@ int main( int argc, char* argv[] ) {
   return result;
 }
 
-namespace sparse_net_library_test{
+namespace sparse_net_library_test {
 
+using sparse_net_library::DataRingbuffer;
+using sparse_net_library::Data_aggregate;
 using sparse_net_library::Transfer_function;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::cost_functions;
@@ -306,11 +309,14 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
   std::cout << std::endl;
   std::cout << "--------------expected:" << std::endl;
   std::cout.precision(2);
-  sample_solver.reset();
+  DataRingbuffer output_data(
+    std::max(data_set.get_sequence_size(), sample_solver.get_solution().network_memory_length()),
+    sample_solver.get_solution().neuron_number()
+  );
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
     std::cout << "["<< data_set.get_label_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
-    sample_solver.solve(data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j));
-    neuron_data[j] = sample_solver.get_neuron_data().back();
+    sample_solver.solve(data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j), output_data);
+    neuron_data[j] = output_data.get_element(0).back();
   }
   std::cout << std::endl;
   std::cout << "------<>------actual:" << std::endl;
@@ -321,7 +327,7 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
   std::cout << std::endl;
   std::cout << "==============" << std::endl;
   std::cout << "Neural memory for current sequence: " << std::endl;
-  for(const vector<sdouble32>& vector : sample_solver.get_neuron_memory().get_whole_buffer()){
+  for(const vector<sdouble32>& vector : output_data.get_whole_buffer()){
     for(const sdouble32& element : vector) std::cout << "[" << element << "]";
     std::cout << std::endl;
   }

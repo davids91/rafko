@@ -75,7 +75,6 @@ void test_solution_solver_multithread(uint16 threads){
   Service_context service_context;
 
   /* Define the input, @Solution and partial solution table */
-  DataRingbuffer neuron_data(1,8);
   Service_context context = Service_context().set_max_solve_threads(threads);
   Solution solution;
   solution.set_network_memory_length(1);
@@ -96,34 +95,36 @@ void test_solution_solver_multithread(uint16 threads){
   temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
   temp_input_interval.set_interval_size(network_inputs.size());
   *solution.mutable_partial_solutions(0)->add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(solution.partial_solutions(0), neuron_data, service_context);
+  Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(solution.partial_solutions(0), service_context);
 
   /* [0][1]: Half of the input */
   manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(1), network_inputs.size()/2,2);
   temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(network_inputs.size()/2));
   temp_input_interval.set_interval_size(network_inputs.size()/2);
   *solution.mutable_partial_solutions(1)->add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(solution.partial_solutions(1), neuron_data, service_context);
+  Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(solution.partial_solutions(1), service_context);
 
   /* [1][0]: Whole of the previous row's data --> neuron [0] to [3] */
   manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(2),4,4);
   temp_input_interval.set_starts(0);
   temp_input_interval.set_interval_size(4);
   *solution.mutable_partial_solutions(2)->add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(solution.partial_solutions(2), neuron_data, service_context);
+  Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(solution.partial_solutions(2), service_context);
 
   /* [1][1]: Half of the previous row's data ( in the middle) --> neuron [1] to [2] */
   manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(3),2,6);
   temp_input_interval.set_starts(1);
   temp_input_interval.set_interval_size(2);
   *solution.mutable_partial_solutions(3)->add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(solution.partial_solutions(3), neuron_data, service_context);
+  Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(solution.partial_solutions(3), service_context);
 
   /* Solve the compiled Solution */
   srand (time(nullptr));
   Solution_solver solution_solver(solution, service_context);
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(solution.neuron_number());
-  vector<sdouble32> network_output;
+  vector<sdouble32> network_output_vector;
+  DataRingbuffer neuron_data_partials(1,8);
+  DataRingbuffer neuron_data(1,8);
 
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights biases and memory filters */
@@ -159,51 +160,33 @@ void test_solution_solver_multithread(uint16 threads){
     }
 
     /* Calculate the expected output */
-    manual_2_neuron_result(
-      network_inputs,expected_neuron_data,solution.partial_solutions(0),0
-    ); /* row 0, column 0 */
-    manual_2_neuron_result(
-      {network_inputs.begin()+2,network_inputs.end()},expected_neuron_data,solution.partial_solutions(1),2
-    ); /* row 0, column 1 */
-    manual_2_neuron_result(
-      {expected_neuron_data.begin(),expected_neuron_data.begin() + 4},expected_neuron_data,solution.partial_solutions(2),4
-    ); /* row 1, column 0 */
-    manual_2_neuron_result(
-      {expected_neuron_data.begin() + 1,expected_neuron_data.begin() + 3},expected_neuron_data,solution.partial_solutions(3),6
-    ); /* row 1, column 1 */
+    manual_2_neuron_result( network_inputs,expected_neuron_data,solution.partial_solutions(0),0 ); /* row 0, column 0 */
+    manual_2_neuron_result( {network_inputs.begin()+2,network_inputs.end()},expected_neuron_data,solution.partial_solutions(1),2 ); /* row 0, column 1 */
+    manual_2_neuron_result( {expected_neuron_data.begin(),expected_neuron_data.begin() + 4},expected_neuron_data,solution.partial_solutions(2),4 ); /* row 1, column 0 */
+    manual_2_neuron_result( {expected_neuron_data.begin() + 1,expected_neuron_data.begin() + 3},expected_neuron_data,solution.partial_solutions(3),6 ); /* row 1, column 1 */
 
     /* Solve the net */
-    /* row 0, column 0 */
-    partial_solution_solver_0_0.collect_input_data(network_inputs);
-    partial_solution_solver_0_0.solve();
+    partial_solution_solver_0_0.solve(network_inputs, neuron_data_partials); /* row 0, column 0 */
+    partial_solution_solver_0_1.solve(network_inputs, neuron_data_partials); /* row 0, column 1 */
+    partial_solution_solver_1_0.solve(network_inputs, neuron_data_partials); /* row 1, column 0 */
+    partial_solution_solver_1_1.solve(network_inputs, neuron_data_partials); /* row 1, column 1 */
+    solution_solver.solve(network_inputs, neuron_data);
 
-    /* row 0, column 1 */
-    partial_solution_solver_0_1.collect_input_data(network_inputs);
-    partial_solution_solver_0_1.solve();
+    /* Check result of the solution */
+    REQUIRE( solution_solver.get_solution().output_neuron_number() <= neuron_data.get_element(0).size());
+    network_output_vector = {
+      neuron_data.get_const_element(0).end() - solution_solver.get_solution().output_neuron_number(),
+      neuron_data.get_const_element(0).end()
+    };
+    REQUIRE( network_output_vector.size() == solution.output_neuron_number() );
 
-    /* row 1, column 0 */
-    partial_solution_solver_1_0.collect_input_data(network_inputs);
-    partial_solution_solver_1_0.solve();
-
-    /* row 1, column 1 */
-    partial_solution_solver_1_1.collect_input_data(network_inputs);
-    partial_solution_solver_1_1.solve();
-
-    solution_solver.solve(network_inputs);
-
-    network_output = solution_solver.get_neuron_data();
-    REQUIRE( solution_solver.get_output_size() <= solution_solver.get_neuron_data().size());
-
-    network_output = {network_output.end() - solution_solver.get_output_size(),network_output.end()};
-    REQUIRE( network_output.size() == solution.output_neuron_number() );
-
-    for(uint32 i = 0; i < network_output.size(); ++i){
-      CHECK(
-        Approx(neuron_data.get_element(solution.neuron_number() - solution.output_neuron_number() + i, 0)).epsilon(double_literal(0.00000000000001))
+    for(uint32 i = 0; i < network_output_vector.size(); ++i){
+      REQUIRE(
+        Approx(neuron_data_partials.get_element(0, solution.neuron_number() - solution.output_neuron_number() + i)).epsilon(double_literal(0.00000000000001))
         == expected_neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]
       );
-      CHECK(
-        Approx(network_output[i]).epsilon(double_literal(0.00000000000001))
+      REQUIRE(
+        Approx(network_output_vector[i]).epsilon(double_literal(0.00000000000001))
         == expected_neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]
       );
     }
@@ -235,8 +218,14 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   Solution_solver solver(*solution, service_context);
-  solver.solve(net_input);
-  vector<sdouble32> result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
+  DataRingbuffer neuron_data(1, solver.get_solution().neuron_number());
+  DataRingbuffer neuron_data2(1, solver.get_solution().neuron_number());
+
+  solver.solve(net_input, neuron_data);
+  vector<sdouble32> result = {
+    neuron_data.get_element(0).end() - solver.get_solution().output_neuron_number(),
+    neuron_data.get_element(0).end()
+  };
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size());
   manaual_fully_connected_network_result(net_input, {}, expected_neuron_data, net_structure, *net);
   vector<sdouble32> expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
@@ -252,8 +241,11 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   Solution* solution2 = Solution_builder(service_context).build(*net);
 
   Solution_solver solver2(*solution2, service_context);
-  solver2.solve(net_input);
-  result = {solver2.get_neuron_data().end() - solver2.get_output_size(),solver2.get_neuron_data().end()};
+  solver2.solve(net_input, neuron_data2);
+  result = {
+    neuron_data2.get_element(0).end() - solver2.get_solution().output_neuron_number(),
+    neuron_data2.get_element(0).end()
+  };
 
   /* Verify once more if the calculated values match the expected ones */
   for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
@@ -294,12 +286,14 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   /* Generate solution from Net */
   Solution* solution = Solution_builder(service_context).build(*net);
   Solution_solver solver(*solution, service_context);
+  DataRingbuffer neuron_data(solver.get_solution().network_memory_length(), solver.get_solution().neuron_number());
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  solver.solve(net_input);
-  REQUIRE( net->neuron_array_size() == static_cast<sint32>(solver.get_raw_activation_values().size()) );
-  REQUIRE( net->neuron_array_size() == static_cast<sint32>(solver.get_transfer_function_output().size()) );
-  vector<sdouble32> result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
+  solver.solve(net_input, neuron_data);
+  vector<sdouble32> result = {
+    (neuron_data.get_element(0).end() - solver.get_solution().output_neuron_number()),
+    neuron_data.get_element(0).end()
+  };
   vector<sdouble32> previous_neuron_data = vector<sdouble32>(net->neuron_array_size());
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size()); /* Should be all zeroes the first time */
 
@@ -313,8 +307,8 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   }
 
   for(uint32 loop = 0; loop < 5; ++loop){ /* Re-verify with additional runs, at least 3, more shouldn't hurt */
-    solver.solve(net_input);
-    result = {solver.get_neuron_data().end() - solver.get_output_size(), solver.get_neuron_data().end()};
+    solver.solve(net_input, neuron_data);
+    result = {neuron_data.get_element(0).end() - solver.get_solution().output_neuron_number(), neuron_data.get_element(0).end()};
     previous_neuron_data = vector<sdouble32>(expected_neuron_data);
     manaual_fully_connected_network_result(net_input, previous_neuron_data, expected_neuron_data, net_structure, *net);
     expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
@@ -388,9 +382,10 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
 
   /* Solve the generated solution */
   Solution_solver solver(*solution, service_context);
+  DataRingbuffer network_output(1, solver.get_solution().neuron_number());
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  solver.solve(net_input);
+  solver.solve(net_input, network_output);
 
   /* Calculate the network manually */
   Transfer_function transfer_function(service_context);
@@ -462,7 +457,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
 
   /* Compare the calculated Neuron outputs to the values in the solution */
   for(uint32 neuron_index = 0; neuron_index < number_of_neurons; ++neuron_index){
-    CHECK(manual_neuron_values[neuron_index] == solver.get_neuron_data()[neuron_index]);
+    CHECK(manual_neuron_values[neuron_index] == network_output.get_element(0, neuron_index) );
   }
 
 }
