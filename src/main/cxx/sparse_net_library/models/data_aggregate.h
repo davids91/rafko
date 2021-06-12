@@ -33,6 +33,7 @@
 #include "rafko_mainframe/models/service_context.h"
 
 #include "sparse_net_library/models/agent.h"
+#include "sparse_net_library/models/data_pool.h"
 #include "sparse_net_library/models/cost_function.h"
 #include "sparse_net_library/services/function_factory.h"
 
@@ -148,14 +149,30 @@ public:
   /**
    * @brief      Same as @set_feature_for_label but in bulk
    *
-   * @param[in]  neuron_data          The neuron data
-   * @param[in]  neuron_buffer_index  The index of the outer neuron bufer to start evaluation from
-   * @param[in]  raw_start_index      The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
-   * @param[in]  labels_to_evaluate   The labels to evaluate
+   * @param[in]  neuron_data              The neuron data
+   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
+   * @param[in]  raw_start_index          The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  labels_to_evaluate       The labels to evaluate
    */
   void set_features_for_labels(
     const deque<vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
+  );
+
+  /**
+   * @brief      Same as @set_feature_for_label but in bulk
+   *
+   * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
+   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
+   * @param[in]  sequence_start_index     The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  sequences_to_evaluate    The labels to evaluate
+   * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
+   * @param[in]  sequence_truncation      The sequence truncation
+   */
+  void set_features_for_sequences(
+    const deque<vector<sdouble32>>& neuron_data,
+    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
+    uint32 start_index_in_sequence, uint32 sequence_truncation
   );
 
   /**
@@ -309,6 +326,8 @@ private:
   shared_ptr<Cost_function> cost_function;
   vector<thread> solve_threads; /* The threads to be started during evaluating the network */
   mutex dataset_mutex;
+
+  static DataPool<sdouble32> common_datapool;
 
   /**
    * @brief      Converting the @Data_set message to vectors

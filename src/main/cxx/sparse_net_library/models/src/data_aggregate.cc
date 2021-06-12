@@ -20,6 +20,8 @@
 
 namespace sparse_net_library {
 
+DataPool<sdouble32> Data_aggregate::common_datapool(1,1);
+
 void Data_aggregate::fill(Data_set& samples){
   uint32 feature_start_index = 0;
   uint32 input_start_index = 0;
@@ -45,9 +47,30 @@ void Data_aggregate::set_features_for_labels(
   if((raw_start_index + labels_to_evaluate) <= error_state.back().sample_errors.size()){
     cost_function->get_feature_errors(
       label_samples, neuron_data, error_state.back().sample_errors,
-      raw_start_index, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
+      raw_start_index, raw_start_index, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
     );
+    error_state.back().error_sum = 0;
+    for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
+      error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+  }else throw new std::runtime_error("Label index out of bounds!");
+}
 
+void Data_aggregate::set_features_for_sequences(
+  const deque<vector<sdouble32>>& neuron_data,
+  uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate,
+  uint32 start_index_in_sequence, uint32 sequence_truncation
+){
+  if((raw_start_index + labels_to_evaluate) <= error_state.back().sample_errors.size()){
+    vector<sdouble32>& resulting_errors = common_datapool.reserve_buffer(labels_to_evaluate);
+    cost_function->get_feature_errors(
+      label_samples, neuron_data, resulting_errors,
+      raw_start_index, 0, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
+    );
+    std::copy(
+      resulting_errors.begin(),resulting_errors.end(),
+      error_state.back().sample_errors.begin() + raw_start_index
+    );
+    common_datapool.release_buffer(resulting_errors);
     error_state.back().error_sum = 0;
     for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
       error_state.back().error_sum += error_state.back().sample_errors[sample_index];

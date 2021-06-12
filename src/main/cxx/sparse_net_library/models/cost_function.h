@@ -75,15 +75,16 @@ public:
    *
    * @param[in]  labels              The array containing the labels to compare the given neuron data to
    * @param[in]  neuron_data         The neuron data to compare for the given labels array
-   * @param      errors_for_labels   The vector to load the resulting errors in, shall be of equal size to @labels
+   * @param      errors_for_labels   The vector to load the resulting errors in, size shall equal @labels_to_evaluate
    * @param[in]  label_start         The index of the label to start evaluating the pairs from
    * @param[in]  labels_to_evaluate  The number of labels to evaluate
    * @param[in]  neuron_start        The starting index of the neuron data outer buffer
+   * @param[in]  neuron_start        The starting index inside the vector for the output errors @errors_for_labels
    * @param[in]  sample_number       The number of overall samples, required for post-processing
    */
   void get_feature_errors(
     const deque<vector<sdouble32>>& labels, const deque<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
-    uint32 label_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
+    uint32 label_start, uint32 error_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
   );
 
   /**
@@ -187,8 +188,9 @@ private:
    *
    * @param[in]  labels                   The label arrays to compare the data to
    * @param[in]  neuron_data              The neuron data to compare to the labels
-   * @param      errors_for_labels        The vector to load the resulting errors in, shall be of equal size to @labels
+   * @param      errors_for_labels        The vector to load the resulting errors in, size shall equal @labels_to_evaluate
    * @param[in]  label_start              The index of the label to start evaluating the pairs from
+   * @param[in]  error_start              The starting index in the label error vector this thread starts
    * @param[in]  neuron_data_start_index  The index inside the neuron data corresponding to the start index defined for @labels
    * @param[in]  labels_to_process        The number of label-data pairs to process this thread
    * @param[in]  outer_thread_index       The outer thread index the index of the thread, to find out which @thread_results array to use
@@ -196,7 +198,7 @@ private:
    */
   void feature_errors_thread(
     const deque<vector<sdouble32>>& labels, const deque<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
-    uint32 label_start, uint32 neuron_data_start_index, uint32 labels_to_process, uint32 outer_thread_index, uint32 sample_number
+    uint32 label_start, uint32 error_start, uint32 neuron_data_start_index, uint32 labels_to_process, uint32 outer_thread_index, uint32 sample_number
   );
 };
 

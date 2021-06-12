@@ -26,7 +26,7 @@ using std::async;
 
 void Cost_function::get_feature_errors(
   const deque<vector<sdouble32>>& labels, const deque<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
-  uint32 label_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
+  uint32 label_start, uint32 error_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
 ){
   if((label_start + labels_to_evaluate) > labels.size())
     throw new std::runtime_error("Label index out of bounds with Neuron data!");
@@ -35,6 +35,7 @@ void Cost_function::get_feature_errors(
     throw new std::runtime_error("Can't evaluate more labels, than there is data provided!");
 
   uint32 neuron_data_start_index = neuron_start;
+  uint32 label_error_start_index = error_start;
   const uint32 labels_to_do_in_a_thread = 1 + static_cast<uint32>(labels_to_evaluate/context.get_sqrt_of_process_threads());
   for(
     uint32 thread_index = 0;
@@ -46,14 +47,15 @@ void Cost_function::get_feature_errors(
     thread_results.back().reserve(context.get_sqrt_of_process_threads());
     process_threads.push_back(thread(
       &Cost_function::feature_errors_thread, this,
-      ref(labels), ref(neuron_data), ref(errors_for_labels), label_start, neuron_data_start_index,
-      min(labels_to_do_in_a_thread, std::min(
+      ref(labels), ref(neuron_data), ref(errors_for_labels), label_start, label_error_start_index,
+      neuron_data_start_index, min(labels_to_do_in_a_thread, std::min(
         static_cast<uint32>(neuron_data.size() - neuron_data_start_index), static_cast<uint32>(labels.size() - label_start)
       )),
       thread_index, sample_number
     ));
     neuron_data_start_index += labels_to_do_in_a_thread;
     label_start += labels_to_do_in_a_thread;
+    label_error_start_index += labels_to_do_in_a_thread;
   }
   while(0 < process_threads.size()){ /* wait for threads to finish! */
     if(process_threads.back().joinable()){
@@ -66,10 +68,10 @@ void Cost_function::get_feature_errors(
 
 void Cost_function::feature_errors_thread(
   const deque<vector<sdouble32>>& labels, const deque<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
-  uint32 label_start, uint32 neuron_data_start_index, uint32 labels_to_process, uint32 outer_thread_index, uint32 sample_number
+  uint32 label_start, uint32 error_start, uint32 neuron_data_start_index, uint32 labels_to_process, uint32 outer_thread_index, uint32 sample_number
 ){
   for(uint32 label_iterator = 0; label_iterator < labels_to_process; ++label_iterator){
-    errors_for_labels[label_start + label_iterator] = get_feature_error(
+    errors_for_labels[error_start + label_iterator] = get_feature_error(
       labels[label_start + label_iterator], neuron_data[neuron_data_start_index + label_iterator],
       context.get_sqrt_of_process_threads(), outer_thread_index, sample_number
     );
