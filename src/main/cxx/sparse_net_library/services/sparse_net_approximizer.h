@@ -21,6 +21,7 @@
 #include "rafko_global.h"
 
 #include <cmath>
+#include <deque>
 #include <mutex>
 
 #include "gen/common.pb.h"
@@ -34,10 +35,11 @@
 
 namespace sparse_net_library{
 
-using std::unique_ptr;
-using std::make_unique;
 using std::max;
 using std::min;
+using std::deque;
+using std::vector;
+using std::unique_ptr;
 using std::mutex;
 
 using rafko_mainframe::Service_context;
@@ -54,7 +56,6 @@ public:
   );
 
   ~Sparse_net_approximizer(void){
-    solvers.clear();
     if(nullptr == context.get_arena_ptr())
       delete net_solution;
   }
@@ -81,10 +82,10 @@ public:
   /**
    * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set
    */
-  void evaluate(void){
-    train_set.set_features_for_labels(solvers,0,train_set.get_number_of_sequences(),0,train_set.get_sequence_size());
-    test_set.set_features_for_labels(solvers,0,test_set.get_number_of_sequences(),0,test_set.get_sequence_size());
-  }
+  void evaluate(void);
+
+
+  void evaluate(Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate);
 
   /**
    * @brief      Moves the network in a random direction, approximates the gradients based on that
@@ -183,10 +184,12 @@ public:
 private:
   SparseNet& net;
   Service_context& context;
-  Solution* net_solution;
-  vector<unique_ptr<Agent>> solvers;
   Data_aggregate& train_set;
   Data_aggregate& test_set;
+  Solution* net_solution;
+  unique_ptr<Agent> solver;
+  vector<DataRingbuffer> neuron_value_buffers; /* One DataRingbuffer per thread */
+  deque<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   Gradient_fragment gradient_fragment;
 
   uint32 iteration;
