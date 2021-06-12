@@ -25,7 +25,7 @@ using std::ref;
 using std::async;
 
 void Cost_function::get_feature_errors(
-  const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+  const deque<vector<sdouble32>>& labels, const deque<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
   uint32 label_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
 ){
   if((label_start + labels_to_evaluate) > labels.size())
@@ -38,7 +38,7 @@ void Cost_function::get_feature_errors(
   const uint32 labels_to_do_in_a_thread = 1 + static_cast<uint32>(labels_to_evaluate/context.get_sqrt_of_process_threads());
   for(
     uint32 thread_index = 0;
-    ((thread_index < context.get_sqrt_of_process_threads()) 
+    ((thread_index < context.get_sqrt_of_process_threads())
       && (neuron_data.size() > neuron_data_start_index));
     ++thread_index
   ){
@@ -65,7 +65,7 @@ void Cost_function::get_feature_errors(
 }
 
 void Cost_function::feature_errors_thread(
-  const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+  const deque<vector<sdouble32>>& labels, const deque<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
   uint32 label_start, uint32 neuron_data_start_index, uint32 labels_to_process, uint32 outer_thread_index, uint32 sample_number
 ){
   for(uint32 label_iterator = 0; label_iterator < labels_to_process; ++label_iterator){

@@ -19,6 +19,7 @@
 #include "test/test_utility.h"
 
 #include <random>
+#include <deque>
 
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/cost_function.h"
@@ -31,6 +32,7 @@ using sparse_net_library::Cost_function_mse;
 using rafko_mainframe::Service_context;
 
 using std::vector;
+using std::deque;
 
 /*###############################################################################################
  * Testing Error function
@@ -45,8 +47,8 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   uint32 feature_size = 20;
   sdouble32 distance = double_literal(10.0);
 
-  vector<vector<sdouble32>> dataset = vector<vector<sdouble32>>(dataset_size,vector<sdouble32>(feature_size));
-  vector<vector<sdouble32>> featureset = vector<vector<sdouble32>>(dataset_size,vector<sdouble32>(feature_size));
+  deque<vector<sdouble32>> dataset = deque<vector<sdouble32>>(dataset_size,vector<sdouble32>(feature_size));
+  deque<vector<sdouble32>> featureset = deque<vector<sdouble32>>(dataset_size,vector<sdouble32>(feature_size));
   srand(time(nullptr));
   for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
       for(uint16 feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){

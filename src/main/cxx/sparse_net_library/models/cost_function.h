@@ -21,6 +21,7 @@
 #include "rafko_global.h"
 
 #include <vector>
+#include <deque>
 #include <thread>
 #include <future>
 
@@ -29,6 +30,7 @@
 namespace sparse_net_library{
 
 using std::vector;
+using std::deque;
 using std::thread;
 using std::future;
 
@@ -80,7 +82,7 @@ public:
    * @param[in]  sample_number       The number of overall samples, required for post-processing
    */
   void get_feature_errors(
-    const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+    const deque<vector<sdouble32>>& labels, const deque<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
     uint32 label_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
   );
 
@@ -193,7 +195,7 @@ private:
    * @param[in]  sample_number            The number of overall samples, required for post-processing
    */
   void feature_errors_thread(
-    const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+    const deque<vector<sdouble32>>& labels, const deque<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
     uint32 label_start, uint32 neuron_data_start_index, uint32 labels_to_process, uint32 outer_thread_index, uint32 sample_number
   );
 };
