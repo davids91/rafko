@@ -69,7 +69,7 @@ public:
       network_approximizer->collect_approximates_from_weight_gradients();
       network_approximizer->apply_fragment();
       ++iteration;
-    }else throw new std::runtime_error("Loop called of an invalid server slot!");
+    }else throw std::runtime_error("Loop called of an invalid server slot!");
   }
 
   void reset(void){
@@ -77,7 +77,7 @@ public:
       training_set->reset_errors();
       test_set->reset_errors();
       network_approximizer->discard_fragment();
-    }else throw new std::runtime_error("Reset called of an invalid server slot!");
+    }else throw std::runtime_error("Reset called of an invalid server slot!");
   }
 
   Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const{

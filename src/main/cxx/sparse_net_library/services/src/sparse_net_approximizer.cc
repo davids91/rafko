@@ -63,15 +63,14 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 }
 
 void Sparse_net_approximizer::evaluate(void){
-  evaluate(train_set, 0, train_set.get_number_of_sequences());
-  evaluate(test_set, 0, test_set.get_number_of_sequences());
+  evaluate(train_set, 0, train_set.get_number_of_sequences(), 0, train_set.get_sequence_size());
+  evaluate(test_set, 0, test_set.get_number_of_sequences(), 0, train_set.get_sequence_size());
 }
 
-void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate){
+void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion){
   if(data_set.get_number_of_sequences() < (sequence_start + sequences_to_evaluate))
-   throw new std::runtime_error("Sequence interval out of bounds!");
+   throw std::runtime_error("Sequence interval out of bounds!");
   for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += context.get_max_solve_threads()){ /* one evaluation iteration */
-    uint32 raw_label_start_index = sequence_index * data_set.get_sequence_size();
     uint32 raw_label_end_index;
     for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&((sequence_start + sequences_to_evaluate) > (sequence_index + thread_index))); ++thread_index){
       /* Solve the sequence under sequence_index + thread_index */
@@ -85,6 +84,8 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
         solver->solve(data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index]); /* step is included in @solve */
         ++raw_inputs_index;
       }
+
+      /* Solve the data and store the result after the inital "prefill" */
       for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
         solver->solve(data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index]);
         std::copy( /* copy the result to the eval array */
@@ -98,9 +99,10 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
     }
 
     /* Upload results to the data set */
-    data_set.set_features_for_labels(
-      neuron_outputs_to_evaluate, 0u, raw_label_start_index,
-      min((raw_label_end_index - raw_label_start_index),static_cast<uint32>(neuron_outputs_to_evaluate.size()))
+    data_set.set_features_for_sequences(
+      neuron_outputs_to_evaluate, 0u,
+      sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),static_cast<uint32>(context.get_max_solve_threads())),
+      start_index_in_sequence, sequence_truncation
     );
   }
 }
@@ -179,14 +181,14 @@ void Sparse_net_approximizer::convert_direction_to_gradient(vector<sdouble32>& d
     weight_epsilon = std::sqrt(weight_epsilon) * double_literal(2.0);
 
     /* see the error values at the negative end of the current direction */
-    evaluate(train_set, sequence_start_index, context.get_minibatch_size());
+    evaluate(train_set, sequence_start_index, context.get_minibatch_size(), start_index_inside_sequence, context.get_memory_truncation());
     error_negative_direction = train_set.get_error_sum();
 
     /* see the error values at the positive end of the current direction */
     for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index)
       net.set_weight_table(weight_index, (net.weight_table(weight_index) + (weight_steps[weight_index] * double_literal(2.0))) );
     weight_updater->update_solution_with_weights(*net_solution);
-    evaluate(train_set, sequence_start_index, context.get_minibatch_size());
+    evaluate(train_set, sequence_start_index, context.get_minibatch_size(), start_index_inside_sequence, context.get_memory_truncation());
     error_positive_direction = train_set.get_error_sum();
 
     /* Restore train set to previous error state, decide if dampening is needed */
@@ -208,7 +210,7 @@ void Sparse_net_approximizer::convert_direction_to_gradient(vector<sdouble32>& d
     }
     weight_updater->update_solution_with_weights(*net_solution);
     ++loops_unchecked; ++iteration;
-  }else throw new std::runtime_error("Incompatible direction given to apprximate for!");
+  }else throw std::runtime_error("Incompatible direction given to apprximate for!");
 }
 
 void Sparse_net_approximizer::collect_fragment(void){
@@ -251,7 +253,7 @@ sdouble32 Sparse_net_approximizer::get_single_weight_gradient(uint32 weight_inde
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate the modified weights gradient */
-  evaluate(train_set, sequence_start_index, context.get_minibatch_size());
+  evaluate(train_set, sequence_start_index, context.get_minibatch_size(), start_index_inside_sequence, context.get_memory_truncation());
   gradient = train_set.get_error_sum();
 
   /* Push the selected weight in other direction */
@@ -259,7 +261,7 @@ sdouble32 Sparse_net_approximizer::get_single_weight_gradient(uint32 weight_inde
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate the newly modified weights gradient */
-  evaluate(train_set, sequence_start_index, context.get_minibatch_size());
+  evaluate(train_set, sequence_start_index, context.get_minibatch_size(), start_index_inside_sequence, context.get_memory_truncation());
   gradient = -(gradient - train_set.get_error_sum()) / (current_epsilon_double * context.get_minibatch_size());
 
   /* Revert weight modification and the error state with it */
@@ -294,7 +296,7 @@ sdouble32 Sparse_net_approximizer::get_gradient_for_all_weights(void){
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate the modified weights gradient */
-  evaluate(train_set, sequence_start_index, context.get_minibatch_size());
+  evaluate(train_set, sequence_start_index, context.get_minibatch_size(), start_index_inside_sequence, context.get_memory_truncation());
   error_positive_direction = train_set.get_error_sum();
 
   /* Push them in the other direction */
@@ -304,7 +306,7 @@ sdouble32 Sparse_net_approximizer::get_gradient_for_all_weights(void){
   weight_updater->update_solution_with_weights(*net_solution);
 
   /* Approximate the newly modified weights gradient */
-  evaluate(train_set, sequence_start_index, context.get_minibatch_size());
+  evaluate(train_set, sequence_start_index, context.get_minibatch_size(), start_index_inside_sequence, context.get_memory_truncation());
   error_negative_direction = train_set.get_error_sum();
 
   gradient = -(error_positive_direction - error_negative_direction) / (current_epsilon_double * context.get_minibatch_size());

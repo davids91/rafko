@@ -33,7 +33,7 @@ using sparse_net_library::weight_updaters_IsValid;
 using std::make_unique;
 
 void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
-  if(SERV_SLOT_TO_APPROXIMIZE != service_slot_.type()) throw new std::runtime_error("Incorrect Server slot initialization!");
+  if(SERV_SLOT_TO_APPROXIMIZE != service_slot_.type()) throw std::runtime_error("Incorrect Server slot initialization!");
   else{
     /* ####################################################################
      * Initial state checks

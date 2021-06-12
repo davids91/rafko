@@ -258,7 +258,7 @@ vector<uint32> Neuron_router::get_dependents_in_subset_of(uint32 neuron_index){
 }
 
 void Neuron_router::omit_from_subset(uint32 neuron_index){
-  if(collection_running)throw new std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
+  if(collection_running)throw std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
   vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
   for(uint32 neuron : to_remove){
     (neuron_states[neuron])->store(0); /* set its state back to 0 */
@@ -275,8 +275,8 @@ void Neuron_router::omit_from_subset(uint32 neuron_index){
 }
 
 void Neuron_router::omit_from_subset(uint32 neuron_index, deque<uint32>& paired_array){
-  if(collection_running)throw new std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
-  if(get_subset_size() != paired_array.size()) throw new std::runtime_error("Subset size doesn't match with the paired array!");
+  if(collection_running)throw std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
+  if(get_subset_size() != paired_array.size()) throw std::runtime_error("Subset size doesn't match with the paired array!");
   vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
   for(uint32 neuron : to_remove){
     (neuron_states[neuron])->store(0); /* set its state back to 0 */

@@ -85,8 +85,6 @@ public:
   void evaluate(void);
 
 
-  void evaluate(Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate);
-
   /**
    * @brief      Moves the network in a random direction, approximates the gradients based on that
    *             and then reverts the the weight change
@@ -213,6 +211,18 @@ private:
     for(sint32 i(message_field.size() - 1); i > static_cast<sint32>(position); --i)
       message_field.SwapElements(i, i - 1);
   }
+
+  /**
+   * @brief      Evaluate the given data set with the given parameters
+   *
+   * @param      data_set                   The data set to evaluate
+   * @param[in]  sequence_start             The starting sequence to be evaluated inside the @data_set
+   * @param[in]  sequences_to_evaluate      The number of sequences to evaluate inside the @data_set
+   * @param[in]  start_index_in_sequence    Parameter for sequence truncation: only update error value starting from this index in every sequence
+   * @param[in]  sequence_tructaion         The number of labels to evaluate inside every evaluated sequence
+   */
+  void evaluate(Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion);
+
 };
 
 } /* namespace sparse_net_library */

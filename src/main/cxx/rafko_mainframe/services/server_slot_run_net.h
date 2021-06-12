@@ -62,7 +62,7 @@ public:
     service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_NET);
 
     if((0 == request.layer_sizes_size())||(request.layer_sizes_size() != request.allowed_transfers_by_layer_size()))
-      throw new std::runtime_error("Invalid network build request!");
+      throw std::runtime_error("Invalid network build request!");
 
     if(get_uuid() == request.target_slot_id()){
       *network = *build_network_from_request(std::move(request));
@@ -103,19 +103,19 @@ public:
 
   /* Not supported interfaces */
   void loop(void){
-    throw new std::runtime_error("Loop operation not supported in a network runner slot!");
+    throw std::runtime_error("Loop operation not supported in a network runner slot!");
   }
 
   void accept_request(uint32 request_bitstring){
-    throw new std::runtime_error("Direct Requests not supported in a network runner slot!");
+    throw std::runtime_error("Direct Requests not supported in a network runner slot!");
   }
 
   Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const{
-    throw new std::runtime_error("Data sets not supported in a network runner slot!");
+    throw std::runtime_error("Data sets not supported in a network runner slot!");
   }
 
   Neural_io_stream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const{
-    throw new std::runtime_error("Data sets not supported in a network runner slot!");
+    throw std::runtime_error("Data sets not supported in a network runner slot!");
   }
 
 protected:

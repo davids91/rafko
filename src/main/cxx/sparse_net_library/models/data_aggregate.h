@@ -170,8 +170,8 @@ public:
    * @param[in]  sequence_truncation      The sequence truncation
    */
   void set_features_for_sequences(
-    const deque<vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
+    const deque<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index, 
+    uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
   );
 

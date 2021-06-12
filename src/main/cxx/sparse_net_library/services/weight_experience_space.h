@@ -76,7 +76,7 @@ public:
   sdouble32 get_weight(uint32 index) const{
     if(weight_values.size() > index)
       return weight_values[index];
-    else throw new std::runtime_error("Weight index out of bounds in weight experience space!");
+    else throw std::runtime_error("Weight index out of bounds in weight experience space!");
   }
 
   /**

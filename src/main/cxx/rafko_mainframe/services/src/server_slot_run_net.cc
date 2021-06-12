@@ -27,7 +27,7 @@ using sparse_net_library::Solution_builder;
 void Server_slot_run_net::initialize(Service_slot&& service_slot_){
   service_slot->set_type(service_slot_.type());
   if(SERV_SLOT_TO_RUN != service_slot->type())
-    throw new std::runtime_error("Incorrect Server slot initialization!");
+    throw std::runtime_error("Incorrect Server slot initialization!");
   else{
     service_slot->set_slot_id(generate_uuid());
     service_slot->set_state(0u); /* Reset state and update accordingly */
@@ -77,7 +77,7 @@ Neural_io_stream Server_slot_run_net::run_net_once(const Neural_io_stream& data_
     result.set_sequence_size(data_stream.sequence_size());
     *result.mutable_package() = {result_package.begin(), result_package.end()};
     return result;
-  }throw new std::runtime_error("Invalid attached network run attempt!");
+  }throw std::runtime_error("Invalid attached network run attempt!");
 }
 
 } /* rafko_mainframe */

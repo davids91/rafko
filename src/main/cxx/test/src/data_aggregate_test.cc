@@ -123,13 +123,15 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   CHECK( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
 
   /* test if the error is stored correctly even when the data is provided in bulk */
-  set_distance *= (rand()%10 / double_literal(10.0)); /* modify the set distance just to be sure */
-  deque<vector<sdouble32>> neuron_data_simulation(((sample_number * sequence_size)/2), {(expected_label - set_distance)}); /* create dummy neuron data with the configured distance */
+  deque<vector<sdouble32>> neuron_data_simulation; /* create dummy neuron data with the configured distance */
   /*!Note: since the simulated neuron data is always at the same generated value here, it doesn't matter where the evaluation starts from inside the neuron buffer,
-   *       i.e. what is the value of neuron_buffer_index, as long as the evaluation is inside the bounds ot he array.
+   *       i.e. what is the value of neuron_buffer_index, as long as the evaluation is inside the bounds of the array.
    */
 
   for(uint32 variant = 0; variant < 100; ++variant){
+    set_distance *= (rand()%10 / double_literal(10.0));
+    neuron_data_simulation = deque<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
+
     /* Test if the half of the set can be updated in bulk */
     data_agr.set_features_for_labels(neuron_data_simulation, 0, 0, (sample_number * sequence_size)/2); /* set the error for the first half */
     data_agr.set_features_for_labels(neuron_data_simulation, 0, (sample_number * sequence_size)/2, (sample_number * sequence_size)/2); /* set the error for the second half */
@@ -152,12 +154,29 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
     data_agr.set_features_for_labels(neuron_data_simulation, 0, (sample_number * sequence_size * 2)/4, (sample_number * sequence_size)/4);
     data_agr.set_features_for_labels(neuron_data_simulation, 0, (sample_number * sequence_size * 3)/4, (sample_number * sequence_size)/4);
 
-    Catch::StringMaker<sdouble32>::precision  = 15;
     for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
       Approx(
         pow(set_distance,2)/(double_literal(2.0)*sample_number * sequence_size)
       ).epsilon(0.00000000000001) == data_agr.get_error(i)
+    );
+
+    REQUIRE( /* Error: (distance^2)/2 */
+      Approx(pow(set_distance,2)/double_literal(2.0)).epsilon(0.00000000000001) == data_agr.get_error_sum()
+    );
+
+    /* Check also the bulk sequenced interface */
+    set_distance *= (rand()%10 / double_literal(10.0));
+    neuron_data_simulation = deque<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
+
+    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), 0, data_agr.get_sequence_size());
+    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), 0, data_agr.get_sequence_size());
+
+    for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
+    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
+      Approx(
+        pow(set_distance,2)/(double_literal(2.0)*sample_number * sequence_size)
+      ).margin(0.00000000000001) == data_agr.get_error(i)
     );
 
     REQUIRE( /* Error: (distance^2)/2 */

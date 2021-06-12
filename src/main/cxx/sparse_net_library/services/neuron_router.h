@@ -162,7 +162,7 @@ public:
       if(the_front.size() == front_index)
         break; /* Only go through the front, for checking. The remaining Neurons shall be resetted */
       if(subset_index != the_front[front_index]){ /* The indices have to match */
-        throw new std::runtime_error("Subset mismatch!");
+        throw std::runtime_error("Subset mismatch!");
       }else ++front_index;
     }
     /* This point is not reachable if there is a mismatch */

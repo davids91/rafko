@@ -39,7 +39,7 @@ public:
     switch(slot_type){
       case SERV_SLOT_TO_RUN: return std::make_unique<Server_slot_run_net>();
       case SERV_SLOT_TO_APPROXIMIZE: return std::make_unique<Server_slot_approximize_net>();
-      default: throw new std::runtime_error("Invalid or unsupported SLot type given to factory!");
+      default: throw std::runtime_error("Invalid or unsupported SLot type given to factory!");
     }
   }
 };

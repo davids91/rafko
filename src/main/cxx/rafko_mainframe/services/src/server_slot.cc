@@ -64,7 +64,7 @@ Slot_response Server_slot::get_status(void) const{
 
 string Server_slot::get_uuid(void) const{
   if(0 != service_slot->slot_id().compare("")) return service_slot->slot_id();
-    else throw new std::runtime_error("Empty UUID is queried!");
+    else throw std::runtime_error("Empty UUID is queried!");
 }
 
 void Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sample_index, Neural_io_stream& target) const{
@@ -114,7 +114,7 @@ SparseNet* Server_slot::build_network_from_request(Build_network_request&& reque
     for(const sint32& allowed : request.allowed_transfers_by_layer()){
       if(transfer_functions_IsValid(static_cast<transfer_functions>(allowed)))
         allowed_transfers[layer_index++] = vector<transfer_functions>(1, static_cast<transfer_functions>(allowed));
-      else throw new std::runtime_error("Unknown transfer function detected!");
+      else throw std::runtime_error("Unknown transfer function detected!");
     }
     return Sparse_net_builder(context).input_size(request.input_size())
       .expected_input_range(request.expected_input_range())

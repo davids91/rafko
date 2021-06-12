@@ -52,29 +52,41 @@ void Data_aggregate::set_features_for_labels(
     error_state.back().error_sum = 0;
     for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
       error_state.back().error_sum += error_state.back().sample_errors[sample_index];
-  }else throw new std::runtime_error("Label index out of bounds!");
+  }else throw std::runtime_error("Label index out of bounds!");
 }
 
 void Data_aggregate::set_features_for_sequences(
-  const deque<vector<sdouble32>>& neuron_data,
-  uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate,
+  const deque<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index,
+  uint32 sequence_start_index, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation
 ){
-  if((raw_start_index + labels_to_evaluate) <= error_state.back().sample_errors.size()){
+  if((sequence_start_index + sequences_to_evaluate) <= get_number_of_sequences()){
+    if((start_index_in_sequence + sequence_truncation) > get_sequence_size())
+      throw std::runtime_error("Sequence truncation indices out of bounds!");
+    uint32 raw_start_index = sequence_start_index * get_sequence_size();
+    uint32 labels_to_evaluate = sequences_to_evaluate * get_sequence_size();
     vector<sdouble32>& resulting_errors = common_datapool.reserve_buffer(labels_to_evaluate);
+    
     cost_function->get_feature_errors(
       label_samples, neuron_data, resulting_errors,
       raw_start_index, 0, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
     );
-    std::copy(
+    std::copy_if(
       resulting_errors.begin(),resulting_errors.end(),
-      error_state.back().sample_errors.begin() + raw_start_index
+      error_state.back().sample_errors.begin() + raw_start_index,
+      [=](uint32 i){ /* return with true if the current index is inside a sequence inbetween the start and the truncated */
+        uint32 index_inside_sequence = i % get_sequence_size();
+        return( /* Copy the data in case the curent index inside the sequence  */
+          (start_index_in_sequence <= index_inside_sequence) /* is between the starting index */
+          &&((start_index_in_sequence + sequence_truncation) > index_inside_sequence) /* and not yet truncated */
+        );
+      }
     );
     common_datapool.release_buffer(resulting_errors);
     error_state.back().error_sum = 0;
     for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
       error_state.back().error_sum += error_state.back().sample_errors[sample_index];
-  }else throw new std::runtime_error("Label index out of bounds!");
+  }else throw std::runtime_error("Sequence index out of bounds!");
 }
 
 } /* namespace sparse_net_library */

@@ -29,10 +29,10 @@ void Cost_function::get_feature_errors(
   uint32 label_start, uint32 error_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
 ){
   if((label_start + labels_to_evaluate) > labels.size())
-    throw new std::runtime_error("Label index out of bounds with Neuron data!");
+    throw std::runtime_error("Label index out of bounds with Neuron data!");
 
   if(neuron_data.size() < labels_to_evaluate)
-    throw new std::runtime_error("Can't evaluate more labels, than there is data provided!");
+    throw std::runtime_error("Can't evaluate more labels, than there is data provided!");
 
   uint32 neuron_data_start_index = neuron_start;
   uint32 label_error_start_index = error_start;
