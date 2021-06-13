@@ -56,8 +56,8 @@ public:
    * @param      output_neuron_data   The reference to transfer function output
    */
    void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data) const{
-     vector<sdouble32>& used_buffer = common_data_pool.reserve_buffer(input_iterator.size());
-     solve(input_data, output_neuron_data, used_buffer);
+     vector<sdouble32>& used_buffer = common_data_pool.reserve_buffer(get_required_tmp_data_size());
+     solve_internal(input_data, output_neuron_data, used_buffer);
      common_data_pool.release_buffer(used_buffer);
    }
 
@@ -70,9 +70,33 @@ public:
     * @param      used_data_pool       The reference to a datapool the partial solver may use for intermediate calculations
     */
    void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data, DataPool<sdouble32>& used_data_pool) const{
-     vector<sdouble32>& used_buffer = used_data_pool.reserve_buffer(input_iterator.size());
-     solve(input_data, output_neuron_data, used_buffer);
+     vector<sdouble32>& used_buffer = used_data_pool.reserve_buffer(get_required_tmp_data_size());
+     solve_internal(input_data, output_neuron_data, used_buffer);
      used_data_pool.release_buffer(used_buffer);
+   }
+
+   /**
+    * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference
+    *             and uses the provided vector for storing intermediate calculations. It shall resize the provided temp_data
+    *             to fit buffer needs.
+    *
+    * @param      input_data           The reference to collect input data from
+    * @param      output_neuron_data   The reference to transfer function output
+    * @param      temp_data            The reference a vector allocated to keep the required collected inputs
+    */
+   void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
+     temp_data.resize(get_required_tmp_data_size());
+     solve_internal(input_data, output_neuron_data, temp_data);
+   }
+
+   /**
+    * @brief      Provides the number of vector elements needed to solve the stored partial solution to
+    *             store the temporary data for the calculations
+    *
+    * @return     True if detail is valid, False otherwise.
+    */
+   uint32 get_required_tmp_data_size(void) const{
+     return input_iterator.size();
    }
 
   /**
@@ -108,13 +132,14 @@ private:
 
   /**
    * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference
-   *             and uses the provided vector for storing intermediate calculations
+   *             and uses the provided vector for storing intermediate calculations. temp_data needs to be appropriately sized
+   *             to ensure that there is enough elements in it to collect all required partial solution input data
    *
    * @param      input_data           The reference to collect input data from
    * @param      output_neuron_data   The reference to transfer function output
    * @param      temp_data            The reference a vector allocated to keep the required collected inputs
    */
-  void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data, vector<sdouble32>& temp_data) const;
+  void solve_internal(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data, vector<sdouble32>& temp_data) const;
 
 };
 

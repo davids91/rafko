@@ -23,7 +23,9 @@
 
 namespace sparse_net_library{
 
-Solution_solver::Solution_solver(const Solution& to_solve, Service_context& context)
+using std::ref;
+
+Solution_solver::Builder::Builder(const Solution& to_solve, Service_context& context)
 :  solution(to_solve)
 ,  service_context(context)
 {
@@ -35,16 +37,14 @@ Solution_solver::Solution_solver(const Solution& to_solve, Service_context& cont
       partial_solvers[row_iterator].push_back( Partial_solution_solver(
         solution.partial_solutions(partial_index_at_row_start + column_index), context
       )); /* Initialize a solver for this partial solution element */
+      if(partial_solvers[row_iterator][column_index].get_required_tmp_data_size() > max_tmp_data_needed)
+        max_tmp_data_needed = partial_solvers[row_iterator][column_index].get_required_tmp_data_size();
     }
     partial_index_at_row_start += solution.cols(row_iterator);
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
 
-void Solution_solver::solve(const vector<sdouble32>& input, DataRingbuffer& output) const{
-
-  using std::ref;
-  using std::min;
-
+void Solution_solver::solve(const vector<sdouble32>& input, DataRingbuffer& output, const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool) const{
   if(0 < solution.cols_size()){
     uint32 col_iterator;
     vector<thread> solve_threads;
@@ -53,11 +53,13 @@ void Solution_solver::solve(const vector<sdouble32>& input, DataRingbuffer& outp
       col_iterator = 0;
       if(0 == solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
       while(col_iterator < solution.cols(row_iterator)){
-        for(uint16 i = 0; i < service_context.get_max_solve_threads(); ++i){
+        for(uint16 thread_index = 0; thread_index < service_context.get_max_solve_threads(); ++thread_index){
           if(col_iterator < solution.cols(row_iterator)){
-            void (Partial_solution_solver::*solve_func_ptr)(const vector<sdouble32>&, DataRingbuffer&) const = &Partial_solution_solver::solve;
-            solve_threads.push_back(thread(solve_func_ptr,
-              partial_solvers[row_iterator][col_iterator], ref(input), ref(output)
+            void (Partial_solution_solver::*solve_func_ptr)(const vector<sdouble32>&, DataRingbuffer&, vector<sdouble32>&) const
+              = &Partial_solution_solver::solve;
+            solve_threads.push_back(thread(
+              solve_func_ptr, partial_solvers[row_iterator][col_iterator],
+              ref(input), ref(output), ref(tmp_data_pool[thread_index].get())
             ));
             ++col_iterator;
           }else break;

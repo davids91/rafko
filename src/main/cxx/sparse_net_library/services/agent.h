@@ -20,10 +20,16 @@
 
 #include "rafko_global.h"
 
+#include <functional>
+
 #include "gen/solution.pb.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
+#include "sparse_net_library/models/data_pool.h"
 
 namespace sparse_net_library{
+
+
+using std::reference_wrapper;
 
 /**
  * @brief      This class serves as a base for reinforcement learning agent, which provides output data
@@ -31,14 +37,27 @@ namespace sparse_net_library{
  */
 class Agent{
 public:
+  Agent(uint32 required_temp_data_size_, uint32 required_tmp_buffer_num_)
+  :  required_temp_data_size(required_temp_data_size_)
+  ,  required_tmp_buffer_num(required_tmp_buffer_num_)
+  { }
 
   /**
-   * @brief      Solves the Solution given in the constructor, considering the previous runs
+   * @brief      Solves the Solution provided in the constructor, previous neural information is supposedly available in @output buffer
    *
    * @param[in]      input    The input data to be taken
    * @param          output   The used Output data to write the results to
    */
-  virtual void solve(const vector<sdouble32>& input, DataRingbuffer& output) const = 0;
+  void solve(const vector<sdouble32>& input, DataRingbuffer& output) const;
+
+  /**
+   * @brief      Solves the Solution provided in the constructor, previous neural information is supposedly available in @output buffer
+   *
+   * @param[in]      input            The input data to be taken
+   * @param          output           The used Output data to write the results to
+   * @param[in]      tmp_data_pool    The already allocated data pool to be used to store intermediate data
+   */
+  virtual void solve(const vector<sdouble32>& input, DataRingbuffer& output, const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool) const = 0;
 
   /**
    * @brief      Provide the underlying solution the solver is built to solve.
@@ -48,6 +67,12 @@ public:
   virtual const Solution& get_solution(void) const = 0;
 
   virtual ~Agent(void) = default;
+private:
+  static DataPool<sdouble32> common_data_pool;
+
+  uint32 required_temp_data_size;
+  uint32 required_tmp_buffer_num;
+
 };
 
 } /* namespace sparse_net_library */

@@ -28,7 +28,7 @@ namespace sparse_net_library {
 
 DataPool<sdouble32> Partial_solution_solver::common_data_pool;
 
-void Partial_solution_solver::solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
+void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
   sdouble32 new_neuron_data = 0;
   sdouble32 new_neuron_input;
   uint32 weight_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */

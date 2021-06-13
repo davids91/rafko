@@ -294,7 +294,7 @@ void print_weights(SparseNet& net, Solution& solution){
 }
 
 void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, SparseNet& net, Service_context& service_context){
-  Solution_solver sample_solver(*Solution_builder(service_context).build(net), service_context);
+  unique_ptr<Solution_solver> sample_solver(Solution_solver::Builder(*Solution_builder(service_context).build(net), service_context).build());
   vector<sdouble32> neuron_data(data_set.get_sequence_size());
   std::cout.precision(2);
   std::cout << std::endl << "Training sample["<< sample_sequence_index <<"]:" << std::endl;
@@ -310,12 +310,12 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
   std::cout << "--------------expected:" << std::endl;
   std::cout.precision(2);
   DataRingbuffer output_data(
-    std::max(data_set.get_sequence_size(), sample_solver.get_solution().network_memory_length()),
-    sample_solver.get_solution().neuron_number()
+    std::max(data_set.get_sequence_size(), sample_solver->get_solution().network_memory_length()),
+    sample_solver->get_solution().neuron_number()
   );
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
     std::cout << "["<< data_set.get_label_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
-    sample_solver.solve(data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j), output_data);
+    sample_solver->Agent::solve(data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j), output_data);
     neuron_data[j] = output_data.get_element(0).back();
   }
   std::cout << std::endl;

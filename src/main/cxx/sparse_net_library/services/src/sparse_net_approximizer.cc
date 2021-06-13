@@ -40,7 +40,7 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  train_set(train_set_)
 ,  test_set(test_set_)
 ,  net_solution(Solution_builder(context).build(net))
-,  solver(make_unique<Solution_solver>(*net_solution, service_context))
+,  solver(Solution_solver::Builder(*net_solution, service_context).build())
 ,  neuron_value_buffers( context.get_max_solve_threads(), DataRingbuffer( net_solution->network_memory_length(), net_solution->neuron_number()) )
 ,  neuron_outputs_to_evaluate((context.get_max_solve_threads() * train_set.get_sequence_size()), vector<sdouble32>(net_solution->neuron_number()))
 ,  solve_threads()

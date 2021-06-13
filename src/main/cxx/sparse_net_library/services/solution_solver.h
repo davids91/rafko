@@ -21,12 +21,14 @@
 #include "rafko_global.h"
 
 #include <vector>
+#include <memory>
 #include <thread>
 #include <atomic>
 #include <utility>
+#include <functional>
 
 #include "gen/solution.pb.h"
-#include "sparse_net_library/models/agent.h"
+#include "sparse_net_library/services/agent.h"
 #include "sparse_net_library/models/data_ringbuffer.h"
 
 #include "sparse_net_library/services/partial_solution_solver.h"
@@ -35,6 +37,8 @@ namespace sparse_net_library{
 
 using std::vector;
 using std::thread;
+using std::reference_wrapper;
+using std::unique_ptr;
 
 /**
  * @brief      This class Processes a @Solution given in its constructor and handles
@@ -42,23 +46,44 @@ using std::thread;
  */
 class Solution_solver : public Agent{
 public:
-  Solution_solver(const Solution& to_solve, Service_context& context);
   Solution_solver(const Solution_solver& other) = delete;/* Copy constructor */
   Solution_solver(Solution_solver&& other) = delete; /* Move constructor */
   Solution_solver& operator=(const Solution_solver& other) = delete; /* Copy assignment */
   Solution_solver& operator=(Solution_solver&& other) = delete; /* Move assignment */
   ~Solution_solver(void) = default;
 
-  /* Methods taken from Agent */
-  void solve(const vector<sdouble32>& input, DataRingbuffer& output) const;
+  /* +++ Methds taken from @Agent +++ */
+  void solve(const vector<sdouble32>& input, DataRingbuffer& output, const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool) const;
   const Solution& get_solution(void) const{
     return solution;
   }
+  /* --- Methds taken from @Agent --- */
 
 private:
+  Solution_solver(const Solution& to_solve, Service_context& context, vector<vector<Partial_solution_solver>> partial_solvers_, uint32 max_tmp_data_needed)
+  :  Agent(max_tmp_data_needed, context.get_max_solve_threads())
+  ,  solution(to_solve)
+  ,  service_context(context)
+  ,  partial_solvers(partial_solvers_)
+  { }
+
   const Solution& solution;
   Service_context& service_context;
   vector<vector<Partial_solution_solver>> partial_solvers;
+
+public:
+  class Builder{
+  public:
+    Builder(const Solution& to_solve, Service_context& context);
+    unique_ptr<Solution_solver> build(void){
+      return unique_ptr<Solution_solver>(new Solution_solver(solution, service_context, partial_solvers, max_tmp_data_needed));
+    }
+  private:
+    const Solution& solution;
+    Service_context& service_context;
+    vector<vector<Partial_solution_solver>> partial_solvers;
+    uint32 max_tmp_data_needed;
+  };
 };
 
 } /* namespace sparse_net_library */

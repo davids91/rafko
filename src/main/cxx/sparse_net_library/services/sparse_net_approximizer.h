@@ -25,7 +25,7 @@
 
 #include "gen/common.pb.h"
 
-#include "sparse_net_library/models/agent.h"
+#include "sparse_net_library/services/agent.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/services/weight_updater.h"

@@ -34,6 +34,7 @@ TRAINER_SOURCES += ../sparse_net_library/services/src/sparse_net_approximizer.cc
 HELPER_SOURCES =  ../sparse_net_library/models/src/neuron_info.cc ../sparse_net_library/models/src/transfer_function.cc
 HELPER_SOURCES +=  ../sparse_net_library/models/src/cost_function.cc ../sparse_net_library/models/src/data_aggregate.cc
 HELPER_SOURCES += ../sparse_net_library/services/src/weight_experience_space.cc
+HELPER_SOURCES += ../sparse_net_library/services/src/agent.cc
 HELPER_SOURCES += ../rafko_mainframe/services/src/training_logger.cc
 
 LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(HELPER_SOURCES)

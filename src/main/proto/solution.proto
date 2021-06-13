@@ -78,8 +78,7 @@ message Partial_solution{
 
 /**
  * @brief      A collection of independent @Partial_solution messages to be executed in parallel.
- *             Each row depends on the previous one, but partial solutions in one row can be solved
- *             in paralell.
+ *             Each row depends on the previous one, but partial solutions in one row can be solved in paralell.
  *             Since rows are usually next to one another, this entity suggest the Neural Network
  *             structure resembles a top-down image (where the input is at the top, the output is at the bottom),
  *             rather than the more classical left-right image (where the input is on the left, and the output is on the right side of the net).

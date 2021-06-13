@@ -31,7 +31,7 @@
 
 #include "rafko_mainframe/models/service_context.h"
 
-#include "sparse_net_library/models/agent.h"
+#include "sparse_net_library/services/agent.h"
 #include "sparse_net_library/models/data_pool.h"
 #include "sparse_net_library/models/cost_function.h"
 #include "sparse_net_library/services/function_factory.h"
