@@ -21,7 +21,6 @@
 #include "rafko_global.h"
 
 #include <vector>
-#include <deque>
 #include <atomic>
 #include <mutex>
 
@@ -36,7 +35,6 @@
 namespace sparse_net_library {
 
 using std::vector;
-using std::deque;
 using std::mutex;
 using std::atomic;
 
@@ -60,6 +58,7 @@ public:
    void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data) const{
      vector<sdouble32>& used_buffer = common_data_pool.reserve_buffer(input_iterator.size());
      solve(input_data, output_neuron_data, used_buffer);
+     common_data_pool.release_buffer(used_buffer);
    }
 
    /**
@@ -73,6 +72,7 @@ public:
    void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data, DataPool<sdouble32>& used_data_pool) const{
      vector<sdouble32>& used_buffer = used_data_pool.reserve_buffer(input_iterator.size());
      solve(input_data, output_neuron_data, used_buffer);
+     used_data_pool.release_buffer(used_buffer);
    }
 
   /**
