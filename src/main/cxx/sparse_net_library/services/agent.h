@@ -51,6 +51,13 @@ public:
   void solve(const vector<sdouble32>& input, DataRingbuffer& output) const;
 
   /**
+   * @brief     Provids the size of the buffer it was declared with
+   */
+  uint32 get_required_temp_data_size(){
+    return required_temp_data_size;
+  }
+
+  /**
    * @brief      Solves the Solution provided in the constructor, previous neural information is supposedly available in @output buffer
    *
    * @param[in]      input            The input data to be taken

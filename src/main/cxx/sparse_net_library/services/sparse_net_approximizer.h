@@ -22,12 +22,14 @@
 
 #include <cmath>
 #include <vector>
+#include <functional>
 
 #include "gen/common.pb.h"
 
-#include "sparse_net_library/services/agent.h"
 #include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/models/data_pool.h"
 #include "sparse_net_library/models/data_aggregate.h"
+#include "sparse_net_library/services/agent.h"
 #include "sparse_net_library/services/weight_updater.h"
 
 #include "sparse_net_library/services/solution_solver.h"
@@ -39,6 +41,7 @@ using std::min;
 using std::vector;
 using std::unique_ptr;
 using std::thread;
+using std::reference_wrapper;
 
 using rafko_mainframe::Service_context;
 
@@ -187,6 +190,8 @@ private:
   vector<DataRingbuffer> neuron_value_buffers; /* One DataRingbuffer per thread */
   vector<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   vector<thread> solve_threads;
+  DataPool<sdouble32> instance_data_pool;
+  vector<reference_wrapper<vector<sdouble32>>> used_data_pools;
 
   Gradient_fragment gradient_fragment;
   uint32 iteration;
