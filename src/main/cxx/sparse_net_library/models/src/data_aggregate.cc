@@ -40,6 +40,22 @@ void Data_aggregate::fill(Data_set& samples){
   }
 }
 
+void Data_aggregate::set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data){
+  if(label_samples.size() > sample_index){
+    if(!exposed_to_multithreading){
+      std::lock_guard<mutex> my_lock(dataset_mutex);
+      error_state.back().error_sum -= error_state.back().sample_errors[sample_index];
+    }
+    error_state.back().sample_errors[sample_index] = cost_function->get_feature_error(
+      label_samples[sample_index], neuron_data, get_number_of_label_samples()
+    );
+    if(!exposed_to_multithreading){
+      std::lock_guard<mutex> my_lock(dataset_mutex);
+      error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+    }
+  }else throw std::runtime_error("Sample index out of bounds!");
+}
+
 void Data_aggregate::set_features_for_labels(
   const vector<vector<sdouble32>>& neuron_data,
   uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate
@@ -49,9 +65,12 @@ void Data_aggregate::set_features_for_labels(
       label_samples, neuron_data, error_state.back().sample_errors,
       raw_start_index, raw_start_index, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
     );
-    error_state.back().error_sum = 0;
-    for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
-      error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+    if(!exposed_to_multithreading){
+      std::lock_guard<mutex> my_lock(dataset_mutex);
+      error_state.back().error_sum = 0;
+      for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
+        error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+    }
   }else throw std::runtime_error("Label index out of bounds!");
 }
 
@@ -86,10 +105,20 @@ void Data_aggregate::set_features_for_sequences(
         ++index_inside_errors;
     });
     common_datapool.release_buffer(resulting_errors);
-    error_state.back().error_sum = 0;
-    for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
-      error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+    if(!exposed_to_multithreading){
+      std::lock_guard<mutex> my_lock(dataset_mutex);
+      error_state.back().error_sum = 0;
+      for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
+        error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+    }
   }else throw std::runtime_error("Sequence index out of bounds!");
+}
+
+void Data_aggregate::conceal_from_multithreading(void){
+  exposed_to_multithreading = false;
+  error_state.back().error_sum = 0;
+  for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
+    error_state.back().error_sum += error_state.back().sample_errors[sample_index];
 }
 
 } /* namespace sparse_net_library */

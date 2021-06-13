@@ -89,6 +89,8 @@ public:
      })
   ,  cost_function(cost_function_)
   ,  solve_threads()
+  ,  exposed_to_multithreading(false)
+  ,  dataset_mutex()
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_);
@@ -107,6 +109,8 @@ public:
      })
   ,  cost_function(cost_function_)
   ,  solve_threads()
+  ,  exposed_to_multithreading(false)
+  ,  dataset_mutex()
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
   }
@@ -125,6 +129,8 @@ public:
      })
   ,  cost_function(Function_factory::build_cost_function(net, the_function, service_context_))
   ,  solve_threads()
+  ,  exposed_to_multithreading(false)
+  ,  dataset_mutex()
   { solve_threads.reserve(service_context_.get_max_solve_threads()); }
 
   /**
@@ -134,15 +140,7 @@ public:
    * @param[in]  sample_index  The sample index
    * @param[in]  neuron_data   The neuron data
    */
-  void set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data){
-    if(label_samples.size() > sample_index){
-      error_state.back().error_sum -= error_state.back().sample_errors[sample_index];
-      error_state.back().sample_errors[sample_index] = cost_function->get_feature_error(
-        label_samples[sample_index], neuron_data, get_number_of_label_samples()
-      );
-      error_state.back().error_sum += error_state.back().sample_errors[sample_index];
-    }else throw std::runtime_error("Sample index out of bounds!");
-  }
+  void set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data);
 
   /**
    * @brief      Same as @set_feature_for_label but in bulk
@@ -177,24 +175,32 @@ public:
    * @brief      Sets the error values to the default value
    */
   void reset_errors(void){
-    for(sdouble32& sample_error : error_state.back().sample_errors)
-      sample_error = (double_literal(1.0)/label_samples.size());
-    error_state.back().error_sum = double_literal(1.0);
+    if(!exposed_to_multithreading){
+      std::lock_guard<mutex> my_lock(dataset_mutex);
+      for(sdouble32& sample_error : error_state.back().sample_errors)
+        sample_error = (double_literal(1.0)/label_samples.size());
+      error_state.back().error_sum = double_literal(1.0);
+    }else throw std::runtime_error("Can't reset errors while set is exposed to multithreading!");
   }
 
   /**
    * @brief      Stores the current error values for later re-use
    */
   void push_state(void){
-    error_state.push_back((error_state.back()));
+    if(!exposed_to_multithreading){
+      std::lock_guard<mutex> my_lock(dataset_mutex);
+      error_state.push_back((error_state.back()));
+    }else throw std::runtime_error("Can't modify state while set is exposed to multithreading!");
   }
 
   /**
    * @brief      Restores the previously stored state, if there is any
    */
   void pop_state(void){
-    if(1 < error_state.size())
-      error_state.pop_back();
+    if(!exposed_to_multithreading){
+      std::lock_guard<mutex> my_lock(dataset_mutex);
+      if(1 < error_state.size()) error_state.pop_back();
+    }else throw std::runtime_error("Can't modify state while set is exposed to multithreading!");
   }
 
   /**
@@ -242,7 +248,10 @@ public:
    * @return     The sum of the errors for all of the samples.
    */
   sdouble32 get_error_sum(void) const{
-    return error_state.back().error_sum;
+    if(!exposed_to_multithreading){
+      std::lock_guard<mutex> my_lock(dataset_mutex);
+      return error_state.back().error_sum;
+    } else throw std::runtime_error("Can't query error state while the set is exposd to multithreading");
   }
 
   /**
@@ -251,7 +260,10 @@ public:
    * @return     The erro average.
    */
   sdouble32 get_error_avg() const{
-    return error_state.back().error_sum / get_number_of_label_samples();
+    if(!exposed_to_multithreading){
+      std::lock_guard<mutex> my_lock(dataset_mutex);
+      return error_state.back().error_sum / get_number_of_label_samples();
+    } else throw std::runtime_error("Can't query error state while the set is exposd to multithreading");
   }
 
   /**
@@ -310,6 +322,20 @@ public:
     return prefill_sequences;
   }
 
+  /**
+   * @brief     Puts the set in a thread-safe state, enabling multi-threaded set access to the error_values vector, but
+   *            disabling error_sum calculations(one of the main common part of the set).
+   */
+  void expose_to_multithreading(void){
+    exposed_to_multithreading = true;
+  }
+
+  /**
+   * @brief     Restores the set to a non-thread-safe state, disabling multi-threaded set access to the error_values vector, but
+   *            re-enabling error_sum calculations(one of the main common part of the set). Also re-calculates error value sum
+   */
+  void conceal_from_multithreading(void);
+
 private:
   struct error_state_type{
     vector<sdouble32> sample_errors;
@@ -323,7 +349,8 @@ private:
   vector<error_state_type> error_state;
   shared_ptr<Cost_function> cost_function;
   vector<thread> solve_threads; /* The threads to be started during evaluating the network */
-  mutex dataset_mutex;
+  bool exposed_to_multithreading; /* basically decides whether or not error sum calculation is enabled. */
+  mutable mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a mutex is required */
 
   static DataPool<sdouble32> common_datapool;
 

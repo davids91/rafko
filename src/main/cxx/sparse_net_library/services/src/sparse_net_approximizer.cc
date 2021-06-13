@@ -49,7 +49,6 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  loops_unchecked(context.get_insignificant_changes())
 ,  sequence_truncation(min(context.get_memory_truncation(), train_set.get_sequence_size()))
 ,  last_applied_direction(net.weight_table_size())
-,  dataset_mutex()
 {
   (void)context.set_minibatch_size(max(1u,min(
     train_set.get_number_of_sequences(),context.get_minibatch_size()
@@ -71,7 +70,8 @@ void Sparse_net_approximizer::evaluate(void){
 
 void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion){
   if(data_set.get_number_of_sequences() < (sequence_start + sequences_to_evaluate))
-   throw std::runtime_error("Sequence interval out of bounds!");
+    throw std::runtime_error("Sequence interval out of bounds!");
+  data_set.expose_to_multithreading();
   for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += context.get_max_solve_threads()){ /* one evaluation iteration */
     for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&((sequence_start + sequences_to_evaluate) > (sequence_index + thread_index))); ++thread_index){
       solve_threads.push_back(thread(&Sparse_net_approximizer::evaluate_single_sequence, this, ref(data_set), sequence_index, thread_index));
@@ -83,14 +83,13 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
       }
     }
 
-    /* Upload results to the data set */
-    std::lock_guard<mutex> my_lock(dataset_mutex);
-    data_set.set_features_for_sequences(
+    data_set.set_features_for_sequences( /* Upload results to the data set */
       neuron_outputs_to_evaluate, 0u,
       sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),static_cast<uint32>(context.get_max_solve_threads())),
       start_index_in_sequence, sequence_truncation
     );
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
+  data_set.conceal_from_multithreading();
 }
 
 void Sparse_net_approximizer::evaluate_single_sequence(Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index){

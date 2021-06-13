@@ -22,7 +22,6 @@
 
 #include <cmath>
 #include <vector>
-#include <mutex>
 
 #include "gen/common.pb.h"
 
@@ -39,7 +38,6 @@ using std::max;
 using std::min;
 using std::vector;
 using std::unique_ptr;
-using std::mutex;
 using std::thread;
 
 using rafko_mainframe::Service_context;
@@ -196,7 +194,6 @@ private:
   uint32 sequence_truncation;
   unique_ptr<Weight_updater> weight_updater;
   vector<sdouble32> last_applied_direction; /* The weight gradients applied to the network in the last iteration */
-  mutex dataset_mutex;
 
   /**
    * @brief      Insert an element to the given position into the given field by
