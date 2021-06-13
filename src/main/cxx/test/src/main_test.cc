@@ -20,8 +20,6 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include <deque>
-
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
@@ -39,8 +37,6 @@ int main( int argc, char* argv[] ) {
 }
 
 namespace sparse_net_library_test {
-
-using std::deque;
 
 using sparse_net_library::DataRingbuffer;
 using sparse_net_library::Data_aggregate;
@@ -351,8 +347,8 @@ Data_aggregate* create_addition_dataset(
 
   using std::vector;
 
-  deque<vector<sdouble32>> net_inputs(number_of_samples);
-  deque<vector<sdouble32>> addition_dataset(number_of_samples);
+  vector<vector<sdouble32>> net_inputs(number_of_samples);
+  vector<vector<sdouble32>> addition_dataset(number_of_samples);
 
   srand(time(nullptr));
   sdouble32 max_x = DBL_MIN;
@@ -373,8 +369,8 @@ Data_aggregate* create_addition_dataset(
   return google::protobuf::Arena::Create<Data_aggregate>(
     service_context.get_arena_ptr(),
     service_context,
-    deque<vector<sdouble32>>(net_inputs),
-    deque<vector<sdouble32>>(addition_dataset),
+    vector<vector<sdouble32>>(net_inputs),
+    vector<vector<sdouble32>>(addition_dataset),
     net, the_function
   );
 }
@@ -383,8 +379,8 @@ Data_aggregate* create_sequenced_addition_dataset(
   uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function, Service_context& service_context
 ){
   uint32 carry_bit;
-  deque<vector<sdouble32>> net_inputs(sequence_size * number_of_samples);
-  deque<vector<sdouble32>> addition_dataset(sequence_size * number_of_samples);
+  vector<vector<sdouble32>> net_inputs(sequence_size * number_of_samples);
+  vector<vector<sdouble32>> addition_dataset(sequence_size * number_of_samples);
 
   srand(time(nullptr));
   for(uint32 i = 0;i < number_of_samples;++i){
@@ -411,8 +407,8 @@ Data_aggregate* create_sequenced_addition_dataset(
   return google::protobuf::Arena::Create<Data_aggregate>(
     service_context.get_arena_ptr(),
     service_context,
-    deque<vector<sdouble32>>(net_inputs),
-    deque<vector<sdouble32>>(addition_dataset),
+    vector<vector<sdouble32>>(net_inputs),
+    vector<vector<sdouble32>>(addition_dataset),
     net, the_function, sequence_size
   );
 

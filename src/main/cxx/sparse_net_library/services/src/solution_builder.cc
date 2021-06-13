@@ -18,6 +18,7 @@
 #include "sparse_net_library/services/solution_builder.h"
 
 #include <cmath>
+#include <deque>
 #include <memory>
 #include <stdexcept>
 
@@ -29,6 +30,7 @@
 
 namespace sparse_net_library{
 
+using std::deque;
 using std::unique_ptr;
 using std::ref;
 using std::lock_guard;

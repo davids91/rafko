@@ -22,7 +22,6 @@
 
 #include <memory>
 #include <vector>
-#include <deque>
 #include <thread>
 
 #include "gen/sparse_net.pb.h"
@@ -32,7 +31,6 @@
 namespace sparse_net_library {
 
 using std::vector;
-using std::deque;
 using std::thread;
 
 using rafko_mainframe::Service_context;

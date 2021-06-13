@@ -21,7 +21,7 @@
 #include "rafko_global.h"
 
 #include <cmath>
-#include <deque>
+#include <vector>
 #include <mutex>
 
 #include "gen/common.pb.h"
@@ -37,7 +37,6 @@ namespace sparse_net_library{
 
 using std::max;
 using std::min;
-using std::deque;
 using std::vector;
 using std::unique_ptr;
 using std::mutex;
@@ -188,7 +187,7 @@ private:
   Solution* net_solution;
   unique_ptr<Agent> solver;
   vector<DataRingbuffer> neuron_value_buffers; /* One DataRingbuffer per thread */
-  deque<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
+  vector<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   vector<thread> solve_threads;
 
   Gradient_fragment gradient_fragment;

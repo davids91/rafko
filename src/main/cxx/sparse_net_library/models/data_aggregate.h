@@ -21,7 +21,6 @@
 #include "rafko_global.h"
 
 #include <vector>
-#include <deque>
 #include <memory>
 #include <stdexcept>
 #include <thread>
@@ -40,7 +39,6 @@
 namespace sparse_net_library{
 
 using std::vector;
-using std::deque;
 using std::shared_ptr;
 using std::unique_ptr;
 using std::move;
@@ -97,7 +95,7 @@ public:
   }
 
   Data_aggregate(
-    deque<vector<sdouble32>>&& input_samples_, deque<vector<sdouble32>>&& label_samples_,
+    vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
     shared_ptr<Cost_function> cost_function_, uint32 sequence_size_ = 1
   ): sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))
@@ -115,7 +113,7 @@ public:
 
   Data_aggregate(
     Service_context& service_context_,
-    deque<vector<sdouble32>>&& input_samples_, deque<vector<sdouble32>>&& label_samples_,
+    vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
     SparseNet& net, cost_functions the_function, uint32 sequence_size_ = 1
   ): sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))
@@ -155,7 +153,7 @@ public:
    * @param[in]  labels_to_evaluate       The labels to evaluate
    */
   void set_features_for_labels(
-    const deque<vector<sdouble32>>& neuron_data,
+    const vector<vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
   );
 
@@ -170,7 +168,7 @@ public:
    * @param[in]  sequence_truncation      The sequence truncation
    */
   void set_features_for_sequences(
-    const deque<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index, 
+    const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
     uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
   );
@@ -319,8 +317,8 @@ private:
   };
 
   uint32 sequence_size;
-  deque<vector<sdouble32>> input_samples;
-  deque<vector<sdouble32>> label_samples;
+  vector<vector<sdouble32>> input_samples;
+  vector<vector<sdouble32>> label_samples;
   uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
   vector<error_state_type> error_state;
   shared_ptr<Cost_function> cost_function;

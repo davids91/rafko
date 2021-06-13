@@ -66,7 +66,7 @@ public:
   void collect_subset(uint8 arg_max_solve_threads, sdouble32 arg_device_max_megabytes, bool strict = true);
 
   /**
-   * @brief      Reads an index from the recently collected subset. Shall only be used 
+   * @brief      Reads an index from the recently collected subset. Shall only be used
    *             when a collection is not actually running; It's not thread-safe!
    *
    * @param[in]  subset_index  The subset index
@@ -96,7 +96,7 @@ public:
   /**
    * @brief      If the index in the arguments matches the first index in the subset,
    *             removes the index from it; Sets its neuron state to processed.
-   *             This validation mechanism is to ensure that the user 
+   *             This validation mechanism is to ensure that the user
    *             of the interface knows what index it is removing.
    *
    * @param[in]  neuron_index  The neuron index to compare against
@@ -114,7 +114,7 @@ public:
   /**
    * @brief      If the index in the arguments matches the first index in the subset,
    *             removes the index from it; Sets its neuron state to be in progress.
-   *             This validation mechanism is to ensure that the user 
+   *             This validation mechanism is to ensure that the user
    *             of the interface knows what index it is removing.
    *
    * @param[in]  neuron_index  The neuron index to compare against
@@ -150,8 +150,8 @@ public:
   }
 
   /**
-   * @brief      Resets the neurons in the subset for all but the ones provided in the 
-   *             argument. The list has to match the subset exactly, or the function 
+   * @brief      Resets the neurons in the subset for all but the ones provided in the
+   *             argument. The list has to match the subset exactly, or the function
    *             throws an exception.
    *
    * @param[in]  the_front  The front

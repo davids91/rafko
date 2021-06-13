@@ -41,7 +41,7 @@ void Data_aggregate::fill(Data_set& samples){
 }
 
 void Data_aggregate::set_features_for_labels(
-  const deque<vector<sdouble32>>& neuron_data,
+  const vector<vector<sdouble32>>& neuron_data,
   uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate
 ){
   if((raw_start_index + labels_to_evaluate) <= error_state.back().sample_errors.size()){
@@ -56,7 +56,7 @@ void Data_aggregate::set_features_for_labels(
 }
 
 void Data_aggregate::set_features_for_sequences(
-  const deque<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index,
+  const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index,
   uint32 sequence_start_index, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation
 ){

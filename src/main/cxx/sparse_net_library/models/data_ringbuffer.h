@@ -21,7 +21,6 @@
 #include "rafko_global.h"
 
 #include <vector>
-#include <deque>
 #include <stdexcept>
 
 #include "gen/common.pb.h"
@@ -29,7 +28,6 @@
 namespace sparse_net_library{
 
 using std::vector;
-using std::deque;
 
 /**
  * @brief      This class describes a ringbuffer designed to store the Memory of a Neural Network.
@@ -97,7 +95,7 @@ public:
    *
    * @return     The non-modifyable raw buffer data
    */
-  const deque<vector<sdouble32>>& get_whole_buffer(void) const{
+  const vector<vector<sdouble32>>& get_whole_buffer(void) const{
     return data;
   }
 
@@ -269,7 +267,7 @@ public:
 
 private:
   uint32 current_index;
-  deque<vector<sdouble32>> data;
+  vector<vector<sdouble32>> data;
 
   /**
    * @brief      Gets the buffer index for the given past index

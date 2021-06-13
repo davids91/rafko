@@ -32,7 +32,6 @@ namespace sparse_net_library_test {
 
 using std::unique_ptr;
 using std::make_unique;
-using std::deque;
 using std::vector;
 
 using sparse_net_library::Sparse_net_builder;

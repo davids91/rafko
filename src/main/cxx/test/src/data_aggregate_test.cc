@@ -19,7 +19,6 @@
 #include "test/test_utility.h"
 
 #include <vector>
-#include <deque>
 #include <memory>
 
 #include "gen/common.pb.h"
@@ -31,7 +30,6 @@ namespace sparse_net_library_test {
 
 using std::unique_ptr;
 using std::vector;
-using std::deque;
 
 using sparse_net_library::Data_set;
 using sparse_net_library::Data_aggregate;
@@ -123,13 +121,13 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   CHECK( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
 
   /* test if the error is stored correctly even when the data is provided in bulk */
-  deque<vector<sdouble32>> neuron_data_simulation; /* create dummy neuron data with the configured distance */
+  vector<vector<sdouble32>> neuron_data_simulation; /* create dummy neuron data with the configured distance */
   /*!Note: since the simulated neuron data is always at the same generated value here, it doesn't matter where the evaluation starts from inside the neuron buffer,
    *       i.e. what is the value of neuron_buffer_index, as long as the evaluation is inside the bounds of the array.
    */
   for(uint32 variant = 0; variant < 100; ++variant){
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
-    neuron_data_simulation = deque<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
+    neuron_data_simulation = vector<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
 
     /* Test if the half of the set can be updated in bulk */
     data_agr.set_features_for_labels(neuron_data_simulation, 0, 0, (sample_number * sequence_size)/2); /* set the error for the first half */
@@ -165,7 +163,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
 
     /* Check also the bulk sequenced interface */
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
-    neuron_data_simulation = deque<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
+    neuron_data_simulation = vector<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), 0, data_agr.get_sequence_size());
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), 0, data_agr.get_sequence_size());
 
@@ -183,7 +181,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
     /* Check also with sequence truncation */
     sdouble32 old_set_distence = set_distance;
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
-    neuron_data_simulation = deque<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
+    neuron_data_simulation = vector<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), data_agr.get_sequence_size()/2, data_agr.get_sequence_size()/2);
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), data_agr.get_sequence_size()/2, data_agr.get_sequence_size()/2);
 
