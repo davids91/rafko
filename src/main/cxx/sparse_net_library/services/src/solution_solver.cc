@@ -45,7 +45,11 @@ Solution_solver::Builder::Builder(const Solution& to_solve, Service_context& con
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
 
-void Solution_solver::solve(const vector<sdouble32>& input, DataRingbuffer& output, const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool) const{
+void Solution_solver::solve(
+  const vector<sdouble32>& input, DataRingbuffer& output,
+  const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool,
+  uint32 used_data_pool_start
+) const{
   if(0 < solution.cols_size()){
     uint32 col_iterator;
     vector<thread> solve_threads;
@@ -60,7 +64,7 @@ void Solution_solver::solve(const vector<sdouble32>& input, DataRingbuffer& outp
               = &Partial_solution_solver::solve;
             solve_threads.push_back(thread(
               solve_func_ptr, partial_solvers[row_iterator][col_iterator],
-              ref(input), ref(output), ref(tmp_data_pool[thread_index].get())
+              ref(input), ref(output), ref(tmp_data_pool[used_data_pool_start + thread_index].get())
             ));
             ++col_iterator;
           }else break;

@@ -109,22 +109,18 @@ void Sparse_net_approximizer::evaluate_single_sequence(Data_aggregate& data_set,
   /* Evaluate the current sequence step by step */
   neuron_value_buffers[thread_index].reset();
   for(uint32 prefill_iterator = 0; prefill_iterator < data_set.get_prefill_inputs_number(); ++prefill_iterator){
-    solver->solve(data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index],
-      {
-        used_data_pools.begin() + (thread_index * context.get_max_solve_threads()),
-        used_data_pools.begin() + (thread_index * context.get_max_solve_threads()) + context.get_max_processing_threads()
-      }
+    solver->solve(
+      data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index],
+      used_data_pools, (thread_index * context.get_max_solve_threads())
     ); /* step is included in @solve */
     ++raw_inputs_index;
   }
 
   /* Solve the data and store the result after the inital "prefill" */
   for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
-    solver->solve(data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index],
-      {
-        used_data_pools.begin() + (thread_index * context.get_max_solve_threads()),
-        used_data_pools.begin() + (thread_index * context.get_max_solve_threads()) + context.get_max_processing_threads()
-      }
+    solver->solve(
+      data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index],
+      used_data_pools, (thread_index * context.get_max_solve_threads())
     );
     std::copy( /* copy the result to the eval array */
       neuron_value_buffers[thread_index].get_element(0).begin(),neuron_value_buffers[thread_index].get_element(0).end(),

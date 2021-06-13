@@ -60,11 +60,16 @@ public:
   /**
    * @brief      Solves the Solution provided in the constructor, previous neural information is supposedly available in @output buffer
    *
-   * @param[in]      input            The input data to be taken
-   * @param          output           The used Output data to write the results to
-   * @param[in]      tmp_data_pool    The already allocated data pool to be used to store intermediate data
+   * @param[in]      input                    The input data to be taken
+   * @param          output                   The used Output data to write the results to
+   * @param[in]      tmp_data_pool            The already allocated data pool to be used to store intermediate data
+   * @param[in]      used_data_pool_start     The first index inside @tmp_data_pool to be used
    */
-  virtual void solve(const vector<sdouble32>& input, DataRingbuffer& output, const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool) const = 0;
+  virtual void solve(
+    const vector<sdouble32>& input, DataRingbuffer& output,
+    const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool,
+    uint32 used_data_pool_start = 0
+  ) const = 0;
 
   /**
    * @brief      Provide the underlying solution the solver is built to solve.

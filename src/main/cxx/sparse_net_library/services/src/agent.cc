@@ -27,6 +27,7 @@ DataPool<sdouble32> Agent::common_data_pool;
 
 void Agent::solve(const vector<sdouble32>& input, DataRingbuffer& output) const{
   vector<reference_wrapper<vector<sdouble32>>> tmp_data_pool;
+
   for(uint32 thread_iterator = 0; thread_iterator < required_tmp_buffer_num; ++thread_iterator)
     tmp_data_pool.push_back(common_data_pool.reserve_buffer(required_temp_data_size));
 
