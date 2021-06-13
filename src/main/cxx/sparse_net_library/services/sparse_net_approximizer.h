@@ -41,6 +41,7 @@ using std::deque;
 using std::vector;
 using std::unique_ptr;
 using std::mutex;
+using std::thread;
 
 using rafko_mainframe::Service_context;
 
@@ -188,8 +189,9 @@ private:
   unique_ptr<Agent> solver;
   vector<DataRingbuffer> neuron_value_buffers; /* One DataRingbuffer per thread */
   deque<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
-  Gradient_fragment gradient_fragment;
+  vector<thread> solve_threads;
 
+  Gradient_fragment gradient_fragment;
   uint32 iteration;
   uint32 loops_unchecked;
   uint32 sequence_truncation;
@@ -223,6 +225,14 @@ private:
    */
   void evaluate(Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion);
 
+  /**
+   * @brief      Evaluate a single sequence in a thread-safe manner
+   *
+   * @param      data_set            The data set containing the evaluatable sequence
+   * @param[in]  sequence_index      The sequence to be evaluated inside the @data_set
+   * @param[in]  thread_index        The index of the thread the function is used with inside @solve_threads
+   */
+  void evaluate_single_sequence(Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index);
 };
 
 } /* namespace sparse_net_library */
