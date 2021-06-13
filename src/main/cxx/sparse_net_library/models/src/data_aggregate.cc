@@ -66,22 +66,25 @@ void Data_aggregate::set_features_for_sequences(
     uint32 raw_start_index = sequence_start_index * get_sequence_size();
     uint32 labels_to_evaluate = sequences_to_evaluate * get_sequence_size();
     vector<sdouble32>& resulting_errors = common_datapool.reserve_buffer(labels_to_evaluate);
-    
+
     cost_function->get_feature_errors(
       label_samples, neuron_data, resulting_errors,
       raw_start_index, 0, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
     );
-    std::copy_if(
-      resulting_errors.begin(),resulting_errors.end(),
-      error_state.back().sample_errors.begin() + raw_start_index,
-      [=](uint32 i){ /* return with true if the current index is inside a sequence inbetween the start and the truncated */
-        uint32 index_inside_sequence = i % get_sequence_size();
-        return( /* Copy the data in case the curent index inside the sequence  */
+
+    uint32 index_inside_sequence = 0;
+    uint32 index_inside_errors = raw_start_index;
+    std::for_each( resulting_errors.begin(),resulting_errors.end(),
+    [&](sdouble32 result_error){ /* go through the resulting error vector */
+        if( /* Copy the data in case the curent index inside the sequence */
           (start_index_in_sequence <= index_inside_sequence) /* is between the starting index */
-          &&((start_index_in_sequence + sequence_truncation) > index_inside_sequence) /* and not yet truncated */
-        );
-      }
-    );
+          &&((start_index_in_sequence + sequence_truncation) >= index_inside_sequence) /* and not yet truncated */
+        ){
+          error_state.back().sample_errors[index_inside_errors] = result_error;
+        }
+        index_inside_sequence = ((index_inside_sequence+1) % get_sequence_size());
+        ++index_inside_errors;
+    });
     common_datapool.release_buffer(resulting_errors);
     error_state.back().error_sum = 0;
     for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)

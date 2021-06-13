@@ -42,10 +42,10 @@ using rafko_mainframe::Service_context;
  * Testing Data aggregate implementation and seeing if it converts @Data_set correctly
  * into the data item wih statistics, and take care of statistic error data correctly
  * */
-TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" ) {
+TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   Service_context service_context;
   uint32 sample_number = 50;
-  uint32 sequence_size = 5;
+  uint32 sequence_size = 6;
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
@@ -66,7 +66,7 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 
   /* Test initial error value, then a fully errorless state */
-  CHECK( Approx(data_agr.get_error_sum()).epsilon(0.00000000000001) == double_literal(1.0) );
+  CHECK( Approx(data_agr.get_error_sum()).margin(0.00000000000001) == double_literal(1.0) );
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
     data_agr.set_feature_for_label(i,{expected_label});
   }
@@ -85,15 +85,15 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
     data_agr.set_feature_for_label(i,{expected_label - set_distance});
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
       Approx(
-        pow(set_distance,2)/(double_literal(2.0)*(sample_number * sequence_size))
-      ).epsilon(0.00000000000001) == data_agr.get_error(i)
+        pow(set_distance,2) / (double_literal(2.0) * (sample_number * sequence_size))
+      ).margin(0.00000000000001) == data_agr.get_error(i)
     );
   }
 
   CHECK( /* Error: (distance^2)/(2 * overall number of samples) */
     Approx(
-      pow(set_distance,2)/double_literal(2.0)
-    ).epsilon(0.00000000000001) == data_agr.get_error_sum()
+      pow(set_distance,2) / double_literal(2.0)
+    ).margin(0.00000000000001) == data_agr.get_error_sum()
   );
 
   /* test if setting to different labels correclty updates the error sum */
@@ -115,7 +115,7 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
     CHECK(
       data_agr.get_error(label_index)
       == (
-        (pow((expected_label - faulty_feature),2)/(double_literal(2.0)*(sample_number * sequence_size)))
+        (pow((expected_label - faulty_feature),2) / (double_literal(2.0) * (sample_number * sequence_size)))
       )
     );
     REQUIRE( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
@@ -127,25 +127,23 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
   /*!Note: since the simulated neuron data is always at the same generated value here, it doesn't matter where the evaluation starts from inside the neuron buffer,
    *       i.e. what is the value of neuron_buffer_index, as long as the evaluation is inside the bounds of the array.
    */
-
   for(uint32 variant = 0; variant < 100; ++variant){
-    set_distance *= (rand()%10 / double_literal(10.0));
+    set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
     neuron_data_simulation = deque<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
 
     /* Test if the half of the set can be updated in bulk */
     data_agr.set_features_for_labels(neuron_data_simulation, 0, 0, (sample_number * sequence_size)/2); /* set the error for the first half */
     data_agr.set_features_for_labels(neuron_data_simulation, 0, (sample_number * sequence_size)/2, (sample_number * sequence_size)/2); /* set the error for the second half */
 
-    Catch::StringMaker<sdouble32>::precision  = 15;
     for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
       Approx(
-        pow(set_distance,2)/(double_literal(2.0)*sample_number * sequence_size)
-      ).epsilon(0.00000000000001) == data_agr.get_error(i)
+        pow(set_distance,2) / (double_literal(2.0) * sample_number * sequence_size)
+      ).margin(0.00000000000001) == data_agr.get_error(i)
     );
 
     REQUIRE( /* Error: (distance^2)/2 */
-      Approx(pow(set_distance,2)/double_literal(2.0)).epsilon(0.00000000000001) == data_agr.get_error_sum()
+      Approx(pow(set_distance,2)/double_literal(2.0)).margin(0.00000000000001) == data_agr.get_error_sum()
     );
 
     /* Test if the quarter of the set can be updated in bulk */
@@ -157,32 +155,59 @@ TEST_CASE("Testing Data aggregate for non-seuqeuntial data", "[data-handling]" )
     for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
       Approx(
-        pow(set_distance,2)/(double_literal(2.0)*sample_number * sequence_size)
-      ).epsilon(0.00000000000001) == data_agr.get_error(i)
+        pow(set_distance,2) / (double_literal(2.0) * sample_number * sequence_size)
+      ).margin(0.00000000000001) == data_agr.get_error(i)
     );
 
     REQUIRE( /* Error: (distance^2)/2 */
-      Approx(pow(set_distance,2)/double_literal(2.0)).epsilon(0.00000000000001) == data_agr.get_error_sum()
+      Approx(pow(set_distance,2)/double_literal(2.0)).margin(0.00000000000001) == data_agr.get_error_sum()
     );
 
     /* Check also the bulk sequenced interface */
-    set_distance *= (rand()%10 / double_literal(10.0));
+    set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
     neuron_data_simulation = deque<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
-
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), 0, data_agr.get_sequence_size());
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), 0, data_agr.get_sequence_size());
 
     for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
       Approx(
-        pow(set_distance,2)/(double_literal(2.0)*sample_number * sequence_size)
+        pow(set_distance,2) / (double_literal(2.0) * sample_number *sequence_size)
       ).margin(0.00000000000001) == data_agr.get_error(i)
     );
 
     REQUIRE( /* Error: (distance^2)/2 */
-      Approx(pow(set_distance,2)/double_literal(2.0)).epsilon(0.00000000000001) == data_agr.get_error_sum()
+      Approx(pow(set_distance,2)/double_literal(2.0)).margin(0.00000000000001) == data_agr.get_error_sum()
     );
-  }
+
+    /* Check also with sequence truncation */
+    sdouble32 old_set_distence = set_distance;
+    set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
+    neuron_data_simulation = deque<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
+    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), data_agr.get_sequence_size()/2, data_agr.get_sequence_size()/2);
+    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), data_agr.get_sequence_size()/2, data_agr.get_sequence_size()/2);
+
+    uint32 raw_label_index = 0;
+    for(uint32 sequence_index = 0; sequence_index < sample_number; ++sequence_index){
+      for(uint32 sequence_iterator = 0; sequence_iterator < data_agr.get_sequence_size(); ++sequence_iterator){
+        if((data_agr.get_sequence_size()/2) > sequence_iterator){ /* first half of the sequence should have have the new error */
+          REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
+            Approx(
+              pow(old_set_distence,2) / (double_literal(2.0) * sample_number * sequence_size)
+            ).margin(0.00000000000001) == data_agr.get_error(raw_label_index)
+          );
+        }else{ /* second half of the sequence should have the new error */
+          REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
+            Approx(
+              pow(set_distance,2) / (double_literal(2.0) * sample_number * sequence_size)
+            ).margin(0.00000000000001) == data_agr.get_error(raw_label_index)
+          );
+        }
+        ++raw_label_index;
+      }
+    }
+
+  }/*for(variants)*/
 }
 
 /*###############################################################################################
@@ -219,21 +244,21 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
 
   /* Saving state, modifying a feature */
   initial_error = data_agr.get_error_sum();
-  CHECK( Approx(double_literal(0.0)).epsilon(0.00000000000001) == data_agr.get_error(selected_index) );
+  CHECK( Approx(double_literal(0.0)).margin(0.00000000000001) == data_agr.get_error(selected_index) );
   data_agr.push_state();
   data_agr.set_feature_for_label(selected_index,{(expected_label - set_distance)});
-  CHECK( Approx(double_literal(0.0)).epsilon(0.00000000000001) != data_agr.get_error(selected_index) );
+  CHECK( Approx(double_literal(0.0)).margin(0.00000000000001) != data_agr.get_error(selected_index) );
   CHECK(
     Approx( /* Error: (distance^2)/(2 * overall number of samples) */
       pow(set_distance,2)/(double_literal(2.0) * sample_number * sequence_size)
-    ).epsilon(0.00000000000001) == data_agr.get_error(selected_index)
+    ).margin(0.00000000000001) == data_agr.get_error(selected_index)
   );
-  CHECK( Approx(initial_error).epsilon(0.00000000000001) != data_agr.get_error_sum() );
+  CHECK( Approx(initial_error).margin(0.00000000000001) != data_agr.get_error_sum() );
 
   /* Restoring state, the error should be the same */
   data_agr.pop_state();
-  CHECK( Approx(initial_error).epsilon(0.00000000000001) == data_agr.get_error_sum() );
-  CHECK( Approx(double_literal(0.0)).epsilon(0.00000000000001) == data_agr.get_error(selected_index) );
+  CHECK( Approx(initial_error).margin(0.00000000000001) == data_agr.get_error_sum() );
+  CHECK( Approx(double_literal(0.0)).margin(0.00000000000001) == data_agr.get_error(selected_index) );
 }
 
 } /* namespace sparse_net_library_test */
