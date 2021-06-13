@@ -71,7 +71,6 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
   if(data_set.get_number_of_sequences() < (sequence_start + sequences_to_evaluate))
    throw std::runtime_error("Sequence interval out of bounds!");
   for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += context.get_max_solve_threads()){ /* one evaluation iteration */
-    uint32 raw_label_end_index;
     for(uint32 thread_index = 0; ((thread_index < context.get_max_solve_threads())&&((sequence_start + sequences_to_evaluate) > (sequence_index + thread_index))); ++thread_index){
       /* Solve the sequence under sequence_index + thread_index */
       uint32 raw_label_index = sequence_index + thread_index;
@@ -92,7 +91,6 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
           neuron_value_buffers[thread_index].get_element(0).begin(),neuron_value_buffers[thread_index].get_element(0).end(),
           neuron_outputs_to_evaluate[(thread_index * data_set.get_sequence_size()) + sequence_iterator].begin()
         );
-        raw_label_end_index = raw_label_index;
         ++raw_label_index;
         ++raw_inputs_index;
       }
@@ -104,14 +102,13 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
       sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),static_cast<uint32>(context.get_max_solve_threads())),
       start_index_in_sequence, sequence_truncation
     );
-  }
+  } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
 }
 
 
 void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
   vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
   uint32 index_of_biggest = 0;
-  sdouble32 average_gradient = double_literal(0.0);
   sdouble32 sum_gradient = double_literal(0.0);
   sdouble32 gradient_overview = get_gradient_for_all_weights() * context.get_step_size();
 
@@ -122,7 +119,6 @@ void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
       index_of_biggest = weight_index;
   }
   sum_gradient = std::sqrt(sum_gradient);
-  average_gradient = std::sqrt(sum_gradient) / static_cast<sdouble32>(net.weight_table_size());
 
   convert_direction_to_gradient(last_applied_direction,false); /* check the last applied direction */
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){

@@ -31,7 +31,6 @@ TEST_CASE("Testing weight experience space weight values","[weightxp]"){
   sdouble32 weight_min = double_literal(-1.0);
   sdouble32 weight_max = double_literal(1.0);
   sdouble32 weight_step = double_literal(0.2);
-  uint32 number_of_weights_in_space = static_cast<uint32>((weight_max - weight_min)/weight_step);
   Weight_experience_space wxp_space = Weight_experience_space(weight_min, weight_max, weight_step);
 
   uint32 weight_index = 0;
