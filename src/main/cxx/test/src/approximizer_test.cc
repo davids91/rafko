@@ -199,7 +199,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     avg_gradient /= static_cast<sdouble32>(approximizer.get_weight_gradient().values_size());
 
     approximizer.apply_fragment();
-    average_duration += duration_cast<milliseconds>(steady_clock::now() - start).count();
+    auto current_duration = duration_cast<milliseconds>(steady_clock::now() - start).count();
+    average_duration += current_duration;
     ++number_of_steps;
     train_error = approximizer.get_train_error();
     test_error = approximizer.get_test_error();
@@ -210,6 +211,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     << "Minimum: ["<< minimum_error <<"];"
     << "Avg_gradient: [" << avg_gradient << "]; "
     << "Iteration: ["<< iteration <<"];   "
+    << "Duration: ["<< current_duration <<"ms];   "
     << std::endl;
     if(0 == (iteration % 100))
       print_training_sample((rand()%number_of_samples), *train_set, *nets[0], service_context);
