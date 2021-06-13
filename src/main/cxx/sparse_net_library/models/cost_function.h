@@ -48,7 +48,11 @@ public:
   , the_function(the_function_)
   {
     process_threads.reserve(context.get_sqrt_of_process_threads());
-    thread_results.reserve(context.get_max_processing_threads());
+    for(uint32 thread_index = 0; thread_index < context.get_max_processing_threads(); ++thread_index){
+      thread_results.push_back(vector<future<sdouble32>>());
+      thread_results.back().reserve(context.get_sqrt_of_process_threads());
+    }
+
   };
 
   /**
@@ -61,11 +65,7 @@ public:
    * @return     The feature error.
    */
   sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 sample_number){
-    thread_results.push_back(vector<future<sdouble32>>());
-    thread_results.back().reserve(context.get_max_processing_threads());
-    sdouble32 result_error = get_feature_error(labels, neuron_data, context.get_max_processing_threads(), 0, sample_number);
-    thread_results.clear();
-    return result_error;
+    return get_feature_error(labels, neuron_data, context.get_max_processing_threads(), 0, sample_number);
   }
 
   /**

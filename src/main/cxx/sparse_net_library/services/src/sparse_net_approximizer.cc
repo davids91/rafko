@@ -63,9 +63,12 @@ Sparse_net_approximizer::Sparse_net_approximizer(
   weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
   solve_threads.reserve(context.get_max_processing_threads());
 
-  for(uint32 process_thread_iterator = 0; process_thread_iterator < (context.get_max_processing_threads() * context.get_max_solve_threads()); ++process_thread_iterator){
+  /* A temporary buffer is allocated at initialization for every thread inside the approximizer * every thread inside the solver */
+  for(uint32 process_thread_iterator = 0; process_thread_iterator < (context.get_max_processing_threads() * context.get_max_solve_threads()); ++process_thread_iterator)
     used_data_pools.push_back(instance_data_pool.reserve_buffer(solver->get_required_temp_data_size()));
-  }
+
+  /* Plus 1 for the data set evaluation */
+  used_data_pools.push_back(instance_data_pool.reserve_buffer(train_set.get_number_of_label_samples()));
 
   evaluate();
 }
@@ -94,7 +97,8 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
     data_set.set_features_for_sequences( /* Upload results to the data set */
       neuron_outputs_to_evaluate, 0u,
       sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),static_cast<uint32>(context.get_max_processing_threads())),
-      start_index_in_sequence, sequence_truncation
+      start_index_in_sequence, sequence_truncation,
+      used_data_pools[(context.get_max_solve_threads() * context.get_max_processing_threads())]
     );
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
   data_set.conceal_from_multithreading();

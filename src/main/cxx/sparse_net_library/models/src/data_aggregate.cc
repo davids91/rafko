@@ -77,34 +77,32 @@ void Data_aggregate::set_features_for_labels(
 void Data_aggregate::set_features_for_sequences(
   const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index,
   uint32 sequence_start_index, uint32 sequences_to_evaluate,
-  uint32 start_index_in_sequence, uint32 sequence_truncation
+  uint32 start_index_in_sequence, uint32 sequence_truncation,
+  vector<sdouble32>& tmp_data
 ){
   if((sequence_start_index + sequences_to_evaluate) <= get_number_of_sequences()){
     if((start_index_in_sequence + sequence_truncation) > get_sequence_size())
       throw std::runtime_error("Sequence truncation indices out of bounds!");
+
     uint32 raw_start_index = sequence_start_index * get_sequence_size();
     uint32 labels_to_evaluate = sequences_to_evaluate * get_sequence_size();
-    vector<sdouble32>& resulting_errors = common_datapool.reserve_buffer(labels_to_evaluate);
+    tmp_data.resize(labels_to_evaluate);
 
     cost_function->get_feature_errors(
-      label_samples, neuron_data, resulting_errors,
+      label_samples, neuron_data, tmp_data,
       raw_start_index, 0, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
     );
 
-    uint32 index_inside_sequence = 0;
-    uint32 index_inside_errors = raw_start_index;
-    std::for_each( resulting_errors.begin(),resulting_errors.end(),
-    [&](sdouble32 result_error){ /* go through the resulting error vector */
-        if( /* Copy the data in case the curent index inside the sequence */
-          (start_index_in_sequence <= index_inside_sequence) /* is between the starting index */
-          &&((start_index_in_sequence + sequence_truncation) >= index_inside_sequence) /* and not yet truncated */
-        ){
-          error_state.back().sample_errors[index_inside_errors] = result_error;
-        }
-        index_inside_sequence = ((index_inside_sequence+1) % get_sequence_size());
-        ++index_inside_errors;
-    });
-    common_datapool.release_buffer(resulting_errors);
+    uint32 copy_index_base = 0;
+    for(uint32 sequence_iterator = 0; sequence_iterator < sequences_to_evaluate; ++sequence_iterator){
+      std::copy(
+        tmp_data.begin() + copy_index_base + start_index_in_sequence,
+        tmp_data.begin() + copy_index_base + start_index_in_sequence + sequence_truncation,
+        error_state.back().sample_errors.begin() + raw_start_index + copy_index_base + start_index_in_sequence
+      );
+      copy_index_base += get_sequence_size();
+    }
+
     if(!exposed_to_multithreading){
       std::lock_guard<mutex> my_lock(dataset_mutex);
       error_state.back().error_sum = 0;

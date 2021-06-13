@@ -169,6 +169,31 @@ public:
     const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
     uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
+  ){
+    vector<sdouble32>& resulting_errors = common_datapool.reserve_buffer(sequences_to_evaluate * get_sequence_size());
+    set_features_for_sequences(
+      neuron_data, neuron_buffer_index,
+      sequence_start_index, sequences_to_evaluate, start_index_in_sequence, sequence_truncation,
+      resulting_errors
+    );
+    common_datapool.release_buffer(resulting_errors);
+  }
+
+  /**
+   * @brief      Same as @set_feature_for_label but in bulk
+   *
+   * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
+   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
+   * @param[in]  sequence_start_index     The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  sequences_to_evaluate    The labels to evaluate
+   * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
+   * @param[in]  sequence_truncation      The sequence truncation
+   */
+  void set_features_for_sequences(
+    const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
+    uint32 sequence_start_index, uint32 sequences_to_evaluate,
+    uint32 start_index_in_sequence, uint32 sequence_truncation,
+    vector<sdouble32>& tmp_data
   );
 
   /**

@@ -43,8 +43,6 @@ void Cost_function::get_feature_errors(
       && (neuron_data.size() > neuron_data_start_index));
     ++thread_index
   ){
-    thread_results.push_back(vector<future<sdouble32>>());
-    thread_results.back().reserve(context.get_sqrt_of_process_threads());
     process_threads.push_back(thread(
       &Cost_function::feature_errors_thread, this,
       ref(labels), ref(neuron_data), ref(errors_for_labels), label_start, label_error_start_index,
@@ -60,7 +58,7 @@ void Cost_function::get_feature_errors(
   while(0 < process_threads.size()){ /* wait for threads to finish! */
     if(process_threads.back().joinable()){
       process_threads.back().join();
-      thread_results.pop_back();
+      thread_results[process_threads.size()-1].clear();
       process_threads.pop_back();
     }
   }
