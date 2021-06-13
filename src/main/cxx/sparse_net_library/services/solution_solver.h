@@ -57,6 +57,7 @@ public:
   const Solution& get_solution(void) const{
     return solution;
   }
+  using Agent::solve;
   /* --- Methds taken from @Agent --- */
 
 private:

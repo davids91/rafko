@@ -315,7 +315,7 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
   );
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
     std::cout << "["<< data_set.get_label_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
-    sample_solver->Agent::solve(data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j), output_data);
+    sample_solver->solve(data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j), output_data);
     neuron_data[j] = output_data.get_element(0).back();
   }
   std::cout << std::endl;
@@ -337,8 +337,6 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
     std::cout << "[" << net.weight_table(i) << "]";
   }
   std::cout << std::endl;
-
-  std::cout.precision(15);
 }
 
 Data_aggregate* create_addition_dataset(

@@ -137,7 +137,7 @@ test-only: $(TEST_OBJECTS)
 	make run-tests
 
 run-tests: $(TEST_RESULT)
-	./$< --use-colour yes
+	./$< --use-colour yes -d yes
 
 loop-tests:
 	./loop-tests.sh

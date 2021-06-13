@@ -28,6 +28,7 @@ using std::ref;
 Solution_solver::Builder::Builder(const Solution& to_solve, Service_context& context)
 :  solution(to_solve)
 ,  service_context(context)
+,  max_tmp_data_needed(0u)
 {
   partial_solvers = vector<vector<Partial_solution_solver>>();
   uint32 partial_index_at_row_start = 0;

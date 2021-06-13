@@ -188,6 +188,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   );
 
   std::cout << "Approximizing net.." << std::endl;
+  std::cout.precision(15);
   while(abs(train_error) > service_context.get_step_size()){
     start = steady_clock::now();
     approximizer.collect_approximates_from_weight_gradients();
@@ -218,13 +219,13 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
-  Solution_solver after_solver(*Solution_builder(service_context).build(*nets[0]), service_context);
+  unique_ptr<Solution_solver> after_solver(Solution_solver::Builder(*Solution_builder(service_context).build(*nets[0]), service_context).build());
 
   sdouble32 error_summary[3] = {0,0,0};
   Cost_function_mse after_cost(1, service_context);
-  DataRingbuffer neuron_data(after_solver.get_solution().network_memory_length(), after_solver.get_solution().neuron_number());
+  DataRingbuffer neuron_data(after_solver->get_solution().network_memory_length(), after_solver->get_solution().neuron_number());
   for(uint32 i = 0; i < number_of_samples; ++i){
-    after_solver.solve(test_set->get_input_sample(i), neuron_data);
+    after_solver->solve(test_set->get_input_sample(i), neuron_data);
     error_summary[0] += after_cost.get_feature_error(neuron_data.get_const_element(0), test_set->get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"
