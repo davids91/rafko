@@ -114,6 +114,7 @@ TEST_SOURCES += ../test/src/data_ringbuffer_test.cc
 TEST_SOURCES += ../test/src/data_pool_test.cc
 TEST_SOURCES += ../test/src/weight_updater_test.cc
 TEST_SOURCES += ../test/src/weight_experience_space_test.cc
+TEST_SOURCES += ../test/src/thread_group_test.cc
 
 OPTIMIZATION_TEST_SOURCES = $(TEST_BASE_SOURCE)
 OPTIMIZATION_TEST_SOURCES += ../test/src/approximizer_test.cc
