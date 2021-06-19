@@ -23,14 +23,17 @@
 #include <vector>
 #include <thread>
 #include <future>
+#include <tuple>
 
 #include "rafko_mainframe/models/service_context.h"
+#include "sparse_net_library/services/thread_group.h"
 
 namespace sparse_net_library{
 
 using std::vector;
 using std::thread;
 using std::future;
+using std::tuple;
 
 using rafko_mainframe::Service_context;
 
@@ -46,13 +49,22 @@ public:
   , thread_results()
   , feature_size(feature_size_)
   , the_function(the_function_)
+  , execution_threads(context.get_max_solve_threads(),[this](
+    tuple<const vector<vector<sdouble32>>&,const vector<vector<sdouble32>>&,vector<sdouble32>&,uint32,uint32,uint32,uint32,uint32> inputs,
+    uint32 thread_index
+  ){
+    feature_errors_thread(
+      std::get<0>(inputs),std::get<1>(inputs),std::get<2>(inputs),
+      std::get<3>(inputs),std::get<4>(inputs),std::get<5>(inputs),std::get<6>(inputs),std::get<7>(inputs),
+      thread_index
+    );
+  })
   {
-    process_threads.reserve(context.get_sqrt_of_process_threads());
-    for(uint32 thread_index = 0; thread_index < context.get_max_processing_threads(); ++thread_index){
+    process_threads.reserve(context.get_sqrt_of_solve_threads());
+    for(uint32 thread_index = 0; thread_index < context.get_max_solve_threads(); ++thread_index){
       thread_results.push_back(vector<future<sdouble32>>());
-      thread_results.back().reserve(context.get_sqrt_of_process_threads());
+      thread_results.back().reserve(context.get_sqrt_of_solve_threads());
     }
-
   };
 
   /**
@@ -65,7 +77,7 @@ public:
    * @return     The feature error.
    */
   sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 sample_number){
-    return get_feature_error(labels, neuron_data, context.get_max_processing_threads(), 0, sample_number);
+    return get_feature_error(labels, neuron_data, context.get_max_solve_threads(), 0, sample_number);
   }
 
   /**
@@ -180,22 +192,27 @@ protected:
   );
 private:
   cost_functions the_function; /* cost function type */
+  ThreadGroup<const vector<vector<sdouble32>>&,const vector<vector<sdouble32>>&,vector<sdouble32>&,uint32,uint32,uint32,uint32,uint32>
+    execution_threads; /* Forgive me for my sins */
+
 
   /**
    * @brief      A Thread being used to sum up the error for each label-data pair and load the result into the provided error vector
    *
-   * @param[in]  labels                   The label arrays to compare the data to
-   * @param[in]  neuron_data              The neuron data to compare to the labels
-   * @param      errors_for_labels        The vector to load the resulting errors in, size shall equal @labels_to_evaluate
-   * @param[in]  label_start              The index of the label to start evaluating the pairs from
-   * @param[in]  error_start              The starting index in the label error vector this thread starts
-   * @param[in]  neuron_data_start_index  The index inside the neuron data corresponding to the start index defined for @labels
-   * @param[in]  labels_to_process        The number of label-data pairs to process this thread
-   * @param[in]  sample_number            The number of overall samples, required for post-processing
+   * @param[in]  labels                                 The label arrays to compare the data to
+   * @param[in]  neuron_data                            The neuron data to compare to the labels
+   * @param      errors_for_labels                      The vector to load the resulting errors in, size shall equal @labels_to_evaluate
+   * @param[in]  label_start                            The index of the label to start evaluating the pairs from
+   * @param[in]  error_start                            The starting index in the label error vector this thread starts
+   * @param[in]  neuron_data_start_index                The index inside the neuron data corresponding to the start index defined for @labels
+   * @param[in]  labels_to_evaluate_in_one_thread       The maximum number of label-data pairs to process in one thread ( thread might process less, based on the size of @labels)
+   * @param[in]  sample_number                          The number of overall samples, required for post-processing
+   * @param[in]  thread_index                           The index of the thread the errors are accumulated in
    */
   void feature_errors_thread(
     const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
-    uint32 label_start, uint32 error_start, uint32 neuron_data_start_index, uint32 labels_to_process, uint32 sample_number
+    uint32 label_start, uint32 error_start, uint32 neuron_data_start_index,
+    uint32 labels_to_evaluate_in_one_thread, uint32 sample_number, uint32 thread_index
   );
 };
 

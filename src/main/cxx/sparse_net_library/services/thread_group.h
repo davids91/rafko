@@ -93,6 +93,7 @@ public:
       return (0 >= threads_ready); /* All threads are notified once the @threads_ready variable is zero again */
      });
     }
+    target_buffers = nullptr; /* Fail Early, Fail Often principle. In case a rouge thread starts an operation, it should segfault because of this */
   }
 
 private:
@@ -114,26 +115,28 @@ private:
         return (Idle != state.load());
       });
      }
-     worker_function((*target_buffers), thread_index);/* do the work */
+     if(End != state.load()){ /* In case there are still tasks to execute.. */
+       worker_function((*target_buffers), thread_index);/* do the work */
 
-     { /* signal that work is done! */
-      unique_lock<mutex> my_lock(state_mutex);
-      ++threads_ready; /* increase "done counter" */
-     }
-     synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
+       { /* signal that work is done! */
+        unique_lock<mutex> my_lock(state_mutex);
+        ++threads_ready; /* increase "done counter" */
+       }
+       synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
 
-     { /* Wait until main thread is closing the iteration */
-      unique_lock<mutex> my_lock(state_mutex);
-      synchroniser.wait(my_lock,[this](){
-        return (Start != state.load());
-      });
-     }
+       { /* Wait until main thread is closing the iteration */
+        unique_lock<mutex> my_lock(state_mutex);
+        synchroniser.wait(my_lock,[this](){
+          return (Start != state.load());
+        });
+       }
 
-     { /* signal that this thread is notified! */
-      unique_lock<mutex> my_lock(state_mutex);
-      --threads_ready; /* decrease the "done counter" to do so */
+       { /* signal that this thread is notified! */
+        unique_lock<mutex> my_lock(state_mutex);
+        --threads_ready; /* decrease the "done counter" to do so */
+       }
+       synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
      }
-     synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
     } /*while(END_VALUE != state)*/
   }
 };

@@ -37,6 +37,10 @@ public:
     return max_solve_threads;
   }
 
+  uint16 get_sqrt_of_solve_threads(void) const{
+    return sqrt_of_solve_threads;
+  }
+
   uint16 get_max_processing_threads(void) const{
     return max_processing_threads;
   }
@@ -92,7 +96,7 @@ public:
   sdouble32 get_sqrt_epsilon() const{
     return sqrt_epsilon;
   }
-  
+
   sdouble32 get_zetta(void) const{
     return hypers.zetta();
   }
@@ -113,6 +117,9 @@ public:
 
   Service_context& set_max_solve_threads(sdouble32 max_solve_threads_){
     max_solve_threads = max_solve_threads_;
+    sqrt_of_solve_threads = static_cast<uint16>(std::max(
+      double_literal(1.0), sqrt(static_cast<sdouble32>(max_solve_threads))
+    ));
     return *this;
   }
 
@@ -199,7 +206,8 @@ public:
   }
 
 private:
-  uint16 max_solve_threads = 2;
+  uint16 max_solve_threads = 4;
+  uint16 sqrt_of_solve_threads = 2;
   uint16 max_processing_threads = 4;
   uint16 sqrt_of_process_threads = 2;
   uint32 insignificant_changes = 100;
