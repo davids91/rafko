@@ -29,6 +29,7 @@
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/data_pool.h"
 #include "sparse_net_library/models/data_aggregate.h"
+#include "sparse_net_library/services/thread_group.h"
 #include "sparse_net_library/services/agent.h"
 #include "sparse_net_library/services/weight_updater.h"
 
@@ -189,16 +190,16 @@ private:
   unique_ptr<Agent> solver;
   vector<DataRingbuffer> neuron_value_buffers; /* One DataRingbuffer per thread */
   vector<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
-  vector<thread> solve_threads;
   DataPool<sdouble32> instance_data_pool;
   vector<reference_wrapper<vector<sdouble32>>> used_data_pools;
 
   Gradient_fragment gradient_fragment;
-  uint32 iteration;
+  uint32 iteration = 1;
   uint32 loops_unchecked;
   uint32 sequence_truncation;
   unique_ptr<Weight_updater> weight_updater;
   vector<sdouble32> last_applied_direction; /* The weight gradients applied to the network in the last iteration */
+  ThreadGroup<Data_aggregate&,uint32> execution_threads;
 
   /**
    * @brief      Insert an element to the given position into the given field by
@@ -227,7 +228,8 @@ private:
   void evaluate(Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion);
 
   /**
-   * @brief      Evaluate a single sequence in a thread-safe manner
+   * @brief      Evaluate a single sequence. The evaluated sequences lies under @sequence_index + @thread_index
+   *              as inside a multi-threaded evaluation, one thread is to evaluate one sequence
    *
    * @param      data_set            The data set containing the evaluatable sequence
    * @param[in]  sequence_index      The sequence to be evaluated inside the @data_set

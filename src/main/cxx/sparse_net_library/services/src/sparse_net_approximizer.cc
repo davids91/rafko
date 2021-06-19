@@ -31,6 +31,7 @@ namespace sparse_net_library{
 using std::make_unique;
 using std::lock_guard;
 using std::ref;
+using std::tuple;
 
 Sparse_net_approximizer::Sparse_net_approximizer(
   SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
@@ -43,14 +44,13 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  solver(Solution_solver::Builder(*net_solution, service_context).build())
 ,  neuron_value_buffers( context.get_max_processing_threads(), DataRingbuffer( net_solution->network_memory_length(), net_solution->neuron_number()) )
 ,  neuron_outputs_to_evaluate((context.get_max_processing_threads() * train_set.get_sequence_size()), vector<sdouble32>(net_solution->neuron_number()))
-,  solve_threads()
 ,  instance_data_pool(context.get_max_processing_threads(), solver->get_required_temp_data_size())
-,  used_data_pools()
-,  gradient_fragment()
-,  iteration(1)
 ,  loops_unchecked(context.get_insignificant_changes())
 ,  sequence_truncation(min(context.get_memory_truncation(), train_set.get_sequence_size()))
 ,  last_applied_direction(net.weight_table_size())
+,  execution_threads(context.get_max_processing_threads(),[this](tuple<Data_aggregate&, uint32>inputs, uint32 thread_index){
+  evaluate_single_sequence(std::get<Data_aggregate&>(inputs),std::get<uint32>(inputs),thread_index);
+})
 {
   (void)context.set_minibatch_size(max(1u,min(
     train_set.get_number_of_sequences(),context.get_minibatch_size()
@@ -61,7 +61,6 @@ Sparse_net_approximizer::Sparse_net_approximizer(
   if(train_set.get_feature_size() != solver->get_solution().output_neuron_number())
     throw std::runtime_error("Network output size doesn't match size of provided labels!");
   weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
-  solve_threads.reserve(context.get_max_processing_threads());
 
   /* A temporary buffer is allocated at initialization for every thread inside the approximizer * every thread inside the solver */
   for(uint32 process_thread_iterator = 0; process_thread_iterator < (context.get_max_processing_threads() * context.get_max_solve_threads()); ++process_thread_iterator)
@@ -69,7 +68,9 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 
   /* Plus 1 for the data set evaluation */
   used_data_pools.push_back(instance_data_pool.reserve_buffer(train_set.get_number_of_label_samples()));
-
+  // execution_threads = ThreadGroup<>(context.get_max_processing_threads()
+  //
+  // );
   evaluate();
 }
 
@@ -84,16 +85,8 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
   data_set.expose_to_multithreading();
 
   for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += context.get_max_processing_threads()){ /* one evaluation iteration */
-    for(uint32 thread_index = 0; ((thread_index < context.get_max_processing_threads())&&((sequence_start + sequences_to_evaluate) > (sequence_index + thread_index))); ++thread_index){
-      solve_threads.push_back(thread(&Sparse_net_approximizer::evaluate_single_sequence, this, ref(data_set), sequence_index, thread_index));
-    }
-    while(0 < solve_threads.size()){
-      if(solve_threads.back().joinable()){
-        solve_threads.back().join();
-        solve_threads.pop_back();
-      }
-    }
-
+    tuple<Data_aggregate&,uint32> tpl = std::forward_as_tuple(data_set, sequence_index);
+    execution_threads.start_and_block(tpl);
     data_set.set_features_for_sequences( /* Upload results to the data set */
       neuron_outputs_to_evaluate, 0u,
       sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),static_cast<uint32>(context.get_max_processing_threads())),
@@ -105,33 +98,38 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
 }
 
 void Sparse_net_approximizer::evaluate_single_sequence(Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index){
-  /* Solve the sequence under sequence_index + thread_index */
-  uint32 raw_label_index = sequence_index + thread_index;
-  uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number()); /* calculate the raw input arrays index */
-  raw_label_index *= data_set.get_sequence_size(); /* calculate the raw labels array index */
+  if(data_set.get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */
+    /*!Note: This might happen because of the number of used threads might point to a grater index, than the nmber of sequences;
+     * Which is mainly because of division remainder between number fo threads and the number of sequences
+     * */
+    /* Solve the sequence under sequence_index + thread_index */
+    uint32 raw_label_index = sequence_index + thread_index;
+    uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number()); /* calculate the raw input arrays index */
+    raw_label_index *= data_set.get_sequence_size(); /* calculate the raw labels array index */
 
-  /* Evaluate the current sequence step by step */
-  neuron_value_buffers[thread_index].reset();
-  for(uint32 prefill_iterator = 0; prefill_iterator < data_set.get_prefill_inputs_number(); ++prefill_iterator){
-    solver->solve(
-      data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index],
-      used_data_pools, (thread_index * context.get_max_solve_threads())
-    ); /* step is included in @solve */
-    ++raw_inputs_index;
-  }
+    /* Evaluate the current sequence step by step */
+    neuron_value_buffers[thread_index].reset();
+    for(uint32 prefill_iterator = 0; prefill_iterator < data_set.get_prefill_inputs_number(); ++prefill_iterator){
+      solver->solve(
+        data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index],
+        used_data_pools, (thread_index * context.get_max_solve_threads())
+      ); /* step is included in @solve */
+      ++raw_inputs_index;
+    }
 
-  /* Solve the data and store the result after the inital "prefill" */
-  for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
-    solver->solve(
-      data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index],
-      used_data_pools, (thread_index * context.get_max_solve_threads())
-    );
-    std::copy( /* copy the result to the eval array */
-      neuron_value_buffers[thread_index].get_element(0).begin(),neuron_value_buffers[thread_index].get_element(0).end(),
-      neuron_outputs_to_evaluate[(thread_index * data_set.get_sequence_size()) + sequence_iterator].begin()
-    );
-    ++raw_label_index;
-    ++raw_inputs_index;
+    /* Solve the data and store the result after the inital "prefill" */
+    for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
+      solver->solve(
+        data_set.get_input_sample(raw_inputs_index), neuron_value_buffers[thread_index],
+        used_data_pools, (thread_index * context.get_max_solve_threads())
+      );
+      std::copy( /* copy the result to the eval array */
+        neuron_value_buffers[thread_index].get_element(0).begin(),neuron_value_buffers[thread_index].get_element(0).end(),
+        neuron_outputs_to_evaluate[(thread_index * data_set.get_sequence_size()) + sequence_iterator].begin()
+      );
+      ++raw_label_index;
+      ++raw_inputs_index;
+    }
   }
 }
 
