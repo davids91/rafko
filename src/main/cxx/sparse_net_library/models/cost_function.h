@@ -191,12 +191,11 @@ private:
    * @param[in]  error_start              The starting index in the label error vector this thread starts
    * @param[in]  neuron_data_start_index  The index inside the neuron data corresponding to the start index defined for @labels
    * @param[in]  labels_to_process        The number of label-data pairs to process this thread
-   * @param[in]  outer_thread_index       The outer thread index the index of the thread, to find out which @thread_results array to use
    * @param[in]  sample_number            The number of overall samples, required for post-processing
    */
   void feature_errors_thread(
     const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
-    uint32 label_start, uint32 error_start, uint32 neuron_data_start_index, uint32 labels_to_process, uint32 outer_thread_index, uint32 sample_number
+    uint32 label_start, uint32 error_start, uint32 neuron_data_start_index, uint32 labels_to_process, uint32 sample_number
   );
 };
 
