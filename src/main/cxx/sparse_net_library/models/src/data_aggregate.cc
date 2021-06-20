@@ -66,10 +66,9 @@ void Data_aggregate::set_features_for_labels(
       raw_start_index, raw_start_index, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
     );
     if(!exposed_to_multithreading){
-      std::lock_guard<mutex> my_lock(dataset_mutex);
       error_state.back().error_sum = 0;
-      for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
-        error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+      tuple<uint32> tpl = std::forward_as_tuple(0);
+      error_calculation_threads.start_and_block(tpl);
     }
   }else throw std::runtime_error("Label index out of bounds!");
 }
@@ -104,10 +103,9 @@ void Data_aggregate::set_features_for_sequences(
     }
 
     if(!exposed_to_multithreading){
-      std::lock_guard<mutex> my_lock(dataset_mutex);
       error_state.back().error_sum = 0;
-      for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
-        error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+      tuple<uint32> tpl = std::forward_as_tuple(0);
+      error_calculation_threads.start_and_block(tpl);
     }
   }else throw std::runtime_error("Sequence index out of bounds!");
 }
@@ -115,8 +113,16 @@ void Data_aggregate::set_features_for_sequences(
 void Data_aggregate::conceal_from_multithreading(void){
   exposed_to_multithreading = false;
   error_state.back().error_sum = 0;
-  for(uint32 sample_index = 0; sample_index < label_samples.size() ; ++sample_index)
-    error_state.back().error_sum += error_state.back().sample_errors[sample_index];
+  tuple<uint32> tpl = std::forward_as_tuple(0);
+  error_calculation_threads.start_and_block(tpl);
+}
+
+void Data_aggregate::accumulate_error_sum(uint32 error_start, uint32 errors_to_sum){
+  sdouble32 local_error = 0;
+  for(uint32 sample_index = error_start; sample_index < (error_start + errors_to_sum) ; ++sample_index)
+    local_error += error_state.back().sample_errors[sample_index];
+  std::lock_guard<mutex> my_lock(dataset_mutex);
+  error_state.back().error_sum += local_error;
 }
 
 } /* namespace sparse_net_library */

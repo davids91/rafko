@@ -25,12 +25,14 @@
 #include <stdexcept>
 #include <thread>
 #include <mutex>
+#include <tuple>
 
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
 
+#include "sparse_net_library/services/thread_group.h"
 #include "sparse_net_library/services/agent.h"
 #include "sparse_net_library/models/data_pool.h"
 #include "sparse_net_library/models/cost_function.h"
@@ -44,6 +46,7 @@ using std::unique_ptr;
 using std::move;
 using std::thread;
 using std::mutex;
+using std::tuple;
 
 /**
  * @brief      A Data set container complete with adaptive error statistics, which is
@@ -88,9 +91,7 @@ public:
        double_literal(1.0)
      })
   ,  cost_function(cost_function_)
-  ,  solve_threads()
   ,  exposed_to_multithreading(false)
-  ,  dataset_mutex()
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_);
@@ -108,9 +109,7 @@ public:
        double_literal(1.0)
      })
   ,  cost_function(cost_function_)
-  ,  solve_threads()
   ,  exposed_to_multithreading(false)
-  ,  dataset_mutex()
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
   }
@@ -128,10 +127,9 @@ public:
        double_literal(1.0)
      })
   ,  cost_function(Function_factory::build_cost_function(net, the_function, service_context_))
-  ,  solve_threads()
   ,  exposed_to_multithreading(false)
   ,  dataset_mutex()
-  { solve_threads.reserve(service_context_.get_max_solve_threads()); }
+  { }
 
   /**
    * @brief      Sets the approximated value for an observed value,
@@ -373,9 +371,14 @@ private:
   uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
   vector<error_state_type> error_state;
   shared_ptr<Cost_function> cost_function;
-  vector<thread> solve_threads; /* The threads to be started during evaluating the network */
   bool exposed_to_multithreading; /* basically decides whether or not error sum calculation is enabled. */
   mutable mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a mutex is required */
+  ThreadGroup<uint32> error_calculation_threads{4,[this](std::tuple<uint32>, uint32 thread_index){
+    uint32 length = error_state.back().sample_errors.size() / 4;
+    uint32 start = length * thread_index;
+    length = std::min(length, static_cast<uint32>(error_state.back().sample_errors.size() - start));
+    accumulate_error_sum(start, length);
+  }} /* TODO: Needs the context! */;
 
   static DataPool<sdouble32> common_datapool;
 
@@ -385,6 +388,15 @@ private:
    * @param      samples  The data set to parse
    */
   void fill(Data_set& samples);
+
+  /**
+   * @brief          Converting the @Data_set message to vectors
+   *
+   * @param[in]      error_start    The starting index to read from in @error_state.sample_errors
+   * @param[in]      errors_to_sum  The number of errors to add to @error_state.error_sum
+   */
+  void accumulate_error_sum(uint32 error_start, uint32 errors_to_sum);
+
 };
 
 } /* namespace sparse_net_library */
