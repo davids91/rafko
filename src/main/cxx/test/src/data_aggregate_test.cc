@@ -59,7 +59,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   }
 
   /* Create @Data_aggregate from @Data_set */
-  Data_aggregate data_agr(data_set, std::make_unique<Cost_function_mse>(1, service_context));
+  Data_aggregate data_agr(service_context, data_set, std::make_unique<Cost_function_mse>(1, service_context));
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 
@@ -232,7 +232,7 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
     data_set.add_labels(expected_label);
   }
 
-  Data_aggregate data_agr(data_set, std::make_unique<Cost_function_mse>(1, service_context));
+  Data_aggregate data_agr(service_context, data_set, std::make_unique<Cost_function_mse>(1, service_context));
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 

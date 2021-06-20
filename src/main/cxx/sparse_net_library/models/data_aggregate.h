@@ -81,8 +81,9 @@ using std::tuple;
  */
 class Data_aggregate{
 public:
-  Data_aggregate(Data_set& samples_, shared_ptr<Cost_function> cost_function_)
-  :  sequence_size(std::max(1u,samples_.sequence_size()))
+  Data_aggregate(Service_context& service_context_, Data_set& samples_, shared_ptr<Cost_function> cost_function_)
+  :  service_context(service_context_)
+  ,  sequence_size(std::max(1u,samples_.sequence_size()))
   ,  input_samples(samples_.inputs_size() / samples_.input_size())
   ,  label_samples(samples_.labels_size() / samples_.feature_size())
   ,  prefill_sequences(static_cast<uint32>((samples_.inputs_size() - samples_.labels_size()) / (samples_.labels_size() / sequence_size)))
@@ -92,15 +93,18 @@ public:
      })
   ,  cost_function(cost_function_)
   ,  exposed_to_multithreading(false)
+  ,  error_calculation_threads(service_context_.get_max_solve_threads(),error_calculation_lambda)
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_);
   }
 
   Data_aggregate(
+    Service_context& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
     shared_ptr<Cost_function> cost_function_, uint32 sequence_size_ = 1
-  ): sequence_size(std::max(1u,sequence_size_))
+  ): service_context(service_context_)
+  ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))
   ,  label_samples(move(label_samples_))
   ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
@@ -110,6 +114,7 @@ public:
      })
   ,  cost_function(cost_function_)
   ,  exposed_to_multithreading(false)
+  ,  error_calculation_threads(service_context_.get_max_solve_threads(),error_calculation_lambda)
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
   }
@@ -118,7 +123,8 @@ public:
     Service_context& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
     SparseNet& net, cost_functions the_function, uint32 sequence_size_ = 1
-  ): sequence_size(std::max(1u,sequence_size_))
+  ): service_context(service_context_)
+  ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))
   ,  label_samples(move(label_samples_))
   ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
@@ -128,7 +134,7 @@ public:
      })
   ,  cost_function(Function_factory::build_cost_function(net, the_function, service_context_))
   ,  exposed_to_multithreading(false)
-  ,  dataset_mutex()
+  ,  error_calculation_threads(service_context_.get_max_solve_threads(),error_calculation_lambda)
   { }
 
   /**
@@ -365,6 +371,7 @@ private:
     sdouble32 error_sum;
   };
 
+  Service_context& service_context;
   uint32 sequence_size;
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;
@@ -373,12 +380,13 @@ private:
   shared_ptr<Cost_function> cost_function;
   bool exposed_to_multithreading; /* basically decides whether or not error sum calculation is enabled. */
   mutable mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a mutex is required */
-  ThreadGroup<uint32> error_calculation_threads{4,[this](std::tuple<uint32>, uint32 thread_index){
-    uint32 length = error_state.back().sample_errors.size() / 4;
+  std::function<void(tuple<uint32>,uint32)> error_calculation_lambda =  [this](tuple<uint32>, uint32 thread_index){
+    uint32 length = error_state.back().sample_errors.size() / service_context.get_max_solve_threads();
     uint32 start = length * thread_index;
     length = std::min(length, static_cast<uint32>(error_state.back().sample_errors.size() - start));
     accumulate_error_sum(start, length);
-  }} /* TODO: Needs the context! */;
+  };
+  ThreadGroup<uint32> error_calculation_threads;
 
   static DataPool<sdouble32> common_datapool;
 
