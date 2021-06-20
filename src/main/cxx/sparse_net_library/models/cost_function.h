@@ -49,16 +49,7 @@ public:
   , thread_results()
   , feature_size(feature_size_)
   , the_function(the_function_)
-  , execution_threads(context.get_max_solve_threads(),[this](
-    tuple<const vector<vector<sdouble32>>&,const vector<vector<sdouble32>>&,vector<sdouble32>&,uint32,uint32,uint32,uint32,uint32> inputs,
-    uint32 thread_index
-  ){
-    feature_errors_thread(
-      std::get<0>(inputs),std::get<1>(inputs),std::get<2>(inputs),
-      std::get<3>(inputs),std::get<4>(inputs),std::get<5>(inputs),std::get<6>(inputs),std::get<7>(inputs),
-      thread_index
-    );
-  })
+  , execution_threads(context.get_max_solve_threads())
   {
     process_threads.reserve(context.get_sqrt_of_solve_threads());
     for(uint32 thread_index = 0; thread_index < context.get_max_solve_threads(); ++thread_index){
@@ -192,9 +183,7 @@ protected:
   );
 private:
   cost_functions the_function; /* cost function type */
-  ThreadGroup<const vector<vector<sdouble32>>&,const vector<vector<sdouble32>>&,vector<sdouble32>&,uint32,uint32,uint32,uint32,uint32>
-    execution_threads; /* Forgive me for my sins */
-
+  ThreadGroup execution_threads; 
 
   /**
    * @brief      A Thread being used to sum up the error for each label-data pair and load the result into the provided error vector

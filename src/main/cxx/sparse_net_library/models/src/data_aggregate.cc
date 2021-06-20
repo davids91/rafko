@@ -67,8 +67,7 @@ void Data_aggregate::set_features_for_labels(
     );
     if(!exposed_to_multithreading){
       error_state.back().error_sum = 0;
-      tuple<uint32> tpl = std::forward_as_tuple(0);
-      error_calculation_threads.start_and_block(tpl);
+      error_calculation_threads.start_and_block(error_calculation_lambda);
     }
   }else throw std::runtime_error("Label index out of bounds!");
 }
@@ -104,8 +103,7 @@ void Data_aggregate::set_features_for_sequences(
 
     if(!exposed_to_multithreading){
       error_state.back().error_sum = 0;
-      tuple<uint32> tpl = std::forward_as_tuple(0);
-      error_calculation_threads.start_and_block(tpl);
+      error_calculation_threads.start_and_block(error_calculation_lambda);
     }
   }else throw std::runtime_error("Sequence index out of bounds!");
 }
@@ -113,8 +111,7 @@ void Data_aggregate::set_features_for_sequences(
 void Data_aggregate::conceal_from_multithreading(void){
   exposed_to_multithreading = false;
   error_state.back().error_sum = 0;
-  tuple<uint32> tpl = std::forward_as_tuple(0);
-  error_calculation_threads.start_and_block(tpl);
+  error_calculation_threads.start_and_block(error_calculation_lambda);
 }
 
 void Data_aggregate::accumulate_error_sum(uint32 error_start, uint32 errors_to_sum){

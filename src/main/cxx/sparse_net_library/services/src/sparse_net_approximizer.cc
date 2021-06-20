@@ -31,7 +31,6 @@ namespace sparse_net_library{
 using std::make_unique;
 using std::lock_guard;
 using std::ref;
-using std::tuple;
 
 Sparse_net_approximizer::Sparse_net_approximizer(
   SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
@@ -48,9 +47,7 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 ,  loops_unchecked(context.get_insignificant_changes())
 ,  sequence_truncation(min(context.get_memory_truncation(), train_set.get_sequence_size()))
 ,  last_applied_direction(net.weight_table_size())
-,  execution_threads(context.get_max_processing_threads(),[this](tuple<Data_aggregate&, uint32>inputs, uint32 thread_index){
-  evaluate_single_sequence(std::get<Data_aggregate&>(inputs),std::get<uint32>(inputs),thread_index);
-})
+,  execution_threads(context.get_max_processing_threads())
 {
   (void)context.set_minibatch_size(max(1u,min(
     train_set.get_number_of_sequences(),context.get_minibatch_size()
@@ -68,9 +65,7 @@ Sparse_net_approximizer::Sparse_net_approximizer(
 
   /* Plus 1 for the data set evaluation */
   used_data_pools.push_back(instance_data_pool.reserve_buffer(train_set.get_number_of_label_samples()));
-  // execution_threads = ThreadGroup<>(context.get_max_processing_threads()
-  //
-  // );
+
   evaluate();
 }
 
@@ -83,10 +78,11 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
   if(data_set.get_number_of_sequences() < (sequence_start + sequences_to_evaluate))
     throw std::runtime_error("Sequence interval out of bounds!");
   data_set.expose_to_multithreading();
-
   for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += context.get_max_processing_threads()){ /* one evaluation iteration */
-    tuple<Data_aggregate&,uint32> tpl = std::forward_as_tuple(data_set, sequence_index);
-    execution_threads.start_and_block(tpl);
+    function<void(uint32)> execution_lambda = [this, &data_set, sequence_index](uint32 thread_index){
+      evaluate_single_sequence(data_set, sequence_index ,thread_index);
+    };
+    execution_threads.start_and_block(execution_lambda);
     data_set.set_features_for_sequences( /* Upload results to the data set */
       neuron_outputs_to_evaluate, 0u,
       sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),static_cast<uint32>(context.get_max_processing_threads())),

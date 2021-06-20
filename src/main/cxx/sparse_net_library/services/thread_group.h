@@ -47,12 +47,9 @@ using std::size_t;
  * @brief    This class provides a number of worker threads to be executed in paralell for the functionality
  *          defined in the constructor of the template object.
  */
-template<typename First, typename ...T>
 class ThreadGroup{
 public:
-  ThreadGroup(uint32 number_of_threads, function<void(tuple<First, T...>&, uint32)> function)
-  :  worker_function(function)
-  ,  state(Idle)
+  ThreadGroup(uint32 number_of_threads)
   {
     for(uint32 i = 0; i < number_of_threads; ++i)
      threads.emplace_back(thread(&ThreadGroup::worker, this, i));
@@ -67,10 +64,10 @@ public:
     for(thread& thread : threads) thread.join();
   }
 
-  void start_and_block(tuple<First, T...>& buffer){
+  void start_and_block(function<void(uint32)>& function){
     { /* initialize, start.. */
      unique_lock<mutex> my_lock(state_mutex);
-     target_buffers = &buffer;
+     worker_function = function;
      state.store(Start);
     }
     synchroniser.notify_all(); /* Whip the peons */
@@ -93,17 +90,15 @@ public:
       return (0 >= threads_ready); /* All threads are notified once the @threads_ready variable is zero again */
      });
     }
-    target_buffers = nullptr; /* Fail Early, Fail Often principle. In case a rouge thread starts an operation, it should segfault because of this */
   }
 
 private:
   enum state_t{Idle, Start, End};
 
-  tuple<First, T...>* target_buffers = nullptr;
-  function<void(tuple<First, T...>&, uint32)> worker_function; /* start, length */
+  function<void(uint32)> worker_function; /* gets the thread index it is inside */
   vector<thread> threads;
   size_t threads_ready = 0;
-  atomic<state_t> state;
+  atomic<state_t> state = {Idle};
   mutex state_mutex;
   condition_variable synchroniser;
 
@@ -116,7 +111,7 @@ private:
       });
      }
      if(End != state.load()){ /* In case there are still tasks to execute.. */
-       worker_function((*target_buffers), thread_index);/* do the work */
+       worker_function(thread_index);/* do the work */
 
        { /* signal that work is done! */
         unique_lock<mutex> my_lock(state_mutex);

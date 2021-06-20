@@ -23,7 +23,6 @@
 namespace sparse_net_library_test {
 
 using std::vector;
-using std::tuple;
 using std::lock_guard;
 
 using sparse_net_library::ThreadGroup;
@@ -38,19 +37,7 @@ TEST_CASE("Thread Group generic use-case test", "[thread-group]"){
   sdouble32 result = 0;
   std::mutex cout_mutex;
 
-  ThreadGroup<vector<sdouble32>&> pool(number_of_threads,[&](tuple<vector<sdouble32>&>& inputs, int thread_index){
-    sdouble32 sum = 0;
-    vector<sdouble32>& used_buffer = std::get<vector<sdouble32>&>(inputs);
-    size_t length = (used_buffer.size() / number_of_threads) + 1u;
-    size_t start = length * thread_index;
-    length = std::min(length, (used_buffer.size() - start));
-    if(start < used_buffer.size()) /* More threads could be available, than needed */
-      for(size_t i = 0; i < length; ++i) sum += used_buffer[start + i];
-    { /* accumulate the full results */
-      lock_guard<std::mutex> my_lock(cout_mutex);
-      result += sum;
-    }
-  });
+  ThreadGroup pool(number_of_threads);
 
   for(uint32 i = 0; i < 1000; ++i){
     test_buffer = vector<sdouble32>(rand()%500);
@@ -59,8 +46,19 @@ TEST_CASE("Thread Group generic use-case test", "[thread-group]"){
     });
     expected = std::accumulate(test_buffer.begin(),test_buffer.end(), 0.0);
     result = 0;
-    auto tpl = std::forward_as_tuple(test_buffer);
-    pool.start_and_block(tpl);
+    std::function<void(uint32)> fnc = [&](int thread_index){
+      sdouble32 sum = 0;
+      size_t length = (test_buffer.size() / number_of_threads) + 1u;
+      size_t start = length * thread_index;
+      length = std::min(length, (test_buffer.size() - start));
+      if(start < test_buffer.size()) /* More threads could be available, than needed */
+        for(size_t i = 0; i < length; ++i) sum += test_buffer[start + i];
+      { /* accumulate the full results */
+        lock_guard<std::mutex> my_lock(cout_mutex);
+        result += sum;
+      }
+    };
+    pool.start_and_block(fnc);
     REQUIRE( Approx(expected).margin(0.00000000000001) == result );
   }
 }

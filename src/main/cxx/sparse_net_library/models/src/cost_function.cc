@@ -35,12 +35,15 @@ void Cost_function::get_feature_errors(
     throw std::runtime_error("Can't evaluate more labels, than there is data provided!");
 
   const uint32 labels_to_do_in_a_thread = 1 + static_cast<uint32>(labels_to_evaluate/context.get_max_solve_threads());
-  tuple<const vector<vector<sdouble32>>&,const vector<vector<sdouble32>>&,vector<sdouble32>&,uint32,uint32,uint32,uint32,uint32> inputs = std::forward_as_tuple(
-    ref(labels), ref(neuron_data), ref(errors_for_labels),
-    label_start, error_start, neuron_start,
-    labels_to_do_in_a_thread, sample_number
-  );
-  execution_threads.start_and_block(inputs);
+  function<void(uint32)> fnc = [this, &labels, &neuron_data, &errors_for_labels, label_start, error_start, neuron_start, labels_to_do_in_a_thread, sample_number](uint32 thread_index){
+    feature_errors_thread(
+      ref(labels), ref(neuron_data), ref(errors_for_labels),
+      label_start, error_start, neuron_start,
+      labels_to_do_in_a_thread, sample_number,
+      thread_index
+    );
+  };
+  execution_threads.start_and_block(fnc);
 }
 
 void Cost_function::feature_errors_thread(
