@@ -19,16 +19,16 @@
 #define SERVER_SLOT_APPROXIMIZE_NET_H
 
 #include "sparse_net_library/models/cost_function.h"
-#include "sparse_net_library/models/data_aggregate.h"
-#include "sparse_net_library/services/sparse_net_approximizer.h"
+#include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/services/sparse_net_approximizer.h"
 
 #include "rafko_mainframe/services/server_slot_run_net.h"
 
 namespace rafko_mainframe{
 
 using sparse_net_library::Cost_function;
-using sparse_net_library::Data_aggregate;
-using sparse_net_library::Sparse_net_approximizer;
+using rafko_gym::Data_aggregate;
+using rafko_gym::Sparse_net_approximizer;
 
 using std::unique_ptr;
 using std::shared_ptr;

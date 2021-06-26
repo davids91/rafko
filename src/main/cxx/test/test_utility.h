@@ -26,7 +26,7 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/data_aggregate.h"
+#include "rafko_gym/models/data_aggregate.h"
 
 namespace sparse_net_library_test {
 
@@ -36,7 +36,7 @@ using std::unique_ptr;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Solution;
 using sparse_net_library::Partial_solution;
-using sparse_net_library::Data_aggregate;
+using rafko_gym::Data_aggregate;
 using sparse_net_library::cost_functions;
 using rafko_mainframe::Service_context;
 

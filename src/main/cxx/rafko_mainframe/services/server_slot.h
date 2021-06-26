@@ -24,22 +24,22 @@
 #include <memory>
 
 #include "gen/deep_learning_service.pb.h"
-#include "sparse_net_library/models/data_aggregate.h"
+#include "rafko_gym/models/data_aggregate.h"
 
 namespace rafko_mainframe{
 
 using std::string;
 using std::shared_ptr;
 
-using sparse_net_library::Data_aggregate;
+using rafko_gym::Data_aggregate;
 using sparse_net_library::SparseNet;
 
 /**
- * @brief      This class describes a common ancestor and interface of whatever 
+ * @brief      This class describes a common ancestor and interface of whatever
  *             is able to run in a @Deep_learning_server.
  */
 class Server_slot{
-public: 
+public:
   Server_slot(void)
   : arena()
   , context()
@@ -115,7 +115,7 @@ public:
    */
   virtual Neural_io_stream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const = 0;
 
-  /** 
+  /**
    * @brief      Queries relevant information about the @Server_slot.
    *
    * @param[in]  request  uses @request_bitstring to ask for @Slot_info_field values
@@ -162,7 +162,7 @@ protected:
   SparseNet* build_network_from_request(Build_network_request&& request);
 
   /**
-   * @brief      Generates a unique identifier, with a guarantee that the currently 
+   * @brief      Generates a unique identifier, with a guarantee that the currently
    *             saved slot Identifiers shall be left out.
    *
    * @return     A random unique Identifier string

@@ -18,7 +18,7 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "sparse_net_library/services/thread_group.h"
+#include "rafko_utilities/services/thread_group.h"
 
 namespace sparse_net_library_test {
 

@@ -22,10 +22,10 @@
 
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
+#include "rafko_gym/models/data_aggregate.h"
+#include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/transfer_function.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
-#include "sparse_net_library/models/data_aggregate.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 #include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/solution_solver.h"
@@ -38,8 +38,8 @@ int main( int argc, char* argv[] ) {
 
 namespace sparse_net_library_test {
 
-using sparse_net_library::DataRingbuffer;
-using sparse_net_library::Data_aggregate;
+using rafko_utilities::DataRingbuffer;
+using rafko_gym::Data_aggregate;
 using sparse_net_library::Transfer_function;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
 using sparse_net_library::cost_functions;

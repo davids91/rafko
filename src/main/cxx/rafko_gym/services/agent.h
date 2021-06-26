@@ -20,16 +20,21 @@
 
 #include "rafko_global.h"
 
+#include <vector>
 #include <functional>
 
 #include "gen/solution.pb.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
-#include "sparse_net_library/models/data_pool.h"
+#include "rafko_utilities/models/data_ringbuffer.h"
+#include "rafko_utilities/models/data_pool.h"
 
-namespace sparse_net_library{
+namespace rafko_gym{
 
-
+using std::vector;
 using std::reference_wrapper;
+
+using rafko_utilities::DataPool;
+using rafko_utilities::DataRingbuffer;
+using sparse_net_library::Solution;
 
 /**
  * @brief      This class serves as a base for reinforcement learning agent, which provides output data
@@ -87,5 +92,5 @@ private:
 
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_gym */
 #endif /* AGENT_H */

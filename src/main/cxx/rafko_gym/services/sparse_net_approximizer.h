@@ -26,16 +26,16 @@
 
 #include "gen/common.pb.h"
 
+#include "rafko_utilities/models/data_pool.h"
+#include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/data_pool.h"
-#include "sparse_net_library/models/data_aggregate.h"
-#include "sparse_net_library/services/thread_group.h"
-#include "sparse_net_library/services/agent.h"
 #include "sparse_net_library/services/weight_updater.h"
-
 #include "sparse_net_library/services/solution_solver.h"
 
-namespace sparse_net_library{
+#include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/services/agent.h"
+
+namespace rafko_gym{
 
 using std::max;
 using std::min;
@@ -45,6 +45,10 @@ using std::thread;
 using std::reference_wrapper;
 
 using rafko_mainframe::Service_context;
+using sparse_net_library::Weight_updater;
+using sparse_net_library::weight_updaters;
+using sparse_net_library::Gradient_fragment;
+
 
 /**
  * @brief      This class approximates gradients for a @Dataset and @Sparse_net.
@@ -238,6 +242,6 @@ private:
   void evaluate_single_sequence(Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index);
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_gym */
 
 #endif /* SPARSE_NET_APPROXIMIZER_H */

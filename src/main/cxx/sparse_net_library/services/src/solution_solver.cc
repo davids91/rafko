@@ -17,6 +17,7 @@
 
 #include "sparse_net_library/services/solution_solver.h"
 
+#include <thread>
 #include <stdexcept>
 
 #include "sparse_net_library/services/synapse_iterator.h"
@@ -24,6 +25,7 @@
 namespace sparse_net_library{
 
 using std::ref;
+using std::thread;
 
 Solution_solver::Builder::Builder(const Solution& to_solve, Service_context& context)
 :  solution(to_solve)

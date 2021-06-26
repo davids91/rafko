@@ -30,7 +30,7 @@
 #include <atomic>
 #include <condition_variable>
 
-namespace sparse_net_library{
+namespace rafko_utilities{
 
 using std::atomic;
 using std::vector;
@@ -136,5 +136,5 @@ private:
   }
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_utilities */
 #endif /* THREAD_GROUP_H */

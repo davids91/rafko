@@ -23,7 +23,7 @@
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/transfer_function.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
+#include "rafko_utilities/models/data_ringbuffer.h"
 #include "sparse_net_library/services/partial_solution_solver.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 
@@ -34,7 +34,7 @@ using std::reference_wrapper;
 
 using sparse_net_library::transfer_functions;
 using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
-using sparse_net_library::DataRingbuffer;
+using rafko_utilities::DataRingbuffer;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Partial_solution_solver;
 using sparse_net_library::Transfer_function;

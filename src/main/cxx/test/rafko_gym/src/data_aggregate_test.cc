@@ -23,7 +23,7 @@
 
 #include "gen/common.pb.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/data_aggregate.h"
+#include "rafko_gym/models/data_aggregate.h"
 #include "sparse_net_library/models/cost_function_mse.h"
 
 namespace sparse_net_library_test {
@@ -32,7 +32,7 @@ using std::unique_ptr;
 using std::vector;
 
 using sparse_net_library::Data_set;
-using sparse_net_library::Data_aggregate;
+using rafko_gym::Data_aggregate;
 using sparse_net_library::Cost_function_mse;
 using rafko_mainframe::Service_context;
 

@@ -25,7 +25,7 @@
 #include <mutex>
 #include <algorithm>
 
-namespace sparse_net_library{
+namespace rafko_utilities{
 
 using std::vector;
 using std::deque;
@@ -69,5 +69,5 @@ private:
   mutex buffers_mutex;
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_utilities */
 #endif /* DATA_POOL_H */

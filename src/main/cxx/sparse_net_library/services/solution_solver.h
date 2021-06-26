@@ -22,23 +22,26 @@
 
 #include <vector>
 #include <memory>
-#include <thread>
 #include <atomic>
 #include <utility>
 #include <functional>
 
 #include "gen/solution.pb.h"
-#include "sparse_net_library/services/agent.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
+#include "rafko_gym/services/agent.h"
+#include "rafko_utilities/models/data_ringbuffer.h"
+#include "rafko_utilities/services/thread_group.h"
 
 #include "sparse_net_library/services/partial_solution_solver.h"
 
 namespace sparse_net_library{
 
 using std::vector;
-using std::thread;
 using std::reference_wrapper;
 using std::unique_ptr;
+
+using rafko_utilities::ThreadGroup;
+using rafko_utilities::DataRingbuffer;
+using rafko_gym::Agent;
 
 /**
  * @brief      This class Processes a @Solution given in its constructor and handles

@@ -23,7 +23,6 @@
 #include <vector>
 #include <memory>
 #include <stdexcept>
-#include <thread>
 #include <mutex>
 #include <tuple>
 
@@ -32,21 +31,28 @@
 
 #include "rafko_mainframe/models/service_context.h"
 
-#include "sparse_net_library/services/thread_group.h"
-#include "sparse_net_library/services/agent.h"
-#include "sparse_net_library/models/data_pool.h"
+#include "rafko_gym/services/agent.h"
+#include "rafko_utilities/services/thread_group.h"
+#include "rafko_utilities/models/data_pool.h"
 #include "sparse_net_library/models/cost_function.h"
 #include "sparse_net_library/services/function_factory.h"
 
-namespace sparse_net_library{
+namespace rafko_gym{
 
 using std::vector;
 using std::shared_ptr;
 using std::unique_ptr;
 using std::move;
-using std::thread;
 using std::mutex;
 using std::tuple;
+
+using rafko_mainframe::Service_context;
+using rafko_utilities::ThreadGroup;
+using sparse_net_library::SparseNet;
+using sparse_net_library::Data_set;
+using sparse_net_library::Function_factory;
+using sparse_net_library::Cost_function;
+using sparse_net_library::cost_functions;
 
 /**
  * @brief      A Data set container complete with adaptive error statistics, which is
@@ -407,6 +413,6 @@ private:
 
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_gym */
 
 #endif /* DATA_AGGREGATE_H */

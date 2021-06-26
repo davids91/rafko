@@ -15,22 +15,27 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "sparse_net_library/services/sparse_net_approximizer.h"
+#include "rafko_gym/services/sparse_net_approximizer.h"
 
 #include <algorithm>
 
 #include "gen/common.pb.h"
-
 #include "sparse_net_library/services/synapse_iterator.h"
 #include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/updater_factory.h"
 
-namespace sparse_net_library{
+namespace rafko_gym{
 
-
+using std::function;
 using std::make_unique;
 using std::lock_guard;
 using std::ref;
+
+using sparse_net_library::Synapse_iterator;
+using sparse_net_library::Index_synapse_interval;
+using sparse_net_library::Solution_builder;
+using sparse_net_library::Solution_solver;
+using sparse_net_library::Updater_factory;
 
 Sparse_net_approximizer::Sparse_net_approximizer(
   SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
@@ -426,4 +431,4 @@ void Sparse_net_approximizer::apply_fragment(void){
   loops_unchecked = context.get_insignificant_changes() + 1;
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_gym */

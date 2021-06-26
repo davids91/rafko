@@ -25,9 +25,11 @@
 
 #include "gen/common.pb.h"
 
-namespace sparse_net_library{
+namespace rafko_utilities{
 
 using std::vector;
+
+using sparse_net_library::Input_synapse_interval;
 
 /**
  * @brief      This class describes a ringbuffer designed to store the Memory of a Neural Network.
@@ -283,6 +285,6 @@ private:
   }
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_utilities */
 
 #endif /* DATA_RING_BUFFER_H */

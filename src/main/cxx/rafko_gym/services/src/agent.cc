@@ -15,11 +15,11 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "sparse_net_library/services/agent.h"
+#include "rafko_gym/services/agent.h"
 
 #include <vector>
 
-namespace sparse_net_library{
+namespace rafko_gym{
 
 using std::vector;
 
@@ -36,4 +36,4 @@ void Agent::solve(const vector<sdouble32>& input, DataRingbuffer& output) const{
   for(vector<sdouble32>& tmp_buffer : tmp_data_pool) common_data_pool.release_buffer(tmp_buffer);
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_gym */

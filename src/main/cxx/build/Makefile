@@ -1,10 +1,6 @@
 LIBFLAGS = `pkg-config --cflags protobuf grpc++`
 LIBS = `pkg-config --libs protobuf grpc++`
 
-LIB_DIR = ../lib
-LIB_OUTPUT = $(LIB_DIR)/libsparsenetlib.a
-MAINFRAME_OUTPUT = rafko-mainframe
-
 DEBUG_FLAGS = -DNDEBUG #no debug
 #DEBUG_FLAGS = -g #debug information added
 #DEBUG_FLAGS = -ggdb #debug information added
@@ -14,60 +10,109 @@ DEBUG_FLAGS = -DNDEBUG #no debug
 CPPFLAGS = -Wall $(LIBFLAGS) $(LIBS) -std=c++14 $(DEBUG_FLAGS)
 CPPFLAGS_DEPLOY = $(CPPFLAGS) -L$(LIB_DIR) -lsparsenetlib
 
-PROTO_FILES_DIR = ../../proto
+##########################################################################################################
+# GENERATED Objects
+##########################################################################################################
 CXX_GEN_FILES_DIR = ../gen
 
-##########################################################################################################
-# Source files
-##########################################################################################################
 GENERATED_SOURCES = $(CXX_GEN_FILES_DIR)/common.pb.cc
 GENERATED_SOURCES += $(CXX_GEN_FILES_DIR)/sparse_net.pb.cc $(CXX_GEN_FILES_DIR)/solution.pb.cc $(CXX_GEN_FILES_DIR)/training.pb.cc
 GENERATED_SOURCES += $(CXX_GEN_FILES_DIR)/deep_learning_service.pb.cc $(CXX_GEN_FILES_DIR)/deep_learning_service.grpc.pb.cc
 GENERATED_SOURCES += $(CXX_GEN_FILES_DIR)/logger.pb.cc
 
-BUILDER_SOURCES = ../sparse_net_library/services/src/sparse_net_builder.cc ../sparse_net_library/services/src/neuron_router.cc
-BUILDER_SOURCES += ../sparse_net_library/services/src/solution_builder.cc ../sparse_net_library/services/src/partial_solution_builder.cc
-SOLVER_SOURCES = ../sparse_net_library/services/src/partial_solution_solver.cc ../sparse_net_library/services/src/solution_solver.cc
-TRAINER_SOURCES = ../sparse_net_library/models/src/dense_net_weight_initializer.cc ../sparse_net_library/services/src/weight_updater.cc
-TRAINER_SOURCES += ../sparse_net_library/services/src/backpropagation_queue_wrapper.cc
-TRAINER_SOURCES += ../sparse_net_library/services/src/sparse_net_approximizer.cc
-HELPER_SOURCES =  ../sparse_net_library/models/src/neuron_info.cc ../sparse_net_library/models/src/transfer_function.cc
-HELPER_SOURCES +=  ../sparse_net_library/models/src/cost_function.cc ../sparse_net_library/models/src/data_aggregate.cc
-HELPER_SOURCES += ../sparse_net_library/services/src/weight_experience_space.cc
-HELPER_SOURCES += ../sparse_net_library/services/src/agent.cc
-HELPER_SOURCES += ../rafko_mainframe/services/src/training_logger.cc
+GENERATED_OBJECTS = $(subst $(CXX_GEN_FILES_DIR)/,,$(GENERATED_SOURCES:.cc=.o))
 
-LIBRARY_SOURCES = $(GENERATED_SOURCES) $(BUILDER_SOURCES) $(SOLVER_SOURCES) $(TRAINER_SOURCES) $(HELPER_SOURCES)
-LIBRARY_OBJECTS = $(subst $(CXX_GEN_FILES_DIR)/,,$(GENERATED_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../sparse_net_library/services/src/,,$(BUILDER_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../sparse_net_library/services/src/,,$(SOLVER_SOURCES:.cc=.o))
-LIBRARY_OBJECTS += $(subst ../sparse_net_library/models/src/,,$(subst ../sparse_net_library/services/src/,,$(TRAINER_SOURCES:.cc=.o)))
-LIBRARY_OBJECTS += $(subst ../sparse_net_library/models/src/,,$(subst ../sparse_net_library/services/src/,,$(subst ../rafko_mainframe/services/src/,,$(HELPER_SOURCES:.cc=.o))))
+##########################################################################################################
+# MAINFRAME
+##########################################################################################################
+MAINFRAME_SOURCE_DIR = rafko_mainframe
 
-###########################
-SERVER_SOURCES = ../rafko_mainframe/services/src/deep_learning_server.cc
-SERVER_SOURCES += ../rafko_mainframe/services/src/server_slot.cc
-SERVER_SOURCES += ../rafko_mainframe/services/src/server_slot_run_net.cc
-SERVER_SOURCES += ../rafko_mainframe/services/src/server_slot_approximize_net.cc
+MAINFRAME_SOURCE_FILES = /services/src/deep_learning_server.cc
+MAINFRAME_SOURCE_FILES += /services/src/server_slot.cc
+MAINFRAME_SOURCE_FILES += /services/src/server_slot_run_net.cc
+MAINFRAME_SOURCE_FILES += /services/src/server_slot_approximize_net.cc
+MAINFRAME_SOURCE_FILES += /services/src/training_logger.cc
+MAINFRAME_SOURCE_FILES += /control/src/rafko_deep_learning_mainframe.cc
 
-MAINFRAME_SOURCES = $(SERVER_SOURCES)
-MAINFRAME_SOURCES += ../rafko_mainframe/src/rafko_deep_learning_mainframe.cc
+MAINFRAME_SOURCES_TMP2 = $(subst /services, ../$(MAINFRAME_SOURCE_DIR)/services,$(MAINFRAME_SOURCE_FILES))
+MAINFRAME_SOURCES_TMP = $(subst /models, ../$(MAINFRAME_SOURCE_DIR)/models,$(MAINFRAME_SOURCES_TMP2))
+MAINFRAME_SOURCES = $(subst /control, ../$(MAINFRAME_SOURCE_DIR)/control,$(MAINFRAME_SOURCES_TMP2))
+MAINFRAME_OBJECTS_TMP = $(subst ../$(MAINFRAME_SOURCE_DIR)/models/src/,,$(subst ../$(MAINFRAME_SOURCE_DIR)/services/src/,,$(MAINFRAME_SOURCES:.cc=.o)))
+MAINFRAME_OBJECTS = $(subst /control/src, $(SPARSE_NET_SOURCE_DIR)/control/src,$(MAINFRAME_OBJECTS_TMP))
+MAINFRAME_OUTPUT = rafko-mainframe
 
-MAINFRAME_OBJECTS = $(subst ../rafko_mainframe/services/src/,,$(subst ../,,$(MAINFRAME_SOURCES:.cc=.o))))
+##########################################################################################################
+# UTILITIES
+##########################################################################################################
+UTILITIES_SOURCE_DIR = rafko_utilities
+#UTILITIES_SOURCES = None! Only header files as of yet
 
+##########################################################################################################
+# SPARSE NETWORK LIBRARY
+##########################################################################################################
+SPARSE_NET_SOURCE_DIR = sparse_net_library
+
+SPARSE_NET_SOURCES = /services/src/sparse_net_builder.cc /services/src/neuron_router.cc
+SPARSE_NET_SOURCES += /services/src/solution_builder.cc /services/src/partial_solution_builder.cc
+SPARSE_NET_SOURCES += /services/src/partial_solution_solver.cc /services/src/solution_solver.cc
+SPARSE_NET_SOURCES += /models/src/dense_net_weight_initializer.cc /services/src/weight_updater.cc
+SPARSE_NET_SOURCES += /services/src/backpropagation_queue_wrapper.cc
+SPARSE_NET_SOURCES +=  /models/src/neuron_info.cc /models/src/transfer_function.cc
+SPARSE_NET_SOURCES +=  /models/src/cost_function.cc
+SPARSE_NET_SOURCES += /services/src/weight_experience_space.cc
+
+LIBRARY_NET_SOURCES_TMP = $(subst /services, ../$(SPARSE_NET_SOURCE_DIR)/services,$(SPARSE_NET_SOURCES))
+LIBRARY_NET_SOURCES = $(subst /models, ../$(SPARSE_NET_SOURCE_DIR)/models,$(LIBRARY_NET_SOURCES_TMP))
+LIBRARY_NET_OBJECTS = $(subst ../$(SPARSE_NET_SOURCE_DIR)/models/src/,,$(subst ../$(SPARSE_NET_SOURCE_DIR)/services/src/,,$(LIBRARY_NET_SOURCES:.cc=.o)))
+
+##########################################################################################################
+# GYM
+##########################################################################################################
+GYM_SOURCE_DIR = rafko_gym
+
+GYM_SOURCES = /services/src/sparse_net_approximizer.cc
+GYM_SOURCES += /services/src/agent.cc
+GYM_SOURCES += /models/src/data_aggregate.cc
+
+LIBRARY_GYM_SOURCES_TMP = $(subst /services, ../$(GYM_SOURCE_DIR)/services,$(GYM_SOURCES))
+LIBRARY_GYM_SOURCES = $(subst /models, ../$(GYM_SOURCE_DIR)/models,$(LIBRARY_GYM_SOURCES_TMP))
+LIBRARY_GYM_OBJECTS = $(subst ../$(GYM_SOURCE_DIR)/models/src/,,$(subst ../$(GYM_SOURCE_DIR)/services/src/,,$(LIBRARY_GYM_SOURCES:.cc=.o)))
+
+##########################################################################################################
+# OUTPUT LIBRARY
+##########################################################################################################
+LIB_DIR = ../lib
+
+LIB_OUTPUT = $(LIB_DIR)/libsparsenetlib.a
 GENERATED_FILES_INCLUDE_DIR = -I $(CXX_GEN_FILES_DIR)
 SOURCES_INCLUDE_DIR = -I ../
+LIBRARY_OBJECTS = $(LIBRARY_NET_OBJECTS) $(LIBRARY_GYM_OBJECTS) $(GENERATED_OBJECTS)
+LIBRARY_SOURCES = $(LIBRARY_NET_SOURCES) $(LIBRARY_GYM_SOURCES) $(GENERATED_SOURCES)
 
 .PHONY: lib clean gen
-build_mainframe: $(LIB_OUTPUT) $(GENERATED_SOURCES)
-	g++ $(GENERATED_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(MAINFRAME_OUTPUT)
-
+#default maketarget: Sparse net library
 $(LIB_OUTPUT): $(LIB_DIR) clean gen $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
 
+mainframe: $(LIB_OUTPUT)
+	g++ $(GENERATED_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(MAINFRAME_OUTPUT)
+
+$(LIB_DIR):
+	@echo "Folder $(directory) does not exist yet!"
+	@mkdir -p $@
+
+$(LIBRARY_OBJECTS):
+	g++ -c $(LIBRARY_SOURCES) $(SOURCES_INCLUDE_DIR) $(GENERATED_FILES_INCLUDE_DIR) $(CPPFLAGS)
+
+clean:
+	rm -f *.o *.exe *.out ../lib/libsparsenetlib.a ../lib/libsparsenetlib.so $(CXX_GEN_FILES_DIR)/*.cc $(CXX_GEN_FILES_DIR)/*.h
+
+
 ##########################################################################################################
-# Protocol bufffer
+# Protocol buffers
 ##########################################################################################################
+PROTO_FILES_DIR = ../../proto
+
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 
@@ -87,55 +132,47 @@ gen: #as in generate models; Can't be bothered to type something like `make gene
 	protoc logger.proto --proto_path="$(PROTO_FILES_DIR)" --cpp_out="$(CXX_GEN_FILES_DIR)/" --grpc_out="$(CXX_GEN_FILES_DIR)" --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH)
 
 ##########################################################################################################
-# Compile
-##########################################################################################################
-$(LIB_DIR):
-	@echo "Folder $(directory) does not exist yet!"
-	@mkdir -p $@
-
-$(LIBRARY_OBJECTS):
-	g++ -c $(LIBRARY_SOURCES) $(SOURCES_INCLUDE_DIR) $(GENERATED_FILES_INCLUDE_DIR) $(CPPFLAGS)
-
-clean:
-	rm -f *.o *.exe *.out ../lib/libsparsenetlib.a ../lib/libsparsenetlib.so $(CXX_GEN_FILES_DIR)/*.cc $(CXX_GEN_FILES_DIR)/*.h
-
-##########################################################################################################
 # Testing
 ##########################################################################################################
 TEST_BASE_SOURCE = ../test/src/main_test.cc
-TEST_SOURCES = $(TEST_BASE_SOURCE)
-TEST_SOURCES += ../test/src/sparse_net_builder_test.cc ../test/src/solution_builder_test.cc
-TEST_SOURCES += ../test/src/partial_solution_solver_test.cc ../test/src/solution_solver_test.cc
-TEST_SOURCES += ../test/src/synapse_iterator_test.cc ../test/src/neuron_router_test.cc
-TEST_SOURCES += ../test/src/neuron_info_test.cc ../test/src/cost_function_mse_test.cc
-TEST_SOURCES += ../test/src/backprop_queue_wrapper_test.cc
-TEST_SOURCES += ../test/src/data_aggregate_test.cc
-TEST_SOURCES += ../test/src/data_ringbuffer_test.cc
-TEST_SOURCES += ../test/src/data_pool_test.cc
-TEST_SOURCES += ../test/src/weight_updater_test.cc
-TEST_SOURCES += ../test/src/weight_experience_space_test.cc
-TEST_SOURCES += ../test/src/thread_group_test.cc
+SPARSE_NET_TEST_SOURCES = $(TEST_BASE_SOURCE)
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/sparse_net_builder_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/solution_builder_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/partial_solution_solver_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/solution_solver_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/synapse_iterator_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/neuron_router_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/neuron_info_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/cost_function_mse_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/backprop_queue_wrapper_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/weight_updater_test.cc
+SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/weight_experience_space_test.cc
 
-OPTIMIZATION_TEST_SOURCES = $(TEST_BASE_SOURCE)
-OPTIMIZATION_TEST_SOURCES += ../test/src/approximizer_test.cc
+UTILITIES_TEST_SOURCES += ../test/$(UTILITIES_SOURCE_DIR)/src/data_ringbuffer_test.cc
+UTILITIES_TEST_SOURCES += ../test/$(UTILITIES_SOURCE_DIR)/src/data_pool_test.cc
+UTILITIES_TEST_SOURCES += ../test/$(UTILITIES_SOURCE_DIR)/src/thread_group_test.cc
 
-TEST_OBJECTS = $(subst ../test/src/,,$(TEST_SOURCES:.cc=.o))
-OPTIMIZATION_TEST_OBJECTS = $(subst ../test/src/,,$(OPTIMIZATION_TEST_SOURCES:.cc=.o))
+SPARSE_NET_TEST_OBJECTS_TMP = $(subst ../test/$(SPARSE_NET_SOURCE_DIR)/src/,,$(SPARSE_NET_TEST_SOURCES:.cc=.o))
+SPARSE_NET_TEST_OBJECTS = $(subst ../test/$(UTILITIES_SOURCE_DIR)/src/,,$(SPARSE_NET_TEST_OBJECTS_TMP))
+
+GYM_TEST_SOURCES = $(TEST_BASE_SOURCE)
+GYM_TEST_SOURCES += ../test/$(GYM_SOURCE_DIR)/src/data_aggregate_test.cc
+GYM_TEST_SOURCES += ../test/$(GYM_SOURCE_DIR)/src/approximizer_test.cc
+GYM_TEST_OBJECTS = $(subst ../test/src/,,$(OPTIMIZATION_TEST_SOURCES:.cc=.o))
 
 TEST_INCLUDES = -I ../test/
 TEST_RESULT = test-results.out
 TEST_LOOPS = 100
 
 .PHONY: test build-tests run-tests test-solution-builder test-only loop-tests
-$(TEST_RESULT): $(TEST_OBJECTS)
-	g++ $(TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
-
-test: clean gen $(LIB_OUTPUT)
+test: clean gen $(LIB_OUTPUT) $(TEST_RESULT)
 	make run-tests
 
-test-only: $(TEST_OBJECTS)
-	g++ $(TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
+test-only: $(LIB_OUTPUT) $(TEST_RESULT)
 	make run-tests
+
+$(TEST_RESULT):
+	g++ $(SPARSE_NET_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 
 run-tests: $(TEST_RESULT)
 	./$< --use-colour yes -d yes
@@ -148,10 +185,10 @@ test-solution-builder: clean gen $(LIB_OUTPUT)
 	g++ $(TEST_BASE) ../test/solution_builder_test.cc ../test/neuron_router_test.cc $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 	./$(TEST_RESULT)
 
-test-opt: clean gen $(LIB_OUTPUT) #as in optimization or approximization
+test-opt: $(LIB_OUTPUT) #as in optimization or approximization
 	@rm -f $(TEST_RESULT)
-	g++ $(TEST_BASE) $(OPTIMIZATION_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
+	g++ $(GYM_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 	./$(TEST_RESULT)  --use-colour yes -a [approximize]
 
-$(TEST_OBJECTS):
-	g++ -c $(TEST_SOURCES) $(SOURCES_INCLUDE_DIR)
+$(SPARSE_NET_TEST_OBJECTS):
+	g++ -c $(UTILITIES_TEST_SOURCES) $(SPARSE_NET_TEST_SOURCES) $(SOURCES_INCLUDE_DIR)

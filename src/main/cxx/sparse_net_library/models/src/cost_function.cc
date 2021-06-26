@@ -17,12 +17,14 @@
 #include "sparse_net_library/models/cost_function.h"
 
 #include <cmath>
+#include <functional>
 
 namespace sparse_net_library {
 
 using std::min;
 using std::ref;
 using std::async;
+using std::function;
 
 void Cost_function::get_feature_errors(
   const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,

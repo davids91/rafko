@@ -21,12 +21,12 @@
 #include "gen/common.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
-#include "sparse_net_library/models/data_aggregate.h"
+#include "rafko_utilities/models/data_ringbuffer.h"
+#include "rafko_gym/models/data_aggregate.h"
 #include "sparse_net_library/models/cost_function_mse.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/solution_builder.h"
-#include "sparse_net_library/services/sparse_net_approximizer.h"
+#include "rafko_gym/services/sparse_net_approximizer.h"
 #include "sparse_net_library/services/function_factory.h"
 
 namespace sparse_net_library_test {
@@ -51,9 +51,9 @@ using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
 using sparse_net_library::WEIGHT_UPDATER_NESTEROV;
 using sparse_net_library::WEIGHT_UPDATER_ADAM;
 using sparse_net_library::WEIGHT_UPDATER_AMSGRAD;
-using sparse_net_library::Sparse_net_approximizer;
-using sparse_net_library::DataRingbuffer;
-using sparse_net_library::Data_aggregate;
+using rafko_gym::Sparse_net_approximizer;
+using rafko_utilities::DataRingbuffer;
+using rafko_gym::Data_aggregate;
 using sparse_net_library::Function_factory;
 using sparse_net_library::Solution;
 using sparse_net_library::Solution_builder;

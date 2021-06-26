@@ -14,11 +14,11 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "sparse_net_library/models/data_aggregate.h"
+#include "rafko_gym/models/data_aggregate.h"
 
 #include <cmath>
 
-namespace sparse_net_library {
+namespace rafko_gym{
 
 DataPool<sdouble32> Data_aggregate::common_datapool(1,1);
 
@@ -122,4 +122,4 @@ void Data_aggregate::accumulate_error_sum(uint32 error_start, uint32 errors_to_s
   error_state.back().error_sum += local_error;
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_gym */

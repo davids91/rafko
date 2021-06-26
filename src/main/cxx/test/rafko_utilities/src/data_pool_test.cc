@@ -21,14 +21,14 @@
 #include <thread>
 
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/data_pool.h"
+#include "rafko_utilities/models/data_pool.h"
 
 namespace sparse_net_library_test {
 
 using std::vector;
 using std::thread;
 
-using sparse_net_library::DataPool;
+using rafko_utilities::DataPool;
 
 /*###############################################################################################
  * Testing if data pool allocates data with the correct parameters

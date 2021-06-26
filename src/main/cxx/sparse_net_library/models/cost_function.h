@@ -26,7 +26,7 @@
 #include <tuple>
 
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/services/thread_group.h"
+#include "rafko_utilities/services/thread_group.h"
 
 namespace sparse_net_library{
 
@@ -35,6 +35,7 @@ using std::thread;
 using std::future;
 using std::tuple;
 
+using rafko_utilities::ThreadGroup;
 using rafko_mainframe::Service_context;
 
 /**
@@ -183,7 +184,7 @@ protected:
   );
 private:
   cost_functions the_function; /* cost function type */
-  ThreadGroup execution_threads; 
+  ThreadGroup execution_threads;
 
   /**
    * @brief      A Thread being used to sum up the error for each label-data pair and load the result into the provided error vector

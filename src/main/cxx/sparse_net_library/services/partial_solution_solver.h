@@ -27,9 +27,9 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 
-#include "sparse_net_library/models/data_pool.h"
+#include "rafko_utilities/models/data_pool.h"
+#include "rafko_utilities/models/data_ringbuffer.h"
 #include "sparse_net_library/models/transfer_function.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
 #include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library {
@@ -37,6 +37,9 @@ namespace sparse_net_library {
 using std::vector;
 using std::mutex;
 using std::atomic;
+
+using rafko_utilities::DataPool;
+using rafko_utilities::DataRingbuffer;
 
 class Partial_solution_solver{
 

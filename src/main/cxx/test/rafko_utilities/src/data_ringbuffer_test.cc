@@ -21,14 +21,14 @@
 #include <vector>
 
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
+#include "rafko_utilities/models/data_ringbuffer.h"
 
 namespace sparse_net_library_test {
 
 using std::vector;
 using std::copy;
 
-using sparse_net_library::DataRingbuffer;
+using rafko_utilities::DataRingbuffer;
 using sparse_net_library::Input_synapse_interval;
 using rafko_mainframe::Service_context;
 
@@ -74,7 +74,7 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
 /*###############################################################################################
  * Testing a sequence of runs to be stored in the ringbuffer, and seeing if the indexing is as expected
  *  by querying sequence indices and comparing to past reaches
- *  Used interfaces: 
+ *  Used interfaces:
  * - get_sequence_size
  * - get_const_element
  * - get_sequence_index
@@ -95,7 +95,7 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
     copy(data_sample.begin(),data_sample.end(), buffer.get_element(0).begin());
   }
 
-  /*!Note: To understand Sequential indexes in the Data ringbuffer, this might help: 
+  /*!Note: To understand Sequential indexes in the Data ringbuffer, this might help:
   for(sint32 i = sequence_number-1; i >= 0; --i)
     std::cout << "[" << i << "]-";
   std::cout << "past index (buffer conents also in this example)" << std::endl;

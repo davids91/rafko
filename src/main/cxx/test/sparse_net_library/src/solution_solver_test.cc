@@ -26,7 +26,7 @@
 #include "gen/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "sparse_net_library/models/transfer_function.h"
-#include "sparse_net_library/models/data_ringbuffer.h"
+#include "rafko_utilities/models/data_ringbuffer.h"
 #include "sparse_net_library/models/spike_function.h"
 #include "sparse_net_library/services/solution_solver.h"
 #include "sparse_net_library/services/partial_solution_solver.h"
@@ -39,7 +39,7 @@ namespace sparse_net_library_test{
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::SparseNet;
-using sparse_net_library::DataRingbuffer;
+using rafko_utilities::DataRingbuffer;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Partial_solution_solver;
 using sparse_net_library::Solution;

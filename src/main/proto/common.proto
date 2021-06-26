@@ -83,4 +83,3 @@ message Index_synapse_interval{
   sint32 starts = 10; /* Starting indexes of intervals */
   uint32 interval_size = 11; /* Sizes of intervals */
 }
-
