@@ -39,7 +39,7 @@ MAINFRAME_SOURCES_TMP = $(subst /models, ../$(MAINFRAME_SOURCE_DIR)/models,$(MAI
 MAINFRAME_SOURCES = $(subst /control, ../$(MAINFRAME_SOURCE_DIR)/control,$(MAINFRAME_SOURCES_TMP2))
 MAINFRAME_OBJECTS_TMP = $(subst ../$(MAINFRAME_SOURCE_DIR)/models/src/,,$(subst ../$(MAINFRAME_SOURCE_DIR)/services/src/,,$(MAINFRAME_SOURCES:.cc=.o)))
 MAINFRAME_OBJECTS = $(subst /control/src, $(SPARSE_NET_SOURCE_DIR)/control/src,$(MAINFRAME_OBJECTS_TMP))
-MAINFRAME_OUTPUT = rafko-mainframe
+MAINFRAME_OUTPUT = rafko-mainframe.out
 
 ##########################################################################################################
 # UTILITIES
@@ -95,7 +95,7 @@ $(LIB_OUTPUT): $(LIB_DIR) clean gen $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
 
 mainframe: $(LIB_OUTPUT)
-	g++ $(GENERATED_SOURCES) $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(MAINFRAME_OUTPUT)
+	g++ $(MAINFRAME_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(MAINFRAME_OUTPUT)
 
 $(LIB_DIR):
 	@echo "Folder $(directory) does not exist yet!"

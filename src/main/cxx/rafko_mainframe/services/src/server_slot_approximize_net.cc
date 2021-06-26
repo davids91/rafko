@@ -85,7 +85,7 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
     ){
       service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_DATA_SET);
       if(training_set)training_set.reset();
-      training_set = std::make_shared<Data_aggregate>(*service_slot->mutable_training_set(), cost_function);
+      training_set = std::make_shared<Data_aggregate>(context, *service_slot->mutable_training_set(), cost_function);
       if(training_set)
         service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_DATA_SET);
       service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_TRAINER); /* data set have changed, trainer needs to be re-initialized */
@@ -99,7 +99,7 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
         (service_slot_.training_set().inputs_size() == service_slot_.test_set().inputs_size())
         &&(service_slot_.training_set().labels_size() == service_slot_.test_set().labels_size())
       ){
-        training_set = std::make_shared<Data_aggregate>(*service_slot_.mutable_test_set(), cost_function);
+        training_set = std::make_shared<Data_aggregate>(context, *service_slot_.mutable_test_set(), cost_function);
       }else test_set = training_set;
       service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_TRAINER); /* data set have changed, trainer needs to be re-initialized */
     }else test_set = training_set;
@@ -167,7 +167,7 @@ void Server_slot_approximize_net::update_cost_function(){
   ){
     if(cost_function) cost_function.reset();
     service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_COST_FUNCTION);
-    if(0 == (service_slot->state() & SERV_SLOT_MISSING_NET)) 
+    if(0 == (service_slot->state() & SERV_SLOT_MISSING_NET))
       cost_function = std::move(Function_factory::build_cost_function(
         *network, service_slot->cost_function(), context
       )); /* Init cost function based on network output */

@@ -17,12 +17,14 @@
 
 #include "rafko_mainframe/services/server_slot_run_net.h"
 
+#include "rafko_utilities/models/data_ringbuffer.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/solution_builder.h"
 
 namespace rafko_mainframe{
 
 using sparse_net_library::Solution_builder;
+using rafko_utilities::DataRingbuffer;
 
 void Server_slot_run_net::initialize(Service_slot&& service_slot_){
   service_slot->set_type(service_slot_.type());
@@ -42,7 +44,7 @@ void Server_slot_run_net::refresh_solution(void){
   service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_SOLUTION);
   if(0 < network->neuron_array_size()){
     network_solution = Solution_builder(context).build(*network);
-    network_solver = std::make_unique<Solution_solver>(*network_solution, context);
+    network_solver = unique_ptr<Solution_solver>(Solution_solver::Builder(*network_solution, context).build());
     service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_SOLUTION);
   }else service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_NET);
   finalize_state();
@@ -59,15 +61,16 @@ Neural_io_stream Server_slot_run_net::run_net_once(const Neural_io_stream& data_
       network->output_neuron_number() * data_stream.sequence_size()
     ); /* ..which is the output of the network multiplied by the sequence size */
     vector<sdouble32> input;
+    DataRingbuffer neuron_data(network_solution->network_memory_length(),network_solution->neuron_number());
     for(uint32 sequence = 0; sequence < data_stream.sequence_size(); ++sequence){
       input = { /* Copy the input data to a temporary */
         data_stream.package().begin() + sequence_start_index,
         data_stream.package().begin() + sequence_start_index + data_stream.input_size(),
       };
-      network_solver->solve(input);
+      network_solver->solve(input,neuron_data);
       std::copy(
-        network_solver->get_neuron_data(0).end() - network_solver->get_output_size(),
-        network_solver->get_neuron_data(0).end(),
+        neuron_data.get_const_element(0).end() - network_solution->output_neuron_number(),
+        neuron_data.get_const_element(0).end(),
         result_package.begin() + sequence_start_index
       );
       sequence_start_index += data_stream.feature_size();
