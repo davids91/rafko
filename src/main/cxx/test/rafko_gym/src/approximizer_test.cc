@@ -159,9 +159,12 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     .allowed_transfer_functions_by_layer(
       {
         {TRANSFER_FUNCTION_SELU},
-        {TRANSFER_FUNCTION_SELU}
+        {TRANSFER_FUNCTION_SELU},
+        {TRANSFER_FUNCTION_SELU},
+        {TRANSFER_FUNCTION_SELU},
+        {TRANSFER_FUNCTION_SELU},
       }
-    ).dense_layers({2,1})
+    ).dense_layers({2,5,20,10,1})
   );
 
   /* Create dataset, test set and optimizers; optimize nets */

@@ -20,18 +20,18 @@
 
 #include "rafko_global.h"
 
-#include <thread>
 #include <vector>
 
 #include "gen/solution.pb.h"
+#include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/service_context.h"
 
 namespace sparse_net_library{
 
 using std::ref;
 using std::vector;
-using std::thread;
 
+using rafko_utilities::ThreadGroup;
 using rafko_mainframe::Service_context;
 
 /**
@@ -40,15 +40,16 @@ using rafko_mainframe::Service_context;
 class Weight_updater{
 public:
   Weight_updater(
-    SparseNet& sparse_net, Service_context& service_context, uint32 required_iterations_for_step_ = 1
+    SparseNet& sparse_net, Service_context& service_context_, uint32 required_iterations_for_step_ = 1
   ): net(sparse_net)
-  ,  context(service_context)
+  ,  service_context(service_context_)
   ,  required_iterations_for_step(required_iterations_for_step_)
+  ,  weights_to_do_in_one_thread(1u + static_cast<uint32>(net.weight_table_size()/service_context.get_max_solve_threads()))
   ,  iteration(0)
   ,  finished(false)
   ,  current_velocity(sparse_net.weight_table_size(),double_literal(0.0))
-  ,  calculate_threads()
-  { calculate_threads.reserve(context.get_max_processing_threads()); };
+  ,  execution_threads(service_context.get_max_solve_threads())
+  { };
 
 
   /**
@@ -60,7 +61,7 @@ public:
   }
 
   /**
-   * @brief      Do an iteration of weight updates. An actual weight update 
+   * @brief      Do an iteration of weight updates. An actual weight update
    *             shall count as valid when @required_iterations_for_step taken place.
    *
    * @param      gradients           The gradients
@@ -77,15 +78,14 @@ public:
   /**
    * @brief      Copies the referenced @SparseNet weights into the solution in the arguments
    *             It supposes that the solution is one already built, and it is built from
-   *             the same @SparseNet referenced in the updater. Opens up a thread for every internal 
-   *             neuron in the partial solution, up until a maximum of Service_context::get_max_processing_threads.
+   *             the same @SparseNet referenced in the updater. Uses a different thread for every partial solution.
    *
    * @param      solution  The solution
    */
   void update_solution_with_weights(Solution& solution);
 
   /**
-   * @brief      Tells if an iteration is at its valid state or not based on 
+   * @brief      Tells if an iteration is at its valid state or not based on
    *             he number of iterations since calling @start
    *
    * @return     True if finished, False otherwise.
@@ -118,12 +118,13 @@ public:
 
 protected:
   SparseNet& net;
-  Service_context& context;
+  Service_context& service_context;
   const uint32 required_iterations_for_step;
+  const uint32 weights_to_do_in_one_thread;
   uint32 iteration;
   bool finished;
   vector<sdouble32> current_velocity;
-  
+
   /**
    * @brief      Gets the new value for one weight based on the gradients.
    *             More complex weight updaters should overwirte this function,
@@ -146,11 +147,11 @@ protected:
    * @return     The new velocity.
    */
   sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
-    return (gradients[weight_index] * context.get_step_size());
+    return (gradients[weight_index] * service_context.get_step_size());
   }
 
 private:
-  vector<thread> calculate_threads;
+  ThreadGroup execution_threads;
 
   /**
    * @brief      Calculates and stroes the required velocity for a weight based on the provided gradients
@@ -194,23 +195,9 @@ private:
    * @param[in]  inner_neuron_weight_index_starts  The inner neuron weight index starts
    */
   void copy_weight_to_solution(
-    uint32 neuron_index, uint32 inner_neuron_index, Partial_solution& partial, uint32 inner_neuron_weight_index_starts
+    uint32 neuron_index, uint32 inner_neuron_index,
+    Partial_solution& partial, uint32 inner_neuron_weight_index_starts
   ) const;
-
-  /**
-   * @brief      This function waits for the given threads to finish, ensures that every thread
-   *             in the reference vector is finished, before it does.
-   *
-   * @param      calculate_threads  The calculate threads
-   *//*!TODO: Find a better solution for these snippets */
-  static void wait_for_threads(vector<thread>& calculate_threads){
-    while(0 < calculate_threads.size()){
-      if(calculate_threads.back().joinable()){
-        calculate_threads.back().join();
-        calculate_threads.pop_back();
-      }
-    }
-  }
 };
 
 } /* namespace sparse_net_library */

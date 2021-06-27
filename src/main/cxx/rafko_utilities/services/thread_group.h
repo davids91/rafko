@@ -93,6 +93,13 @@ public:
     }
   }
 
+  /**
+   * @brief     Returns the number of worker threads handled in this group
+   */
+  uint32 get_number_of_threads(void){
+    return threads.size();
+  }
+
 private:
   enum state_t{Idle, Start, End};
   mutable const function<void(uint32)>* worker_function; /* gets the thread index it is inside */

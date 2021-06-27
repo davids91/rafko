@@ -24,8 +24,8 @@ namespace sparse_net_library{
 
 class Weight_updater_momentum : public Weight_updater{
 public:
-  Weight_updater_momentum(SparseNet& sparse_net, Service_context& service_context)
-  :  Weight_updater(sparse_net, service_context)
+  Weight_updater_momentum(SparseNet& sparse_net, Service_context& service_context_)
+  :  Weight_updater(sparse_net, service_context_)
   ,  previous_velocity(sparse_net.weight_table_size(),double_literal(0.0))
   { }
 
@@ -37,8 +37,8 @@ public:
 private:
   sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
     return (
-      (previous_velocity[weight_index] * context.get_gamma()) 
-      + (gradients[weight_index] * context.get_step_size())
+      (previous_velocity[weight_index] * service_context.get_gamma())
+      + (gradients[weight_index] * service_context.get_step_size())
     );
   }
 

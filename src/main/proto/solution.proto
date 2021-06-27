@@ -28,6 +28,8 @@ import "common.proto";
  *             a coherent part of a sparse neural network, where locality is maximized.
  *             The arrays inside this structure all have their sizes defined by @internal_neuron_number
  *             and/or the size of @data, which contains the data for the inputs and neurons as well.
+ *             The Partial solution itself is best solved iteratively, becuase each neuron may depend on the previous one
+ *             or the previous row.
  */
 message Partial_solution{
   /** ################################################################################################

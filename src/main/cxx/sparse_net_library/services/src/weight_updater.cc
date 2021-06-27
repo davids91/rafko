@@ -38,75 +38,78 @@ void Weight_updater::update_weight_with_velocity(uint32 weight_index, uint32 wei
 }
 
 void Weight_updater::calculate_velocity(const vector<sdouble32>& gradients){
-  uint32 weight_index = 0;
-  const uint32 weight_number = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
-  for( /* As long as there are threads to open or remaining weights */
-    uint32 thread_index = 0; 
-    ( (thread_index < context.get_max_solve_threads())
-      &&(static_cast<uint32>(net.weight_table_size()) > weight_index) );
-    ++thread_index
-  ){
-    calculate_threads.push_back(thread(
-      &Weight_updater::calculate_velocity_thread, this, ref(gradients),
-      weight_index, std::min(weight_number, (net.weight_table_size() - weight_index))
-    ));
-    weight_index += weight_number;
-  }
-  wait_for_threads(calculate_threads);
+  execution_threads.start_and_block([this, &gradients](uint32 thread_index){
+    sint32 weight_index_start = weights_to_do_in_one_thread * thread_index;
+    if(weight_index_start < net.weight_table_size()){
+      uint32 weight_index = (weights_to_do_in_one_thread * thread_index);
+      calculate_velocity_thread(
+        gradients, weight_index, std::min(weights_to_do_in_one_thread, (net.weight_table_size() - weight_index))
+      );
+    }
+  });
 }
 
 void Weight_updater::update_weights_with_velocity(void){
-  uint32 weight_index = 0;
-  const uint32 weight_number = 1 + static_cast<uint32>(net.weight_table_size()/context.get_max_solve_threads());
-  for( /* As long as there are threads to open or remaining weights */
-    uint32 thread_index = 0; 
-    ( (thread_index < context.get_max_solve_threads())
-      &&(static_cast<uint32>(net.weight_table_size()) > weight_index) );
-    ++thread_index
-  ){
-    calculate_threads.push_back(thread(
-      &Weight_updater::update_weight_with_velocity, this,
-      weight_index, std::min(weight_number, (net.weight_table_size() - weight_index))
-    ));
-    weight_index += weight_number;
-  }
-  wait_for_threads(calculate_threads);
+  execution_threads.start_and_block([this](uint32 thread_index){
+    sint32 weight_index_start = weights_to_do_in_one_thread * thread_index;
+    if(weight_index_start < net.weight_table_size()){
+      uint32 weight_index = (weights_to_do_in_one_thread * thread_index);
+      update_weight_with_velocity(weight_index, std::min(weights_to_do_in_one_thread, (net.weight_table_size() - weight_index)));
+    }
+  });
 }
 
 void Weight_updater::update_solution_with_weights(Solution& solution){
-  uint32 inner_neuron_iterator;
-  uint32 neuron_weight_synapse_starts;
-  uint32 inner_neuron_weight_index_starts;
-  uint32 neuron_index;
-  for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
-    inner_neuron_iterator = 0;
-    neuron_weight_synapse_starts = 0;
-    inner_neuron_weight_index_starts = 0;
-    while(inner_neuron_iterator < solution.partial_solutions(partial_index).internal_neuron_number()){
-      while( /* As long as there are threads to open or remaining neurons */
-        (context.get_max_processing_threads() > calculate_threads.size())
-        &&(inner_neuron_iterator < solution.partial_solutions(partial_index).internal_neuron_number())
-      ){
-        neuron_index = solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_iterator;
-        calculate_threads.push_back(thread(
-          &Weight_updater::copy_weight_to_solution, this, neuron_index, inner_neuron_iterator,
-          ref(*solution.mutable_partial_solutions(partial_index)), inner_neuron_weight_index_starts
-        ));
-        ++inner_neuron_weight_index_starts; /* ++ for memory filter */
-        for(uint32 i = 0; i < solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_iterator); ++i){
-          inner_neuron_weight_index_starts += 
-            solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
+  sint32 partial_start_index = 0;
+  while(partial_start_index < solution.partial_solutions_size()){
+    if(
+      (static_cast<uint32>(solution.partial_solutions_size()) < (service_context.get_max_solve_threads()/2))
+      ||(solution.partial_solutions_size() < 2)
+    ){
+      for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
+        uint32 neuron_weight_synapse_starts = 0;
+        uint32 inner_neuron_weight_index_starts = 0;
+        for(uint32 inner_neuron_index = 0; inner_neuron_index < solution.partial_solutions(partial_index).internal_neuron_number(); ++inner_neuron_index){
+          const uint32 neuron_index = solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_index;
+          copy_weight_to_solution( /* Take over a weight from one Neuron */
+            neuron_index, inner_neuron_index,
+            *solution.mutable_partial_solutions(partial_index), inner_neuron_weight_index_starts
+          );
+          /* step forward the weight table iterator for this Neuron */
+          ++inner_neuron_weight_index_starts; /* ++ for memory filter */
+          for(uint32 i = 0; i < solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index); ++i)
+            inner_neuron_weight_index_starts += solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
+          neuron_weight_synapse_starts += solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index);
         }
-        neuron_weight_synapse_starts += solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_iterator);
-        ++inner_neuron_iterator;
       }
-      wait_for_threads(calculate_threads);
+    }else{ /* It is efficient to use multithreading */
+      execution_threads.start_and_block([this, partial_start_index, &solution](uint32 thread_index){
+        const sint32 partial_index = partial_start_index + thread_index;
+        if(partial_index < solution.partial_solutions_size()){
+          uint32 neuron_weight_synapse_starts = 0;
+          uint32 inner_neuron_weight_index_starts = 0;
+          for(uint32 inner_neuron_index = 0; inner_neuron_index < solution.partial_solutions(partial_index).internal_neuron_number(); ++inner_neuron_index){
+            const uint32 neuron_index = solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_index;
+            copy_weight_to_solution( /* Take over a weight from one Neuron */
+              neuron_index, inner_neuron_index,
+              *solution.mutable_partial_solutions(partial_index), inner_neuron_weight_index_starts
+            );
+            /* step forward the weight table iterator for this Neuron */
+            ++inner_neuron_weight_index_starts; /* ++ for memory filter */
+            for(uint32 i = 0; i < solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index); ++i)
+              inner_neuron_weight_index_starts += solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
+            neuron_weight_synapse_starts += solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index);
+          }
+        }
+      });
     }
-  } /* for(uint32 partial_index = 0;partial_index < solution.partial_solutions_size(); ++partial_index) */
+    partial_start_index += execution_threads.get_number_of_threads();
+  } /* while(partial_start_index < solution.partial_solutions_size()) */
 }
 
 void Weight_updater::copy_weight_to_solution(
-  uint32 neuron_index, uint32 inner_neuron_index, Partial_solution& partial, uint32 inner_neuron_weight_index_starts 
+  uint32 neuron_index, uint32 inner_neuron_index,
+  Partial_solution& partial, uint32 inner_neuron_weight_index_starts
 ) const{ /*!Note: After shared weight optimization, this part is to be re-worked */
   uint32 weights_copied = 0;
   partial.set_weight_table(

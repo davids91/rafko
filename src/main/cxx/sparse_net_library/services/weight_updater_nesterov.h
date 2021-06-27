@@ -24,8 +24,8 @@ namespace sparse_net_library{
 
 class Weight_updater_nesterov : public Weight_updater{
 public:
-  Weight_updater_nesterov(SparseNet& sparse_net, Service_context& service_context)
-  :  Weight_updater(sparse_net, service_context, 2)
+  Weight_updater_nesterov(SparseNet& sparse_net, Service_context& service_context_)
+  :  Weight_updater(sparse_net, service_context_, 2)
   { }
 
   void iterate(const vector<sdouble32>& gradients,Solution& solution){
@@ -41,12 +41,12 @@ public:
 private:
   sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
     if(!is_finished()) return (
-      (previous_velocity[weight_index] * context.get_gamma())
-      + (gradients[weight_index] * context.get_step_size())
+      (previous_velocity[weight_index] * service_context.get_gamma())
+      + (gradients[weight_index] * service_context.get_step_size())
     );
     else return(
-      (previous_velocity_at_start[weight_index] * context.get_gamma())
-      + (gradients[weight_index] * context.get_step_size())
+      (previous_velocity_at_start[weight_index] * service_context.get_gamma())
+      + (gradients[weight_index] * service_context.get_step_size())
     );
   }
 

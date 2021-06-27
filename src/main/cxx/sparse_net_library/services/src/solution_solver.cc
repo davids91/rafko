@@ -59,7 +59,7 @@ void Solution_solver::solve(
       col_iterator = 0;
       if( /* Don't use the threadgroup if there is no need for multiple threads.. */
         (solution.cols(row_iterator) < service_context.get_max_solve_threads()/2u)
-        ||(solution.cols(row_iterator) < 8u) /* ..since the number of partial solutions depend on the available device size */
+        ||(solution.cols(row_iterator) < 2u) /* ..since the number of partial solutions depend on the available device size */
       ){ /* having fewer partial solutions in a row usually implies whether or not multiple threads are needed */
         while(col_iterator < solution.cols(row_iterator)){
           for(uint16 thread_index = 0; thread_index < service_context.get_max_solve_threads(); ++thread_index){
