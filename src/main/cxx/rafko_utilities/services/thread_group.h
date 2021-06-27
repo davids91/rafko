@@ -45,7 +45,8 @@ using std::size_t;
 
 /**
  * @brief    This class provides a number of worker threads to be executed in paralell for the functionality
- *          defined in the constructor of the template object.
+ *          defined in the constructor of the template object. The class itself is not thread safe! Use a mutex
+ *          to run the same instance from multiple threads.
  */
 class ThreadGroup{
 public:
@@ -87,7 +88,7 @@ public:
     { /* wait until all threads are notified */
      unique_lock<mutex> my_lock(state_mutex);
      synchroniser.wait(my_lock,[this](){
-      return (0 >= threads_ready); /* All threads are notified once the @threads_ready variable is zero again */
+      return (0u == threads_ready); /* All threads are notified once the @threads_ready variable is zero again */
      });
     }
   }

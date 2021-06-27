@@ -205,7 +205,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     train_error = approximizer.get_train_error();
     test_error = approximizer.get_test_error();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
-    cout << "\rError:"
+    cout << "\rError:" << std::setprecision(9)
     << "Training:[" << train_error << "]; "
     << "Test:[" << test_error << "]; "
     << "Minimum: ["<< minimum_error <<"];"

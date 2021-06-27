@@ -57,20 +57,34 @@ void Solution_solver::solve(
     for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
       if(0 == solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
       col_iterator = 0;
-      while(col_iterator < solution.cols(row_iterator)){
-        { /* To make the Solver itself thread-safe; the sub-threads need to be guarded with a lock */
-          std::lock_guard<mutex> my_lock(threads_mutex);
-          execution_threads.start_and_block([this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator]
-          (uint32 thread_index){
-            if((col_iterator + thread_index) < solution.cols(row_iterator)){
-              partial_solvers[row_iterator][(col_iterator + thread_index)].solve(
-                input,output,tmp_data_pool[used_data_pool_start + thread_index].get()
-              );
-            }
-          });
-        }
-        col_iterator += service_context.get_max_solve_threads();
-      } /* while(col_iterator < solution.cols(row_iterator)) */
+      if( /* Don't use the threadgroup if there is no need for multiple threads.. */
+        (solution.cols(row_iterator) < service_context.get_max_solve_threads()/2u)
+        ||(solution.cols(row_iterator) < 8u) /* ..since the number of partial solutions depend on the available device size */
+      ){ /* having fewer partial solutions in a row usually implies whether or not multiple threads are needed */
+        while(col_iterator < solution.cols(row_iterator)){
+          for(uint16 thread_index = 0; thread_index < service_context.get_max_solve_threads(); ++thread_index){
+            if(col_iterator < solution.cols(row_iterator)){
+              partial_solvers[row_iterator][col_iterator].solve(ref(input), ref(output), ref(tmp_data_pool[used_data_pool_start + thread_index].get()));
+              ++col_iterator;
+            }else break;
+          }
+        }/* while(col_iterator < solution.cols(row_iterator)) */
+      }else{
+        while(col_iterator < solution.cols(row_iterator)){
+          { /* To make the Solver itself thread-safe; the sub-threads need to be guarded with a lock */
+            std::lock_guard<mutex> my_lock(threads_mutex);
+            execution_threads.start_and_block([this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator]
+            (uint32 thread_index){
+              if((col_iterator + thread_index) < solution.cols(row_iterator)){
+                partial_solvers[row_iterator][(col_iterator + thread_index)].solve(
+                  input,output,tmp_data_pool[used_data_pool_start + thread_index].get()
+                );
+              }
+            });
+          }
+          col_iterator += service_context.get_max_solve_threads();
+        } /* while(col_iterator < solution.cols(row_iterator)) */
+      }
     } /* for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator) */
   }else throw std::runtime_error("A solution of 0 rows!");
 }
