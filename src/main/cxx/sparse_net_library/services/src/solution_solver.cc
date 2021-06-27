@@ -17,15 +17,14 @@
 
 #include "sparse_net_library/services/solution_solver.h"
 
-#include <thread>
 #include <stdexcept>
 
 #include "sparse_net_library/services/synapse_iterator.h"
 
 namespace sparse_net_library{
 
+using std::function;
 using std::ref;
-using std::thread;
 
 Solution_solver::Builder::Builder(const Solution& to_solve, Service_context& context)
 :  solution(to_solve)
@@ -54,28 +53,25 @@ void Solution_solver::solve(
 ) const{
   if(0 < solution.cols_size()){
     uint32 col_iterator;
-    vector<thread> solve_threads;
     output.step(); /* move the iterator forward for the next one and store the current data */
     for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
-      col_iterator = 0;
       if(0 == solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
+      col_iterator = 0;
       while(col_iterator < solution.cols(row_iterator)){
-        for(uint16 thread_index = 0; thread_index < service_context.get_max_solve_threads(); ++thread_index){
-          if(col_iterator < solution.cols(row_iterator)){
-            void (Partial_solution_solver::*solve_func_ptr)(const vector<sdouble32>&, DataRingbuffer&, vector<sdouble32>&) const
-              = &Partial_solution_solver::solve;
-            solve_threads.push_back(thread(
-              solve_func_ptr, partial_solvers[row_iterator][col_iterator],
-              ref(input), ref(output), ref(tmp_data_pool[used_data_pool_start + thread_index].get())
-            ));
-            ++col_iterator;
-          }else break;
+        function<void(uint32)> fnc = [this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator]
+        (uint32 thread_index){
+          if((col_iterator + thread_index) < solution.cols(row_iterator)){
+            partial_solvers[row_iterator][(col_iterator + thread_index)].solve(
+              input,output,tmp_data_pool[used_data_pool_start + thread_index].get()
+            );
+          }
+        };
+        { /* To make the Solver itself thread-safe; the sub-threads need to be guarded with a lock */
+          std::lock_guard<mutex> my_lock(threads_mutex);
+          execution_threads.start_and_block(fnc);
         }
-        std::for_each(solve_threads.begin(),solve_threads.end(),[](thread& solve_thread){
-          if(true == solve_thread.joinable())solve_thread.join();
-        });
-        solve_threads.clear();
-      }
+        col_iterator += service_context.get_max_solve_threads();
+      } /* while(col_iterator < solution.cols(row_iterator)) */
     } /* for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator) */
   }else throw std::runtime_error("A solution of 0 rows!");
 }

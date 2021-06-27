@@ -249,7 +249,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
 
   /* Verify once more if the calculated values match the expected ones */
   for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
-    CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+    REQUIRE( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
 
   if(nullptr == arena){
     delete solution2;

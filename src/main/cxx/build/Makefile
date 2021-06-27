@@ -91,7 +91,7 @@ LIBRARY_SOURCES = $(LIBRARY_NET_SOURCES) $(LIBRARY_GYM_SOURCES) $(GENERATED_SOUR
 
 .PHONY: lib clean gen
 #default maketarget: Sparse net library
-$(LIB_OUTPUT): $(LIB_DIR) clean gen $(LIBRARY_OBJECTS)
+$(LIB_OUTPUT): $(LIB_DIR) $(LIBRARY_OBJECTS)
 	ar -r -v -s $(LIB_OUTPUT) $(LIBRARY_OBJECTS)
 
 mainframe: $(LIB_OUTPUT)
@@ -185,7 +185,7 @@ test-solution-builder: clean gen $(LIB_OUTPUT)
 	g++ $(TEST_BASE) ../test/solution_builder_test.cc ../test/neuron_router_test.cc $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 	./$(TEST_RESULT)
 
-test-opt: $(LIB_OUTPUT) #as in optimization or approximization
+test-opt: clean gen $(LIB_OUTPUT) #as in optimization or approximization
 	@rm -f $(TEST_RESULT)
 	g++ $(GYM_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 	./$(TEST_RESULT)  --use-colour yes -a [approximize]

@@ -23,6 +23,7 @@
 #include <vector>
 #include <memory>
 #include <atomic>
+#include <mutex>
 #include <utility>
 #include <functional>
 
@@ -36,6 +37,7 @@
 namespace sparse_net_library{
 
 using std::vector;
+using std::mutex;
 using std::reference_wrapper;
 using std::unique_ptr;
 
@@ -73,11 +75,14 @@ private:
   ,  solution(to_solve)
   ,  service_context(context)
   ,  partial_solvers(partial_solvers_)
+  ,  execution_threads(context.get_max_solve_threads())
   { }
 
   const Solution& solution;
   Service_context& service_context;
   vector<vector<Partial_solution_solver>> partial_solvers;
+  mutable mutex threads_mutex;
+  ThreadGroup execution_threads;
 
 public:
   class Builder{

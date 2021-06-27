@@ -64,7 +64,7 @@ public:
     for(thread& thread : threads) thread.join();
   }
 
-  void start_and_block(function<void(uint32)>& function){
+  void start_and_block(function<void(uint32)>& function) const{
     { /* initialize, start.. */
      unique_lock<mutex> my_lock(state_mutex);
      worker_function = function;
@@ -94,13 +94,12 @@ public:
 
 private:
   enum state_t{Idle, Start, End};
-
-  function<void(uint32)> worker_function; /* gets the thread index it is inside */
+  mutable function<void(uint32)> worker_function; /* gets the thread index it is inside */
+  mutable size_t threads_ready = 0;
+  mutable atomic<state_t> state = {Idle};
+  mutable mutex state_mutex;
+  mutable condition_variable synchroniser;
   vector<thread> threads;
-  size_t threads_ready = 0;
-  atomic<state_t> state = {Idle};
-  mutex state_mutex;
-  condition_variable synchroniser;
 
   void worker(uint32 thread_index){
     while(End != state.load()){ /* Until the pool is stopped */
