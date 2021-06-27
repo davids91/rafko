@@ -50,7 +50,7 @@ public:
   , thread_results()
   , feature_size(feature_size_)
   , the_function(the_function_)
-  , execution_threads(context.get_max_solve_threads())
+  , execution_threads(context.get_sqrt_of_solve_threads())
   {
     process_threads.reserve(context.get_sqrt_of_solve_threads());
     for(uint32 thread_index = 0; thread_index < context.get_max_solve_threads(); ++thread_index){
@@ -69,7 +69,7 @@ public:
    * @return     The feature error.
    */
   sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 sample_number){
-    return get_feature_error(labels, neuron_data, context.get_max_solve_threads(), 0, sample_number);
+    return get_feature_error(labels, neuron_data, context.get_sqrt_of_solve_threads(), 0, sample_number);
   }
 
   /**

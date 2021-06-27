@@ -26,7 +26,6 @@
 
 namespace rafko_gym{
 
-using std::function;
 using std::make_unique;
 using std::lock_guard;
 using std::ref;
@@ -84,10 +83,9 @@ void Sparse_net_approximizer::evaluate(Data_aggregate& data_set, uint32 sequence
     throw std::runtime_error("Sequence interval out of bounds!");
   data_set.expose_to_multithreading();
   for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += context.get_max_processing_threads()){ /* one evaluation iteration */
-    function<void(uint32)> execution_lambda = [this, &data_set, sequence_index](uint32 thread_index){
+    execution_threads.start_and_block([this, &data_set, sequence_index](uint32 thread_index){
       evaluate_single_sequence(data_set, sequence_index ,thread_index);
-    };
-    execution_threads.start_and_block(execution_lambda);
+    });
     data_set.set_features_for_sequences( /* Upload results to the data set */
       neuron_outputs_to_evaluate, 0u,
       sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),static_cast<uint32>(context.get_max_processing_threads())),

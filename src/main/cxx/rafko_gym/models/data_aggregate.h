@@ -99,7 +99,7 @@ public:
      })
   ,  cost_function(cost_function_)
   ,  exposed_to_multithreading(false)
-  ,  error_calculation_threads(service_context_.get_max_solve_threads())
+  ,  error_calculation_threads(service_context_.get_sqrt_of_solve_threads())
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_);
@@ -120,7 +120,7 @@ public:
      })
   ,  cost_function(cost_function_)
   ,  exposed_to_multithreading(false)
-  ,  error_calculation_threads(service_context_.get_max_solve_threads())
+  ,  error_calculation_threads(service_context_.get_sqrt_of_solve_threads())
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
   }
@@ -140,7 +140,7 @@ public:
      })
   ,  cost_function(Function_factory::build_cost_function(net, the_function, service_context_))
   ,  exposed_to_multithreading(false)
-  ,  error_calculation_threads(service_context_.get_max_solve_threads())
+  ,  error_calculation_threads(service_context_.get_sqrt_of_solve_threads())
   { }
 
   /**
@@ -386,8 +386,8 @@ private:
   shared_ptr<Cost_function> cost_function;
   bool exposed_to_multithreading; /* basically decides whether or not error sum calculation is enabled. */
   mutable mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a mutex is required */
-  std::function<void(uint32)> error_calculation_lambda =  [this](uint32 thread_index){
-    uint32 length = error_state.back().sample_errors.size() / service_context.get_max_solve_threads();
+  const std::function<void(uint32)> error_calculation_lambda =  [this](uint32 thread_index){
+    uint32 length = error_state.back().sample_errors.size() / service_context.get_sqrt_of_solve_threads();
     uint32 start = length * thread_index;
     length = std::min(length, static_cast<uint32>(error_state.back().sample_errors.size() - start));
     accumulate_error_sum(start, length);

@@ -58,17 +58,16 @@ void Solution_solver::solve(
       if(0 == solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
       col_iterator = 0;
       while(col_iterator < solution.cols(row_iterator)){
-        function<void(uint32)> fnc = [this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator]
-        (uint32 thread_index){
-          if((col_iterator + thread_index) < solution.cols(row_iterator)){
-            partial_solvers[row_iterator][(col_iterator + thread_index)].solve(
-              input,output,tmp_data_pool[used_data_pool_start + thread_index].get()
-            );
-          }
-        };
         { /* To make the Solver itself thread-safe; the sub-threads need to be guarded with a lock */
           std::lock_guard<mutex> my_lock(threads_mutex);
-          execution_threads.start_and_block(fnc);
+          execution_threads.start_and_block([this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator]
+          (uint32 thread_index){
+            if((col_iterator + thread_index) < solution.cols(row_iterator)){
+              partial_solvers[row_iterator][(col_iterator + thread_index)].solve(
+                input,output,tmp_data_pool[used_data_pool_start + thread_index].get()
+              );
+            }
+          });
         }
         col_iterator += service_context.get_max_solve_threads();
       } /* while(col_iterator < solution.cols(row_iterator)) */

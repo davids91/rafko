@@ -64,10 +64,10 @@ public:
     for(thread& thread : threads) thread.join();
   }
 
-  void start_and_block(function<void(uint32)>& function) const{
+  void start_and_block(const function<void(uint32)>& function) const{
     { /* initialize, start.. */
      unique_lock<mutex> my_lock(state_mutex);
-     worker_function = function;
+     worker_function = &function;
      state.store(Start);
     }
     synchroniser.notify_all(); /* Whip the peons */
@@ -94,7 +94,7 @@ public:
 
 private:
   enum state_t{Idle, Start, End};
-  mutable function<void(uint32)> worker_function; /* gets the thread index it is inside */
+  mutable const function<void(uint32)>* worker_function; /* gets the thread index it is inside */
   mutable size_t threads_ready = 0;
   mutable atomic<state_t> state = {Idle};
   mutable mutex state_mutex;
@@ -110,7 +110,7 @@ private:
       });
      }
      if(End != state.load()){ /* In case there are still tasks to execute.. */
-       worker_function(thread_index);/* do the work */
+       (*worker_function)(thread_index);/* do the work */
 
        { /* signal that work is done! */
         unique_lock<mutex> my_lock(state_mutex);

@@ -17,14 +17,12 @@
 #include "sparse_net_library/models/cost_function.h"
 
 #include <cmath>
-#include <functional>
 
 namespace sparse_net_library {
 
 using std::min;
 using std::ref;
 using std::async;
-using std::function;
 
 void Cost_function::get_feature_errors(
   const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
@@ -36,16 +34,15 @@ void Cost_function::get_feature_errors(
   if(neuron_data.size() < labels_to_evaluate)
     throw std::runtime_error("Can't evaluate more labels, than there is data provided!");
 
-  const uint32 labels_to_do_in_a_thread = 1 + static_cast<uint32>(labels_to_evaluate/context.get_max_solve_threads());
-  function<void(uint32)> fnc = [this, &labels, &neuron_data, &errors_for_labels, label_start, error_start, neuron_start, labels_to_do_in_a_thread, sample_number](uint32 thread_index){
+  const uint32 labels_to_do_in_a_thread = 1 + static_cast<uint32>(labels_to_evaluate/context.get_sqrt_of_solve_threads());
+  execution_threads.start_and_block([this, &labels, &neuron_data, &errors_for_labels, label_start, error_start, neuron_start, labels_to_do_in_a_thread, sample_number](uint32 thread_index){
     feature_errors_thread(
       ref(labels), ref(neuron_data), ref(errors_for_labels),
       label_start, error_start, neuron_start,
       labels_to_do_in_a_thread, sample_number,
       thread_index
     );
-  };
-  execution_threads.start_and_block(fnc);
+  });
 }
 
 void Cost_function::feature_errors_thread(
