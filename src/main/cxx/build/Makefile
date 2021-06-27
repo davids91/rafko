@@ -135,8 +135,7 @@ gen: #as in generate models; Can't be bothered to type something like `make gene
 # Testing
 ##########################################################################################################
 TEST_BASE_SOURCE = ../test/src/main_test.cc
-SPARSE_NET_TEST_SOURCES = $(TEST_BASE_SOURCE)
-SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/sparse_net_builder_test.cc
+SPARSE_NET_TEST_SOURCES = ../test/$(SPARSE_NET_SOURCE_DIR)/src/sparse_net_builder_test.cc
 SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/solution_builder_test.cc
 SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/partial_solution_solver_test.cc
 SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/solution_solver_test.cc
@@ -147,19 +146,12 @@ SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/cost_function_ms
 SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/backprop_queue_wrapper_test.cc
 SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/weight_updater_test.cc
 SPARSE_NET_TEST_SOURCES += ../test/$(SPARSE_NET_SOURCE_DIR)/src/weight_experience_space_test.cc
-
 UTILITIES_TEST_SOURCES += ../test/$(UTILITIES_SOURCE_DIR)/src/data_ringbuffer_test.cc
 UTILITIES_TEST_SOURCES += ../test/$(UTILITIES_SOURCE_DIR)/src/data_pool_test.cc
 UTILITIES_TEST_SOURCES += ../test/$(UTILITIES_SOURCE_DIR)/src/thread_group_test.cc
-
-SPARSE_NET_TEST_OBJECTS_TMP = $(subst ../test/$(SPARSE_NET_SOURCE_DIR)/src/,,$(SPARSE_NET_TEST_SOURCES:.cc=.o))
-SPARSE_NET_TEST_OBJECTS = $(subst ../test/$(UTILITIES_SOURCE_DIR)/src/,,$(SPARSE_NET_TEST_OBJECTS_TMP))
-
-GYM_TEST_SOURCES = $(TEST_BASE_SOURCE)
-GYM_TEST_SOURCES += ../test/$(GYM_SOURCE_DIR)/src/data_aggregate_test.cc
-GYM_TEST_SOURCES += ../test/$(GYM_SOURCE_DIR)/src/approximizer_test.cc
-GYM_TEST_OBJECTS = $(subst ../test/src/,,$(OPTIMIZATION_TEST_SOURCES:.cc=.o))
-
+GYM_TEST_SOURCES = ../test/$(GYM_SOURCE_DIR)/src/data_aggregate_test.cc
+OPTIMIZE_TEST_SOURCES = $(TEST_BASE_SOURCE) ../test/$(GYM_SOURCE_DIR)/src/approximizer_test.cc
+TEST_SOURCES = $(TEST_BASE_SOURCE) $(SPARSE_NET_TEST_SOURCES) $(UTILITIES_TEST_SOURCES) $(GYM_TEST_SOURCE)
 TEST_INCLUDES = -I ../test/
 TEST_RESULT = test-results.out
 TEST_LOOPS = 100
@@ -172,7 +164,7 @@ test-only: $(LIB_OUTPUT) $(TEST_RESULT)
 	make run-tests
 
 $(TEST_RESULT):
-	g++ $(SPARSE_NET_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
+	g++ $(TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 
 run-tests: $(TEST_RESULT)
 	./$< --use-colour yes -d yes
@@ -187,7 +179,7 @@ test-solution-builder: clean gen $(LIB_OUTPUT)
 
 test-opt: clean gen $(LIB_OUTPUT) #as in optimization or approximization
 	@rm -f $(TEST_RESULT)
-	g++ $(GYM_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
+	g++ $(OPTIMIZE_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 	./$(TEST_RESULT)  --use-colour yes -a [approximize]
 
 $(SPARSE_NET_TEST_OBJECTS):
