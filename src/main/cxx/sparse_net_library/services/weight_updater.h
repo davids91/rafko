@@ -76,13 +76,23 @@ public:
   }
 
   /**
-   * @brief      Copies the referenced @SparseNet weights into the solution in the arguments
+   * @brief      Copies the weights in the stored @SparseNet reference into the provided solution.
    *             It supposes that the solution is one already built, and it is built from
    *             the same @SparseNet referenced in the updater. Uses a different thread for every partial solution.
    *
    * @param      solution  The solution
    */
-  void update_solution_with_weights(Solution& solution);
+  void update_solution_with_weights(Solution& solution) const;
+
+  /**
+   * @brief      Copies the weights in the stored @SparseNet reference into the provided solution.
+   *             It supposes that the solution is one already built, and it is built from
+   *             the same @SparseNet referenced in the updater. Uses a different thread for every partial solution.
+   *
+   * @param      solution       The solution
+   * @param[in]  weight_index   The index of the weight to take over fro the @SparseNet
+   */
+  void update_solution_with_weight(Solution& solution, uint32 weight_index) const;
 
   /**
    * @brief      Tells if an iteration is at its valid state or not based on
@@ -134,7 +144,7 @@ protected:
    *
    * @return     The new weight.
    */
-  sdouble32 get_new_weight(uint32 weight_index){
+  sdouble32 get_new_weight(uint32 weight_index) const{
     return(net.weight_table(weight_index) - get_current_velocity(weight_index));
   }
 
@@ -146,7 +156,7 @@ protected:
    *
    * @return     The new velocity.
    */
-  sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
+  sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients) const{
     return (gradients[weight_index] * service_context.get_step_size());
   }
 
@@ -186,16 +196,33 @@ private:
   void update_weight_with_velocity(uint32 weight_index, uint32 weight_number);
 
   /**
-   * @brief      A thread to copy a weight synapse from the referenced @SparseNet
-   *             into a partial solution.
+   * @brief      Copies the weights of a Neuron from the referenced @SparseNet
+   *             into the partial solution reference provided as an argument.
+   *             The @Partial_solution must be built from the SparseNet, as a pre-requisite.
    *
-   * @param[in]  inner_neuron_index                The inner neuron index
-   * @param      partial                           The partial
-   * @param[in]  neuron_weight_synapse_starts      The neuron weight synapse starts
-   * @param[in]  inner_neuron_weight_index_starts  The inner neuron weight index starts
+   * @param[in]  neuron_index                      The index of the Neuron inside the @SparsNet
+   * @param[in]  inner_neuron_index                The index of the Neuron inside the @Partial_solution
+   * @param      partial                           The partial solution to update
+   * @param[in]  inner_neuron_weight_index_starts  The index in the weight table (of the @Partial_solution) where the inner neuron weights start
    */
-  void copy_weight_to_solution(
+  void copy_weights_of_neuron_to_partial_solution(
     uint32 neuron_index, uint32 inner_neuron_index,
+    Partial_solution& partial, uint32 inner_neuron_weight_index_starts
+  ) const;
+
+  /**
+   * @brief      Copies the weight of a Neuron under the given index from the referenced @SparseNets
+   *             weight table into the partial solution reference provided as an argument.
+   *             The @Partial_solution must be built from the SparseNet, as a pre-requisite.
+   *
+   * @param[in]  neuron_index                      The index of the Neuron inside the @SparsNet
+   * @param[in]  weight_index                      The index of the Neurons weight inside the weight table of @SparsNet
+   * @param[in]  inner_neuron_index                The index of the Neuron inside the @Partial_solution
+   * @param      partial                           The partial solution to update
+   * @param[in]  inner_neuron_weight_index_starts  The index in the weight table (of the @Partial_solution) where the inner neuron weights start
+   */
+  void copy_weight_of_neuron_to_partial_solution(
+    uint32 neuron_index, uint32 weight_index, uint32 inner_neuron_index,
     Partial_solution& partial, uint32 inner_neuron_weight_index_starts
   ) const;
 };

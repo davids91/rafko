@@ -229,7 +229,7 @@ void check_if_the_same(SparseNet& net, Solution& solution){
             expected_inputs += weight_synapse.interval_size();
           },[&](Index_synapse_interval weight_synapse, sint32 input_index){
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
-            CHECK(
+            REQUIRE(
               solution.partial_solutions(partial_solution_iterator).weight_table(input_index)
               == net.weight_table(neuron_weight_iterator[neuron_synapse_element_iterator])
             );
@@ -249,16 +249,16 @@ void check_if_the_same(SparseNet& net, Solution& solution){
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!Synapse_iterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
               CHECK( 0 == input_synapse.reach_past_loops() ); /* Internal inputs should always be taken from the current loop */
-              CHECK(
+              REQUIRE(
                 static_cast<sint32>(first_neuron_index_in_partial + input_index)
                 == neuron_input_iterator[neuron_synapse_element_iterator]
               );
             }else{ /* Inner Neuron takes its input from the partial solution input */
-              CHECK( /* Input indices match */
+              REQUIRE( /* Input indices match */
                 partial_input_iterator[Synapse_iterator<>::input_index_from_synapse_index(input_index)]
                 == neuron_input_iterator[neuron_synapse_element_iterator]
               );
-             CHECK( /* The time the neuron takes its input also match */
+             REQUIRE( /* The time the neuron takes its input also match */
                 partial_input_iterator.synapse_under(Synapse_iterator<>::input_index_from_synapse_index(input_index)).reach_past_loops()
                 == neuron_input_iterator.synapse_under(neuron_synapse_element_iterator).reach_past_loops()
               );
@@ -274,8 +274,7 @@ void check_if_the_same(SparseNet& net, Solution& solution){
         }
       } /* Inner Neuron loop*/
     } /* Partial solution loop */
-    Neuron_found_in_partial:
-    input_synapse_offset = 0; /* Dummy statement so that accursed goto works with the above label. Don't use GOTO kids! ..unless you absolutely have to! */
+    Neuron_found_in_partial:;
   } /*(uint32 neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator)*/
 }
 

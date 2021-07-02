@@ -272,7 +272,7 @@ sdouble32 Sparse_net_approximizer::get_single_weight_gradient(uint32 weight_inde
 
   /* Push it in one direction */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
-  weight_updater->update_solution_with_weights(*net_solution);
+  weight_updater->update_solution_with_weight(*net_solution, weight_index);
 
   /* Approximate the modified weights gradient */
   evaluate(train_set, sequence_start_index, context.get_minibatch_size(), start_index_inside_sequence, context.get_memory_truncation());
@@ -280,7 +280,7 @@ sdouble32 Sparse_net_approximizer::get_single_weight_gradient(uint32 weight_inde
 
   /* Push the selected weight in other direction */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) - current_epsilon_double) );
-  weight_updater->update_solution_with_weights(*net_solution);
+  weight_updater->update_solution_with_weight(*net_solution, weight_index);
 
   /* Approximate the newly modified weights gradient */
   evaluate(train_set, sequence_start_index, context.get_minibatch_size(), start_index_inside_sequence, context.get_memory_truncation());
@@ -288,7 +288,7 @@ sdouble32 Sparse_net_approximizer::get_single_weight_gradient(uint32 weight_inde
 
   /* Revert weight modification and the error state with it */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
-  weight_updater->update_solution_with_weights(*net_solution);
+  weight_updater->update_solution_with_weight(*net_solution, weight_index);
   train_set.pop_state();
 
   return gradient;
