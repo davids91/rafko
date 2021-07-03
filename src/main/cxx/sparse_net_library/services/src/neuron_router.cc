@@ -62,6 +62,7 @@ void Neuron_router::collect_subset(uint8 arg_max_solve_threads, sdouble32 arg_de
   std::for_each(processing_threads.begin(),processing_threads.end(),[](thread& processing_thread){
     if(true == processing_thread.joinable())processing_thread.join();
   });
+  std::sort(net_subset.begin(),net_subset.end());
   collection_running = false;
   ++iteration;
 }
@@ -123,7 +124,7 @@ uint32 Neuron_router::get_next_neuron(vector<uint32>& visiting, bool strict){
         ||(is_neuron_processed(synapse_input_index))
         ||((!strict)&&(is_neuron_reserved(synapse_input_index)))
         /*!Note: In non-strict mode usually the whole of the net is collected into the subset in order,
-         * 
+         *
          * which might be undesirable compared to the Neurons being collected into smaller non-dependent subsets.
          **/
       ){
