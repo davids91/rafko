@@ -130,7 +130,6 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(network_inputs.size());
   *partial_solution.mutable_output_data() = temp_index_interval;
-  partial_solution.set_internal_neuron_number(network_inputs.size());
   partial_solution.add_weight_table(double_literal(0.0));  /* A weight for the memory filter */
   for(uint32 i = 0; i < network_inputs.size(); ++i){
     partial_solution.add_weight_table(double_literal(1.0));

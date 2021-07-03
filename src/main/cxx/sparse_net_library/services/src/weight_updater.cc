@@ -87,7 +87,7 @@ void Weight_updater::update_solution_with_weight(Solution& solution, uint32 weig
         ){ /* Iterate the inner neurons until the relevant weight synapse start is found for it */
           uint32 inner_neuron_weight_synapse_starts = 0;
           uint32 inner_neuron_weight_index_starts = 0;
-          for(uint32 inner_neuron_index = 0; inner_neuron_index < partial.internal_neuron_number(); ++inner_neuron_index){
+          for(uint32 inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
             if((partial.output_data().starts() + inner_neuron_index) == neuron_index){ /* found the relevant Neuron! */
               copy_weight_of_neuron_to_partial_solution(
                 neuron_index, weight_index, inner_neuron_index, partial, inner_neuron_weight_index_starts
@@ -117,7 +117,7 @@ void Weight_updater::update_solution_with_weights(Solution& solution) const{
       for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
         uint32 neuron_weight_synapse_starts = 0;
         uint32 inner_neuron_weight_index_starts = 0;
-        for(uint32 inner_neuron_index = 0; inner_neuron_index < solution.partial_solutions(partial_index).internal_neuron_number(); ++inner_neuron_index){
+        for(uint32 inner_neuron_index = 0; inner_neuron_index < solution.partial_solutions(partial_index).output_data().interval_size(); ++inner_neuron_index){
           const uint32 neuron_index = solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_index;
           copy_weights_of_neuron_to_partial_solution( /* Take over a weight from one Neuron */
             neuron_index, inner_neuron_index,
@@ -136,7 +136,7 @@ void Weight_updater::update_solution_with_weights(Solution& solution) const{
         if(partial_index < solution.partial_solutions_size()){
           uint32 neuron_weight_synapse_starts = 0;
           uint32 inner_neuron_weight_index_starts = 0;
-          for(uint32 inner_neuron_index = 0; inner_neuron_index < solution.partial_solutions(partial_index).internal_neuron_number(); ++inner_neuron_index){
+          for(uint32 inner_neuron_index = 0; inner_neuron_index < solution.partial_solutions(partial_index).output_data().interval_size(); ++inner_neuron_index){
             const uint32 neuron_index = solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_index;
             copy_weights_of_neuron_to_partial_solution( /* Take over a weight from one Neuron */
               neuron_index, inner_neuron_index,

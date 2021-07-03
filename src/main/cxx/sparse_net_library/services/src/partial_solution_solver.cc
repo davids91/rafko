@@ -57,7 +57,7 @@ void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data
 
   /* Solve the Partial Solution based on the collected input data and stored operations */
   input_index_offset = 0;
-  for(uint16 neuron_iterator = 0; neuron_iterator < detail.internal_neuron_number(); ++neuron_iterator){
+  for(uint16 neuron_iterator = 0; neuron_iterator < detail.output_data().interval_size(); ++neuron_iterator){
     new_neuron_data = 0;
     internal_weight_iterator.iterate([&](Index_synapse_interval weight_synapse, sint32 weight_index){
       if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
@@ -105,16 +105,16 @@ void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data
 
 bool Partial_solution_solver::is_valid(void) const{
   if(
-    (0u < detail.internal_neuron_number())
-    &&(static_cast<int>(detail.internal_neuron_number()) == detail.index_synapse_number_size())
-    &&(static_cast<int>(detail.internal_neuron_number()) == detail.weight_synapse_number_size())
-    &&(static_cast<int>(detail.internal_neuron_number()) == detail.neuron_transfer_functions_size())
-    &&(static_cast<int>(detail.internal_neuron_number()) == detail.memory_filter_index_size())
+    (0u < detail.output_data().interval_size())
+    &&(static_cast<int>(detail.output_data().interval_size()) == detail.index_synapse_number_size())
+    &&(static_cast<int>(detail.output_data().interval_size()) == detail.weight_synapse_number_size())
+    &&(static_cast<int>(detail.output_data().interval_size()) == detail.neuron_transfer_functions_size())
+    &&(static_cast<int>(detail.output_data().interval_size()) == detail.memory_filter_index_size())
   ){
     uint32 weight_synapse_number = 0;
     uint32 index_synapse_number = 0;
 
-    for(uint16 neuron_iterator = 0u; neuron_iterator < detail.internal_neuron_number(); ++neuron_iterator){
+    for(uint16 neuron_iterator = 0u; neuron_iterator < detail.output_data().interval_size(); ++neuron_iterator){
       weight_synapse_number += detail.weight_synapse_number(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
       index_synapse_number += detail.index_synapse_number(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
     }
@@ -127,7 +127,7 @@ bool Partial_solution_solver::is_valid(void) const{
       uint32 count_of_input_indexes = 0;
       uint32 weight_synapse_iterator_start = 0;
       uint32 count_of_input_weights = 0;
-      for(uint32 neuron_iterator = 0; neuron_iterator < detail.internal_neuron_number(); neuron_iterator++){
+      for(uint32 neuron_iterator = 0; neuron_iterator < detail.output_data().interval_size(); neuron_iterator++){
         count_of_input_indexes = 0;
         count_of_input_weights = 0;
         for(uint32 input_iterator = 0; input_iterator < detail.index_synapse_number(neuron_iterator); ++input_iterator){

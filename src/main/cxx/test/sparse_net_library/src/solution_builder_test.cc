@@ -78,7 +78,7 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
     for(sint32 partial_iterator = 0; partial_iterator < solution->partial_solutions_size(); ++partial_iterator){
       for(
         uint32 internal_neuron_iterator = 0;
-        internal_neuron_iterator < solution->partial_solutions(partial_iterator).internal_neuron_number();
+        internal_neuron_iterator < solution->partial_solutions(partial_iterator).output_data().interval_size();
         ++internal_neuron_iterator
       ){
         if(

@@ -38,8 +38,6 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(const SparseNet&
     Index_synapse_interval temp_synapse_interval;
     Synapse_iterator<> weight_iterator(net.neuron_array(neuron_index).input_weights());
     Synapse_iterator<Input_synapse_interval> input_iterator(net.neuron_array(neuron_index).input_indices());
-    /* Add a new Neuron into the partial solution */
-    partial.set_internal_neuron_number(partial.internal_neuron_number() + 1);
 
     /* Copy in Neuron parameters */
     partial.add_neuron_transfer_functions(net.neuron_array(neuron_index).transfer_function_idx());

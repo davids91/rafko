@@ -59,7 +59,6 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
   /**###################################################################################################
    * Neuron global parameters in partial
    */
-  partial_solution.set_internal_neuron_number(2);
   temp_index_interval.set_starts(neuron_offset + 0u);
   temp_index_interval.set_interval_size(2);
   *partial_solution.mutable_output_data() = temp_index_interval;
@@ -212,7 +211,7 @@ void check_if_the_same(SparseNet& net, Solution& solution){
       Synapse_iterator<Input_synapse_interval> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
       const uint32 first_neuron_index_in_partial = solution.partial_solutions(partial_solution_iterator).output_data().starts();
       for( /* Skim through the inner neurons in the partial solutiomake n until the current one if found */
-        uint32 i_neuron_iter = 0; i_neuron_iter < solution.partial_solutions(partial_solution_iterator).internal_neuron_number();++i_neuron_iter
+        uint32 i_neuron_iter = 0; i_neuron_iter < solution.partial_solutions(partial_solution_iterator).output_data().interval_size();++i_neuron_iter
       ){ /*!Note: i_neuron_iter == inner neuron iterator */
         if(neuron_iterator == static_cast<sint32>(first_neuron_index_in_partial + i_neuron_iter)){
           /* If the current neuron being checked is the one in the partial solution under i_neuron_iter */
