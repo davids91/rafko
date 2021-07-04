@@ -58,8 +58,8 @@ public:
    *
    * @param[in]  context  The Service context
    */
-  Solution_builder(Service_context& context_)
-  :  context(context_)
+  Solution_builder(Service_context& service_context_)
+  :  service_context(service_context_)
   { }
 
   /**
@@ -72,10 +72,14 @@ public:
   Solution* build(const SparseNet& net);
 
 private:
-  Service_context& context;
+  Service_context& service_context;
 
   static sdouble32 get_size_in_mb(const Partial_solution& partial){
     return partial.SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */;
+  }
+
+  static uint32 get_last_neuron_index_of_partial(const Partial_solution& partial){
+    return (partial.output_data().starts() + partial.output_data().interval_size());
   }
 };
 

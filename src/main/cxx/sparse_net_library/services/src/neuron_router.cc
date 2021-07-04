@@ -265,6 +265,7 @@ void Neuron_router::omit_from_subset(uint32 neuron_index){
     (neuron_states[neuron])->store(0); /* set its state back to 0 */
     for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
       if(net_subset[subset_iterator] == neuron){ /* And then erase it from the subset finally */
+        net_subset_size_bytes.store(net_subset_size_bytes.load() - Neuron_info::get_neuron_estimated_size_bytes(net.neuron_array(neuron)));
         net_subset.erase(net_subset.begin() + subset_iterator);
         break;
       }
@@ -283,6 +284,7 @@ void Neuron_router::omit_from_subset(uint32 neuron_index, deque<uint32>& paired_
     (neuron_states[neuron])->store(0); /* set its state back to 0 */
     for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
       if(net_subset[subset_iterator] == neuron){ /* And then erase it from the subset finally */
+        net_subset_size_bytes.store(net_subset_size_bytes.load() - Neuron_info::get_neuron_estimated_size_bytes(net.neuron_array(neuron)));
         net_subset.erase(net_subset.begin() + subset_iterator);
         paired_array.erase(paired_array.begin() + subset_iterator);
         break;

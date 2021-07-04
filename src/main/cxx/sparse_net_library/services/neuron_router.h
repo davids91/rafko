@@ -174,8 +174,12 @@ public:
    *
    * @return     The subset size.
    */
-  uint32 get_subset_size() const{
+  uint32 get_subset_size(void) const{
     return net_subset.size();
+  }
+
+  uint32 get_subset_size_bytes(void) const{
+    return net_subset_size_bytes;
   }
 
   /**
@@ -193,6 +197,7 @@ public:
   void reset_remaining_subset(void){
     while(0 < net_subset.size())
       confirm_first_subset_element_ommitted(net_subset.front());
+    net_subset_size_bytes.store(0);
   }
 
   /**
