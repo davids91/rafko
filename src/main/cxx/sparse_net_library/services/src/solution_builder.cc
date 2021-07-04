@@ -35,8 +35,7 @@ using std::unique_ptr;
 using std::ref;
 using std::lock_guard;
 
-Solution* Solution_builder::build(const SparseNet& net){
-  if(0 == net.output_neuron_number()) throw std::runtime_error("Can't build a solution with 0 output Neurons!");
+Solution* Solution_builder::build(const SparseNet& net, bool optimize_to_gpu){
   Neuron_router neuron_router(net);
   Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(service_context.get_arena_ptr());
   uint32 overall_partial_solution_count = 0;
@@ -47,17 +46,16 @@ Solution* Solution_builder::build(const SparseNet& net){
   uint32 current_neuron_index;
   bool has_neuron = false;
 
+  if(0 == net.output_neuron_number()) throw std::runtime_error("Can't build a solution with 0 output Neurons!");
   while(!neuron_router.finished()){ /* Until the whole network is processed */
-    if(0 == solution->cols_size()) neuron_router.collect_subset(service_context.get_max_solve_threads(),service_context.get_device_max_megabytes(), false);
+    if( (!optimize_to_gpu)&&(0 == solution->cols_size()) )
+      neuron_router.collect_subset(service_context.get_max_solve_threads(),service_context.get_device_max_megabytes(), false);
     else neuron_router.collect_subset(service_context.get_max_solve_threads(),service_context.get_device_max_megabytes(), true);
 
-    /* try to generate a row to fit into `max threads` partial solutions */
     remaining_megabytes_in_row = service_context.get_device_max_megabytes();
     const sdouble32 max_megabytes_in_one_partial = ( remaining_megabytes_in_row / static_cast<sdouble32>(service_context.get_max_solve_threads()) );
     overall_partial_solution_count = solution->partial_solutions_size();
 
-    /* Generate appropriate number of partial solutions and put the neurons inside */
-    /* !Note It is supposed that the subset is sorted in ascending order */
     if(0u < neuron_router.get_subset_size()){
       for(uint32 partial_index_in_row = 0; partial_index_in_row < service_context.get_max_solve_threads(); ++partial_index_in_row){
         if(nullptr == service_context.get_arena_ptr() ) *solution->add_partial_solutions() = Partial_solution();
@@ -96,8 +94,8 @@ Solution* Solution_builder::build(const SparseNet& net){
           solution->mutable_partial_solutions()->RemoveLast();
         }
         if( /* in case there are no more available Neurons in the subset */
-          (0u == neuron_router.get_subset_size())
-          ||(0u == solution->cols_size()) /* Or the first partial of the first row is finished.. */
+          (0u == neuron_router.get_subset_size()) /* Or the first partial of the first row is finished.. */
+          ||((!optimize_to_gpu)&&(0u == solution->cols_size())) /* ..while optimizing solution to CPU */
         )break;
         /*!Note: The first partial of the first row collected Neurons in a non-strict way,
          * so other Neurons might not fit into other partials, because they might have dependencies in this row

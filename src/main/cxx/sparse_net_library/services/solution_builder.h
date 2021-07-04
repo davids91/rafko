@@ -65,11 +65,12 @@ public:
   /**
    * @brief      Build the Solution to be solved by @Solution_solver
    *
-   * @param[in]  net   The net
+   * @param[in]  net               The network to build a solution from
+   * @param[in]  optimize_to_gpu   Should the resulting solution be optimized for large amount of threads
    *
    * @return     Builder reference for chaining
    */
-  Solution* build(const SparseNet& net);
+  Solution* build(const SparseNet& net, bool optimize_to_gpu = false);
 
 private:
   Service_context& service_context;
