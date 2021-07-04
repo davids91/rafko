@@ -79,7 +79,7 @@ private:
   }
 
   static uint32 get_last_neuron_index_of_partial(const Partial_solution& partial){
-    return (partial.output_data().starts() + partial.output_data().interval_size());
+    return (partial.output_data().starts() + partial.output_data().interval_size() - 1u);
   }
 };
 

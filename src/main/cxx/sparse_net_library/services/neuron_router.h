@@ -90,7 +90,7 @@ public:
     if((!collection_running)&&(0 < net_subset.size())){
       put_it_here = net_subset.front();
       return true;
-    }else return false;
+    } else return false;
   }
 
   /**
@@ -180,6 +180,10 @@ public:
 
   uint32 get_subset_size_bytes(void) const{
     return net_subset_size_bytes;
+  }
+
+  sdouble32 get_subset_size_megabytes(void) const{
+    return( static_cast<sdouble32>(net_subset_size_bytes) / (double_literal(1024.0) * double_literal(1024.0)) );
   }
 
   /**

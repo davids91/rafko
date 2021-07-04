@@ -177,6 +177,10 @@ test-solution-builder: clean gen $(LIB_OUTPUT)
 	g++ $(TEST_BASE) ../test/solution_builder_test.cc ../test/neuron_router_test.cc $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
 	./$(TEST_RESULT)
 
+test-only-opt: $(LIB_OUTPUT) #as in optimization or approximization
+	g++ $(OPTIMIZE_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)
+	./$(TEST_RESULT)  --use-colour yes -a [approximize]
+
 test-opt: clean gen $(LIB_OUTPUT) #as in optimization or approximization
 	@rm -f $(TEST_RESULT)
 	g++ $(OPTIMIZE_TEST_SOURCES) $(CPPFLAGS_DEPLOY) $(SOURCES_INCLUDE_DIR) -o $(TEST_RESULT)

@@ -45,15 +45,14 @@ using std::vector;
 /*###############################################################################################
  * Testing Solution generation using the @Sparse_net_builder and the @Solution_builder
  * */
-Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, uint32 recursion){
+Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, vector<uint32> net_structure, uint32 recursion){
   Service_context service_context = Service_context()
   .set_max_solve_threads(4).set_device_max_megabytes(device_max_megabytes)
   .set_arena_ptr(arena);
 
-  vector<uint32> net_structure = {20,20,30,10,2}; /* Build a net of this structure */
   Sparse_net_builder builder = Sparse_net_builder(service_context);
 
-  builder.input_size(50).expected_input_range(double_literal(5.0)).output_neuron_number(2);
+  builder.input_size(50).expected_input_range(double_literal(5.0)).output_neuron_number(net_structure.back());
 
   if(NETWORK_RECURRENCE_TO_SELF == recursion){
     builder.set_recurrence_to_self();
@@ -66,33 +65,37 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
     net = builder.dense_layers(net_structure)
   );
 
-   Solution* solution;
-   REQUIRE_NOTHROW(
-      solution = Solution_builder(service_context).build(*net)
-   );
+  Solution* solution;
+  REQUIRE_NOTHROW(
+    solution = Solution_builder(service_context).build(*net)
+  );
+
+  sint32 expected_partial_number = 0;
+  for(sint32 i = 0; i < solution->cols_size(); ++i){
+    CHECK( 0 < solution->cols(i) );
+    expected_partial_number += solution->cols(i);
+  }
+  CHECK( expected_partial_number == solution->partial_solutions_size() );
 
   /* See if every Neuron is inside the result solution */
   bool found;
   for(sint32 neuron_iterator = 0; neuron_iterator < net->neuron_array_size(); ++neuron_iterator){
     found = false;
     for(sint32 partial_iterator = 0; partial_iterator < solution->partial_solutions_size(); ++partial_iterator){
+      REQUIRE( 0u < solution->partial_solutions(partial_iterator).output_data().interval_size() );
       for(
         uint32 internal_neuron_iterator = 0;
         internal_neuron_iterator < solution->partial_solutions(partial_iterator).output_data().interval_size();
         ++internal_neuron_iterator
       ){
-        if(
-          static_cast<sint32>(
-            solution->partial_solutions(partial_iterator).output_data().starts() + internal_neuron_iterator
-          ) == neuron_iterator
-        ){
+        if(static_cast<sint32>(solution->partial_solutions(partial_iterator).output_data().starts() + internal_neuron_iterator) == neuron_iterator){
           found = true;
-          goto Solution_search_over; /* don't judge */
+          goto Solution_search_over; /* don't judge me */
         }
       }
     }
     Solution_search_over:
-    CHECK( true == found ); /* Found the Neuron index from the net in the result solution */
+    REQUIRE( true == found ); /* Found the Neuron index from the net in the result solution */
   }
 
   /* Test if the inputs of the partial in the first row only contain input indexes */
@@ -106,29 +109,56 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
   return solution;
 }
 
-TEST_CASE( "Building a solution from a net", "[build][small][build-only]" ){
+TEST_CASE( "Building a solution from a small net", "[build][small][build-only]" ){
   sdouble32 space_used_megabytes = 0;
-  unique_ptr<Solution> solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),0));
+  unique_ptr<Solution> solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{2,2,3,1,2},0));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
   solution.reset();
 
   /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
-  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),0));
+  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{2,2,3,1,2},0));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   solution.reset();
 
   /* again, but With recursion enabled */
-  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),0x02));
+  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{20,20,30,10,5},0x02));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
   solution.reset();
 
   /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
-  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),0x02));
+  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{2,2,3,1,2},0x02));
+  REQUIRE( nullptr != solution );
+  REQUIRE( 0 < solution->SpaceUsedLong() );
+}
+
+TEST_CASE( "Building a solution from a bigger net", "[build][build-only]" ){
+  sdouble32 space_used_megabytes = 0;
+  unique_ptr<Solution> solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{20,20,30,10,5},0));
+  REQUIRE( nullptr != solution );
+  REQUIRE( 0 < solution->SpaceUsedLong() );
+  space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
+  solution.reset();
+
+  /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
+  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{20,20,30,10,5},0));
+  REQUIRE( nullptr != solution );
+  REQUIRE( 0 < solution->SpaceUsedLong() );
+  solution.reset();
+
+  /* again, but With recursion enabled */
+  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{20,20,30,10,5},0x02));
+  REQUIRE( nullptr != solution );
+  REQUIRE( 0 < solution->SpaceUsedLong() );
+  space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
+  solution.reset();
+
+  /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
+  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{20,20,30,10,5},0x02));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
 }

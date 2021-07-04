@@ -19,13 +19,6 @@
 
 namespace sparse_net_library{
 
-uint32 Neuron_info::get_neuron_estimated_size_bytes(const Neuron& neuron){
-  uint32 ret = 0;
-  ret = neuron.input_weights_size()  * 2/* Byte */ * 2/* fields( interval_size and starts) */;
-  ret += neuron.input_indices_size() * 2/* Byte */ * 2/* fields( interval_size and starts) */;
-  return ret;
-}
-
 bool Neuron_info::is_neuron_valid(const Neuron& neuron)
 {
   if(

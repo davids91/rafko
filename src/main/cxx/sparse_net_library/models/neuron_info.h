@@ -33,7 +33,25 @@ public:
    *
    * @return     The neuron estimated size in bytes.
    */
-  static uint32 get_neuron_estimated_size_bytes(const Neuron& neuron);
+  static uint32 get_neuron_estimated_size_bytes(const Neuron& neuron){
+    return (
+      neuron.input_weights_size()  * 2/* Byte */ * 2/* fields( interval_size and starts) */
+      + neuron.input_indices_size() * 2/* Byte */ * 2/* fields( interval_size and starts) */
+    );
+  }
+
+  /**
+   * @brief      Gets a neurons estimated size in megabytes.
+   *
+   * @param[in]  neuron  The neuron
+   *
+   * @return     The neuron estimated size in megabytes.
+   */
+  static sdouble32 get_neuron_estimated_size_megabytes(const Neuron& neuron){
+    return (
+      static_cast<sdouble32>(get_neuron_estimated_size_bytes(neuron)) / (double_literal(1024.0) * double_literal(1024.0))
+    );
+  }
 
   /**
    * @brief      Determines whether the specified neuron is valid, but does
