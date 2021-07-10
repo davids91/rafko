@@ -61,9 +61,11 @@ public:
    * @return         The const buffer reference used as storage of the Neural data of the agent
    */
   const DataRingbuffer& solve(const vector<sdouble32>& input, bool reset_neuron_data, uint32 thread_index = 0){
-    if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
-    solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread) );
-    return neuron_value_buffers[thread_index];
+    if(max_threads > thread_index){
+      if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
+      solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread) );
+      return neuron_value_buffers[thread_index];
+    } else throw std::runtime_error("Thread index out of bounds!");
   }
 
   /**

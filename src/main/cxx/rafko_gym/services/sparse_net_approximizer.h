@@ -22,33 +22,33 @@
 
 #include <cmath>
 #include <vector>
-#include <functional>
 
 #include "gen/common.pb.h"
+#include "gen/sparse_net.pb.h"
 
-#include "rafko_utilities/models/data_pool.h"
-#include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/services/weight_updater.h"
+#include "sparse_net_library/services/solution_builder.h"
 #include "sparse_net_library/services/solution_solver.h"
+#include "sparse_net_library/services/updater_factory.h"
+#include "sparse_net_library/services/weight_updater.h"
 
-#include "rafko_gym/models/data_aggregate.h"
 #include "rafko_gym/services/agent.h"
+#include "rafko_gym/services/environment.h"
 
 namespace rafko_gym{
 
-using std::max;
 using std::min;
 using std::vector;
 using std::unique_ptr;
-using std::thread;
-using std::reference_wrapper;
 
 using rafko_mainframe::Service_context;
+using sparse_net_library::SparseNet;
+using sparse_net_library::Solution_builder;
+using sparse_net_library::Solution_solver;
 using sparse_net_library::Weight_updater;
 using sparse_net_library::weight_updaters;
 using sparse_net_library::Gradient_fragment;
-
+using sparse_net_library::Updater_factory;
 
 /**
  * @brief      This class approximates gradients for a @Dataset and @Sparse_net.
@@ -56,10 +56,18 @@ using sparse_net_library::Gradient_fragment;
  */
 class Sparse_net_approximizer{
 public:
-  Sparse_net_approximizer(
-    SparseNet& neural_network, Data_aggregate& train_set_, Data_aggregate& test_set_,
-    weight_updaters weight_updater_, Service_context& service_context
-  );
+
+  Sparse_net_approximizer(Service_context& service_context, SparseNet& neural_network, Environment& environment_, weight_updaters weight_updater_)
+  : context(service_context)
+  , net(neural_network)
+  , net_solution(Solution_builder(context).build(net))
+  , environment(environment_)
+  , solver(Solution_solver::Builder(*net_solution, service_context).build())
+  , last_applied_direction(net.weight_table_size())
+  {
+    weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
+    environment.full_evaluation(*solver);
+  }
 
   ~Sparse_net_approximizer(void){
     if(nullptr == context.get_arena_ptr())
@@ -69,27 +77,6 @@ public:
   Sparse_net_approximizer(Sparse_net_approximizer&& other) = delete; /* Move constructor */
   Sparse_net_approximizer& operator=(const Sparse_net_approximizer& other) = delete; /* Copy assignment */
   Sparse_net_approximizer& operator=(Sparse_net_approximizer&& other) = delete; /* Move assignment */
-
-  /**
-   * @brief      Checks if the data-set changed enough to be re-evaluated, and if it does, it evaluates it
-   */
-  void check(void){
-    if(
-      (loops_unchecked >= context.get_insignificant_changes())
-      ||(loops_unchecked > (train_set.get_error_sum()/context.get_step_size()))
-      ||(loops_unchecked > (test_set.get_error_sum()/context.get_step_size()))
-    ){
-      /* calculate the error value for the current network in the testing and training datasets */
-      evaluate();
-      loops_unchecked = 0;
-    }
-  }
-
-  /**
-   * @brief      Evaluate the configured network on the given data set, which updates the stored error states of the set
-   */
-  void evaluate(void);
-
 
   /**
    * @brief      Moves the network in a random direction, approximates the gradients based on that
@@ -163,20 +150,6 @@ public:
   }
 
   /**
-   * @brief      Gives back the error of the configured Network based on the training dataset
-   */
-  sdouble32 get_train_error(void) const{
-   return train_set.get_error_avg();
-  }
-
-  /**
-   * @brief      Gives back the error of the configured Network based on the test set
-   */
-  sdouble32 get_test_error(void) const{
-   return test_set.get_error_avg();
-  }
-
-  /**
    * @brief      Helper function to get the collected weight gradient fragment
    *
    * @return     Constant reference to the current weight gradients array
@@ -186,24 +159,14 @@ public:
   }
 
 private:
-  SparseNet& net;
   Service_context& context;
-  Data_aggregate& train_set;
-  Data_aggregate& test_set;
+  SparseNet& net;
   Solution* net_solution;
+  Environment& environment;
   unique_ptr<Agent> solver;
-  vector<DataRingbuffer> neuron_value_buffers; /* One DataRingbuffer per thread */
-  vector<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
-  DataPool<sdouble32> instance_data_pool;
-  vector<reference_wrapper<vector<sdouble32>>> used_data_pools;
-
-  Gradient_fragment gradient_fragment;
-  uint32 iteration = 1;
-  uint32 loops_unchecked;
-  uint32 sequence_truncation;
   unique_ptr<Weight_updater> weight_updater;
+  Gradient_fragment gradient_fragment;
   vector<sdouble32> last_applied_direction; /* The weight gradients applied to the network in the last iteration */
-  ThreadGroup execution_threads;
 
   /**
    * @brief      Insert an element to the given position into the given field by
@@ -214,32 +177,11 @@ private:
    * @param[in]  value          The value
    * @param[in]  position       The position
    */
-  void insert_element_at_position(google::protobuf::RepeatedField<sdouble32>& message_field, sdouble32 value, uint32 position){
+  static void insert_element_at_position(google::protobuf::RepeatedField<sdouble32>& message_field, sdouble32 value, uint32 position){
     *message_field.Add() = value;
     for(sint32 i(message_field.size() - 1); i > static_cast<sint32>(position); --i)
       message_field.SwapElements(i, i - 1);
   }
-
-  /**
-   * @brief      Evaluate the given data set with the given parameters
-   *
-   * @param      data_set                   The data set to evaluate
-   * @param[in]  sequence_start             The starting sequence to be evaluated inside the @data_set
-   * @param[in]  sequences_to_evaluate      The number of sequences to evaluate inside the @data_set
-   * @param[in]  start_index_in_sequence    Parameter for sequence truncation: only update error value starting from this index in every sequence
-   * @param[in]  sequence_tructaion         The number of labels to evaluate inside every evaluated sequence
-   */
-  void evaluate(Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion);
-
-  /**
-   * @brief      Evaluate a single sequence. The evaluated sequences lies under @sequence_index + @thread_index
-   *              as inside a multi-threaded evaluation, one thread is to evaluate one sequence
-   *
-   * @param      data_set            The data set containing the evaluatable sequence
-   * @param[in]  sequence_index      The sequence to be evaluated inside the @data_set
-   * @param[in]  thread_index        The index of the thread the function is used with inside @solve_threads
-   */
-  void evaluate_single_sequence(Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index);
 };
 
 } /* namespace rafko_gym */

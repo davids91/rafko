@@ -72,7 +72,7 @@ private:
   Solution_solver(
     const Solution& to_solve, Service_context& context, vector<vector<Partial_solution_solver>> partial_solvers_,
     uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
-  ): Agent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_solve_threads())
+  ): Agent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_processing_threads())
   ,  solution(to_solve)
   ,  service_context(context)
   ,  partial_solvers(partial_solvers_)

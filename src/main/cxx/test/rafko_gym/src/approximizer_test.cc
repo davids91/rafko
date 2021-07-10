@@ -22,12 +22,13 @@
 #include "gen/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
-#include "rafko_gym/models/data_aggregate.h"
 #include "sparse_net_library/models/cost_function_mse.h"
 #include "sparse_net_library/services/sparse_net_builder.h"
 #include "sparse_net_library/services/solution_builder.h"
-#include "rafko_gym/services/sparse_net_approximizer.h"
 #include "sparse_net_library/services/function_factory.h"
+#include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/services/environment_data_set.h"
+#include "rafko_gym/services/sparse_net_approximizer.h"
 
 namespace sparse_net_library_test {
 
@@ -38,6 +39,9 @@ using std::flush;
 using std::chrono::steady_clock;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
+
+using rafko_mainframe::Service_context;
+using rafko_utilities::DataRingbuffer;
 using sparse_net_library::SparseNet;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::Cost_function_mse;
@@ -51,14 +55,14 @@ using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
 using sparse_net_library::WEIGHT_UPDATER_NESTEROV;
 using sparse_net_library::WEIGHT_UPDATER_ADAM;
 using sparse_net_library::WEIGHT_UPDATER_AMSGRAD;
-using rafko_gym::Sparse_net_approximizer;
-using rafko_utilities::DataRingbuffer;
-using rafko_gym::Data_aggregate;
 using sparse_net_library::Function_factory;
 using sparse_net_library::Solution;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::Solution_solver;
-using rafko_mainframe::Service_context;
+using rafko_gym::Environment;
+using rafko_gym::Environment_data_set;
+using rafko_gym::Sparse_net_approximizer;
+using rafko_gym::Data_aggregate;
 
 /*###############################################################################################
  * Testing if the gradients are added to the fragment correctly
@@ -86,7 +90,8 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   /* Create dataset, test set and aprroximizer */
   Data_aggregate* train_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
   Data_aggregate* test_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
-  Sparse_net_approximizer approximizer(*nets[0],*train_set,*test_set,WEIGHT_UPDATER_DEFAULT, service_context);
+  Environment_data_set env(service_context, *train_set, *test_set);
+  Sparse_net_approximizer approximizer(service_context, *nets[0], env, WEIGHT_UPDATER_DEFAULT);
 
   /* adding a simple-weight-gradient fragment */
   uint32 weight_index = rand()%(nets[0]->weight_table_size());
@@ -157,17 +162,25 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     .input_size(2).expected_input_range(double_literal(1.0))
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
-      {
-        {TRANSFER_FUNCTION_SELU},
-        {TRANSFER_FUNCTION_SELU},
-        {TRANSFER_FUNCTION_SELU}
-      }
-    ).dense_layers({10,10,1})
+    //   {
+    //     {TRANSFER_FUNCTION_SELU},
+    //     {TRANSFER_FUNCTION_SELU},
+    //     {TRANSFER_FUNCTION_SELU}
+    //   }
+    // ).dense_layers({10,10,1})
+    {
+      {TRANSFER_FUNCTION_SELU},
+      {TRANSFER_FUNCTION_SELU},
+    }
+  ).dense_layers({2,1})
+
   );
 
   /* Create dataset, test set and optimizers; optimize nets */
   Data_aggregate* train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
   Data_aggregate* test_set = create_sequenced_addition_dataset(number_of_samples * 2, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
+  Environment_data_set env(service_context, *train_set, *test_set);
+  Sparse_net_approximizer approximizer(service_context, *nets[0], env, WEIGHT_UPDATER_AMSGRAD);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -184,9 +197,6 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   average_duration = 0;
   iteration = 0;
   minimum_error = std::numeric_limits<sdouble32>::max();
-  Sparse_net_approximizer approximizer(
-    *nets[0], *train_set, *test_set, WEIGHT_UPDATER_AMSGRAD, service_context
-  );
 
   std::cout << "Approximizing net.." << std::endl;
   std::cout.precision(15);
@@ -203,8 +213,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     auto current_duration = duration_cast<milliseconds>(steady_clock::now() - start).count();
     average_duration += current_duration;
     ++number_of_steps;
-    train_error = approximizer.get_train_error();
-    test_error = approximizer.get_test_error();
+    train_error = train_set->get_error_avg();
+    test_error = test_set->get_error_avg();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
     cout << "\rError:" << std::setprecision(9)
     << "Training:[" << train_error << "]; "
