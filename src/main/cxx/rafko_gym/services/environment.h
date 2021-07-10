@@ -25,7 +25,8 @@
 namespace rafko_gym{
 
 /**
- * @brief      A class representing an environment, producing fitness/error value
+ * @brief      A class representing an environment, producing fitness/error value. Error values are negative, while fittness
+ *             values are positive
  */
 class Environment{
 public:
@@ -33,7 +34,7 @@ public:
    * @brief      Evaluates the given agent and returns with its error/fittness value
    *
    * @param[in]      agent    The actor to be evaluated in the current environment
-   * @return         The resulting error/fitness value summary of the evaluation, depending on the intended usage
+   * @return         The resulting error/fitness value summary of the evaluation
    */
   virtual sdouble32 full_evaluation(Agent& agent) = 0;
 
@@ -41,14 +42,22 @@ public:
    * @brief      Evaluates the given agent in a stochastic manner and returns with its error/fittness value
    *
    * @param[in]      agent    The actor to be evaluated in the current environment
-   * @return         The resulting error/fitness value summary of the evaluation, depending on the intended usage
+   * @param[in]      index    A helper value to make Stochastic evaluation deterministicly reproducible
+   * @return         The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 stochastic_evaluation(Agent& agent) = 0;
+  virtual sdouble32 stochastic_evaluation(Agent& agent, uint32 index = 0u) = 0;
 
   /**
    * @brief      Saves the Environment state
    */
   virtual void push_state(void) = 0;
+
+  /**
+   * @brief      Provides the last measured error/fittness value
+   *
+   * @return     The resulting error/fitness value summary of the evaluation
+   */
+  virtual sdouble32 get_last_measured_value(void) = 0;
 
   /**
    * @brief      Restores the previously stored environment state
@@ -59,4 +68,5 @@ public:
 };
 
 } /* namespace rafko_gym */
+
 #endif /* ENVIRONMENT_H */

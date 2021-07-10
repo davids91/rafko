@@ -96,7 +96,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   /* adding a simple-weight-gradient fragment */
   uint32 weight_index = rand()%(nets[0]->weight_table_size());
   uint32 gradient_value_index;
-  sdouble32 weight_gradient = 0.5f;
+  sdouble32 weight_gradient = double_literal(0.5);
   sdouble32 weight_old_value = nets[0]->weight_table(weight_index);
 
   REQUIRE( nets[0]->weight_table(weight_index) == weight_old_value );

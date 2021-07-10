@@ -44,21 +44,22 @@ public:
   sdouble32 full_evaluation(Agent& agent){
     evaluate(agent, train_set, 0u, train_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
     evaluate(agent, test_set, 0u, test_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
-    loops_unchecked = service_context.get_insignificant_changes() + 1;
-    return train_set.get_error_sum();
+    loops_unchecked = 0u;
+    return -train_set.get_error_sum();
   }
 
-  sdouble32 stochastic_evaluation(Agent& agent){
+  sdouble32 stochastic_evaluation(Agent& agent, uint32 index = 0){
+    if(0 < index)srand(index);
     check(agent);
     uint32 sequence_start_index = (rand()%(
       train_set.get_number_of_sequences() - service_context.get_minibatch_size() + 1
     ));
-    uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training */
-      train_set.get_sequence_size() - service_context.get_memory_truncation() + 1 /* not all result output values are evaluated */
-    )); /* only service_context.get_memory_truncation(), starting at a random index inside bounds */
+    uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
+      train_set.get_sequence_size() - service_context.get_memory_truncation() + 1 /* ..not all result output values are evaluated.. */
+    )); /* ..only service_context.get_memory_truncation(), starting at a random index inside bounds */
     evaluate(agent, train_set, sequence_start_index, service_context.get_minibatch_size(), start_index_inside_sequence, service_context.get_memory_truncation());
     ++loops_unchecked; ++iteration;
-    return train_set.get_error_sum();
+    return -train_set.get_error_sum();
   }
 
   void push_state(void){
@@ -69,6 +70,10 @@ public:
   void pop_state(void){
     train_set.pop_state();
     test_set.pop_state();
+  }
+
+  sdouble32 get_last_measured_value(void){
+    return -train_set.get_error_sum();
   }
 
   /**

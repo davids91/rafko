@@ -57,32 +57,26 @@ using sparse_net_library::Updater_factory;
 class Sparse_net_approximizer{
 public:
 
-  Sparse_net_approximizer(Service_context& service_context, SparseNet& neural_network, Environment& environment_, weight_updaters weight_updater_)
-  : context(service_context)
+  Sparse_net_approximizer(Service_context& service_context_, SparseNet& neural_network, Environment& environment_, weight_updaters weight_updater_)
+  : service_context(service_context_)
   , net(neural_network)
-  , net_solution(Solution_builder(context).build(net))
+  , net_solution(Solution_builder(service_context).build(net))
   , environment(environment_)
   , solver(Solution_solver::Builder(*net_solution, service_context).build())
-  , last_applied_direction(net.weight_table_size())
+  , applied_direction(net.weight_table_size())
   {
-    weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,context);
+    weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,service_context);
     environment.full_evaluation(*solver);
   }
 
   ~Sparse_net_approximizer(void){
-    if(nullptr == context.get_arena_ptr())
+    if(nullptr == service_context.get_arena_ptr())
       delete net_solution;
   }
   Sparse_net_approximizer(const Sparse_net_approximizer& other) = delete;/* Copy constructor */
   Sparse_net_approximizer(Sparse_net_approximizer&& other) = delete; /* Move constructor */
   Sparse_net_approximizer& operator=(const Sparse_net_approximizer& other) = delete; /* Copy assignment */
   Sparse_net_approximizer& operator=(Sparse_net_approximizer&& other) = delete; /* Move assignment */
-
-  /**
-   * @brief      Moves the network in a random direction, approximates the gradients based on that
-   *             and then reverts the the weight change
-   */
-  void collect_approximates_from_random_direction(void);
 
   /**
    * @brief      Moves the network in a direction based on induvidual weight gradients,
@@ -98,11 +92,6 @@ public:
    * @param[in]  save_to_fragment  Decides wether or not to add the results into the collected gradient fragments
    */
   void convert_direction_to_gradient(vector<sdouble32>& direction, bool save_to_fragment);
-
-  /**
-   * @brief      Step the net in the opposite direction of the gradient slope
-   */
-  void collect_fragment(void);
 
   /**
    * @brief      Collects the approximate gradient of a single weight
@@ -159,14 +148,16 @@ public:
   }
 
 private:
-  Service_context& context;
+  Service_context& service_context;
   SparseNet& net;
   Solution* net_solution;
   Environment& environment;
   unique_ptr<Agent> solver;
   unique_ptr<Weight_updater> weight_updater;
   Gradient_fragment gradient_fragment;
-  vector<sdouble32> last_applied_direction; /* The weight gradients applied to the network in the last iteration */
+
+  uint32 iteration = 1;
+  vector<sdouble32> applied_direction;
 
   /**
    * @brief      Insert an element to the given position into the given field by

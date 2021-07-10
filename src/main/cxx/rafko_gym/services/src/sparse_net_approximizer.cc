@@ -33,45 +33,23 @@ using sparse_net_library::Index_synapse_interval;
 
 void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
   vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
-  uint32 index_of_biggest = 0;
-  sdouble32 sum_gradient = double_literal(0.0);
-  sdouble32 gradient_overview = get_gradient_for_all_weights() * context.get_step_size();
-
+  sdouble32 gradient_overview = get_gradient_for_all_weights() * service_context.get_step_size();
+  sdouble32 greatest_weight_value = double_literal(0.0);
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-    weight_gradients[weight_index] += get_single_weight_gradient(weight_index);
-    sum_gradient += std::pow(weight_gradients[weight_index],double_literal(2.0));
-    if(std::abs(weight_gradients[index_of_biggest]) < std::abs(weight_gradients[weight_index]))
-      index_of_biggest = weight_index;
+    weight_gradients[weight_index] = get_single_weight_gradient(weight_index);
+    if(greatest_weight_value < std::abs(weight_gradients[weight_index]))
+      greatest_weight_value = std::abs(weight_gradients[weight_index]);
   }
-  sum_gradient = std::sqrt(sum_gradient);
-
-  convert_direction_to_gradient(last_applied_direction,false); /* check the last applied direction */
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-    weight_gradients[weight_index] = (
-      ( /* Gradients normalized by the biggest value */
-        (weight_gradients[weight_index] / std::abs(weight_gradients[index_of_biggest]))
-        + gradient_overview /* plus the overview gradient */
-      ) / (double_literal(1.0) + std::abs(gradient_overview)) /* normalized by the extended value */
+    weight_gradients[weight_index] = ( /* Gradients normalized by the biggest value */
+      ( weight_gradients[weight_index] + gradient_overview ) / (greatest_weight_value + std::abs(gradient_overview))
     ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
         * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
         */
-    weight_gradients[weight_index] *= context.get_step_size();
+    weight_gradients[weight_index] *= service_context.get_step_size();
   }
-
   convert_direction_to_gradient(weight_gradients,true);
-}
-
-void Sparse_net_approximizer::collect_approximates_from_random_direction(void){
-  vector<sdouble32> direction(net.weight_table_size());
-  sdouble32 gradient_overview = get_gradient_for_all_weights() * context.get_step_size();
-  std::generate_n(direction.begin(),net.weight_table_size(),[=](){
-    return(
-      (
-        (static_cast<sdouble32>(rand()%201) / double_literal(200.0)) - double_literal(1.0) + gradient_overview
-      ) * context.get_step_size()
-    );
-  });
-  convert_direction_to_gradient(direction,true);
+  ++iteration;
 }
 
 void Sparse_net_approximizer::convert_direction_to_gradient(vector<sdouble32>& direction, bool save_to_fragment){
@@ -79,122 +57,118 @@ void Sparse_net_approximizer::convert_direction_to_gradient(vector<sdouble32>& d
     sdouble32 dampening_value;
     sdouble32 error_negative_direction;
     sdouble32 error_positive_direction;
-    vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
-    vector<sdouble32> weight_steps(net.weight_table_size(),double_literal(0.0));
     sdouble32 weight_epsilon = double_literal(0.0);
 
+    vector<sdouble32> weight_gradients(net.weight_table_size(), double_literal(0.0));
     for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-      weight_steps[weight_index] = direction[weight_index];
-      weight_epsilon += std::pow(weight_steps[weight_index], double_literal(2.0));
-      net.set_weight_table(weight_index, (net.weight_table(weight_index) - weight_steps[weight_index]) );
+      net.set_weight_table(weight_index, (net.weight_table(weight_index) - direction[weight_index]) );
+      weight_epsilon += std::pow(direction[weight_index],double_literal(2.0)); /* Collect weight epsilon for both(positive and negative) direction */
     } /* apply the direction on which network approximation shall be done */
+    weight_epsilon = std::sqrt(weight_epsilon);
     weight_updater->update_solution_with_weights(*net_solution);
-    weight_epsilon = std::sqrt(weight_epsilon) * double_literal(2.0);
 
     /* see the error values at the negative end of the current direction */
     environment.push_state();
-    error_negative_direction = environment.stochastic_evaluation(*solver);
+    error_negative_direction = -environment.stochastic_evaluation(*solver, iteration);
+    environment.pop_state();
 
     /* see the error values at the positive end of the current direction */
     for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index)
-      net.set_weight_table(weight_index, (net.weight_table(weight_index) + (weight_steps[weight_index] * double_literal(2.0))) );
+      net.set_weight_table(weight_index, (net.weight_table(weight_index) + (direction[weight_index] * double_literal(2.0))) );
     weight_updater->update_solution_with_weights(*net_solution);
-    error_positive_direction = environment.stochastic_evaluation(*solver);
-    environment.pop_state(); /* Restore train set to previous error state, decide if dampening is needed */
-    if( /* In case the initial error is smaller, than the errors in either direction.. */
-      // (train_set.get_error_avg() < error_positive_direction)
-      // &&(train_set.get_error_avg() < error_negative_direction)
-      true /* It was always true... */
-    )dampening_value = context.get_zetta(); /* ..decrease the amount to move the current net */
-      else dampening_value = double_literal(1.0); /* reducing oscillation at lower error ranges */
 
+    if(!save_to_fragment)environment.push_state();
+    error_positive_direction = -environment.stochastic_evaluation(*solver, iteration);
+    if(!save_to_fragment)environment.pop_state(); /* Restore train set to previous error state, decide if dampening is needed */
+
+    if( /* In case the initial error is smaller, than the errors in either direction.. */
+      (environment.get_last_measured_value() <= error_positive_direction)
+      &&(environment.get_last_measured_value() <= error_negative_direction)
+    )dampening_value = service_context.get_zetta(); /* ..decrease the amount to move the current net */
+      else dampening_value = double_literal(1.0); /* reducing oscillation at lower error ranges */
     /* collect the fragment, revert weight changes */
     for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-      weight_gradients[weight_index] = (
-        ( error_positive_direction - error_negative_direction ) / (weight_epsilon)
-      );
-
-      if(save_to_fragment)add_to_fragment( weight_index, (weight_gradients[weight_index] * weight_steps[weight_index] * dampening_value) );
-      net.set_weight_table(weight_index, (net.weight_table(weight_index) - (weight_steps[weight_index])) );
+      weight_gradients[weight_index] = ( ( error_positive_direction - error_negative_direction ) / (weight_epsilon) );
+      if(save_to_fragment)add_to_fragment( weight_index, (weight_gradients[weight_index] * direction[weight_index] * dampening_value) );
+      net.set_weight_table(weight_index, (net.weight_table(weight_index) - (direction[weight_index])) );
     }
     weight_updater->update_solution_with_weights(*net_solution);
-  }else throw std::runtime_error("Incompatible direction given to apprximate for!");
-}
-
-void Sparse_net_approximizer::collect_fragment(void){
-  /* Approximate the gradient for every weight */
-  vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
-  uint32 index_of_biggest = double_literal(0.0);
-  sdouble32 average_gradient = double_literal(0.0);
-  sdouble32 sum_gradient = double_literal(0.0);
-  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-    weight_gradients[weight_index] = get_single_weight_gradient(weight_index);
-    average_gradient += weight_gradients[weight_index];
-    sum_gradient += std::pow(weight_gradients[weight_index],double_literal(2.0));
-    if(weight_gradients[index_of_biggest] < weight_gradients[weight_index])
-      index_of_biggest = weight_index;
-  }
-  sum_gradient = std::sqrt(sum_gradient);
-  average_gradient /= static_cast<sdouble32>(net.weight_table_size());
-  add_to_fragment(index_of_biggest, (weight_gradients[index_of_biggest] / sum_gradient) );
+  }else throw std::runtime_error("Incompatible direction given to approximate for!");
 }
 
 sdouble32 Sparse_net_approximizer::get_single_weight_gradient(uint32 weight_index){
   sdouble32 gradient;
-  const sdouble32 current_epsilon = context.get_sqrt_epsilon();
+  sdouble32 dampening_value;
+  const sdouble32 current_epsilon = service_context.get_sqrt_epsilon();
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
 
-  /* Save error from the initial network, decide the minibatch and sequence truncation */
-  environment.push_state();
-
-  /* Push it in one direction */
+  /* Push the choosen weight in one direction */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
   weight_updater->update_solution_with_weight(*net_solution, weight_index);
-
-  /* Approximate the modified weights gradient */
-  gradient = environment.stochastic_evaluation(*solver);
+  environment.push_state(); /* Approximate the modified weights gradient */
+  gradient = -environment.stochastic_evaluation(*solver, iteration);
+  environment.pop_state();
 
   /* Push the selected weight in other direction */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) - current_epsilon_double) );
   weight_updater->update_solution_with_weight(*net_solution, weight_index);
 
-  /* Approximate the newly modified weights gradient */
-  sdouble32 new_error_state = environment.stochastic_evaluation(*solver);
-  gradient = -(gradient - new_error_state) / (current_epsilon_double * context.get_minibatch_size());
+  environment.push_state(); /* Approximate the newly modified weights gradient */
+  sdouble32 new_error_state = -environment.stochastic_evaluation(*solver, iteration);
+  environment.pop_state();
+
+  /* Calculate the gradient */
+  if( /* In case the initial error is smaller, than the errors in either direction.. */
+    (environment.get_last_measured_value() <= new_error_state)
+    &&(environment.get_last_measured_value() <= gradient)
+  )dampening_value = service_context.get_zetta(); /* ..decrease the amount to move the current net */
+    else dampening_value = double_literal(1.0); /* reducing oscillation at lower error ranges */
+  gradient = -(gradient - new_error_state) / (current_epsilon_double * service_context.get_minibatch_size());
 
   /* Revert weight modification and the error state with it */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
   weight_updater->update_solution_with_weight(*net_solution, weight_index);
-  environment.pop_state();
-
-  return gradient;
+  return (gradient * dampening_value);
 }
 
 sdouble32 Sparse_net_approximizer::get_gradient_for_all_weights(void){
   sdouble32 gradient;
+  sdouble32 dampening_value;
   sdouble32 error_negative_direction;
   sdouble32 error_positive_direction;
-  const sdouble32 current_epsilon = context.get_sqrt_epsilon();
+  const sdouble32 current_epsilon = service_context.get_sqrt_epsilon();
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
 
-  environment.push_state(); /* Save error from the initial network, decide the minibatch and sequence truncation */
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
     net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
   } /* Push every weight in a positive epsilon direction */
   weight_updater->update_solution_with_weights(*net_solution);
-  error_positive_direction = environment.stochastic_evaluation(*solver); /* Approximate the modified weights gradient */
+
+  environment.push_state(); /* Approximate the modified weights gradient */
+  error_positive_direction = -environment.stochastic_evaluation(*solver, iteration);
+  environment.pop_state();
+
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
     net.set_weight_table(weight_index, (net.weight_table(weight_index) - current_epsilon_double) );
   } /* Push the weights to the other direction */
   weight_updater->update_solution_with_weights(*net_solution);
-  error_negative_direction = environment.stochastic_evaluation(*solver); /* Approximate the newly modified weights gradient */
-  gradient = -(error_positive_direction - error_negative_direction) / (current_epsilon_double * context.get_minibatch_size());
+
+  environment.push_state(); /* Approximate the newly modified weights gradient */
+  error_negative_direction = -environment.stochastic_evaluation(*solver, iteration);
+  environment.pop_state();
+
+  if( /* In case the initial error is smaller, than the errors in either direction.. */
+    (environment.get_last_measured_value() <= error_positive_direction)
+    &&(environment.get_last_measured_value() <= error_negative_direction)
+  )dampening_value = service_context.get_zetta(); /* ..decrease the amount to move the current net */
+    else dampening_value = double_literal(1.0); /* reducing oscillation at lower error ranges */
+
+  gradient = -(error_positive_direction - error_negative_direction) / (current_epsilon_double * service_context.get_minibatch_size());
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
     net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
   } /* Revert weight modifications and the error state with it */
   weight_updater->update_solution_with_weights(*net_solution);
-  environment.pop_state();
-  return gradient;
+  return (gradient * dampening_value);
 }
 
 void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gradient_fragment_value){
@@ -251,35 +225,34 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
       );
     }else{ /* The index is the first index after the synapse */
       gradient_fragment.mutable_weight_synapses(weight_synapse_index_target)->set_interval_size(synapse_size + 1);
-      insert_element_at_position(
-        *gradient_fragment.mutable_values(), gradient_fragment_value, (values_index_target + synapse_size)
-      );
+      insert_element_at_position( *gradient_fragment.mutable_values(), gradient_fragment_value, (values_index_target + synapse_size) );
     }
   }
 }
 
 void Sparse_net_approximizer::apply_fragment(void){
   uint32 fragment_value_index = 0;
-  std::fill(last_applied_direction.begin(),last_applied_direction.end(),double_literal(0.0));
+  std::fill(applied_direction.begin(),applied_direction.end(), double_literal(0.0));
 
   if(weight_updater->is_finished())weight_updater->start();
   if(1 == gradient_fragment.weight_synapses_size()){
     std::copy(
       gradient_fragment.values().begin(),
       gradient_fragment.values().begin() + gradient_fragment.weight_synapses(0).interval_size(),
-      last_applied_direction.begin() + gradient_fragment.weight_synapses(0).starts()
+      applied_direction.begin() + gradient_fragment.weight_synapses(0).starts()
     );
   }else{
     Synapse_iterator<>::iterate(gradient_fragment.weight_synapses(), [&](
       Index_synapse_interval interval, sint32 weight_index
     ){
-      last_applied_direction[weight_index] += gradient_fragment.values(fragment_value_index);
+      applied_direction[weight_index] += gradient_fragment.values(fragment_value_index);
       ++fragment_value_index;
     });
   }
 
-  weight_updater->iterate(last_applied_direction, *net_solution);
+  weight_updater->iterate(applied_direction, *net_solution);
   gradient_fragment = Gradient_fragment();
+  environment.full_evaluation(*solver);
 }
 
 } /* namespace rafko_gym */

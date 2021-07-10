@@ -32,9 +32,12 @@ Environment_data_set::Environment_data_set(Service_context& service_context_, Da
 : service_context(service_context_)
 , train_set(train_set_)
 , test_set(test_set_)
-, neuron_outputs_to_evaluate((service_context.get_max_processing_threads() * train_set.get_sequence_size()), vector<sdouble32>(train_set_.get_feature_size()))
+, neuron_outputs_to_evaluate( /* For every thread, 1 sequence is evaluated.. */
+  (service_context.get_max_processing_threads() * train_set.get_sequence_size() + 1u),
+  vector<sdouble32>(train_set_.get_feature_size()) /* ..plus for the label errors one additional vector is needed */
+)
 , execution_threads(service_context.get_max_processing_threads())
-, loops_unchecked(service_context.get_insignificant_changes())
+, loops_unchecked(service_context.get_insignificant_changes() + 1u)
 , sequence_truncation(min(service_context.get_memory_truncation(), train_set.get_sequence_size()))
 {
   (void)service_context.set_minibatch_size(max(1u,min(
@@ -43,6 +46,7 @@ Environment_data_set::Environment_data_set(Service_context& service_context_, Da
   (void)service_context.set_memory_truncation(max(1u,min(
     train_set.get_sequence_size(), service_context.get_memory_truncation()
   )));
+  neuron_outputs_to_evaluate.back().resize(train_set.get_number_of_label_samples());
 }
 
 void Environment_data_set::evaluate(
@@ -55,15 +59,15 @@ void Environment_data_set::evaluate(
     throw std::runtime_error("Network output size doesn't match size of provided labels!");
 
   data_set.expose_to_multithreading();
-  for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += service_context.get_max_processing_threads()){ /* one evaluation iteration */
+  for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += service_context.get_max_processing_threads()){
     execution_threads.start_and_block([this, &agent, &data_set, sequence_index](uint32 thread_index){
       evaluate_single_sequence(agent, data_set, sequence_index, thread_index);
     });
     data_set.set_features_for_sequences( /* Upload results to the data set */
       neuron_outputs_to_evaluate, 0u,
-      sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),static_cast<uint32>(service_context.get_max_processing_threads())),
-      start_index_in_sequence, sequence_truncation
-      //tmp data mate!!
+      sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),
+      static_cast<uint32>(service_context.get_max_processing_threads())), start_index_in_sequence, sequence_truncation,
+      neuron_outputs_to_evaluate.back()
     );
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
   data_set.conceal_from_multithreading();
@@ -78,14 +82,14 @@ void Environment_data_set::evaluate_single_sequence(
      * */
     /* Solve the sequence under sequence_index + thread_index */
     uint32 raw_label_index = sequence_index + thread_index;
-    uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number()); /* calculate the raw input arrays index */
-    raw_label_index *= data_set.get_sequence_size(); /* calculate the raw labels array index */
+    uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());
+    raw_label_index *= data_set.get_sequence_size();
 
     /* Evaluate the current sequence step by step */
     for(uint32 prefill_iterator = 0; prefill_iterator < data_set.get_prefill_inputs_number(); ++prefill_iterator){
       (void)agent.solve(data_set.get_input_sample(raw_inputs_index), (0 == prefill_iterator), thread_index);
       ++raw_inputs_index;
-    }
+    } /* The first few labels are there to set an initial state to the network */
 
     /* Solve the data and store the result after the inital "prefill" */
     for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
