@@ -124,7 +124,6 @@ void test_solution_solver_multithread(uint16 threads){
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(solution.neuron_number());
   vector<sdouble32> network_output_vector;
   DataRingbuffer neuron_data_partials(1,8);
-  DataRingbuffer neuron_data(1,8);
 
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights biases and memory filters */
@@ -170,10 +169,10 @@ void test_solution_solver_multithread(uint16 threads){
     partial_solution_solver_0_1.solve(network_inputs, neuron_data_partials); /* row 0, column 1 */
     partial_solution_solver_1_0.solve(network_inputs, neuron_data_partials); /* row 1, column 0 */
     partial_solution_solver_1_1.solve(network_inputs, neuron_data_partials); /* row 1, column 1 */
-    solution_solver->solve(network_inputs, neuron_data);
+    const DataRingbuffer& neuron_data = solution_solver->solve(network_inputs, false);
 
     /* Check result of the solution */
-    REQUIRE( solution_solver->get_solution().output_neuron_number() <= neuron_data.get_element(0).size());
+    REQUIRE( solution_solver->get_solution().output_neuron_number() <= neuron_data.get_const_element(0).size());
     network_output_vector = {
       neuron_data.get_const_element(0).end() - solution_solver->get_solution().output_neuron_number(),
       neuron_data.get_const_element(0).end()
@@ -218,13 +217,11 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
-  DataRingbuffer neuron_data(1, solver->get_solution().neuron_number());
-  DataRingbuffer neuron_data2(1, solver->get_solution().neuron_number());
 
-  solver->solve(net_input, neuron_data);
+  const DataRingbuffer& neuron_data = solver->solve(net_input, true);
   vector<sdouble32> result = {
-    neuron_data.get_element(0).end() - solver->get_solution().output_neuron_number(),
-    neuron_data.get_element(0).end()
+    neuron_data.get_const_element(0).end() - solver->get_solution().output_neuron_number(),
+    neuron_data.get_const_element(0).end()
   };
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size());
   manaual_fully_connected_network_result(net_input, {}, expected_neuron_data, net_structure, *net);
@@ -241,10 +238,10 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   Solution* solution2 = Solution_builder(service_context).build(*net);
 
   unique_ptr<Solution_solver> solver2(Solution_solver::Builder(*solution2, service_context).build());
-  solver2->solve(net_input, neuron_data2);
+  const DataRingbuffer& neuron_data2 = solver2->solve(net_input, true);
   result = {
-    neuron_data2.get_element(0).end() - solver2->get_solution().output_neuron_number(),
-    neuron_data2.get_element(0).end()
+    neuron_data2.get_const_element(0).end() - solver2->get_solution().output_neuron_number(),
+    neuron_data2.get_const_element(0).end()
   };
 
   /* Verify once more if the calculated values match the expected ones */
@@ -286,13 +283,12 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   /* Generate solution from Net */
   Solution* solution = Solution_builder(service_context).build(*net);
   unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
-  DataRingbuffer neuron_data(solver->get_solution().network_memory_length(), solver->get_solution().neuron_number());
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  solver->solve(net_input, neuron_data);
+  const DataRingbuffer& neuron_data = solver->solve(net_input, true);
   vector<sdouble32> result = {
-    (neuron_data.get_element(0).end() - solver->get_solution().output_neuron_number()),
-    neuron_data.get_element(0).end()
+    (neuron_data.get_const_element(0).end() - solver->get_solution().output_neuron_number()),
+    neuron_data.get_const_element(0).end()
   };
   vector<sdouble32> previous_neuron_data = vector<sdouble32>(net->neuron_array_size());
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size()); /* Should be all zeroes the first time */
@@ -307,8 +303,8 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   }
 
   for(uint32 loop = 0; loop < 5; ++loop){ /* Re-verify with additional runs, at least 3, more shouldn't hurt */
-    solver->solve(net_input, neuron_data);
-    result = {neuron_data.get_element(0).end() - solver->get_solution().output_neuron_number(), neuron_data.get_element(0).end()};
+    const DataRingbuffer& neuron_data = solver->solve(net_input, false);
+    result = {neuron_data.get_const_element(0).end() - solver->get_solution().output_neuron_number(), neuron_data.get_const_element(0).end()};
     previous_neuron_data = vector<sdouble32>(expected_neuron_data);
     manaual_fully_connected_network_result(net_input, previous_neuron_data, expected_neuron_data, net_structure, *net);
     expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
@@ -316,7 +312,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
     REQUIRE( net_structure.back() == result.size() );
     REQUIRE( expected_result.size() == result.size() );
     for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
-      CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+      REQUIRE( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
   }
 
   /* Return with the size of the overall solution */
@@ -382,10 +378,9 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
 
   /* Solve the generated solution */
   unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
-  DataRingbuffer network_output(1, solver->get_solution().neuron_number());
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  solver->solve(net_input, network_output);
+  const DataRingbuffer& network_output = solver->solve(net_input, true);
 
   /* Calculate the network manually */
   Transfer_function transfer_function(service_context);
@@ -457,7 +452,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
 
   /* Compare the calculated Neuron outputs to the values in the solution */
   for(uint32 neuron_index = 0; neuron_index < number_of_neurons; ++neuron_index){
-    CHECK(manual_neuron_values[neuron_index] == network_output.get_element(0, neuron_index) );
+    REQUIRE(manual_neuron_values[neuron_index] == network_output.get_element(0, neuron_index) );
   }
 
 }

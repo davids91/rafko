@@ -42,24 +42,28 @@ using sparse_net_library::Solution;
  */
 class Agent{
 public:
-  Agent(uint32 required_temp_data_size_, uint32 required_tmp_buffer_num_)
-  :  required_temp_data_size(required_temp_data_size_)
-  ,  required_tmp_buffer_num(required_tmp_buffer_num_)
-  { }
+  Agent(const Solution& brain_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1)
+  : brain(brain_)
+  , required_temp_data_number_per_thread(required_temp_data_number_per_thread_)
+  , required_temp_data_size(required_temp_data_size_)
+  , max_threads(max_threads_)
+  , common_data_pool((required_temp_data_number_per_thread * max_threads_), required_temp_data_size_)
+  , neuron_value_buffers(max_threads, DataRingbuffer( brain.network_memory_length(), brain.neuron_number()))
+  { /* A temporary buffer is allocated for every required future usage per thread */
+    for(uint32 tmp_data_index = 0; tmp_data_index < (required_temp_data_number_per_thread * max_threads); ++tmp_data_index)
+      used_data_buffers.push_back(common_data_pool.reserve_buffer(required_temp_data_size));
+  }
 
   /**
    * @brief      Solves the Solution provided in the constructor, previous neural information is supposedly available in @output buffer
    *
    * @param[in]      input    The input data to be taken
-   * @param          output   The used Output data to write the results to
+   * @return         The const buffer reference used as storage of the Neural data of the agent
    */
-  void solve(const vector<sdouble32>& input, DataRingbuffer& output) const;
-
-  /**
-   * @brief     Provids the size of the buffer it was declared with
-   */
-  uint32 get_required_temp_data_size(){
-    return required_temp_data_size;
+  const DataRingbuffer& solve(const vector<sdouble32>& input, bool reset_neuron_data, uint32 thread_index = 0){
+    if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
+    solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread) );
+    return neuron_value_buffers[thread_index];
   }
 
   /**
@@ -79,17 +83,30 @@ public:
   /**
    * @brief      Provide the underlying solution the solver is built to solve.
    *
-   * @return     A const reference to the solution the solver is aiming to solve
+   * @return     A const reference to the solution the agent is using to produce outputs to the given inputs
    */
-  virtual const Solution& get_solution(void) const = 0;
+  const Solution& get_solution(void) const{
+    return brain;
+  }
 
   virtual ~Agent(void) = default;
+
+  /**
+   * @brief     Provides the size of the buffer it was declared with
+   */
+  uint32 get_required_temp_data_size(){
+    return required_temp_data_size;
+  }
+
 private:
-  static DataPool<sdouble32> common_data_pool;
-
+  const Solution& brain;
+  uint32 required_temp_data_number_per_thread;
   uint32 required_temp_data_size;
-  uint32 required_tmp_buffer_num;
+  uint32 max_threads;
 
+  DataPool<sdouble32> common_data_pool;
+  vector<DataRingbuffer> neuron_value_buffers; /* One DataRingbuffer per thread */
+  vector<reference_wrapper<vector<sdouble32>>> used_data_buffers;
 };
 
 } /* namespace rafko_gym */

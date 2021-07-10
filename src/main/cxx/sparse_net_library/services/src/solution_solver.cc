@@ -29,9 +29,7 @@ using std::ref;
 Solution_solver::Builder::Builder(const Solution& to_solve, Service_context& context)
 :  solution(to_solve)
 ,  service_context(context)
-,  max_tmp_data_needed(0u)
 {
-  partial_solvers = vector<vector<Partial_solution_solver>>();
   uint32 partial_index_at_row_start = 0;
   for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
     partial_solvers.push_back(vector<Partial_solution_solver>());
@@ -39,17 +37,18 @@ Solution_solver::Builder::Builder(const Solution& to_solve, Service_context& con
       partial_solvers[row_iterator].push_back( Partial_solution_solver(
         solution.partial_solutions(partial_index_at_row_start + column_index), context
       )); /* Initialize a solver for this partial solution element */
-      if(partial_solvers[row_iterator][column_index].get_required_tmp_data_size() > max_tmp_data_needed)
-        max_tmp_data_needed = partial_solvers[row_iterator][column_index].get_required_tmp_data_size();
+      if(partial_solvers[row_iterator][column_index].get_required_tmp_data_size() > max_tmp_size_needed)
+        max_tmp_size_needed = partial_solvers[row_iterator][column_index].get_required_tmp_data_size();
     }
     partial_index_at_row_start += solution.cols(row_iterator);
+    if(solution.cols(row_iterator) > max_tmp_data_needed_per_thread)
+      max_tmp_data_needed_per_thread = solution.cols(row_iterator);
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
 
 void Solution_solver::solve(
   const vector<sdouble32>& input, DataRingbuffer& output,
-  const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool,
-  uint32 used_data_pool_start
+  const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool, uint32 used_data_pool_start
 ) const{
   if(0 < solution.cols_size()){
     uint32 col_iterator;

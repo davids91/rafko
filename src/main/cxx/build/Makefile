@@ -71,7 +71,6 @@ LIBRARY_NET_OBJECTS = $(subst ../$(SPARSE_NET_SOURCE_DIR)/models/src/,,$(subst .
 GYM_SOURCE_DIR = rafko_gym
 
 GYM_SOURCES = /services/src/sparse_net_approximizer.cc
-GYM_SOURCES += /services/src/agent.cc
 GYM_SOURCES += /models/src/data_aggregate.cc
 
 LIBRARY_GYM_SOURCES_TMP = $(subst /services, ../$(GYM_SOURCE_DIR)/services,$(GYM_SOURCES))

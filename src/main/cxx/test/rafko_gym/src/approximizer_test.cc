@@ -226,9 +226,9 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   sdouble32 error_summary[3] = {0,0,0};
   Cost_function_mse after_cost(1, service_context);
-  DataRingbuffer neuron_data(after_solver->get_solution().network_memory_length(), after_solver->get_solution().neuron_number());
   for(uint32 i = 0; i < number_of_samples; ++i){
-    after_solver->solve(test_set->get_input_sample(i), neuron_data);
+    bool reset = 0 == (i%(train_set->get_sequence_size()));
+    const DataRingbuffer& neuron_data = after_solver->solve(test_set->get_input_sample(i), reset);
     error_summary[0] += after_cost.get_feature_error(neuron_data.get_const_element(0), test_set->get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"

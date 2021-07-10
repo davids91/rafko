@@ -57,21 +57,22 @@ public:
   Solution_solver& operator=(Solution_solver&& other) = delete; /* Move assignment */
   ~Solution_solver(void) = default;
 
-  /* +++ Methds taken from @Agent +++ */
+  /* +++ Methods taken from @Agent +++ */
   void solve(
     const vector<sdouble32>& input, DataRingbuffer& output,
-    const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool,
-    uint32 used_data_pool_start = 0
+    const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool, uint32 used_data_pool_start = 0
   ) const;
-  const Solution& get_solution(void) const{
-    return solution;
+  const uint32 get_output_data_size(void) const{
+    return solution.output_neuron_number();
   }
   using Agent::solve;
-  /* --- Methds taken from @Agent --- */
+  /* --- Methods taken from @Agent --- */
 
 private:
-  Solution_solver(const Solution& to_solve, Service_context& context, vector<vector<Partial_solution_solver>> partial_solvers_, uint32 max_tmp_data_needed)
-  :  Agent(max_tmp_data_needed, context.get_max_solve_threads())
+  Solution_solver(
+    const Solution& to_solve, Service_context& context, vector<vector<Partial_solution_solver>> partial_solvers_,
+    uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
+  ): Agent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_solve_threads())
   ,  solution(to_solve)
   ,  service_context(context)
   ,  partial_solvers(partial_solvers_)
@@ -89,13 +90,16 @@ public:
   public:
     Builder(const Solution& to_solve, Service_context& context);
     unique_ptr<Solution_solver> build(void){
-      return unique_ptr<Solution_solver>(new Solution_solver(solution, service_context, partial_solvers, max_tmp_data_needed));
+      return unique_ptr<Solution_solver>(new Solution_solver(
+        solution, service_context, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread
+      ));
     }
   private:
     const Solution& solution;
     Service_context& service_context;
     vector<vector<Partial_solution_solver>> partial_solvers;
-    uint32 max_tmp_data_needed;
+    uint32 max_tmp_size_needed = 0;
+    uint32 max_tmp_data_needed_per_thread = 0;
   };
 };
 

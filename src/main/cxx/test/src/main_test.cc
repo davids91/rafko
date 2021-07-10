@@ -307,14 +307,14 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
   std::cout << std::endl;
   std::cout << "--------------expected:" << std::endl;
   std::cout.precision(2);
-  DataRingbuffer output_data(
-    std::max(data_set.get_sequence_size(), sample_solver->get_solution().network_memory_length()),
-    sample_solver->get_solution().neuron_number()
-  );
+  DataRingbuffer output_data_copy(0,0);
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
     std::cout << "["<< data_set.get_label_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
-    sample_solver->solve(data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j), output_data);
-    neuron_data[j] = output_data.get_element(0).back();
+    const DataRingbuffer& output_data = sample_solver->solve(
+      data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j), false
+    );
+    neuron_data[j] = output_data.get_const_element(0).back();
+    output_data_copy = output_data;
   }
   std::cout << std::endl;
   std::cout << "------<>------actual:" << std::endl;
@@ -325,7 +325,7 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
   std::cout << std::endl;
   std::cout << "==============" << std::endl;
   std::cout << "Neural memory for current sequence: " << std::endl;
-  for(const vector<sdouble32>& vector : output_data.get_whole_buffer()){
+  for(const vector<sdouble32>& vector : output_data_copy.get_whole_buffer()){
     for(const sdouble32& element : vector) std::cout << "[" << element << "]";
     std::cout << std::endl;
   }
