@@ -45,7 +45,7 @@ public:
    * @param[in]      index    A helper value to make Stochastic evaluation deterministicly reproducible
    * @return         The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 stochastic_evaluation(Agent& agent, uint32 index = 0u) = 0;
+  virtual sdouble32 stochastic_evaluation(Agent& agent, uint32 seed = 0u) = 0;
 
   /**
    * @brief      Saves the Environment state

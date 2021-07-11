@@ -55,6 +55,7 @@ void Environment_data_set::evaluate(
 ){
   if(data_set.get_number_of_sequences() < (sequence_start + sequences_to_evaluate))
     throw std::runtime_error("Sequence interval out of bounds!");
+
   if(train_set.get_feature_size() != agent.get_solution().output_neuron_number())
     throw std::runtime_error("Network output size doesn't match size of provided labels!");
 
@@ -65,19 +66,16 @@ void Environment_data_set::evaluate(
     });
     data_set.set_features_for_sequences( /* Upload results to the data set */
       neuron_outputs_to_evaluate, 0u,
-      sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)),
-      static_cast<uint32>(service_context.get_max_processing_threads())), start_index_in_sequence, sequence_truncation,
-      neuron_outputs_to_evaluate.back()
+      sequence_index, min(((sequence_start + sequences_to_evaluate) - (sequence_index)), static_cast<uint32>(service_context.get_max_processing_threads())),
+      start_index_in_sequence, sequence_truncation, neuron_outputs_to_evaluate.back()
     );
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
   data_set.conceal_from_multithreading();
 }
 
-void Environment_data_set::evaluate_single_sequence(
-  Agent& agent, Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index
-){
+void Environment_data_set::evaluate_single_sequence(Agent& agent, Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index){
   if(data_set.get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */
-    /*!Note: This might happen because of the number of used threads might point to a grater index, than the nmber of sequences;
+    /*!Note: This might happen because of the number of used threads might point to a grater index, than the number of sequences;
      * Which is mainly because of division remainder between number fo threads and the number of sequences
      * */
     /* Solve the sequence under sequence_index + thread_index */
@@ -93,7 +91,8 @@ void Environment_data_set::evaluate_single_sequence(
 
     /* Solve the data and store the result after the inital "prefill" */
     for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
-      const DataRingbuffer& neuron_output = agent.solve(data_set.get_input_sample(raw_inputs_index), false, thread_index);
+      bool reset = ( (0u == data_set.get_prefill_inputs_number())&&(0u == sequence_iterator) );
+      const DataRingbuffer& neuron_output = agent.solve(data_set.get_input_sample(raw_inputs_index), reset, thread_index);
       std::copy( /* copy the result to the eval array */
         neuron_output.get_const_element(0).begin(),neuron_output.get_const_element(0).end(),
         neuron_outputs_to_evaluate[(thread_index * data_set.get_sequence_size()) + sequence_iterator].begin()

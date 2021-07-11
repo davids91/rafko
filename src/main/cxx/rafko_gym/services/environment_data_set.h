@@ -48,12 +48,10 @@ public:
     return -train_set.get_error_sum();
   }
 
-  sdouble32 stochastic_evaluation(Agent& agent, uint32 index = 0){
-    if(0 < index)srand(index);
+  sdouble32 stochastic_evaluation(Agent& agent, uint32 seed = 0){
+    if(0 < seed)srand(seed);
     check(agent);
-    uint32 sequence_start_index = (rand()%(
-      train_set.get_number_of_sequences() - service_context.get_minibatch_size() + 1
-    ));
+    uint32 sequence_start_index = (rand()%(train_set.get_number_of_sequences() - service_context.get_minibatch_size() + 1));
     uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
       train_set.get_sequence_size() - service_context.get_memory_truncation() + 1 /* ..not all result output values are evaluated.. */
     )); /* ..only service_context.get_memory_truncation(), starting at a random index inside bounds */
@@ -124,14 +122,12 @@ private:
    * @brief      Evaluate a single sequence. The evaluated sequences lies under @sequence_index + @thread_index
    *              as inside a multi-threaded evaluation, one thread is to evaluate one sequence
    *
-   * @param      agent                   The agent to evaluate
-   * @param      data_set                   The data set to evaluate the @agent on
+   * @param      agent               The agent to evaluate
+   * @param      data_set            The data set to evaluate the @agent on
    * @param[in]  sequence_index      The sequence to be evaluated inside the @data_set
    * @param[in]  thread_index        The index of the thread the function is used with inside @solve_threads
    */
-  void evaluate_single_sequence(
-    Agent& agent, Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index
-  );
+  void evaluate_single_sequence(Agent& agent, Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index);
 };
 
 } /* namespace rafko_gym */

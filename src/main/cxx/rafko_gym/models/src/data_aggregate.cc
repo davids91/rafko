@@ -90,7 +90,6 @@ void Data_aggregate::set_features_for_sequences(
       label_samples, neuron_data, tmp_data,
       raw_start_index, 0, labels_to_evaluate, neuron_buffer_start_index, get_number_of_label_samples()
     );
-
     uint32 copy_index_base = 0;
     for(uint32 sequence_iterator = 0; sequence_iterator < sequences_to_evaluate; ++sequence_iterator){
       std::copy(

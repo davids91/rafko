@@ -171,16 +171,16 @@ protected:
    *             by @get_feature_error, which divides the features to almost equal parts,
    *             and calls this function on them.
    *
-   * @param[in]  labels                   The labels
-   * @param[in]  neuron_data              The neuron data
-   * @param[in]  neuron_data_start_index  The start index of in the neuron data
-   * @param[in]  number_to_add            The number of features to calculate
+   * @param[in]  labels                           The labels
+   * @param[in]  neuron_data                      The neuron data
+   * @param[in]  feature_start_index_in_neuron    The start index of the data to be compared against the labels in the neuron data
+   * @param[in]  number_to_add                    The number of features to calculate
    *
    * @return     returns with the error summary under the range {start_index;(start_index + number_to_add)}
    */
   sdouble32 summarize_errors(
     const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data,
-    uint32 neuron_data_start_index, uint32 number_to_add
+    uint32 feature_start_index_in_neuron, uint32 number_to_add
   );
 private:
   cost_functions the_function; /* cost function type */
@@ -196,13 +196,14 @@ private:
    * @param[in]  error_start                            The starting index in the label error vector this thread starts
    * @param[in]  neuron_data_start_index                The index inside the neuron data corresponding to the start index defined for @labels
    * @param[in]  labels_to_evaluate_in_one_thread       The maximum number of label-data pairs to process in one thread ( thread might process less, based on the size of @labels)
+   * @param[in]  labels_evaluating_overall              The number of label-data pairs to process in the parent function call overall ( neuron data buffer array might not necessarily indicate the maximum size, as there might be other data cached next to it )
    * @param[in]  sample_number                          The number of overall samples, required for post-processing
    * @param[in]  thread_index                           The index of the thread the errors are accumulated in
    */
   void feature_errors_thread(
     const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
     uint32 label_start, uint32 error_start, uint32 neuron_data_start_index,
-    uint32 labels_to_evaluate_in_one_thread, uint32 sample_number, uint32 thread_index
+    uint32 labels_to_evaluate_in_one_thread, uint32 labels_evaluating_overall, uint32 sample_number, uint32 thread_index
   );
 };
 
