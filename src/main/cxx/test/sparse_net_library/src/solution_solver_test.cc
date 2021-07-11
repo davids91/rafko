@@ -25,8 +25,9 @@
 #include "gen/solution.pb.h"
 #include "gen/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/transfer_function.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
+#include "rafko_utilities/services/thread_group.h"
+#include "sparse_net_library/models/transfer_function.h"
 #include "sparse_net_library/models/spike_function.h"
 #include "sparse_net_library/services/solution_solver.h"
 #include "sparse_net_library/services/partial_solution_solver.h"
@@ -36,10 +37,12 @@
 
 namespace sparse_net_library_test{
 
+using rafko_mainframe::Service_context;
+using rafko_utilities::DataRingbuffer;
+using rafko_utilities::ThreadGroup;
 using sparse_net_library::Sparse_net_builder;
 using sparse_net_library::Solution_builder;
 using sparse_net_library::SparseNet;
-using rafko_utilities::DataRingbuffer;
 using sparse_net_library::Partial_solution;
 using sparse_net_library::Partial_solution_solver;
 using sparse_net_library::Solution;
@@ -56,7 +59,6 @@ using sparse_net_library::TRANSFER_FUNCTION_SELU;
 using sparse_net_library::NETWORK_RECURRENCE_TO_SELF;
 using sparse_net_library::NETWORK_RECURRENCE_TO_LAYER;
 using sparse_net_library::Spike_function;
-using rafko_mainframe::Service_context;
 
 using std::unique_ptr;
 using std::make_unique;
@@ -459,6 +461,48 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
 
 TEST_CASE("Solution Solver test with Generated fully connected network", "[solve][full]"){
   test_generated_net_by_calculation(nullptr);
+}
+
+/*###############################################################################################
+ * Test if the solver is able to produce correct output when used from multiple threads
+ */
+TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
+  vector<uint32> net_structure = {20,30,40,30,20};
+  vector<sdouble32> net_input = {
+    double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)
+  };
+  Service_context service_context = Service_context();
+  SparseNet* net = Sparse_net_builder(service_context)
+    .input_size(5).expected_input_range(double_literal(5.0))
+    .dense_layers(net_structure);
+  Solution* solution = Solution_builder(service_context).build(*net);
+  unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
+
+  /* solve in a single thread */
+  const DataRingbuffer& single_thread_output_buffer = solver->solve(net_input, true);
+  const vector<sdouble32> single_thread_output = {
+    single_thread_output_buffer.get_const_element(0).begin(),
+    single_thread_output_buffer.get_const_element(0).end()
+  };
+
+  /* solve from multiple threads */
+  const uint32 thread_number = service_context.get_max_processing_threads();
+  ThreadGroup executor(thread_number);
+  vector<vector<sdouble32>> thread_outputs(thread_number);
+  executor.start_and_block([&](uint32 thread_index){
+    const DataRingbuffer& thread_output_buffer = solver->solve(net_input, true, thread_index);
+    thread_outputs[thread_index] = {
+      thread_output_buffer.get_const_element(0).begin(),
+      thread_output_buffer.get_const_element(0).end()
+    };
+  });
+
+  /* compare that multi-thread solve should be the same as single thread solve */
+  for(uint32 neuron_data_index = 0; neuron_data_index < single_thread_output.size(); ++neuron_data_index){
+    for(uint32 thread_index = 0; thread_index < thread_number; ++thread_index){
+      REQUIRE( single_thread_output[neuron_data_index] == thread_outputs[thread_index][neuron_data_index] );
+    }
+  }
 }
 
 }
