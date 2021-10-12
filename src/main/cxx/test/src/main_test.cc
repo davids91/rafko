@@ -25,10 +25,10 @@
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/transfer_function.h"
-#include "sparse_net_library/services/synapse_iterator.h"
-#include "sparse_net_library/services/solution_builder.h"
-#include "sparse_net_library/services/solution_solver.h"
+#include "rafko_net/models/transfer_function.h"
+#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/services/solution_builder.h"
+#include "rafko_net/services/solution_solver.h"
 
 int main( int argc, char* argv[] ) {
   int result = Catch::Session().run( argc, argv );

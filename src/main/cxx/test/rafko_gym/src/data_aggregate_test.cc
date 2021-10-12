@@ -24,7 +24,7 @@
 #include "gen/common.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_gym/models/data_aggregate.h"
-#include "sparse_net_library/models/cost_function_mse.h"
+#include "rafko_net/models/cost_function_mse.h"
 
 namespace sparse_net_library_test {
 

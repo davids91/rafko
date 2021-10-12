@@ -18,7 +18,7 @@
 #ifndef SERVER_SLOT_APPROXIMIZE_NET_H
 #define SERVER_SLOT_APPROXIMIZE_NET_H
 
-#include "sparse_net_library/models/cost_function.h"
+#include "rafko_net/models/cost_function.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_gym/services/environment_data_set.h"
 #include "rafko_gym/services/sparse_net_approximizer.h"

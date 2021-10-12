@@ -34,8 +34,8 @@
 #include "rafko_gym/services/agent.h"
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_utilities/models/data_pool.h"
-#include "sparse_net_library/models/cost_function.h"
-#include "sparse_net_library/services/function_factory.h"
+#include "rafko_net/models/cost_function.h"
+#include "rafko_net/services/function_factory.h"
 
 namespace rafko_gym{
 

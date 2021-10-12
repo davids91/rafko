@@ -26,7 +26,7 @@
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
-#include "sparse_net_library/models/cost_function_mse.h"
+#include "rafko_net/models/cost_function_mse.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_gym/services/environment_data_set.h"
 

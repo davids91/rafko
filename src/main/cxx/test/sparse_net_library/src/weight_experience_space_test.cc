@@ -18,7 +18,7 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "sparse_net_library/services/Weight_experience_space.h"
+#include "rafko_net/services/Weight_experience_space.h"
 
 namespace sparse_net_library_test {
 

@@ -22,10 +22,10 @@
 #include "gen/sparse_net.pb.h"
 #include "gen/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/transfer_function.h"
+#include "rafko_net/models/transfer_function.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
-#include "sparse_net_library/services/partial_solution_solver.h"
-#include "sparse_net_library/services/synapse_iterator.h"
+#include "rafko_net/services/partial_solution_solver.h"
+#include "rafko_net/services/synapse_iterator.h"
 
 namespace sparse_net_library_test {
 

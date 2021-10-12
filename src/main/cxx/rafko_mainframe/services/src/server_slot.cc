@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "gen/common.pb.h"
-#include "sparse_net_library/services/sparse_net_builder.h"
+#include "rafko_net/services/sparse_net_builder.h"
 
 namespace rafko_mainframe{
 

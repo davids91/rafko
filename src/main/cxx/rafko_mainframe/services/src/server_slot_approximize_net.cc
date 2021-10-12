@@ -17,9 +17,9 @@
 
 #include "rafko_mainframe/services/server_slot_approximize_net.h"
 
-#include "sparse_net_library/services/sparse_net_builder.h"
-#include "sparse_net_library/services/solution_builder.h"
-#include "sparse_net_library/services/function_factory.h"
+#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/solution_builder.h"
+#include "rafko_net/services/function_factory.h"
 
 namespace rafko_mainframe{
 

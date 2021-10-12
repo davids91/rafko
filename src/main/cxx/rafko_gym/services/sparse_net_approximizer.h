@@ -27,10 +27,10 @@
 #include "gen/sparse_net.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/services/solution_builder.h"
-#include "sparse_net_library/services/solution_solver.h"
-#include "sparse_net_library/services/updater_factory.h"
-#include "sparse_net_library/services/weight_updater.h"
+#include "rafko_net/services/solution_builder.h"
+#include "rafko_net/services/solution_solver.h"
+#include "rafko_net/services/updater_factory.h"
+#include "rafko_net/services/weight_updater.h"
 
 #include "rafko_gym/services/agent.h"
 #include "rafko_gym/services/environment.h"

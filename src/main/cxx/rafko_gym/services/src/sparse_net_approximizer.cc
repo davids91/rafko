@@ -20,7 +20,7 @@
 #include <algorithm>
 
 #include "gen/common.pb.h"
-#include "sparse_net_library/services/synapse_iterator.h"
+#include "rafko_net/services/synapse_iterator.h"
 
 namespace rafko_gym{
 

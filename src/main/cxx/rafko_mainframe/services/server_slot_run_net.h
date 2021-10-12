@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 
-#include "sparse_net_library/services/solution_solver.h"
+#include "rafko_net/services/solution_solver.h"
 
 #include "rafko_mainframe/services/server_slot.h"
 

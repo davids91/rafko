@@ -27,13 +27,13 @@
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/services/thread_group.h"
-#include "sparse_net_library/models/transfer_function.h"
-#include "sparse_net_library/models/spike_function.h"
-#include "sparse_net_library/services/solution_solver.h"
-#include "sparse_net_library/services/partial_solution_solver.h"
-#include "sparse_net_library/services/synapse_iterator.h"
-#include "sparse_net_library/services/sparse_net_builder.h"
-#include "sparse_net_library/services/solution_builder.h"
+#include "rafko_net/models/transfer_function.h"
+#include "rafko_net/models/spike_function.h"
+#include "rafko_net/services/solution_solver.h"
+#include "rafko_net/services/partial_solution_solver.h"
+#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/solution_builder.h"
 
 namespace sparse_net_library_test{
 

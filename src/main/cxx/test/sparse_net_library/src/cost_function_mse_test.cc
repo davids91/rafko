@@ -21,8 +21,8 @@
 #include <random>
 
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/models/cost_function.h"
-#include "sparse_net_library/models/cost_function_mse.h"
+#include "rafko_net/models/cost_function.h"
+#include "rafko_net/models/cost_function_mse.h"
 
 
 namespace sparse_net_library_test {

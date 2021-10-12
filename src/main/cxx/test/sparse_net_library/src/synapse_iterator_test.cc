@@ -19,7 +19,7 @@
 #include "test/test_utility.h"
 
 #include "gen/sparse_net.pb.h"
-#include "sparse_net_library/services/synapse_iterator.h"
+#include "rafko_net/services/synapse_iterator.h"
 
 namespace sparse_net_library_test {
 

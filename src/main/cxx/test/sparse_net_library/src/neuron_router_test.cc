@@ -23,10 +23,10 @@
 #include "gen/solution.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
-#include "sparse_net_library/services/synapse_iterator.h"
-#include "sparse_net_library/services/sparse_net_builder.h"
-#include "sparse_net_library/services/solution_builder.h"
-#include "sparse_net_library/services/neuron_router.h"
+#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/solution_builder.h"
+#include "rafko_net/services/neuron_router.h"
 
 namespace sparse_net_library_test {
 
