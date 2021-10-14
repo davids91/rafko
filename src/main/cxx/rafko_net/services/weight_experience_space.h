@@ -24,7 +24,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::vector;
 
@@ -144,6 +144,6 @@ private:
 
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /*  WEIGHT_EXPERIENCE_SPACE_H */

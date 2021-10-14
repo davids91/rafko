@@ -20,9 +20,9 @@
 
 #include "rafko_net/services/Weight_experience_space.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
-using sparse_net_library::Weight_experience_space;
+using rafko_net::Weight_experience_space;
 
 /*###############################################################################################
  * Testing whether or not the correct weight values are generated in a weight experience space
@@ -42,4 +42,4 @@ TEST_CASE("Testing weight experience space weight values","[weightxp]"){
   }
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

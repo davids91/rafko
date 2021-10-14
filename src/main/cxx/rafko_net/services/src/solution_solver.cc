@@ -21,7 +21,7 @@
 
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::function;
 using std::ref;
@@ -88,4 +88,4 @@ void Solution_solver::solve(
   }else throw std::runtime_error("A solution of 0 rows!");
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

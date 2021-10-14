@@ -5,8 +5,8 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.rafko.mainframe.RafkoDeepLearningService;
 import org.rafko.mainframe.Rafko_deep_learningGrpc;
-import org.rafko.sparse_net_library.RafkoCommon;
-import org.rafko.sparse_net_library.RafkoSparseNet;
+import org.rafko.rafko_net.RafkoCommon;
+import org.rafko.rafko_net.RafkoSparseNet;
 
 import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;

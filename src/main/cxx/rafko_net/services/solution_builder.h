@@ -24,11 +24,11 @@
 #include <vector>
 #include <thread>
 
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 using std::vector;
 using std::thread;
@@ -84,6 +84,6 @@ private:
   }
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* SOLUTION_BUILDER_H */

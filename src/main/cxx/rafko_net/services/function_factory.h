@@ -23,13 +23,13 @@
 #include <memory>
 #include <stdexcept>
 
-#include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 
 #include "rafko_net/models/cost_function_squared_error.h"
 #include "rafko_net/models/cost_function_mse.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::unique_ptr;
 
@@ -67,6 +67,6 @@ public:
   }
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* FUNCTION_FACTORY_H */

@@ -23,7 +23,7 @@
 #include <vector>
 #include <functional>
 
-#include "gen/solution.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/models/data_pool.h"
 
@@ -34,7 +34,7 @@ using std::reference_wrapper;
 
 using rafko_utilities::DataPool;
 using rafko_utilities::DataRingbuffer;
-using sparse_net_library::Solution;
+using rafko_net::Solution;
 
 /**
  * @brief      This class serves as a base for reinforcement learning agent, which provides output data

@@ -20,7 +20,7 @@
 
 #include "rafko_net/services/weight_updater.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 class Weight_updater_adam : public Weight_updater{
 public:
@@ -80,6 +80,6 @@ private:
   vector<sdouble32> raw_moment;
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* WEIGHT_UPDATER_ADAM_H */

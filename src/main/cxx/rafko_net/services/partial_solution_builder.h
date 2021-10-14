@@ -21,13 +21,13 @@
 #include "rafko_global.h"
 #include <functional>
 
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
 
 #include "rafko_net/services/synapse_iterator.h"
 
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using google::protobuf::RepeatedPtrField;
 
@@ -123,6 +123,6 @@ private:
   static const uint8 neuron_input_external = 2;
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* PARTIAL_SOLUTION_BUILDER_H */

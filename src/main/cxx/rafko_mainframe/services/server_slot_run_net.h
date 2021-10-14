@@ -28,9 +28,9 @@
 namespace rafko_mainframe{
 
 using std::vector;
-using sparse_net_library::SparseNet;
-using sparse_net_library::Solution;
-using sparse_net_library::Solution_solver;
+using rafko_net::SparseNet;
+using rafko_net::Solution;
+using rafko_net::Solution_solver;
 
 using std::string;
 using std::unique_ptr;

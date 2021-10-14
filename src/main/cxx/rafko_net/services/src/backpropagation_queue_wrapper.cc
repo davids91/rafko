@@ -19,7 +19,7 @@
 
 #include "rafko_net/services/neuron_router.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::vector;
 
@@ -74,4 +74,4 @@ Backpropagation_queue_wrapper::Backpropagation_queue_wrapper(SparseNet& net, Ser
   }
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

@@ -20,7 +20,7 @@
 
 #include "rafko_net/models/weight_initializer.h"
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 /**
  * @brief      Class for dense net weight initializer. The member functions of the class are documented
@@ -78,5 +78,5 @@ private:
 
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif // Dense_net_weight_initializer_H

@@ -18,8 +18,8 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/models/cost_function_mse.h"
@@ -30,7 +30,7 @@
 #include "rafko_gym/services/environment_data_set.h"
 #include "rafko_gym/services/sparse_net_approximizer.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
 using std::vector;
 using std::cout;
@@ -42,23 +42,23 @@ using std::chrono::milliseconds;
 
 using rafko_mainframe::Service_context;
 using rafko_utilities::DataRingbuffer;
-using sparse_net_library::SparseNet;
-using sparse_net_library::Sparse_net_builder;
-using sparse_net_library::Cost_function_mse;
-using sparse_net_library::COST_FUNCTION_SQUARED_ERROR;
-using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
-using sparse_net_library::TRANSFER_FUNCTION_SELU;
-using sparse_net_library::TRANSFER_FUNCTION_RELU;
-using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
-using sparse_net_library::WEIGHT_UPDATER_DEFAULT;
-using sparse_net_library::WEIGHT_UPDATER_MOMENTUM;
-using sparse_net_library::WEIGHT_UPDATER_NESTEROV;
-using sparse_net_library::WEIGHT_UPDATER_ADAM;
-using sparse_net_library::WEIGHT_UPDATER_AMSGRAD;
-using sparse_net_library::Function_factory;
-using sparse_net_library::Solution;
-using sparse_net_library::Solution_builder;
-using sparse_net_library::Solution_solver;
+using rafko_net::SparseNet;
+using rafko_net::Sparse_net_builder;
+using rafko_net::Cost_function_mse;
+using rafko_net::COST_FUNCTION_SQUARED_ERROR;
+using rafko_net::TRANSFER_FUNCTION_IDENTITY;
+using rafko_net::TRANSFER_FUNCTION_SELU;
+using rafko_net::TRANSFER_FUNCTION_RELU;
+using rafko_net::TRANSFER_FUNCTION_SIGMOID;
+using rafko_net::WEIGHT_UPDATER_DEFAULT;
+using rafko_net::WEIGHT_UPDATER_MOMENTUM;
+using rafko_net::WEIGHT_UPDATER_NESTEROV;
+using rafko_net::WEIGHT_UPDATER_ADAM;
+using rafko_net::WEIGHT_UPDATER_AMSGRAD;
+using rafko_net::Function_factory;
+using rafko_net::Solution;
+using rafko_net::Solution_builder;
+using rafko_net::Solution_solver;
 using rafko_gym::Environment;
 using rafko_gym::Environment_data_set;
 using rafko_gym::Sparse_net_approximizer;
@@ -247,4 +247,4 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

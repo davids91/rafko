@@ -26,8 +26,8 @@
 #include <mutex>
 #include <tuple>
 
-#include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
 
@@ -48,11 +48,11 @@ using std::tuple;
 
 using rafko_mainframe::Service_context;
 using rafko_utilities::ThreadGroup;
-using sparse_net_library::SparseNet;
-using sparse_net_library::Data_set;
-using sparse_net_library::Function_factory;
-using sparse_net_library::Cost_function;
-using sparse_net_library::cost_functions;
+using rafko_net::SparseNet;
+using rafko_net::Data_set;
+using rafko_net::Function_factory;
+using rafko_net::Cost_function;
+using rafko_net::cost_functions;
 
 /**
  * @brief      A Data set container complete with adaptive error statistics, which is

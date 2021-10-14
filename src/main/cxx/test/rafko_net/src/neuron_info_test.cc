@@ -18,19 +18,19 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
-  using sparse_net_library::Neuron;
-  using sparse_net_library::Neuron_info;
-  using sparse_net_library::Index_synapse_interval;
-  using sparse_net_library::Input_synapse_interval;
-  using sparse_net_library::Synapse_iterator;
-  using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
+  using rafko_net::Neuron;
+  using rafko_net::Neuron_info;
+  using rafko_net::Index_synapse_interval;
+  using rafko_net::Input_synapse_interval;
+  using rafko_net::Synapse_iterator;
+  using rafko_net::TRANSFER_FUNCTION_IDENTITY;
 
 /*###############################################################################################
  * Testing Neuron Validation
@@ -91,4 +91,4 @@ TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
   CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

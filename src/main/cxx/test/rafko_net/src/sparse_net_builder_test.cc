@@ -20,28 +20,28 @@
 
 #include <memory>
 
-#include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/sparse_net_builder.h"
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
-using sparse_net_library::Neuron;
-using sparse_net_library::SparseNet;
-using sparse_net_library::transfer_functions;
-using sparse_net_library::Sparse_net_builder;
-using sparse_net_library::Neuron_info;
-using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
-using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
-using sparse_net_library::TRANSFER_FUNCTION_TANH;
-using sparse_net_library::TRANSFER_FUNCTION_RELU;
-using sparse_net_library::TRANSFER_FUNCTION_SELU;
-using sparse_net_library::Input_synapse_interval;
-using sparse_net_library::Index_synapse_interval;
-using sparse_net_library::Synapse_iterator;
+using rafko_net::Neuron;
+using rafko_net::SparseNet;
+using rafko_net::transfer_functions;
+using rafko_net::Sparse_net_builder;
+using rafko_net::Neuron_info;
+using rafko_net::TRANSFER_FUNCTION_IDENTITY;
+using rafko_net::TRANSFER_FUNCTION_SIGMOID;
+using rafko_net::TRANSFER_FUNCTION_TANH;
+using rafko_net::TRANSFER_FUNCTION_RELU;
+using rafko_net::TRANSFER_FUNCTION_SELU;
+using rafko_net::Input_synapse_interval;
+using rafko_net::Index_synapse_interval;
+using rafko_net::Synapse_iterator;
 using rafko_mainframe::Service_context;
 
 using std::make_shared;
@@ -353,4 +353,4 @@ TEST_CASE( "Builder to construct Fully Connected Net correctly through the inter
   arena.Reset();
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

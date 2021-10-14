@@ -22,7 +22,7 @@
 
 #include <vector>
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 /**
  * @brief      Spike function handling and utilities
@@ -51,5 +51,5 @@ public:
     return (previous_value - transfer_function_output);
   }
 };
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif /* SPIKE_FUNCTION_H */

@@ -18,18 +18,18 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
 using std::abs;
 using std::vector;
 
-using sparse_net_library::Neuron;
-using sparse_net_library::Synapse_iterator;
-using sparse_net_library::Input_synapse_interval;
-using sparse_net_library::Index_synapse_interval;
+using rafko_net::Neuron;
+using rafko_net::Synapse_iterator;
+using rafko_net::Input_synapse_interval;
+using rafko_net::Index_synapse_interval;
 
 
 /*###############################################################################################

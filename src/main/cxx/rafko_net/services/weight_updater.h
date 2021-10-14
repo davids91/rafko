@@ -22,11 +22,11 @@
 
 #include <vector>
 
-#include "gen/solution.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/service_context.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::ref;
 using std::vector;
@@ -227,6 +227,6 @@ private:
   ) const;
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* WEIGHT_UPDATER_H */

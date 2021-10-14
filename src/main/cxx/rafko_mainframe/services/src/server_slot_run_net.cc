@@ -23,7 +23,7 @@
 
 namespace rafko_mainframe{
 
-using sparse_net_library::Solution_builder;
+using rafko_net::Solution_builder;
 using rafko_utilities::DataRingbuffer;
 
 void Server_slot_run_net::initialize(Service_slot&& service_slot_){

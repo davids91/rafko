@@ -26,9 +26,9 @@
 #include <functional>
 #include <stdexcept>
 
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 using std::unique_ptr;
 using std::vector;
@@ -367,5 +367,5 @@ private:
   }
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif /* NEURON_ROUTER_H */

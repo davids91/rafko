@@ -18,7 +18,7 @@
 #ifndef UPDATER_FACTORY_H
 #define UPDATER_FACTORY_H
 
-#include "gen/common.pb.h"
+#include "rafko_protocol/common.pb.h"
 
 #include <memory>
 
@@ -28,7 +28,7 @@
 #include "rafko_net/services/weight_updater_amsgrad.h"
 #include "rafko_net/services/weight_updater_adam.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::unique_ptr;
 using std::make_unique;
@@ -63,6 +63,6 @@ public:
   }
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* UPDATER_FACTORY_H */

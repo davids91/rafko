@@ -27,7 +27,7 @@
 
 namespace rafko_mainframe{
 
-using sparse_net_library::Cost_function;
+using rafko_net::Cost_function;
 using rafko_gym::Data_aggregate;
 using rafko_gym::Sparse_net_approximizer;
 using rafko_gym::Environment_data_set;

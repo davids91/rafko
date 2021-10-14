@@ -19,7 +19,7 @@
 
 #include <algorithm>
 
-#include "gen/common.pb.h"
+#include "rafko_protocol/common.pb.h"
 #include "rafko_net/services/synapse_iterator.h"
 
 namespace rafko_gym{
@@ -28,8 +28,8 @@ using std::make_unique;
 using std::lock_guard;
 using std::ref;
 
-using sparse_net_library::Synapse_iterator;
-using sparse_net_library::Index_synapse_interval;
+using rafko_net::Synapse_iterator;
+using rafko_net::Index_synapse_interval;
 
 void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
   vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));

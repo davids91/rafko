@@ -24,12 +24,12 @@
 #include <memory>
 #include <stdexcept>
 
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/models/weight_initializer.h"
 #include "rafko_net/models/neuron_info.h"
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 using std::shared_ptr;
 
@@ -273,5 +273,5 @@ private:
 
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif /* SPARSE_NET_BUILDER_H */

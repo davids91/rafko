@@ -18,7 +18,7 @@
 
 #include <cmath>
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 using std::min;
 using std::ref;
@@ -110,4 +110,4 @@ sdouble32 Cost_function::summarize_errors(
   return local_error;
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

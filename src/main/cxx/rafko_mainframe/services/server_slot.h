@@ -23,7 +23,7 @@
 #include <string>
 #include <memory>
 
-#include "gen/deep_learning_service.pb.h"
+#include "rafko_protocol/deep_learning_service.pb.h"
 #include "rafko_gym/models/data_aggregate.h"
 
 namespace rafko_mainframe{
@@ -32,7 +32,7 @@ using std::string;
 using std::shared_ptr;
 
 using rafko_gym::Data_aggregate;
-using sparse_net_library::SparseNet;
+using rafko_net::SparseNet;
 
 /**
  * @brief      This class describes a common ancestor and interface of whatever

@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 
-#include "gen/common.pb.h"
+#include "rafko_protocol/common.pb.h"
 #include "rafko_net/services/sparse_net_builder.h"
 
 namespace rafko_mainframe{
@@ -32,9 +32,9 @@ using std::mt19937;
 using std::uniform_int_distribution;
 using std::vector;
 
-using sparse_net_library::Sparse_net_builder;
-using sparse_net_library::transfer_functions;
-using sparse_net_library::transfer_functions_IsValid;
+using rafko_net::Sparse_net_builder;
+using rafko_net::transfer_functions;
+using rafko_net::transfer_functions_IsValid;
 
 string Server_slot::generate_uuid(void){
   static random_device dev;

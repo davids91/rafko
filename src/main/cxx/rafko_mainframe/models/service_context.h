@@ -22,7 +22,7 @@
 
 #include <cmath>
 
-#include "gen/deep_learning_service.pb.h"
+#include "rafko_protocol/deep_learning_service.pb.h"
 
 namespace rafko_mainframe{
 

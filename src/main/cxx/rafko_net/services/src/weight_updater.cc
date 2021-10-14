@@ -19,7 +19,7 @@
 
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using rafko_mainframe::Service_context;
 
@@ -199,4 +199,4 @@ void Weight_updater::copy_weight_of_neuron_to_partial_solution(
   });
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

@@ -17,7 +17,7 @@
 
 #include "rafko_net/models/neuron_info.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 bool Neuron_info::is_neuron_valid(const Neuron& neuron)
 {
@@ -49,4 +49,4 @@ bool Neuron_info::is_neuron_valid(const Neuron& neuron)
   } else return false;
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

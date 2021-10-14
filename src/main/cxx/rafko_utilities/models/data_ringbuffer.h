@@ -23,13 +23,13 @@
 #include <vector>
 #include <stdexcept>
 
-#include "gen/common.pb.h"
+#include "rafko_protocol/common.pb.h"
 
 namespace rafko_utilities{
 
 using std::vector;
 
-using sparse_net_library::Input_synapse_interval;
+using rafko_net::Input_synapse_interval;
 
 /**
  * @brief      This class describes a ringbuffer designed to store the Memory of a Neural Network.

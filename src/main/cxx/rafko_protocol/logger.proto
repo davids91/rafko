@@ -15,29 +15,25 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef BACKPROPAGATION_WRAPPER_H
-#define BACKPROPAGATION_WRAPPER_H
+syntax = "proto3";
+option cc_enable_arenas = true;
+option java_package = "org.rafko.rafko_mainframe";
+option java_outer_classname = "RafkoTrainingLog";
 
-#include "rafko_mainframe/models/service_context.h"
+package rafko_mainframe;
 
-namespace rafko_net{
-
-using rafko_mainframe::Service_context;
-
-/**
- * @brief      Wrapper function to generate Backpropagation_queue objects from @SparseNet
- *             objects
+/** @brief      Describes a data package for a given iteration during a training. The stored data
+ *              is identified by the iteration and attached tags, most of which are use-case dependent.
  */
-class Backpropagation_queue_wrapper{
-public:
-  Backpropagation_queue_wrapper(SparseNet& net, Service_context& context);
-  Backpropagation_queue operator()(){
-    return gradient_step;
-  }
-private:
-  Backpropagation_queue gradient_step;
-};
+message Data_package{
+  uint32 iteration = 1;
+  repeated uint32 coordinates = 2;
+  repeated string tags = 3;
+  repeated double data = 20;
+}
 
-} /* namespace rafko_net */
-
-#endif /* BACKPROPAGATION_WRAPPER_H */
+/** @brief      A measurement of the training process taken by the supervising process.
+ */
+message Measurement{
+  repeated Data_package packs = 10;
+}

@@ -22,7 +22,7 @@
 
 #include <cmath>
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::vector;
 
@@ -53,5 +53,5 @@ private:
   sdouble32 sample_number;
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif /* COST_FUNCTION_SQUARED_ERROR_H */

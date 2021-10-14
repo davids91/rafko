@@ -22,8 +22,8 @@
 #include <memory>
 #include <numeric>
 
-#include "gen/solution.pb.h"
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/services/thread_group.h"
@@ -35,30 +35,30 @@
 #include "rafko_net/services/sparse_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 
-namespace sparse_net_library_test{
+namespace rafko_net_test{
 
 using rafko_mainframe::Service_context;
 using rafko_utilities::DataRingbuffer;
 using rafko_utilities::ThreadGroup;
-using sparse_net_library::Sparse_net_builder;
-using sparse_net_library::Solution_builder;
-using sparse_net_library::SparseNet;
-using sparse_net_library::Partial_solution;
-using sparse_net_library::Partial_solution_solver;
-using sparse_net_library::Solution;
-using sparse_net_library::Solution_solver;
-using sparse_net_library::Index_synapse_interval;
-using sparse_net_library::Input_synapse_interval;
-using sparse_net_library::Synapse_iterator;
-using sparse_net_library::Transfer_function;
-using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
-using sparse_net_library::TRANSFER_FUNCTION_SIGMOID;
-using sparse_net_library::TRANSFER_FUNCTION_TANH;
-using sparse_net_library::TRANSFER_FUNCTION_RELU;
-using sparse_net_library::TRANSFER_FUNCTION_SELU;
-using sparse_net_library::NETWORK_RECURRENCE_TO_SELF;
-using sparse_net_library::NETWORK_RECURRENCE_TO_LAYER;
-using sparse_net_library::Spike_function;
+using rafko_net::Sparse_net_builder;
+using rafko_net::Solution_builder;
+using rafko_net::SparseNet;
+using rafko_net::Partial_solution;
+using rafko_net::Partial_solution_solver;
+using rafko_net::Solution;
+using rafko_net::Solution_solver;
+using rafko_net::Index_synapse_interval;
+using rafko_net::Input_synapse_interval;
+using rafko_net::Synapse_iterator;
+using rafko_net::Transfer_function;
+using rafko_net::TRANSFER_FUNCTION_IDENTITY;
+using rafko_net::TRANSFER_FUNCTION_SIGMOID;
+using rafko_net::TRANSFER_FUNCTION_TANH;
+using rafko_net::TRANSFER_FUNCTION_RELU;
+using rafko_net::TRANSFER_FUNCTION_SELU;
+using rafko_net::NETWORK_RECURRENCE_TO_SELF;
+using rafko_net::NETWORK_RECURRENCE_TO_LAYER;
+using rafko_net::Spike_function;
 
 using std::unique_ptr;
 using std::make_unique;

@@ -24,7 +24,7 @@
 
 #include "rafko_mainframe/models/service_context.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::vector;
 using rafko_mainframe::Service_context;
@@ -86,5 +86,5 @@ private:
   Service_context& context;
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif /* TRANSFER_FUNCTION_H */

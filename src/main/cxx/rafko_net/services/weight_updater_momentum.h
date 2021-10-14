@@ -20,7 +20,7 @@
 
 #include "rafko_net/services/weight_updater.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 class Weight_updater_momentum : public Weight_updater{
 public:
@@ -45,6 +45,6 @@ private:
   vector<sdouble32> previous_velocity;
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* WEIGHT_UPDATER_MOMENTUM_H */

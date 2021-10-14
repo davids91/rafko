@@ -25,9 +25,9 @@
 
 #include <google/protobuf/repeated_field.h>
 
-#include "gen/common.pb.h"
+#include "rafko_protocol/common.pb.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::function;
 using google::protobuf::RepeatedPtrField;
@@ -370,6 +370,6 @@ private:
   }
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* SYNAPSE_ITERATOR_H */

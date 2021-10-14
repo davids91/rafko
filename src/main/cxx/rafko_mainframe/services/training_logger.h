@@ -23,7 +23,7 @@
 #include <vector>
 #include <string>
 
-#include "gen/logger.pb.h"
+#include "rafko_protocol/logger.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
 

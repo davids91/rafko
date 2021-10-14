@@ -22,7 +22,7 @@
 
 #include <cmath>
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::vector;
 
@@ -50,5 +50,5 @@ protected:
   }
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif /* COST_FUNCTION_MSE_H */

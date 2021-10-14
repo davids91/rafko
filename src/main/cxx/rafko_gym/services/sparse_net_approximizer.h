@@ -23,8 +23,8 @@
 #include <cmath>
 #include <vector>
 
-#include "gen/common.pb.h"
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/services/solution_builder.h"
@@ -42,13 +42,13 @@ using std::vector;
 using std::unique_ptr;
 
 using rafko_mainframe::Service_context;
-using sparse_net_library::SparseNet;
-using sparse_net_library::Solution_builder;
-using sparse_net_library::Solution_solver;
-using sparse_net_library::Weight_updater;
-using sparse_net_library::weight_updaters;
-using sparse_net_library::Gradient_fragment;
-using sparse_net_library::Updater_factory;
+using rafko_net::SparseNet;
+using rafko_net::Solution_builder;
+using rafko_net::Solution_solver;
+using rafko_net::Weight_updater;
+using rafko_net::weight_updaters;
+using rafko_net::Gradient_fragment;
+using rafko_net::Updater_factory;
 
 /**
  * @brief      This class approximates gradients for a @Dataset and @Sparse_net.

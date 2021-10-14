@@ -20,7 +20,7 @@
 
 #include <memory>
 
-#include "gen/deep_learning_service.pb.h"
+#include "rafko_protocol/deep_learning_service.pb.h"
 
 #include "rafko_mainframe/services/server_slot.h"
 #include "rafko_mainframe/services/server_slot_run_net.h"

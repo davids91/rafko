@@ -27,14 +27,14 @@
 #include <utility>
 #include <functional>
 
-#include "gen/solution.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_gym/services/agent.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/services/thread_group.h"
 
 #include "rafko_net/services/partial_solution_solver.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::vector;
 using std::mutex;
@@ -103,6 +103,6 @@ public:
   };
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* SOLUTION_SOLVER_H */

@@ -11,18 +11,34 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_EXTENSIONS OFF)
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+  option(MAKE_TESTS
+    "Enables test build"
+    ON
+  )
+  option(TEST_CONVERGENCE
+    "Makes the test builds examines convergence, instead of acceptance tests"
+    OFF
+  )
+
 endif()
 
+add_subdirectory(rafko_protocol)
 add_subdirectory(rafko_utilities)
 add_subdirectory(rafko_net)
 add_subdirectory(rafko_gym)
-add_subdirectory(rafko_mainframe)
-add_subdirectory(test)
+#add_subdirectory(rafko_mainframe)
 
-add_library(rafko "")
-target_link_libraries(rafko rafko_utilities rafko_net rafko_gym)
-install(
-  TARGETS rafko_utilities rafko_net rafko_gym rafko_mainframe
-  LIBRARY DESTINATION build
-  PUBLIC_HEADER DESTINATION build/include
+add_library(rafko_lib "")
+target_link_libraries(rafko_lib PUBLIC rafko_protocol rafko_utilities rafko_net rafko_gym)
+target_include_directories(rafko_lib PUBLIC ${CMAKE_BINARY_DIR}) # For Generated protocol files
+
+add_custom_target(run
+  COMMAND ./rafko_test -d yes
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test
+  COMMENT "running tests in ${CMAKE_BINARY_DIR}/test"
 )
+
+if(MAKE_TESTS)
+  add_subdirectory(test)
+endif()

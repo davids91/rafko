@@ -24,7 +24,7 @@
 
 #include "rafko_net/models/transfer_function.h"
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 using std::min;
 using std::max;
@@ -61,4 +61,4 @@ sdouble32 Dense_net_weight_initializer::next_bias() const{
   return double_literal(0.0);
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

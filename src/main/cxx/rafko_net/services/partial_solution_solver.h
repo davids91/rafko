@@ -24,15 +24,15 @@
 #include <atomic>
 #include <mutex>
 
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
 
 #include "rafko_utilities/models/data_pool.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 using std::vector;
 using std::mutex;
@@ -146,5 +146,5 @@ private:
 
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif /* Partial_solution_H */

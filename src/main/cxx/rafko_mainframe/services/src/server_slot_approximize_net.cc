@@ -23,12 +23,12 @@
 
 namespace rafko_mainframe{
 
-using sparse_net_library::Solution_builder;
-using sparse_net_library::Function_factory;
-using sparse_net_library::cost_functions_IsValid;
-using sparse_net_library::COST_FUNCTION_UNKNOWN;
-using sparse_net_library::WEIGHT_UPDATER_UNKNOWN;
-using sparse_net_library::weight_updaters_IsValid;
+using rafko_net::Solution_builder;
+using rafko_net::Function_factory;
+using rafko_net::cost_functions_IsValid;
+using rafko_net::COST_FUNCTION_UNKNOWN;
+using rafko_net::WEIGHT_UPDATER_UNKNOWN;
+using rafko_net::weight_updaters_IsValid;
 
 void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
   if(SERV_SLOT_TO_APPROXIMIZE != service_slot_.type()) throw std::runtime_error("Incorrect Server slot initialization!");

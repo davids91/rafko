@@ -20,12 +20,12 @@
 
 #include "rafko_utilities/services/thread_group.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
 using std::vector;
 using std::lock_guard;
 
-using sparse_net_library::ThreadGroup;
+using rafko_net::ThreadGroup;
 
 /*###############################################################################################
  * Testing if data pool is thread-safe
@@ -63,4 +63,4 @@ TEST_CASE("Thread Group generic use-case test", "[thread-group]"){
   }
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

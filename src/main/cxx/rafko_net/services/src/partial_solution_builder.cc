@@ -19,7 +19,7 @@
 
 #include <stdexcept>
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 uint32 Partial_solution_builder::neuron_synapse_count = 0;
 uint32 Partial_solution_builder::partial_input_synapse_count = 0;
@@ -171,4 +171,4 @@ bool Partial_solution_builder::look_for_neuron_input_internally(uint32 neuron_in
   }else return false;
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

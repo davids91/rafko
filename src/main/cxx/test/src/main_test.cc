@@ -20,8 +20,8 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_mainframe/models/service_context.h"
@@ -36,19 +36,19 @@ int main( int argc, char* argv[] ) {
   return result;
 }
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
 using rafko_utilities::DataRingbuffer;
 using rafko_gym::Data_aggregate;
-using sparse_net_library::Transfer_function;
-using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
-using sparse_net_library::cost_functions;
-using sparse_net_library::Input_synapse_interval;
-using sparse_net_library::Index_synapse_interval;
-using sparse_net_library::Solution_builder;
-using sparse_net_library::Solution_solver;
-using sparse_net_library::Synapse_iterator;
-using sparse_net_library::Neuron;
+using rafko_net::Transfer_function;
+using rafko_net::TRANSFER_FUNCTION_IDENTITY;
+using rafko_net::cost_functions;
+using rafko_net::Input_synapse_interval;
+using rafko_net::Index_synapse_interval;
+using rafko_net::Solution_builder;
+using rafko_net::Solution_solver;
+using rafko_net::Synapse_iterator;
+using rafko_net::Neuron;
 using rafko_mainframe::Service_context;
 
 void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset){
@@ -411,4 +411,4 @@ Data_aggregate* create_sequenced_addition_dataset(
 }
 
 
-} /* namsepace sparse_net_library_test */
+} /* namsepace rafko_net_test */

@@ -28,7 +28,7 @@
 
 #include "rafko_net/services/partial_solution_builder.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::deque;
 using std::unique_ptr;
@@ -114,4 +114,4 @@ Solution* Solution_builder::build(const SparseNet& net, bool optimize_to_gpu){
   return solution;
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

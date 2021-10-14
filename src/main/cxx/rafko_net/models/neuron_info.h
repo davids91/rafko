@@ -19,9 +19,9 @@
 #define NEURON_INFO_H
 
 #include "rafko_global.h"
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 class Neuron_info{
 public:
@@ -62,6 +62,6 @@ public:
   static bool is_neuron_valid(const Neuron& neuron);
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 
 #endif /* NEURON_INFO_H */

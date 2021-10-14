@@ -25,7 +25,7 @@
 
 #include "rafko_mainframe/models/service_context.h"
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 using std::min;
 using std::max;
@@ -122,5 +122,5 @@ protected:
   sdouble32 expected_input_maximum_value = numeric_limits<sdouble32>::epsilon();
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif /* WEIGHT_INITIALIZER_H */

@@ -21,26 +21,26 @@
 #include <vector>
 #include <memory>
 
-#include "gen/solution.pb.h"
-#include "gen/sparse_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/sparse_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/weight_updater.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
 using std::unique_ptr;
 using std::make_unique;
 
-using sparse_net_library::Sparse_net_builder;
-using sparse_net_library::Solution_builder;
-using sparse_net_library::SparseNet;
-using sparse_net_library::Partial_solution;
-using sparse_net_library::Solution;
-using sparse_net_library::Synapse_iterator;
-using sparse_net_library::Weight_updater;
+using rafko_net::Sparse_net_builder;
+using rafko_net::Solution_builder;
+using rafko_net::SparseNet;
+using rafko_net::Partial_solution;
+using rafko_net::Solution;
+using rafko_net::Synapse_iterator;
+using rafko_net::Weight_updater;
 using rafko_mainframe::Service_context;
 
 /*###############################################################################################
@@ -77,4 +77,4 @@ TEST_CASE("Weight updater test","[build][weight-update]"){
 
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

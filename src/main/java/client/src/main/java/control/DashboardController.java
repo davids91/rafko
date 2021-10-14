@@ -20,9 +20,9 @@ import models.ColorMap;
 import models.Global;
 import models.Server_slot_data;
 import org.rafko.mainframe.RafkoDeepLearningService;
-import org.rafko.sparse_net_library.RafkoCommon;
-import org.rafko.sparse_net_library.RafkoSparseNet;
-import org.rafko.sparse_net_library.RafkoTraining;
+import org.rafko.rafko_net.RafkoCommon;
+import org.rafko.rafko_net.RafkoSparseNet;
+import org.rafko.rafko_net.RafkoTraining;
 import services.RafkoDLClient;
 
 import java.io.*;

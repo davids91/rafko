@@ -24,7 +24,7 @@
 
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 Neuron_router::Neuron_router(const SparseNet& sparse_net) : net(sparse_net){
   output_layer_iterator = (net.neuron_array_size() - net.output_neuron_number()); /* Start to process Ouptut Layer Neurons */
@@ -296,4 +296,4 @@ void Neuron_router::omit_from_subset(uint32 neuron_index, deque<uint32>& paired_
   }
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

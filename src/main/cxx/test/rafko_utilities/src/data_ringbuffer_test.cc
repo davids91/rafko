@@ -23,13 +23,13 @@
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
 using std::vector;
 using std::copy;
 
 using rafko_utilities::DataRingbuffer;
-using sparse_net_library::Input_synapse_interval;
+using rafko_net::Input_synapse_interval;
 using rafko_mainframe::Service_context;
 
 /*###############################################################################################
@@ -126,4 +126,4 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
   }
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

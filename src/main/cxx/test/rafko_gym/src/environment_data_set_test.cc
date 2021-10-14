@@ -22,8 +22,8 @@
 #include <memory>
 #include <functional>
 
-#include "gen/common.pb.h"
-#include "gen/solution.pb.h"
+#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/models/cost_function_mse.h"
@@ -40,9 +40,9 @@ using rafko_utilities::DataRingbuffer;
 using rafko_gym::Agent;
 using rafko_gym::Data_aggregate;
 using rafko_gym::Environment_data_set;
-using sparse_net_library::Solution;
-using sparse_net_library::Data_set;
-using sparse_net_library::Cost_function_mse;
+using rafko_net::Solution;
+using rafko_net::Data_set;
+using rafko_net::Cost_function_mse;
 
 /*###############################################################################################
  * Testing if the data-set environment produces correct error values

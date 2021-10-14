@@ -23,21 +23,21 @@
 
 #include "rafko_global.h"
 
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_gym/models/data_aggregate.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
 using std::vector;
 using std::unique_ptr;
 
-using sparse_net_library::SparseNet;
-using sparse_net_library::Solution;
-using sparse_net_library::Partial_solution;
+using rafko_net::SparseNet;
+using rafko_net::Solution;
+using rafko_net::Partial_solution;
 using rafko_gym::Data_aggregate;
-using sparse_net_library::cost_functions;
+using rafko_net::cost_functions;
 using rafko_mainframe::Service_context;
 
 /**

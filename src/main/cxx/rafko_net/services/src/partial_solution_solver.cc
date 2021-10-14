@@ -24,7 +24,7 @@
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/models/spike_function.h"
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 DataPool<sdouble32> Partial_solution_solver::common_data_pool;
 
@@ -160,4 +160,4 @@ bool Partial_solution_solver::is_valid(void) const{
   }else return false;
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

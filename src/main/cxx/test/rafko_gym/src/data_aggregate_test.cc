@@ -21,19 +21,19 @@
 #include <vector>
 #include <memory>
 
-#include "gen/common.pb.h"
+#include "rafko_protocol/common.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_net/models/cost_function_mse.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
 using std::unique_ptr;
 using std::vector;
 
-using sparse_net_library::Data_set;
+using rafko_net::Data_set;
 using rafko_gym::Data_aggregate;
-using sparse_net_library::Cost_function_mse;
+using rafko_net::Cost_function_mse;
 using rafko_mainframe::Service_context;
 
 /*###############################################################################################
@@ -259,4 +259,4 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
   CHECK( Approx(double_literal(0.0)).margin(0.00000000000001) == data_agr.get_error(selected_index) );
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

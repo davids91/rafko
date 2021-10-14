@@ -19,7 +19,7 @@
 
 #include <cmath>
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 using std::max;
 
@@ -89,4 +89,4 @@ sdouble32 Transfer_function::get_derivative(transfer_functions function, sdouble
   }
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

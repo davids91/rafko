@@ -20,7 +20,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::abs;
 using std::max;
@@ -112,4 +112,4 @@ sdouble32 Weight_experience_space::get_best_weight(void){
 }
 
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

@@ -28,7 +28,7 @@
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/services/thread_group.h"
 
-namespace sparse_net_library{
+namespace rafko_net{
 
 using std::vector;
 using std::thread;
@@ -207,5 +207,5 @@ private:
   );
 };
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */
 #endif /* COST_FUNCTION_H */

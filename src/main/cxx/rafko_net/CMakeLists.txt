@@ -1,5 +1,6 @@
 add_library(rafko_net)
 target_include_directories(rafko_net PUBLIC ${PROJECT_SOURCE_DIR} models services)
+target_link_libraries(rafko_net PUBLIC rafko_protocol)
 target_sources(rafko_net
   INTERFACE
   models/cost_function_squared_error.h

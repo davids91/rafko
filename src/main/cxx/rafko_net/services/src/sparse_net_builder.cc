@@ -25,7 +25,7 @@
 
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace sparse_net_library {
+namespace rafko_net {
 
 using std::shared_ptr;
 
@@ -211,4 +211,4 @@ SparseNet* Sparse_net_builder::build(void){
   }else throw std::runtime_error("Inconsistent parameters given to Sparse Net Builder!");
 }
 
-} /* namespace sparse_net_library */
+} /* namespace rafko_net */

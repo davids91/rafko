@@ -18,23 +18,23 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/services/sparse_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
-using sparse_net_library::Sparse_net_builder;
-using sparse_net_library::SparseNet;
-using sparse_net_library::Solution_builder;
-using sparse_net_library::Solution;
-using sparse_net_library::Solution_solver;
-using sparse_net_library::Synapse_iterator;
-using sparse_net_library::NETWORK_RECURRENCE_TO_SELF;
-using sparse_net_library::NETWORK_RECURRENCE_TO_LAYER;
+using rafko_net::Sparse_net_builder;
+using rafko_net::SparseNet;
+using rafko_net::Solution_builder;
+using rafko_net::Solution;
+using rafko_net::Solution_solver;
+using rafko_net::Synapse_iterator;
+using rafko_net::NETWORK_RECURRENCE_TO_SELF;
+using rafko_net::NETWORK_RECURRENCE_TO_LAYER;
 using rafko_mainframe::Service_context;
 
 using std::unique_ptr;
@@ -163,4 +163,4 @@ TEST_CASE( "Building a solution from a bigger net", "[build][build-only]" ){
   REQUIRE( 0 < solution->SpaceUsedLong() );
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

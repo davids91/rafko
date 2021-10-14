@@ -19,28 +19,28 @@
 
 #include <random>
 
-#include "gen/sparse_net.pb.h"
-#include "gen/solution.pb.h"
+#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/services/partial_solution_solver.h"
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
 using std::vector;
 using std::reference_wrapper;
 
-using sparse_net_library::transfer_functions;
-using sparse_net_library::TRANSFER_FUNCTION_IDENTITY;
+using rafko_net::transfer_functions;
+using rafko_net::TRANSFER_FUNCTION_IDENTITY;
 using rafko_utilities::DataRingbuffer;
-using sparse_net_library::Partial_solution;
-using sparse_net_library::Partial_solution_solver;
-using sparse_net_library::Transfer_function;
-using sparse_net_library::Index_synapse_interval;
-using sparse_net_library::Input_synapse_interval;
-using sparse_net_library::Synapse_iterator;
+using rafko_net::Partial_solution;
+using rafko_net::Partial_solution_solver;
+using rafko_net::Transfer_function;
+using rafko_net::Index_synapse_interval;
+using rafko_net::Input_synapse_interval;
+using rafko_net::Synapse_iterator;
 using rafko_mainframe::Service_context;
 
 /*###############################################################################################
@@ -179,4 +179,4 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   }
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

@@ -25,9 +25,9 @@
 #include "rafko_net/models/cost_function_mse.h"
 
 
-namespace sparse_net_library_test {
+namespace rafko_net_test {
 
-using sparse_net_library::Cost_function_mse;
+using rafko_net::Cost_function_mse;
 using rafko_mainframe::Service_context;
 
 using std::vector;
@@ -80,4 +80,4 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
 
 }
 
-} /* namespace sparse_net_library_test */
+} /* namespace rafko_net_test */

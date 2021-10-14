@@ -19,14 +19,14 @@
 
 #include <thread>
 
-#include "gen/common.pb.h"
+#include "rafko_protocol/common.pb.h"
 
 #include "rafko_mainframe/services/server_slot_factory.h"
 
 namespace rafko_mainframe{
 
-using sparse_net_library::transfer_functions;
-using sparse_net_library::transfer_functions_IsValid;
+using rafko_net::transfer_functions;
+using rafko_net::transfer_functions_IsValid;
 using std::lock_guard;
 using std::thread;
 
@@ -276,7 +276,7 @@ void Deep_learning_server::loop(void){
 
 ::grpc::Status Deep_learning_server::get_network(
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
-  ::sparse_net_library::SparseNet* response
+  ::rafko_net::SparseNet* response
 ){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ get_network +++ " << std::endl;
