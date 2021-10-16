@@ -61,13 +61,12 @@ Neural_io_stream Server_slot_run_net::run_net_once(const Neural_io_stream& data_
       network->output_neuron_number() * data_stream.sequence_size()
     ); /* ..which is the output of the network multiplied by the sequence size */
     vector<sdouble32> input;
-    DataRingbuffer neuron_data(network_solution->network_memory_length(),network_solution->neuron_number());
     for(uint32 sequence = 0; sequence < data_stream.sequence_size(); ++sequence){
       input = { /* Copy the input data to a temporary */
         data_stream.package().begin() + sequence_start_index,
         data_stream.package().begin() + sequence_start_index + data_stream.input_size(),
       };
-      network_solver->solve(input,neuron_data);
+      const DataRingbuffer& neuron_data = network_solver->solve(input,true,0);
       std::copy(
         neuron_data.get_const_element(0).end() - network_solution->output_neuron_number(),
         neuron_data.get_const_element(0).end(),

@@ -30,8 +30,6 @@ using sparse_net_library::COST_FUNCTION_UNKNOWN;
 using sparse_net_library::WEIGHT_UPDATER_UNKNOWN;
 using sparse_net_library::weight_updaters_IsValid;
 
-using std::make_unique;
-
 void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
   if(SERV_SLOT_TO_APPROXIMIZE != service_slot_.type()) throw std::runtime_error("Incorrect Server slot initialization!");
   else{
@@ -187,6 +185,9 @@ void Server_slot_approximize_net::update_cost_function(){
 }
 
 void Server_slot_approximize_net::update_trainer(void){
+  using std::make_unique;
+  using std::make_shared;
+
   expose_state();
   if(
     (weight_updaters_IsValid(service_slot->weight_updater()))
@@ -197,8 +198,14 @@ void Server_slot_approximize_net::update_trainer(void){
     if(network_approximizer)network_approximizer.reset();
     service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_TRAINER);
     service_slot->set_weight_updater(service_slot->weight_updater());
+    if(environment_data_set){
+      environment_data_set.reset();
+    }
+    environment_data_set = std::make_shared<Environment_data_set>(
+      context, *training_set, *test_set
+    );
     network_approximizer = std::make_unique<Sparse_net_approximizer>(
-      *network, *training_set, *test_set, service_slot->weight_updater(), context
+      context, *network, *environment_data_set, service_slot->weight_updater()
     );
     if(network_approximizer){
       service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_TRAINER);

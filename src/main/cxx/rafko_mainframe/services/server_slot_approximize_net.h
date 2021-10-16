@@ -20,6 +20,7 @@
 
 #include "sparse_net_library/models/cost_function.h"
 #include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/services/environment_data_set.h"
 #include "rafko_gym/services/sparse_net_approximizer.h"
 
 #include "rafko_mainframe/services/server_slot_run_net.h"
@@ -29,6 +30,7 @@ namespace rafko_mainframe{
 using sparse_net_library::Cost_function;
 using rafko_gym::Data_aggregate;
 using rafko_gym::Sparse_net_approximizer;
+using rafko_gym::Environment_data_set;
 
 using std::unique_ptr;
 using std::shared_ptr;
@@ -41,11 +43,6 @@ class Server_slot_approximize_net : public Server_slot_run_net{
 public:
   Server_slot_approximize_net()
   :  Server_slot_run_net()
-  ,  cost_function()
-  ,  training_set()
-  ,  test_set()
-  ,  network_approximizer()
-  ,  iteration(0)
   { service_slot->set_type(SERV_SLOT_TO_APPROXIMIZE); }
 
   void initialize(Service_slot&& service_slot_);
@@ -115,9 +112,10 @@ private:
   shared_ptr<Cost_function> cost_function;
   shared_ptr<Data_aggregate> training_set;
   shared_ptr<Data_aggregate> test_set;
+  shared_ptr<Environment_data_set> environment_data_set;
   unique_ptr<Sparse_net_approximizer> network_approximizer;
 
-  uint32 iteration;
+  uint32 iteration = 0;
 
   void update_cost_function(void);
   void update_trainer(void);
