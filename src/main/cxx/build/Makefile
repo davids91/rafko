@@ -1,7 +1,7 @@
 LIBFLAGS = `pkg-config --cflags protobuf grpc++`
 LIBS = `pkg-config --libs protobuf grpc++`
 
-DEBUG_FLAGS = -DNDEBUG #no debug
+DEBUG_FLAGS = -DNDEBUG -march=native #no debug
 #DEBUG_FLAGS = -g #debug information added
 #DEBUG_FLAGS = -ggdb #debug information added
 #DEBUG_FLAGS += -v # verbose compile information

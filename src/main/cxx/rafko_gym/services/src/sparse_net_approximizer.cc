@@ -112,7 +112,6 @@ sdouble32 Sparse_net_approximizer::get_single_weight_gradient(uint32 weight_inde
   /* Push the selected weight in other direction */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) - current_epsilon_double) );
   weight_updater->update_solution_with_weight(*net_solution, weight_index);
-
   environment.push_state(); /* Approximate the newly modified weights gradient */
   sdouble32 new_error_state = -environment.stochastic_evaluation(*solver, iteration);
   environment.pop_state();
@@ -123,7 +122,7 @@ sdouble32 Sparse_net_approximizer::get_single_weight_gradient(uint32 weight_inde
     &&(environment.get_last_measured_value() <= gradient)
   )dampening_value = service_context.get_zetta(); /* ..decrease the amount to move the current net */
     else dampening_value = double_literal(1.0); /* reducing oscillation at lower error ranges */
-  gradient = -(gradient - new_error_state) / (current_epsilon_double * service_context.get_minibatch_size());
+  gradient = -(gradient - new_error_state) * (current_epsilon_double);
 
   /* Revert weight modification and the error state with it */
   net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
@@ -143,7 +142,6 @@ sdouble32 Sparse_net_approximizer::get_gradient_for_all_weights(void){
     net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
   } /* Push every weight in a positive epsilon direction */
   weight_updater->update_solution_with_weights(*net_solution);
-
   environment.push_state(); /* Approximate the modified weights gradient */
   error_positive_direction = -environment.stochastic_evaluation(*solver, iteration);
   environment.pop_state();
@@ -152,7 +150,6 @@ sdouble32 Sparse_net_approximizer::get_gradient_for_all_weights(void){
     net.set_weight_table(weight_index, (net.weight_table(weight_index) - current_epsilon_double) );
   } /* Push the weights to the other direction */
   weight_updater->update_solution_with_weights(*net_solution);
-
   environment.push_state(); /* Approximate the newly modified weights gradient */
   error_negative_direction = -environment.stochastic_evaluation(*solver, iteration);
   environment.pop_state();
@@ -163,7 +160,7 @@ sdouble32 Sparse_net_approximizer::get_gradient_for_all_weights(void){
   )dampening_value = service_context.get_zetta(); /* ..decrease the amount to move the current net */
     else dampening_value = double_literal(1.0); /* reducing oscillation at lower error ranges */
 
-  gradient = -(error_positive_direction - error_negative_direction) / (current_epsilon_double * service_context.get_minibatch_size());
+  gradient = -(error_positive_direction - error_negative_direction) * (current_epsilon_double);
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
     net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
   } /* Revert weight modifications and the error state with it */
