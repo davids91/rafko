@@ -88,8 +88,8 @@ rebuild_cache/fast: rebuild_cache
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	/usr/bin/cmake-gui -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -130,17 +130,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named test-run
+# Target rules for targets named run
 
 # Build rule for target.
-test-run: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test-run
-.PHONY : test-run
+run: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 run
+.PHONY : run
 
 # fast build rule for target.
-test-run/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test-run.dir/build.make CMakeFiles/test-run.dir/build
-.PHONY : test-run/fast
+run/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/build
+.PHONY : run/fast
 
 #=============================================================================
 # Target rules for targets named rafko_lib
@@ -195,6 +195,19 @@ rafko_gym/fast:
 .PHONY : rafko_gym/fast
 
 #=============================================================================
+# Target rules for targets named rafko_mainframe
+
+# Build rule for target.
+rafko_mainframe: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rafko_mainframe
+.PHONY : rafko_mainframe
+
+# fast build rule for target.
+rafko_mainframe/fast:
+	$(MAKE) $(MAKESILENT) -f rafko_mainframe/CMakeFiles/rafko_mainframe.dir/build.make rafko_mainframe/CMakeFiles/rafko_mainframe.dir/build
+.PHONY : rafko_mainframe/fast
+
+#=============================================================================
 # Target rules for targets named rafko_test
 
 # Build rule for target.
@@ -215,9 +228,10 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... test-run"
+	@echo "... run"
 	@echo "... rafko_gym"
 	@echo "... rafko_lib"
+	@echo "... rafko_mainframe"
 	@echo "... rafko_net"
 	@echo "... rafko_protocol"
 	@echo "... rafko_test"

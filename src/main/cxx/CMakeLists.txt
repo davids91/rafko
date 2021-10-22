@@ -27,7 +27,7 @@ add_subdirectory(rafko_protocol)
 add_subdirectory(rafko_utilities)
 add_subdirectory(rafko_net)
 add_subdirectory(rafko_gym)
-#add_subdirectory(rafko_mainframe)
+add_subdirectory(rafko_mainframe)
 
 add_library(rafko_lib "")
 target_link_libraries(rafko_lib PUBLIC rafko_protocol rafko_utilities rafko_net rafko_gym)
