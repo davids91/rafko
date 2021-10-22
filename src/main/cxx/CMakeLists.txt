@@ -33,12 +33,7 @@ add_library(rafko_lib "")
 target_link_libraries(rafko_lib PUBLIC rafko_protocol rafko_utilities rafko_net rafko_gym)
 target_include_directories(rafko_lib PUBLIC ${CMAKE_BINARY_DIR}) # For Generated protocol files
 
-add_custom_target(run
-  COMMAND ./rafko_test -d yes
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test
-  COMMENT "running tests in ${CMAKE_BINARY_DIR}/test"
-)
-
 if(MAKE_TESTS)
+  enable_testing()
   add_subdirectory(test)
 endif()
