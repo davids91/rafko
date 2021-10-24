@@ -180,7 +180,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   Data_aggregate* train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
   Data_aggregate* test_set = create_sequenced_addition_dataset(number_of_samples * 2, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
   Environment_data_set env(service_context, *train_set, *test_set);
-  Sparse_net_approximizer approximizer(service_context, *nets[0], env, WEIGHT_UPDATER_AMSGRAD);
+  Sparse_net_approximizer approximizer(service_context, *nets[0], env, WEIGHT_UPDATER_AMSGRAD,1);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;

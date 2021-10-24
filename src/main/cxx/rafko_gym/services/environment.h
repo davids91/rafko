@@ -42,7 +42,7 @@ public:
    * @brief      Evaluates the given agent in a stochastic manner and returns with its error/fittness value
    *
    * @param[in]      agent    The actor to be evaluated in the current environment
-   * @param[in]      index    A helper value to make Stochastic evaluation deterministicly reproducible
+   * @param[in]      seed    A helper value to make Stochastic evaluation deterministicly reproducible
    * @return         The resulting error/fitness value summary of the evaluation
    */
   virtual sdouble32 stochastic_evaluation(Agent& agent, uint32 seed = 0u) = 0;

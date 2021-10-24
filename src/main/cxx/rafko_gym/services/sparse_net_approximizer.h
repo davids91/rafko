@@ -57,13 +57,25 @@ using rafko_net::Updater_factory;
 class Sparse_net_approximizer{
 public:
 
-  Sparse_net_approximizer(Service_context& service_context_, SparseNet& neural_network, Environment& environment_, weight_updaters weight_updater_)
-  : service_context(service_context_)
+  /**
+   * @brief      Class Constructor
+   *
+   * @param      service_context_              The service context in which the object should be executed
+   * @param[in]  neural_network                The Network to optimize based on the gradient approximation
+   * @param      environment_                  The Data Environment the network should be evaluated in
+   * @param[in]  weight_updater_               The Weight updater to help convergence
+   * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
+   */
+  Sparse_net_approximizer(
+    Service_context& service_context_, SparseNet& neural_network, Environment& environment_,
+    weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
+  ):service_context(service_context_)
   , net(neural_network)
   , net_solution(Solution_builder(service_context).build(net))
   , environment(environment_)
   , solver(Solution_solver::Builder(*net_solution, service_context).build())
   , applied_direction(net.weight_table_size())
+  , stochastic_evaluation_loops(stochastic_evaluation_loops_)
   {
     weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,service_context);
     environment.full_evaluation(*solver);
@@ -155,9 +167,23 @@ private:
   unique_ptr<Agent> solver;
   unique_ptr<Weight_updater> weight_updater;
   Gradient_fragment gradient_fragment;
+  uint32 stochastic_evaluation_loops;
 
   uint32 iteration = 1;
   vector<sdouble32> applied_direction;
+
+  /**
+   * @brief      Evaluates the network in a stochastic manner the number of configured times and return with the fittness/error value
+   *
+   * @return         The average of the resulting fitness values of the evaluations
+   */
+  sdouble32 stochastic_evaluation(void){
+    sdouble32 fitness = double_literal(0.0);
+    for(uint32 i = 0; i < stochastic_evaluation_loops; ++i){
+      fitness += environment.stochastic_evaluation(*solver, iteration);
+    }
+    return fitness / static_cast<sdouble32>(stochastic_evaluation_loops);
+  }
 
   /**
    * @brief      Insert an element to the given position into the given field by
