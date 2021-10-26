@@ -171,6 +171,7 @@ private:
 
   uint32 iteration = 1;
   vector<sdouble32> applied_direction;
+  sdouble32 epsilon_addition = double_literal(0.0);
 
   /**
    * @brief      Evaluates the network in a stochastic manner the number of configured times and return with the fittness/error value
@@ -179,9 +180,8 @@ private:
    */
   sdouble32 stochastic_evaluation(void){
     sdouble32 fitness = double_literal(0.0);
-    for(uint32 i = 0; i < stochastic_evaluation_loops; ++i){
+    for(uint32 i = 0; i < stochastic_evaluation_loops; ++i)
       fitness += environment.stochastic_evaluation(*solver, iteration);
-    }
     return fitness / static_cast<sdouble32>(stochastic_evaluation_loops);
   }
 
