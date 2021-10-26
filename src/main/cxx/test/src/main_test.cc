@@ -294,9 +294,20 @@ void print_weights(SparseNet& net, Solution& solution){
 void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, SparseNet& net, Service_context& service_context){
   unique_ptr<Solution_solver> sample_solver(Solution_solver::Builder(*Solution_builder(service_context).build(net), service_context).build());
   vector<sdouble32> neuron_data(data_set.get_sequence_size());
+  uint32 raw_label_index = sample_sequence_index;
+  uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());
+  raw_label_index *= data_set.get_sequence_size();
+
   std::cout.precision(2);
   std::cout << std::endl << "Training sample["<< sample_sequence_index <<"]:" << std::endl;
-  std::cout << std::endl << "..or raw_sample["<< (data_set.get_sequence_size() * sample_sequence_index) <<"]:" << std::endl;
+
+  /* Prefill neural network */
+  for(uint32 prefill_iterator = 0; prefill_iterator < data_set.get_prefill_inputs_number(); ++prefill_iterator){
+    (void)sample_solver->solve(data_set.get_input_sample(raw_inputs_index), (0 == prefill_iterator), 0);
+    ++raw_inputs_index;
+  } /* The first few labels are there to set an initial state to the network */
+
+
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
     std::cout << "["<< data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
   }
@@ -309,12 +320,16 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
   std::cout.precision(2);
   DataRingbuffer output_data_copy(0,0);
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
-    std::cout << "["<< data_set.get_label_sample((data_set.get_sequence_size() * sample_sequence_index) + j)[0] <<"]";
+    std::cout << "["<< data_set.get_label_sample(raw_label_index)[0] <<"]";
     const DataRingbuffer& output_data = sample_solver->solve(
-      data_set.get_input_sample((data_set.get_sequence_size() * sample_sequence_index) + j), false
+      data_set.get_input_sample(raw_inputs_index),
+      ( (0u == data_set.get_prefill_inputs_number())&&(0u == j) ),
+      0u
     );
     neuron_data[j] = output_data.get_const_element(0).back();
     output_data_copy = output_data;
+    ++raw_label_index;
+    ++raw_inputs_index;
   }
   std::cout << std::endl;
   std::cout << "------<>------actual:" << std::endl;
@@ -323,13 +338,18 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
     std::cout << "["<< neuron_data[j] <<"]";
   }
   std::cout << std::endl;
+  std::cout << "Errors for sequence: " << std::endl;
+  for(uint32 j = 0;j < data_set.get_sequence_size();++j){
+    std::cout << "{" << data_set.get_error((sample_sequence_index * data_set.get_sequence_size()) + j) << "}";
+  }
+  std::cout << std::endl;
+
   std::cout << "==============" << std::endl;
   std::cout << "Neural memory for current sequence: " << std::endl;
   for(const vector<sdouble32>& vector : output_data_copy.get_whole_buffer()){
     for(const sdouble32& element : vector) std::cout << "[" << element << "]";
     std::cout << std::endl;
   }
-
   std::cout << "weights: " << std::endl;
   for(int i = 0; i < net.weight_table_size(); ++i){
     std::cout << "[" << net.weight_table(i) << "]";

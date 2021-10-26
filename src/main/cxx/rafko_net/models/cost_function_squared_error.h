@@ -33,7 +33,7 @@ using rafko_mainframe::Service_context;
 class Cost_function_squared_error : public Cost_function{
 public:
   Cost_function_squared_error(uint32 feature_size_, Service_context& service_context)
-  : Cost_function(feature_size_, COST_FUNCTION_MSE,service_context)
+  : Cost_function(feature_size_, COST_FUNCTION_SQUARED_ERROR, service_context)
   { };
 
 protected:

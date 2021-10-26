@@ -159,6 +159,13 @@ public:
     return gradient_fragment;
   }
 
+  /**
+   * @brief      Evaluates the network in the given environment fully
+   */
+  void full_evaluation(void){
+    environment.full_evaluation(*solver);
+  }
+
 private:
   Service_context& service_context;
   SparseNet& net;

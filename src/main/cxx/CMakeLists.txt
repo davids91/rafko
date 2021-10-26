@@ -20,6 +20,10 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     "Makes the test builds examines convergence, instead of acceptance tests"
     OFF
   )
+  option(BUILD_MAINFRAME
+    "Enables build for the included grpc based deep learning service"
+    OFF
+  )
 
 endif()
 
@@ -27,7 +31,9 @@ add_subdirectory(rafko_protocol)
 add_subdirectory(rafko_utilities)
 add_subdirectory(rafko_net)
 add_subdirectory(rafko_gym)
-add_subdirectory(rafko_mainframe)
+if(BUILD_MAINFRAME)
+  add_subdirectory(rafko_mainframe)
+endif()
 
 add_library(rafko_lib "")
 target_link_libraries(rafko_lib PUBLIC rafko_protocol rafko_utilities rafko_net rafko_gym)
