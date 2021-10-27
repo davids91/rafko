@@ -88,8 +88,20 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   );
 
   /* Create dataset, test set and aprroximizer */
-  Data_aggregate* train_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
-  Data_aggregate* test_set = create_addition_dataset(5, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
+  std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> tmp1 = create_addition_dataset(5);
+  Data_aggregate* train_set = google::protobuf::Arena::Create<Data_aggregate>(
+    service_context.get_arena_ptr(), service_context,
+    vector<vector<sdouble32>>(std::get<0>(tmp1)),
+    vector<vector<sdouble32>>(std::get<1>(tmp1)),
+    *nets[0], COST_FUNCTION_SQUARED_ERROR
+  );
+  tmp1 = create_addition_dataset(10);
+  Data_aggregate* test_set = google::protobuf::Arena::Create<Data_aggregate>(
+    service_context.get_arena_ptr(), service_context,
+    vector<vector<sdouble32>>(std::get<0>(tmp1)),
+    vector<vector<sdouble32>>(std::get<1>(tmp1)),
+    *nets[0], COST_FUNCTION_SQUARED_ERROR
+  );
   Environment_data_set env(service_context, *train_set, *test_set);
   Sparse_net_approximizer approximizer(service_context, *nets[0], env, WEIGHT_UPDATER_DEFAULT);
 
@@ -177,9 +189,20 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   );
 
   /* Create dataset, test set and optimizers; optimize nets */
-  Data_aggregate* train_set = create_sequenced_addition_dataset(number_of_samples, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
-  Data_aggregate* test_set = create_sequenced_addition_dataset(number_of_samples * 2, 4, *nets[0], COST_FUNCTION_SQUARED_ERROR, service_context);
-  Environment_data_set env(service_context, *train_set, *test_set);
+  std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> tmp1 = create_sequenced_addition_dataset(number_of_samples, 4);
+  Data_aggregate* train_set =  google::protobuf::Arena::Create<Data_aggregate>(
+    service_context.get_arena_ptr(), service_context,
+    vector<vector<sdouble32>>(std::get<0>(tmp1)),
+    vector<vector<sdouble32>>(std::get<1>(tmp1)),
+    *nets[0], COST_FUNCTION_SQUARED_ERROR, /* Sequence size */4
+  );
+  tmp1 = create_sequenced_addition_dataset(number_of_samples * 2, 4);
+  Data_aggregate* test_set =  google::protobuf::Arena::Create<Data_aggregate>(
+    service_context.get_arena_ptr(), service_context,
+    vector<vector<sdouble32>>(std::get<0>(tmp1)),
+    vector<vector<sdouble32>>(std::get<1>(tmp1)),
+    *nets[0], COST_FUNCTION_SQUARED_ERROR, /* Sequence size */4
+  );  Environment_data_set env(service_context, *train_set, *test_set);
   Sparse_net_approximizer approximizer(service_context, *nets[0], env, WEIGHT_UPDATER_AMSGRAD,1);
 
   sdouble32 train_error = 1.0;
@@ -216,7 +239,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     train_error = train_set->get_error_avg();
     test_error = test_set->get_error_avg();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
-    cout << "\r   Error:" << std::setprecision(9)
+    cout << "\r\tError:" << std::setprecision(9)
     << "Training:[" << train_error << "]; "
     << "Test:[" << test_error << "]; "
     << "Minimum: ["<< minimum_error <<"];"

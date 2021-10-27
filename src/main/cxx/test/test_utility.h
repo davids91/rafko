@@ -78,7 +78,7 @@ extern void manaual_fully_connected_network_result(
 );
 
 /**
- * @brief      Checks if the inputs are pointing to the same data and weight values are matching in the given 
+ * @brief      Checks if the inputs are pointing to the same data and weight values are matching in the given
  *             @SparseNet and @Solution
  *
  * @param      net       The net
@@ -109,14 +109,10 @@ extern void print_training_sample(uint32 sample_sequence_index, Data_aggregate& 
  *             The generated dataset is adequate for testing non-recurrent neural networks
  *
  * @param[in]  number_of_samples  The number of samples to create
- * @param      net                The @SparseNet to supply the given cost function
- * @param[in]  service_context    The service context
  *
  * @return     The addition dataset. For each sample: Inputs: [a][b]; Outputs: [a+b]
  */
-extern Data_aggregate* create_addition_dataset(
-  uint32 number_of_samples, SparseNet& net, cost_functions the_function, Service_context& service_context
-);
+extern std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_addition_dataset(uint32 number_of_samples);
 
 /**
  * @brief      Creates a normalized dataset for adding binary numbers: each number is stored
@@ -125,14 +121,10 @@ extern Data_aggregate* create_addition_dataset(
  *
  * @param[in]  number_of_samples  The number of samples to create
  * @param[in]  sequence_size      The number of sequences one sample should contain, i.e. the size of the binary number
- * @param      net                The @SparseNet to supply the given cost function
- * @param[in]  service_context    The service context
  *
- * @return     The addition dataset. For each sample: Inputs: [[a0][...][an]][[b0][...][bn]]; Outputs: [[result0][...][resultn]]
+ * @return     The addition dataset. For each sample: Inputs: [[a0][...][an]][[b0][...][bn]]; Labels: [[result0][...][resultn]]
  */
-extern Data_aggregate* create_sequenced_addition_dataset(
-  uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function, Service_context& service_context
-);
+extern std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size);
 
 /**
  * @brief      Checks if the two arguments match or not

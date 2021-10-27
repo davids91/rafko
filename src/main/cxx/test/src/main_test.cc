@@ -357,14 +357,12 @@ void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_se
   std::cout << std::endl;
 }
 
-Data_aggregate* create_addition_dataset(
-  uint32 number_of_samples, SparseNet& net, cost_functions the_function, Service_context& service_context
-){
+std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_addition_dataset(uint32 number_of_samples){
 
   using std::vector;
 
   vector<vector<sdouble32>> net_inputs(number_of_samples);
-  vector<vector<sdouble32>> addition_dataset(number_of_samples);
+  vector<vector<sdouble32>> net_labels(number_of_samples);
 
   srand(time(nullptr));
   sdouble32 max_x = DBL_MIN;
@@ -379,55 +377,61 @@ Data_aggregate* create_addition_dataset(
   for(uint32 i = 0;i < number_of_samples;++i){ /* Normalize the inputs */
     net_inputs[i][0] /= max_x;
     net_inputs[i][1] /= max_y;
-    addition_dataset[i].push_back(net_inputs[i][0] + net_inputs[i][1]);
+    net_labels[i].push_back(net_inputs[i][0] + net_inputs[i][1]);
   }
-
-  return google::protobuf::Arena::Create<Data_aggregate>(
-    service_context.get_arena_ptr(),
-    service_context,
-    vector<vector<sdouble32>>(net_inputs),
-    vector<vector<sdouble32>>(addition_dataset),
-    net, the_function
-  );
+  return std::make_pair(net_inputs,net_labels);
 }
 
-Data_aggregate* create_sequenced_addition_dataset(
-  uint32 number_of_samples, uint32 sequence_size, SparseNet& net, cost_functions the_function, Service_context& service_context
-){
+std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size){
   uint32 carry_bit;
   vector<vector<sdouble32>> net_inputs(sequence_size * number_of_samples);
-  vector<vector<sdouble32>> addition_dataset(sequence_size * number_of_samples);
+  vector<vector<sdouble32>> net_labels(sequence_size * number_of_samples);
 
   srand(time(nullptr));
   for(uint32 i = 0;i < number_of_samples;++i){
     carry_bit = 0;
     for(uint32 j = 0;j <sequence_size;++j){ /* Add testing and training sequences randomly */
       net_inputs[(sequence_size * i) + j] = vector<sdouble32>(2);
-      addition_dataset[(sequence_size * i) + j] = vector<sdouble32>(1);
+      net_labels[(sequence_size * i) + j] = vector<sdouble32>(1);
       net_inputs[(sequence_size * i) + j][0] = static_cast<sdouble32>(rand()%2);
       net_inputs[(sequence_size * i) + j][1] = static_cast<sdouble32>(rand()%2);
 
-      addition_dataset[(sequence_size * i) + j][0] =
+      net_labels[(sequence_size * i) + j][0] =
         net_inputs[(sequence_size * i) + j][0]
         + net_inputs[(sequence_size * i) + j][1]
         + carry_bit;
-      if(1 < addition_dataset[(sequence_size * i) + j][0]){
-        addition_dataset[(sequence_size * i) + j][0] = 1;
+      if(1 < net_labels[(sequence_size * i) + j][0]){
+        net_labels[(sequence_size * i) + j][0] = 1;
         carry_bit = 1;
       }else{
         carry_bit = 0;
       }
     }
   }
+  return std::make_pair(net_inputs,net_labels);
+}
 
-  return google::protobuf::Arena::Create<Data_aggregate>(
-    service_context.get_arena_ptr(),
-    service_context,
-    vector<vector<sdouble32>>(net_inputs),
-    vector<vector<sdouble32>>(addition_dataset),
-    net, the_function, sequence_size
-  );
 
+TEST_CASE("Testing whether binary addition can be solved with a manual program","[meta]"){
+  uint32 sequence_size = 4;
+  uint32 number_of_samples = 10;
+  std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> dataset = create_sequenced_addition_dataset(number_of_samples, sequence_size);
+  vector<vector<sdouble32>>& inputs = std::get<0>(dataset);
+  vector<vector<sdouble32>>& labels = std::get<1>(dataset);
+
+  for(uint32 sample_iterator = 0; sample_iterator < number_of_samples; ++sample_iterator){
+    sdouble32 carry_bit = 0;
+    for(uint32 sequence_iterator = 0; sequence_iterator < sequence_size; ++sequence_iterator){
+      sdouble32 result = (
+        inputs[(sample_iterator * sequence_size) + sequence_iterator][0]
+        + inputs[(sample_iterator * sequence_size) + sequence_iterator][1]
+        + carry_bit
+      );
+      carry_bit = (double_literal(1.0) < result)?double_literal(1.0):double_literal(0.0);
+      result = std::min(double_literal(1.0), result);
+      REQUIRE( std::min(double_literal(1.0), result) == labels[(sample_iterator * sequence_size) + sequence_iterator][0] );
+    }
+  }
 }
 
 
