@@ -22,6 +22,7 @@
 
 #include <cmath>
 #include <vector>
+#include <limits>
 
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/sparse_net.pb.h"
@@ -164,6 +165,10 @@ public:
    */
   void full_evaluation(void){
     environment.full_evaluation(*solver);
+    if(min_test_error > environment.get_testing_fitness()){
+      min_test_error = environment.get_testing_fitness();
+      min_test_error_was_at_iteration = iteration;
+    }
   }
 
   /**
@@ -177,11 +182,15 @@ public:
       &&(
         (
           service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_BELOW_LEARNING_RATE)
-          &&(service_context.get_step_size() >= -environment.get_last_measured_fitness())
+          &&(service_context.get_step_size() >= -environment.get_training_fitness())
         )||(
           service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_ZERO)
-          &&(double_literal(0.0) ==  -environment.get_last_measured_fitness())
+          &&(double_literal(0.0) ==  -environment.get_training_fitness())
         )
+      )||(
+        service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_EARLY_STOPPING)
+        &&(environment.get_testing_fitness() < (min_test_error - (min_test_error * service_context.get_delta())))
+        &&((iteration - min_test_error_was_at_iteration) > service_context.get_tolerance_loop_value())
       )
     );
   }
@@ -199,6 +208,8 @@ private:
   uint32 iteration = 1;
   vector<sdouble32> applied_direction;
   sdouble32 epsilon_addition = double_literal(0.0);
+  sdouble32 min_test_error = std::numeric_limits<sdouble32>::max();
+  uint32 min_test_error_was_at_iteration = 0;
 
   /**
    * @brief      Evaluates the network in a stochastic manner the number of configured times and return with the fittness/error value

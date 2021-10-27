@@ -164,8 +164,9 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context()
-    .set_step_size(8e-2).set_minibatch_size(64).set_memory_truncation(2).
-    set_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_BELOW_LEARNING_RATE,true)
+    .set_step_size(8e-2).set_minibatch_size(64).set_memory_truncation(2)
+    .set_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_ZERO,true)
+    .set_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_EARLY_STOPPING,true)
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
   uint32 number_of_samples = 128;
 

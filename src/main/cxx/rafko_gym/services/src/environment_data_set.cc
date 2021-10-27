@@ -37,7 +37,7 @@ Environment_data_set::Environment_data_set(Service_context& service_context_, Da
   vector<sdouble32>(train_set_.get_feature_size()) /* ..plus for the label errors one additional vector is needed */
 )
 , execution_threads(service_context.get_max_processing_threads())
-, loops_unchecked(service_context.get_insignificant_changes() + 1u)
+, loops_unchecked(service_context.get_tolerance_loop_value() + 1u)
 , sequence_truncation(min(service_context.get_memory_truncation(), train_set.get_sequence_size()))
 {
   (void)service_context.set_minibatch_size(max(1u,min(

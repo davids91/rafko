@@ -51,8 +51,8 @@ public:
     return sqrt_of_process_threads;
   }
 
-  uint32 get_insignificant_changes(void) const{
-    return insignificant_changes;
+  uint32 get_tolerance_loop_value(void) const{
+    return tolerance_loop_value;
   }
 
   sdouble32 get_device_max_megabytes(void) const{
@@ -93,6 +93,10 @@ public:
 
   sdouble32 get_gamma(void) const{
     return hypers.gamma();
+  }
+
+  sdouble32 get_delta(void) const{
+    return hypers.delta();
   }
 
   sdouble32 get_epsilon(void) const{
@@ -137,8 +141,8 @@ public:
     return *this;
   }
 
-  void set_insignificant_changes(uint32 insignificant_changes_){
-    insignificant_changes = insignificant_changes_;
+  void set_tolerance_loop_value(uint32 tolerance_loop_value_){
+    tolerance_loop_value = tolerance_loop_value_;
   }
 
   Service_context& set_device_max_megabytes(sdouble32 device_max_megabytes_){
@@ -173,6 +177,11 @@ public:
 
   Service_context& set_gamma(sdouble32 gamma_){
     hypers.set_gamma(gamma_);
+    return *this;
+  }
+
+  Service_context& set_delta(sdouble32 delta_){
+    hypers.set_delta(delta_);
     return *this;
   }
 
@@ -219,8 +228,9 @@ public:
     hypers.set_beta(double_literal(0.9));
     hypers.set_beta_2(double_literal(0.99));
     hypers.set_gamma(double_literal(0.9));
+    hypers.set_delta(double_literal(0.03));
     hypers.set_epsilon(1e-8); /* very small positive value almost greater, than double_literal(0.0) */
-    hypers.set_zetta(0.3);
+    hypers.set_zetta(double_literal(0.3));
     hypers.set_lambda(double_literal(1.0507));
     hypers.set_training_strategies(rafko_net::Training_strategy::TRAINING_STRATEGY_UNKNOWN);
   }
@@ -230,7 +240,7 @@ private:
   uint16 sqrt_of_solve_threads = 2;
   uint16 max_processing_threads = 4;
   uint16 sqrt_of_process_threads = 2;
-  uint32 insignificant_changes = 100;
+  uint32 tolerance_loop_value = 100;
   sdouble32 sqrt_epsilon = sqrt(double_literal(1e-15));
   sdouble32 device_max_megabytes = double_literal(2048);
   Arena* arena_ptr = nullptr;

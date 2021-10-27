@@ -70,8 +70,12 @@ public:
     test_set.pop_state();
   }
 
-  sdouble32 get_last_measured_fitness(void){
+  sdouble32 get_training_fitness(void){
     return -train_set.get_error_avg();
+  }
+
+  sdouble32 get_testing_fitness(void){
+    return -test_set.get_error_avg();
   }
 
   /**
@@ -81,7 +85,7 @@ public:
    */
   void check(Agent& agent){
     if(
-      (loops_unchecked >= service_context.get_insignificant_changes())
+      (loops_unchecked >= service_context.get_tolerance_loop_value())
       ||(loops_unchecked > (train_set.get_error_sum()/service_context.get_step_size()))
       ||(loops_unchecked > (test_set.get_error_sum()/service_context.get_step_size()))
     ){ /* calculate the error value for the agent in this environment */

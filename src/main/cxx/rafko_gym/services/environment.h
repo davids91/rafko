@@ -53,11 +53,18 @@ public:
   virtual void push_state(void) = 0;
 
   /**
-   * @brief      Provides the last measured error/fittness value
+   * @brief      Provides the last measured training fitness value
    *
    * @return     The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 get_last_measured_fitness(void) = 0;
+  virtual sdouble32 get_training_fitness(void) = 0;
+
+  /**
+   * @brief      Provides the last measured testing fitness value
+   *
+   * @return     The resulting error/fitness value summary of the evaluation
+   */
+  virtual sdouble32 get_testing_fitness(void) = 0;
 
   /**
    * @brief      Restores the previously stored environment state

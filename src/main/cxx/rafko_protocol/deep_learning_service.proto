@@ -160,6 +160,7 @@ message Service_hyperparameters{
   double alpha = 20;
   double beta = 21;
   double gamma = 22;
+  double delta = 23;
   double epsilon = 24; /* very small positive value almost greater, than zero */
   double zetta = 25; /* Commonly used for oscillation dampening purposes */
   double lambda = 31;

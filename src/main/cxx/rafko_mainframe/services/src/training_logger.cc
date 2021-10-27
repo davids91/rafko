@@ -32,7 +32,7 @@ void Training_logger::log(uint32 iteration, const vector<uint32>& coordinates, c
   for(const sdouble32& data_element : data) measured.add_data(data_element);
   *measurement.add_packs() = measured;
   ++changes_since;
-  if(context.get_insignificant_changes() < changes_since)
+  if(context.get_tolerance_loop_value() < changes_since)
     flush();
 }
 
