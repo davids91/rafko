@@ -70,8 +70,8 @@ public:
     test_set.pop_state();
   }
 
-  sdouble32 get_last_measured_value(void){
-    return -train_set.get_error_sum();
+  sdouble32 get_last_measured_fitness(void){
+    return -train_set.get_error_avg();
   }
 
   /**

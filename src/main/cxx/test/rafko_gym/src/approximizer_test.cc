@@ -164,7 +164,8 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context()
-    .set_step_size(8e-2).set_minibatch_size(64).set_memory_truncation(2)
+    .set_step_size(8e-2).set_minibatch_size(64).set_memory_truncation(2).
+    set_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_BELOW_LEARNING_RATE,true)
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
   uint32 number_of_samples = 128;
 
@@ -223,7 +224,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   std::cout << "Approximizing net.." << std::endl;
   std::cout.precision(15);
-  while(abs(train_error) > service_context.get_step_size()){
+  // while(abs(train_error) > service_context.get_step_size()){
+  while(!approximizer.stop_training()){
     start = steady_clock::now();
     approximizer.collect_approximates_from_weight_gradients();
     avg_gradient = 0;
@@ -253,7 +255,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     }
     ++iteration;
   }
-  average_duration /= number_of_steps;
+  if(1 < number_of_steps)average_duration /= number_of_steps;
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 

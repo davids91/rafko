@@ -57,7 +57,7 @@ public:
    *
    * @return     The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 get_last_measured_value(void) = 0;
+  virtual sdouble32 get_last_measured_fitness(void) = 0;
 
   /**
    * @brief      Restores the previously stored environment state

@@ -25,6 +25,18 @@ package rafko_net;
 import "common.proto";
 
 
+/** @brief      Different configurable strategies while training
+ */
+enum Training_strategy{
+  TRAINING_STRATEGY_UNKNOWN = 0;
+  TRAINING_STRATEGY_EARLY_STOPPING = 1; /* Stop the training when training eror diverges from test error */
+  TRAINING_STRATEGY_LEARNING_RATE_SCHEDULE = 2;
+  TRAINING_STRATEGY_STOCHASTIC_MINING_SCHEDULE = 4;
+  TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_BELOW_LEARNING_RATE = 4096;
+  TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_ZERO = 8192;
+  TRAINING_STRATEGY_END = 1048576;
+}
+
 /** @brief      Describes a data-set to train or test Neural Networks
  *              The input and label arrays contain @input_size and @feature_size floating point numbers
  *              respectively, repeated after one another.

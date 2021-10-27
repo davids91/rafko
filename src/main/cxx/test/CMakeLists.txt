@@ -1,6 +1,6 @@
 if(MAKE_TESTS)
   add_executable(rafko_test)
-  add_test(NAME rafko_test_suite COMMAND rafko_test -d yes --abort)
+  add_test(NAME rafko_test_suite COMMAND rafko_test -d yes --abort -b)
   target_link_libraries(rafko_test rafko_lib)
   target_include_directories(rafko_test PUBLIC ${PROJECT_SOURCE_DIR})
 

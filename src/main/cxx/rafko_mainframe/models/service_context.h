@@ -22,6 +22,7 @@
 
 #include <cmath>
 
+#include "rafko_protocol/training.pb.h"
 #include "rafko_protocol/deep_learning_service.pb.h"
 
 namespace rafko_mainframe{
@@ -30,6 +31,7 @@ using std::sqrt;
 using google::protobuf::Arena;
 
 using rafko_mainframe::Service_hyperparameters;
+using rafko_net::Training_strategy;
 
 class Service_context{
 public:
@@ -71,6 +73,10 @@ public:
 
   uint32 get_memory_truncation(void) const{
     return hypers.memory_truncation();
+  }
+
+  bool get_training_strategy(rafko_net::Training_strategy strategy){
+    return (0u < (static_cast<uint32>(hypers.training_strategies()) & static_cast<uint32>(strategy)));
   }
 
   sdouble32 get_alpha(void) const{
@@ -191,6 +197,19 @@ public:
     return *this;
   }
 
+  Service_context& set_training_strategy(Training_strategy strategy, bool enable){
+    if(enable){
+      hypers.set_training_strategies(
+        static_cast<Training_strategy>(static_cast<uint32>(hypers.training_strategies()) | static_cast<uint32>(strategy))
+      );
+    }else{
+      hypers.set_training_strategies(
+        static_cast<Training_strategy>(static_cast<uint32>(hypers.training_strategies()) & (~static_cast<uint32>(strategy)))
+      );
+    }
+    return *this;
+  }
+
   Service_context(void){
     hypers.set_step_size(double_literal(1e-6));
     hypers.set_minibatch_size(64);
@@ -203,6 +222,7 @@ public:
     hypers.set_epsilon(1e-8); /* very small positive value almost greater, than double_literal(0.0) */
     hypers.set_zetta(0.3);
     hypers.set_lambda(double_literal(1.0507));
+    hypers.set_training_strategies(rafko_net::Training_strategy::TRAINING_STRATEGY_UNKNOWN);
   }
 
 private:

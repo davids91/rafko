@@ -166,6 +166,26 @@ public:
     environment.full_evaluation(*solver);
   }
 
+  /**
+   * @brief      Helper function to get the collected weight gradient fragment
+   *
+   * @return     Constant reference to the current weight gradients array
+   */
+  bool stop_training(void){
+    return(
+      (1u < iteration)
+      &&(
+        (
+          service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_BELOW_LEARNING_RATE)
+          &&(service_context.get_step_size() >= -environment.get_last_measured_fitness())
+        )||(
+          service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_ZERO)
+          &&(double_literal(0.0) ==  -environment.get_last_measured_fitness())
+        )
+      )
+    );
+  }
+
 private:
   Service_context& service_context;
   SparseNet& net;
