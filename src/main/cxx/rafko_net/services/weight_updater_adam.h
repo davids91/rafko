@@ -52,7 +52,7 @@ public:
 private:
   sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
     return (
-      service_context.get_step_size()
+      service_context.get_learning_rate()
       / (
         std::sqrt(
           raw_moment[weight_index]

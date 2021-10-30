@@ -182,7 +182,7 @@ public:
       &&(
         (
           service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_BELOW_LEARNING_RATE)
-          &&(service_context.get_step_size() >= -environment.get_training_fitness())
+          &&(service_context.get_learning_rate() >= -environment.get_training_fitness())
         )||(
           service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_ZERO)
           &&(double_literal(0.0) ==  -environment.get_training_fitness())

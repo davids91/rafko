@@ -1,6 +1,6 @@
 if(MAKE_TESTS)
   add_executable(rafko_test)
-  add_test(NAME rafko_test_suite COMMAND rafko_test -d yes --abort -b)
+  add_test(NAME rafko_test_suite COMMAND rafko_test -d yes)
   target_link_libraries(rafko_test rafko_lib)
   target_include_directories(rafko_test PUBLIC ${PROJECT_SOURCE_DIR})
 
@@ -30,6 +30,7 @@ if(MAKE_TESTS)
       rafko_net/src/synapse_iterator_test.cc
       rafko_net/src/weight_experience_space_test.cc
       rafko_net/src/weight_updater_test.cc
+      rafko_mainframe/src/service_context_test.cc
     )
   endif()
 endif()

@@ -86,8 +86,8 @@ public:
   void check(Agent& agent){
     if(
       (loops_unchecked >= service_context.get_tolerance_loop_value())
-      ||(loops_unchecked > (train_set.get_error_sum()/service_context.get_step_size()))
-      ||(loops_unchecked > (test_set.get_error_sum()/service_context.get_step_size()))
+      ||(loops_unchecked > (train_set.get_error_sum()/service_context.get_learning_rate()))
+      ||(loops_unchecked > (test_set.get_error_sum()/service_context.get_learning_rate()))
     ){ /* calculate the error value for the agent in this environment */
       full_evaluation(agent);
       loops_unchecked = 0;

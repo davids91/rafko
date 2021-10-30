@@ -33,7 +33,7 @@ using rafko_net::Index_synapse_interval;
 
 void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
   vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
-  sdouble32 gradient_overview = get_gradient_for_all_weights() * service_context.get_step_size();
+  sdouble32 gradient_overview = get_gradient_for_all_weights() * service_context.get_learning_rate(iteration);
   sdouble32 greatest_weight_value = double_literal(0.0);
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
     weight_gradients[weight_index] = get_single_weight_gradient(weight_index);
@@ -46,7 +46,7 @@ void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
     ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
         * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
         */
-    weight_gradients[weight_index] *= service_context.get_step_size();
+    weight_gradients[weight_index] *= service_context.get_learning_rate(iteration);
   }
   convert_direction_to_gradient(weight_gradients,true);
   ++iteration;

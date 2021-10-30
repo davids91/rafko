@@ -152,7 +152,7 @@ message Slot_info{
  *             are decided from the server configuration.
  */
 message Service_hyperparameters{
-  double step_size = 10;
+  double learning_rate = 10;
   uint32 minibatch_size = 11;
   uint32 memory_truncation = 12;
   rafko_net.Training_strategy training_strategies = 13;

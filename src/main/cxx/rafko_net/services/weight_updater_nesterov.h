@@ -42,11 +42,11 @@ private:
   sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
     if(!is_finished()) return (
       (previous_velocity[weight_index] * service_context.get_gamma())
-      + (gradients[weight_index] * service_context.get_step_size())
+      + (gradients[weight_index] * service_context.get_learning_rate())
     );
     else return(
       (previous_velocity_at_start[weight_index] * service_context.get_gamma())
-      + (gradients[weight_index] * service_context.get_step_size())
+      + (gradients[weight_index] * service_context.get_learning_rate())
     );
   }
 

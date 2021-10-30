@@ -71,7 +71,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   google::protobuf::Arena arena;
   Service_context service_context = Service_context()
     .set_max_processing_threads(7)
-    .set_step_size(1e-1).set_arena_ptr(&arena);
+    .set_learning_rate(1e-1).set_arena_ptr(&arena);
 
   /* Create nets */
   vector<SparseNet*> nets = vector<SparseNet*>();
@@ -122,7 +122,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
 
   approximizer.apply_fragment(); /* Add the negative gradient */
   REQUIRE(
-    (nets[0]->weight_table(weight_index) + (weight_gradient * service_context.get_step_size()))
+    (nets[0]->weight_table(weight_index) + (weight_gradient * service_context.get_learning_rate()))
     == Approx(weight_old_value).epsilon(0.00000000000001)
   );
 
@@ -145,7 +145,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
     CHECK(
       Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
-      == (initial_weights[weight_index] - (correct_weight_delta[weight_index] * service_context.get_step_size()))
+      == (initial_weights[weight_index] - (correct_weight_delta[weight_index] * service_context.get_learning_rate()))
     );
   }
 }
@@ -164,7 +164,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
   Service_context service_context = Service_context()
-    .set_step_size(8e-2).set_minibatch_size(64).set_memory_truncation(2)
+    .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
     .set_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_ZERO,true)
     .set_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_EARLY_STOPPING,true)
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
@@ -225,7 +225,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   std::cout << "Approximizing net.." << std::endl;
   std::cout.precision(15);
-  // while(abs(train_error) > service_context.get_step_size()){
+  // while(abs(train_error) > service_context.get_learning_rate()){
   while(!approximizer.stop_training()){
     start = steady_clock::now();
     approximizer.collect_approximates_from_weight_gradients();

@@ -21,6 +21,8 @@
 #include "rafko_global.h"
 
 #include <cmath>
+#include <vector>
+#include <utility>
 
 #include "rafko_protocol/training.pb.h"
 #include "rafko_protocol/deep_learning_service.pb.h"
@@ -29,6 +31,9 @@ namespace rafko_mainframe{
 
 using std::sqrt;
 using google::protobuf::Arena;
+using std::vector;
+using std::pair;
+using std::get;
 
 using rafko_mainframe::Service_hyperparameters;
 using rafko_net::Training_strategy;
@@ -63,8 +68,26 @@ public:
     return arena_ptr;
   }
 
-  sdouble32 get_step_size(void) const{
-    return hypers.step_size();
+  sdouble32 get_learning_rate(uint32 iteration = 0) const{
+    if((0 == learning_rate_with_decay.size())||(iteration < get<uint32>(learning_rate_with_decay[0])))
+      return hypers.learning_rate();
+    if(iteration >= get<uint32>(learning_rate_with_decay.back()))
+      return get<sdouble32>(learning_rate_with_decay.back());
+    uint32 decay_index = 0;
+    if(iteration >= learning_rate_decay_iteration_cache)
+      decay_index = learning_rate_decay_index_cache;
+
+    while(
+      (decay_index < (learning_rate_with_decay.size()-1u))
+      &&(iteration >= get<uint32>(learning_rate_with_decay[decay_index]))
+    )++decay_index;
+
+    --decay_index;
+
+    learning_rate_decay_iteration_cache = iteration;
+    learning_rate_decay_index_cache = decay_index;
+
+    return get<sdouble32>(learning_rate_with_decay[decay_index]);
   }
 
   uint32 get_minibatch_size(void) const{
@@ -115,8 +138,9 @@ public:
     return hypers.lambda();
   }
 
-  Service_context& set_step_size(sdouble32 step_size_){
-    hypers.set_step_size(step_size_);
+  Service_context& set_learning_rate(sdouble32 learning_rate_){
+    hypers.set_learning_rate(learning_rate_);
+    calculate_learning_rate_decay();
     return *this;
   }
 
@@ -219,8 +243,14 @@ public:
     return *this;
   }
 
+  Service_context& set_learning_rate_decay(vector<pair<uint32,sdouble32>>&& iteration_with_value){
+    learning_rate_decay = std::move(iteration_with_value);
+    calculate_learning_rate_decay();
+    return *this;
+  }
+
   Service_context(void){
-    hypers.set_step_size(double_literal(1e-6));
+    hypers.set_learning_rate(double_literal(1e-6));
     hypers.set_minibatch_size(64);
     hypers.set_memory_truncation(2);
 
@@ -245,6 +275,24 @@ private:
   sdouble32 device_max_megabytes = double_literal(2048);
   Arena* arena_ptr = nullptr;
   Service_hyperparameters hypers = Service_hyperparameters();
+  mutable uint32 learning_rate_decay_iteration_cache = 0;
+  mutable uint32 learning_rate_decay_index_cache = 0;
+  vector<pair<uint32, sdouble32>> learning_rate_with_decay;
+  vector<pair<uint32, sdouble32>> learning_rate_decay;
+
+
+  /**
+   * @brief      Calculates the learning rates for different iteration indices
+   *             based on the decay and the initial learning rate
+   */
+  void calculate_learning_rate_decay(void){
+    sdouble32 learning_rate = get_learning_rate();
+    learning_rate_with_decay.clear();
+    for(pair<uint32, sdouble32> decay : learning_rate_decay){
+      learning_rate *= get<sdouble32>(decay);
+      learning_rate_with_decay.push_back({get<uint32>(decay), learning_rate});
+    }
+  }
 };
 
 } /* namespace rafko_mainframe */
