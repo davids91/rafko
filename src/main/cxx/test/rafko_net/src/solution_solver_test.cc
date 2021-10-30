@@ -505,4 +505,30 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
   }
 }
 
+/*###############################################################################################
+ * Test if the solver is able to remember the previous neuron values correctly
+ */
+TEST_CASE("Solution Solver memory test", "[solve][memory]"){
+  Service_context service_context = Service_context();
+  SparseNet* net = Sparse_net_builder(service_context)
+    .input_size(1).expected_input_range(double_literal(5.0))
+    .set_recurrence_to_self()
+    .allowed_transfer_functions_by_layer({{TRANSFER_FUNCTION_IDENTITY}})
+    .dense_layers({1});
+
+  for(uint32 weight_index = 0; weight_index < net->weight_table_size(); ++weight_index){
+    net->set_weight_table(weight_index, double_literal(1.0));
+  }
+  net->set_weight_table(0u,double_literal(0.0)); /* Set the memory filter of the only neuron to 0, so the previous value of it would not modify the current one through the spike function*/
+
+  Solution* solution = Solution_builder(service_context).build(*net);
+  unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
+
+  sdouble32 expected_result = double_literal(1.0);
+  for(uint32 variant = 0u; variant < 10u; ++variant){
+    CHECK( expected_result ==  (solver->solve({double_literal(0.0)}, false, 0u)).get_element(0u,0u));
+    expected_result += double_literal(1.0);
+  }
+}
+
 }
