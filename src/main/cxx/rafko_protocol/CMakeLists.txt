@@ -1,9 +1,7 @@
 add_library(rafko_protocol)
 target_include_directories(rafko_protocol
   PUBLIC
-  .
-  ${CMAKE_BINARY_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen
   ${Protobuf_INCLUDE_DIRS}
 )
 find_package(Protobuf CONFIG REQUIRED)
@@ -28,17 +26,23 @@ protobuf_generate(
     rafko_protocol
   LANGUAGE
     cpp
+  GENERATE_EXTENSIONS
+    .pb.cc .pb.h
+  PROTOC_OUT_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol
   PROTOS
     ${PROTO_SOURCES}
 )
+
 protobuf_generate(
   TARGET
     rafko_protocol
   LANGUAGE
     grpc
   GENERATE_EXTENSIONS
-    .grpc.pb.h
-    .grpc.pb.cc
+    .grpc.pb.cc .grpc.pb.h
+  PROTOC_OUT_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol
   PROTOS
     deep_learning_service.proto
   PLUGIN
