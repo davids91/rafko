@@ -1,7 +1,7 @@
 if(MAKE_TESTS)
   add_executable(rafko_test)
   add_test(NAME rafko_test_suite COMMAND rafko_test -d yes)
-  target_link_libraries(rafko_test rafko_lib)
+  target_link_libraries(rafko_test rafko_full)
   target_include_directories(rafko_test PRIVATE ${PROJECT_SOURCE_DIR})
 
   if(TEST_CONVERGENCE)
