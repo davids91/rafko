@@ -48,12 +48,12 @@ private:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  static void add_to_synapse(sint32 index, uint32 reach_back, uint32& current_synapse_count, RepeatedPtrField<Input_synapse_interval>* synapse_intervals){
+  static void add_to_synapse(sint32 index, uint32 reach_back, uint32& current_synapse_count, RepeatedPtrField<InputSynapseInterval>* synapse_intervals){
     if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
       ++current_synapse_count;
       synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
     }else{ /* Opening up a totally new Neuron Synapse */
-      Input_synapse_interval new_interval;
+      InputSynapseInterval new_interval;
       new_interval.set_starts(index);
       new_interval.set_interval_size(1);
       new_interval.set_reach_past_loops(reach_back);
@@ -69,12 +69,12 @@ private:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  static void add_to_synapse(sint32 index, uint32& current_synapse_count, RepeatedPtrField<Index_synapse_interval>* synapse_intervals){
+  static void add_to_synapse(sint32 index, uint32& current_synapse_count, RepeatedPtrField<IndexSynapseInterval>* synapse_intervals){
     if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
       ++current_synapse_count;
       synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
     }else{ /* Opening up a totally new Neuron Synapse */
-      Index_synapse_interval new_interval;
+      IndexSynapseInterval new_interval;
       new_interval.set_starts(index);
       new_interval.set_interval_size(1);
       *synapse_intervals->Add() = new_interval;
@@ -93,7 +93,7 @@ private:
    */
   static bool look_for_neuron_input(
     sint32 neuron_input_index, uint32 input_reach_back,
-    Synapse_iterator<Input_synapse_interval>& input_synapse, Partial_solution& partial
+    Synapse_iterator<InputSynapseInterval>& input_synapse, Partial_solution& partial
   );
 
   /**

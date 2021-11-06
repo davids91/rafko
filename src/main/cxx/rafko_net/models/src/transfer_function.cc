@@ -23,66 +23,66 @@ namespace rafko_net {
 
 using std::max;
 
-transfer_functions Transfer_function::next(){
+Transfer_functions Transfer_function::next(){
   return next({
-    TRANSFER_FUNCTION_IDENTITY,
-    TRANSFER_FUNCTION_SIGMOID,
-    TRANSFER_FUNCTION_TANH,
-    TRANSFER_FUNCTION_ELU,
-    TRANSFER_FUNCTION_SELU,
-    TRANSFER_FUNCTION_RELU
+    transfer_function_identity,
+    transfer_function_sigmoid,
+    transfer_function_tanh,
+    transfer_function_elu,
+    transfer_function_selu,
+    transfer_function_relu
   });
 }
 
-transfer_functions Transfer_function::next(vector<transfer_functions> range){
-  transfer_functions candidate = static_cast<transfer_functions>(rand()%transfer_functions_ARRAYSIZE);
+Transfer_functions Transfer_function::next(vector<Transfer_functions> range){
+  Transfer_functions candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
   while(find(range.begin(), range.end(), candidate) == range.end())
-    candidate = static_cast<transfer_functions>(rand()%transfer_functions_ARRAYSIZE);
+    candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
   return candidate;
 }
 
-sdouble32 Transfer_function::get_average_output_range(transfer_functions function){
+sdouble32 Transfer_function::get_average_output_range(Transfer_functions function){
   switch(function){
-  case TRANSFER_FUNCTION_SIGMOID:
-  case TRANSFER_FUNCTION_TANH:
+  case transfer_function_sigmoid:
+  case transfer_function_tanh:
     return double_literal(1.0);
-  case TRANSFER_FUNCTION_ELU:
-  case TRANSFER_FUNCTION_RELU:
-  case TRANSFER_FUNCTION_SELU:
-  case TRANSFER_FUNCTION_IDENTITY:
+  case transfer_function_elu:
+  case transfer_function_relu:
+  case transfer_function_selu:
+  case transfer_function_identity:
   default:
     return double_literal(50.0); /* The averagest number there is */
   }
 }
 
-sdouble32 Transfer_function::get_value(transfer_functions function, sdouble32 data) const{
+sdouble32 Transfer_function::get_value(Transfer_functions function, sdouble32 data) const{
   switch(function){
-    case TRANSFER_FUNCTION_IDENTITY: return data; /* Identity means f(x) = x */
-    case TRANSFER_FUNCTION_SIGMOID: return 1/(1+exp(-data));
-    case TRANSFER_FUNCTION_TANH: return tanh(data);
-    case TRANSFER_FUNCTION_ELU:
+    case transfer_function_identity: return data; /* Identity means f(x) = x */
+    case transfer_function_sigmoid: return 1/(1+exp(-data));
+    case transfer_function_tanh: return tanh(data);
+    case transfer_function_elu:
       if(0 >= data) return context.get_alpha() * (exp(data) -1);
       else return data;
-    case TRANSFER_FUNCTION_SELU:
+    case transfer_function_selu:
       if(0 >= data) return ((context.get_alpha() * exp(data)) - context.get_alpha()) * context.get_lambda();
       else return data;
-    case TRANSFER_FUNCTION_RELU: return max(double_literal(0.0),data);
+    case transfer_function_relu: return max(double_literal(0.0),data);
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
 
-sdouble32 Transfer_function::get_derivative(transfer_functions function, sdouble32 data) const{
+sdouble32 Transfer_function::get_derivative(Transfer_functions function, sdouble32 data) const{
   switch(function){
-    case TRANSFER_FUNCTION_IDENTITY: return 1; /* Identity means f(x) = x */
-    case TRANSFER_FUNCTION_SIGMOID: return exp(data)/pow((exp(data) + 1),2);
-    case TRANSFER_FUNCTION_TANH: return 1/cosh(data);
-    case TRANSFER_FUNCTION_ELU:
+    case transfer_function_identity: return 1; /* Identity means f(x) = x */
+    case transfer_function_sigmoid: return exp(data)/pow((exp(data) + 1),2);
+    case transfer_function_tanh: return 1/cosh(data);
+    case transfer_function_elu:
       if(0 >= data) return context.get_alpha() + get_value(function,data);
       else return 1;
-    case TRANSFER_FUNCTION_SELU:
+    case transfer_function_selu:
       if(0 >= data) return (context.get_lambda() * context.get_alpha() * exp(data));
       else return context.get_lambda();
-    case TRANSFER_FUNCTION_RELU:
+    case transfer_function_relu:
       if(0 >= data) return 0;
       else return 1;
     default: throw std::runtime_error("Unidentified transfer function queried for information!");

@@ -25,10 +25,10 @@ namespace rafko_mainframe{
 
 using rafko_net::Solution_builder;
 using rafko_net::Function_factory;
-using rafko_net::cost_functions_IsValid;
-using rafko_net::COST_FUNCTION_UNKNOWN;
-using rafko_net::WEIGHT_UPDATER_UNKNOWN;
-using rafko_net::weight_updaters_IsValid;
+using rafko_net::Cost_functions_IsValid;
+using rafko_net::cost_function_unknown;
+using rafko_net::weight_updater_unknown;
+using rafko_net::Weight_updaters_IsValid;
 
 void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
   if(SERV_SLOT_TO_APPROXIMIZE != service_slot_.type()) throw std::runtime_error("Incorrect Server slot initialization!");
@@ -50,8 +50,8 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
       &&(0 < service_slot_.test_set().inputs_size())
     )*service_slot->mutable_test_set() = service_slot_.test_set();
     if(
-      (weight_updaters_IsValid(service_slot_.weight_updater()))
-      &&(WEIGHT_UPDATER_UNKNOWN != service_slot_.weight_updater())
+      (Weight_updaters_IsValid(service_slot_.weight_updater()))
+      &&(weight_updater_unknown != service_slot_.weight_updater())
     )service_slot->set_weight_updater(service_slot_.weight_updater());
     if(service_slot_.has_hypers())(void)context.set_hypers(service_slot_.hypers());
 
@@ -68,8 +68,8 @@ void Server_slot_approximize_net::initialize(Service_slot&& service_slot_){
      * COST FUNCTION
      * #################################################################### */
     if(
-      cost_functions_IsValid(service_slot_.cost_function())
-      &&(COST_FUNCTION_UNKNOWN != service_slot_.cost_function())
+      Cost_functions_IsValid(service_slot_.cost_function())
+      &&(cost_function_unknown != service_slot_.cost_function())
     )service_slot->set_cost_function(service_slot_.cost_function());
     update_cost_function();
     expose_state();
@@ -149,14 +149,14 @@ void Server_slot_approximize_net::update_cost_function(){
   if(
     (cost_function)
     &&( /* in case there's a cost function object, but an invalid cost function type stored */
-      (!cost_functions_IsValid(service_slot->cost_function()))
-      ||(COST_FUNCTION_UNKNOWN == service_slot->cost_function())
+      (!Cost_functions_IsValid(service_slot->cost_function()))
+      ||(cost_function_unknown == service_slot->cost_function())
       ||(service_slot->cost_function() != cost_function->get_type())
     ) /* or the stored cost function type doesn't match the objects */
   )cost_function.reset();
   if(!cost_function)service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_COST_FUNCTION);
   if(
-    (COST_FUNCTION_UNKNOWN != service_slot->cost_function())
+    (cost_function_unknown != service_slot->cost_function())
     &&(
       (0 == (service_slot->state() & SERV_SLOT_MISSING_NET))
       ||(0 == (service_slot->state() & SERV_SLOT_MISSING_DATA_SET))
@@ -190,8 +190,8 @@ void Server_slot_approximize_net::update_trainer(void){
 
   expose_state();
   if(
-    (weight_updaters_IsValid(service_slot->weight_updater()))
-    &&(WEIGHT_UPDATER_UNKNOWN != service_slot->weight_updater())
+    (Weight_updaters_IsValid(service_slot->weight_updater()))
+    &&(weight_updater_unknown != service_slot->weight_updater())
     &&(0 == (service_slot->state() & SERV_SLOT_MISSING_DATA_SET))
     &&(0 == (service_slot->state() & SERV_SLOT_MISSING_NET))
   ){

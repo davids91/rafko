@@ -50,7 +50,7 @@ public:
    *
    * @return     The Calculated weight
    */
-  virtual sdouble32 next_weight_for(transfer_functions used_transfer_function) const = 0;
+  virtual sdouble32 next_weight_for(Transfer_functions used_transfer_function) const = 0;
 
   /**
    * @brief      Calculate a number which fits the Neuron the most based on the configuration parameters
@@ -87,12 +87,12 @@ public:
 
   /**
    * @brief      Calculate a weight which fits the Neuron the most based on the configuration parameters
-   *             The basis of the number is the Transfer_function::TRANSFER_FUNCTION_IDENTITY
+   *             The basis of the number is the Transfer_function::transfer_function_identity
    *
    * @return     The Calculated Weight value
    */
   sdouble32 next_weight() const{
-    return next_weight_for(TRANSFER_FUNCTION_IDENTITY);
+    return next_weight_for(transfer_function_identity);
   }
 
   virtual ~Weight_initializer(void) = default;

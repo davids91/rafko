@@ -54,7 +54,7 @@ using google::protobuf::RepeatedPtrField;
  *             Example: To iterate through a synapse set, a lambda for each synapse start, and for each element in that synapse:
  *             syn_iter.iterate([&](int synapse_start){},[&](int index){});
  */
-template<typename Interval_type = Index_synapse_interval>
+template<typename Interval_type = IndexSynapseInterval>
 class Synapse_iterator{
 public:
    Synapse_iterator(const RepeatedPtrField<Interval_type>& arg_synapse_interval)

@@ -1,4 +1,5 @@
 add_library(rafko_protocol)
+file(MAKE_DIRECTORY   ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol)
 target_include_directories(rafko_protocol
   PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/gen
@@ -30,7 +31,6 @@ protobuf_generate(
     .pb.cc .pb.h
   PROTOC_OUT_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol
-#  OUT_VAR PBUF_OUT
   PROTOS
     ${PROTO_SOURCES}
 )

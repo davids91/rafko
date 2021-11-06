@@ -31,16 +31,16 @@ namespace rafko_net_test {
 
 using rafko_net::Neuron;
 using rafko_net::SparseNet;
-using rafko_net::transfer_functions;
+using rafko_net::Transfer_functions;
 using rafko_net::Sparse_net_builder;
 using rafko_net::Neuron_info;
-using rafko_net::TRANSFER_FUNCTION_IDENTITY;
-using rafko_net::TRANSFER_FUNCTION_SIGMOID;
-using rafko_net::TRANSFER_FUNCTION_TANH;
-using rafko_net::TRANSFER_FUNCTION_RELU;
-using rafko_net::TRANSFER_FUNCTION_SELU;
-using rafko_net::Input_synapse_interval;
-using rafko_net::Index_synapse_interval;
+using rafko_net::transfer_function_identity;
+using rafko_net::transfer_function_sigmoid;
+using rafko_net::transfer_function_tanh;
+using rafko_net::transfer_function_relu;
+using rafko_net::transfer_function_selu;
+using rafko_net::InputSynapseInterval;
+using rafko_net::IndexSynapseInterval;
 using rafko_net::Synapse_iterator;
 using rafko_mainframe::Service_context;
 
@@ -63,10 +63,10 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   Service_context service_context = Service_context().set_arena_ptr(arena);
 
   /* Create the single Weight Table */
-  Index_synapse_interval temp_index_interval;
-  Input_synapse_interval temp_input_interval;
+  IndexSynapseInterval temp_index_interval;
+  InputSynapseInterval temp_input_interval;
   sdouble32 used_weight = double_literal(0.5);
-  transfer_functions used_transfer_function = TRANSFER_FUNCTION_SIGMOID;
+  Transfer_functions used_transfer_function = transfer_function_sigmoid;
   vector<sdouble32> weight_table {double_literal(0.0),double_literal(0.0)};
   weight_table[0] = used_weight;
   REQUIRE( nullptr != &(weight_table[0]) );
@@ -213,9 +213,9 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
 
   SparseNet* net(builder->dense_layers(
     {2,3,2},{
-      {TRANSFER_FUNCTION_IDENTITY},
-      {TRANSFER_FUNCTION_SELU,TRANSFER_FUNCTION_RELU},
-      {TRANSFER_FUNCTION_TANH,TRANSFER_FUNCTION_SIGMOID}
+      {transfer_function_identity},
+      {transfer_function_selu,transfer_function_relu},
+      {transfer_function_tanh,transfer_function_sigmoid}
     }
   ));
 
@@ -288,8 +288,8 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( Synapse_iterator<>::synapse_index_from_input_index(0) == net->neuron_array(1).input_indices(0).starts() );
 
   /* The input Layer should have Identity transfer function according to configuration */
-  CHECK( TRANSFER_FUNCTION_IDENTITY == net->neuron_array(0).transfer_function_idx() );
-  CHECK( TRANSFER_FUNCTION_IDENTITY == net->neuron_array(1).transfer_function_idx() );
+  CHECK( transfer_function_identity == net->neuron_array(0).transfer_function_idx() );
+  CHECK( transfer_function_identity == net->neuron_array(1).transfer_function_idx() );
 
   /* Check Hidden Neurons */
   /* Hidden Neurons should have 2 weight Synapses: inputs and bias */
@@ -302,20 +302,20 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( 0 == net->neuron_array(3).input_indices(0).starts() );
   CHECK( 0 == net->neuron_array(4).input_indices(0).starts() );
 
-  /* The Hidden Layer should have either TRANSFER_FUNCTION_RELU or TRANSFER_FUNCTION_SELU according to the configuration */
+  /* The Hidden Layer should have either transfer_function_relu or transfer_function_selu according to the configuration */
   CHECK((
-    (TRANSFER_FUNCTION_RELU == net->neuron_array(2).transfer_function_idx())
-    ||(TRANSFER_FUNCTION_SELU == net->neuron_array(2).transfer_function_idx())
+    (transfer_function_relu == net->neuron_array(2).transfer_function_idx())
+    ||(transfer_function_selu == net->neuron_array(2).transfer_function_idx())
   ));
 
   CHECK((
-    (TRANSFER_FUNCTION_RELU == net->neuron_array(3).transfer_function_idx())
-    ||(TRANSFER_FUNCTION_SELU == net->neuron_array(3).transfer_function_idx())
+    (transfer_function_relu == net->neuron_array(3).transfer_function_idx())
+    ||(transfer_function_selu == net->neuron_array(3).transfer_function_idx())
   ));
 
   CHECK((
-    (TRANSFER_FUNCTION_RELU == net->neuron_array(4).transfer_function_idx())
-    ||(TRANSFER_FUNCTION_SELU == net->neuron_array(4).transfer_function_idx())
+    (transfer_function_relu == net->neuron_array(4).transfer_function_idx())
+    ||(transfer_function_selu == net->neuron_array(4).transfer_function_idx())
   ));
 
   /* Check Output Neurons */
@@ -327,15 +327,15 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( 2 == net->neuron_array(5).input_indices(0).starts() );
   CHECK( 2 == net->neuron_array(6).input_indices(0).starts() );
 
-  /* The Output Layer should have either TRANSFER_FUNCTION_SIGMOID or TRANSFER_FUNCTION_TANH according to the configuration */
+  /* The Output Layer should have either transfer_function_sigmoid or transfer_function_tanh according to the configuration */
   CHECK((
-    (TRANSFER_FUNCTION_SIGMOID == net->neuron_array(5).transfer_function_idx())
-    ||(TRANSFER_FUNCTION_TANH == net->neuron_array(5).transfer_function_idx())
+    (transfer_function_sigmoid == net->neuron_array(5).transfer_function_idx())
+    ||(transfer_function_tanh == net->neuron_array(5).transfer_function_idx())
   ));
 
   CHECK((
-    (TRANSFER_FUNCTION_SIGMOID == net->neuron_array(6).transfer_function_idx())
-    ||(TRANSFER_FUNCTION_TANH == net->neuron_array(6).transfer_function_idx())
+    (transfer_function_sigmoid == net->neuron_array(6).transfer_function_idx())
+    ||(transfer_function_tanh == net->neuron_array(6).transfer_function_idx())
   ));
   return net;
 }

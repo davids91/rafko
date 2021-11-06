@@ -35,8 +35,8 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
 
   uint32 previous_size = 0;
   uint32 numNeurons = 0;
-  Input_synapse_interval temp_input_interval;
-  Index_synapse_interval temp_index_interval;
+  InputSynapseInterval temp_input_interval;
+  IndexSynapseInterval temp_index_interval;
   /* Calculate number of weights needed overall
    * - Input Layer shall have a weight for every input for every neuron
    * - Input Layer shall have a weight for every bias and memory_filter for every neuron
@@ -64,7 +64,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
     uint32 layer_input_starts_at = 0;
     uint64 weightIt = 0;
     uint64 neurIt = 0;
-    sdouble32 expPrevLayerOutput = Transfer_function::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
+    sdouble32 expPrevLayerOutput = Transfer_function::get_average_output_range(transfer_function_identity);
 
     ret->set_input_data_size(arg_input_size);
     ret->set_output_neuron_number(layer_sizes.back());

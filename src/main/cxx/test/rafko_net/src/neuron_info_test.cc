@@ -27,18 +27,18 @@ namespace rafko_net_test {
 
   using rafko_net::Neuron;
   using rafko_net::Neuron_info;
-  using rafko_net::Index_synapse_interval;
-  using rafko_net::Input_synapse_interval;
+  using rafko_net::IndexSynapseInterval;
+  using rafko_net::InputSynapseInterval;
   using rafko_net::Synapse_iterator;
-  using rafko_net::TRANSFER_FUNCTION_IDENTITY;
+  using rafko_net::transfer_function_identity;
 
 /*###############################################################################################
  * Testing Neuron Validation
  * */
 TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
 
-  Index_synapse_interval temp_index_interval;
-  Input_synapse_interval temp_input_interval;
+  IndexSynapseInterval temp_index_interval;
+  InputSynapseInterval temp_input_interval;
 
   /* Empty Neuron should be invalid */
   Neuron neuron = Neuron();
@@ -51,7 +51,7 @@ TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
   neuron.set_memory_filter_idx(0);
   CHECK( false == Neuron_info::is_neuron_valid(neuron) );
 
-  neuron.set_transfer_function_idx(TRANSFER_FUNCTION_IDENTITY);
+  neuron.set_transfer_function_idx(transfer_function_identity);
   CHECK( true == Neuron_info::is_neuron_valid(neuron) );
 
   /* Setting indexing information */

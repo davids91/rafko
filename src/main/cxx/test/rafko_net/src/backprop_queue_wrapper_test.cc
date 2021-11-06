@@ -33,8 +33,8 @@ namespace rafko_net_test {
 
 using rafko_net::SparseNet;
 using rafko_net::Sparse_net_builder;
-using rafko_net::Index_synapse_interval;
-using rafko_net::Input_synapse_interval;
+using rafko_net::IndexSynapseInterval;
+using rafko_net::InputSynapseInterval;
 using rafko_net::Synapse_iterator;
 using rafko_net::Backpropagation_queue;
 using rafko_net::Backpropagation_queue_wrapper;
@@ -71,7 +71,7 @@ TEST_CASE( "Testing backpropagation queue", "" ) {
   uint32 current_depth = 0;
   uint32 current_row = 0;
   REQUIRE( 0 < Synapse_iterator<>(queue.neuron_synapses()).size() );
-  Synapse_iterator<>::iterate(queue.neuron_synapses(),[&](Index_synapse_interval interval_synapse, sint32 neuron_index){
+  Synapse_iterator<>::iterate(queue.neuron_synapses(),[&](IndexSynapseInterval interval_synapse, sint32 neuron_index){
     REQUIRE( net->neuron_array_size() > neuron_index ); /* all indexes shall be inside network bounds */
     ++num_neurons;
     neuron_depth[neuron_index] = current_depth;
@@ -91,9 +91,9 @@ TEST_CASE( "Testing backpropagation queue", "" ) {
   }
   CHECK( net->neuron_array_size() == static_cast<sint32>(num_neurons) ); /* Neuron column numbers shall add up the number of Neurons */
 
-  Synapse_iterator<>::iterate(queue.neuron_synapses(),[&](Index_synapse_interval interval_synapse, sint32 neuron_index){
-    Synapse_iterator<Input_synapse_interval>::iterate(net->neuron_array(neuron_index).input_indices(),[=](
-      Input_synapse_interval input_synapse, sint32 input_index
+  Synapse_iterator<>::iterate(queue.neuron_synapses(),[&](IndexSynapseInterval interval_synapse, sint32 neuron_index){
+    Synapse_iterator<InputSynapseInterval>::iterate(net->neuron_array(neuron_index).input_indices(),[=](
+      InputSynapseInterval input_synapse, sint32 input_index
     ){
       if(!Synapse_iterator<>::is_index_input(input_index))
       CHECK( neuron_depth[neuron_index] < neuron_depth[input_index] );

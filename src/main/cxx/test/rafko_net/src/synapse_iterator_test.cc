@@ -28,8 +28,8 @@ using std::vector;
 
 using rafko_net::Neuron;
 using rafko_net::Synapse_iterator;
-using rafko_net::Input_synapse_interval;
-using rafko_net::Index_synapse_interval;
+using rafko_net::InputSynapseInterval;
+using rafko_net::IndexSynapseInterval;
 
 
 /*###############################################################################################
@@ -39,7 +39,7 @@ using rafko_net::Index_synapse_interval;
  */
 TEST_CASE("Synapse Iteration","[synapse-iteration]"){
   Neuron neuron = Neuron();
-  Input_synapse_interval temp_synapse_interval;
+  InputSynapseInterval temp_synapse_interval;
   vector<vector<uint32>> synapse_indexes = {
     {50,10},{60,30},{20,70}
   }; /* {{range},{start,length},{range}..} */
@@ -52,11 +52,11 @@ TEST_CASE("Synapse Iteration","[synapse-iteration]"){
 
   uint32 range_iter = 0;
   sint32 manual_index = synapse_indexes[0][0];
-  Synapse_iterator<Input_synapse_interval> iter(neuron.input_indices());
+  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
-  iter.iterate([&](Input_synapse_interval input_synapse, sint32 index){
+  iter.iterate([&](InputSynapseInterval input_synapse, sint32 index){
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     ++manual_index;
@@ -77,7 +77,7 @@ TEST_CASE("Synapse Iteration","[synapse-iteration]"){
  */
 TEST_CASE("Synapse iteration on a range","[synapse-iteration]"){
   Neuron neuron = Neuron();
-  Input_synapse_interval temp_synapse_interval;
+  InputSynapseInterval temp_synapse_interval;
   vector<vector<uint32>> synapse_indexes = {
     {50,10},{60,30},{20,70}
   }; /* {{range},{start,length},{range}..} */
@@ -90,11 +90,11 @@ TEST_CASE("Synapse iteration on a range","[synapse-iteration]"){
 
   uint32 range_iter = 1;
   sint32 manual_index = synapse_indexes[1][0];
-  Synapse_iterator<Input_synapse_interval> iter(neuron.input_indices());
+  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
-  iter.iterate([&](Input_synapse_interval input_synapse, sint32 index){
+  iter.iterate([&](InputSynapseInterval input_synapse, sint32 index){
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     ++manual_index;
@@ -115,7 +115,7 @@ TEST_CASE("Synapse iteration on a range","[synapse-iteration]"){
  */
 TEST_CASE("Synapse iteration including negative numbers","[synapse-iteration]"){
   Neuron neuron = Neuron();
-  Input_synapse_interval temp_synapse_interval;
+  InputSynapseInterval temp_synapse_interval;
   vector<vector<sint32>> synapse_indexes = {
     {-50,10},{-60,30},{-20,70}
   }; /* {{range},{start,length},{range}..} */
@@ -128,11 +128,11 @@ TEST_CASE("Synapse iteration including negative numbers","[synapse-iteration]"){
 
   uint32 range_iter = 0;
   sint32 manual_index = synapse_indexes[0][0];
-  Synapse_iterator<Input_synapse_interval> iter(neuron.input_indices());
+  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
-  iter.iterate([&](Input_synapse_interval input_synapse, sint32 index){
+  iter.iterate([&](InputSynapseInterval input_synapse, sint32 index){
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     --manual_index;
@@ -153,7 +153,7 @@ TEST_CASE("Synapse iteration including negative numbers","[synapse-iteration]"){
  */
 TEST_CASE("Synapse Iterator direct access","[synapse-iteration]"){
   Neuron neuron = Neuron();
-  Input_synapse_interval temp_synapse_interval;
+  InputSynapseInterval temp_synapse_interval;
   vector<vector<sint32>> synapse_indexes = {
     {-50,10},{70,30},{-20,70}
   }; /* {{range},{start,length},{range}..} */
@@ -164,7 +164,7 @@ TEST_CASE("Synapse Iterator direct access","[synapse-iteration]"){
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  Synapse_iterator<Input_synapse_interval> iter(neuron.input_indices());
+  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
   CHECK( iter[0] == -50 );
   CHECK( iter[5] == -55 );
   CHECK( iter[10] == 70 );
@@ -183,7 +183,7 @@ TEST_CASE("Synapse Iterator direct access","[synapse-iteration]"){
  */
 TEST_CASE("Synapse Iterator Skimming","[synapse-iteration]"){
   Neuron neuron = Neuron();
-  Input_synapse_interval temp_synapse_interval;
+  InputSynapseInterval temp_synapse_interval;
   vector<vector<sint32>> synapse_indexes = {
     {-50,10},{70,30},{-20,70}
   }; /* {{range},{start,length},{range}..} */
@@ -194,10 +194,10 @@ TEST_CASE("Synapse Iterator Skimming","[synapse-iteration]"){
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  Synapse_iterator<Input_synapse_interval> iter(neuron.input_indices());
+  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
 
   sint32 manual_index = 0;
-  iter.skim([&](Input_synapse_interval input_synapse){
+  iter.skim([&](InputSynapseInterval input_synapse){
     CHECK( input_synapse.starts() == synapse_indexes[manual_index][0] );
     CHECK( static_cast<sint32>(input_synapse.interval_size()) == synapse_indexes[manual_index][1] );
     ++manual_index;
@@ -210,7 +210,7 @@ TEST_CASE("Synapse Iterator Skimming","[synapse-iteration]"){
  */
 TEST_CASE("Synapse Iterator Utility functions","[synapse-iteration]"){
   Neuron neuron = Neuron();
-  Input_synapse_interval temp_synapse_interval;
+  InputSynapseInterval temp_synapse_interval;
   vector<vector<sint32>> synapse_indexes = {
     {-50,10},{70,30},{-20,70}
   }; /* {{range},{start,length},{range}..} */
@@ -221,7 +221,7 @@ TEST_CASE("Synapse Iterator Utility functions","[synapse-iteration]"){
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  Synapse_iterator<Input_synapse_interval> iter(neuron.input_indices());
+  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
   CHECK( 110 == iter.size() );
   CHECK( -89 == iter.back() );
 }
@@ -233,7 +233,7 @@ TEST_CASE("Synapse Iterator Utility functions","[synapse-iteration]"){
  */
 TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
   Neuron neuron = Neuron();
-  Index_synapse_interval temp_synapse_interval;
+  IndexSynapseInterval temp_synapse_interval;
   vector<vector<sint32>> synapse_indexes = {
     {50,3},{70,3},{20,2},{30,2}
   }; /* {{range},{start,length},{range}..} */
@@ -253,7 +253,7 @@ TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
   for(uint32 i = 0; i < synapse_indexes.size(); ++i){ /* go through each synapse interval */
     element_index = synapse_indexes[i][0]; /* the start of the synapse currently being iterated over */
     iteration_count = 0;
-    iter.iterate([&](Index_synapse_interval interval, sint32 synapse_index){
+    iter.iterate([&](IndexSynapseInterval interval, sint32 synapse_index){
       CHECK( element_index == synapse_index );
       ++element_index;
       ++iteration_count;
@@ -269,7 +269,7 @@ TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
     element_index = synapse_indexes[i][0]; /* the start of the synapse currently being iterated over */
     iteration_count = 0;
     iteration_in_this_synapse = 0;
-    iter.iterate([&](Index_synapse_interval interval, sint32 synapse_index){
+    iter.iterate([&](IndexSynapseInterval interval, sint32 synapse_index){
       if(iteration_in_this_synapse >= synapse_indexes[current_synapse][1]){
         ++current_synapse;
         iteration_in_this_synapse = 0;

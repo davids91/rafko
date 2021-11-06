@@ -437,9 +437,9 @@ public class DashboardController implements Initializable {
                     server_slot_combo.getValue().getName(),
                     1, 1,
                     new ArrayList<>(Arrays.asList( /* Allowed transfer functions */
-                        RafkoCommon.transfer_functions.TRANSFER_FUNCTION_SELU,
-                        RafkoCommon.transfer_functions.TRANSFER_FUNCTION_SELU,
-                        RafkoCommon.transfer_functions.TRANSFER_FUNCTION_SELU
+                        RafkoCommon.transfer_functions.transfer_function_selu,
+                        RafkoCommon.transfer_functions.transfer_function_selu,
+                        RafkoCommon.transfer_functions.transfer_function_selu
                     )),
                     new ArrayList<>(Arrays.asList(4,2,1)) /* Layer sizes */
                 );
@@ -589,8 +589,8 @@ public class DashboardController implements Initializable {
                     .setAlpha(1.6732).setLambda(1.0507)
                     .setStepSize(1e-2).setMinibatchSize(64).setMemoryTruncation(3)
                     .build())
-            .setCostFunction(RafkoCommon.cost_functions.COST_FUNCTION_MSE)
-            .setWeightUpdater(RafkoCommon.weight_updaters.WEIGHT_UPDATER_MOMENTUM);
+            .setCostFunction(RafkoCommon.cost_functions.cost_function_mse)
+            .setWeightUpdater(RafkoCommon.weight_updaters.weight_updater_momentum);
 
         if(
             (0 < selected_slot_state)

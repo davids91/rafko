@@ -45,18 +45,18 @@ public:
    * @return     The weight updater.
    */
   static unique_ptr<Weight_updater> build_weight_updater(
-    SparseNet& net, weight_updaters weight_updater, Service_context& context
+    SparseNet& net, Weight_updaters weight_updater, Service_context& context
   ){
     switch(weight_updater){
-      case WEIGHT_UPDATER_MOMENTUM:
+      case weight_updater_momentum:
         return make_unique<Weight_updater_momentum>(net,context);
-      case WEIGHT_UPDATER_NESTEROV:
+      case weight_updater_nesterovs:
         return make_unique<Weight_updater_nesterov>(net,context);
-      case WEIGHT_UPDATER_ADAM:
+      case weight_updater_adam:
         return make_unique<Weight_updater_adam>(net,context);
-      case WEIGHT_UPDATER_AMSGRAD:
+      case weight_updater_amsgrad:
         return make_unique<Weight_updater_amsgrad>(net,context);
-      case WEIGHT_UPDATER_DEFAULT:
+      case weight_updater_default:
       default: 
         return make_unique<Weight_updater>(net,context);
     };

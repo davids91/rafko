@@ -29,7 +29,7 @@ using std::lock_guard;
 using std::ref;
 
 using rafko_net::Synapse_iterator;
-using rafko_net::Index_synapse_interval;
+using rafko_net::IndexSynapseInterval;
 
 void Sparse_net_approximizer::collect_approximates_from_weight_gradients(void){
   vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
@@ -158,7 +158,7 @@ void Sparse_net_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gra
   uint32 values_index = 0;
   uint32 values_index_target = gradient_fragment.values_size();
   uint32 weight_synapse_index_target = gradient_fragment.weight_synapses_size();
-  Index_synapse_interval tmp_synapse_interval;
+  IndexSynapseInterval tmp_synapse_interval;
 
   for(uint32 weight_syn_index = 0; static_cast<sint32>(weight_syn_index) < gradient_fragment.weight_synapses_size(); ++weight_syn_index){
     if( /* If the weight synapse is at or in-between the first index before the start of the synapse.. */
@@ -226,7 +226,7 @@ void Sparse_net_approximizer::apply_fragment(void){
     );
   }else{
     Synapse_iterator<>::iterate(gradient_fragment.weight_synapses(), [&](
-      Index_synapse_interval interval, sint32 weight_index
+      IndexSynapseInterval interval, sint32 weight_index
     ){
       applied_direction[weight_index] += gradient_fragment.values(fragment_value_index);
       ++fragment_value_index;

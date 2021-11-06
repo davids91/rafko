@@ -40,7 +40,7 @@ enum Network_recurrence{
 message Neuron{
   /* index of the weight for the memory filter. 1.0: keep its previous value instead of the newly calculated one */
   uint32 memory_filter_idx = 2;  /* Value pointed at should always be 0.0 <= memory_filter < 1.0 default value is 0.0 <== as in zero memory of its previous value */
-  transfer_functions transfer_function_idx = 3; /* index of the transfer function this Neuron uses, empty is invalid */
+  Transfer_functions transfer_function_idx = 3; /* index of the transfer function this Neuron uses, empty is invalid */
 
   /**
    * Input weights shall only contain positive intervals,
@@ -48,14 +48,14 @@ message Neuron{
    * Every weight above inputs in @input_indices count as a bias, and shall behave
    * like it has an input of 1.
    */
-  repeated Index_synapse_interval input_weights = 10;
+  repeated IndexSynapseInterval input_weights = 10;
 
   /**
    * Input indices describes intervals denoting the neurons inputs.
    * Each positive interval corresponds to indices in the internal data of a @Neuron stored in the @Solution_solver
    * Each negative interval corresponds to indices in the input data given to the @Solution_solver
    */
-  repeated Input_synapse_interval input_indices = 11;
+  repeated InputSynapseInterval input_indices = 11;
 }
 
 /** @brief      A sparse net implementation containing the

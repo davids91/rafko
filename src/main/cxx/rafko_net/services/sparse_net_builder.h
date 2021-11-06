@@ -137,7 +137,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  Sparse_net_builder& allowed_transfer_functions_by_layer(vector<vector<transfer_functions> > filter){
+  Sparse_net_builder& allowed_transfer_functions_by_layer(vector<vector<Transfer_functions> > filter){
     arg_allowed_transfer_functions_by_layer = filter;
     is_allowed_transfer_functions_by_layer_set = true;
     return *this;
@@ -175,7 +175,7 @@ public:
    *
    * @return   the built neural network
    */
-  SparseNet* dense_layers(vector<uint32> layer_sizes, vector<vector<transfer_functions>> transfer_function_filter){
+  SparseNet* dense_layers(vector<uint32> layer_sizes, vector<vector<Transfer_functions>> transfer_function_filter){
     (void)allowed_transfer_functions_by_layer(transfer_function_filter);
     return dense_layers(layer_sizes);
   }
@@ -220,7 +220,7 @@ private:
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
    */
-  sdouble32 arg_expected_input_range = Transfer_function::get_average_output_range(TRANSFER_FUNCTION_IDENTITY);
+  sdouble32 arg_expected_input_range = Transfer_function::get_average_output_range(transfer_function_identity);
 
   /**
    * The array containing the neurons while Sparse_net_builder::build is used
@@ -247,7 +247,7 @@ private:
    */
   uint32 arg_output_neuron_number = 0;
 
-  vector<vector<transfer_functions> > arg_allowed_transfer_functions_by_layer;
+  vector<vector<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
 
   /**
    * @brief Sparse_net_builder::set_neuron_array: moves the neuron_array argument into the SparseNet

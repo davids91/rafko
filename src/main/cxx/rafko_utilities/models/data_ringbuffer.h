@@ -29,7 +29,7 @@ namespace rafko_utilities{
 
 using std::vector;
 
-using rafko_net::Input_synapse_interval;
+using rafko_net::InputSynapseInterval;
 
 /**
  * @brief      This class describes a ringbuffer designed to store the Memory of a Neural Network.
@@ -164,7 +164,7 @@ public:
    *
    * @return     The buffer element in the given sequence
    */
-  sdouble32 get_const_element(uint32 sequence_index, Input_synapse_interval input_synapse, uint32 element_offset_from_start) const{
+  sdouble32 get_const_element(uint32 sequence_index, InputSynapseInterval input_synapse, uint32 element_offset_from_start) const{
     if(static_cast<sint32>(get_sequence_size()) > get_sequence_index(sequence_index,input_synapse)){
       if(input_synapse.starts() + element_offset_from_start < data[get_sequence_index(sequence_index,input_synapse)].size())
         return get_const_element(
@@ -183,7 +183,7 @@ public:
    *
    * @return     The constant element.
    */
-  const vector<sdouble32>& get_const_element(uint32 sequence_index, Input_synapse_interval input_synapse) const{
+  const vector<sdouble32>& get_const_element(uint32 sequence_index, InputSynapseInterval input_synapse) const{
     if(static_cast<sint32>(get_sequence_size()) > get_sequence_index(sequence_index,input_synapse)){
         return get_const_element(get_sequence_index(sequence_index,input_synapse));
     }else throw std::runtime_error("Buffer index out of bounds!");
@@ -219,7 +219,7 @@ public:
    *
    * @return     The buffer index.
    */
-  sint32 get_sequence_index(uint32 sequence_index, Input_synapse_interval input_synapse) const{
+  sint32 get_sequence_index(uint32 sequence_index, InputSynapseInterval input_synapse) const{
     return get_sequence_index(sequence_index, input_synapse.reach_past_loops());
   }
 

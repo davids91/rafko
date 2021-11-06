@@ -38,7 +38,7 @@ void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data
   sint32 input_index;
 
   /* Collect the input data to solve the partial solution */
-  input_iterator.skim([&](Input_synapse_interval input_synapse){
+  input_iterator.skim([&](InputSynapseInterval input_synapse){
     if(Synapse_iterator<>::is_index_input(input_synapse.starts())){ /* If @Partial_solution input is from the network input */
       std::copy(
         input_data.begin() + Synapse_iterator<>::input_index_from_synapse_index(input_synapse.starts()),
@@ -59,7 +59,7 @@ void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data
   input_index_offset = 0;
   for(uint16 neuron_iterator = 0; neuron_iterator < detail.output_data().interval_size(); ++neuron_iterator){
     new_neuron_data = 0;
-    internal_weight_iterator.iterate([&](Index_synapse_interval weight_synapse, sint32 weight_index){
+    internal_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse, sint32 weight_index){
       if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
         input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
         if(Synapse_iterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */

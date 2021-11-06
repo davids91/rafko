@@ -25,8 +25,8 @@
 #include <future>
 #include <tuple>
 
-#include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/services/thread_group.h"
+#include "rafko_mainframe/models/service_context.h"
 
 namespace rafko_net{
 
@@ -44,7 +44,7 @@ using rafko_mainframe::Service_context;
  */
 class Cost_function{
 public:
-  Cost_function(uint32 feature_size_, cost_functions the_function_, Service_context& service_context)
+  Cost_function(uint32 feature_size_, Cost_functions the_function_, Service_context& service_context)
   : context(service_context)
   , process_threads()
   , thread_results()
@@ -109,7 +109,7 @@ public:
    *
    * @return     The type.
    */
-  cost_functions get_type(void){
+  Cost_functions get_type(void){
     return the_function;
   }
 
@@ -183,7 +183,7 @@ protected:
     uint32 feature_start_index_in_neuron, uint32 number_to_add
   );
 private:
-  cost_functions the_function; /* cost function type */
+  Cost_functions the_function; /* cost function type */
   ThreadGroup execution_threads;
 
   /**

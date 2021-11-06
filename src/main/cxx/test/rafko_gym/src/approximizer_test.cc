@@ -44,17 +44,17 @@ using rafko_mainframe::Service_context;
 using rafko_utilities::DataRingbuffer;
 using rafko_net::SparseNet;
 using rafko_net::Sparse_net_builder;
-using rafko_net::Cost_function_mse;
-using rafko_net::COST_FUNCTION_SQUARED_ERROR;
-using rafko_net::TRANSFER_FUNCTION_IDENTITY;
-using rafko_net::TRANSFER_FUNCTION_SELU;
-using rafko_net::TRANSFER_FUNCTION_RELU;
-using rafko_net::TRANSFER_FUNCTION_SIGMOID;
-using rafko_net::WEIGHT_UPDATER_DEFAULT;
-using rafko_net::WEIGHT_UPDATER_MOMENTUM;
-using rafko_net::WEIGHT_UPDATER_NESTEROV;
-using rafko_net::WEIGHT_UPDATER_ADAM;
-using rafko_net::WEIGHT_UPDATER_AMSGRAD;
+using rafko_net::cost_function_mse;
+using rafko_net::cost_function_squared_error;
+using rafko_net::transfer_function_identity;
+using rafko_net::transfer_function_selu;
+using rafko_net::transfer_function_relu;
+using rafko_net::transfer_function_sigmoid;
+using rafko_net::weight_updater_default;
+using rafko_net::weight_updater_momentum;
+using rafko_net::weight_updater_nesterovs;
+using rafko_net::weight_updater_adam;
+using rafko_net::weight_updater_amsgrad;
 using rafko_net::Function_factory;
 using rafko_net::Solution;
 using rafko_net::Solution_builder;
@@ -82,7 +82,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
     .input_size(2).expected_input_range(double_literal(1.0))
     .allowed_transfer_functions_by_layer(
       {
-        {TRANSFER_FUNCTION_SELU}
+        {transfer_function_selu}
       }
     ).dense_layers({1})
   );
@@ -93,17 +93,17 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
-    *nets[0], COST_FUNCTION_SQUARED_ERROR
+    *nets[0], cost_function_squared_error
   );
   tmp1 = create_addition_dataset(10);
   Data_aggregate* test_set = google::protobuf::Arena::Create<Data_aggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
-    *nets[0], COST_FUNCTION_SQUARED_ERROR
+    *nets[0], cost_function_squared_error
   );
   Environment_data_set env(service_context, *train_set, *test_set);
-  Sparse_net_approximizer approximizer(service_context, *nets[0], env, WEIGHT_UPDATER_DEFAULT);
+  Sparse_net_approximizer approximizer(service_context, *nets[0], env, weight_updater_default);
 
   /* adding a simple-weight-gradient fragment */
   uint32 weight_index = rand()%(nets[0]->weight_table_size());
@@ -177,14 +177,14 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
     //   {
-    //     {TRANSFER_FUNCTION_SELU},
-    //     {TRANSFER_FUNCTION_SELU},
-    //     {TRANSFER_FUNCTION_SELU}
+    //     {transfer_function_selu},
+    //     {transfer_function_selu},
+    //     {transfer_function_selu}
     //   }
     // ).dense_layers({10,10,1})
     {
-      {TRANSFER_FUNCTION_SELU},
-      {TRANSFER_FUNCTION_SELU},
+      {transfer_function_selu},
+      {transfer_function_selu},
     }
   ).dense_layers({2,1})
 
@@ -196,16 +196,16 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
-    *nets[0], COST_FUNCTION_SQUARED_ERROR, /* Sequence size */4
+    *nets[0], cost_function_squared_error, /* Sequence size */4
   );
   tmp1 = create_sequenced_addition_dataset(number_of_samples * 2, 4);
   Data_aggregate* test_set =  google::protobuf::Arena::Create<Data_aggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
-    *nets[0], COST_FUNCTION_SQUARED_ERROR, /* Sequence size */4
+    *nets[0], cost_function_squared_error, /* Sequence size */4
   );  Environment_data_set env(service_context, *train_set, *test_set);
-  Sparse_net_approximizer approximizer(service_context, *nets[0], env, WEIGHT_UPDATER_AMSGRAD,1);
+  Sparse_net_approximizer approximizer(service_context, *nets[0], env, weight_updater_amsgrad,1);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -263,7 +263,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   unique_ptr<Solution_solver> after_solver(Solution_solver::Builder(*Solution_builder(service_context).build(*nets[0]), service_context).build());
 
   sdouble32 error_summary[3] = {0,0,0};
-  Cost_function_mse after_cost(1, service_context);
+  cost_function_mse after_cost(1, service_context);
   for(uint32 i = 0; i < number_of_samples; ++i){
     bool reset = 0 == (i%(train_set->get_sequence_size()));
     const DataRingbuffer& neuron_data = after_solver->solve(test_set->get_input_sample(i), reset);

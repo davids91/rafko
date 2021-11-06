@@ -68,7 +68,7 @@ void Weight_updater::update_solution_with_weight(Solution& solution, uint32 weig
       is_neuron_relevant_to_weight = true; /* Neuron is relevant its memory filter parameter is the given weight index */
     }else{ /* ..otherwise it is relevant if any of its weight synapses contain the given weight index */
       Synapse_iterator<>::skim_terminatable(net.neuron_array(neuron_index).input_weights(),
-      [&is_neuron_relevant_to_weight, weight_index](Index_synapse_interval input_weight_synapse){
+      [&is_neuron_relevant_to_weight, weight_index](IndexSynapseInterval input_weight_synapse){
         if(
           (static_cast<sint32>(weight_index) >= input_weight_synapse.starts())
           &&(weight_index < (input_weight_synapse.starts() + input_weight_synapse.interval_size()))
@@ -166,7 +166,7 @@ void Weight_updater::copy_weights_of_neuron_to_partial_solution(
   );
   ++weights_copied; /* ++ for Memory ratio */
   Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
-    Index_synapse_interval weight_synapse, sint32 network_weight_index
+    IndexSynapseInterval weight_synapse, sint32 network_weight_index
   ){
     partial.set_weight_table(
       (inner_neuron_weight_index_starts + weights_copied), net.weight_table(network_weight_index)
@@ -188,7 +188,7 @@ void Weight_updater::copy_weight_of_neuron_to_partial_solution(
   }
   ++weights_copied; /* ++ for Memory ratio */
   Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
-    Index_synapse_interval weight_synapse, sint32 network_weight_index
+    IndexSynapseInterval weight_synapse, sint32 network_weight_index
   ){
     if(static_cast<sint32>(weight_index) == network_weight_index){
       partial.set_weight_table(

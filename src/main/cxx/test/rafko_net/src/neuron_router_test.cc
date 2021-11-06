@@ -38,7 +38,7 @@ using rafko_net::Sparse_net_builder;
 using rafko_net::SparseNet;
 using rafko_net::Neuron_router;
 using rafko_net::Synapse_iterator;
-using rafko_net::Input_synapse_interval;
+using rafko_net::InputSynapseInterval;
 using rafko_mainframe::Service_context;
 
 /*###############################################################################################
@@ -86,8 +86,8 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
         REQUIRE( neuron_in_subset != subset.end() );
 
         /* And check its dependencies */
-        Synapse_iterator<Input_synapse_interval>::iterate(net->neuron_array(layer_start + i).input_indices(),
-        [&](Input_synapse_interval input_synapse, sint32 synapse_input_index){
+        Synapse_iterator<InputSynapseInterval>::iterate(net->neuron_array(layer_start + i).input_indices(),
+        [&](InputSynapseInterval input_synapse, sint32 synapse_input_index){
           if( /* Every net-internal Neuron input.. */
             (!Synapse_iterator<>::is_index_input(synapse_input_index))
             &&(!net_iterator.is_neuron_processed(synapse_input_index))

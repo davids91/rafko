@@ -33,7 +33,7 @@ using rafko_mainframe::Service_context;
 class Cost_function_mse : public Cost_function{
 public:
   Cost_function_mse(uint32 feature_size_, Service_context& service_context)
-  : Cost_function(feature_size_, COST_FUNCTION_MSE, service_context)
+  : Cost_function(feature_size_, cost_function_mse, service_context)
   { };
 
 protected:

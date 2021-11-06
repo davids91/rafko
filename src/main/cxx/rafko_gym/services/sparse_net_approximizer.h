@@ -47,7 +47,7 @@ using rafko_net::SparseNet;
 using rafko_net::Solution_builder;
 using rafko_net::Solution_solver;
 using rafko_net::Weight_updater;
-using rafko_net::weight_updaters;
+using rafko_net::Weight_updaters;
 using rafko_net::Gradient_fragment;
 using rafko_net::Updater_factory;
 
@@ -69,7 +69,7 @@ public:
    */
   Sparse_net_approximizer(
     Service_context& service_context_, SparseNet& neural_network, Environment& environment_,
-    weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
+    Weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
   ):service_context(service_context_)
   , net(neural_network)
   , net_solution(Solution_builder(service_context).build(net))

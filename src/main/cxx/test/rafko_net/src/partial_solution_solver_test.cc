@@ -32,14 +32,14 @@ namespace rafko_net_test {
 using std::vector;
 using std::reference_wrapper;
 
-using rafko_net::transfer_functions;
-using rafko_net::TRANSFER_FUNCTION_IDENTITY;
+using rafko_net::Transfer_functions;
+using rafko_net::transfer_function_identity;
 using rafko_utilities::DataRingbuffer;
 using rafko_net::Partial_solution;
 using rafko_net::Partial_solution_solver;
 using rafko_net::Transfer_function;
-using rafko_net::Index_synapse_interval;
-using rafko_net::Input_synapse_interval;
+using rafko_net::IndexSynapseInterval;
+using rafko_net::InputSynapseInterval;
 using rafko_net::Synapse_iterator;
 using rafko_mainframe::Service_context;
 
@@ -61,7 +61,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   Partial_solution partial_solution;
   vector<uint32> helper_vector_uint;
   vector<sdouble32> expected_neuron_output;
-  Input_synapse_interval temp_synapse_interval;
+  InputSynapseInterval temp_synapse_interval;
 
   /* Define the input and structure of the network */
   vector<sdouble32> network_inputs = {double_literal(10.0),double_literal(5.0)};
@@ -84,10 +84,10 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   /* The result should change in accordance with the parameters */
   srand (time(nullptr));
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
-    Synapse_iterator<>::iterate(partial_solution.weight_indices(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
+    Synapse_iterator<>::iterate(partial_solution.weight_indices(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },0u,1u); /* Mess with the weights of the first Neuron */
-    Synapse_iterator<>::iterate(partial_solution.weight_indices(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
+    Synapse_iterator<>::iterate(partial_solution.weight_indices(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },1u,1u); /* Mess with the weights of the second Neuron */
 
@@ -123,8 +123,8 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   Service_context service_context;
   Partial_solution partial_solution;
   vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
-  Index_synapse_interval temp_index_interval;
-  Input_synapse_interval temp_input_interval;
+  IndexSynapseInterval temp_index_interval;
+  InputSynapseInterval temp_input_interval;
   DataRingbuffer neuron_data(1, network_inputs.size());
 
   temp_index_interval.set_starts(0);
@@ -133,7 +133,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   partial_solution.add_weight_table(double_literal(0.0));  /* A weight for the memory filter */
   for(uint32 i = 0; i < network_inputs.size(); ++i){
     partial_solution.add_weight_table(double_literal(1.0));
-    partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
+    partial_solution.add_neuron_transfer_functions(transfer_function_identity);
     partial_solution.add_memory_filter_index(0);
 
     partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights */

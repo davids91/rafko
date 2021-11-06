@@ -52,7 +52,7 @@ using rafko_net::SparseNet;
 using rafko_net::Data_set;
 using rafko_net::Function_factory;
 using rafko_net::Cost_function;
-using rafko_net::cost_functions;
+using rafko_net::Cost_functions;
 
 /**
  * @brief      A Data set container complete with adaptive error statistics, which is
@@ -128,7 +128,7 @@ public:
   Data_aggregate(
     Service_context& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
-    SparseNet& net, cost_functions the_function, uint32 sequence_size_ = 1
+    SparseNet& net, Cost_functions the_function, uint32 sequence_size_ = 1
   ): service_context(service_context_)
   ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))

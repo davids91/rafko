@@ -27,7 +27,7 @@ sint32 Partial_solution_builder::previous_neuron_input_index;
 uint8 Partial_solution_builder::previous_neuron_input_source;
 
 uint32 Partial_solution_builder::add_neuron_to_partial_solution(const SparseNet& net, uint32 neuron_index, Partial_solution& partial){
-  Synapse_iterator<Input_synapse_interval> input_synapse(partial.input_data());
+  Synapse_iterator<InputSynapseInterval> input_synapse(partial.input_data());
   previous_neuron_input_index = input_synapse.size();
   previous_neuron_input_source = neuron_input_none;
   partial_input_synapse_count = 0;
@@ -35,9 +35,9 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(const SparseNet&
 
   if(net.neuron_array_size() > static_cast<int>(neuron_index)){
     uint32 max_reach_back = 0;
-    Index_synapse_interval temp_synapse_interval;
+    IndexSynapseInterval temp_synapse_interval;
     Synapse_iterator<> weight_iterator(net.neuron_array(neuron_index).input_weights());
-    Synapse_iterator<Input_synapse_interval> input_iterator(net.neuron_array(neuron_index).input_indices());
+    Synapse_iterator<InputSynapseInterval> input_iterator(net.neuron_array(neuron_index).input_indices());
     partial.mutable_output_data()->set_interval_size(partial.output_data().interval_size() + 1u);
 
     /* Copy in Neuron parameters */
@@ -47,11 +47,11 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(const SparseNet&
 
     /* Copy in weights from the net */
     partial.add_weight_synapse_number(net.neuron_array(neuron_index).input_weights_size());
-    weight_iterator.iterate([&](Index_synapse_interval weight_synapse){
+    weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
       temp_synapse_interval.set_starts(partial.weight_table_size());
       temp_synapse_interval.set_interval_size(weight_synapse.interval_size());
       *partial.add_weight_indices() = temp_synapse_interval;
-    },[&](Index_synapse_interval weight_synapse, sint32 weight_index){
+    },[&](IndexSynapseInterval weight_synapse, sint32 weight_index){
       partial.add_weight_table(net.weight_table(weight_index));
     });
 
@@ -61,10 +61,10 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(const SparseNet&
     previous_neuron_input_index = input_synapse.size(); /* Input value to point above the size of the input */
     const uint32 index_synapse_previous_size = partial.inside_indices_size();
 
-    input_iterator.iterate([&](Input_synapse_interval interval_synapse){
+    input_iterator.iterate([&](InputSynapseInterval interval_synapse){
       if(interval_synapse.reach_past_loops() > max_reach_back)
          max_reach_back = interval_synapse.reach_past_loops();
-    },[&](Input_synapse_interval interval_synapse, sint32 neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
+    },[&](InputSynapseInterval interval_synapse, sint32 neuron_input_index){ /* Put each Neuron input into the @Partial_solution */
       if(!look_for_neuron_input(neuron_input_index, interval_synapse.reach_past_loops(), input_synapse, partial)){
         /* Check if the partial input synapse needs to be closed */
         if( /* if the Neuron has any inputs from the past or not found internally */
@@ -119,10 +119,10 @@ uint32 Partial_solution_builder::add_neuron_to_partial_solution(const SparseNet&
 
 bool Partial_solution_builder::look_for_neuron_input(
   sint32 neuron_input_index, uint32 input_reach_back,
-  Synapse_iterator<Input_synapse_interval>& input_synapse, Partial_solution& partial
+  Synapse_iterator<InputSynapseInterval>& input_synapse, Partial_solution& partial
 ){
   uint32 candidate_synapse_index = input_synapse.size();
-  input_synapse.iterate_terminatable([&](Input_synapse_interval interval_synapse, sint32 synapse_index){
+  input_synapse.iterate_terminatable([&](InputSynapseInterval interval_synapse, sint32 synapse_index){
     if(candidate_synapse_index == input_synapse.size()) candidate_synapse_index = 0;
     if( /* If the index as well as the time of input matches */
       (input_reach_back == interval_synapse.reach_past_loops())

@@ -29,7 +29,7 @@ using std::vector;
 using std::copy;
 
 using rafko_utilities::DataRingbuffer;
-using rafko_net::Input_synapse_interval;
+using rafko_net::InputSynapseInterval;
 using rafko_mainframe::Service_context;
 
 /*###############################################################################################
@@ -84,7 +84,7 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
   uint32 sequence_number = 5;
   uint32 buffer_size = 30;
   DataRingbuffer buffer(sequence_number, buffer_size);
-  Input_synapse_interval input_synapse;
+  InputSynapseInterval input_synapse;
   vector<sdouble32> data_sample(buffer_size);
 
   /* Simulate some runs: each element in the buffer shall have the value of it's past value */

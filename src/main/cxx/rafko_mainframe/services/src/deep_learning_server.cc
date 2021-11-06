@@ -25,8 +25,8 @@
 
 namespace rafko_mainframe{
 
-using rafko_net::transfer_functions;
-using rafko_net::transfer_functions_IsValid;
+using rafko_net::Transfer_functions;
+using rafko_net::Transfer_functions_IsValid;
 using std::lock_guard;
 using std::thread;
 

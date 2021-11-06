@@ -41,10 +41,10 @@ namespace rafko_net_test {
 using rafko_utilities::DataRingbuffer;
 using rafko_gym::Data_aggregate;
 using rafko_net::Transfer_function;
-using rafko_net::TRANSFER_FUNCTION_IDENTITY;
-using rafko_net::cost_functions;
-using rafko_net::Input_synapse_interval;
-using rafko_net::Index_synapse_interval;
+using rafko_net::transfer_function_identity;
+using rafko_net::Cost_functions;
+using rafko_net::InputSynapseInterval;
+using rafko_net::IndexSynapseInterval;
 using rafko_net::Solution_builder;
 using rafko_net::Solution_solver;
 using rafko_net::Synapse_iterator;
@@ -53,8 +53,8 @@ using rafko_mainframe::Service_context;
 
 void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset){
 
-  Input_synapse_interval temp_input_interval;
-  Index_synapse_interval temp_index_interval;
+  InputSynapseInterval temp_input_interval;
+  IndexSynapseInterval temp_index_interval;
 
   /**###################################################################################################
    * Neuron global parameters in partial
@@ -75,7 +75,7 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
   /**###################################################################################################
    * The first neuron shall have the inputs
    */
-  partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
+  partial_solution.add_neuron_transfer_functions(transfer_function_identity);
   partial_solution.add_memory_filter_index(
     number_of_inputs               + 1u
   ); /* input weights + first bias + first index */
@@ -94,7 +94,7 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
   /**###################################################################################################
    * The second Neuron shall only have the first neuron as input
    */
-  partial_solution.add_neuron_transfer_functions(TRANSFER_FUNCTION_IDENTITY);
+  partial_solution.add_neuron_transfer_functions(transfer_function_identity);
   partial_solution.add_memory_filter_index(
     number_of_inputs          + 1u                      + 1u                  + 1u          + 1u
   ); /* input weights + bias1 + first memory ratio value + first neuron weight + second bias + after the previous index */
@@ -160,7 +160,7 @@ void manaual_fully_connected_network_result(
 
     if(0 < previous_data.size())
       REQUIRE( neuron_data.size() == previous_data.size() );
-    Synapse_iterator<>::iterate(neuron.input_weights(),[&](Index_synapse_interval weight_synapse, sint32 neuron_weight_index){
+    Synapse_iterator<>::iterate(neuron.input_weights(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
       if(static_cast<sdouble32>(input_synapse_index) < neuron.input_indices_size()){ /* Only get input from the net if it's explicitly defined */
         REQUIRE( 1 >= neuron.input_indices(input_synapse_index).reach_past_loops() ); /* Only the last loop and the current can be handled in this test yet */
         if(Synapse_iterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
@@ -208,7 +208,7 @@ void check_if_the_same(SparseNet& net, Solution& solution){
       weight_synapse_offset = 0;
 
       /* Since Neurons take their inputs from the partial solution input, test iterates over it */
-      Synapse_iterator<Input_synapse_interval> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
+      Synapse_iterator<InputSynapseInterval> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
       const uint32 first_neuron_index_in_partial = solution.partial_solutions(partial_solution_iterator).output_data().starts();
       for( /* Skim through the inner neurons in the partial solutiomake n until the current one if found */
         uint32 i_neuron_iter = 0; i_neuron_iter < solution.partial_solutions(partial_solution_iterator).output_data().interval_size();++i_neuron_iter
@@ -224,9 +224,9 @@ void check_if_the_same(SparseNet& net, Solution& solution){
           /* Inner Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input is true ) */
           expected_inputs = 0;
           counted_inputs = 0;
-          inner_neuron_weight_iterator.iterate([&](Index_synapse_interval weight_synapse){
+          inner_neuron_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
             expected_inputs += weight_synapse.interval_size();
-          },[&](Index_synapse_interval weight_synapse, sint32 input_index){
+          },[&](IndexSynapseInterval weight_synapse, sint32 input_index){
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
             REQUIRE(
               solution.partial_solutions(partial_solution_iterator).weight_table(input_index)
@@ -238,13 +238,13 @@ void check_if_the_same(SparseNet& net, Solution& solution){
 
           /* Test if all of the neurons inputs are are the same as the ones in the net */
           /* Test iterates over the inner neurons synapse to see if it matches the Neuron synapse */
-          Synapse_iterator<Input_synapse_interval> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
-          Synapse_iterator<Input_synapse_interval> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
+          Synapse_iterator<InputSynapseInterval> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
+          Synapse_iterator<InputSynapseInterval> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
 
           /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input s true ) */
           neuron_synapse_element_iterator = 0;
           counted_inputs = 0;
-          inner_neuron_input_iterator.iterate([&](Input_synapse_interval input_synapse, sint32 input_index){
+          inner_neuron_input_iterator.iterate([&](InputSynapseInterval input_synapse, sint32 input_index){
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!Synapse_iterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
               CHECK( 0 == input_synapse.reach_past_loops() ); /* Internal inputs should always be taken from the current loop */

@@ -31,10 +31,10 @@ using std::max;
 
 using rafko_mainframe::Service_context;
 
-sdouble32 Dense_net_weight_initializer::get_weight_amplitude(transfer_functions used_transfer_function) const{
+sdouble32 Dense_net_weight_initializer::get_weight_amplitude(Transfer_functions used_transfer_function) const{
   sdouble32 amplitude;
   switch(used_transfer_function){
-    case TRANSFER_FUNCTION_RELU:
+    case transfer_function_relu:
     amplitude = (sqrt(2 / (expected_input_number))); /* Kaiming initialization */
   default:
     amplitude = (sqrt(2 / (expected_input_number * expected_input_maximum_value)));
@@ -42,7 +42,7 @@ sdouble32 Dense_net_weight_initializer::get_weight_amplitude(transfer_functions 
   return max(context.get_epsilon(),amplitude);
 }
 
-sdouble32 Dense_net_weight_initializer::next_weight_for(transfer_functions used_transfer_function) const{
+sdouble32 Dense_net_weight_initializer::next_weight_for(Transfer_functions used_transfer_function) const{
   return ((rand()%2 == 0)?-double_literal(1.0):double_literal(1.0)) * limit_weight(
     (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
   );

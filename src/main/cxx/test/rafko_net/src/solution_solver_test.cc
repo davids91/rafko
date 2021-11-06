@@ -47,15 +47,15 @@ using rafko_net::Partial_solution;
 using rafko_net::Partial_solution_solver;
 using rafko_net::Solution;
 using rafko_net::Solution_solver;
-using rafko_net::Index_synapse_interval;
-using rafko_net::Input_synapse_interval;
+using rafko_net::IndexSynapseInterval;
+using rafko_net::InputSynapseInterval;
 using rafko_net::Synapse_iterator;
 using rafko_net::Transfer_function;
-using rafko_net::TRANSFER_FUNCTION_IDENTITY;
-using rafko_net::TRANSFER_FUNCTION_SIGMOID;
-using rafko_net::TRANSFER_FUNCTION_TANH;
-using rafko_net::TRANSFER_FUNCTION_RELU;
-using rafko_net::TRANSFER_FUNCTION_SELU;
+using rafko_net::transfer_function_identity;
+using rafko_net::transfer_function_sigmoid;
+using rafko_net::transfer_function_tanh;
+using rafko_net::transfer_function_relu;
+using rafko_net::transfer_function_selu;
 using rafko_net::NETWORK_RECURRENCE_TO_SELF;
 using rafko_net::NETWORK_RECURRENCE_TO_LAYER;
 using rafko_net::Spike_function;
@@ -90,7 +90,7 @@ void test_solution_solver_multithread(uint16 threads){
   *solution.add_partial_solutions() = Partial_solution();
 
   vector<sdouble32> network_inputs = {double_literal(5.1),double_literal(10.3),double_literal(3.2),double_literal(9.4)};
-  Input_synapse_interval temp_input_interval;
+  InputSynapseInterval temp_input_interval;
 
   /* [0][0]: Whole of the input */
   manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(0), network_inputs.size(),0);
@@ -357,9 +357,9 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
 
   SparseNet* net(builder->dense_layers(
     network_layout_sizes,{
-      {TRANSFER_FUNCTION_IDENTITY},
-      {TRANSFER_FUNCTION_SELU,TRANSFER_FUNCTION_RELU},
-      {TRANSFER_FUNCTION_TANH,TRANSFER_FUNCTION_SIGMOID}
+      {transfer_function_identity},
+      {transfer_function_selu,transfer_function_relu},
+      {transfer_function_tanh,transfer_function_sigmoid}
     }
   ));
 
@@ -406,13 +406,13 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
       /* if the Neuron is solvable --> all of its children are etiher inputs or solved already */
       /* solve them, store its data and update the meta */
       if(false == solved[neuron_iterator]){
-        Synapse_iterator<Input_synapse_interval> neuron_input_synapses(net->neuron_array(neuron_iterator).input_indices());
+        Synapse_iterator<InputSynapseInterval> neuron_input_synapses(net->neuron_array(neuron_iterator).input_indices());
         overall_inputs_in_neuron = neuron_input_synapses.size();
         solved_inputs_in_neuron = 0;
         neuron_input_iterator = 0;
         neuron_data = 0;
         Synapse_iterator<>::iterate(net->neuron_array(neuron_iterator).input_weights(),
-        [&](Index_synapse_interval weight_synapse, sint32 weight_index){
+        [&](IndexSynapseInterval weight_synapse, sint32 weight_index){
           if(neuron_input_iterator < neuron_input_synapses.size()){
             input_index = neuron_input_synapses[neuron_input_iterator];
             if(
@@ -513,7 +513,7 @@ TEST_CASE("Solution Solver memory test", "[solve][memory]"){
   SparseNet* net = Sparse_net_builder(service_context)
     .input_size(1).expected_input_range(double_literal(5.0))
     .set_recurrence_to_self()
-    .allowed_transfer_functions_by_layer({{TRANSFER_FUNCTION_IDENTITY}})
+    .allowed_transfer_functions_by_layer({{transfer_function_identity}})
     .dense_layers({1});
 
   for(uint32 weight_index = 0; weight_index < net->weight_table_size(); ++weight_index){

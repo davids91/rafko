@@ -43,7 +43,7 @@ public:
    *
    * @return     A random Transfer Function
    */
-  static transfer_functions next();
+  static Transfer_functions next();
 
   /**
    * @brief      Provides a random Transfer function out of the ones in the argument
@@ -52,7 +52,7 @@ public:
    *
    * @return     A random Transfer function according to the given range
    */
-  static transfer_functions next(vector<transfer_functions> range);
+  static Transfer_functions next(vector<Transfer_functions> range);
 
   /**
    * @brief      Provides the average range of the given Transfer functions output
@@ -61,7 +61,7 @@ public:
    *
    * @return     The average output range.
    */
-  static sdouble32 get_average_output_range(transfer_functions function);
+  static sdouble32 get_average_output_range(Transfer_functions function);
 
   /**
    * @brief      Apply the given transfer function to the given data
@@ -71,7 +71,7 @@ public:
    *
    * @return     The result of data.
    */
-  sdouble32 get_value(transfer_functions function, sdouble32 data) const;
+  sdouble32 get_value(Transfer_functions function, sdouble32 data) const;
 
   /**
    * @brief      Gets a functions derivative calculated form the given data
@@ -81,7 +81,7 @@ public:
    *
    * @return     The derivative from data.
    */
-  sdouble32 get_derivative(transfer_functions function, sdouble32 data) const;
+  sdouble32 get_derivative(Transfer_functions function, sdouble32 data) const;
 private:
   Service_context& context;
 };

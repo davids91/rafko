@@ -52,12 +52,12 @@ public:
     sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0)
   ): Dense_net_weight_initializer(service_context, memRatioMin, memRatioMax)
   { srand(seed); }
-  
+
   /**
    * @brief      Configuration functions
    */
   void set(uint32 expected_input_number, sdouble32 expected_input_maximum_value_);
-  sdouble32 next_weight_for(transfer_functions used_transfer_function) const;
+  sdouble32 next_weight_for(Transfer_functions used_transfer_function) const;
   sdouble32 next_memory_filter() const;
   sdouble32 next_bias() const;
 
@@ -74,9 +74,10 @@ private:
    *
    * @return     Expected weight amplitude
    */
-  sdouble32 get_weight_amplitude(transfer_functions used_transfer_function) const;
+  sdouble32 get_weight_amplitude(Transfer_functions used_transfer_function) const;
 
 };
 
 } /* namespace rafko_net */
-#endif // Dense_net_weight_initializer_H
+
+#endif /* Dense_net_weight_initializer_H */

@@ -124,7 +124,7 @@ message Build_network_request{
   string target_slot_id = 2;
   uint32 input_size = 10;
   double expected_input_range = 11;
-  repeated rafko_net.transfer_functions allowed_transfers_by_layer = 14;
+  repeated rafko_net.Transfer_functions allowed_transfers_by_layer = 14;
   repeated uint32 layer_sizes = 15;
 }
 
@@ -179,8 +179,8 @@ message Service_slot{
   rafko_net.SparseNet network = 22;
   rafko_net.Data_set test_set = 23;
   rafko_net.Data_set training_set = 24;
-  rafko_net.cost_functions cost_function = 25;
-  rafko_net.weight_updaters weight_updater = 26;
+  rafko_net.Cost_functions cost_function = 25;
+  rafko_net.Weight_updaters weight_updater = 26;
 }
 
 /**
