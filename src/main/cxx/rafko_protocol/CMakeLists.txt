@@ -30,6 +30,7 @@ protobuf_generate(
     .pb.cc .pb.h
   PROTOC_OUT_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol
+#  OUT_VAR PBUF_OUT
   PROTOS
     ${PROTO_SOURCES}
 )
@@ -49,13 +50,8 @@ protobuf_generate(
     "protoc-gen-grpc=${grpc_cpp_plugin_location}"
 )
 
-#protobuf_generate_cpp(
-#  LIB_SOURCES LIB_HEADERS
-#  ${PROTO_SOURCES}
-#  PLUGIN protoc-gen-grpc=${GRPC_CPP_PLUGIN_PATH}
-#)
-#target_sources(rafko_protocol
-#  PRIVATE
-#  ${LIB_HEADERS}
-#  ${LIB_SOURCES}
-#)
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol
+  DESTINATION include/rafko_protocol
+  FILES_MATCHING PATTERN "*.h"
+)

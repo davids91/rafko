@@ -1,8 +1,7 @@
 add_library(rafko_net)
 target_include_directories(rafko_net PUBLIC ${PROJECT_SOURCE_DIR} models services)
 target_link_libraries(rafko_net PUBLIC rafko_protocol)
-target_sources(rafko_net
-  INTERFACE
+set(NET_INTERFACE
   models/cost_function_squared_error.h
   models/cost_function_mse.h
   services/synapse_iterator.h
@@ -10,7 +9,8 @@ target_sources(rafko_net
   services/weight_updater_amsgrad.h
   services/weight_updater_momentum.h
   services/weight_updater_nesterov.h
-  PUBLIC
+)
+set(NET_HEADERS
   models/cost_function.h
   models/dense_net_weight_initializer.h
   models/neuron_info.h
@@ -28,6 +28,14 @@ target_sources(rafko_net
   services/updater_factory.h
   services/weight_experience_space.h
   services/weight_updater.h
+)
+set(NET_PUBLIC_HEADERS
+  ${NET_INTERFACE}
+  ${NET_HEADERS}
+)
+target_sources(rafko_net
+  INTERFACE ${NET_INTERFACE}
+  PUBLIC ${NET_HEADERS}
   PRIVATE
   models/src/dense_net_weight_initializer.cc
   models/src/neuron_info.cc
@@ -42,4 +50,8 @@ target_sources(rafko_net
   services/src/solution_solver.cc
   services/src/weight_experience_space.cc
   services/src/weight_updater.cc
+)
+install(
+  FILES ${NET_PUBLIC_HEADERS}
+  DESTINATION include/rafko_net
 )

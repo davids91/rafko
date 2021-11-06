@@ -38,9 +38,18 @@ endif()
 
 add_library(rafko_lib "")
 target_link_libraries(rafko_lib PUBLIC rafko_protocol rafko_utilities rafko_net rafko_gym)
-target_include_directories(rafko_lib PUBLIC ${CMAKE_BINARY_DIR}) # For Generated protocol files
 
 if(MAKE_TESTS)
   enable_testing()
   add_subdirectory(test)
 endif()
+
+
+set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/lib")
+install( TARGETS rafko_lib
+  EXPORT rafko-export
+  LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+  RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
+)
