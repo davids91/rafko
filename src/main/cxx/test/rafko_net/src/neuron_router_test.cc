@@ -34,12 +34,12 @@ using std::unique_ptr;
 using std::make_unique;
 using std::vector;
 
-using rafko_net::RafkoNet_builder;
+using rafko_net::RafkoNetBuilder;
 using rafko_net::RafkoNet;
-using rafko_net::Neuron_router;
-using rafko_net::Synapse_iterator;
+using rafko_net::NeuronRouter;
+using rafko_net::SynapseIterator;
 using rafko_net::InputSynapseInterval;
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 
 /*###############################################################################################
  * Testing if the iteration is correctly processing the Sparse net
@@ -48,14 +48,14 @@ using rafko_mainframe::Service_context;
  *    Because of the structure of a fully connected Net, one iteration would involve one layer exactly
  * */
 TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small]" ){
-  Service_context service_context;
+  ServiceContext service_context;
   /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};
-  unique_ptr<RafkoNet_builder> net_builder = make_unique<RafkoNet_builder>(service_context);
+  unique_ptr<RafkoNetBuilder> net_builder = make_unique<RafkoNetBuilder>(service_context);
   net_builder->input_size(5).output_neuron_number(5).expected_input_range(double_literal(5.0));
   unique_ptr<RafkoNet> net = unique_ptr<RafkoNet>(net_builder->dense_layers(layer_structure));
   net_builder.reset();
-  Neuron_router net_iterator(*net);
+  NeuronRouter net_iterator(*net);
 
   /* Testing the collected subset in each iteration in the net */
   uint16 iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
@@ -86,10 +86,10 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
         REQUIRE( neuron_in_subset != subset.end() );
 
         /* And check its dependencies */
-        Synapse_iterator<InputSynapseInterval>::iterate(net->neuron_array(layer_start + i).input_indices(),
+        SynapseIterator<InputSynapseInterval>::iterate(net->neuron_array(layer_start + i).input_indices(),
         [&](InputSynapseInterval input_synapse, sint32 synapse_input_index){
           if( /* Every net-internal Neuron input.. */
-            (!Synapse_iterator<>::is_index_input(synapse_input_index))
+            (!SynapseIterator<>::is_index_input(synapse_input_index))
             &&(!net_iterator.is_neuron_processed(synapse_input_index))
           ){ /* ..should be already solved.. */
             found = false;
@@ -120,17 +120,17 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
  *  by building a Neuron network, ommiting neurons from the subset, and then checking return values
  * */
 TEST_CASE( "Testing Neural Network router dependency interface", "[neuron-iteration][neuron-dependency]" ){
-  Service_context service_context;
+  ServiceContext service_context;
 
   /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};
   unique_ptr<RafkoNet> net(
-    RafkoNet_builder(service_context)
+    RafkoNetBuilder(service_context)
     .input_size(5).output_neuron_number(5)
     .expected_input_range(double_literal(5.0))
     .dense_layers(layer_structure)
   );
-  Neuron_router net_iterator(*net);
+  NeuronRouter net_iterator(*net);
 
   /* Collect the whole network into one big subset */
   while(static_cast<sint32>(net_iterator.get_subset_size()) < net->neuron_array_size()){ /* Until the whole network is processed */

@@ -35,10 +35,10 @@ using std::unique_ptr;
 
 using rafko_net::RafkoNet;
 using rafko_net::Solution;
-using rafko_net::Partial_solution;
-using rafko_gym::Data_aggregate;
-using rafko_net::Cost_functions;
-using rafko_mainframe::Service_context;
+using rafko_net::PartialSolution;
+using rafko_gym::DataAggregate;
+using rafko_net::CostFunctions;
+using rafko_mainframe::ServiceContext;
 
 /**
  * @brief      generates a partial partial_solution manually based on the Neural Network structure:
@@ -47,7 +47,7 @@ using rafko_mainframe::Service_context;
  * @param      partial_solution  The partial solution
  * @param[in]  number_of_inputs  The number of inputs to the network
  */
-extern void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset = 0);
+extern void manual_2_neuron_partial_solution(PartialSolution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset = 0);
 
 /** @brief Calculates the result of the partial partial_solution manually based on the structure provided by @manual_2_neuron_partial_solution
  *         In case there are more than 2 inputs, all of them shall be processed with the same weight
@@ -56,12 +56,12 @@ extern void manual_2_neuron_partial_solution(Partial_solution& partial_solution,
  *         - result1 = (prev_result1 * memory_filter1) + (result1 * (double_literal(1.0)-memory_rato1) //apply memory filter
  *         - result2 = f[1]((result1 * weight3) + bias2)
  *         - end_result = (prev_result2 * memory_filter2) + (result2 * (double_literal(1.0)-memory_rato2)
- * @param[in]  partial_inputs      The collected inputs of the @Partial_solution
+ * @param[in]  partial_inputs      The collected inputs of the @PartialSolution
  * @param      prev_neuron_output  The previous neuron data
  * @param[in]  partial_solution    The partial solution containing the weights andmisc parameters of the calculation
  * @param[in]  neuron_offset       THe neuron offset in which the partial solution is present in the whole network
  */
-extern void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdouble32>& prev_neuron_output, const Partial_solution& partial_solution, uint32 neuron_offset = 0);
+extern void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdouble32>& prev_neuron_output, const PartialSolution& partial_solution, uint32 neuron_offset = 0);
 
 /**
  * @brief      Calculates the result of a fully connected Network for the given inputs
@@ -102,7 +102,7 @@ extern void print_weights(RafkoNet& net, Solution& solution);
  * @param      net                    The net
  * @param      service_context        The service context
  */
-extern void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, RafkoNet& net, Service_context& service_context);
+extern void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set, RafkoNet& net, ServiceContext& service_context);
 
 /**
  * @brief      Creates a normalized dataset for addition: basically adding two numbers together.

@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef Dense_net_weight_initializer_H
-#define Dense_net_weight_initializer_H
+#ifndef DenseNetWeightInitializer_H
+#define DenseNetWeightInitializer_H
 
 #include "rafko_net/models/weight_initializer.h"
 
@@ -24,10 +24,10 @@ namespace rafko_net {
 
 /**
  * @brief      Class for dense net weight initializer. The member functions of the class are documented
- *             under @Weight_initializer. The Aim of this specialization is to provide correct weight,
+ *             under @WeightInitializer. The Aim of this specialization is to provide correct weight,
  *             bias and memory filter initalization to Fully Connected(Dense) Feedforward Neural networks.
  */
-class Dense_net_weight_initializer : public Weight_initializer{
+class DenseNetWeightInitializer : public WeightInitializer{
 public:
 
   /**
@@ -35,29 +35,29 @@ public:
    *             To srand with time(nullptr), the constructor needs to be called with
    *             a true boolean argument or given a seed value.
    */
-  Dense_net_weight_initializer(bool seed, Service_context& service_context)
-  :  Weight_initializer(service_context)
+  DenseNetWeightInitializer(bool seed, ServiceContext& service_context)
+  :  WeightInitializer(service_context)
   { if(seed)srand(static_cast<uint32>(time(nullptr))); }
 
-  Dense_net_weight_initializer(
-    Service_context& service_context, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
-  ): Weight_initializer(service_context)
+  DenseNetWeightInitializer(
+    ServiceContext& service_context, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
+  ): WeightInitializer(service_context)
   {
     memMin = max(double_literal(0.0), min(double_literal(1.0), memRatioMin));
     memMax = min(double_literal(1.0), max(memMin,memRatioMax));
   }
 
-  Dense_net_weight_initializer(
-    uint32 seed, Service_context& service_context,
+  DenseNetWeightInitializer(
+    uint32 seed, ServiceContext& service_context,
     sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0)
-  ): Dense_net_weight_initializer(service_context, memRatioMin, memRatioMax)
+  ): DenseNetWeightInitializer(service_context, memRatioMin, memRatioMax)
   { srand(seed); }
 
   /**
    * @brief      Configuration functions
    */
   void set(uint32 expected_input_number, sdouble32 expected_input_maximum_value_);
-  sdouble32 next_weight_for(Transfer_functions used_transfer_function) const;
+  sdouble32 next_weight_for(TransferFunctions used_transfer_function) const;
   sdouble32 next_memory_filter() const;
   sdouble32 next_bias() const;
 
@@ -68,16 +68,16 @@ private:
   /**
    * @brief      Gets the expected amplitude for a weight with the given transfer function
    *             and configured parameters. Should always be a positive number above
-   *             @Transfer_function::epsilon
+   *             @TransferFunction::epsilon
    *
    * @param[in]  used_transfer_function  The basis transfer function
    *
    * @return     Expected weight amplitude
    */
-  sdouble32 get_weight_amplitude(Transfer_functions used_transfer_function) const;
+  sdouble32 get_weight_amplitude(TransferFunctions used_transfer_function) const;
 
 };
 
 } /* namespace rafko_net */
 
-#endif /* Dense_net_weight_initializer_H */
+#endif /* DenseNetWeightInitializer_H */

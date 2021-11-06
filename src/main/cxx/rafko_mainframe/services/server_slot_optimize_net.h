@@ -26,7 +26,7 @@ namespace rafko_mainframe{
  * @brief      This class describes a server slot which optimizes a Neural network
  *             for its stored datasets if the required input data and parameters are provided.
  */
-class Server_slot_optimize_net : public Server_slot{
+class ServerSlotOptimizeNet : public ServerSlot{
 public:
   void initialize(ServiceSlot&& service_slot_);
   void loop(void);
@@ -37,7 +37,7 @@ public:
   SlotInfo get_info(uint32 request_bitstring);
   NeuralIOStream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const;
   NeuralIOStream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const;
-  ~Server_slot_optimize_net(void);
+  ~ServerSlotOptimizeNet(void);
 };
 
 } /* namespace rafko_mainframe */

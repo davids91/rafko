@@ -32,12 +32,12 @@ namespace rafko_net{
 using google::protobuf::RepeatedPtrField;
 
 /**
- * @brief      Front-end to create partial solution objects by adding Neurons into them. 
+ * @brief      Front-end to create partial solution objects by adding Neurons into them.
  *             Weights of a Neuron consists of: {memory_ratio, w1..wn, bias1..biasn}
  */
-class Partial_solution_builder{
+class PartialSolutionBuilder{
 public:
-  static uint32 add_neuron_to_partial_solution(const RafkoNet& net, uint32 neuron_index, Partial_solution& partial);
+  static uint32 add_neuron_to_partial_solution(const RafkoNet& net, uint32 neuron_index, PartialSolution& partial);
 
 private:
   /**
@@ -83,28 +83,28 @@ private:
   }
 
   /**
-   * @brief      Looks for the given Neuron index in the @Partial_solution input,
+   * @brief      Looks for the given Neuron index in the @PartialSolution input,
    *             and adds the input to it if found
    *
    * @param[in]  neuron_input_index  The neuron input index to look for
-   * @param[in]  input_reach_back    The number of loops a Neural input reaches back to 
+   * @param[in]  input_reach_back    The number of loops a Neural input reaches back to
    *
-   * @return     returns true if the neuron index was found in the @Partial_solution input
+   * @return     returns true if the neuron index was found in the @PartialSolution input
    */
   static bool look_for_neuron_input(
     sint32 neuron_input_index, uint32 input_reach_back,
-    Synapse_iterator<InputSynapseInterval>& input_synapse, Partial_solution& partial
+    SynapseIterator<InputSynapseInterval>& input_synapse, PartialSolution& partial
   );
 
   /**
-   * @brief      Looks for the given Neuron index in the @Partial_solution internally,
+   * @brief      Looks for the given Neuron index in the @PartialSolution internally,
    *             and adds the input to it if found
    *
    * @param[in]  neuron_input_index  The neuron input index to look for
    *
-   * @return     returns true if the neuron index was found in the @Partial_solution Inner Neurons
+   * @return     returns true if the neuron index was found in the @PartialSolution Inner Neurons
    */
-  static bool look_for_neuron_input_internally(uint32 neuron_input_index, Partial_solution& partial);
+  static bool look_for_neuron_input_internally(uint32 neuron_input_index, PartialSolution& partial);
 
   /**
    * Temporary helper variables used only during Neuron mapping which is started by @add_neuron_to_partial_solution

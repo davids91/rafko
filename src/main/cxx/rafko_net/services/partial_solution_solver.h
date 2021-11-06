@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef Partial_solution_H
-#define Partial_solution_H
+#ifndef PartialSolution_H
+#define PartialSolution_H
 
 #include "rafko_global.h"
 
@@ -41,10 +41,10 @@ using std::atomic;
 using rafko_utilities::DataPool;
 using rafko_utilities::DataRingbuffer;
 
-class Partial_solution_solver{
+class PartialSolution_solver{
 
 public:
-  Partial_solution_solver(const Partial_solution& partial_solution, Service_context& service_context)
+  PartialSolution_solver(const PartialSolution& partial_solution, ServiceContext& service_context)
   :  detail(partial_solution)
   ,  internal_weight_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())
@@ -116,22 +116,22 @@ private:
   /**
    * The Partial solution to solve
    */
-  const Partial_solution& detail;
+  const PartialSolution& detail;
 
   /**
    * The iterator to go through the Neuron weights while solving the detail
    */
-  Synapse_iterator<> internal_weight_iterator;
+  SynapseIterator<> internal_weight_iterator;
 
   /**
    * The iterator to go through the I/O of the detail
    */
-  Synapse_iterator<InputSynapseInterval> input_iterator;
+  SynapseIterator<InputSynapseInterval> input_iterator;
 
   /**
    * The transfer function set configured for the current session
    */
-  Transfer_function transfer_function;
+  TransferFunction transfer_function;
 
   /**
    * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference
@@ -147,4 +147,4 @@ private:
 };
 
 } /* namespace rafko_net */
-#endif /* Partial_solution_H */
+#endif /* PartialSolution_H */

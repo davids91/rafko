@@ -22,10 +22,10 @@
 
 namespace rafko_net{
 
-class Weight_updater_amsgrad : public Weight_updater{
+class WeightUpdaterAMSGrad : public WeightUpdater{
 public:
-  Weight_updater_amsgrad(RafkoNet& rafko_net, Service_context& service_context_)
-  :  Weight_updater(rafko_net, service_context_)
+  WeightUpdaterAMSGrad(RafkoNet& rafko_net, ServiceContext& service_context_)
+  :  WeightUpdater(rafko_net, service_context_)
   ,  iteration_count(0)
   ,  moment(rafko_net.weight_table_size(),double_literal(0.0))
   ,  raw_moment_max(rafko_net.weight_table_size(),double_literal(0.0))
@@ -48,7 +48,7 @@ public:
       if(raw_moment > raw_moment_max[weight_index])
         raw_moment_max[weight_index] = raw_moment;
     }
-    Weight_updater::iterate(gradients, solution);
+    WeightUpdater::iterate(gradients, solution);
     ++iteration_count;
   }
 

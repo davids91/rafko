@@ -24,7 +24,7 @@
 
 #include "rafko_net/services/weight_updater.h"
 #include "rafko_net/services/weight_updater_momentum.h"
-#include "rafko_net/services/weight_updater_nesterov.h"
+#include "rafko_net/services/weight_updater_nesterovs.h"
 #include "rafko_net/services/weight_updater_amsgrad.h"
 #include "rafko_net/services/weight_updater_adam.h"
 
@@ -33,7 +33,7 @@ namespace rafko_net{
 using std::unique_ptr;
 using std::make_unique;
 
-class Updater_factory{
+class UpdaterFactory{
 public:
   /**
    * @brief      Builds a weight updater.
@@ -44,21 +44,21 @@ public:
    *
    * @return     The weight updater.
    */
-  static unique_ptr<Weight_updater> build_weight_updater(
-    RafkoNet& net, Weight_updaters weight_updater, Service_context& context
+  static unique_ptr<WeightUpdater> build_weight_updater(
+    RafkoNet& net, WeightUpdaters weight_updater, ServiceContext& context
   ){
     switch(weight_updater){
       case weight_updater_momentum:
-        return make_unique<Weight_updater_momentum>(net,context);
+        return make_unique<WeightUpdaterMomentum>(net,context);
       case weight_updater_nesterovs:
-        return make_unique<Weight_updater_nesterov>(net,context);
+        return make_unique<WeightUpdaterNesterovs>(net,context);
       case weight_updater_adam:
-        return make_unique<Weight_updater_adam>(net,context);
+        return make_unique<WeightUpdaterAdam>(net,context);
       case weight_updater_amsgrad:
-        return make_unique<Weight_updater_amsgrad>(net,context);
+        return make_unique<WeightUpdaterAMSGrad>(net,context);
       case weight_updater_default:
-      default: 
-        return make_unique<Weight_updater>(net,context);
+      default:
+        return make_unique<WeightUpdater>(net,context);
     };
   }
 };

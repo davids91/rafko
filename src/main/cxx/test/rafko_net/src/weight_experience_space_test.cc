@@ -18,11 +18,11 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "rafko_net/services/Weight_experience_space.h"
+#include "rafko_net/services/weight_experience_space.h"
 
 namespace rafko_net_test {
 
-using rafko_net::Weight_experience_space;
+using rafko_net::WeightExperienceSpace;
 
 /*###############################################################################################
  * Testing whether or not the correct weight values are generated in a weight experience space
@@ -31,7 +31,7 @@ TEST_CASE("Testing weight experience space weight values","[weightxp]"){
   sdouble32 weight_min = double_literal(-1.0);
   sdouble32 weight_max = double_literal(1.0);
   sdouble32 weight_step = double_literal(0.2);
-  Weight_experience_space wxp_space = Weight_experience_space(weight_min, weight_max, weight_step);
+  WeightExperienceSpace wxp_space = WeightExperienceSpace(weight_min, weight_max, weight_step);
 
   uint32 weight_index = 0;
   for(sdouble32 weight = weight_min; weight < weight_max; weight += weight_step){

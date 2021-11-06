@@ -37,20 +37,20 @@
 
 namespace rafko_net_test{
 
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 using rafko_utilities::DataRingbuffer;
 using rafko_utilities::ThreadGroup;
-using rafko_net::RafkoNet_builder;
-using rafko_net::Solution_builder;
+using rafko_net::RafkoNetBuilder;
+using rafko_net::SolutionBuilder;
 using rafko_net::RafkoNet;
-using rafko_net::Partial_solution;
-using rafko_net::Partial_solution_solver;
+using rafko_net::PartialSolution;
+using rafko_net::PartialSolution_solver;
 using rafko_net::Solution;
-using rafko_net::Solution_solver;
+using rafko_net::SolutionSolver;
 using rafko_net::IndexSynapseInterval;
 using rafko_net::InputSynapseInterval;
-using rafko_net::Synapse_iterator;
-using rafko_net::Transfer_function;
+using rafko_net::SynapseIterator;
+using rafko_net::TransferFunction;
 using rafko_net::transfer_function_identity;
 using rafko_net::transfer_function_sigmoid;
 using rafko_net::transfer_function_tanh;
@@ -58,7 +58,7 @@ using rafko_net::transfer_function_relu;
 using rafko_net::transfer_function_selu;
 using rafko_net::network_recurrence_to_self;
 using rafko_net::network_recurrence_to_layer;
-using rafko_net::Spike_function;
+using rafko_net::SpikeFunction;
 
 using std::unique_ptr;
 using std::make_unique;
@@ -68,61 +68,61 @@ using std::vector;
  * Testing if the solution solver produces a correct output, given a manually constructed
  * @Solution.
  * - 2 rows and two columns shall be constructed.
- * - @Partial_solution [0][0]: takes the whole of the input
- * - @Partial_solution [0][1]: takes half of the input
- * - @Partial_solution [1][0]: takes the whole of the previous row
- * - @Partial_solution [1][1]: takes half from each previous @Partial_solution
+ * - @PartialSolution [0][0]: takes the whole of the input
+ * - @PartialSolution [0][1]: takes half of the input
+ * - @PartialSolution [1][0]: takes the whole of the previous row
+ * - @PartialSolution [1][1]: takes half from each previous @PartialSolution
  */
 void test_solution_solver_multithread(uint16 threads){
-  Service_context service_context;
+  ServiceContext service_context;
 
   /* Define the input, @Solution and partial solution table */
-  Service_context context = Service_context().set_max_solve_threads(threads);
+  ServiceContext context = ServiceContext().set_max_solve_threads(threads);
   Solution solution;
   solution.set_network_memory_length(1);
   solution.set_neuron_number(8);
   solution.set_output_neuron_number(4);
   solution.add_cols(2); /* Every row shall have 2 columns */
   solution.add_cols(2);
-  *solution.add_partial_solutions() = Partial_solution();
-  *solution.add_partial_solutions() = Partial_solution();
-  *solution.add_partial_solutions() = Partial_solution();
-  *solution.add_partial_solutions() = Partial_solution();
+  *solution.add_partial_solutions() = PartialSolution();
+  *solution.add_partial_solutions() = PartialSolution();
+  *solution.add_partial_solutions() = PartialSolution();
+  *solution.add_partial_solutions() = PartialSolution();
 
   vector<sdouble32> network_inputs = {double_literal(5.1),double_literal(10.3),double_literal(3.2),double_literal(9.4)};
   InputSynapseInterval temp_input_interval;
 
   /* [0][0]: Whole of the input */
   manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(0), network_inputs.size(),0);
-  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
+  temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0));
   temp_input_interval.set_interval_size(network_inputs.size());
   *solution.mutable_partial_solutions(0)->add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_0 = Partial_solution_solver(solution.partial_solutions(0), service_context);
+  PartialSolution_solver partial_solution_solver_0_0 = PartialSolution_solver(solution.partial_solutions(0), service_context);
 
   /* [0][1]: Half of the input */
   manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(1), network_inputs.size()/2,2);
-  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(network_inputs.size()/2));
+  temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(network_inputs.size()/2));
   temp_input_interval.set_interval_size(network_inputs.size()/2);
   *solution.mutable_partial_solutions(1)->add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_0_1 = Partial_solution_solver(solution.partial_solutions(1), service_context);
+  PartialSolution_solver partial_solution_solver_0_1 = PartialSolution_solver(solution.partial_solutions(1), service_context);
 
   /* [1][0]: Whole of the previous row's data --> neuron [0] to [3] */
   manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(2),4,4);
   temp_input_interval.set_starts(0);
   temp_input_interval.set_interval_size(4);
   *solution.mutable_partial_solutions(2)->add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_0 = Partial_solution_solver(solution.partial_solutions(2), service_context);
+  PartialSolution_solver partial_solution_solver_1_0 = PartialSolution_solver(solution.partial_solutions(2), service_context);
 
   /* [1][1]: Half of the previous row's data ( in the middle) --> neuron [1] to [2] */
   manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(3),2,6);
   temp_input_interval.set_starts(1);
   temp_input_interval.set_interval_size(2);
   *solution.mutable_partial_solutions(3)->add_input_data() = temp_input_interval;
-  Partial_solution_solver partial_solution_solver_1_1 = Partial_solution_solver(solution.partial_solutions(3), service_context);
+  PartialSolution_solver partial_solution_solver_1_1 = PartialSolution_solver(solution.partial_solutions(3), service_context);
 
   /* Solve the compiled Solution */
   srand (time(nullptr));
-  unique_ptr<Solution_solver> solution_solver(Solution_solver::Builder(solution, service_context).build());
+  unique_ptr<SolutionSolver> solution_solver(SolutionSolver::Builder(solution, service_context).build());
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(solution.neuron_number());
   vector<sdouble32> network_output_vector;
   DataRingbuffer neuron_data_partials(1,8);
@@ -145,19 +145,19 @@ void test_solution_solver_multithread(uint16 threads){
       /* Modify memory filters and transfer functions */
       solution.mutable_partial_solutions(0)->set_weight_table(solution.partial_solutions(0).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       solution.mutable_partial_solutions(0)->set_weight_table(solution.partial_solutions(0).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      solution.mutable_partial_solutions(0)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(0).neuron_transfer_functions_size()),Transfer_function::next());
+      solution.mutable_partial_solutions(0)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(0).neuron_transfer_functions_size()),TransferFunction::next());
 
       solution.mutable_partial_solutions(1)->set_weight_table(solution.partial_solutions(1).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       solution.mutable_partial_solutions(1)->set_weight_table(solution.partial_solutions(1).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      solution.mutable_partial_solutions(1)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(1).neuron_transfer_functions_size()),Transfer_function::next());
+      solution.mutable_partial_solutions(1)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(1).neuron_transfer_functions_size()),TransferFunction::next());
 
       solution.mutable_partial_solutions(2)->set_weight_table(solution.partial_solutions(2).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       solution.mutable_partial_solutions(2)->set_weight_table(solution.partial_solutions(2).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      solution.mutable_partial_solutions(2)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(2).neuron_transfer_functions_size()),Transfer_function::next());
+      solution.mutable_partial_solutions(2)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(2).neuron_transfer_functions_size()),TransferFunction::next());
 
       solution.mutable_partial_solutions(3)->set_weight_table(solution.partial_solutions(3).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       solution.mutable_partial_solutions(3)->set_weight_table(solution.partial_solutions(3).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      solution.mutable_partial_solutions(3)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(3).neuron_transfer_functions_size()),Transfer_function::next());
+      solution.mutable_partial_solutions(3)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(3).neuron_transfer_functions_size()),TransferFunction::next());
     }
 
     /* Calculate the expected output */
@@ -204,21 +204,21 @@ TEST_CASE("Solution solver manual testing","[solve][small][manual-solve]"){
  * Testing if the solution solver produces a correct output, given a built @RafkoNet
  */
 void testing_solution_solver_manually(google::protobuf::Arena* arena){
-  Service_context service_context = Service_context()
+  ServiceContext service_context = ServiceContext()
   .set_max_solve_threads(4).set_device_max_megabytes(2048)
   .set_arena_ptr(arena);
   vector<uint32> net_structure = {20,40,30,10,20};
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the described net */
-  RafkoNet* net = RafkoNet_builder(service_context).input_size(5)
+  RafkoNet* net = RafkoNetBuilder(service_context).input_size(5)
     .expected_input_range(double_literal(5.0)).dense_layers(net_structure);
 
   /* Generate solution from Net */
-  Solution* solution = Solution_builder(service_context).build(*net);
+  Solution* solution = SolutionBuilder(service_context).build(*net);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
+  unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());
 
   const DataRingbuffer& neuron_data = solver->solve(net_input, true);
   vector<sdouble32> result = {
@@ -237,9 +237,9 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   /* Re-veriy with guaranteed multiple partial solutions */
   sdouble32 solution_size_mb = solution->SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
   (void)service_context.set_device_max_megabytes(solution_size_mb/double_literal(4.0));
-  Solution* solution2 = Solution_builder(service_context).build(*net);
+  Solution* solution2 = SolutionBuilder(service_context).build(*net);
 
-  unique_ptr<Solution_solver> solver2(Solution_solver::Builder(*solution2, service_context).build());
+  unique_ptr<SolutionSolver> solver2(SolutionSolver::Builder(*solution2, service_context).build());
   const DataRingbuffer& neuron_data2 = solver2->solve(net_input, true);
   result = {
     neuron_data2.get_const_element(0).end() - solver2->get_solution().output_neuron_number(),
@@ -272,8 +272,8 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   };
 
   /* Build the above described net */
-  Service_context service_context = Service_context().set_device_max_megabytes(max_space_mb);
-  RafkoNet_builder net_builder = RafkoNet_builder(service_context);
+  ServiceContext service_context = ServiceContext().set_device_max_megabytes(max_space_mb);
+  RafkoNetBuilder net_builder = RafkoNetBuilder(service_context);
   net_builder.input_size(5).expected_input_range(double_literal(5.0));
   if(network_recurrence_to_self == recurrence)
     net_builder.set_recurrence_to_self();
@@ -283,8 +283,8 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   RafkoNet* net = net_builder.dense_layers(net_structure);
 
   /* Generate solution from Net */
-  Solution* solution = Solution_builder(service_context).build(*net);
-  unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
+  Solution* solution = SolutionBuilder(service_context).build(*net);
+  unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   const DataRingbuffer& neuron_data = solver->solve(net_input, true);
@@ -343,14 +343,14 @@ TEST_CASE("Solution Solver test with memory", "[solve][memory]"){
  * and compare the calculated results to the one provided by the solution.
  */
 void test_generated_net_by_calculation(google::protobuf::Arena* arena){
-  Service_context service_context = Service_context().set_arena_ptr(arena);
+  ServiceContext service_context = ServiceContext().set_arena_ptr(arena);
   vector<sdouble32> net_input = {
     double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)
   };
   vector<uint32> network_layout_sizes = {10,30,20};
 
   /* Generate a fully connected Neural network */
-  unique_ptr<RafkoNet_builder> builder(make_unique<RafkoNet_builder>(service_context));
+  unique_ptr<RafkoNetBuilder> builder(make_unique<RafkoNetBuilder>(service_context));
   builder->input_size(5)
     .output_neuron_number(20)
     .expected_input_range(double_literal(5.0));
@@ -366,7 +366,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   /* Generate a solution */
   Solution* solution;
   REQUIRE_NOTHROW(
-     solution = Solution_builder(service_context).build(*net)
+     solution = SolutionBuilder(service_context).build(*net)
   );
   service_context.set_device_max_megabytes( /* Introduce segmentation into the solution to test roboustness */
     (solution->SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */)/double_literal(4.0)
@@ -375,17 +375,17 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
     delete solution;
   }
   REQUIRE_NOTHROW(
-     solution = Solution_builder(service_context).build(*net)
+     solution = SolutionBuilder(service_context).build(*net)
   );
 
   /* Solve the generated solution */
-  unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
+  unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   const DataRingbuffer& network_output = solver->solve(net_input, true);
 
   /* Calculate the network manually */
-  Transfer_function transfer_function(service_context);
+  TransferFunction transfer_function(service_context);
   const uint32 number_of_neurons = std::accumulate(network_layout_sizes.begin(),network_layout_sizes.end(),0);
   vector<sdouble32> manual_neuron_values = vector<sdouble32>(number_of_neurons);
   vector<bool> solved = vector<bool>(number_of_neurons, false);
@@ -406,23 +406,23 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
       /* if the Neuron is solvable --> all of its children are etiher inputs or solved already */
       /* solve them, store its data and update the meta */
       if(false == solved[neuron_iterator]){
-        Synapse_iterator<InputSynapseInterval> neuron_input_synapses(net->neuron_array(neuron_iterator).input_indices());
+        SynapseIterator<InputSynapseInterval> neuron_input_synapses(net->neuron_array(neuron_iterator).input_indices());
         overall_inputs_in_neuron = neuron_input_synapses.size();
         solved_inputs_in_neuron = 0;
         neuron_input_iterator = 0;
         neuron_data = 0;
-        Synapse_iterator<>::iterate(net->neuron_array(neuron_iterator).input_weights(),
+        SynapseIterator<>::iterate(net->neuron_array(neuron_iterator).input_weights(),
         [&](IndexSynapseInterval weight_synapse, sint32 weight_index){
           if(neuron_input_iterator < neuron_input_synapses.size()){
             input_index = neuron_input_synapses[neuron_input_iterator];
             if(
-              Synapse_iterator<>::is_index_input(input_index) /* Neuron input points to input data */
+              SynapseIterator<>::is_index_input(input_index) /* Neuron input points to input data */
               ||(true == solved[input_index]) /* or the current input points to a neuron which is already solved */
             ){ /* the input counts as solved */
               ++solved_inputs_in_neuron;
             }
-            if(Synapse_iterator<>::is_index_input(input_index)){
-              input_index = Synapse_iterator<>::input_index_from_synapse_index(input_index);
+            if(SynapseIterator<>::is_index_input(input_index)){
+              input_index = SynapseIterator<>::input_index_from_synapse_index(input_index);
               neuron_data += net_input[input_index] * net->weight_table(weight_index);
             }else{
               neuron_data += manual_neuron_values[input_index] * net->weight_table(weight_index);
@@ -437,7 +437,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
             net->neuron_array(neuron_iterator).transfer_function_idx(),
             neuron_data
           );
-          manual_neuron_values[neuron_iterator] = Spike_function::get_value(
+          manual_neuron_values[neuron_iterator] = SpikeFunction::get_value(
             net->weight_table(net->neuron_array(neuron_iterator).memory_filter_idx()),
             neuron_data,
             manual_neuron_values[neuron_iterator]
@@ -471,12 +471,12 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
   vector<sdouble32> net_input = {
     double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)
   };
-  Service_context service_context = Service_context();
-  RafkoNet* net = RafkoNet_builder(service_context)
+  ServiceContext service_context = ServiceContext();
+  RafkoNet* net = RafkoNetBuilder(service_context)
     .input_size(5).expected_input_range(double_literal(5.0))
     .dense_layers(net_structure);
-  Solution* solution = Solution_builder(service_context).build(*net);
-  unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
+  Solution* solution = SolutionBuilder(service_context).build(*net);
+  unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());
 
   /* solve in a single thread */
   const DataRingbuffer& single_thread_output_buffer = solver->solve(net_input, true);
@@ -509,8 +509,8 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
  * Test if the solver is able to remember the previous neuron values correctly
  */
 TEST_CASE("Solution Solver memory test", "[solve][memory]"){
-  Service_context service_context = Service_context();
-  RafkoNet* net = RafkoNet_builder(service_context)
+  ServiceContext service_context = ServiceContext();
+  RafkoNet* net = RafkoNetBuilder(service_context)
     .input_size(1).expected_input_range(double_literal(5.0))
     .set_recurrence_to_self()
     .allowed_transfer_functions_by_layer({{transfer_function_identity}})
@@ -521,8 +521,8 @@ TEST_CASE("Solution Solver memory test", "[solve][memory]"){
   }
   net->set_weight_table(0u,double_literal(0.0)); /* Set the memory filter of the only neuron to 0, so the previous value of it would not modify the current one through the spike function*/
 
-  Solution* solution = Solution_builder(service_context).build(*net);
-  unique_ptr<Solution_solver> solver(Solution_solver::Builder(*solution, service_context).build());
+  Solution* solution = SolutionBuilder(service_context).build(*net);
+  unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());
 
   sdouble32 expected_result = double_literal(1.0);
   for(uint32 variant = 0u; variant < 10u; ++variant){

@@ -20,9 +20,9 @@
 
 namespace rafko_gym{
 
-DataPool<sdouble32> Data_aggregate::common_datapool(1,1);
+DataPool<sdouble32> DataAggregate::common_datapool(1,1);
 
-void Data_aggregate::fill(DataSet& samples){
+void DataAggregate::fill(DataSet& samples){
   uint32 feature_start_index = 0;
   uint32 input_start_index = 0;
   /*!Note: One cycle can be used for both, because there will always be at least as many inputs as labels */
@@ -40,7 +40,7 @@ void Data_aggregate::fill(DataSet& samples){
   }
 }
 
-void Data_aggregate::set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data){
+void DataAggregate::set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data){
   if(label_samples.size() > sample_index){
     if(!exposed_to_multithreading){
       std::lock_guard<mutex> my_lock(dataset_mutex);
@@ -56,7 +56,7 @@ void Data_aggregate::set_feature_for_label(uint32 sample_index, const vector<sdo
   }else throw std::runtime_error("Sample index out of bounds!");
 }
 
-void Data_aggregate::set_features_for_labels(
+void DataAggregate::set_features_for_labels(
   const vector<vector<sdouble32>>& neuron_data,
   uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate
 ){
@@ -72,7 +72,7 @@ void Data_aggregate::set_features_for_labels(
   }else throw std::runtime_error("Label index out of bounds!");
 }
 
-void Data_aggregate::set_features_for_sequences(
+void DataAggregate::set_features_for_sequences(
   const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index,
   uint32 sequence_start_index, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation,
@@ -107,13 +107,13 @@ void Data_aggregate::set_features_for_sequences(
   }else throw std::runtime_error("Sequence index out of bounds!");
 }
 
-void Data_aggregate::conceal_from_multithreading(void){
+void DataAggregate::conceal_from_multithreading(void){
   exposed_to_multithreading = false;
   error_state.back().error_sum = 0;
   error_calculation_threads.start_and_block(error_calculation_lambda);
 }
 
-void Data_aggregate::accumulate_error_sum(uint32 error_start, uint32 errors_to_sum){
+void DataAggregate::accumulate_error_sum(uint32 error_start, uint32 errors_to_sum){
   sdouble32 local_error = 0;
   for(uint32 sample_index = error_start; sample_index < (error_start + errors_to_sum) ; ++sample_index)
     local_error += error_state.back().sample_errors[sample_index];

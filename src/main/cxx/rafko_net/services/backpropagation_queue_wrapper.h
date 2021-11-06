@@ -22,15 +22,15 @@
 
 namespace rafko_net{
 
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 
 /**
  * @brief      Wrapper function to generate BackpropagationQueue objects from @RafkoNet
  *             objects
  */
-class BackpropagationQueue_wrapper{
+class BackpropagationQueueWrapper{
 public:
-  BackpropagationQueue_wrapper(RafkoNet& net, Service_context& context);
+  BackpropagationQueueWrapper(RafkoNet& net, ServiceContext& context);
   BackpropagationQueue operator()(){
     return gradient_step;
   }

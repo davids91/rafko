@@ -29,7 +29,7 @@ namespace rafko_net {
 
 using std::shared_ptr;
 
-RafkoNet* RafkoNet_builder::dense_layers(vector<uint32> layer_sizes){
+RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
 
   using std::make_shared;
 
@@ -64,7 +64,7 @@ RafkoNet* RafkoNet_builder::dense_layers(vector<uint32> layer_sizes){
     uint32 layer_input_starts_at = 0;
     uint64 weightIt = 0;
     uint64 neurIt = 0;
-    sdouble32 expPrevLayerOutput = Transfer_function::get_average_output_range(transfer_function_identity);
+    sdouble32 expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);
 
     ret->set_input_data_size(arg_input_size);
     ret->set_output_neuron_number(layer_sizes.back());
@@ -72,7 +72,7 @@ RafkoNet* RafkoNet_builder::dense_layers(vector<uint32> layer_sizes){
     previous_size = arg_input_size;
 
     if(!is_weight_initializer_set){
-      weight_initializer(std::make_shared<Dense_net_weight_initializer>(context));
+      weight_initializer(std::make_shared<DenseNetWeightInitializer>(context));
     }
 
     arg_weight_table = vector<sdouble32>(numWeights);
@@ -96,14 +96,14 @@ RafkoNet* RafkoNet_builder::dense_layers(vector<uint32> layer_sizes){
         ++weightIt;
         if(is_allowed_transfer_functions_by_layer_set){
           arg_neuron_array[neurIt].set_transfer_function_idx(
-            Transfer_function::next(arg_allowed_transfer_functions_by_layer[layerIt])
+            TransferFunction::next(arg_allowed_transfer_functions_by_layer[layerIt])
           );
         }else{
-          arg_neuron_array[neurIt].set_transfer_function_idx(Transfer_function::next());
+          arg_neuron_array[neurIt].set_transfer_function_idx(TransferFunction::next());
         }
 
         /* Storing the expected output of this Net */
-        if(0 < layerIt)expPrevLayerOutput += Transfer_function::get_average_output_range(
+        if(0 < layerIt)expPrevLayerOutput += TransferFunction::get_average_output_range(
           arg_neuron_array[neurIt].transfer_function_idx()
         );
 
@@ -113,7 +113,7 @@ RafkoNet* RafkoNet_builder::dense_layers(vector<uint32> layer_sizes){
         *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
 
         if(0 == layerIt){
-          temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
+          temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0));
         }else{
           temp_input_interval.set_starts(layer_input_starts_at);
         }
@@ -195,7 +195,7 @@ RafkoNet* RafkoNet_builder::dense_layers(vector<uint32> layer_sizes){
   }else throw std::runtime_error("Input Output Pre-requisites failed;Unable to determine Net Structure!");
 }
 
-RafkoNet* RafkoNet_builder::build(void){
+RafkoNet* RafkoNetBuilder::build(void){
   if( /* Required arguments are set */
     (is_input_size_set && is_output_neuron_number_set)
     &&(is_neuron_array_set && is_weight_table_set) /* needed arguments are set */

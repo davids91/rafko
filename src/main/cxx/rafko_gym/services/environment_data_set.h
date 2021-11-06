@@ -37,9 +37,9 @@ using std::reference_wrapper;
 /**
  * @brief      A class representing an environment using a train and test set
  */
-class Environment_data_set : public Environment{
+class EnvironmentDataSet : public Environment{
 public:
-  Environment_data_set(Service_context& service_context_, Data_aggregate& train_set_, Data_aggregate& test_set_);
+  EnvironmentDataSet(ServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_);
 
   sdouble32 full_evaluation(Agent& agent){
     evaluate(agent, train_set, 0u, train_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
@@ -94,12 +94,12 @@ public:
     }
   }
 
-  ~Environment_data_set(void) = default;
+  ~EnvironmentDataSet(void) = default;
 
 private:
-  Service_context& service_context;
-  Data_aggregate& train_set;
-  Data_aggregate& test_set;
+  ServiceContext& service_context;
+  DataAggregate& train_set;
+  DataAggregate& test_set;
   vector<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   ThreadGroup execution_threads;
 
@@ -118,7 +118,7 @@ private:
    * @param[in]  sequence_tructaion         The number of labels to evaluate inside every evaluated sequence
    */
   void evaluate(
-    Agent& agent, Data_aggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
+    Agent& agent, DataAggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_tructaion
   );
 
@@ -131,7 +131,7 @@ private:
    * @param[in]  sequence_index      The sequence to be evaluated inside the @data_set
    * @param[in]  thread_index        The index of the thread the function is used with inside @solve_threads
    */
-  void evaluate_single_sequence(Agent& agent, Data_aggregate& data_set, uint32 sequence_index, uint32 thread_index);
+  void evaluate_single_sequence(Agent& agent, DataAggregate& data_set, uint32 sequence_index, uint32 thread_index);
 };
 
 } /* namespace rafko_gym */

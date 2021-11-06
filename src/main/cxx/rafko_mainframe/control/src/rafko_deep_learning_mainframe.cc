@@ -16,11 +16,11 @@ using grpc::ServerReaderWriter;
 using grpc::ServerWriter;
 using grpc::Status;
 
-using rafko_mainframe::Deep_learning_server;
+using rafko_mainframe::DeepLearningServer;
 
 int main(int argc, char *argv[]){
   std::string server_address("0.0.0.0:50052");
-  Deep_learning_server service;
+  DeepLearningServer service;
 
   ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

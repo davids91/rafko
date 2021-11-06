@@ -24,7 +24,7 @@ using std::min;
 using std::ref;
 using std::async;
 
-void Cost_function::get_feature_errors(
+void CostFunction::get_feature_errors(
   const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
   uint32 label_start, uint32 error_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
 ){
@@ -46,7 +46,7 @@ void Cost_function::get_feature_errors(
 }
 
 static std::mutex cout_mutex;
-void Cost_function::feature_errors_thread(
+void CostFunction::feature_errors_thread(
   const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
   uint32 label_start, uint32 error_start, uint32 neuron_data_start_index,
   uint32 labels_to_evaluate_in_one_thread, uint32 labels_evaluating_overall, uint32 sample_number, uint32 thread_index
@@ -75,7 +75,7 @@ void Cost_function::feature_errors_thread(
   }
 }
 
-sdouble32 Cost_function::get_feature_error(
+sdouble32 CostFunction::get_feature_error(
   const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data,
   uint32 max_threads, uint32 outer_thread_index, uint32 sample_number
 ){
@@ -84,7 +84,7 @@ sdouble32 Cost_function::get_feature_error(
   const uint32 feature_number = 1 + static_cast<uint32>(labels.size()/max_threads);
   for(uint32 thread_index = 0; ((thread_index < max_threads) && (neuron_data.size() > feature_start_inside_neuron)); ++thread_index){
     thread_results[outer_thread_index].push_back(async(std::launch::async,
-      &Cost_function::summarize_errors, this, ref(labels), ref(neuron_data), feature_start_inside_neuron,
+      &CostFunction::summarize_errors, this, ref(labels), ref(neuron_data), feature_start_inside_neuron,
       min(feature_number, static_cast<uint32>(neuron_data.size() - feature_start_inside_neuron))
     ));
     feature_start_inside_neuron += feature_number;
@@ -96,7 +96,7 @@ sdouble32 Cost_function::get_feature_error(
   return error_post_process(error_value, sample_number);
 }
 
-sdouble32 Cost_function::summarize_errors(
+sdouble32 CostFunction::summarize_errors(
   const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data,
   uint32 feature_start_index_in_neuron, uint32 number_to_add
 ){

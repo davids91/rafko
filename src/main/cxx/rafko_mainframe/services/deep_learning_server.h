@@ -39,9 +39,9 @@ using std::mutex;
  * @brief      This class describes a server for deep learning related tasks. The supported operations are described in
  *             the @/proto/deep_learning_services.proto file. Functions defined in the service are thread-safe.
  */
-class Deep_learning_server final : public RafkoDeepLearning::Service{
+class DeepLearningServer final : public RafkoDeepLearning::Service{
 public:
-  Deep_learning_server(void)
+  DeepLearningServer(void)
   :  server_slots()
   ,  server_slot_mutexs()
   ,  is_server_slot_running()
@@ -49,10 +49,10 @@ public:
   ,  server_mutex()
   { }
 
-  Deep_learning_server(const Deep_learning_server& other) = delete;/* Copy constructor */
-  Deep_learning_server(Deep_learning_server&& other) = delete; /* Move constructor */
-  Deep_learning_server& operator=(const Deep_learning_server& other) = delete; /* Copy assignment */
-  Deep_learning_server& operator=(Deep_learning_server&& other) = delete; /* Move assignment */
+  DeepLearningServer(const DeepLearningServer& other) = delete;/* Copy constructor */
+  DeepLearningServer(DeepLearningServer&& other) = delete; /* Move constructor */
+  DeepLearningServer& operator=(const DeepLearningServer& other) = delete; /* Copy assignment */
+  DeepLearningServer& operator=(DeepLearningServer&& other) = delete; /* Move assignment */
 
   ::grpc::Status add_slot(::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request, ::rafko_mainframe::SlotResponse* response);
   ::grpc::Status update_slot(::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request, ::rafko_mainframe::SlotResponse* response);
@@ -67,14 +67,14 @@ public:
    * @brief      The main loop of the server to run to be able to provide the service
    */
   void loop(void);
-  ~Deep_learning_server(void){ server_slots.clear(); }
+  ~DeepLearningServer(void){ server_slots.clear(); }
 
 private:
-  vector<unique_ptr<Server_slot>> server_slots; /* points to different implementations of a @Server_slot */
+  vector<unique_ptr<ServerSlot>> server_slots; /* points to different implementations of a @ServerSlot */
   vector<unique_ptr<mutex>> server_slot_mutexs;
   vector<uint8> is_server_slot_running;
   vector<uint32> iteration;
-  mutex server_mutex; /* Aims to protect modification of the state of the server ( mainly Server_slots ) */
+  mutex server_mutex; /* Aims to protect modification of the state of the server ( mainly ServerSlots ) */
 
   /**
    * @brief      Tries to find the index of the server slot with the given identifier

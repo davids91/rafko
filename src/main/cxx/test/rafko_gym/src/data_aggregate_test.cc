@@ -32,16 +32,16 @@ using std::unique_ptr;
 using std::vector;
 
 using rafko_net::DataSet;
-using rafko_gym::Data_aggregate;
-using rafko_net::Cost_function_mse;
-using rafko_mainframe::Service_context;
+using rafko_gym::DataAggregate;
+using rafko_net::CostFunctionMSE;
+using rafko_mainframe::ServiceContext;
 
 /*###############################################################################################
  * Testing Data aggregate implementation and seeing if it converts @DataSet correctly
  * into the data item wih statistics, and take care of statistic error data correctly
  * */
 TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
-  Service_context service_context;
+  ServiceContext service_context;
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
   sdouble32 expected_label = double_literal(50.0);
@@ -58,8 +58,8 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
     data_set.add_labels(expected_label);
   }
 
-  /* Create @Data_aggregate from @DataSet */
-  Data_aggregate data_agr(service_context, data_set, std::make_unique<Cost_function_mse>(1, service_context));
+  /* Create @DataAggregate from @DataSet */
+  DataAggregate data_agr(service_context, data_set, std::make_unique<CostFunctionMSE>(1, service_context));
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 
@@ -213,7 +213,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
  * are working as expected
  * */
 TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
-  Service_context service_context;
+  ServiceContext service_context;
   const uint32 sample_number = 50;
   const uint32 sequence_size = 5;
   const uint32 selected_index = rand()%(sample_number * sequence_size);
@@ -232,7 +232,7 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
     data_set.add_labels(expected_label);
   }
 
-  Data_aggregate data_agr(service_context, data_set, std::make_unique<Cost_function_mse>(1, service_context));
+  DataAggregate data_agr(service_context, data_set, std::make_unique<CostFunctionMSE>(1, service_context));
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 

@@ -38,7 +38,7 @@ using std::vector;
  */
 class Training_logger{
 public:
-  Training_logger(string id_, Service_context& service_context)
+  Training_logger(string id_, ServiceContext& service_context)
   :  id(id_)
   ,  context(service_context)
   ,  measurement()
@@ -50,7 +50,7 @@ public:
 
 private:
   string id;
-  Service_context& context;
+  ServiceContext& context;
   Measurement measurement;
   uint32 changes_since;
 };

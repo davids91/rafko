@@ -43,14 +43,14 @@ using std::mutex;
                between the Neurons. The Neurons at the beginning of the net only take in input data,
                so they already have their inputs ready. Any other Neurons build upon that, with each Iteration
                some additional @Neuron nodes are collected into a subset. That subset is later to be used by
-               the @Solution_builder to compile @Partial_solutions.
+               the @SolutionBuilder to compile @PartialSolutions.
                If a Neuron is solvable, its state is being set to "reserved", and collected into the subset.
                After an iteration the state update from the subset needs to be handled by whoever has access to
                the Neuron indexes inside.
  */
-class Neuron_router{
+class NeuronRouter{
 public:
-  Neuron_router(const RafkoNet& rafko_net);
+  NeuronRouter(const RafkoNet& rafko_net);
 
   uint32 operator[](int index){
     return get_neuron_index_from_subset(index);

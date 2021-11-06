@@ -23,9 +23,9 @@ namespace rafko_net{
 
 using std::vector;
 
-BackpropagationQueue_wrapper::BackpropagationQueue_wrapper(RafkoNet& net, Service_context& context){
+BackpropagationQueueWrapper::BackpropagationQueueWrapper(RafkoNet& net, ServiceContext& context){
   vector<vector<uint32>> neuron_queue = vector<vector<uint32>>(1,vector<uint32>(0));
-  Neuron_router neuron_router(net);
+  NeuronRouter neuron_router(net);
   uint32 neuron_index;
   uint32 neuron_depth = 0;
   uint32 neurons_done = 0;

@@ -23,7 +23,7 @@ namespace rafko_net {
 
 using std::max;
 
-Transfer_functions Transfer_function::next(){
+TransferFunctions TransferFunction::next(){
   return next({
     transfer_function_identity,
     transfer_function_sigmoid,
@@ -34,14 +34,14 @@ Transfer_functions Transfer_function::next(){
   });
 }
 
-Transfer_functions Transfer_function::next(vector<Transfer_functions> range){
-  Transfer_functions candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
+TransferFunctions TransferFunction::next(vector<TransferFunctions> range){
+  TransferFunctions candidate = static_cast<TransferFunctions>(rand()%TransferFunctions_ARRAYSIZE);
   while(find(range.begin(), range.end(), candidate) == range.end())
-    candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
+    candidate = static_cast<TransferFunctions>(rand()%TransferFunctions_ARRAYSIZE);
   return candidate;
 }
 
-sdouble32 Transfer_function::get_average_output_range(Transfer_functions function){
+sdouble32 TransferFunction::get_average_output_range(TransferFunctions function){
   switch(function){
   case transfer_function_sigmoid:
   case transfer_function_tanh:
@@ -55,7 +55,7 @@ sdouble32 Transfer_function::get_average_output_range(Transfer_functions functio
   }
 }
 
-sdouble32 Transfer_function::get_value(Transfer_functions function, sdouble32 data) const{
+sdouble32 TransferFunction::get_value(TransferFunctions function, sdouble32 data) const{
   switch(function){
     case transfer_function_identity: return data; /* Identity means f(x) = x */
     case transfer_function_sigmoid: return 1/(1+exp(-data));
@@ -71,7 +71,7 @@ sdouble32 Transfer_function::get_value(Transfer_functions function, sdouble32 da
   }
 }
 
-sdouble32 Transfer_function::get_derivative(Transfer_functions function, sdouble32 data) const{
+sdouble32 TransferFunction::get_derivative(TransferFunctions function, sdouble32 data) const{
   switch(function){
     case transfer_function_identity: return 1; /* Identity means f(x) = x */
     case transfer_function_sigmoid: return exp(data)/pow((exp(data) + 1),2);

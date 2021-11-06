@@ -55,9 +55,9 @@ using google::protobuf::RepeatedPtrField;
  *             syn_iter.iterate([&](int synapse_start){},[&](int index){});
  */
 template<typename Interval_type = IndexSynapseInterval>
-class Synapse_iterator{
+class SynapseIterator{
 public:
-   Synapse_iterator(const RepeatedPtrField<Interval_type>& arg_synapse_interval)
+   SynapseIterator(const RepeatedPtrField<Interval_type>& arg_synapse_interval)
   :  synapse_interval(arg_synapse_interval)
   ,  last_reached_synapse(0)
   ,  last_reached_index(0)

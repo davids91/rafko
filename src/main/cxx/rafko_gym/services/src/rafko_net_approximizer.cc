@@ -28,10 +28,10 @@ using std::make_unique;
 using std::lock_guard;
 using std::ref;
 
-using rafko_net::Synapse_iterator;
+using rafko_net::SynapseIterator;
 using rafko_net::IndexSynapseInterval;
 
-void RafkoNet_approximizer::collect_approximates_from_weight_gradients(void){
+void RafkoNetApproximizer::collect_approximates_from_weight_gradients(void){
   vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
   sdouble32 gradient_overview = get_gradient_for_all_weights() * service_context.get_learning_rate(iteration);
   sdouble32 greatest_weight_value = double_literal(0.0);
@@ -52,7 +52,7 @@ void RafkoNet_approximizer::collect_approximates_from_weight_gradients(void){
   ++iteration;
 }
 
-void RafkoNet_approximizer::convert_direction_to_gradient(vector<sdouble32>& direction, bool save_to_fragment){
+void RafkoNetApproximizer::convert_direction_to_gradient(vector<sdouble32>& direction, bool save_to_fragment){
   if(net.weight_table_size() == static_cast<sint32>(direction.size())){
     sdouble32 error_negative_direction;
     sdouble32 error_positive_direction;
@@ -95,7 +95,7 @@ void RafkoNet_approximizer::convert_direction_to_gradient(vector<sdouble32>& dir
   }else throw std::runtime_error("Incompatible direction given to approximate for!");
 }
 
-sdouble32 RafkoNet_approximizer::get_single_weight_gradient(uint32 weight_index){
+sdouble32 RafkoNetApproximizer::get_single_weight_gradient(uint32 weight_index){
   sdouble32 gradient;
   const sdouble32 current_epsilon = service_context.get_sqrt_epsilon() * epsilon_addition;
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
@@ -123,7 +123,7 @@ sdouble32 RafkoNet_approximizer::get_single_weight_gradient(uint32 weight_index)
   return (gradient);
 }
 
-sdouble32 RafkoNet_approximizer::get_gradient_for_all_weights(void){
+sdouble32 RafkoNetApproximizer::get_gradient_for_all_weights(void){
   sdouble32 gradient;
   sdouble32 error_negative_direction;
   sdouble32 error_positive_direction;
@@ -154,7 +154,7 @@ sdouble32 RafkoNet_approximizer::get_gradient_for_all_weights(void){
   return (gradient);
 }
 
-void RafkoNet_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gradient_fragment_value){
+void RafkoNetApproximizer::add_to_fragment(uint32 weight_index, sdouble32 gradient_fragment_value){
   uint32 values_index = 0;
   uint32 values_index_target = gradient_fragment.values_size();
   uint32 weight_synapse_index_target = gradient_fragment.weight_synapses_size();
@@ -213,7 +213,7 @@ void RafkoNet_approximizer::add_to_fragment(uint32 weight_index, sdouble32 gradi
   }
 }
 
-void RafkoNet_approximizer::apply_fragment(void){
+void RafkoNetApproximizer::apply_fragment(void){
   uint32 fragment_value_index = 0;
   std::fill(applied_direction.begin(),applied_direction.end(), double_literal(0.0));
 
@@ -225,7 +225,7 @@ void RafkoNet_approximizer::apply_fragment(void){
       applied_direction.begin() + gradient_fragment.weight_synapses(0).starts()
     );
   }else{
-    Synapse_iterator<>::iterate(gradient_fragment.weight_synapses(), [&](
+    SynapseIterator<>::iterate(gradient_fragment.weight_synapses(), [&](
       IndexSynapseInterval interval, sint32 weight_index
     ){
       applied_direction[weight_index] += gradient_fragment.values(fragment_value_index);

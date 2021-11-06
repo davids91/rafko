@@ -42,20 +42,20 @@ using std::min;
 using std::vector;
 using std::unique_ptr;
 
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 using rafko_net::RafkoNet;
-using rafko_net::Solution_builder;
-using rafko_net::Solution_solver;
-using rafko_net::Weight_updater;
-using rafko_net::Weight_updaters;
+using rafko_net::SolutionBuilder;
+using rafko_net::SolutionSolver;
+using rafko_net::WeightUpdater;
+using rafko_net::WeightUpdaters;
 using rafko_net::GradientFragment;
-using rafko_net::Updater_factory;
+using rafko_net::UpdaterFactory;
 
 /**
  * @brief      This class approximates gradients for a @Dataset and @RafkoNet.
  *             The approximated gradients are collected into one gradient fragment.
  */
-class RafkoNet_approximizer{
+class RafkoNetApproximizer{
 public:
 
   /**
@@ -67,29 +67,29 @@ public:
    * @param[in]  weight_updater_               The Weight updater to help convergence
    * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
-  RafkoNet_approximizer(
-    Service_context& service_context_, RafkoNet& neural_network, Environment& environment_,
-    Weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
+  RafkoNetApproximizer(
+    ServiceContext& service_context_, RafkoNet& neural_network, Environment& environment_,
+    WeightUpdaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
   ):service_context(service_context_)
   , net(neural_network)
-  , net_solution(Solution_builder(service_context).build(net))
+  , net_solution(SolutionBuilder(service_context).build(net))
   , environment(environment_)
-  , solver(Solution_solver::Builder(*net_solution, service_context).build())
+  , solver(SolutionSolver::Builder(*net_solution, service_context).build())
   , applied_direction(net.weight_table_size())
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
   {
-    weight_updater = Updater_factory::build_weight_updater(net,weight_updater_,service_context);
+    weight_updater = UpdaterFactory::build_weight_updater(net,weight_updater_,service_context);
     environment.full_evaluation(*solver);
   }
 
-  ~RafkoNet_approximizer(void){
+  ~RafkoNetApproximizer(void){
     if(nullptr == service_context.get_arena_ptr())
       delete net_solution;
   }
-  RafkoNet_approximizer(const RafkoNet_approximizer& other) = delete;/* Copy constructor */
-  RafkoNet_approximizer(RafkoNet_approximizer&& other) = delete; /* Move constructor */
-  RafkoNet_approximizer& operator=(const RafkoNet_approximizer& other) = delete; /* Copy assignment */
-  RafkoNet_approximizer& operator=(RafkoNet_approximizer&& other) = delete; /* Move assignment */
+  RafkoNetApproximizer(const RafkoNetApproximizer& other) = delete;/* Copy constructor */
+  RafkoNetApproximizer(RafkoNetApproximizer&& other) = delete; /* Move constructor */
+  RafkoNetApproximizer& operator=(const RafkoNetApproximizer& other) = delete; /* Copy assignment */
+  RafkoNetApproximizer& operator=(RafkoNetApproximizer&& other) = delete; /* Move assignment */
 
   /**
    * @brief      Moves the network in a direction based on induvidual weight gradients,
@@ -196,12 +196,12 @@ public:
   }
 
 private:
-  Service_context& service_context;
+  ServiceContext& service_context;
   RafkoNet& net;
   Solution* net_solution;
   Environment& environment;
   unique_ptr<Agent> solver;
-  unique_ptr<Weight_updater> weight_updater;
+  unique_ptr<WeightUpdater> weight_updater;
   GradientFragment gradient_fragment;
   uint32 stochastic_evaluation_loops;
 

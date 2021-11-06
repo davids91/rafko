@@ -27,7 +27,7 @@ namespace rafko_net{
 /**
  * @brief      Spike function handling and utilities
  */
-class Spike_function{
+class SpikeFunction{
 public:
   /**
    * @brief      Apply the given spike function to a neurons activation data

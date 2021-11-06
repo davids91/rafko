@@ -25,12 +25,12 @@
 
 namespace rafko_mainframe{
 
-using rafko_net::Transfer_functions;
-using rafko_net::Transfer_functions_IsValid;
+using rafko_net::TransferFunctions;
+using rafko_net::TransferFunctions_IsValid;
 using std::lock_guard;
 using std::thread;
 
-void Deep_learning_server::loop(void){
+void DeepLearningServer::loop(void){
   lock_guard<mutex> my_lock(server_mutex);
   for(uint32 i = 0; i < server_slots.size(); ++i){
     if(0 < is_server_slot_running[i]){
@@ -54,7 +54,7 @@ void Deep_learning_server::loop(void){
   }
 }
 
-::grpc::Status Deep_learning_server::add_slot(
+::grpc::Status DeepLearningServer::add_slot(
   ::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request,
   ::rafko_mainframe::SlotResponse* response
 ){
@@ -63,8 +63,8 @@ void Deep_learning_server::loop(void){
   try{
     lock_guard<mutex> my_lock(server_mutex);
     server_slot_mutexs.push_back(std::make_unique<mutex>());
-    server_slots.push_back(unique_ptr<Server_slot>(
-      Server_slot_factory::build_server_slot(request->type())
+    server_slots.push_back(unique_ptr<ServerSlot>(
+      ServerSlotFactory::build_server_slot(request->type())
     ));
     is_server_slot_running.push_back(0);
     iteration.push_back(0);
@@ -83,7 +83,7 @@ void Deep_learning_server::loop(void){
   return return_value;
 }
 
-::grpc::Status Deep_learning_server::update_slot(
+::grpc::Status DeepLearningServer::update_slot(
   ::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request,
   ::rafko_mainframe::SlotResponse* response
 ){
@@ -107,7 +107,7 @@ void Deep_learning_server::loop(void){
   return return_value;
 }
 
-::grpc::Status Deep_learning_server::ping(
+::grpc::Status DeepLearningServer::ping(
   ::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request,
   ::rafko_mainframe::SlotResponse* response
 ){
@@ -131,7 +131,7 @@ void Deep_learning_server::loop(void){
 }
 
 
-::grpc::Status Deep_learning_server::build_network(
+::grpc::Status DeepLearningServer::build_network(
   ::grpc::ServerContext* context, const ::rafko_mainframe::BuildNetworkRequest* request,
   ::rafko_mainframe::SlotResponse* response
 ){
@@ -155,7 +155,7 @@ void Deep_learning_server::loop(void){
   return return_value;
 }
 
-::grpc::Status Deep_learning_server::request_action(
+::grpc::Status DeepLearningServer::request_action(
   ::grpc::ServerContext* context, 
   ::grpc::ServerReaderWriter< ::rafko_mainframe::SlotResponse,::rafko_mainframe::SlotRequest>* stream
 ){
@@ -250,7 +250,7 @@ void Deep_learning_server::loop(void){
   return return_value;
 }
 
-::grpc::Status Deep_learning_server::get_info(
+::grpc::Status DeepLearningServer::get_info(
   ::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request,
   ::rafko_mainframe::SlotInfo* response
 ){
@@ -274,7 +274,7 @@ void Deep_learning_server::loop(void){
 }
 
 
-::grpc::Status Deep_learning_server::get_network(
+::grpc::Status DeepLearningServer::get_network(
   ::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request,
   ::rafko_net::RafkoNet* response
 ){
@@ -297,7 +297,7 @@ void Deep_learning_server::loop(void){
   return return_value;
 }
 
-uint32 Deep_learning_server::find_id(string id){
+uint32 DeepLearningServer::find_id(string id){
   uint32 index;
   for(index = 0; index < server_slots.size(); ++index)
     if((server_slots[index])&&(0 == id.compare(server_slots[index]->get_uuid())))

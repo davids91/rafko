@@ -32,16 +32,16 @@ namespace rafko_net_test {
 using std::vector;
 using std::reference_wrapper;
 
-using rafko_net::Transfer_functions;
+using rafko_net::TransferFunctions;
 using rafko_net::transfer_function_identity;
 using rafko_utilities::DataRingbuffer;
-using rafko_net::Partial_solution;
-using rafko_net::Partial_solution_solver;
-using rafko_net::Transfer_function;
+using rafko_net::PartialSolution;
+using rafko_net::PartialSolution_solver;
+using rafko_net::TransferFunction;
 using rafko_net::IndexSynapseInterval;
 using rafko_net::InputSynapseInterval;
-using rafko_net::Synapse_iterator;
-using rafko_mainframe::Service_context;
+using rafko_net::SynapseIterator;
+using rafko_mainframe::ServiceContext;
 
 /*###############################################################################################
  * Testing if the solver processes a partial_solution detail correctly
@@ -56,9 +56,9 @@ using rafko_mainframe::Service_context;
  */
 
 TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-solution][manual]" ){
-  Service_context service_context;
+  ServiceContext service_context;
   DataRingbuffer neuron_data(1,2);
-  Partial_solution partial_solution;
+  PartialSolution partial_solution;
   vector<uint32> helper_vector_uint;
   vector<sdouble32> expected_neuron_output;
   InputSynapseInterval temp_synapse_interval;
@@ -68,12 +68,12 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   manual_2_neuron_partial_solution(partial_solution, network_inputs.size());
 
   /* Add relevant Partial solution input (the input of the first @Neuron) */
-  temp_synapse_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
+  temp_synapse_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0));
   temp_synapse_interval.set_interval_size(network_inputs.size());
   *partial_solution.add_input_data() = temp_synapse_interval;
 
   /* Test the partial_solution */
-  Partial_solution_solver solver(partial_solution, service_context);
+  PartialSolution_solver solver(partial_solution, service_context);
 
   /* The result should be according to the calculations */
   solver.solve(network_inputs, neuron_data);
@@ -84,10 +84,10 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   /* The result should change in accordance with the parameters */
   srand (time(nullptr));
   for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
-    Synapse_iterator<>::iterate(partial_solution.weight_indices(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
+    SynapseIterator<>::iterate(partial_solution.weight_indices(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },0u,1u); /* Mess with the weights of the first Neuron */
-    Synapse_iterator<>::iterate(partial_solution.weight_indices(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
+    SynapseIterator<>::iterate(partial_solution.weight_indices(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },1u,1u); /* Mess with the weights of the second Neuron */
 
@@ -105,7 +105,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
-    partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),Transfer_function::next());
+    partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),TransferFunction::next());
     solver.solve(network_inputs, neuron_data);
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     REQUIRE( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
@@ -120,8 +120,8 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
  * - see if the input is collected correctly
  */
 TEST_CASE("Test Partial solution input collection","[solve][partial-solution][input_collection]"){
-  Service_context service_context;
-  Partial_solution partial_solution;
+  ServiceContext service_context;
+  PartialSolution partial_solution;
   vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
   IndexSynapseInterval temp_index_interval;
   InputSynapseInterval temp_input_interval;
@@ -137,7 +137,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
     partial_solution.add_memory_filter_index(0);
 
     partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights */
-    temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(i));
+    temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(i));
     temp_input_interval.set_interval_size(1u); /* Input index synapse starts at the beginning of the data and goes on for an interval of 1 */
     *partial_solution.add_inside_indices() = temp_input_interval;
 
@@ -151,27 +151,27 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
    * Add the partial solution inputs
    */
   /* First 3 elements */
-  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0));
+  temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0));
   temp_input_interval.set_interval_size(3);
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Elements from 3 to 5 */
-  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(3));
+  temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(3));
   temp_input_interval.set_interval_size(3);
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Elements from 6 to 8 */
-  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(6));
+  temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(6));
   temp_input_interval.set_interval_size(2);
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Elements from 8 to 9 ( to the end ) */
-  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(8));
+  temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(8));
   temp_input_interval.set_interval_size(2);
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Prepare the partial solution */
-  Partial_solution_solver solver(partial_solution, service_context);
+  PartialSolution_solver solver(partial_solution, service_context);
 
   solver.solve(network_inputs, neuron_data); /* Since the network just spits the inputs back out so the input collection is testable through it*/
   for(uint32 i = 0; i < network_inputs.size(); ++i){

@@ -39,19 +39,19 @@ int main( int argc, char* argv[] ) {
 namespace rafko_net_test {
 
 using rafko_utilities::DataRingbuffer;
-using rafko_gym::Data_aggregate;
-using rafko_net::Transfer_function;
+using rafko_gym::DataAggregate;
+using rafko_net::TransferFunction;
 using rafko_net::transfer_function_identity;
-using rafko_net::Cost_functions;
+using rafko_net::CostFunctions;
 using rafko_net::InputSynapseInterval;
 using rafko_net::IndexSynapseInterval;
-using rafko_net::Solution_builder;
-using rafko_net::Solution_solver;
-using rafko_net::Synapse_iterator;
+using rafko_net::SolutionBuilder;
+using rafko_net::SolutionSolver;
+using rafko_net::SynapseIterator;
 using rafko_net::Neuron;
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 
-void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset){
+void manual_2_neuron_partial_solution(PartialSolution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset){
 
   InputSynapseInterval temp_input_interval;
   IndexSynapseInterval temp_index_interval;
@@ -82,7 +82,7 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
 
   /* inputs go to neuron1 */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights */
-  temp_input_interval.set_starts(Synapse_iterator<>::synapse_index_from_input_index(0)); /* Input index synapse starts at the beginning of the data */
+  temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0)); /* Input index synapse starts at the beginning of the data */
   temp_input_interval.set_interval_size(number_of_inputs); /* Neuron 1 has an input index synapse of the inputs */
   *partial_solution.add_inside_indices() = temp_input_interval;
 
@@ -112,9 +112,9 @@ void manual_2_neuron_partial_solution(Partial_solution& partial_solution, uint32
   *partial_solution.add_weight_indices() = temp_index_interval;
 }
 
-void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdouble32>& prev_neuron_output, const Partial_solution& partial_solution, uint32 neuron_offset){
-  Service_context service_context;
-  Transfer_function trasfer_function(service_context);
+void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdouble32>& prev_neuron_output, const PartialSolution& partial_solution, uint32 neuron_offset){
+  ServiceContext service_context;
+  TransferFunction trasfer_function(service_context);
 
   /* Neuron 1 = transfer_function( ( input0 * weight0 + input1 * weight1 ... inputN * weightN ) + bias0 )*/
   sdouble32 neuron1_result = 0;
@@ -139,8 +139,8 @@ void manaual_fully_connected_network_result(
   vector<sdouble32>& inputs, vector<sdouble32> previous_data, vector<sdouble32>& neuron_data,
   vector<uint32> layer_structure, RafkoNet network
 ){
-  Service_context service_context;
-  Transfer_function trasfer_function(service_context);
+  ServiceContext service_context;
+  TransferFunction trasfer_function(service_context);
 
   uint32 neuron_number = 0;
   for(uint32 layer_iterator = 0; layer_iterator < layer_structure.size(); ++layer_iterator){ /* Go through all of the layers, count the number of Neurons */
@@ -160,11 +160,11 @@ void manaual_fully_connected_network_result(
 
     if(0 < previous_data.size())
       REQUIRE( neuron_data.size() == previous_data.size() );
-    Synapse_iterator<>::iterate(neuron.input_weights(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
+    SynapseIterator<>::iterate(neuron.input_weights(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
       if(static_cast<sdouble32>(input_synapse_index) < neuron.input_indices_size()){ /* Only get input from the net if it's explicitly defined */
         REQUIRE( 1 >= neuron.input_indices(input_synapse_index).reach_past_loops() ); /* Only the last loop and the current can be handled in this test yet */
-        if(Synapse_iterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
-          neuron_input_value = inputs[Synapse_iterator<>::input_index_from_synapse_index(
+        if(SynapseIterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
+          neuron_input_value = inputs[SynapseIterator<>::input_index_from_synapse_index(
             neuron.input_indices(input_synapse_index).starts() - input_index_offset
           )];
         else if(1 == neuron.input_indices(input_synapse_index).reach_past_loops())
@@ -208,7 +208,7 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
       weight_synapse_offset = 0;
 
       /* Since Neurons take their inputs from the partial solution input, test iterates over it */
-      Synapse_iterator<InputSynapseInterval> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
+      SynapseIterator<InputSynapseInterval> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
       const uint32 first_neuron_index_in_partial = solution.partial_solutions(partial_solution_iterator).output_data().starts();
       for( /* Skim through the inner neurons in the partial solutiomake n until the current one if found */
         uint32 i_neuron_iter = 0; i_neuron_iter < solution.partial_solutions(partial_solution_iterator).output_data().interval_size();++i_neuron_iter
@@ -218,10 +218,10 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
           neuron_synapse_element_iterator = 0;
 
           /* Test iterates over the Neurons input weights, to see if they match with the wights in the Network */
-          Synapse_iterator<> inner_neuron_weight_iterator(solution.partial_solutions(partial_solution_iterator).weight_indices());
-          Synapse_iterator<> neuron_weight_iterator(net.neuron_array(neuron_iterator).input_weights());
+          SynapseIterator<> inner_neuron_weight_iterator(solution.partial_solutions(partial_solution_iterator).weight_indices());
+          SynapseIterator<> neuron_weight_iterator(net.neuron_array(neuron_iterator).input_weights());
 
-          /* Inner Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input is true ) */
+          /* Inner Neuron inputs point to indexes in the partial solution input ( when SynapseIterator<>::is_index_input is true ) */
           expected_inputs = 0;
           counted_inputs = 0;
           inner_neuron_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
@@ -238,15 +238,15 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
 
           /* Test if all of the neurons inputs are are the same as the ones in the net */
           /* Test iterates over the inner neurons synapse to see if it matches the Neuron synapse */
-          Synapse_iterator<InputSynapseInterval> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
-          Synapse_iterator<InputSynapseInterval> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
+          SynapseIterator<InputSynapseInterval> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
+          SynapseIterator<InputSynapseInterval> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
 
-          /* Neuron inputs point to indexes in the partial solution input ( when Synapse_iterator<>::is_index_input s true ) */
+          /* Neuron inputs point to indexes in the partial solution input ( when SynapseIterator<>::is_index_input s true ) */
           neuron_synapse_element_iterator = 0;
           counted_inputs = 0;
           inner_neuron_input_iterator.iterate([&](InputSynapseInterval input_synapse, sint32 input_index){
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
-            if(!Synapse_iterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
+            if(!SynapseIterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
               CHECK( 0 == input_synapse.reach_past_loops() ); /* Internal inputs should always be taken from the current loop */
               REQUIRE(
                 static_cast<sint32>(first_neuron_index_in_partial + input_index)
@@ -254,11 +254,11 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
               );
             }else{ /* Inner Neuron takes its input from the partial solution input */
               REQUIRE( /* Input indices match */
-                partial_input_iterator[Synapse_iterator<>::input_index_from_synapse_index(input_index)]
+                partial_input_iterator[SynapseIterator<>::input_index_from_synapse_index(input_index)]
                 == neuron_input_iterator[neuron_synapse_element_iterator]
               );
              REQUIRE( /* The time the neuron takes its input also match */
-                partial_input_iterator.synapse_under(Synapse_iterator<>::input_index_from_synapse_index(input_index)).reach_past_loops()
+                partial_input_iterator.synapse_under(SynapseIterator<>::input_index_from_synapse_index(input_index)).reach_past_loops()
                 == neuron_input_iterator.synapse_under(neuron_synapse_element_iterator).reach_past_loops()
               );
             }
@@ -291,8 +291,8 @@ void print_weights(RafkoNet& net, Solution& solution){
   }
 }
 
-void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, RafkoNet& net, Service_context& service_context){
-  unique_ptr<Solution_solver> sample_solver(Solution_solver::Builder(*Solution_builder(service_context).build(net), service_context).build());
+void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set, RafkoNet& net, ServiceContext& service_context){
+  unique_ptr<SolutionSolver> sample_solver(SolutionSolver::Builder(*SolutionBuilder(service_context).build(net), service_context).build());
   vector<sdouble32> neuron_data(data_set.get_sequence_size());
   uint32 raw_label_index = sample_sequence_index;
   uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());

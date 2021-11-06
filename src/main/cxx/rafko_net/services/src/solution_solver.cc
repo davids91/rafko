@@ -26,15 +26,15 @@ namespace rafko_net{
 using std::function;
 using std::ref;
 
-Solution_solver::Builder::Builder(const Solution& to_solve, Service_context& context)
+SolutionSolver::Builder::Builder(const Solution& to_solve, ServiceContext& context)
 :  solution(to_solve)
 ,  service_context(context)
 {
   uint32 partial_index_at_row_start = 0;
   for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
-    partial_solvers.push_back(vector<Partial_solution_solver>());
+    partial_solvers.push_back(vector<PartialSolution_solver>());
     for(uint32 column_index = 0; column_index < solution.cols(row_iterator); ++column_index){
-      partial_solvers[row_iterator].push_back( Partial_solution_solver(
+      partial_solvers[row_iterator].push_back( PartialSolution_solver(
         solution.partial_solutions(partial_index_at_row_start + column_index), context
       )); /* Initialize a solver for this partial solution element */
       if(partial_solvers[row_iterator][column_index].get_required_tmp_data_size() > max_tmp_size_needed)
@@ -46,7 +46,7 @@ Solution_solver::Builder::Builder(const Solution& to_solve, Service_context& con
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
 
-void Solution_solver::solve(
+void SolutionSolver::solve(
   const vector<sdouble32>& input, DataRingbuffer& output,
   const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool, uint32 used_data_pool_start
 ) const{

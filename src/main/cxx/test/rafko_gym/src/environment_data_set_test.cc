@@ -35,14 +35,14 @@ namespace rako_gym_test {
 using std::vector;
 using std::reference_wrapper;
 
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 using rafko_utilities::DataRingbuffer;
 using rafko_gym::Agent;
-using rafko_gym::Data_aggregate;
-using rafko_gym::Environment_data_set;
+using rafko_gym::DataAggregate;
+using rafko_gym::EnvironmentDataSet;
 using rafko_net::Solution;
 using rafko_net::DataSet;
-using rafko_net::Cost_function_mse;
+using rafko_net::CostFunctionMSE;
 
 /*###############################################################################################
  * Testing if the data-set environment produces correct error values
@@ -64,7 +64,7 @@ private:
 TEST_CASE("Testing Dataset environment", "[environment]"){
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
-  Service_context service_context = Service_context()
+  ServiceContext service_context = ServiceContext()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
@@ -82,9 +82,9 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   }
 
   /* Create the environment and dummy agent */
-  Data_aggregate training_set(service_context, data_set, std::make_unique<Cost_function_mse>(1, service_context));
-  Data_aggregate test_set(service_context, data_set, std::make_unique<Cost_function_mse>(1, service_context));
-  Environment_data_set environment(service_context, training_set, test_set);
+  DataAggregate training_set(service_context, data_set, std::make_unique<CostFunctionMSE>(1, service_context));
+  DataAggregate test_set(service_context, data_set, std::make_unique<CostFunctionMSE>(1, service_context));
+  EnvironmentDataSet environment(service_context, training_set, test_set);
   Solution solution;
   solution.set_neuron_number(1);
   solution.set_output_neuron_number(1);

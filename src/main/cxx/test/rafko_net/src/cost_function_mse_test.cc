@@ -27,8 +27,8 @@
 
 namespace rafko_net_test {
 
-using rafko_net::Cost_function_mse;
-using rafko_mainframe::Service_context;
+using rafko_net::CostFunctionMSE;
+using rafko_mainframe::ServiceContext;
 
 using std::vector;
 
@@ -38,7 +38,7 @@ using std::vector;
  * - Calculate the distances to it
  * */
 TEST_CASE( "Error function test", "[training][error-function]" ) {
-  Service_context service_context;
+  ServiceContext service_context;
 
   /* create fake data and fake features with a given distance */
   uint16 dataset_size = 500;
@@ -58,7 +58,7 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   }
 
   /* one feature distance should be (double_literal(0.5) * (distance)^2 ) */
-  Cost_function_mse cost(feature_size, service_context);
+  CostFunctionMSE cost(feature_size, service_context);
   for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
     CHECK(
       Approx(

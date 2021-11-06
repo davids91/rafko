@@ -26,9 +26,9 @@
 
 namespace rafko_net {
 
-DataPool<sdouble32> Partial_solution_solver::common_data_pool;
+DataPool<sdouble32> PartialSolution_solver::common_data_pool;
 
-void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
+void PartialSolution_solver::solve_internal(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
   sdouble32 new_neuron_data = 0;
   sdouble32 new_neuron_input;
   uint32 weight_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
@@ -39,13 +39,13 @@ void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data
 
   /* Collect the input data to solve the partial solution */
   input_iterator.skim([&](InputSynapseInterval input_synapse){
-    if(Synapse_iterator<>::is_index_input(input_synapse.starts())){ /* If @Partial_solution input is from the network input */
+    if(SynapseIterator<>::is_index_input(input_synapse.starts())){ /* If @PartialSolution input is from the network input */
       std::copy(
-        input_data.begin() + Synapse_iterator<>::input_index_from_synapse_index(input_synapse.starts()),
-        input_data.begin() + Synapse_iterator<>::input_index_from_synapse_index(input_synapse.starts()) + input_synapse.interval_size(),
+        input_data.begin() + SynapseIterator<>::input_index_from_synapse_index(input_synapse.starts()),
+        input_data.begin() + SynapseIterator<>::input_index_from_synapse_index(input_synapse.starts()) + input_synapse.interval_size(),
         temp_data.begin() + input_index_offset
       );
-    }else if(static_cast<sint32>(output_neuron_data.buffer_size()) > input_synapse.starts()){  /* If @Partial_solution input is from the previous row */
+    }else if(static_cast<sint32>(output_neuron_data.buffer_size()) > input_synapse.starts()){  /* If @PartialSolution input is from the previous row */
       std::copy(
         output_neuron_data.get_element(input_synapse.reach_past_loops()).begin() + input_synapse.starts(),
         output_neuron_data.get_element(input_synapse.reach_past_loops()).begin() + input_synapse.starts() + input_synapse.interval_size(),
@@ -62,8 +62,8 @@ void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data
     internal_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse, sint32 weight_index){
       if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
         input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
-        if(Synapse_iterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
-          input_index = Synapse_iterator<>::input_index_from_synapse_index(input_index - input_index_offset);
+        if(SynapseIterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
+          input_index = SynapseIterator<>::input_index_from_synapse_index(input_index - input_index_offset);
           new_neuron_input = temp_data[input_index];
         }else{ /* Neuron gets its input internaly */
           input_index = detail.output_data().starts() + input_index + input_index_offset;
@@ -92,7 +92,7 @@ void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data
       detail.neuron_transfer_functions(neuron_iterator), new_neuron_data
     );
 
-    new_neuron_data = Spike_function::get_value( /* apply spike function */
+    new_neuron_data = SpikeFunction::get_value( /* apply spike function */
       detail.weight_table(detail.memory_filter_index(neuron_iterator)),
       new_neuron_data, output_neuron_data.get_element(0, (detail.output_data().starts() + neuron_iterator))
     );
@@ -103,7 +103,7 @@ void Partial_solution_solver::solve_internal(const vector<sdouble32>& input_data
   } /* Go through the neurons */
 }
 
-bool Partial_solution_solver::is_valid(void) const{
+bool PartialSolution_solver::is_valid(void) const{
   if(
     (0u < detail.output_data().interval_size())
     &&(static_cast<int>(detail.output_data().interval_size()) == detail.index_synapse_number_size())

@@ -23,7 +23,7 @@
 
 namespace rafko_net{
 
-class Neuron_info{
+class NeuronInfo{
 public:
 
   /**

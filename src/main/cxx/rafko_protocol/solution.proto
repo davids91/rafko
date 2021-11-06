@@ -31,19 +31,19 @@ import "common.proto";
  *             The Partial solution itself is best solved iteratively, becuase each neuron may depend on the previous one
  *             or the previous row.
  */
-message Partial_solution{
+message PartialSolution{
   /** ################################################################################################
    * Solution data
    */
   repeated double weight_table = 2; /* stores the weights paired to @inside_indexes for the inputs of the Neurons; Ranges [0.0,1.0) */
-  repeated InputSynapseInterval input_data = 3; /* @Partial_solution input: negative intervals are network inputs, positives are inner neuron data */
-  IndexSynapseInterval output_data = 4; /* @Partial_solution output; The inner Neurons mapped to Neuron indices in the @RafkoNet */
+  repeated InputSynapseInterval input_data = 3; /* @PartialSolution input: negative intervals are network inputs, positives are inner neuron data */
+  IndexSynapseInterval output_data = 4; /* @PartialSolution output; The inner Neurons mapped to Neuron indices in the @RafkoNet */
 
   /** ################################################################################################
    * A representation of the actual neuron to be used in this intermediate solution
    * - sizes are of @output_data.interval_size()
    */
-  repeated Transfer_functions neuron_transfer_functions = 11;
+  repeated TransferFunctions neuron_transfer_functions = 11;
   repeated uint32 memory_filter_index = 12;
 
   /** ################################################################################################
@@ -66,19 +66,19 @@ message Partial_solution{
   repeated InputSynapseInterval inside_indices = 20;
 
   /**
-   * Inner Neuron weight intervals corresponding to the @weight_table in the @Partial_solution
-   * - Solving the @Partial_solution is based on indexes, every new index reads in a weight. In case the currently
+   * Inner Neuron weight intervals corresponding to the @weight_table in the @PartialSolution
+   * - Solving the @PartialSolution is based on indexes, every new index reads in a weight. In case the currently
    *   used weight synapse ends, another synapse starts.
    * - The number of weights shall equal the number of indexes, so the two synapses should end at the
    *   same number of input-weight pairs.
-   * - Although @weight_synapse_number is not used while solving the @Partial_solution it can be
+   * - Although @weight_synapse_number is not used while solving the @PartialSolution it can be
    *   used to check wether the above statement holds true
    */
   repeated IndexSynapseInterval weight_indices = 30;
 }
 
 /**
- * @brief      A collection of independent @Partial_solution messages to be executed in parallel.
+ * @brief      A collection of independent @PartialSolution messages to be executed in parallel.
  *             Each row depends on the previous one, but partial solutions in one row can be solved in paralell.
  *             Since rows are usually next to one another, this entity suggest the Neural Network
  *             structure resembles a top-down image (where the input is at the top, the output is at the bottom),
@@ -89,5 +89,5 @@ message Solution{
   uint32 output_neuron_number = 2; /* Number of outputs the @Solution has */
   uint32 network_memory_length = 3; /* How many runs a network should be able to remember */
   repeated uint32 cols = 10; /* How many columns each row has, size gives back number of rows */
-  repeated Partial_solution partial_solutions = 11; /* The number of outputs this solution has is the summary of the last rows internal Neuron */
+  repeated PartialSolution partial_solutions = 11; /* The number of outputs this solution has is the summary of the last rows internal Neuron */
 }

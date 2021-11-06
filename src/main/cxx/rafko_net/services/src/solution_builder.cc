@@ -35,8 +35,8 @@ using std::unique_ptr;
 using std::ref;
 using std::lock_guard;
 
-Solution* Solution_builder::build(const RafkoNet& net, bool optimize_to_gpu){
-  Neuron_router neuron_router(net);
+Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
+  NeuronRouter neuron_router(net);
   Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(service_context.get_arena_ptr());
   uint32 overall_partial_solution_count = 0;
   sdouble32 remaining_megabytes_in_row = 0;
@@ -58,14 +58,14 @@ Solution* Solution_builder::build(const RafkoNet& net, bool optimize_to_gpu){
 
     if(0u < neuron_router.get_subset_size()){
       for(uint32 partial_index_in_row = 0; partial_index_in_row < service_context.get_max_solve_threads(); ++partial_index_in_row){
-        if(nullptr == service_context.get_arena_ptr() ) *solution->add_partial_solutions() = Partial_solution();
-        else *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<Partial_solution>(service_context.get_arena_ptr());
+        if(nullptr == service_context.get_arena_ptr() ) *solution->add_partial_solutions() = PartialSolution();
+        else *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<PartialSolution>(service_context.get_arena_ptr());
 
         /* fill up the partial with Neurons */
-        Partial_solution& this_partial = *solution->mutable_partial_solutions(solution->partial_solutions_size()-1);
+        PartialSolution& this_partial = *solution->mutable_partial_solutions(solution->partial_solutions_size()-1);
         sdouble32 remaining_megabytes_in_partial = max_megabytes_in_one_partial;
         has_neuron = neuron_router.get_first_neuron_index_from_subset(current_neuron_index);
-        if(has_neuron) current_neuron_megabyte_size = Neuron_info::get_neuron_estimated_size_megabytes(net.neuron_array(current_neuron_index));
+        if(has_neuron) current_neuron_megabyte_size = NeuronInfo::get_neuron_estimated_size_megabytes(net.neuron_array(current_neuron_index));
           else break;
         while( /* there are Neurons left to put into this partial */
           ((has_neuron)||(neuron_router.get_first_neuron_index_from_subset(current_neuron_index)))
@@ -75,14 +75,14 @@ Solution* Solution_builder::build(const RafkoNet& net, bool optimize_to_gpu){
           )
         ){
           if(!has_neuron){ /* A new Neuron index was acquired from the router, refresh size info */
-            current_neuron_megabyte_size = Neuron_info::get_neuron_estimated_size_megabytes(net.neuron_array(current_neuron_index));
+            current_neuron_megabyte_size = NeuronInfo::get_neuron_estimated_size_megabytes(net.neuron_array(current_neuron_index));
           }
           if(current_neuron_megabyte_size >= remaining_megabytes_in_partial){
             break;
           }
           if(0u == this_partial.output_data().interval_size()) /* The first Neuron inside the partial solution shall determine its start */
             this_partial.mutable_output_data()->set_starts(current_neuron_index);
-          reach_back = Partial_solution_builder::add_neuron_to_partial_solution(net, current_neuron_index, this_partial);
+          reach_back = PartialSolutionBuilder::add_neuron_to_partial_solution(net, current_neuron_index, this_partial);
           remaining_megabytes_in_row -= current_neuron_megabyte_size;
           remaining_megabytes_in_partial -= current_neuron_megabyte_size;
           if(reach_back_max < reach_back)reach_back_max = reach_back;

@@ -22,19 +22,19 @@
 
 namespace rafko_net{
 
-class Weight_updater_nesterov : public Weight_updater{
+class WeightUpdaterNesterovs : public WeightUpdater{
 public:
-  Weight_updater_nesterov(RafkoNet& rafko_net, Service_context& service_context_)
-  :  Weight_updater(rafko_net, service_context_, 2)
+  WeightUpdaterNesterovs(RafkoNet& rafko_net, ServiceContext& service_context_)
+  :  WeightUpdater(rafko_net, service_context_, 2)
   { }
 
   void iterate(const vector<sdouble32>& gradients,Solution& solution){
-    Weight_updater::iterate(gradients, solution);
+    WeightUpdater::iterate(gradients, solution);
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
 
   void start(void){
-    Weight_updater::start();
+    WeightUpdater::start();
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity_at_start.begin());
   }
 

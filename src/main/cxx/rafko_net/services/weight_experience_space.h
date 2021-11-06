@@ -36,9 +36,9 @@ using std::vector;
  *             as to avoid value overflow: Whenever an experience is added into the weight value in focus, the experience of
  *             the smallest cardinality is set back to zero, and all other experiences are corrected for that.
  */
-class Weight_experience_space{
+class WeightExperienceSpace{
 public:
-  Weight_experience_space(sdouble32 weight_min_, sdouble32 weight_max_, sdouble32 weight_step_);
+  WeightExperienceSpace(sdouble32 weight_min_, sdouble32 weight_max_, sdouble32 weight_step_);
 
   /**
    * @brief      Adds a positive or negative experience value for the given weight.

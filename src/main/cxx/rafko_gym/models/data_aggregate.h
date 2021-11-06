@@ -46,13 +46,13 @@ using std::move;
 using std::mutex;
 using std::tuple;
 
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 using rafko_utilities::ThreadGroup;
 using rafko_net::RafkoNet;
 using rafko_net::DataSet;
-using rafko_net::Function_factory;
-using rafko_net::Cost_function;
-using rafko_net::Cost_functions;
+using rafko_net::FunctionFactory;
+using rafko_net::CostFunction;
+using rafko_net::CostFunctions;
 
 /**
  * @brief      A Data set container complete with adaptive error statistics, which is
@@ -85,9 +85,9 @@ using rafko_net::Cost_functions;
  *             contigous array.
 
  */
-class Data_aggregate{
+class DataAggregate{
 public:
-  Data_aggregate(Service_context& service_context_, DataSet& samples_, shared_ptr<Cost_function> cost_function_)
+  DataAggregate(ServiceContext& service_context_, DataSet& samples_, shared_ptr<CostFunction> cost_function_)
   :  service_context(service_context_)
   ,  sequence_size(std::max(1u,samples_.sequence_size()))
   ,  input_samples(samples_.inputs_size() / samples_.input_size())
@@ -105,10 +105,10 @@ public:
     else fill(samples_);
   }
 
-  Data_aggregate(
-    Service_context& service_context_,
+  DataAggregate(
+    ServiceContext& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
-    shared_ptr<Cost_function> cost_function_, uint32 sequence_size_ = 1
+    shared_ptr<CostFunction> cost_function_, uint32 sequence_size_ = 1
   ): service_context(service_context_)
   ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))
@@ -125,10 +125,10 @@ public:
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
   }
 
-  Data_aggregate(
-    Service_context& service_context_,
+  DataAggregate(
+    ServiceContext& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
-    RafkoNet& net, Cost_functions the_function, uint32 sequence_size_ = 1
+    RafkoNet& net, CostFunctions the_function, uint32 sequence_size_ = 1
   ): service_context(service_context_)
   ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))
@@ -138,7 +138,7 @@ public:
        vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
        double_literal(1.0)
      })
-  ,  cost_function(Function_factory::build_cost_function(net, the_function, service_context_))
+  ,  cost_function(FunctionFactory::build_cost_function(net, the_function, service_context_))
   ,  exposed_to_multithreading(false)
   ,  error_calculation_threads(service_context_.get_sqrt_of_solve_threads())
   { }
@@ -377,13 +377,13 @@ private:
     sdouble32 error_sum;
   };
 
-  Service_context& service_context;
+  ServiceContext& service_context;
   uint32 sequence_size;
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;
   uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
   vector<error_state_type> error_state;
-  shared_ptr<Cost_function> cost_function;
+  shared_ptr<CostFunction> cost_function;
   bool exposed_to_multithreading; /* basically decides whether or not error sum calculation is enabled. */
   mutable mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a mutex is required */
   const std::function<void(uint32)> error_calculation_lambda =  [this](uint32 thread_index){

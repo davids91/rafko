@@ -8,7 +8,7 @@ set(NET_INTERFACE
   services/weight_updater_adam.h
   services/weight_updater_amsgrad.h
   services/weight_updater_momentum.h
-  services/weight_updater_nesterov.h
+  services/weight_updater_nesterovs.h
 )
 set(NET_HEADERS
   models/cost_function.h

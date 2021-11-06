@@ -27,15 +27,15 @@
 
 namespace rafko_net_test {
 
-using rafko_net::RafkoNet_builder;
+using rafko_net::RafkoNetBuilder;
 using rafko_net::RafkoNet;
-using rafko_net::Solution_builder;
+using rafko_net::SolutionBuilder;
 using rafko_net::Solution;
-using rafko_net::Solution_solver;
-using rafko_net::Synapse_iterator;
+using rafko_net::SolutionSolver;
+using rafko_net::SynapseIterator;
 using rafko_net::network_recurrence_to_self;
 using rafko_net::network_recurrence_to_layer;
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 
 using std::unique_ptr;
 using std::shared_ptr;
@@ -43,14 +43,14 @@ using std::make_unique;
 using std::vector;
 
 /*###############################################################################################
- * Testing Solution generation using the @RafkoNet_builder and the @Solution_builder
+ * Testing Solution generation using the @RafkoNetBuilder and the @SolutionBuilder
  * */
 Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, vector<uint32> net_structure, uint32 recursion){
-  Service_context service_context = Service_context()
+  ServiceContext service_context = ServiceContext()
   .set_max_solve_threads(4).set_device_max_megabytes(device_max_megabytes)
   .set_arena_ptr(arena);
 
-  RafkoNet_builder builder = RafkoNet_builder(service_context);
+  RafkoNetBuilder builder = RafkoNetBuilder(service_context);
 
   builder.input_size(50).expected_input_range(double_literal(5.0)).output_neuron_number(net_structure.back());
 
@@ -67,7 +67,7 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
 
   Solution* solution;
   REQUIRE_NOTHROW(
-    solution = Solution_builder(service_context).build(*net)
+    solution = SolutionBuilder(service_context).build(*net)
   );
 
   sint32 expected_partial_number = 0;

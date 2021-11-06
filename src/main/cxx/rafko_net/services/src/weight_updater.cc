@@ -21,15 +21,15 @@
 
 namespace rafko_net{
 
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 
-void Weight_updater::calculate_velocity_thread(const vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number){
+void WeightUpdater::calculate_velocity_thread(const vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number){
   for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
     current_velocity[weight_index + weight_iterator] = get_new_velocity(weight_index + weight_iterator, gradients);
   }
 }
 
-void Weight_updater::update_weight_with_velocity(uint32 weight_index, uint32 weight_number){
+void WeightUpdater::update_weight_with_velocity(uint32 weight_index, uint32 weight_number){
   for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
     net.set_weight_table(
       weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator)
@@ -37,7 +37,7 @@ void Weight_updater::update_weight_with_velocity(uint32 weight_index, uint32 wei
   }
 }
 
-void Weight_updater::calculate_velocity(const vector<sdouble32>& gradients){
+void WeightUpdater::calculate_velocity(const vector<sdouble32>& gradients){
   execution_threads.start_and_block([this, &gradients](uint32 thread_index){
     sint32 weight_index_start = weights_to_do_in_one_thread * thread_index;
     if(weight_index_start < net.weight_table_size()){
@@ -49,7 +49,7 @@ void Weight_updater::calculate_velocity(const vector<sdouble32>& gradients){
   });
 }
 
-void Weight_updater::update_weights_with_velocity(void){
+void WeightUpdater::update_weights_with_velocity(void){
   execution_threads.start_and_block([this](uint32 thread_index){
     sint32 weight_index_start = weights_to_do_in_one_thread * thread_index;
     if(weight_index_start < net.weight_table_size()){
@@ -59,7 +59,7 @@ void Weight_updater::update_weights_with_velocity(void){
   });
 }
 
-void Weight_updater::update_solution_with_weight(Solution& solution, uint32 weight_index) const{
+void WeightUpdater::update_solution_with_weight(Solution& solution, uint32 weight_index) const{
   /* Iterate through the neurons in the network */
   for(uint32 neuron_index = 0; static_cast<sint32>(neuron_index) < net.neuron_array_size(); ++neuron_index){
     bool is_neuron_relevant_to_weight = false;
@@ -67,7 +67,7 @@ void Weight_updater::update_solution_with_weight(Solution& solution, uint32 weig
     if(weight_index == net.neuron_array(neuron_index).memory_filter_idx()){
       is_neuron_relevant_to_weight = true; /* Neuron is relevant its memory filter parameter is the given weight index */
     }else{ /* ..otherwise it is relevant if any of its weight synapses contain the given weight index */
-      Synapse_iterator<>::skim_terminatable(net.neuron_array(neuron_index).input_weights(),
+      SynapseIterator<>::skim_terminatable(net.neuron_array(neuron_index).input_weights(),
       [&is_neuron_relevant_to_weight, weight_index](IndexSynapseInterval input_weight_synapse){
         if(
           (static_cast<sint32>(weight_index) >= input_weight_synapse.starts())
@@ -80,7 +80,7 @@ void Weight_updater::update_solution_with_weight(Solution& solution, uint32 weig
     }
     if(is_neuron_relevant_to_weight){ /* look through the relevant partial solutions; One Neuron shall only be part of only one partial solution. */
       for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
-        Partial_solution& partial = *solution.mutable_partial_solutions(partial_index);
+        PartialSolution& partial = *solution.mutable_partial_solutions(partial_index);
         if( /* if the output of the partial solution contains the neuron */
           (static_cast<sint32>(neuron_index) >= partial.output_data().starts())
           &&(neuron_index < (partial.output_data().starts() + partial.output_data().interval_size()))
@@ -107,7 +107,7 @@ void Weight_updater::update_solution_with_weight(Solution& solution, uint32 weig
 }
 
 
-void Weight_updater::update_solution_with_weights(Solution& solution) const{
+void WeightUpdater::update_solution_with_weights(Solution& solution) const{
   sint32 partial_start_index = 0;
   while(partial_start_index < solution.partial_solutions_size()){
     if(
@@ -155,9 +155,9 @@ void Weight_updater::update_solution_with_weights(Solution& solution) const{
   } /* while(partial_start_index < solution.partial_solutions_size()) */
 }
 
-void Weight_updater::copy_weights_of_neuron_to_partial_solution(
+void WeightUpdater::copy_weights_of_neuron_to_partial_solution(
   uint32 neuron_index, uint32 inner_neuron_index,
-  Partial_solution& partial, uint32 inner_neuron_weight_index_starts
+  PartialSolution& partial, uint32 inner_neuron_weight_index_starts
 ) const{ /*!Note: After shared weight optimization, this part is to be re-worked */
   uint32 weights_copied = 0;
   partial.set_weight_table(
@@ -165,7 +165,7 @@ void Weight_updater::copy_weights_of_neuron_to_partial_solution(
     net.weight_table(net.neuron_array(neuron_index).memory_filter_idx())
   );
   ++weights_copied; /* ++ for Memory ratio */
-  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
+  SynapseIterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
     IndexSynapseInterval weight_synapse, sint32 network_weight_index
   ){
     partial.set_weight_table(
@@ -175,9 +175,9 @@ void Weight_updater::copy_weights_of_neuron_to_partial_solution(
   });
 }
 
-void Weight_updater::copy_weight_of_neuron_to_partial_solution(
+void WeightUpdater::copy_weight_of_neuron_to_partial_solution(
   uint32 neuron_index, uint32 weight_index, uint32 inner_neuron_index,
-  Partial_solution& partial, uint32 inner_neuron_weight_index_starts
+  PartialSolution& partial, uint32 inner_neuron_weight_index_starts
 ) const{ /*!Note: After shared weight optimization, this part is to be re-worked */
   uint32 weights_copied = 0;
   if(weight_index == net.neuron_array(neuron_index).memory_filter_idx()){
@@ -187,7 +187,7 @@ void Weight_updater::copy_weight_of_neuron_to_partial_solution(
     );
   }
   ++weights_copied; /* ++ for Memory ratio */
-  Synapse_iterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
+  SynapseIterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
     IndexSynapseInterval weight_synapse, sint32 network_weight_index
   ){
     if(static_cast<sint32>(weight_index) == network_weight_index){

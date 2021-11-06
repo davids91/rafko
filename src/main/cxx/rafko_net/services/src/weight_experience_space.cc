@@ -25,7 +25,7 @@ namespace rafko_net{
 using std::abs;
 using std::max;
 
-Weight_experience_space::Weight_experience_space(sdouble32 weight_min_, sdouble32 weight_max_, sdouble32 weight_step_)
+WeightExperienceSpace::WeightExperienceSpace(sdouble32 weight_min_, sdouble32 weight_max_, sdouble32 weight_step_)
 :  weight_min(weight_min_)
 ,  weight_max(weight_max_)
 ,  weight_step(weight_step_)
@@ -49,7 +49,7 @@ Weight_experience_space::Weight_experience_space(sdouble32 weight_min_, sdouble3
   }
 }
 
-sdouble32 Weight_experience_space::add_experience(sdouble32 value){
+sdouble32 WeightExperienceSpace::add_experience(sdouble32 value){
   experiences[best_weight_index] += value;
   if(abs(experiences[best_weight_index]) < abs(experiences[smallest_experience])){
     smallest_experience = best_weight_index;
@@ -60,7 +60,7 @@ sdouble32 Weight_experience_space::add_experience(sdouble32 value){
   return weight_values[best_weight_index];
 }
 
-void Weight_experience_space::adapt_weight(uint32 weight_index){
+void WeightExperienceSpace::adapt_weight(uint32 weight_index){
   if( /* Only adapt the weights not on the edge of the space, to preserve the range of the space */
     (0 < weight_index)&&(weight_index < (weight_values.size()-1))
     &&(experiences[weight_index] < experiences[weight_index - 1]) /* And only adapt the weight if both the left */
@@ -86,7 +86,7 @@ void Weight_experience_space::adapt_weight(uint32 weight_index){
   }
 }
 
-void Weight_experience_space::evaluate_weights(void){
+void WeightExperienceSpace::evaluate_weights(void){
   last_weight_index = best_weight_index;
   best_weight_index = 0;
   worst_weight_index = 0;
@@ -99,7 +99,7 @@ void Weight_experience_space::evaluate_weights(void){
   }
 }
 
-void Weight_experience_space::cut(void){
+void WeightExperienceSpace::cut(void){
   for(uint32 weight_index = 1; weight_index < experiences.size(); ++weight_index){
     experiences[weight_index] = std::copysign(
       (abs(experiences[weight_index]) - abs(experiences[smallest_experience])), experiences[weight_index]
@@ -107,7 +107,7 @@ void Weight_experience_space::cut(void){
   }
 }
 
-sdouble32 Weight_experience_space::get_best_weight(void){
+sdouble32 WeightExperienceSpace::get_best_weight(void){
   return weight_values[best_weight_index];
 }
 

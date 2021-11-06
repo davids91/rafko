@@ -23,14 +23,14 @@
 
 namespace rafko_mainframe{
 
-using rafko_net::Solution_builder;
-using rafko_net::Function_factory;
-using rafko_net::Cost_functions_IsValid;
+using rafko_net::SolutionBuilder;
+using rafko_net::FunctionFactory;
+using rafko_net::CostFunctions_IsValid;
 using rafko_net::cost_function_unknown;
 using rafko_net::weight_updater_unknown;
-using rafko_net::Weight_updaters_IsValid;
+using rafko_net::WeightUpdaters_IsValid;
 
-void Server_slot_approximize_net::initialize(ServiceSlot&& service_slot_){
+void ServerSlotApproximizeNet::initialize(ServiceSlot&& service_slot_){
   if(serv_slot_to_optimize != service_slot_.type()) throw std::runtime_error("Incorrect Server slot initialization!");
   else{
     /* ####################################################################
@@ -50,7 +50,7 @@ void Server_slot_approximize_net::initialize(ServiceSlot&& service_slot_){
       &&(0 < service_slot_.test_set().inputs_size())
     )*service_slot->mutable_test_set() = service_slot_.test_set();
     if(
-      (Weight_updaters_IsValid(service_slot_.weight_updater()))
+      (WeightUpdaters_IsValid(service_slot_.weight_updater()))
       &&(weight_updater_unknown != service_slot_.weight_updater())
     )service_slot->set_weight_updater(service_slot_.weight_updater());
     if(service_slot_.has_hypers())(void)context.set_hypers(service_slot_.hypers());
@@ -68,7 +68,7 @@ void Server_slot_approximize_net::initialize(ServiceSlot&& service_slot_){
      * COST FUNCTION
      * #################################################################### */
     if(
-      Cost_functions_IsValid(service_slot_.cost_function())
+      CostFunctions_IsValid(service_slot_.cost_function())
       &&(cost_function_unknown != service_slot_.cost_function())
     )service_slot->set_cost_function(service_slot_.cost_function());
     update_cost_function();
@@ -83,7 +83,7 @@ void Server_slot_approximize_net::initialize(ServiceSlot&& service_slot_){
     ){
       service_slot->set_state(service_slot->state() | serv_slot_missing_data_set);
       if(training_set)training_set.reset();
-      training_set = std::make_shared<Data_aggregate>(context, *service_slot->mutable_training_set(), cost_function);
+      training_set = std::make_shared<DataAggregate>(context, *service_slot->mutable_training_set(), cost_function);
       if(training_set)
         service_slot->set_state(service_slot->state() & ~serv_slot_missing_data_set);
       service_slot->set_state(service_slot->state() | serv_slot_missing_trainer); /* data set have changed, trainer needs to be re-initialized */
@@ -97,7 +97,7 @@ void Server_slot_approximize_net::initialize(ServiceSlot&& service_slot_){
         (service_slot_.training_set().inputs_size() == service_slot_.test_set().inputs_size())
         &&(service_slot_.training_set().labels_size() == service_slot_.test_set().labels_size())
       ){
-        training_set = std::make_shared<Data_aggregate>(context, *service_slot_.mutable_test_set(), cost_function);
+        training_set = std::make_shared<DataAggregate>(context, *service_slot_.mutable_test_set(), cost_function);
       }else test_set = training_set;
       service_slot->set_state(service_slot->state() | serv_slot_missing_trainer); /* data set have changed, trainer needs to be re-initialized */
     }else test_set = training_set;
@@ -109,13 +109,13 @@ void Server_slot_approximize_net::initialize(ServiceSlot&& service_slot_){
   }
 }
 
-void Server_slot_approximize_net::accept_request(uint32 request_bitstring){
+void ServerSlotApproximizeNet::accept_request(uint32 request_bitstring){
   if(0 < (request_bitstring & serv_slot_to_refresh_solution)){
     refresh_solution();
   }
 }
 
-SlotInfo Server_slot_approximize_net::get_info(uint32 request_bitstring){
+SlotInfo ServerSlotApproximizeNet::get_info(uint32 request_bitstring){
   SlotInfo response;
   if(0 < (request_bitstring & slot_info_iteration)){
     response.add_info_field(slot_info_iteration);
@@ -144,12 +144,12 @@ SlotInfo Server_slot_approximize_net::get_info(uint32 request_bitstring){
   return response;
 }
 
-void Server_slot_approximize_net::update_cost_function(){
+void ServerSlotApproximizeNet::update_cost_function(){
   expose_state();
   if(
     (cost_function)
     &&( /* in case there's a cost function object, but an invalid cost function type stored */
-      (!Cost_functions_IsValid(service_slot->cost_function()))
+      (!CostFunctions_IsValid(service_slot->cost_function()))
       ||(cost_function_unknown == service_slot->cost_function())
       ||(service_slot->cost_function() != cost_function->get_type())
     ) /* or the stored cost function type doesn't match the objects */
@@ -166,15 +166,15 @@ void Server_slot_approximize_net::update_cost_function(){
     if(cost_function) cost_function.reset();
     service_slot->set_state(service_slot->state() | serv_slot_missing_cost_function);
     if(0 == (service_slot->state() & serv_slot_missing_net))
-      cost_function = std::move(Function_factory::build_cost_function(
+      cost_function = std::move(FunctionFactory::build_cost_function(
         *network, service_slot->cost_function(), context
       )); /* Init cost function based on network output */
     else if(0 == (service_slot->state() & serv_slot_missing_data_set))
-      cost_function = std::move(Function_factory::build_cost_function(
+      cost_function = std::move(FunctionFactory::build_cost_function(
         training_set->get_feature_size(), service_slot->cost_function(), context
       )); /* Init cost function based on data_aggregate object */
     else /* Fallback level! In case no objects are initialized yet, but the data_set is already loaded form the request */
-      cost_function = std::move(Function_factory::build_cost_function(
+      cost_function = std::move(FunctionFactory::build_cost_function(
         service_slot->training_set().feature_size(), service_slot->cost_function(), context
       )); /* Init cost function based on stored training set in server slot object */
     if(cost_function){
@@ -184,13 +184,13 @@ void Server_slot_approximize_net::update_cost_function(){
   finalize_state();
 }
 
-void Server_slot_approximize_net::update_trainer(void){
+void ServerSlotApproximizeNet::update_trainer(void){
   using std::make_unique;
   using std::make_shared;
 
   expose_state();
   if(
-    (Weight_updaters_IsValid(service_slot->weight_updater()))
+    (WeightUpdaters_IsValid(service_slot->weight_updater()))
     &&(weight_updater_unknown != service_slot->weight_updater())
     &&(0 == (service_slot->state() & serv_slot_missing_data_set))
     &&(0 == (service_slot->state() & serv_slot_missing_net))
@@ -201,10 +201,10 @@ void Server_slot_approximize_net::update_trainer(void){
     if(environment_data_set){
       environment_data_set.reset();
     }
-    environment_data_set = std::make_shared<Environment_data_set>(
+    environment_data_set = std::make_shared<EnvironmentDataSet>(
       context, *training_set, *test_set
     );
-    network_approximizer = std::make_unique<RafkoNet_approximizer>(
+    network_approximizer = std::make_unique<RafkoNetApproximizer>(
       context, *network, *environment_data_set, service_slot->weight_updater()
     );
     if(network_approximizer){

@@ -29,9 +29,9 @@ namespace rafko_net {
 using std::min;
 using std::max;
 
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 
-sdouble32 Dense_net_weight_initializer::get_weight_amplitude(Transfer_functions used_transfer_function) const{
+sdouble32 DenseNetWeightInitializer::get_weight_amplitude(TransferFunctions used_transfer_function) const{
   sdouble32 amplitude;
   switch(used_transfer_function){
     case transfer_function_relu:
@@ -42,13 +42,13 @@ sdouble32 Dense_net_weight_initializer::get_weight_amplitude(Transfer_functions 
   return max(context.get_epsilon(),amplitude);
 }
 
-sdouble32 Dense_net_weight_initializer::next_weight_for(Transfer_functions used_transfer_function) const{
+sdouble32 DenseNetWeightInitializer::next_weight_for(TransferFunctions used_transfer_function) const{
   return ((rand()%2 == 0)?-double_literal(1.0):double_literal(1.0)) * limit_weight(
     (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
   );
 }
 
-sdouble32 Dense_net_weight_initializer::next_memory_filter() const{
+sdouble32 DenseNetWeightInitializer::next_memory_filter() const{
   if(memMin <  memMax){
     sdouble32 diff = memMax - memMin;
     return (double_literal(0.0) == diff)?0:(
@@ -57,7 +57,7 @@ sdouble32 Dense_net_weight_initializer::next_memory_filter() const{
   } else return memMin;
 }
 
-sdouble32 Dense_net_weight_initializer::next_bias() const{
+sdouble32 DenseNetWeightInitializer::next_bias() const{
   return double_literal(0.0);
 }
 

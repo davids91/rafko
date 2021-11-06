@@ -33,12 +33,12 @@ using std::unique_ptr;
 /**
  * @brief      Front-end to create server slot objects.
  */
-class Server_slot_factory{
+class ServerSlotFactory{
 public:
-  static unique_ptr<Server_slot> build_server_slot(Slot_type slot_type){
+  static unique_ptr<ServerSlot> build_server_slot(Slot_type slot_type){
     switch(slot_type){
-      case serv_slot_to_run: return std::make_unique<Server_slot_run_net>();
-      case serv_slot_to_optimize: return std::make_unique<Server_slot_approximize_net>();
+      case serv_slot_to_run: return std::make_unique<ServerSlotRunNet>();
+      case serv_slot_to_optimize: return std::make_unique<ServerSlotApproximizeNet>();
       default: throw std::runtime_error("Invalid or unsupported SLot type given to factory!");
     }
   }

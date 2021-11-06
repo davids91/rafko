@@ -27,7 +27,7 @@ using std::abs;
 using std::vector;
 
 using rafko_net::Neuron;
-using rafko_net::Synapse_iterator;
+using rafko_net::SynapseIterator;
 using rafko_net::InputSynapseInterval;
 using rafko_net::IndexSynapseInterval;
 
@@ -52,7 +52,7 @@ TEST_CASE("Synapse Iteration","[synapse-iteration]"){
 
   uint32 range_iter = 0;
   sint32 manual_index = synapse_indexes[0][0];
-  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
+  SynapseIterator<InputSynapseInterval> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
@@ -90,7 +90,7 @@ TEST_CASE("Synapse iteration on a range","[synapse-iteration]"){
 
   uint32 range_iter = 1;
   sint32 manual_index = synapse_indexes[1][0];
-  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
+  SynapseIterator<InputSynapseInterval> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
@@ -128,7 +128,7 @@ TEST_CASE("Synapse iteration including negative numbers","[synapse-iteration]"){
 
   uint32 range_iter = 0;
   sint32 manual_index = synapse_indexes[0][0];
-  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
+  SynapseIterator<InputSynapseInterval> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
@@ -164,7 +164,7 @@ TEST_CASE("Synapse Iterator direct access","[synapse-iteration]"){
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
+  SynapseIterator<InputSynapseInterval> iter(neuron.input_indices());
   CHECK( iter[0] == -50 );
   CHECK( iter[5] == -55 );
   CHECK( iter[10] == 70 );
@@ -194,7 +194,7 @@ TEST_CASE("Synapse Iterator Skimming","[synapse-iteration]"){
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
+  SynapseIterator<InputSynapseInterval> iter(neuron.input_indices());
 
   sint32 manual_index = 0;
   iter.skim([&](InputSynapseInterval input_synapse){
@@ -221,7 +221,7 @@ TEST_CASE("Synapse Iterator Utility functions","[synapse-iteration]"){
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  Synapse_iterator<InputSynapseInterval> iter(neuron.input_indices());
+  SynapseIterator<InputSynapseInterval> iter(neuron.input_indices());
   CHECK( 110 == iter.size() );
   CHECK( -89 == iter.back() );
 }
@@ -244,7 +244,7 @@ TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
     *neuron.add_input_weights() = temp_synapse_interval;
   }
 
-  Synapse_iterator<> iter(neuron.input_weights());
+  SynapseIterator<> iter(neuron.input_weights());
   uint32 iterate_range_number;
   sint32 iteration_count;
   uint32 current_synapse;

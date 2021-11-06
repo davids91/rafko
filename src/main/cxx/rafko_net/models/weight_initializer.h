@@ -31,14 +31,14 @@ using std::min;
 using std::max;
 using std::numeric_limits;
 
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 
-class Weight_initializer{
+class WeightInitializer{
 public:
   /**
    * @brief      Constructs the object.
    */
-  Weight_initializer(Service_context& service_context) noexcept
+  WeightInitializer(ServiceContext& service_context) noexcept
   : context(service_context)
   { };
 
@@ -50,7 +50,7 @@ public:
    *
    * @return     The Calculated weight
    */
-  virtual sdouble32 next_weight_for(Transfer_functions used_transfer_function) const = 0;
+  virtual sdouble32 next_weight_for(TransferFunctions used_transfer_function) const = 0;
 
   /**
    * @brief      Calculate a number which fits the Neuron the most based on the configuration parameters
@@ -87,7 +87,7 @@ public:
 
   /**
    * @brief      Calculate a weight which fits the Neuron the most based on the configuration parameters
-   *             The basis of the number is the Transfer_function::transfer_function_identity
+   *             The basis of the number is the TransferFunction::transfer_function_identity
    *
    * @return     The Calculated Weight value
    */
@@ -95,10 +95,10 @@ public:
     return next_weight_for(transfer_function_identity);
   }
 
-  virtual ~Weight_initializer(void) = default;
+  virtual ~WeightInitializer(void) = default;
 
 protected:
-  Service_context& context;
+  ServiceContext& context;
 
   /**
    * @brief      Limits the given weight into the limits used in the Neural Network

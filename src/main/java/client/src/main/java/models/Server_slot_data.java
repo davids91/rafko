@@ -1,8 +1,8 @@
 package models;
 
-public class Server_slot_data {
+public class ServerSlot_data {
     String id = "";
-    public Server_slot_data(String id_){
+    public ServerSlot_data(String id_){
         id = id_;
     }
 

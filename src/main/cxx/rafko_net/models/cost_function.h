@@ -36,15 +36,15 @@ using std::future;
 using std::tuple;
 
 using rafko_utilities::ThreadGroup;
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 
 /**
  * @brief      Error function handling and utilities, provides a hook for a computation
  *             function to be run on every sample by feature.
  */
-class Cost_function{
+class CostFunction{
 public:
-  Cost_function(uint32 feature_size_, Cost_functions the_function_, Service_context& service_context)
+  CostFunction(uint32 feature_size_, CostFunctions the_function_, ServiceContext& service_context)
   : context(service_context)
   , process_threads()
   , thread_results()
@@ -109,14 +109,14 @@ public:
    *
    * @return     The type.
    */
-  Cost_functions get_type(void){
+  CostFunctions get_type(void){
     return the_function;
   }
 
-  virtual ~Cost_function(void) = default;
+  virtual ~CostFunction(void) = default;
 
 protected:
-  Service_context& context;
+  ServiceContext& context;
   vector<thread> process_threads;
   vector<vector<future<sdouble32>>> thread_results;
   uint32 feature_size;
@@ -183,7 +183,7 @@ protected:
     uint32 feature_start_index_in_neuron, uint32 number_to_add
   );
 private:
-  Cost_functions the_function; /* cost function type */
+  CostFunctions the_function; /* cost function type */
   ThreadGroup execution_threads;
 
   /**

@@ -31,9 +31,9 @@ namespace rafko_net_test {
 
 using rafko_net::Neuron;
 using rafko_net::RafkoNet;
-using rafko_net::Transfer_functions;
-using rafko_net::RafkoNet_builder;
-using rafko_net::Neuron_info;
+using rafko_net::TransferFunctions;
+using rafko_net::RafkoNetBuilder;
+using rafko_net::NeuronInfo;
 using rafko_net::transfer_function_identity;
 using rafko_net::transfer_function_sigmoid;
 using rafko_net::transfer_function_tanh;
@@ -41,8 +41,8 @@ using rafko_net::transfer_function_relu;
 using rafko_net::transfer_function_selu;
 using rafko_net::InputSynapseInterval;
 using rafko_net::IndexSynapseInterval;
-using rafko_net::Synapse_iterator;
-using rafko_mainframe::Service_context;
+using rafko_net::SynapseIterator;
+using rafko_mainframe::ServiceContext;
 
 using std::make_shared;
 using std::shared_ptr;
@@ -60,13 +60,13 @@ using std::vector;
  * 1st and 2nd neurons will have the first as input both
  * */
 RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
-  Service_context service_context = Service_context().set_arena_ptr(arena);
+  ServiceContext service_context = ServiceContext().set_arena_ptr(arena);
 
   /* Create the single Weight Table */
   IndexSynapseInterval temp_index_interval;
   InputSynapseInterval temp_input_interval;
   sdouble32 used_weight = double_literal(0.5);
-  Transfer_functions used_transfer_function = transfer_function_sigmoid;
+  TransferFunctions used_transfer_function = transfer_function_sigmoid;
   vector<sdouble32> weight_table {double_literal(0.0),double_literal(0.0)};
   weight_table[0] = used_weight;
   REQUIRE( nullptr != &(weight_table[0]) );
@@ -84,7 +84,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   temp_index_interval.set_starts(0); /* Weight 0 in the weight_table */
   temp_index_interval.set_interval_size(2); /* Weight0 + bias0 in the weight_table */
   *neuron_table[0].add_input_weights() = temp_index_interval;
-  REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[0]) );
+  REQUIRE( true == NeuronInfo::is_neuron_valid( neuron_table[0]) );
 
   /* Neuron 1 Has Neuron 0 as input */
   neuron_table[1].set_transfer_function_idx(used_transfer_function);
@@ -95,7 +95,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(2);
   *neuron_table[1].add_input_weights() = temp_index_interval;
-  REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[1]) );
+  REQUIRE( true == NeuronInfo::is_neuron_valid( neuron_table[1]) );
 
   /* Neuron 2 Also has Neuron 0 as input */
   neuron_table[2].set_transfer_function_idx(used_transfer_function);
@@ -106,10 +106,10 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(2);
   *neuron_table[2].add_input_weights() = temp_index_interval;
-  REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[2]) );
+  REQUIRE( true == NeuronInfo::is_neuron_valid( neuron_table[2]) );
 
   /* Pass the net into the builder */
-  shared_ptr<RafkoNet_builder> builder(make_shared<RafkoNet_builder>(service_context));
+  shared_ptr<RafkoNetBuilder> builder(make_shared<RafkoNetBuilder>(service_context));
   builder->input_size(1).expected_input_range(double_literal(1.0)).output_neuron_number(2)
     .neuron_array(neuron_table).weight_table(weight_table);
 
@@ -125,7 +125,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
     CHECK( used_weight == net->weight_table(0) );
 
     /* Check parameters for each neuron */
-    REQUIRE( true == Neuron_info::is_neuron_valid(net->neuron_array(0)) );
+    REQUIRE( true == NeuronInfo::is_neuron_valid(net->neuron_array(0)) );
     REQUIRE( 0 < net->neuron_array(0).input_indices_size() );
     CHECK( 1 == net->neuron_array(0).input_indices_size() );
     CHECK( 1 == net->neuron_array(0).input_indices(0).interval_size() );
@@ -143,7 +143,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
       == net->neuron_array(0).transfer_function_idx()
     );
 
-    REQUIRE( true == Neuron_info::is_neuron_valid(net->neuron_array(1)) );
+    REQUIRE( true == NeuronInfo::is_neuron_valid(net->neuron_array(1)) );
     REQUIRE( 0 < net->neuron_array(1).input_indices_size() );
     CHECK( 1 == net->neuron_array(1).input_indices_size() );
     CHECK( 1 == net->neuron_array(1).input_indices(0).interval_size() );
@@ -161,7 +161,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
       == net->neuron_array(1).transfer_function_idx()
     );
 
-    REQUIRE( true == Neuron_info::is_neuron_valid(net->neuron_array(2)) );
+    REQUIRE( true == NeuronInfo::is_neuron_valid(net->neuron_array(2)) );
     REQUIRE( 0 < net->neuron_array(2).input_indices_size() );
     CHECK( 1 == net->neuron_array(2).input_indices_size() );
     CHECK( 1 == net->neuron_array(2).input_indices(0).interval_size() );
@@ -205,8 +205,8 @@ TEST_CASE("Constructing small net manually using arena","[build][arena][small][m
  * And check manually the connections
  */
 RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
-  Service_context service_context = Service_context().set_arena_ptr(arena);
-  unique_ptr<RafkoNet_builder> builder(make_unique<RafkoNet_builder>(service_context));
+  ServiceContext service_context = ServiceContext().set_arena_ptr(arena);
+  unique_ptr<RafkoNetBuilder> builder(make_unique<RafkoNetBuilder>(service_context));
   builder->input_size(5)
     .output_neuron_number(2)
     .expected_input_range(double_literal(5.0));
@@ -230,7 +230,7 @@ RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   uint32 number_of_input_indexes;
   uint32 number_of_input_weights;
   for(int i = 0; i < 7; ++i){
-    REQUIRE( true == Neuron_info::is_neuron_valid(net->neuron_array(i)) );
+    REQUIRE( true == NeuronInfo::is_neuron_valid(net->neuron_array(i)) );
 
     /* Check the indexing */
     REQUIRE( 0 < net->neuron_array(i).input_indices_size() );
@@ -284,8 +284,8 @@ RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   CHECK( 2 == net->neuron_array(1).input_weights_size() );
 
   /* Input Neurons should have their first synapse starting from the 0th input */
-  CHECK( Synapse_iterator<>::synapse_index_from_input_index(0) == net->neuron_array(0).input_indices(0).starts() ); /* 0th Input, translated using Synapse_iterator<> */
-  CHECK( Synapse_iterator<>::synapse_index_from_input_index(0) == net->neuron_array(1).input_indices(0).starts() );
+  CHECK( SynapseIterator<>::synapse_index_from_input_index(0) == net->neuron_array(0).input_indices(0).starts() ); /* 0th Input, translated using SynapseIterator<> */
+  CHECK( SynapseIterator<>::synapse_index_from_input_index(0) == net->neuron_array(1).input_indices(0).starts() );
 
   /* The input Layer should have Identity transfer function according to configuration */
   CHECK( transfer_function_identity == net->neuron_array(0).transfer_function_idx() );

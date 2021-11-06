@@ -40,10 +40,10 @@ using std::chrono::steady_clock;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 using rafko_utilities::DataRingbuffer;
 using rafko_net::RafkoNet;
-using rafko_net::RafkoNet_builder;
+using rafko_net::RafkoNetBuilder;
 using rafko_net::cost_function_mse;
 using rafko_net::cost_function_squared_error;
 using rafko_net::transfer_function_identity;
@@ -55,21 +55,21 @@ using rafko_net::weight_updater_momentum;
 using rafko_net::weight_updater_nesterovs;
 using rafko_net::weight_updater_adam;
 using rafko_net::weight_updater_amsgrad;
-using rafko_net::Function_factory;
+using rafko_net::FunctionFactory;
 using rafko_net::Solution;
-using rafko_net::Solution_builder;
-using rafko_net::Solution_solver;
+using rafko_net::SolutionBuilder;
+using rafko_net::SolutionSolver;
 using rafko_gym::Environment;
-using rafko_gym::Environment_data_set;
-using rafko_gym::RafkoNet_approximizer;
-using rafko_gym::Data_aggregate;
+using rafko_gym::EnvironmentDataSet;
+using rafko_gym::RafkoNetApproximizer;
+using rafko_gym::DataAggregate;
 
 /*###############################################################################################
  * Testing if the gradients are added to the fragment correctly
  * */
 TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context()
+  ServiceContext service_context = ServiceContext()
     .set_max_processing_threads(7)
     .set_learning_rate(1e-1).set_arena_ptr(&arena);
 
@@ -78,7 +78,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   /*!Note: no need for smart pointers, because ownership is in the arena.
     * The builder automatically uses the arena pointer provided in the context.
     */
-  nets.push_back(RafkoNet_builder(service_context)
+  nets.push_back(RafkoNetBuilder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
     .allowed_transfer_functions_by_layer(
       {
@@ -89,21 +89,21 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
 
   /* Create dataset, test set and aprroximizer */
   std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> tmp1 = create_addition_dataset(5);
-  Data_aggregate* train_set = google::protobuf::Arena::Create<Data_aggregate>(
+  DataAggregate* train_set = google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
     *nets[0], cost_function_squared_error
   );
   tmp1 = create_addition_dataset(10);
-  Data_aggregate* test_set = google::protobuf::Arena::Create<Data_aggregate>(
+  DataAggregate* test_set = google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
     *nets[0], cost_function_squared_error
   );
-  Environment_data_set env(service_context, *train_set, *test_set);
-  RafkoNet_approximizer approximizer(service_context, *nets[0], env, weight_updater_default);
+  EnvironmentDataSet env(service_context, *train_set, *test_set);
+  RafkoNetApproximizer approximizer(service_context, *nets[0], env, weight_updater_default);
 
   /* adding a simple-weight-gradient fragment */
   uint32 weight_index = rand()%(nets[0]->weight_table_size());
@@ -163,7 +163,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
  * */
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
-  Service_context service_context = Service_context()
+  ServiceContext service_context = ServiceContext()
     .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
     .set_training_strategy(rafko_net::Training_strategy::training_strategy_stop_if_training_error_zero,true)
     .set_training_strategy(rafko_net::Training_strategy::training_strategy_early_stopping,true)
@@ -172,7 +172,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   /* Create nets */
   vector<RafkoNet*> nets = vector<RafkoNet*>();
-  nets.push_back(RafkoNet_builder(service_context)
+  nets.push_back(RafkoNetBuilder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
@@ -192,20 +192,20 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   /* Create dataset, test set and optimizers; optimize nets */
   std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> tmp1 = create_sequenced_addition_dataset(number_of_samples, 4);
-  Data_aggregate* train_set =  google::protobuf::Arena::Create<Data_aggregate>(
+  DataAggregate* train_set =  google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
     *nets[0], cost_function_squared_error, /* Sequence size */4
   );
   tmp1 = create_sequenced_addition_dataset(number_of_samples * 2, 4);
-  Data_aggregate* test_set =  google::protobuf::Arena::Create<Data_aggregate>(
+  DataAggregate* test_set =  google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
     *nets[0], cost_function_squared_error, /* Sequence size */4
-  );  Environment_data_set env(service_context, *train_set, *test_set);
-  RafkoNet_approximizer approximizer(service_context, *nets[0], env, weight_updater_amsgrad,1);
+  );  EnvironmentDataSet env(service_context, *train_set, *test_set);
+  RafkoNetApproximizer approximizer(service_context, *nets[0], env, weight_updater_amsgrad,1);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -260,7 +260,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   cout << endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
-  unique_ptr<Solution_solver> after_solver(Solution_solver::Builder(*Solution_builder(service_context).build(*nets[0]), service_context).build());
+  unique_ptr<SolutionSolver> after_solver(SolutionSolver::Builder(*SolutionBuilder(service_context).build(*nets[0]), service_context).build());
 
   sdouble32 error_summary[3] = {0,0,0};
   cost_function_mse after_cost(1, service_context);

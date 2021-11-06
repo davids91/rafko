@@ -24,7 +24,7 @@ package rafko_net;
 /** @brief      Indexes of the transfer function a neuron is able to use
  *              on the weigthed sum of its operation
  */
-enum Transfer_functions{
+enum TransferFunctions{
   transfer_function_unknown = 0;
   transfer_function_identity = 1;
   transfer_function_sigmoid = 2;
@@ -38,7 +38,7 @@ enum Transfer_functions{
 /** @brief      Indexes of the error functions a Neural Network is able to use
  *              to calculate the gradient of the weights
  */
-enum Cost_functions{
+enum CostFunctions{
   cost_function_unknown = 0;
   cost_function_squared_error = 1; /* ( (expected-calculated)^2 ) */
   cost_function_mse = 2; /* ( 0.5*(expected-calculated)^2 )/dataset_size */
@@ -46,7 +46,7 @@ enum Cost_functions{
 
 /** @brief      Describes the available weight updaters implemented in the framework
  */
-enum Weight_updaters{
+enum WeightUpdaters{
   weight_updater_unknown = 0;
   weight_updater_default = 1;
   weight_updater_momentum = 2;
@@ -66,11 +66,11 @@ enum Weight_updaters{
  *             on the given interval. In case the sign is negative for that element, the interval it describes grows
  *             in the negative direction. This way two kinds of intervals can be stored in the same synapse.
  *             Positive interval starts at 0, goes on indefinitely: [0,+inf]
- *             -Positive intervals usually denote enclosed relationships (e.g.: internal neurons in a @Partial_solution)
+ *             -Positive intervals usually denote enclosed relationships (e.g.: internal neurons in a @PartialSolution)
  *             Negative interval starts at -1, goes backwards indefinitely: [-1,-inf]
  *             - Negative intervals usually denote external relationships (e.g.: input data of the Neurons in the @Net
- *               or inputs of an Inner Neuron, taken from the @Partial_solution input synapses )
- *             In the class @Synapse_iterator there are methods to map negative intervals into positive array numbers.
+ *               or inputs of an Inner Neuron, taken from the @PartialSolution input synapses )
+ *             In the class @SynapseIterator there are methods to map negative intervals into positive array numbers.
  *             The -1 becomes index 0, -2 ==> 1 and so on... This is needed to be able to use negative intervals as
  *             indexes in arrays.
  */

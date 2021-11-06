@@ -23,10 +23,10 @@
 
 namespace rafko_mainframe{
 
-using rafko_net::Solution_builder;
+using rafko_net::SolutionBuilder;
 using rafko_utilities::DataRingbuffer;
 
-void Server_slot_run_net::initialize(ServiceSlot&& service_slot_){
+void ServerSlotRunNet::initialize(ServiceSlot&& service_slot_){
   service_slot->set_type(service_slot_.type());
   if(serv_slot_to_run != service_slot->type())
     throw std::runtime_error("Incorrect Server slot initialization!");
@@ -39,18 +39,18 @@ void Server_slot_run_net::initialize(ServiceSlot&& service_slot_){
   }
 }
 
-void Server_slot_run_net::refresh_solution(void){
+void ServerSlotRunNet::refresh_solution(void){
   expose_state();
   service_slot->set_state(service_slot->state() | serv_slot_missing_solution);
   if(0 < network->neuron_array_size()){
-    network_solution = Solution_builder(context).build(*network);
-    network_solver = unique_ptr<Solution_solver>(Solution_solver::Builder(*network_solution, context).build());
+    network_solution = SolutionBuilder(context).build(*network);
+    network_solver = unique_ptr<SolutionSolver>(SolutionSolver::Builder(*network_solution, context).build());
     service_slot->set_state(service_slot->state() & ~serv_slot_missing_solution);
   }else service_slot->set_state(service_slot->state() | serv_slot_missing_net);
   finalize_state();
 }
 
-NeuralIOStream Server_slot_run_net::run_net_once(const NeuralIOStream& data_stream){
+NeuralIOStream ServerSlotRunNet::run_net_once(const NeuralIOStream& data_stream){
   if(
     (serv_slot_ok == service_slot->state())
     ||(0 == (serv_slot_missing_solution & service_slot->state()))

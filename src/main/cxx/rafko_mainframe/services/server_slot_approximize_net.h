@@ -27,10 +27,10 @@
 
 namespace rafko_mainframe{
 
-using rafko_net::Cost_function;
-using rafko_gym::Data_aggregate;
-using rafko_gym::RafkoNet_approximizer;
-using rafko_gym::Environment_data_set;
+using rafko_net::CostFunction;
+using rafko_gym::DataAggregate;
+using rafko_gym::RafkoNetApproximizer;
+using rafko_gym::EnvironmentDataSet;
 
 using std::unique_ptr;
 using std::shared_ptr;
@@ -39,10 +39,10 @@ using std::shared_ptr;
  * @brief      This class describes a server slot which optimizes a Neural network
  *             for its stored datasets if the required input data and parameters are provided.
  */
-class Server_slot_approximize_net : public Server_slot_run_net{
+class ServerSlotApproximizeNet : public ServerSlotRunNet{
 public:
-  Server_slot_approximize_net()
-  :  Server_slot_run_net()
+  ServerSlotApproximizeNet()
+  :  ServerSlotRunNet()
   { service_slot->set_type(serv_slot_to_optimize); }
 
   void initialize(ServiceSlot&& service_slot_);
@@ -50,13 +50,13 @@ public:
   SlotInfo get_info(uint32 request_bitstring);
 
   void update_network(BuildNetworkRequest&& request){
-    Server_slot_run_net::update_network(std::move(request));
+    ServerSlotRunNet::update_network(std::move(request));
     update_cost_function();
     update_trainer();
   }
 
   void update_network(RafkoNet&& net_){
-    Server_slot_run_net::update_network(std::move(net_));
+    ServerSlotRunNet::update_network(std::move(net_));
     update_cost_function();
     update_trainer();
   }
@@ -101,7 +101,7 @@ public:
     }else throw std::runtime_error("Invalid training set queried for sample!");
   }
 
-  ~Server_slot_approximize_net(void){
+  ~ServerSlotApproximizeNet(void){
     network_approximizer.reset();
     test_set.reset();
     training_set.reset();
@@ -109,11 +109,11 @@ public:
   }
 
 private:
-  shared_ptr<Cost_function> cost_function;
-  shared_ptr<Data_aggregate> training_set;
-  shared_ptr<Data_aggregate> test_set;
-  shared_ptr<Environment_data_set> environment_data_set;
-  unique_ptr<RafkoNet_approximizer> network_approximizer;
+  shared_ptr<CostFunction> cost_function;
+  shared_ptr<DataAggregate> training_set;
+  shared_ptr<DataAggregate> test_set;
+  shared_ptr<EnvironmentDataSet> environment_data_set;
+  unique_ptr<RafkoNetApproximizer> network_approximizer;
 
   uint32 iteration = 0;
 

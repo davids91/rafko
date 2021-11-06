@@ -31,16 +31,16 @@ namespace rafko_mainframe{
 using std::string;
 using std::shared_ptr;
 
-using rafko_gym::Data_aggregate;
+using rafko_gym::DataAggregate;
 using rafko_net::RafkoNet;
 
 /**
  * @brief      This class describes a common ancestor and interface of whatever
- *             is able to run in a @Deep_learning_server.
+ *             is able to run in a @DeepLearningServer.
  */
-class Server_slot{
+class ServerSlot{
 public:
-  Server_slot(void)
+  ServerSlot(void)
   : arena()
   , context()
   {
@@ -48,7 +48,7 @@ public:
     service_slot = google::protobuf::Arena::CreateMessage<ServiceSlot>(&arena);
     service_slot->set_slot_id(generate_uuid());
   }
-  virtual ~Server_slot() = default;
+  virtual ~ServerSlot() = default;
 
   /**
    * @brief      Initializes based on the provided backbone
@@ -116,7 +116,7 @@ public:
   virtual NeuralIOStream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const = 0;
 
   /**
-   * @brief      Queries relevant information about the @Server_slot.
+   * @brief      Queries relevant information about the @ServerSlot.
    *
    * @param[in]  request  uses @request_bitstring to ask for @SlotInfo_field values
    *
@@ -149,7 +149,7 @@ private:
   google::protobuf::Arena arena;
 
 protected:
-  Service_context context;
+  ServiceContext context;
   ServiceSlot* service_slot;
 
   /**
@@ -198,7 +198,7 @@ protected:
    *                           the sizes inside the @data_set to copy the information from.
    *                           Whichever size components are not set correctly shall not be copied
    */
-  void get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sample_index, NeuralIOStream& target) const;
+  void get_data_sample(shared_ptr<DataAggregate> data_set, uint32 sample_index, NeuralIOStream& target) const;
 
 };
 

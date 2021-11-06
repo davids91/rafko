@@ -27,14 +27,14 @@
 namespace rafko_net{
 
 using std::vector;
-using rafko_mainframe::Service_context;
+using rafko_mainframe::ServiceContext;
 
 /**
  * @brief      Transfer function handling and utilities
  */
-class Transfer_function{
+class TransferFunction{
 public:
-  Transfer_function(Service_context& service_context)
+  TransferFunction(ServiceContext& service_context)
   : context(service_context)
   { }
 
@@ -43,7 +43,7 @@ public:
    *
    * @return     A random Transfer Function
    */
-  static Transfer_functions next();
+  static TransferFunctions next();
 
   /**
    * @brief      Provides a random Transfer function out of the ones in the argument
@@ -52,7 +52,7 @@ public:
    *
    * @return     A random Transfer function according to the given range
    */
-  static Transfer_functions next(vector<Transfer_functions> range);
+  static TransferFunctions next(vector<TransferFunctions> range);
 
   /**
    * @brief      Provides the average range of the given Transfer functions output
@@ -61,7 +61,7 @@ public:
    *
    * @return     The average output range.
    */
-  static sdouble32 get_average_output_range(Transfer_functions function);
+  static sdouble32 get_average_output_range(TransferFunctions function);
 
   /**
    * @brief      Apply the given transfer function to the given data
@@ -71,7 +71,7 @@ public:
    *
    * @return     The result of data.
    */
-  sdouble32 get_value(Transfer_functions function, sdouble32 data) const;
+  sdouble32 get_value(TransferFunctions function, sdouble32 data) const;
 
   /**
    * @brief      Gets a functions derivative calculated form the given data
@@ -81,9 +81,9 @@ public:
    *
    * @return     The derivative from data.
    */
-  sdouble32 get_derivative(Transfer_functions function, sdouble32 data) const;
+  sdouble32 get_derivative(TransferFunctions function, sdouble32 data) const;
 private:
-  Service_context& context;
+  ServiceContext& context;
 };
 
 } /* namespace rafko_net */

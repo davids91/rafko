@@ -49,13 +49,13 @@ using rafko_gym::Agent;
  * @brief      This class Processes a @Solution given in its constructor and handles
  *             the distribution of the needed resources for it.
  */
-class Solution_solver : public Agent{
+class SolutionSolver : public Agent{
 public:
-  Solution_solver(const Solution_solver& other) = delete;/* Copy constructor */
-  Solution_solver(Solution_solver&& other) = delete; /* Move constructor */
-  Solution_solver& operator=(const Solution_solver& other) = delete; /* Copy assignment */
-  Solution_solver& operator=(Solution_solver&& other) = delete; /* Move assignment */
-  ~Solution_solver(void) = default;
+  SolutionSolver(const SolutionSolver& other) = delete;/* Copy constructor */
+  SolutionSolver(SolutionSolver&& other) = delete; /* Move constructor */
+  SolutionSolver& operator=(const SolutionSolver& other) = delete; /* Copy assignment */
+  SolutionSolver& operator=(SolutionSolver&& other) = delete; /* Move assignment */
+  ~SolutionSolver(void) = default;
 
   /* +++ Methods taken from @Agent +++ */
   void solve(
@@ -69,8 +69,8 @@ public:
   /* --- Methods taken from @Agent --- */
 
 private:
-  Solution_solver(
-    const Solution& to_solve, Service_context& context, vector<vector<Partial_solution_solver>> partial_solvers_,
+  SolutionSolver(
+    const Solution& to_solve, ServiceContext& context, vector<vector<PartialSolution_solver>> partial_solvers_,
     uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
   ): Agent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_processing_threads())
   ,  solution(to_solve)
@@ -80,24 +80,24 @@ private:
   { }
 
   const Solution& solution;
-  Service_context& service_context;
-  vector<vector<Partial_solution_solver>> partial_solvers;
+  ServiceContext& service_context;
+  vector<vector<PartialSolution_solver>> partial_solvers;
   mutable mutex threads_mutex;
   ThreadGroup execution_threads;
 
 public:
   class Builder{
   public:
-    Builder(const Solution& to_solve, Service_context& context);
-    unique_ptr<Solution_solver> build(void){
-      return unique_ptr<Solution_solver>(new Solution_solver(
+    Builder(const Solution& to_solve, ServiceContext& context);
+    unique_ptr<SolutionSolver> build(void){
+      return unique_ptr<SolutionSolver>(new SolutionSolver(
         solution, service_context, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread
       ));
     }
   private:
     const Solution& solution;
-    Service_context& service_context;
-    vector<vector<Partial_solution_solver>> partial_solvers;
+    ServiceContext& service_context;
+    vector<vector<PartialSolution_solver>> partial_solvers;
     uint32 max_tmp_size_needed = 0;
     uint32 max_tmp_data_needed_per_thread = 0;
   };

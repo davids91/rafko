@@ -18,7 +18,7 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 import models.ColorMap;
 import models.Global;
-import models.Server_slot_data;
+import models.ServerSlot_data;
 import org.rafko.mainframe.RafkoDeepLearningService;
 import org.rafko.rafko_net.RafkoCommon;
 import org.rafko.rafko_net.RafkoSparseNet;
@@ -59,7 +59,7 @@ public class DashboardController implements Initializable {
     public Button dataset_save_btn;
     public Slider sample_index_slider;
     public Label server_state_label;
-    public ComboBox<Server_slot_data> server_slot_combo;
+    public ComboBox<ServerSlot_data> server_slot_combo;
     public Label server_slot_state_label;
     public Button server_slot_state_query;
     public Button create_slot_btn;
@@ -124,14 +124,14 @@ public class DashboardController implements Initializable {
         });
         server_slot_combo.setConverter(new StringConverter<>(){
             @Override
-            public String toString(Server_slot_data object) {
+            public String toString(ServerSlot_data object) {
                 if(null == object) return null;
                 else return object.getName();
             }
 
             @Override
-            public Server_slot_data fromString(String string) {
-                return new Server_slot_data(string);
+            public ServerSlot_data fromString(String string) {
+                return new ServerSlot_data(string);
             }
         });
         server_slot_combo.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -608,7 +608,7 @@ public class DashboardController implements Initializable {
             &&(!slot_state.getSlotId().isEmpty())
         ){
             /* server_slot_combo.add */
-            server_slot_combo.getItems().add(new Server_slot_data(slot_state.getSlotId()));
+            server_slot_combo.getItems().add(new ServerSlot_data(slot_state.getSlotId()));
             server_slot_combo.getSelectionModel().selectLast();
             create_new_dataset();
             create_network();
