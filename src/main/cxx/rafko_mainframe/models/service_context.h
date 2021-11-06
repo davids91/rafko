@@ -35,7 +35,7 @@ using std::vector;
 using std::pair;
 using std::get;
 
-using rafko_mainframe::Service_hyperparameters;
+using rafko_mainframe::ServiceHyperparameters;
 using rafko_net::Training_strategy;
 
 class Service_context{
@@ -225,7 +225,7 @@ public:
     return *this;
   }
 
-  Service_context& set_hypers(Service_hyperparameters hypers_){
+  Service_context& set_hypers(ServiceHyperparameters hypers_){
     hypers.CopyFrom(hypers_);
     return *this;
   }
@@ -274,7 +274,7 @@ private:
   sdouble32 sqrt_epsilon = sqrt(double_literal(1e-15));
   sdouble32 device_max_megabytes = double_literal(2048);
   Arena* arena_ptr = nullptr;
-  Service_hyperparameters hypers = Service_hyperparameters();
+  ServiceHyperparameters hypers = ServiceHyperparameters();
   mutable uint32 learning_rate_decay_iteration_cache = 0;
   mutable uint32 learning_rate_decay_index_cache = 0;
   vector<pair<uint32, sdouble32>> learning_rate_with_decay;

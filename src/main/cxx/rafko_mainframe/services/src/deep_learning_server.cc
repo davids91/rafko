@@ -44,7 +44,7 @@ void Deep_learning_server::loop(void){
           std::cout << "slot[" << slot_index << "]"
           << "; iteration:" << iteration[slot_index]
           << ": training error: "<< 
-            server_slots[slot_index]->get_info(SLOT_INFO_TRAINING_ERROR).info_package(0)
+            server_slots[slot_index]->get_info(slot_info_training_error).info_package(0)
           << "   " << std::endl;
           if(50000 < iteration[slot_index])is_server_slot_running[slot_index] = false;
         }, i);
@@ -55,8 +55,8 @@ void Deep_learning_server::loop(void){
 }
 
 ::grpc::Status Deep_learning_server::add_slot(
-  ::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request,
-  ::rafko_mainframe::Slot_response* response
+  ::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request,
+  ::rafko_mainframe::SlotResponse* response
 ){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ add_slot +++ " << std::endl;
@@ -70,7 +70,7 @@ void Deep_learning_server::loop(void){
     iteration.push_back(0);
     if(server_slots.back()){ /* If Item successfully added */
       lock_guard<mutex> my_lock(*server_slot_mutexs.back());
-      server_slots.back()->initialize(Service_slot(*request));
+      server_slots.back()->initialize(ServiceSlot(*request));
       response->CopyFrom(server_slots.back()->get_status());
       return_value = ::grpc::Status::OK;
     }else return_value = ::grpc::Status::CANCELLED;
@@ -84,8 +84,8 @@ void Deep_learning_server::loop(void){
 }
 
 ::grpc::Status Deep_learning_server::update_slot(
-  ::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request,
-  ::rafko_mainframe::Slot_response* response
+  ::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request,
+  ::rafko_mainframe::SlotResponse* response
 ){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ update_slot +++ " << std::endl;
@@ -94,7 +94,7 @@ void Deep_learning_server::loop(void){
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
-      server_slots[slot_index]->initialize(Service_slot(*request));
+      server_slots[slot_index]->initialize(ServiceSlot(*request));
       response->CopyFrom(server_slots[slot_index]->get_status());
       return_value = ::grpc::Status::OK;
     }else return_value = ::grpc::Status::CANCELLED;
@@ -108,8 +108,8 @@ void Deep_learning_server::loop(void){
 }
 
 ::grpc::Status Deep_learning_server::ping(
-  ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
-  ::rafko_mainframe::Slot_response* response
+  ::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request,
+  ::rafko_mainframe::SlotResponse* response
 ){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ ping +++ " << std::endl;
@@ -132,8 +132,8 @@ void Deep_learning_server::loop(void){
 
 
 ::grpc::Status Deep_learning_server::build_network(
-  ::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request,
-  ::rafko_mainframe::Slot_response* response
+  ::grpc::ServerContext* context, const ::rafko_mainframe::BuildNetworkRequest* request,
+  ::rafko_mainframe::SlotResponse* response
 ){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ build_network +++ " << std::endl;
@@ -142,7 +142,7 @@ void Deep_learning_server::loop(void){
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
       lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
-      server_slots[slot_index]->update_network(Build_network_request(*request));
+      server_slots[slot_index]->update_network(BuildNetworkRequest(*request));
       response->CopyFrom(server_slots[slot_index]->get_status());
       return_value = ::grpc::Status::OK;
     }else return_value = ::grpc::Status::CANCELLED;
@@ -157,12 +157,12 @@ void Deep_learning_server::loop(void){
 
 ::grpc::Status Deep_learning_server::request_action(
   ::grpc::ServerContext* context, 
-  ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response,::rafko_mainframe::Slot_request>* stream
+  ::grpc::ServerReaderWriter< ::rafko_mainframe::SlotResponse,::rafko_mainframe::SlotRequest>* stream
 ){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ request_action +++ " << std::endl;
   try{
-    Slot_request current_request;
+    SlotRequest current_request;
     while(stream->Read(&current_request)){
       const uint32 slot_index = find_id(current_request.target_slot_id());
       if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
@@ -170,55 +170,55 @@ void Deep_learning_server::loop(void){
         uint32 request_index = current_request.request_index();
         lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
         std::cout << " on slot["<< slot_index <<"]" << std::endl;
-        if(0 < (request_bitstring & SERV_SLOT_TO_START)){
+        if(0 < (request_bitstring & serv_slot_to_start)){
           is_server_slot_running[slot_index] = 1;
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_STOP)){
+        if(0 < (request_bitstring & serv_slot_to_stop)){
           is_server_slot_running[slot_index] = 0;
           iteration[slot_index] = 0;
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_RESET)){
+        if(0 < (request_bitstring & serv_slot_to_reset)){
           server_slots[slot_index]->reset();
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_TAKEOVER_NET)){
+        if(0 < (request_bitstring & serv_slot_to_takeover_net)){
           std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_APPEND_TRAINING_SET)){
+        if(0 < (request_bitstring & serv_slot_to_takeover_training_set)){
           std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_APPEND_TEST_SET)){
+        if(0 < (request_bitstring & serv_slot_to_append_test_set)){
           std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_DISTILL_NETWORK)){
+        if(0 < (request_bitstring & serv_slot_to_distill_network)){
           std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_AMPLIFY_NETWORK)){
+        if(0 < (request_bitstring & serv_slot_to_amplify_network)){
           std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_GET_TRAINING_SAMPLE)){
-          Slot_response response(server_slots[slot_index]->get_status());
+        if(0 < (request_bitstring & serv_slot_to_get_training_sample)){
+          SlotResponse response(server_slots[slot_index]->get_status());
           response.mutable_data_stream()->CopyFrom(
             server_slots[slot_index]->get_training_sample(request_index, true, true)
           );
           stream->Write(response);
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_GET_TEST_SAMPLE)){
-          Slot_response response(server_slots[slot_index]->get_status());
+        if(0 < (request_bitstring & serv_slot_to_get_test_sample)){
+          SlotResponse response(server_slots[slot_index]->get_status());
           response.mutable_data_stream()->CopyFrom(
             server_slots[slot_index]->get_testing_sample(request_index, true, true)
           );
           stream->Write(response);
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_REFRESH_SOLUTION)){
-          server_slots[slot_index]->accept_request(request_bitstring & SERV_SLOT_TO_REFRESH_SOLUTION);
+        if(0 < (request_bitstring & serv_slot_to_refresh_solution)){
+          server_slots[slot_index]->accept_request(request_bitstring & serv_slot_to_refresh_solution);
         }
-        if(0 < (request_bitstring & SERV_SLOT_RUN_ONCE)){
-          Slot_response response(server_slots[slot_index]->get_status());
+        if(0 < (request_bitstring & serv_slot_to_run_once)){
+          SlotResponse response(server_slots[slot_index]->get_status());
           if(0 == current_request.data_stream().input_size()){ /* No input data specified */
             response.mutable_data_stream()->CopyFrom(server_slots[slot_index]->run_net_once(
               server_slots[slot_index]->get_training_sample(request_index, true, false)
@@ -230,7 +230,7 @@ void Deep_learning_server::loop(void){
           }
           stream->Write(response);
         }
-        if(0 < (request_bitstring & SERV_SLOT_TO_DIE)){
+        if(0 < (request_bitstring & serv_slot_to_die)){
           lock_guard<mutex> my_lock(server_mutex);
           std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
@@ -251,8 +251,8 @@ void Deep_learning_server::loop(void){
 }
 
 ::grpc::Status Deep_learning_server::get_info(
-  ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
-  ::rafko_mainframe::Slot_info* response
+  ::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request,
+  ::rafko_mainframe::SlotInfo* response
 ){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ get_info +++ " << std::endl;
@@ -275,7 +275,7 @@ void Deep_learning_server::loop(void){
 
 
 ::grpc::Status Deep_learning_server::get_network(
-  ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
+  ::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request,
   ::rafko_net::RafkoNet* response
 ){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;

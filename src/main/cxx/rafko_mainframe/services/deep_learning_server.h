@@ -39,7 +39,7 @@ using std::mutex;
  * @brief      This class describes a server for deep learning related tasks. The supported operations are described in
  *             the @/proto/deep_learning_services.proto file. Functions defined in the service are thread-safe.
  */
-class Deep_learning_server final : public Rafko_deep_learning::Service{
+class Deep_learning_server final : public RafkoDeepLearning::Service{
 public:
   Deep_learning_server(void)
   :  server_slots()
@@ -54,14 +54,14 @@ public:
   Deep_learning_server& operator=(const Deep_learning_server& other) = delete; /* Copy assignment */
   Deep_learning_server& operator=(Deep_learning_server&& other) = delete; /* Move assignment */
 
-  ::grpc::Status add_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response);
-  ::grpc::Status update_slot(::grpc::ServerContext* context, const ::rafko_mainframe::Service_slot* request, ::rafko_mainframe::Slot_response* response);
+  ::grpc::Status add_slot(::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request, ::rafko_mainframe::SlotResponse* response);
+  ::grpc::Status update_slot(::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request, ::rafko_mainframe::SlotResponse* response);
 
-  ::grpc::Status ping(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::rafko_mainframe::Slot_response* response);
-  ::grpc::Status build_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response);
-  ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response, ::rafko_mainframe::Slot_request>* stream);
-  ::grpc::Status get_info(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::rafko_mainframe::Slot_info* response);
-  ::grpc::Status get_network(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::rafko_net::RafkoNet* response);
+  ::grpc::Status ping(::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request, ::rafko_mainframe::SlotResponse* response);
+  ::grpc::Status build_network(::grpc::ServerContext* context, const ::rafko_mainframe::BuildNetworkRequest* request, ::rafko_mainframe::SlotResponse* response);
+  ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::SlotResponse, ::rafko_mainframe::SlotRequest>* stream);
+  ::grpc::Status get_info(::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request, ::rafko_mainframe::SlotInfo* response);
+  ::grpc::Status get_network(::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request, ::rafko_net::RafkoNet* response);
 
   /**
    * @brief      The main loop of the server to run to be able to provide the service

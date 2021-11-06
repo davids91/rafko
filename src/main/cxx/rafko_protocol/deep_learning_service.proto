@@ -30,74 +30,73 @@ import "training.proto";
  *              The differetn kinds of tasks are contained in the enum @Slot_type
  */
 enum Slot_type{
-  SERV_SLOT_UNKNOWN = 0;
-  SERV_SLOT_TO_RUN = 1; /* Simply runs a network, provides output on demand. Ignores @data_set and @test_set in @Service_slot */
-  SERV_SLOT_TO_OPTIMIZE = 2; /* Optimizes the attached network in it's loop based on the custom implementation of the Stochastic Gradient descent algorithm */
-  SERV_SLOT_TO_APPROXIMIZE = 3; /* Approximizes the attached network in it's loop based on an approximation of its gradient from the provided data sets */
+  serv_slot_unknown = 0;
+  serv_slot_to_run = 1; /* Simply runs a network, provides output on demand. Ignores @data_set and @test_set in @ServiceSlot */
+  serv_slot_to_optimize = 2; /* Approximizes the attached network in it's loop based on an approximation of its gradient from the provided data sets */
 }
 
 /** @brief      A service slot can have different states, all of which are contained in the below enum.
  *              The states shall be summarized in a unit32 field as a bitstring, except when everything is okay,
- *              in which case the value shall be SERV_SLOT_OK
+ *              in which case the value shall be serv_slot_ok
  */
 enum Slot_state_values{
-  SERV_SLOT_STATE_UNKNOWN = 0;
-  SERV_SLOT_MISSING_NET = 1; /* Missing or empty Neural network attached to the Server slot */
-  SERV_SLOT_MISSING_SOLUTION = 2; /* Despite Network state, a Solution was not built based on the attached network ( if any ) */
-  SERV_SLOT_MISSING_DATA_SET = 4;
-  SERV_SLOT_MISSING_COST_FUNCTION = 16;
-  SERV_SLOT_MISSING_TRAINER = 32;
-  SERV_SLOT_OK = 65536;
+  serv_slot_state_unknown = 0;
+  serv_slot_missing_net = 1; /* Missing or empty Neural network attached to the Server slot */
+  serv_slot_missing_solution = 2; /* Despite Network state, a Solution was not built based on the attached network ( if any ) */
+  serv_slot_missing_data_set = 4;
+  serv_slot_missing_cost_function = 16;
+  serv_slot_missing_trainer = 32;
+  serv_slot_ok = 65536;
 }
 
 /** @brief      Available actions to request from a service slot
  */
 enum Slot_action_field{
-  SERV_SLOT_NOOP = 0;
-  SERV_SLOT_TO_START = 1; /* This action makes the server call the @loop of the @target_slot_id every time its @loop is called */
-  SERV_SLOT_TO_STOP = 2; /* This action disables the behavior introduced by @SERV_SLOT_TO_START */
-  SERV_SLOT_TO_RESET = 4; /* Depending on the slot, it could reset the attached networks data, the test/training error scores or whatever is implemented in the slot's @reset function */
-  SERV_SLOT_TO_TAKEOVER_NET = 8; /* Takes a copy from the source slot, and overwrites the network in the target slot in it */
-  SERV_SLOT_TO_APPEND_TRAINING_SET = 16; /* Adds the provided data_stream as an element of the training set attached to the server slot */
-  SERV_SLOT_TO_APPEND_TEST_SET = 32; /* Adds the provided data_stream as an element of the test set attached to the server slot */
-  SERV_SLOT_TO_DISTILL_NETWORK = 64; /* For the network attached to the slot: removes the zero, or insignificantly small weights with connections. */
+  serv_slot_noop = 0;
+  serv_slot_to_start = 1; /* This action makes the server call the @loop of the @target_slot_id every time its @loop is called */
+  serv_slot_to_stop = 2; /* This action disables the behavior introduced by @serv_slot_to_start */
+  serv_slot_to_reset = 4; /* Depending on the slot, it could reset the attached networks data, the test/training error scores or whatever is implemented in the slot's @reset function */
+  serv_slot_to_takeover_net = 8; /* Takes a copy from the source slot, and overwrites the network in the target slot in it */
+  serv_slot_to_takeover_training_set = 16; /* Adds the provided data_stream as an element of the training set attached to the server slot */
+  serv_slot_to_append_test_set = 32; /* Adds the provided data_stream as an element of the test set attached to the server slot */
+  serv_slot_to_distill_network = 64; /* For the network attached to the slot: removes the zero, or insignificantly small weights with connections. */
   /*!Note: The removal/duplication threshold is based on the @beta parameter in the service hyperparameters */
-  SERV_SLOT_TO_AMPLIFY_NETWORK = 128; /* For the network attached to the slot: duplicates the significant neurons. */
+  serv_slot_to_amplify_network = 128; /* For the network attached to the slot: duplicates the significant neurons. */
   /*!Note: A neuron proves to be significant if the output of it is paired with greater weights, than other neurons.*/
-  SERV_SLOT_RUN_ONCE = 256; /* Run network one time. Uses the attached @data_stream of the request */
-  SERV_SLOT_TO_GET_TRAINING_SAMPLE = 512; /* Provides a training sample[@request_index] from the training set attached to the target slot: first, the input, then the label packed together */
-  SERV_SLOT_TO_GET_TEST_SAMPLE = 1024; /* Provides a training sample[@request_index] from the training set attached to the target slot: first, the input, then the label packed together */
-  SERV_SLOT_TO_REFRESH_SOLUTION = 2048; /* Re-generates the solution attached to the server slot based on the attached network */
-  SERV_SLOT_TO_DIE = 65536;
+  serv_slot_to_run_once = 256; /* Run network one time. Uses the attached @data_stream of the request */
+  serv_slot_to_get_training_sample = 512; /* Provides a training sample[@request_index] from the training set attached to the target slot: first, the input, then the label packed together */
+  serv_slot_to_get_test_sample = 1024; /* Provides a training sample[@request_index] from the training set attached to the target slot: first, the input, then the label packed together */
+  serv_slot_to_refresh_solution = 2048; /* Re-generates the solution attached to the server slot based on the attached network */
+  serv_slot_to_die = 65536;
 }
 
 /** @brief      Available information fields to query from a service slot. The data is given back in the order of the enumerations
- *              e.g.: in case the info (SLOT_INFO_TRAINING_ERROR & SLOT_INFO_TEST_SET_SEQUENCE_NUMBER) is be queried,
- *                    SLOT_INFO_TRAINING_ERROR is be under index 1
+ *              e.g.: in case the info (slot_info_training_error & SLOT_INFO_TEST_SET_SEQUENCE_NUMBER) is be queried,
+ *                    slot_info_training_error is be under index 1
  *                    SLOT_INFO_TEST_SET_SEQUENCE_NUMBER shall be under index 2
  *              e.g.: in case the info (SLOT_INFO_TEST_SET_SAMPLE_NUMBER & SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER) is queried
  *                    SLOT_INFO_TRAINING_SET_SAMPLE_NUMBER is be under index 1
  *                    SLOT_INFO_TEST_SET_SAMPLE_NUMBER shall be under index 2
  */
-enum Slot_info_field{
-  SLOT_INFO_UNKNOWN = 0;
-  SLOT_INFO_ITERATION = 1;
-  SLOT_INFO_TRAINING_ERROR = 32;
-  SLOT_INFO_TRAINING_SET_SEQUENCE_COUNT = 64;
+enum SlotInfo_field{
+  slot_info_unknown = 0;
+  slot_info_iteration = 1;
+  slot_info_training_error = 32;
+  slot_info_training_set_sequence_count = 64;
   /*!Note: values related to training set can go up to 512 */
-  SLOT_INFO_TEST_ERROR = 1024;
-  SLOT_INFO_TEST_SET_SEQUENCE_COUNT = 2048;
+  slot_info_test_error = 1024;
+  slot_info_test_set_sequence_count = 2048;
   /*!Note: values related to test set can go up to 16384 */
 }
 
 /** @brief      Certain slots may require raw I/O data form the network to operate.
- *              The message @Neural_io_stream provides either Neural network input data
+ *              The message @NeuralIOStream provides either Neural network input data
  *              or output data, depending on the recipient. One sample of the packet shall
  *              arrive in the order they are defined here. i.e.: first the input, then the labels,
  *              then the features. COmponents might be left empty, in which case the corresponding
  *              descriptor shall remain empty.
  */
-message Neural_io_stream{
+message NeuralIOStream{
   /* +++ Size components +++ */
   uint32 sequence_size = 1; /* Number of feature sequenced arrays in a package; sequence lengths for each types of data are set below */
   uint32 input_size = 2; /* Number of floating point numbers that a Neuron network takes as input */
@@ -109,18 +108,18 @@ message Neural_io_stream{
 
 /** @brief      The meaasge to ask requests from the server. @action, @data_stream may be left blank.
  */
-message Slot_request{
+message SlotRequest{
   string source_slot_id = 1; /* In case of action requests involving 2 service slots, this field shall be used as the source slot */
   string target_slot_id = 2; /* In case of action requests involving only one slot this field shall be used */
   uint32 request_index = 10; /* In case of datasets, the index of the data sample */
   uint32 request_bitstring = 11; /* Either an action or an info request */
-  Neural_io_stream data_stream = 20; /* May be a part of a data-set or a run-once request */
+  NeuralIOStream data_stream = 20; /* May be a part of a data-set or a run-once request */
 }
 
-/** @brief      Provides the parameters for the rpc @build_network in the service @Rafko_deep_learning
+/** @brief      Provides the parameters for the rpc @build_network in the service @RafkoDeepLearning
  *              This message is a utility for a rpc which is planned to be in the service temporarily.
  */
-message Build_network_request{
+message BuildNetworkRequest{
   string target_slot_id = 2;
   uint32 input_size = 10;
   double expected_input_range = 11;
@@ -131,17 +130,17 @@ message Build_network_request{
 /** @brief      Requests to a server reply with the following response package. Some fields may
  *              be left blank.
  */
-message Slot_response{
+message SlotResponse{
   string slot_id = 1; /* A string id to query existing service slots by */
   uint32 slot_state = 10; /* a bitfield representing the status of the slot */
-  Neural_io_stream data_stream = 30; /* May be a part of a data-set or a run-once request */
+  NeuralIOStream data_stream = 30; /* May be a part of a data-set or a run-once request */
 }
 
 /**
  * @brief      This class describes a packet of slot information.
  */
-message Slot_info{
-  repeated Slot_info_field info_field = 10;
+message SlotInfo{
+  repeated SlotInfo_field info_field = 10;
   repeated double info_package = 11;
 }
 
@@ -151,7 +150,7 @@ message Slot_info{
  *             context of deep learning. System relevant parameters like the number of working threads
  *             are decided from the server configuration.
  */
-message Service_hyperparameters{
+message ServiceHyperparameters{
   double learning_rate = 10;
   uint32 minibatch_size = 11;
   uint32 memory_truncation = 12;
@@ -170,12 +169,12 @@ message Service_hyperparameters{
 /** @brief      The structure of a service slot encapsulating a channel in which deep learning related requests
  *              can be run.
  */
-message Service_slot{
+message ServiceSlot{
   string slot_id = 1; /* A unique identifier for each service slot */
-  uint32 state = 2; /* A bitfield storing 0 or 1 at the positions given in enum @Slot_state_values, except when everything is fine, then the value @SERV_SLOT_OK is used */
+  uint32 state = 2; /* A bitfield storing 0 or 1 at the positions given in enum @Slot_state_values, except when everything is fine, then the value @serv_slot_ok is used */
   Slot_type type = 10; /* Must be set on client side */
 
-  Service_hyperparameters hypers = 21;
+  ServiceHyperparameters hypers = 21;
   rafko_net.RafkoNet network = 22;
   rafko_net.Data_set test_set = 23;
   rafko_net.Data_set training_set = 24;
@@ -186,13 +185,13 @@ message Service_slot{
 /**
  * @brief      Describes a Rafko Deep Learning Service
  */
-service Rafko_deep_learning{
-  rpc add_slot(Service_slot) returns (Slot_response) {} /* If possible adds a new slot into the server, then retudrns the status and ID of it */
-  rpc update_slot(Service_slot) returns (Slot_response) {} /* Modify existing slot; the ID must be provided */
+service RafkoDeepLearning{
+  rpc add_slot(ServiceSlot) returns (SlotResponse) {} /* If possible adds a new slot into the server, then retudrns the status and ID of it */
+  rpc update_slot(ServiceSlot) returns (SlotResponse) {} /* Modify existing slot; the ID must be provided */
 
-  rpc ping(Slot_request) returns (Slot_response) {} /* Pings a slot, the response repeats the slot id and state if valid */
-  rpc build_network(Build_network_request) returns (Slot_response) {} /* Builds a Neural network with the given parameters into the provided slot */
-  rpc request_action(stream Slot_request) returns (stream Slot_response) {} /* Make requests for the target service_slot, and return with the status after each request is completed */
-  rpc get_info(Slot_request) returns (Slot_info) {}
-  rpc get_network(Slot_request) returns (rafko_net.RafkoNet) {} /* Provides the Loaded network into the slot */
+  rpc ping(SlotRequest) returns (SlotResponse) {} /* Pings a slot, the response repeats the slot id and state if valid */
+  rpc build_network(BuildNetworkRequest) returns (SlotResponse) {} /* Builds a Neural network with the given parameters into the provided slot */
+  rpc request_action(stream SlotRequest) returns (stream SlotResponse) {} /* Make requests for the target service_slot, and return with the status after each request is completed */
+  rpc get_info(SlotRequest) returns (SlotInfo) {}
+  rpc get_network(SlotRequest) returns (rafko_net.RafkoNet) {} /* Provides the Loaded network into the slot */
 }

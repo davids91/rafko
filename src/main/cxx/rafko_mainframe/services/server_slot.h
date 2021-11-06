@@ -45,7 +45,7 @@ public:
   , context()
   {
     (void)context.set_arena_ptr(&arena);
-    service_slot = google::protobuf::Arena::CreateMessage<Service_slot>(&arena);
+    service_slot = google::protobuf::Arena::CreateMessage<ServiceSlot>(&arena);
     service_slot->set_slot_id(generate_uuid());
   }
   virtual ~Server_slot() = default;
@@ -55,7 +55,7 @@ public:
    *
    * @param[in]  service_slot_  The service slot
    */
-  virtual void initialize(Service_slot&& service_slot_) = 0;
+  virtual void initialize(ServiceSlot&& service_slot_) = 0;
 
   /**
    * @brief      The main loop of the server to run to be able to provide the service
@@ -72,7 +72,7 @@ public:
    *
    * @param      request  The request containing the parameters of the network to be built
    */
-  virtual void update_network(Build_network_request&& request) = 0;
+  virtual void update_network(BuildNetworkRequest&& request) = 0;
 
   /**
    * @brief      Update the currently loaded network with the provided one
@@ -95,7 +95,7 @@ public:
    *
    * @return     The output data stream.
    */
-  virtual Neural_io_stream run_net_once(const Neural_io_stream& data_stream) = 0;
+  virtual NeuralIOStream run_net_once(const NeuralIOStream& data_stream) = 0;
 
   /**
    * @brief      Gets a sample from the attached training dataset
@@ -104,7 +104,7 @@ public:
    *
    * @return     The training sample as a packed stream: First the input, then the label.
    */
-  virtual Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const = 0;
+  virtual NeuralIOStream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const = 0;
 
   /**
    * @brief      Gets a sample from the attached testing dataset
@@ -113,16 +113,16 @@ public:
    *
    * @return     The testing sample as a packed stream: First the input, then the label.
    */
-  virtual Neural_io_stream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const = 0;
+  virtual NeuralIOStream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const = 0;
 
   /**
    * @brief      Queries relevant information about the @Server_slot.
    *
-   * @param[in]  request  uses @request_bitstring to ask for @Slot_info_field values
+   * @param[in]  request  uses @request_bitstring to ask for @SlotInfo_field values
    *
-   * @return     Information packets returned in the order given by @Slot_info_field.
+   * @return     Information packets returned in the order given by @SlotInfo_field.
    */
-  virtual Slot_info get_info(uint32 request_bitstring) = 0;
+  virtual SlotInfo get_info(uint32 request_bitstring) = 0;
 
   /**
    * @brief      Provide the loaded network
@@ -143,14 +143,14 @@ public:
    *
    * @return     The status, described in the file @proto/deep_learning_service.proto
    */
-  Slot_response get_status(void) const;
+  SlotResponse get_status(void) const;
 
 private:
   google::protobuf::Arena arena;
 
 protected:
   Service_context context;
-  Service_slot* service_slot;
+  ServiceSlot* service_slot;
 
   /**
    * @brief      Builds a network from the given request
@@ -159,7 +159,7 @@ protected:
    *
    * @return     The built network, belonging to the arena in the service slot
    */
-  RafkoNet* build_network_from_request(Build_network_request&& request);
+  RafkoNet* build_network_from_request(BuildNetworkRequest&& request);
 
   /**
    * @brief      Generates a unique identifier, with a guarantee that the currently
@@ -174,7 +174,7 @@ protected:
    *             instead of the final status value. It's safe to call multiple times.
    */
   void expose_state(void){
-    if(SERV_SLOT_OK == service_slot->state())
+    if(serv_slot_ok == service_slot->state())
       service_slot->set_state(0);
   }
 
@@ -185,7 +185,7 @@ protected:
    */
   void finalize_state(void){
     if(0 == service_slot->state()) /* No issues found, great! */
-      service_slot->set_state(SERV_SLOT_OK);
+      service_slot->set_state(serv_slot_ok);
   }
 
   /**
@@ -198,7 +198,7 @@ protected:
    *                           the sizes inside the @data_set to copy the information from.
    *                           Whichever size components are not set correctly shall not be copied
    */
-  void get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sample_index, Neural_io_stream& target) const;
+  void get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sample_index, NeuralIOStream& target) const;
 
 };
 

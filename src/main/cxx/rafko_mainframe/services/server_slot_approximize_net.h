@@ -43,13 +43,13 @@ class Server_slot_approximize_net : public Server_slot_run_net{
 public:
   Server_slot_approximize_net()
   :  Server_slot_run_net()
-  { service_slot->set_type(SERV_SLOT_TO_APPROXIMIZE); }
+  { service_slot->set_type(serv_slot_to_optimize); }
 
-  void initialize(Service_slot&& service_slot_);
+  void initialize(ServiceSlot&& service_slot_);
   void accept_request(uint32 request_bitstring);
-  Slot_info get_info(uint32 request_bitstring);
+  SlotInfo get_info(uint32 request_bitstring);
 
-  void update_network(Build_network_request&& request){
+  void update_network(BuildNetworkRequest&& request){
     Server_slot_run_net::update_network(std::move(request));
     update_cost_function();
     update_trainer();
@@ -62,7 +62,7 @@ public:
   }
 
   void loop(void){
-    if(SERV_SLOT_OK == service_slot->state()){
+    if(serv_slot_ok == service_slot->state()){
       network_approximizer->collect_approximates_from_weight_gradients();
       network_approximizer->apply_fragment();
       ++iteration;
@@ -77,9 +77,9 @@ public:
     }else throw std::runtime_error("Reset called of an invalid server slot!");
   }
 
-  Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const{
+  NeuralIOStream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const{
     if((training_set)&&(0 < service_slot->state())){
-      Neural_io_stream result;
+      NeuralIOStream result;
       result.set_sequence_size(training_set->get_sequence_size());
       if(get_input)result.set_input_size(training_set->get_input_sample(0).size());
       if(get_label)result.set_label_size(training_set->get_label_sample(0).size());
@@ -89,9 +89,9 @@ public:
     }else throw std::runtime_error("Invalid training set queried for sample!");
   }
 
-  Neural_io_stream get_test_sample(uint32 sample_index, bool get_input, bool get_label) const{
+  NeuralIOStream get_test_sample(uint32 sample_index, bool get_input, bool get_label) const{
     if((training_set)&&(0 < service_slot->state())){
-      Neural_io_stream result;
+      NeuralIOStream result;
       result.set_sequence_size(test_set->get_sequence_size());
       if(get_input)result.set_input_size(test_set->get_input_sample(0).size());
       if(get_label)result.set_label_size(test_set->get_label_sample(0).size());

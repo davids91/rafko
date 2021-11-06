@@ -26,9 +26,9 @@ namespace rafko_mainframe{
 using rafko_net::Solution_builder;
 using rafko_utilities::DataRingbuffer;
 
-void Server_slot_run_net::initialize(Service_slot&& service_slot_){
+void Server_slot_run_net::initialize(ServiceSlot&& service_slot_){
   service_slot->set_type(service_slot_.type());
-  if(SERV_SLOT_TO_RUN != service_slot->type())
+  if(serv_slot_to_run != service_slot->type())
     throw std::runtime_error("Incorrect Server slot initialization!");
   else{
     service_slot->set_slot_id(generate_uuid());
@@ -41,21 +41,21 @@ void Server_slot_run_net::initialize(Service_slot&& service_slot_){
 
 void Server_slot_run_net::refresh_solution(void){
   expose_state();
-  service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_SOLUTION);
+  service_slot->set_state(service_slot->state() | serv_slot_missing_solution);
   if(0 < network->neuron_array_size()){
     network_solution = Solution_builder(context).build(*network);
     network_solver = unique_ptr<Solution_solver>(Solution_solver::Builder(*network_solution, context).build());
-    service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_SOLUTION);
-  }else service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_NET);
+    service_slot->set_state(service_slot->state() & ~serv_slot_missing_solution);
+  }else service_slot->set_state(service_slot->state() | serv_slot_missing_net);
   finalize_state();
 }
 
-Neural_io_stream Server_slot_run_net::run_net_once(const Neural_io_stream& data_stream){
+NeuralIOStream Server_slot_run_net::run_net_once(const NeuralIOStream& data_stream){
   if(
-    (SERV_SLOT_OK == service_slot->state())
-    ||(0 == (SERV_SLOT_MISSING_SOLUTION & service_slot->state()))
+    (serv_slot_ok == service_slot->state())
+    ||(0 == (serv_slot_missing_solution & service_slot->state()))
   ){
-    Neural_io_stream result;
+    NeuralIOStream result;
     uint32 sequence_start_index = 0;
     vector<sdouble32> result_package = vector<sdouble32>( /* reserve enough space for the result.. */
       network->output_neuron_number() * data_stream.sequence_size()

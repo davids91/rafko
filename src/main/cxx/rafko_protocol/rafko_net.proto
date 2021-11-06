@@ -26,7 +26,7 @@ import "common.proto";
 /** @brief      Network basically describes the connections a recurrent network has
  *              with the past runs. This enumeration is for a utility which is for
  *              testing purposes only. Recurrences described here affect
- *              only the rpc @build_network in the service @Rafko_deep_learning
+ *              only the rpc @build_network in the service @RafkoDeepLearning
  */
 enum Network_recurrence{
   network_recurrence_unknown = 0;

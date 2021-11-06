@@ -47,26 +47,26 @@ public:
   ,  network_solution()
   ,  network_solver()
   { 
-    service_slot->set_type(SERV_SLOT_TO_RUN);
+    service_slot->set_type(serv_slot_to_run);
     network = google::protobuf::Arena::CreateMessage<RafkoNet>(context.get_arena_ptr());
   }
 
-  void initialize(Service_slot&& service_slot_);
+  void initialize(ServiceSlot&& service_slot_);
   void refresh_solution(void);
-  Neural_io_stream run_net_once(const Neural_io_stream& data_stream);
+  NeuralIOStream run_net_once(const NeuralIOStream& data_stream);
   ~Server_slot_run_net(void){ }
 
   /* Inlinable interfaces */
-  void update_network(Build_network_request&& request){
+  void update_network(BuildNetworkRequest&& request){
     expose_state();
-    service_slot->set_state(service_slot->state() | SERV_SLOT_MISSING_NET);
+    service_slot->set_state(service_slot->state() | serv_slot_missing_net);
 
     if((0 == request.layer_sizes_size())||(request.layer_sizes_size() != request.allowed_transfers_by_layer_size()))
       throw std::runtime_error("Invalid network build request!");
 
     if(get_uuid() == request.target_slot_id()){
       *network = *build_network_from_request(std::move(request));
-      if(nullptr != network) service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_NET);
+      if(nullptr != network) service_slot->set_state(service_slot->state() & ~serv_slot_missing_net);
       refresh_solution();
     }
     finalize_state();
@@ -76,7 +76,7 @@ public:
     expose_state();
     if(0 < net_.neuron_array_size()){
       *network = std::move(net_);
-      service_slot->set_state(service_slot->state() & ~SERV_SLOT_MISSING_NET);
+      service_slot->set_state(service_slot->state() & ~serv_slot_missing_net);
       refresh_solution();
     }
     finalize_state();
@@ -86,16 +86,16 @@ public:
     update_network(RafkoNet());
   }
 
-  Slot_info get_info(uint32 request_bitstring){
-    return Slot_info(); /* No info to be provided */
+  SlotInfo get_info(uint32 request_bitstring){
+    return SlotInfo(); /* No info to be provided */
   }
   
   RafkoNet get_network(void) const{
     return *network;
   }
 
-  Slot_response get_status(void) const{
-    Slot_response ret;
+  SlotResponse get_status(void) const{
+    SlotResponse ret;
     ret.set_slot_id(service_slot->slot_id());
     ret.set_slot_state(service_slot->state());
     return ret;
@@ -110,11 +110,11 @@ public:
     throw std::runtime_error("Direct Requests not supported in a network runner slot!");
   }
 
-  Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const{
+  NeuralIOStream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const{
     throw std::runtime_error("Data sets not supported in a network runner slot!");
   }
 
-  Neural_io_stream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const{
+  NeuralIOStream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const{
     throw std::runtime_error("Data sets not supported in a network runner slot!");
   }
 
