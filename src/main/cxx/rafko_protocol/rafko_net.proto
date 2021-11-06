@@ -18,7 +18,7 @@
 syntax = "proto3";
 option cc_enable_arenas = true;
 option java_package = "org.rafko.rafko_net";
-option java_outer_classname = "RafkoSparseNet";
+option java_outer_classname = "RafkoRafkoNet";
 package rafko_net;
 
 import "common.proto";
@@ -29,9 +29,9 @@ import "common.proto";
  *              only the rpc @build_network in the service @Rafko_deep_learning
  */
 enum Network_recurrence{
-  NETWORK_RECURRENCE_UNKNOWN = 0;
-  NETWORK_RECURRENCE_TO_SELF = 1;
-  NETWORK_RECURRENCE_TO_LAYER = 2;
+  network_recurrence_unknown = 0;
+  network_recurrence_to_self = 1;
+  network_recurrence_to_layer = 2;
 }
 
 /** @brief      Takes input, assigns weights to them and processes
@@ -44,7 +44,7 @@ message Neuron{
 
   /**
    * Input weights shall only contain positive intervals,
-   * each interval corresponding to an index in the @weight_table in the @SparseNet
+   * each interval corresponding to an index in the @weight_table in the @RafkoNet
    * Every weight above inputs in @input_indices count as a bias, and shall behave
    * like it has an input of 1.
    */
@@ -61,7 +61,7 @@ message Neuron{
 /** @brief      A sparse net implementation containing the
  *              Neurons and optimization cache files
  */
-message SparseNet{
+message RafkoNet{
   uint32 input_data_size = 10; /* Number of inputs (floating point numbers) accepted by the Neural network */
   uint32 output_neuron_number = 11; /* Number of outputs the Neural network has */
 

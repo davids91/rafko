@@ -8,7 +8,7 @@ set(GYM_HEADERS
   models/data_aggregate.h
   services/agent.h
   services/environment.h
-  services/sparse_net_approximizer.h
+  services/rafko_net_approximizer.h
 )
 set(GYM_PUBLIC_HEADERS
   ${GYM_INTERFACE}
@@ -20,7 +20,7 @@ target_sources(rafko_gym
   PRIVATE
   models/src/data_aggregate.cc
   services/src/environment_data_set.cc
-  services/src/sparse_net_approximizer.cc
+  services/src/rafko_net_approximizer.cc
 )
 
 install(

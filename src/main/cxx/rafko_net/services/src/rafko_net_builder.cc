@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 
 #include <time.h>
 
@@ -29,7 +29,7 @@ namespace rafko_net {
 
 using std::shared_ptr;
 
-SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
+RafkoNet* RafkoNet_builder::dense_layers(vector<uint32> layer_sizes){
 
   using std::make_shared;
 
@@ -41,14 +41,14 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
    * - Input Layer shall have a weight for every input for every neuron
    * - Input Layer shall have a weight for every bias and memory_filter for every neuron
    */
-  uint64 numWeights = (layer_sizes[0] * arg_input_size) + (2 * layer_sizes[0]); /* The first layer only takes input from the @SparseNet input data */
+  uint64 numWeights = (layer_sizes[0] * arg_input_size) + (2 * layer_sizes[0]); /* The first layer only takes input from the @RafkoNet input data */
   for(uint32 layerSize : layer_sizes){
     if(0 != numNeurons){ /* The first layer is already included in numWeights */
       numWeights += previous_size * layerSize; /* Calculate the number of weights needed */
       numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_filter amongst the weights */
     }
-    if(NETWORK_RECURRENCE_TO_SELF == recurrence)numWeights += layerSize; /* Recurrence to self */
-    else if(NETWORK_RECURRENCE_TO_LAYER == recurrence)numWeights += (layerSize * layerSize); /* Recurrence to layer */
+    if(network_recurrence_to_self == recurrence)numWeights += layerSize; /* Recurrence to self */
+    else if(network_recurrence_to_layer == recurrence)numWeights += (layerSize * layerSize); /* Recurrence to layer */
     previous_size = layerSize;
     numNeurons += layerSize; /* Calculate the number of elements needed */
   }
@@ -60,7 +60,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
       ||(arg_output_neuron_number == layer_sizes.back()) /* Or compliant to the Dense layer */
     )
   ){
-    SparseNet* ret = google::protobuf::Arena::CreateMessage<SparseNet>(context.get_arena_ptr());
+    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(context.get_arena_ptr());
     uint32 layer_input_starts_at = 0;
     uint64 weightIt = 0;
     uint64 neurIt = 0;
@@ -130,7 +130,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
         }
 
         /* Add recurrence of the Neuron */
-        if(NETWORK_RECURRENCE_TO_SELF == recurrence){ /* recurrence to self */
+        if(network_recurrence_to_self == recurrence){ /* recurrence to self */
           /* Add the weight synapse */
           temp_index_interval.set_starts(weightIt);
           temp_index_interval.set_interval_size(1 + 1); /* self-recurrence + a bias */
@@ -147,7 +147,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
           temp_input_interval.set_interval_size(1); /* of a lone input as the actual @Neuron itself */
           temp_input_interval.set_reach_past_loops(1);
           *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
-        }else if(NETWORK_RECURRENCE_TO_LAYER == recurrence){ /* recurrence to layer */
+        }else if(network_recurrence_to_layer == recurrence){ /* recurrence to layer */
           /* Add the weight synapse */
           temp_index_interval.set_starts(weightIt);
           temp_index_interval.set_interval_size(layer_sizes[layerIt] + 1); /* Current layer + a bias */
@@ -164,7 +164,7 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
           /* Add the input synapse */
           if(0 < layerIt)temp_input_interval.set_starts(layer_input_starts_at + layer_sizes[layerIt-1]); /* starts at the beginning of the current layer */
           else temp_input_interval.set_starts(layer_input_starts_at); /* starts at the beginning of the current layer */
-          
+
           temp_input_interval.set_interval_size(layer_sizes[layerIt]); /* takes up the whole layer */
           temp_input_interval.set_reach_past_loops(1);
           *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
@@ -195,14 +195,14 @@ SparseNet* Sparse_net_builder::dense_layers(vector<uint32> layer_sizes){
   }else throw std::runtime_error("Input Output Pre-requisites failed;Unable to determine Net Structure!");
 }
 
-SparseNet* Sparse_net_builder::build(void){
+RafkoNet* RafkoNet_builder::build(void){
   if( /* Required arguments are set */
     (is_input_size_set && is_output_neuron_number_set)
     &&(is_neuron_array_set && is_weight_table_set) /* needed arguments are set */
     &&(0 < arg_weight_table.size())&&(0 < arg_neuron_array.size()) /* There are at least some Neurons and Weights */
     &&(arg_output_neuron_number <= arg_neuron_array.size()) /* Output size isn't too big */
   ){
-    SparseNet* ret = google::protobuf::Arena::CreateMessage<SparseNet>(context.get_arena_ptr());
+    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(context.get_arena_ptr());
     ret->set_input_data_size(arg_input_size);
     ret->set_output_neuron_number(arg_output_neuron_number);
     set_weight_table(ret);

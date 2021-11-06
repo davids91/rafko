@@ -32,7 +32,7 @@ using std::string;
 using std::shared_ptr;
 
 using rafko_gym::Data_aggregate;
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet;
 
 /**
  * @brief      This class describes a common ancestor and interface of whatever
@@ -79,7 +79,7 @@ public:
    *
    * @param[in]  net_   The network to overwrite the current one
    */
-  virtual void update_network(SparseNet&& net_) = 0;
+  virtual void update_network(RafkoNet&& net_) = 0;
 
   /**
    * @brief      Accept the request provided in the argument. Implementation may vary.
@@ -129,7 +129,7 @@ public:
    *
    * @return     The network currently loaded in the configuration
    */
-  virtual SparseNet get_network(void) const = 0;
+  virtual RafkoNet get_network(void) const = 0;
 
   /**
    * @brief      Gets the identifier of the slot
@@ -159,7 +159,7 @@ protected:
    *
    * @return     The built network, belonging to the arena in the service slot
    */
-  SparseNet* build_network_from_request(Build_network_request&& request);
+  RafkoNet* build_network_from_request(Build_network_request&& request);
 
   /**
    * @brief      Generates a unique identifier, with a guarantee that the currently

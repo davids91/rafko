@@ -24,7 +24,7 @@
 #include <vector>
 #include <thread>
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 
@@ -36,7 +36,7 @@ using std::thread;
 using rafko_mainframe::Service_context;
 
 /**
- * @brief      Front-end to create a @Soltuion to solve a @SparseNet. @max_solve_threads
+ * @brief      Front-end to create a @Soltuion to solve a @RafkoNet. @max_solve_threads
  *             determines the maximum number of threads to be used inside the @build function.
  *             A @Solution_chain is built up by a 2D array of @Partial_solutions. The first row
  *             is independent because they are mostly processing only inputs to the Neural network
@@ -70,7 +70,7 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  Solution* build(const SparseNet& net, bool optimize_to_gpu = false);
+  Solution* build(const RafkoNet& net, bool optimize_to_gpu = false);
 
 private:
   Service_context& service_context;

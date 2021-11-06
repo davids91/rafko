@@ -26,7 +26,7 @@ uint32 Partial_solution_builder::partial_input_synapse_count = 0;
 sint32 Partial_solution_builder::previous_neuron_input_index;
 uint8 Partial_solution_builder::previous_neuron_input_source;
 
-uint32 Partial_solution_builder::add_neuron_to_partial_solution(const SparseNet& net, uint32 neuron_index, Partial_solution& partial){
+uint32 Partial_solution_builder::add_neuron_to_partial_solution(const RafkoNet& net, uint32 neuron_index, Partial_solution& partial){
   Synapse_iterator<InputSynapseInterval> input_synapse(partial.input_data());
   previous_neuron_input_index = input_synapse.size();
   previous_neuron_input_source = neuron_input_none;

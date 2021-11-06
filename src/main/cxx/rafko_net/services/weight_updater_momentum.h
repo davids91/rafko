@@ -24,9 +24,9 @@ namespace rafko_net{
 
 class Weight_updater_momentum : public Weight_updater{
 public:
-  Weight_updater_momentum(SparseNet& sparse_net, Service_context& service_context_)
-  :  Weight_updater(sparse_net, service_context_)
-  ,  previous_velocity(sparse_net.weight_table_size(),double_literal(0.0))
+  Weight_updater_momentum(RafkoNet& rafko_net, Service_context& service_context_)
+  :  Weight_updater(rafko_net, service_context_)
+  ,  previous_velocity(rafko_net.weight_table_size(),double_literal(0.0))
   { }
 
   void iterate(const vector<sdouble32>& gradients,Solution& solution){

@@ -21,18 +21,18 @@
 #include <memory>
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/models/neuron_info.h"
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/synapse_iterator.h"
 
 namespace rafko_net_test {
 
 using rafko_net::Neuron;
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet;
 using rafko_net::Transfer_functions;
-using rafko_net::Sparse_net_builder;
+using rafko_net::RafkoNet_builder;
 using rafko_net::Neuron_info;
 using rafko_net::transfer_function_identity;
 using rafko_net::transfer_function_sigmoid;
@@ -59,7 +59,7 @@ using std::vector;
  * 0th Neuron shall have 5 inputs
  * 1st and 2nd neurons will have the first as input both
  * */
-SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
+RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   Service_context service_context = Service_context().set_arena_ptr(arena);
 
   /* Create the single Weight Table */
@@ -109,13 +109,13 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
   REQUIRE( true == Neuron_info::is_neuron_valid( neuron_table[2]) );
 
   /* Pass the net into the builder */
-  shared_ptr<Sparse_net_builder> builder(make_shared<Sparse_net_builder>(service_context));
+  shared_ptr<RafkoNet_builder> builder(make_shared<RafkoNet_builder>(service_context));
   builder->input_size(1).expected_input_range(double_literal(1.0)).output_neuron_number(2)
     .neuron_array(neuron_table).weight_table(weight_table);
 
   try{
     /* Build the net with the given parameters */
-    SparseNet* net(builder->build());
+    RafkoNet* net(builder->build());
 
     /* Check Net parameters */
     REQUIRE( 0 < net->neuron_array_size() );
@@ -184,14 +184,14 @@ SparseNet* test_net_builder_manually(google::protobuf::Arena* arena){
 }
 
 TEST_CASE( "Constructing small net manually", "[build][small][manual]" ) {
-  SparseNet* net = test_net_builder_manually(nullptr);
+  RafkoNet* net = test_net_builder_manually(nullptr);
   REQUIRE( nullptr != net );
   delete net;
 }
 
 TEST_CASE("Constructing small net manually using arena","[build][arena][small][manual]"){
   google::protobuf::Arena arena;
-  SparseNet* net = test_net_builder_manually(&arena);
+  RafkoNet* net = test_net_builder_manually(&arena);
   REQUIRE( nullptr != net );
   arena.Reset();
 }
@@ -204,14 +204,14 @@ TEST_CASE("Constructing small net manually using arena","[build][arena][small][m
  * -Output Layer: 2 Neurons
  * And check manually the connections
  */
-SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
+RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   Service_context service_context = Service_context().set_arena_ptr(arena);
-  unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>(service_context));
+  unique_ptr<RafkoNet_builder> builder(make_unique<RafkoNet_builder>(service_context));
   builder->input_size(5)
     .output_neuron_number(2)
     .expected_input_range(double_literal(5.0));
 
-  SparseNet* net(builder->dense_layers(
+  RafkoNet* net(builder->dense_layers(
     {2,3,2},{
       {transfer_function_identity},
       {transfer_function_selu,transfer_function_relu},
@@ -341,14 +341,14 @@ SparseNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
 }
 
 TEST_CASE( "Builder to construct Fully Connected Net correctly through the interface", "[build][small]" ) {
-  SparseNet* net = test_net_builder_fully_connected(nullptr);
+  RafkoNet* net = test_net_builder_fully_connected(nullptr);
   REQUIRE( nullptr != net );
   delete net;
 }
 
 TEST_CASE( "Builder to construct Fully Connected Net correctly through the interface with arena", "[build][arena][small]" ) {
   google::protobuf::Arena arena;
-  SparseNet* net(test_net_builder_fully_connected(&arena));
+  RafkoNet* net(test_net_builder_fully_connected(&arena));
   REQUIRE( nullptr != net );
   arena.Reset();
 }

@@ -19,7 +19,7 @@
 #include "test/test_utility.h"
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/synapse_iterator.h"
 

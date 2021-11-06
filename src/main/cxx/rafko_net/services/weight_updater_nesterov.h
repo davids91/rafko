@@ -24,8 +24,8 @@ namespace rafko_net{
 
 class Weight_updater_nesterov : public Weight_updater{
 public:
-  Weight_updater_nesterov(SparseNet& sparse_net, Service_context& service_context_)
-  :  Weight_updater(sparse_net, service_context_, 2)
+  Weight_updater_nesterov(RafkoNet& rafko_net, Service_context& service_context_)
+  :  Weight_updater(rafko_net, service_context_, 2)
   { }
 
   void iterate(const vector<sdouble32>& gradients,Solution& solution){

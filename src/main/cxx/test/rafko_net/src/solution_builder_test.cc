@@ -18,23 +18,23 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
 
 namespace rafko_net_test {
 
-using rafko_net::Sparse_net_builder;
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet_builder;
+using rafko_net::RafkoNet;
 using rafko_net::Solution_builder;
 using rafko_net::Solution;
 using rafko_net::Solution_solver;
 using rafko_net::Synapse_iterator;
-using rafko_net::NETWORK_RECURRENCE_TO_SELF;
-using rafko_net::NETWORK_RECURRENCE_TO_LAYER;
+using rafko_net::network_recurrence_to_self;
+using rafko_net::network_recurrence_to_layer;
 using rafko_mainframe::Service_context;
 
 using std::unique_ptr;
@@ -43,24 +43,24 @@ using std::make_unique;
 using std::vector;
 
 /*###############################################################################################
- * Testing Solution generation using the @Sparse_net_builder and the @Solution_builder
+ * Testing Solution generation using the @RafkoNet_builder and the @Solution_builder
  * */
 Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, vector<uint32> net_structure, uint32 recursion){
   Service_context service_context = Service_context()
   .set_max_solve_threads(4).set_device_max_megabytes(device_max_megabytes)
   .set_arena_ptr(arena);
 
-  Sparse_net_builder builder = Sparse_net_builder(service_context);
+  RafkoNet_builder builder = RafkoNet_builder(service_context);
 
   builder.input_size(50).expected_input_range(double_literal(5.0)).output_neuron_number(net_structure.back());
 
-  if(NETWORK_RECURRENCE_TO_SELF == recursion){
+  if(network_recurrence_to_self == recursion){
     builder.set_recurrence_to_self();
-  }else if(NETWORK_RECURRENCE_TO_LAYER == recursion){
+  }else if(network_recurrence_to_layer == recursion){
     builder.set_recurrence_to_layer();
   }
 
-  SparseNet* net;
+  RafkoNet* net;
   REQUIRE_NOTHROW(
     net = builder.dense_layers(net_structure)
   );

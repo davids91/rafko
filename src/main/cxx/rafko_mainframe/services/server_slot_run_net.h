@@ -28,7 +28,7 @@
 namespace rafko_mainframe{
 
 using std::vector;
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet;
 using rafko_net::Solution;
 using rafko_net::Solution_solver;
 
@@ -48,7 +48,7 @@ public:
   ,  network_solver()
   { 
     service_slot->set_type(SERV_SLOT_TO_RUN);
-    network = google::protobuf::Arena::CreateMessage<SparseNet>(context.get_arena_ptr());
+    network = google::protobuf::Arena::CreateMessage<RafkoNet>(context.get_arena_ptr());
   }
 
   void initialize(Service_slot&& service_slot_);
@@ -72,7 +72,7 @@ public:
     finalize_state();
   }
 
-  void update_network(SparseNet&& net_){
+  void update_network(RafkoNet&& net_){
     expose_state();
     if(0 < net_.neuron_array_size()){
       *network = std::move(net_);
@@ -83,14 +83,14 @@ public:
   }
 
   void reset(void){
-    update_network(SparseNet());
+    update_network(RafkoNet());
   }
 
   Slot_info get_info(uint32 request_bitstring){
     return Slot_info(); /* No info to be provided */
   }
   
-  SparseNet get_network(void) const{
+  RafkoNet get_network(void) const{
     return *network;
   }
 
@@ -119,7 +119,7 @@ public:
   }
 
 protected:
-  SparseNet* network;
+  RafkoNet* network;
   Solution* network_solution;
   unique_ptr<Solution_solver> network_solver;
 };

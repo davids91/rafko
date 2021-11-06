@@ -61,7 +61,7 @@ public:
   ::grpc::Status build_network(::grpc::ServerContext* context, const ::rafko_mainframe::Build_network_request* request, ::rafko_mainframe::Slot_response* response);
   ::grpc::Status request_action(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::rafko_mainframe::Slot_response, ::rafko_mainframe::Slot_request>* stream);
   ::grpc::Status get_info(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::rafko_mainframe::Slot_info* response);
-  ::grpc::Status get_network(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::rafko_net::SparseNet* response);
+  ::grpc::Status get_network(::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request, ::rafko_net::RafkoNet* response);
 
   /**
    * @brief      The main loop of the server to run to be able to provide the service

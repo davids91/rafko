@@ -11,7 +11,7 @@ set(PROTO_SOURCES
   common.proto
   logger.proto
   solution.proto
-  sparse_net.proto
+  rafko_net.proto
   training.proto
   deep_learning_service.proto
 )

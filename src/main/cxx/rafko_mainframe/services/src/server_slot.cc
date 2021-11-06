@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 
 namespace rafko_mainframe{
 
@@ -32,7 +32,7 @@ using std::mt19937;
 using std::uniform_int_distribution;
 using std::vector;
 
-using rafko_net::Sparse_net_builder;
+using rafko_net::RafkoNet_builder;
 using rafko_net::Transfer_functions;
 using rafko_net::Transfer_functions_IsValid;
 
@@ -107,7 +107,7 @@ void Server_slot::get_data_sample(shared_ptr<Data_aggregate> data_set, uint32 sa
   }
 }
 
-SparseNet* Server_slot::build_network_from_request(Build_network_request&& request){
+RafkoNet* Server_slot::build_network_from_request(Build_network_request&& request){
   if(0 < request.allowed_transfers_by_layer_size()){
     uint32 layer_index = 0;
     vector<vector<Transfer_functions>> allowed_transfers(request.allowed_transfers_by_layer_size());
@@ -116,12 +116,12 @@ SparseNet* Server_slot::build_network_from_request(Build_network_request&& reque
         allowed_transfers[layer_index++] = vector<Transfer_functions>(1, static_cast<Transfer_functions>(allowed));
       else throw std::runtime_error("Unknown transfer function detected!");
     }
-    return Sparse_net_builder(context).input_size(request.input_size())
+    return RafkoNet_builder(context).input_size(request.input_size())
       .expected_input_range(request.expected_input_range())
       .allowed_transfer_functions_by_layer(allowed_transfers)
       .dense_layers({request.layer_sizes().begin(),request.layer_sizes().end()});
   }else{
-    return Sparse_net_builder(context).input_size(request.input_size())
+    return RafkoNet_builder(context).input_size(request.input_size())
       .expected_input_range(request.expected_input_range())
       .dense_layers({request.layer_sizes().begin(),request.layer_sizes().end()});
   }

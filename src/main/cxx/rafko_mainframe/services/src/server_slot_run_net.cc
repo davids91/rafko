@@ -18,7 +18,7 @@
 #include "rafko_mainframe/services/server_slot_run_net.h"
 
 #include "rafko_utilities/models/data_ringbuffer.h"
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 
 namespace rafko_mainframe{

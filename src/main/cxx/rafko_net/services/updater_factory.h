@@ -45,7 +45,7 @@ public:
    * @return     The weight updater.
    */
   static unique_ptr<Weight_updater> build_weight_updater(
-    SparseNet& net, Weight_updaters weight_updater, Service_context& context
+    RafkoNet& net, Weight_updaters weight_updater, Service_context& context
   ){
     switch(weight_updater){
       case weight_updater_momentum:

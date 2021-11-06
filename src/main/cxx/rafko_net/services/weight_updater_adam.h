@@ -24,11 +24,11 @@ namespace rafko_net{
 
 class Weight_updater_adam : public Weight_updater{
 public:
-  Weight_updater_adam(SparseNet& sparse_net, Service_context& service_context_)
-  :  Weight_updater(sparse_net, service_context_)
+  Weight_updater_adam(RafkoNet& rafko_net, Service_context& service_context_)
+  :  Weight_updater(rafko_net, service_context_)
   ,  iteration_count(0)
-  ,  moment(sparse_net.weight_table_size(),double_literal(0.0))
-  ,  raw_moment(sparse_net.weight_table_size(),double_literal(0.0))
+  ,  moment(rafko_net.weight_table_size(),double_literal(0.0))
+  ,  raw_moment(rafko_net.weight_table_size(),double_literal(0.0))
   { }
 
   void iterate(const vector<sdouble32>& gradients,Solution& solution){

@@ -25,12 +25,12 @@ namespace rafko_net{
 using rafko_mainframe::Service_context;
 
 /**
- * @brief      Wrapper function to generate Backpropagation_queue objects from @SparseNet
+ * @brief      Wrapper function to generate Backpropagation_queue objects from @RafkoNet
  *             objects
  */
 class Backpropagation_queue_wrapper{
 public:
-  Backpropagation_queue_wrapper(SparseNet& net, Service_context& context);
+  Backpropagation_queue_wrapper(RafkoNet& net, Service_context& context);
   Backpropagation_queue operator()(){
     return gradient_step;
   }

@@ -25,7 +25,7 @@
 #include <limits>
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/services/solution_builder.h"
@@ -43,7 +43,7 @@ using std::vector;
 using std::unique_ptr;
 
 using rafko_mainframe::Service_context;
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet;
 using rafko_net::Solution_builder;
 using rafko_net::Solution_solver;
 using rafko_net::Weight_updater;
@@ -52,10 +52,10 @@ using rafko_net::Gradient_fragment;
 using rafko_net::Updater_factory;
 
 /**
- * @brief      This class approximates gradients for a @Dataset and @Sparse_net.
+ * @brief      This class approximates gradients for a @Dataset and @RafkoNet.
  *             The approximated gradients are collected into one gradient fragment.
  */
-class Sparse_net_approximizer{
+class RafkoNet_approximizer{
 public:
 
   /**
@@ -67,8 +67,8 @@ public:
    * @param[in]  weight_updater_               The Weight updater to help convergence
    * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
-  Sparse_net_approximizer(
-    Service_context& service_context_, SparseNet& neural_network, Environment& environment_,
+  RafkoNet_approximizer(
+    Service_context& service_context_, RafkoNet& neural_network, Environment& environment_,
     Weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
   ):service_context(service_context_)
   , net(neural_network)
@@ -82,14 +82,14 @@ public:
     environment.full_evaluation(*solver);
   }
 
-  ~Sparse_net_approximizer(void){
+  ~RafkoNet_approximizer(void){
     if(nullptr == service_context.get_arena_ptr())
       delete net_solution;
   }
-  Sparse_net_approximizer(const Sparse_net_approximizer& other) = delete;/* Copy constructor */
-  Sparse_net_approximizer(Sparse_net_approximizer&& other) = delete; /* Move constructor */
-  Sparse_net_approximizer& operator=(const Sparse_net_approximizer& other) = delete; /* Copy assignment */
-  Sparse_net_approximizer& operator=(Sparse_net_approximizer&& other) = delete; /* Move assignment */
+  RafkoNet_approximizer(const RafkoNet_approximizer& other) = delete;/* Copy constructor */
+  RafkoNet_approximizer(RafkoNet_approximizer&& other) = delete; /* Move constructor */
+  RafkoNet_approximizer& operator=(const RafkoNet_approximizer& other) = delete; /* Copy assignment */
+  RafkoNet_approximizer& operator=(RafkoNet_approximizer&& other) = delete; /* Move assignment */
 
   /**
    * @brief      Moves the network in a direction based on induvidual weight gradients,
@@ -197,7 +197,7 @@ public:
 
 private:
   Service_context& service_context;
-  SparseNet& net;
+  RafkoNet& net;
   Solution* net_solution;
   Environment& environment;
   unique_ptr<Agent> solver;

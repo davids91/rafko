@@ -24,7 +24,7 @@ set(NET_HEADERS
   services/partial_solution_solver.h
   services/solution_builder.h
   services/solution_solver.h
-  services/sparse_net_builder.h
+  services/rafko_net_builder.h
   services/updater_factory.h
   services/weight_experience_space.h
   services/weight_updater.h
@@ -46,7 +46,7 @@ target_sources(rafko_net
   services/src/partial_solution_builder.cc
   services/src/partial_solution_solver.cc
   services/src/solution_builder.cc
-  services/src/sparse_net_builder.cc
+  services/src/rafko_net_builder.cc
   services/src/solution_solver.cc
   services/src/weight_experience_space.cc
   services/src/weight_updater.cc

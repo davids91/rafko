@@ -40,14 +40,14 @@ using rafko_mainframe::Service_context;
 class Weight_updater{
 public:
   Weight_updater(
-    SparseNet& sparse_net, Service_context& service_context_, uint32 required_iterations_for_step_ = 1
-  ): net(sparse_net)
+    RafkoNet& rafko_net, Service_context& service_context_, uint32 required_iterations_for_step_ = 1
+  ): net(rafko_net)
   ,  service_context(service_context_)
   ,  required_iterations_for_step(required_iterations_for_step_)
   ,  weights_to_do_in_one_thread(1u + static_cast<uint32>(net.weight_table_size()/service_context.get_max_solve_threads()))
   ,  iteration(0)
   ,  finished(false)
-  ,  current_velocity(sparse_net.weight_table_size(),double_literal(0.0))
+  ,  current_velocity(rafko_net.weight_table_size(),double_literal(0.0))
   ,  execution_threads(service_context.get_max_solve_threads())
   { };
 
@@ -76,21 +76,21 @@ public:
   }
 
   /**
-   * @brief      Copies the weights in the stored @SparseNet reference into the provided solution.
+   * @brief      Copies the weights in the stored @RafkoNet reference into the provided solution.
    *             It supposes that the solution is one already built, and it is built from
-   *             the same @SparseNet referenced in the updater. Uses a different thread for every partial solution.
+   *             the same @RafkoNet referenced in the updater. Uses a different thread for every partial solution.
    *
    * @param      solution  The solution
    */
   void update_solution_with_weights(Solution& solution) const;
 
   /**
-   * @brief      Copies the weights in the stored @SparseNet reference into the provided solution.
+   * @brief      Copies the weights in the stored @RafkoNet reference into the provided solution.
    *             It supposes that the solution is one already built, and it is built from
-   *             the same @SparseNet referenced in the updater. Uses a different thread for every partial solution.
+   *             the same @RafkoNet referenced in the updater. Uses a different thread for every partial solution.
    *
    * @param      solution       The solution
-   * @param[in]  weight_index   The index of the weight to take over fro the @SparseNet
+   * @param[in]  weight_index   The index of the weight to take over fro the @RafkoNet
    */
   void update_solution_with_weight(Solution& solution, uint32 weight_index) const;
 
@@ -127,7 +127,7 @@ public:
   virtual ~Weight_updater() = default;
 
 protected:
-  SparseNet& net;
+  RafkoNet& net;
   Service_context& service_context;
   const uint32 required_iterations_for_step;
   const uint32 weights_to_do_in_one_thread;
@@ -171,7 +171,7 @@ private:
   void calculate_velocity(const vector<sdouble32>& gradients);
 
   /**
-   * @brief      The function to update every weight of the referenced @SparseNet
+   * @brief      The function to update every weight of the referenced @RafkoNet
    *             based on the values provided by @get_new_weight.
    *             It starts multiple threads, dividing almost equally the number of weights
    *             to be updated in each thread.
@@ -196,9 +196,9 @@ private:
   void update_weight_with_velocity(uint32 weight_index, uint32 weight_number);
 
   /**
-   * @brief      Copies the weights of a Neuron from the referenced @SparseNet
+   * @brief      Copies the weights of a Neuron from the referenced @RafkoNet
    *             into the partial solution reference provided as an argument.
-   *             The @Partial_solution must be built from the SparseNet, as a pre-requisite.
+   *             The @Partial_solution must be built from the RafkoNet, as a pre-requisite.
    *
    * @param[in]  neuron_index                      The index of the Neuron inside the @SparsNet
    * @param[in]  inner_neuron_index                The index of the Neuron inside the @Partial_solution
@@ -211,9 +211,9 @@ private:
   ) const;
 
   /**
-   * @brief      Copies the weight of a Neuron under the given index from the referenced @SparseNets
+   * @brief      Copies the weight of a Neuron under the given index from the referenced @RafkoNets
    *             weight table into the partial solution reference provided as an argument.
-   *             The @Partial_solution must be built from the SparseNet, as a pre-requisite.
+   *             The @Partial_solution must be built from the RafkoNet, as a pre-requisite.
    *
    * @param[in]  neuron_index                      The index of the Neuron inside the @SparsNet
    * @param[in]  weight_index                      The index of the Neurons weight inside the weight table of @SparsNet

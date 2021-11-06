@@ -18,7 +18,7 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/services/synapse_iterator.h"
 
 namespace rafko_net_test {

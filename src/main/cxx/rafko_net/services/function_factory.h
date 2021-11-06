@@ -24,7 +24,7 @@
 #include <stdexcept>
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 
 #include "rafko_net/models/cost_function_squared_error.h"
 #include "rafko_net/models/cost_function_mse.h"
@@ -38,12 +38,12 @@ public:
   /**
    * @brief      Builds a cost function.
    *
-   * @param[in]  net            The @SparseNet that decides which cost function to build
+   * @param[in]  net            The @RafkoNet that decides which cost function to build
    * @param[in]  context        The service context
    *
    * @return     The cost function.
    */
-  static unique_ptr<Cost_function> build_cost_function(const SparseNet& net, Cost_functions the_function, Service_context& context){
+  static unique_ptr<Cost_function> build_cost_function(const RafkoNet& net, Cost_functions the_function, Service_context& context){
     return build_cost_function(net.output_neuron_number(), the_function, context);
   }
 

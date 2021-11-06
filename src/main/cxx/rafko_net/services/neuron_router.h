@@ -26,7 +26,7 @@
 #include <functional>
 #include <stdexcept>
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 
 namespace rafko_net {
 
@@ -37,7 +37,7 @@ using std::atomic;
 using std::mutex;
 
 /**
- * @brief      This class describes a neuron router which iterates through the given @SparseNet,
+ * @brief      This class describes a neuron router which iterates through the given @RafkoNet,
                collecting a subset of Neurons from the thread, all of whom are able to be solved without
                waiting for any other Neurons. The subset is being collected based on the input relations
                between the Neurons. The Neurons at the beginning of the net only take in input data,
@@ -50,7 +50,7 @@ using std::mutex;
  */
 class Neuron_router{
 public:
-  Neuron_router(const SparseNet& sparse_net);
+  Neuron_router(const RafkoNet& rafko_net);
 
   uint32 operator[](int index){
     return get_neuron_index_from_subset(index);
@@ -240,7 +240,7 @@ public:
     return (neuron_state_processed_value(neuron_index) == *neuron_states[neuron_index]);
   }
 private:
-  const SparseNet& net;
+  const RafkoNet& net;
   bool collection_running = false;
 
   /**
@@ -249,7 +249,7 @@ private:
   atomic<uint32> output_layer_iterator;
 
   /**
-   * For each @Neuron in @SparseNet stores the processed state. Values:
+   * For each @Neuron in @RafkoNet stores the processed state. Values:
    *  - Number of processed children ( storing raw children number without synapse information )
    *  - Number of processed children + 1 in case the Neuron is reserved
    *  - Number of processed children + 2 in case the Neuron is processed

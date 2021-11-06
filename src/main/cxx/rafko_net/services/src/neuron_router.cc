@@ -26,7 +26,7 @@
 
 namespace rafko_net{
 
-Neuron_router::Neuron_router(const SparseNet& sparse_net) : net(sparse_net){
+Neuron_router::Neuron_router(const RafkoNet& rafko_net) : net(rafko_net){
   output_layer_iterator = (net.neuron_array_size() - net.output_neuron_number()); /* Start to process Ouptut Layer Neurons */
   neuron_states = vector<unique_ptr<atomic<uint32>>>(); /* Every Neuron has 0 child processed at first */
   neuron_number_of_inputs = vector<uint32>(net.neuron_array_size(),0);

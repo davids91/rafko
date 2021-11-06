@@ -21,18 +21,18 @@
 #include <memory>
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
 #include "rafko_mainframe/models/service_context.h"
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/backpropagation_queue_wrapper.h"
 #include "rafko_net/services/neuron_router.h"
 
 namespace rafko_net_test {
 
-using rafko_net::SparseNet;
-using rafko_net::Sparse_net_builder;
+using rafko_net::RafkoNet;
+using rafko_net::RafkoNet_builder;
 using rafko_net::IndexSynapseInterval;
 using rafko_net::InputSynapseInterval;
 using rafko_net::Synapse_iterator;
@@ -55,10 +55,10 @@ using std::vector;
  * */
 TEST_CASE( "Testing backpropagation queue", "" ) {
   Service_context service_context;
-  unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>(service_context));
+  unique_ptr<RafkoNet_builder> builder(make_unique<RafkoNet_builder>(service_context));
   builder->input_size(10).expected_input_range(double_literal(5.0));
 
-  unique_ptr<SparseNet> net(builder->dense_layers({20,10,3,5,5}));
+  unique_ptr<RafkoNet> net(builder->dense_layers({20,10,3,5,5}));
   Neuron_router router(*net);
 
   /* Create a backrpop queue */

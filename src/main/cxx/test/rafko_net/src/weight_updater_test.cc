@@ -22,10 +22,10 @@
 #include <memory>
 
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/weight_updater.h"
 
@@ -34,9 +34,9 @@ namespace rafko_net_test {
 using std::unique_ptr;
 using std::make_unique;
 
-using rafko_net::Sparse_net_builder;
+using rafko_net::RafkoNet_builder;
 using rafko_net::Solution_builder;
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet;
 using rafko_net::Partial_solution;
 using rafko_net::Solution;
 using rafko_net::Synapse_iterator;
@@ -53,7 +53,7 @@ TEST_CASE("Weight updater test","[build][weight-update]"){
   Service_context service_context;
   vector<uint32> net_structure = {2,4,3,1,2};
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
-  unique_ptr<SparseNet> net(Sparse_net_builder(service_context).input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure));
+  unique_ptr<RafkoNet> net(RafkoNet_builder(service_context).input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure));
   Weight_updater weight_updater(*net, service_context);
   unique_ptr<Solution> solution = unique_ptr<Solution>(Solution_builder(service_context).build(*net));
   check_if_the_same(*net, *solution);

@@ -24,7 +24,7 @@
 #include <atomic>
 #include <mutex>
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 
 #include "rafko_utilities/models/data_pool.h"
@@ -104,7 +104,7 @@ public:
 
   /**
    * @brief      Determines if given Solution Detail is valid. Due to performance reasons
-   *             this function isn't used while solving a SparseNet
+   *             this function isn't used while solving a RafkoNet
    *
    * @return     True if detail is valid, False otherwise.
    */

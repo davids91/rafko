@@ -15,15 +15,15 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef sparse_net_TEST_MOCKUPS_H
-#define sparse_net_TEST_MOCKUPS_H
+#ifndef TEST_UTILITY_H
+#define TEST_UTILITY_H
 
 #include <vector>
 #include <memory>
 
 #include "rafko_global.h"
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_gym/models/data_aggregate.h"
@@ -33,7 +33,7 @@ namespace rafko_net_test {
 using std::vector;
 using std::unique_ptr;
 
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet;
 using rafko_net::Solution;
 using rafko_net::Partial_solution;
 using rafko_gym::Data_aggregate;
@@ -74,17 +74,17 @@ extern void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vect
  */
 extern void manaual_fully_connected_network_result(
   vector<sdouble32>& inputs, vector<sdouble32> previous_data, vector<sdouble32>& neuron_data,
-  vector<uint32> layer_structure, SparseNet network
+  vector<uint32> layer_structure, RafkoNet network
 );
 
 /**
  * @brief      Checks if the inputs are pointing to the same data and weight values are matching in the given
- *             @SparseNet and @Solution
+ *             @RafkoNet and @Solution
  *
  * @param      net       The net
  * @param      solution  The solution
  */
-extern void check_if_the_same(SparseNet& net, Solution& solution);
+extern void check_if_the_same(RafkoNet& net, Solution& solution);
 
 /**
  * @brief      Prints weights for the given arguments
@@ -92,7 +92,7 @@ extern void check_if_the_same(SparseNet& net, Solution& solution);
  * @param      net       The net
  * @param      solution  The solution
  */
-extern void print_weights(SparseNet& net, Solution& solution);
+extern void print_weights(RafkoNet& net, Solution& solution);
 
 /**
  * @brief      Prints a training sample of the given data set, under the given index. Expects 2 inputs and one output!
@@ -102,7 +102,7 @@ extern void print_weights(SparseNet& net, Solution& solution);
  * @param      net                    The net
  * @param      service_context        The service context
  */
-extern void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, SparseNet& net, Service_context& service_context);
+extern void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, RafkoNet& net, Service_context& service_context);
 
 /**
  * @brief      Creates a normalized dataset for addition: basically adding two numbers together.
@@ -136,4 +136,4 @@ extern void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& 
 
 };
 
-#endif /* sparse_net_TEST_MOCKUPS_H */
+#endif /* TEST_UTILITY_H */

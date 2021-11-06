@@ -23,7 +23,7 @@ option java_outer_classname = "RafkoDeepLearningService";
 package rafko_mainframe;
 
 import "common.proto";
-import "sparse_net.proto";
+import "rafko_net.proto";
 import "training.proto";
 
 /** @brief      A service consists of slots on which different Neural related tasks can run.
@@ -176,7 +176,7 @@ message Service_slot{
   Slot_type type = 10; /* Must be set on client side */
 
   Service_hyperparameters hypers = 21;
-  rafko_net.SparseNet network = 22;
+  rafko_net.RafkoNet network = 22;
   rafko_net.Data_set test_set = 23;
   rafko_net.Data_set training_set = 24;
   rafko_net.Cost_functions cost_function = 25;
@@ -194,5 +194,5 @@ service Rafko_deep_learning{
   rpc build_network(Build_network_request) returns (Slot_response) {} /* Builds a Neural network with the given parameters into the provided slot */
   rpc request_action(stream Slot_request) returns (stream Slot_response) {} /* Make requests for the target service_slot, and return with the status after each request is completed */
   rpc get_info(Slot_request) returns (Slot_info) {}
-  rpc get_network(Slot_request) returns (rafko_net.SparseNet) {} /* Provides the Loaded network into the slot */
+  rpc get_network(Slot_request) returns (rafko_net.RafkoNet) {} /* Provides the Loaded network into the slot */
 }

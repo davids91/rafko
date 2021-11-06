@@ -37,7 +37,7 @@ message Partial_solution{
    */
   repeated double weight_table = 2; /* stores the weights paired to @inside_indexes for the inputs of the Neurons; Ranges [0.0,1.0) */
   repeated InputSynapseInterval input_data = 3; /* @Partial_solution input: negative intervals are network inputs, positives are inner neuron data */
-  IndexSynapseInterval output_data = 4; /* @Partial_solution output; The inner Neurons mapped to Neuron indices in the @SparseNet */
+  IndexSynapseInterval output_data = 4; /* @Partial_solution output; The inner Neurons mapped to Neuron indices in the @RafkoNet */
 
   /** ################################################################################################
    * A representation of the actual neuron to be used in this intermediate solution
@@ -49,7 +49,7 @@ message Partial_solution{
   /** ################################################################################################
    * Synapse information
    * - Positive Neuron synapse inputs are mapped to the previous Partial solution output
-   * - Negative Synapse inputs are not mapped to the actual @SparseNet input
+   * - Negative Synapse inputs are not mapped to the actual @RafkoNet input
    * - @weight_synapse_number might contain more weights, than @index_synapse_number contains inputs
    * - Weights additional to inputs shall behave like biases: they shall have an input of 1.0
    */

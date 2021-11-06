@@ -23,7 +23,7 @@
 #include <numeric>
 
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/services/thread_group.h"
@@ -32,7 +32,7 @@
 #include "rafko_net/services/solution_solver.h"
 #include "rafko_net/services/partial_solution_solver.h"
 #include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 
 namespace rafko_net_test{
@@ -40,9 +40,9 @@ namespace rafko_net_test{
 using rafko_mainframe::Service_context;
 using rafko_utilities::DataRingbuffer;
 using rafko_utilities::ThreadGroup;
-using rafko_net::Sparse_net_builder;
+using rafko_net::RafkoNet_builder;
 using rafko_net::Solution_builder;
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet;
 using rafko_net::Partial_solution;
 using rafko_net::Partial_solution_solver;
 using rafko_net::Solution;
@@ -56,8 +56,8 @@ using rafko_net::transfer_function_sigmoid;
 using rafko_net::transfer_function_tanh;
 using rafko_net::transfer_function_relu;
 using rafko_net::transfer_function_selu;
-using rafko_net::NETWORK_RECURRENCE_TO_SELF;
-using rafko_net::NETWORK_RECURRENCE_TO_LAYER;
+using rafko_net::network_recurrence_to_self;
+using rafko_net::network_recurrence_to_layer;
 using rafko_net::Spike_function;
 
 using std::unique_ptr;
@@ -201,7 +201,7 @@ TEST_CASE("Solution solver manual testing","[solve][small][manual-solve]"){
 }
 
 /*###############################################################################################
- * Testing if the solution solver produces a correct output, given a built @SparseNet
+ * Testing if the solution solver produces a correct output, given a built @RafkoNet
  */
 void testing_solution_solver_manually(google::protobuf::Arena* arena){
   Service_context service_context = Service_context()
@@ -211,7 +211,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
 
   /* Build the described net */
-  SparseNet* net = Sparse_net_builder(service_context).input_size(5)
+  RafkoNet* net = RafkoNet_builder(service_context).input_size(5)
     .expected_input_range(double_literal(5.0)).dense_layers(net_structure);
 
   /* Generate solution from Net */
@@ -273,14 +273,14 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
 
   /* Build the above described net */
   Service_context service_context = Service_context().set_device_max_megabytes(max_space_mb);
-  Sparse_net_builder net_builder = Sparse_net_builder(service_context);
+  RafkoNet_builder net_builder = RafkoNet_builder(service_context);
   net_builder.input_size(5).expected_input_range(double_literal(5.0));
-  if(NETWORK_RECURRENCE_TO_SELF == recurrence)
+  if(network_recurrence_to_self == recurrence)
     net_builder.set_recurrence_to_self();
-  else if(NETWORK_RECURRENCE_TO_LAYER == recurrence)
+  else if(network_recurrence_to_layer == recurrence)
     net_builder.set_recurrence_to_layer();
 
-  SparseNet* net = net_builder.dense_layers(net_structure);
+  RafkoNet* net = net_builder.dense_layers(net_structure);
 
   /* Generate solution from Net */
   Solution* solution = Solution_builder(service_context).build(*net);
@@ -350,12 +350,12 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   vector<uint32> network_layout_sizes = {10,30,20};
 
   /* Generate a fully connected Neural network */
-  unique_ptr<Sparse_net_builder> builder(make_unique<Sparse_net_builder>(service_context));
+  unique_ptr<RafkoNet_builder> builder(make_unique<RafkoNet_builder>(service_context));
   builder->input_size(5)
     .output_neuron_number(20)
     .expected_input_range(double_literal(5.0));
 
-  SparseNet* net(builder->dense_layers(
+  RafkoNet* net(builder->dense_layers(
     network_layout_sizes,{
       {transfer_function_identity},
       {transfer_function_selu,transfer_function_relu},
@@ -472,7 +472,7 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
     double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)
   };
   Service_context service_context = Service_context();
-  SparseNet* net = Sparse_net_builder(service_context)
+  RafkoNet* net = RafkoNet_builder(service_context)
     .input_size(5).expected_input_range(double_literal(5.0))
     .dense_layers(net_structure);
   Solution* solution = Solution_builder(service_context).build(*net);
@@ -510,7 +510,7 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
  */
 TEST_CASE("Solution Solver memory test", "[solve][memory]"){
   Service_context service_context = Service_context();
-  SparseNet* net = Sparse_net_builder(service_context)
+  RafkoNet* net = RafkoNet_builder(service_context)
     .input_size(1).expected_input_range(double_literal(5.0))
     .set_recurrence_to_self()
     .allowed_transfer_functions_by_layer({{transfer_function_identity}})

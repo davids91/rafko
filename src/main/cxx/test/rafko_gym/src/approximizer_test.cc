@@ -19,16 +19,16 @@
 #include "test/test_utility.h"
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/models/cost_function_mse.h"
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/function_factory.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_gym/services/environment_data_set.h"
-#include "rafko_gym/services/sparse_net_approximizer.h"
+#include "rafko_gym/services/rafko_net_approximizer.h"
 
 namespace rafko_net_test {
 
@@ -42,8 +42,8 @@ using std::chrono::milliseconds;
 
 using rafko_mainframe::Service_context;
 using rafko_utilities::DataRingbuffer;
-using rafko_net::SparseNet;
-using rafko_net::Sparse_net_builder;
+using rafko_net::RafkoNet;
+using rafko_net::RafkoNet_builder;
 using rafko_net::cost_function_mse;
 using rafko_net::cost_function_squared_error;
 using rafko_net::transfer_function_identity;
@@ -61,7 +61,7 @@ using rafko_net::Solution_builder;
 using rafko_net::Solution_solver;
 using rafko_gym::Environment;
 using rafko_gym::Environment_data_set;
-using rafko_gym::Sparse_net_approximizer;
+using rafko_gym::RafkoNet_approximizer;
 using rafko_gym::Data_aggregate;
 
 /*###############################################################################################
@@ -74,11 +74,11 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
     .set_learning_rate(1e-1).set_arena_ptr(&arena);
 
   /* Create nets */
-  vector<SparseNet*> nets = vector<SparseNet*>();
+  vector<RafkoNet*> nets = vector<RafkoNet*>();
   /*!Note: no need for smart pointers, because ownership is in the arena.
     * The builder automatically uses the arena pointer provided in the context.
     */
-  nets.push_back(Sparse_net_builder(service_context)
+  nets.push_back(RafkoNet_builder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
     .allowed_transfer_functions_by_layer(
       {
@@ -103,7 +103,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
     *nets[0], cost_function_squared_error
   );
   Environment_data_set env(service_context, *train_set, *test_set);
-  Sparse_net_approximizer approximizer(service_context, *nets[0], env, weight_updater_default);
+  RafkoNet_approximizer approximizer(service_context, *nets[0], env, weight_updater_default);
 
   /* adding a simple-weight-gradient fragment */
   uint32 weight_index = rand()%(nets[0]->weight_table_size());
@@ -171,8 +171,8 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   uint32 number_of_samples = 128;
 
   /* Create nets */
-  vector<SparseNet*> nets = vector<SparseNet*>();
-  nets.push_back(Sparse_net_builder(service_context)
+  vector<RafkoNet*> nets = vector<RafkoNet*>();
+  nets.push_back(RafkoNet_builder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
@@ -205,7 +205,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
     *nets[0], cost_function_squared_error, /* Sequence size */4
   );  Environment_data_set env(service_context, *train_set, *test_set);
-  Sparse_net_approximizer approximizer(service_context, *nets[0], env, weight_updater_amsgrad,1);
+  RafkoNet_approximizer approximizer(service_context, *nets[0], env, weight_updater_amsgrad,1);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;

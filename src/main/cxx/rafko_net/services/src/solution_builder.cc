@@ -35,7 +35,7 @@ using std::unique_ptr;
 using std::ref;
 using std::lock_guard;
 
-Solution* Solution_builder::build(const SparseNet& net, bool optimize_to_gpu){
+Solution* Solution_builder::build(const RafkoNet& net, bool optimize_to_gpu){
   Neuron_router neuron_router(net);
   Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(service_context.get_arena_ptr());
   uint32 overall_partial_solution_count = 0;

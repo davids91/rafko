@@ -19,7 +19,7 @@
 
 #include <random>
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/models/transfer_function.h"

@@ -24,7 +24,7 @@
 #include <memory>
 #include <stdexcept>
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/models/weight_initializer.h"
 #include "rafko_net/models/neuron_info.h"
@@ -34,38 +34,38 @@ namespace rafko_net {
 using std::shared_ptr;
 
 /**
- * @brief Sparse_net_builder: Builder class to compile Sparse Neural Networks
+ * @brief RafkoNet_builder: Builder class to compile Sparse Neural Networks
  * There are Two ways to use this class. One is to add the required building blocks of a Network
- * manually. The Other is to use one of the higher level construction functions like @Sparse_net_builder::dense_layers.
- * Some parameters needed to be added unconditionally, which is checked by @Sparse_net_builder::io_pre_requisites_set.
+ * manually. The Other is to use one of the higher level construction functions like @RafkoNet_builder::dense_layers.
+ * Some parameters needed to be added unconditionally, which is checked by @RafkoNet_builder::io_pre_requisites_set.
  */
-class Sparse_net_builder{
+class RafkoNet_builder{
 public:
-  Sparse_net_builder(Service_context& service_context_)
+  RafkoNet_builder(Service_context& service_context_)
   :  context(service_context_)
   { }
 
   /**
-   * @brief      Sparse_net_builder::input_size: sets the number of expected inputs for the SparseNet object to be built
+   * @brief      RafkoNet_builder::input_size: sets the number of expected inputs for the RafkoNet object to be built
    *
    * @param[in]  size  The size
    *
    * @return     builder reference for chaining
    */
-  Sparse_net_builder& input_size(uint32 size){
+  RafkoNet_builder& input_size(uint32 size){
     arg_input_size = size;
     is_input_size_set = true;
     return *this;
   }
 
   /**
-   * @brief      sets the number of expected outputs for the SparseNet object to be built
+   * @brief      sets the number of expected outputs for the RafkoNet object to be built
    *
    * @param[in]  size  The size
    *
    * @return     builder reference for chaining
    */
-  Sparse_net_builder& output_neuron_number(uint32 size){
+  RafkoNet_builder& output_neuron_number(uint32 size){
     arg_output_neuron_number = size;
     is_output_neuron_number_set = true;
     return *this;
@@ -78,7 +78,7 @@ public:
    *
    * @return
    */
-  Sparse_net_builder& expected_input_range(sdouble32 range){
+  RafkoNet_builder& expected_input_range(sdouble32 range){
     arg_expected_input_range = range;
     is_expected_input_range_set = true;
     return *this;
@@ -86,13 +86,13 @@ public:
 
   /**
    * @brief      Sets the Weight initializer to a manual one, overwriting the default weight
-   *             intialization assigned for any builder interface, except @Sparse_net_builder::build.
+   *             intialization assigned for any builder interface, except @RafkoNet_builder::build.
    *
    * @param[in]  initializer  The initializer
    *
    * @return     Builder reference for chaining
    */
-  Sparse_net_builder& weight_initializer(shared_ptr<Weight_initializer> initializer){
+  RafkoNet_builder& weight_initializer(shared_ptr<Weight_initializer> initializer){
     if(nullptr != initializer){
       arg_weight_initer = initializer;
       is_weight_initializer_set = true;
@@ -107,7 +107,7 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  Sparse_net_builder& neuron_array(vector<Neuron> arr){
+  RafkoNet_builder& neuron_array(vector<Neuron> arr){
     if((0 < arr.size())&&(Neuron_info::is_neuron_valid(arr.back()))){
       arg_neuron_array = arr;
       is_neuron_array_set = true;
@@ -122,7 +122,7 @@ public:
    *
    * @return     reference for chaining
    */
-  Sparse_net_builder& weight_table(vector<sdouble32> table){
+  RafkoNet_builder& weight_table(vector<sdouble32> table){
     if(0 < table.size()){
       arg_weight_table = table;
       is_weight_table_set = true;
@@ -137,7 +137,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  Sparse_net_builder& allowed_transfer_functions_by_layer(vector<vector<Transfer_functions> > filter){
+  RafkoNet_builder& allowed_transfer_functions_by_layer(vector<vector<Transfer_functions> > filter){
     arg_allowed_transfer_functions_by_layer = filter;
     is_allowed_transfer_functions_by_layer_set = true;
     return *this;
@@ -149,8 +149,8 @@ public:
    *
    * @return     builder reference for chaining
    */
-  Sparse_net_builder& set_recurrence_to_self(void){
-    recurrence = NETWORK_RECURRENCE_TO_SELF;
+  RafkoNet_builder& set_recurrence_to_self(void){
+    recurrence = network_recurrence_to_self;
     return *this;
   }
 
@@ -160,8 +160,8 @@ public:
    *
    * @return     builder reference for chaining
    */
-  Sparse_net_builder& set_recurrence_to_layer(void){
-    recurrence = NETWORK_RECURRENCE_TO_LAYER;
+  RafkoNet_builder& set_recurrence_to_layer(void){
+    recurrence = network_recurrence_to_layer;
     return *this;
   }
 
@@ -175,7 +175,7 @@ public:
    *
    * @return   the built neural network
    */
-  SparseNet* dense_layers(vector<uint32> layer_sizes, vector<vector<Transfer_functions>> transfer_function_filter){
+  RafkoNet* dense_layers(vector<uint32> layer_sizes, vector<vector<Transfer_functions>> transfer_function_filter){
     (void)allowed_transfer_functions_by_layer(transfer_function_filter);
     return dense_layers(layer_sizes);
   }
@@ -187,7 +187,7 @@ public:
    *
    * @return     the built neural network
    */
-  SparseNet* dense_layers(vector<uint32> layer_sizes);
+  RafkoNet* dense_layers(vector<uint32> layer_sizes);
 
   /**
    * @brief    creates a Neural network from the given Arguments. Requires the following
@@ -200,7 +200,7 @@ public:
    *
    * @return   the built neural network
    */
-  SparseNet* build();
+  RafkoNet* build();
 
 private:
   Service_context& context;
@@ -215,7 +215,7 @@ private:
   bool is_weight_initializer_set = false;
   bool is_neuron_array_set = false;
   bool is_allowed_transfer_functions_by_layer_set = false;
-  uint32 recurrence = NETWORK_RECURRENCE_UNKNOWN;
+  uint32 recurrence = network_recurrence_unknown;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
@@ -223,12 +223,12 @@ private:
   sdouble32 arg_expected_input_range = Transfer_function::get_average_output_range(transfer_function_identity);
 
   /**
-   * The array containing the neurons while Sparse_net_builder::build is used
+   * The array containing the neurons while RafkoNet_builder::build is used
    */
   vector<Neuron> arg_neuron_array;
 
   /**
-   * The array containing the used weights in the network while Sparse_net_builder::build is used
+   * The array containing the used weights in the network while RafkoNet_builder::build is used
    */
   vector<sdouble32> arg_weight_table;
 
@@ -250,22 +250,22 @@ private:
   vector<vector<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
 
   /**
-   * @brief Sparse_net_builder::set_neuron_array: moves the neuron_array argument into the SparseNet
-   * @param arr: the neuron array to be added to the @SparseNet object net
+   * @brief RafkoNet_builder::set_neuron_array: moves the neuron_array argument into the RafkoNet
+   * @param arr: the neuron array to be added to the @RafkoNet object net
    * @param net: the new owner of the neuron_array
    */
-  void set_neuron_array(SparseNet* net){
+  void set_neuron_array(RafkoNet* net){
     if(Neuron_info::is_neuron_valid(arg_neuron_array.back())){ /* If the last element is valid */
       *net->mutable_neuron_array() = {arg_neuron_array.begin(),arg_neuron_array.end()};
     } else throw std::runtime_error("Unable to set Neuron Array into Sparse net as the last Neuron seems invalid!");
   }
 
   /**
-   * @brief Sparse_net_builder::set_weight_table: moves the weightTable argument into the SparseNet
-   * @param table: the array of floating point numbers to be added to the @SparseNet object net
+   * @brief RafkoNet_builder::set_weight_table: moves the weightTable argument into the RafkoNet
+   * @param table: the array of floating point numbers to be added to the @RafkoNet object net
    * @param net: the new owner of the weightTable
    */
-  void set_weight_table(SparseNet* net){
+  void set_weight_table(RafkoNet* net){
     if(0 < arg_weight_table.size()){
       *net->mutable_weight_table() = {arg_weight_table.begin(), arg_weight_table.end()};
     }else throw std::runtime_error("Unable to build net, weight table is of size 0!");

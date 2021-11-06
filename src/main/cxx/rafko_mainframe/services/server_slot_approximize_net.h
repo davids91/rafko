@@ -21,7 +21,7 @@
 #include "rafko_net/models/cost_function.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_gym/services/environment_data_set.h"
-#include "rafko_gym/services/sparse_net_approximizer.h"
+#include "rafko_gym/services/rafko_net_approximizer.h"
 
 #include "rafko_mainframe/services/server_slot_run_net.h"
 
@@ -29,7 +29,7 @@ namespace rafko_mainframe{
 
 using rafko_net::Cost_function;
 using rafko_gym::Data_aggregate;
-using rafko_gym::Sparse_net_approximizer;
+using rafko_gym::RafkoNet_approximizer;
 using rafko_gym::Environment_data_set;
 
 using std::unique_ptr;
@@ -55,7 +55,7 @@ public:
     update_trainer();
   }
 
-  void update_network(SparseNet&& net_){
+  void update_network(RafkoNet&& net_){
     Server_slot_run_net::update_network(std::move(net_));
     update_cost_function();
     update_trainer();
@@ -113,7 +113,7 @@ private:
   shared_ptr<Data_aggregate> training_set;
   shared_ptr<Data_aggregate> test_set;
   shared_ptr<Environment_data_set> environment_data_set;
-  unique_ptr<Sparse_net_approximizer> network_approximizer;
+  unique_ptr<RafkoNet_approximizer> network_approximizer;
 
   uint32 iteration = 0;
 

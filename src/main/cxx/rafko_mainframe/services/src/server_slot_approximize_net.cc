@@ -17,7 +17,7 @@
 
 #include "rafko_mainframe/services/server_slot_approximize_net.h"
 
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/function_factory.h"
 
@@ -204,7 +204,7 @@ void Server_slot_approximize_net::update_trainer(void){
     environment_data_set = std::make_shared<Environment_data_set>(
       context, *training_set, *test_set
     );
-    network_approximizer = std::make_unique<Sparse_net_approximizer>(
+    network_approximizer = std::make_unique<RafkoNet_approximizer>(
       context, *network, *environment_data_set, service_slot->weight_updater()
     );
     if(network_approximizer){

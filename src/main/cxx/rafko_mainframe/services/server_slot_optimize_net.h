@@ -32,7 +32,7 @@ public:
   void loop(void);
   void reset(void);
   void update_network(Build_network_request&& request);
-  void update_network(SparseNet&& net_);
+  void update_network(RafkoNet&& net_);
   void accept_request(uint32 accept_request);
   Slot_info get_info(uint32 request_bitstring);
   Neural_io_stream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const;

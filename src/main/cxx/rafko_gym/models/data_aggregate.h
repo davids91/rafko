@@ -27,7 +27,7 @@
 #include <tuple>
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
 
@@ -48,7 +48,7 @@ using std::tuple;
 
 using rafko_mainframe::Service_context;
 using rafko_utilities::ThreadGroup;
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet;
 using rafko_net::Data_set;
 using rafko_net::Function_factory;
 using rafko_net::Cost_function;
@@ -128,7 +128,7 @@ public:
   Data_aggregate(
     Service_context& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
-    SparseNet& net, Cost_functions the_function, uint32 sequence_size_ = 1
+    RafkoNet& net, Cost_functions the_function, uint32 sequence_size_ = 1
   ): service_context(service_context_)
   ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))

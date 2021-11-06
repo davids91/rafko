@@ -21,7 +21,7 @@
 #include "rafko_global.h"
 #include <functional>
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 
 #include "rafko_net/services/synapse_iterator.h"
@@ -37,7 +37,7 @@ using google::protobuf::RepeatedPtrField;
  */
 class Partial_solution_builder{
 public:
-  static uint32 add_neuron_to_partial_solution(const SparseNet& net, uint32 neuron_index, Partial_solution& partial);
+  static uint32 add_neuron_to_partial_solution(const RafkoNet& net, uint32 neuron_index, Partial_solution& partial);
 
 private:
   /**

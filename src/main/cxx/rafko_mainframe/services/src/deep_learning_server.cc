@@ -276,7 +276,7 @@ void Deep_learning_server::loop(void){
 
 ::grpc::Status Deep_learning_server::get_network(
   ::grpc::ServerContext* context, const ::rafko_mainframe::Slot_request* request,
-  ::rafko_net::SparseNet* response
+  ::rafko_net::RafkoNet* response
 ){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ get_network +++ " << std::endl;

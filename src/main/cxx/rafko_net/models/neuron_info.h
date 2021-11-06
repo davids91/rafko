@@ -19,7 +19,7 @@
 #define NEURON_INFO_H
 
 #include "rafko_global.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 
 namespace rafko_net{
 
@@ -55,7 +55,7 @@ public:
 
   /**
    * @brief      Determines whether the specified neuron is valid, but does
-   *             not take SparseNet integrity into account (eg.: it doesn't check index validities)
+   *             not take RafkoNet integrity into account (eg.: it doesn't check index validities)
    *
    * @param[in]  neuron  The neuron reference
    */

@@ -19,12 +19,12 @@
 #include "test/test_utility.h"
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 
 #include "rafko_mainframe/models/service_context.h"
 #include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/sparse_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/neuron_router.h"
 
@@ -34,8 +34,8 @@ using std::unique_ptr;
 using std::make_unique;
 using std::vector;
 
-using rafko_net::Sparse_net_builder;
-using rafko_net::SparseNet;
+using rafko_net::RafkoNet_builder;
+using rafko_net::RafkoNet;
 using rafko_net::Neuron_router;
 using rafko_net::Synapse_iterator;
 using rafko_net::InputSynapseInterval;
@@ -51,9 +51,9 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
   Service_context service_context;
   /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};
-  unique_ptr<Sparse_net_builder> net_builder = make_unique<Sparse_net_builder>(service_context);
+  unique_ptr<RafkoNet_builder> net_builder = make_unique<RafkoNet_builder>(service_context);
   net_builder->input_size(5).output_neuron_number(5).expected_input_range(double_literal(5.0));
-  unique_ptr<SparseNet> net = unique_ptr<SparseNet>(net_builder->dense_layers(layer_structure));
+  unique_ptr<RafkoNet> net = unique_ptr<RafkoNet>(net_builder->dense_layers(layer_structure));
   net_builder.reset();
   Neuron_router net_iterator(*net);
 
@@ -124,8 +124,8 @@ TEST_CASE( "Testing Neural Network router dependency interface", "[neuron-iterat
 
   /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};
-  unique_ptr<SparseNet> net(
-    Sparse_net_builder(service_context)
+  unique_ptr<RafkoNet> net(
+    RafkoNet_builder(service_context)
     .input_size(5).output_neuron_number(5)
     .expected_input_range(double_literal(5.0))
     .dense_layers(layer_structure)

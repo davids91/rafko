@@ -20,7 +20,7 @@
 #include "test/catch.hpp"
 #include "test/test_utility.h"
 
-#include "rafko_protocol/sparse_net.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
@@ -137,7 +137,7 @@ void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdou
 
 void manaual_fully_connected_network_result(
   vector<sdouble32>& inputs, vector<sdouble32> previous_data, vector<sdouble32>& neuron_data,
-  vector<uint32> layer_structure, SparseNet network
+  vector<uint32> layer_structure, RafkoNet network
 ){
   Service_context service_context;
   Transfer_function trasfer_function(service_context);
@@ -192,7 +192,7 @@ void manaual_fully_connected_network_result(
   } /* For every Neuron */
 }
 
-void check_if_the_same(SparseNet& net, Solution& solution){
+void check_if_the_same(RafkoNet& net, Solution& solution){
   uint32 input_synapse_offset;
   uint32 weight_synapse_offset;
   uint32 neuron_synapse_element_iterator;
@@ -277,7 +277,7 @@ void check_if_the_same(SparseNet& net, Solution& solution){
   } /*(uint32 neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator)*/
 }
 
-void print_weights(SparseNet& net, Solution& solution){
+void print_weights(RafkoNet& net, Solution& solution){
   std::cout << "net("<< net.weight_table_size() << " weights):";
   for(sint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
     std::cout << "["<< net.weight_table(weight_index) <<"]";
@@ -291,7 +291,7 @@ void print_weights(SparseNet& net, Solution& solution){
   }
 }
 
-void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, SparseNet& net, Service_context& service_context){
+void print_training_sample(uint32 sample_sequence_index, Data_aggregate& data_set, RafkoNet& net, Service_context& service_context){
   unique_ptr<Solution_solver> sample_solver(Solution_solver::Builder(*Solution_builder(service_context).build(net), service_context).build());
   vector<sdouble32> neuron_data(data_set.get_sequence_size());
   uint32 raw_label_index = sample_sequence_index;
