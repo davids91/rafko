@@ -25,7 +25,7 @@ package rafko_mainframe;
 /** @brief      Describes a data package for a given iteration during a training. The stored data
  *              is identified by the iteration and attached tags, most of which are use-case dependent.
  */
-message Data_package{
+message DataPackage{
   uint32 iteration = 1;
   repeated uint32 coordinates = 2;
   repeated string tags = 3;
@@ -35,5 +35,5 @@ message Data_package{
 /** @brief      A measurement of the training process taken by the supervising process.
  */
 message Measurement{
-  repeated Data_package packs = 10;
+  repeated DataPackage packs = 10;
 }

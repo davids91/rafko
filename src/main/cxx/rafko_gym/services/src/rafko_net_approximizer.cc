@@ -234,7 +234,7 @@ void RafkoNet_approximizer::apply_fragment(void){
   }
 
   weight_updater->iterate(applied_direction, *net_solution);
-  gradient_fragment = Gradient_fragment();
+  gradient_fragment = GradientFragment();
   environment.full_evaluation(*solver);
 }
 

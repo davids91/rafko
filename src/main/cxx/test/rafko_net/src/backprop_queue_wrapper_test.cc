@@ -36,8 +36,8 @@ using rafko_net::RafkoNet_builder;
 using rafko_net::IndexSynapseInterval;
 using rafko_net::InputSynapseInterval;
 using rafko_net::Synapse_iterator;
-using rafko_net::Backpropagation_queue;
-using rafko_net::Backpropagation_queue_wrapper;
+using rafko_net::BackpropagationQueue;
+using rafko_net::BackpropagationQueue_wrapper;
 using rafko_net::Neuron_router;
 using rafko_mainframe::Service_context;
 
@@ -62,8 +62,8 @@ TEST_CASE( "Testing backpropagation queue", "" ) {
   Neuron_router router(*net);
 
   /* Create a backrpop queue */
-  Backpropagation_queue_wrapper queue_wrapper(*net, service_context);
-  Backpropagation_queue queue = queue_wrapper();
+  BackpropagationQueue_wrapper queue_wrapper(*net, service_context);
+  BackpropagationQueue queue = queue_wrapper();
 
   /* Check integrity */
   vector<uint32> neuron_depth = vector<uint32>(net->neuron_array_size(), 0);

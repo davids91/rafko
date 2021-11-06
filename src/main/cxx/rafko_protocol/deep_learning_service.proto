@@ -176,8 +176,8 @@ message ServiceSlot{
 
   ServiceHyperparameters hypers = 21;
   rafko_net.RafkoNet network = 22;
-  rafko_net.Data_set test_set = 23;
-  rafko_net.Data_set training_set = 24;
+  rafko_net.DataSet test_set = 23;
+  rafko_net.DataSet training_set = 24;
   rafko_net.Cost_functions cost_function = 25;
   rafko_net.Weight_updaters weight_updater = 26;
 }

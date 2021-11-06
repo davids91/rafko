@@ -262,7 +262,7 @@ public:
     hypers.set_epsilon(1e-8); /* very small positive value almost greater, than double_literal(0.0) */
     hypers.set_zetta(double_literal(0.3));
     hypers.set_lambda(double_literal(1.0507));
-    hypers.set_training_strategies(rafko_net::Training_strategy::TRAINING_STRATEGY_UNKNOWN);
+    hypers.set_training_strategies(rafko_net::Training_strategy::training_strategy_unknown);
   }
 
 private:

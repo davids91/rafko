@@ -25,7 +25,7 @@ namespace rafko_mainframe{
 using std::ios;
 
 void Training_logger::log(uint32 iteration, const vector<uint32>& coordinates, const vector<string>& tags, const vector<sdouble32>& data){
-  Data_package measured;
+  DataPackage measured;
   measured.set_iteration(iteration);
   for(const uint32& coordinate : coordinates) measured.add_coordinates(coordinate);
   for(const string& tag : tags) measured.add_tags(tag);

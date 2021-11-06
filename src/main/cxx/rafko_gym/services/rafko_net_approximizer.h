@@ -48,7 +48,7 @@ using rafko_net::Solution_builder;
 using rafko_net::Solution_solver;
 using rafko_net::Weight_updater;
 using rafko_net::Weight_updaters;
-using rafko_net::Gradient_fragment;
+using rafko_net::GradientFragment;
 using rafko_net::Updater_factory;
 
 /**
@@ -131,7 +131,7 @@ public:
    * @brief      Discards the gradient fragment collected in the past
    */
   void discard_fragment(void){
-    gradient_fragment = Gradient_fragment();
+    gradient_fragment = GradientFragment();
   }
 
   /**
@@ -147,7 +147,7 @@ public:
    *
    * @return     The fragment.
    */
-  const Gradient_fragment get_fragment(void){
+  const GradientFragment get_fragment(void){
     return gradient_fragment;
   }
 
@@ -156,7 +156,7 @@ public:
    *
    * @return     Constant reference to the current weight gradients array
    */
-  const Gradient_fragment& get_weight_gradient(void) const{
+  const GradientFragment& get_weight_gradient(void) const{
     return gradient_fragment;
   }
 
@@ -181,14 +181,14 @@ public:
       (1u < iteration)
       &&(
         (
-          service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_BELOW_LEARNING_RATE)
+          service_context.get_training_strategy(rafko_net::Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
           &&(service_context.get_learning_rate() >= -environment.get_training_fitness())
         )||(
-          service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_STOP_WHEN_TRAINING_ERROR_ZERO)
+          service_context.get_training_strategy(rafko_net::Training_strategy::training_strategy_stop_if_training_error_zero)
           &&(double_literal(0.0) ==  -environment.get_training_fitness())
         )
       )||(
-        service_context.get_training_strategy(rafko_net::Training_strategy::TRAINING_STRATEGY_EARLY_STOPPING)
+        service_context.get_training_strategy(rafko_net::Training_strategy::training_strategy_early_stopping)
         &&(environment.get_testing_fitness() < (min_test_error - (min_test_error * service_context.get_delta())))
         &&((iteration - min_test_error_was_at_iteration) > service_context.get_tolerance_loop_value())
       )
@@ -202,7 +202,7 @@ private:
   Environment& environment;
   unique_ptr<Agent> solver;
   unique_ptr<Weight_updater> weight_updater;
-  Gradient_fragment gradient_fragment;
+  GradientFragment gradient_fragment;
   uint32 stochastic_evaluation_loops;
 
   uint32 iteration = 1;

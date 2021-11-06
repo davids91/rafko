@@ -31,13 +31,13 @@ namespace rafko_net_test {
 using std::unique_ptr;
 using std::vector;
 
-using rafko_net::Data_set;
+using rafko_net::DataSet;
 using rafko_gym::Data_aggregate;
 using rafko_net::Cost_function_mse;
 using rafko_mainframe::Service_context;
 
 /*###############################################################################################
- * Testing Data aggregate implementation and seeing if it converts @Data_set correctly
+ * Testing Data aggregate implementation and seeing if it converts @DataSet correctly
  * into the data item wih statistics, and take care of statistic error data correctly
  * */
 TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
@@ -47,8 +47,8 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
-  /* Create a @Data_set and fill it with data */
-  Data_set data_set = Data_set();
+  /* Create a @DataSet and fill it with data */
+  DataSet data_set = DataSet();
   data_set.set_input_size(1);
   data_set.set_feature_size(1);
   data_set.set_sequence_size(sequence_size);
@@ -58,7 +58,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
     data_set.add_labels(expected_label);
   }
 
-  /* Create @Data_aggregate from @Data_set */
+  /* Create @Data_aggregate from @DataSet */
   Data_aggregate data_agr(service_context, data_set, std::make_unique<Cost_function_mse>(1, service_context));
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
@@ -221,8 +221,8 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
   const sdouble32 set_distance = double_literal(10.0);
   sdouble32 initial_error;
 
-  /* Create a @Data_set and fill it with data */
-  Data_set data_set = Data_set();
+  /* Create a @DataSet and fill it with data */
+  DataSet data_set = DataSet();
   data_set.set_input_size(1);
   data_set.set_feature_size(1);
   data_set.set_sequence_size(sequence_size);

@@ -49,7 +49,7 @@ using std::tuple;
 using rafko_mainframe::Service_context;
 using rafko_utilities::ThreadGroup;
 using rafko_net::RafkoNet;
-using rafko_net::Data_set;
+using rafko_net::DataSet;
 using rafko_net::Function_factory;
 using rafko_net::Cost_function;
 using rafko_net::Cost_functions;
@@ -87,7 +87,7 @@ using rafko_net::Cost_functions;
  */
 class Data_aggregate{
 public:
-  Data_aggregate(Service_context& service_context_, Data_set& samples_, shared_ptr<Cost_function> cost_function_)
+  Data_aggregate(Service_context& service_context_, DataSet& samples_, shared_ptr<Cost_function> cost_function_)
   :  service_context(service_context_)
   ,  sequence_size(std::max(1u,samples_.sequence_size()))
   ,  input_samples(samples_.inputs_size() / samples_.input_size())
@@ -397,14 +397,14 @@ private:
   static DataPool<sdouble32> common_datapool;
 
   /**
-   * @brief      Converting the @Data_set message to vectors
+   * @brief      Converting the @DataSet message to vectors
    *
    * @param      samples  The data set to parse
    */
-  void fill(Data_set& samples);
+  void fill(DataSet& samples);
 
   /**
-   * @brief          Converting the @Data_set message to vectors
+   * @brief          Converting the @DataSet message to vectors
    *
    * @param[in]      error_start    The starting index to read from in @error_state.sample_errors
    * @param[in]      errors_to_sum  The number of errors to add to @error_state.error_sum

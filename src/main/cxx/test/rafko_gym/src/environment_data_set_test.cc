@@ -41,7 +41,7 @@ using rafko_gym::Agent;
 using rafko_gym::Data_aggregate;
 using rafko_gym::Environment_data_set;
 using rafko_net::Solution;
-using rafko_net::Data_set;
+using rafko_net::DataSet;
 using rafko_net::Cost_function_mse;
 
 /*###############################################################################################
@@ -70,8 +70,8 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
-  /* Create a @Data_set and fill it with data */
-  Data_set data_set = Data_set();
+  /* Create a @DataSet and fill it with data */
+  DataSet data_set = DataSet();
   data_set.set_input_size(1);
   data_set.set_feature_size(1);
   data_set.set_sequence_size(sequence_size);

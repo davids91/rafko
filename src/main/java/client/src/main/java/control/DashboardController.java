@@ -480,7 +480,7 @@ public class DashboardController implements Initializable {
                 sin_labels.add(Math.sin(sin_value));
             }
         }
-        upload_dataset(RafkoTraining.Data_set.newBuilder()
+        upload_dataset(RafkoTraining.DataSet.newBuilder()
             .setInputSize(1).setFeatureSize(1).setSequenceSize(sequence_size)
             .addAllInputs(sin_inputs).addAllLabels(sin_labels)
             .build()
@@ -499,7 +499,7 @@ public class DashboardController implements Initializable {
         }
     }
 
-    void upload_dataset(RafkoTraining.Data_set data_set) {
+    void upload_dataset(RafkoTraining.DataSet data_set) {
         if(
             (null != data_set)
             &&(0 < selected_slot_state)
