@@ -44,7 +44,7 @@ using rafko_mainframe::ServiceContext;
 using rafko_utilities::DataRingbuffer;
 using rafko_net::RafkoNet;
 using rafko_net::RafkoNetBuilder;
-using rafko_net::cost_function_mse;
+using rafko_net::CostFunctionMSE;
 using rafko_net::cost_function_squared_error;
 using rafko_net::transfer_function_identity;
 using rafko_net::transfer_function_selu;
@@ -263,7 +263,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   unique_ptr<SolutionSolver> after_solver(SolutionSolver::Builder(*SolutionBuilder(service_context).build(*nets[0]), service_context).build());
 
   sdouble32 error_summary[3] = {0,0,0};
-  cost_function_mse after_cost(1, service_context);
+  CostFunctionMSE after_cost(1, service_context);
   for(uint32 i = 0; i < number_of_samples; ++i){
     bool reset = 0 == (i%(train_set->get_sequence_size()));
     const DataRingbuffer& neuron_data = after_solver->solve(test_set->get_input_sample(i), reset);
