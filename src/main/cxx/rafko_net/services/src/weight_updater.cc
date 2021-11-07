@@ -64,20 +64,16 @@ void WeightUpdater::update_solution_with_weight(Solution& solution, uint32 weigh
   for(uint32 neuron_index = 0; static_cast<sint32>(neuron_index) < net.neuron_array_size(); ++neuron_index){
     bool is_neuron_relevant_to_weight = false;
     /* iterate through the weights of the current neuron */
-    if(weight_index == net.neuron_array(neuron_index).memory_filter_idx()){
-      is_neuron_relevant_to_weight = true; /* Neuron is relevant its memory filter parameter is the given weight index */
-    }else{ /* ..otherwise it is relevant if any of its weight synapses contain the given weight index */
-      SynapseIterator<>::skim_terminatable(net.neuron_array(neuron_index).input_weights(),
-      [&is_neuron_relevant_to_weight, weight_index](IndexSynapseInterval input_weight_synapse){
-        if(
-          (static_cast<sint32>(weight_index) >= input_weight_synapse.starts())
-          &&(weight_index < (input_weight_synapse.starts() + input_weight_synapse.interval_size()))
-        ){
-          is_neuron_relevant_to_weight = true;
-          return false; /* no need to continue as Neuron is relevant */
-        }else return true; /* kep examining the Neuron to see if it is relevant */
-      });
-    }
+    SynapseIterator<>::skim_terminatable(net.neuron_array(neuron_index).input_weights(),
+    [&is_neuron_relevant_to_weight, weight_index](IndexSynapseInterval input_weight_synapse){
+      if(
+        (static_cast<sint32>(weight_index) >= input_weight_synapse.starts())
+        &&(weight_index < (input_weight_synapse.starts() + input_weight_synapse.interval_size()))
+      ){
+        is_neuron_relevant_to_weight = true;
+        return false; /* no need to continue as Neuron is relevant */
+      }else return true; /* kep examining the Neuron to see if it is relevant */
+    });
     if(is_neuron_relevant_to_weight){ /* look through the relevant partial solutions; One Neuron shall only be part of only one partial solution. */
       for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
         PartialSolution& partial = *solution.mutable_partial_solutions(partial_index);
@@ -94,7 +90,6 @@ void WeightUpdater::update_solution_with_weight(Solution& solution, uint32 weigh
               );
               goto neuron_evaluation_finished; /* don't judge me */
             }/* TODO: Only copy the one weight, not the whole Neuron.. */
-            ++inner_neuron_weight_index_starts; /* ++ for memory filter */
             for(uint32 i = 0; i < partial.weight_synapse_number(inner_neuron_index); ++i)
               inner_neuron_weight_index_starts += partial.weight_indices(inner_neuron_weight_synapse_starts + i).interval_size();
             inner_neuron_weight_synapse_starts += partial.weight_synapse_number(inner_neuron_index);
@@ -123,8 +118,6 @@ void WeightUpdater::update_solution_with_weights(Solution& solution) const{
             neuron_index, inner_neuron_index,
             *solution.mutable_partial_solutions(partial_index), inner_neuron_weight_index_starts
           );
-          /* step forward the weight table iterator for this Neuron */
-          ++inner_neuron_weight_index_starts; /* ++ for memory filter */
           for(uint32 i = 0; i < solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index); ++i)
             inner_neuron_weight_index_starts += solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
           neuron_weight_synapse_starts += solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index);
@@ -142,8 +135,6 @@ void WeightUpdater::update_solution_with_weights(Solution& solution) const{
               neuron_index, inner_neuron_index,
               *solution.mutable_partial_solutions(partial_index), inner_neuron_weight_index_starts
             );
-            /* step forward the weight table iterator for this Neuron */
-            ++inner_neuron_weight_index_starts; /* ++ for memory filter */
             for(uint32 i = 0; i < solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index); ++i)
               inner_neuron_weight_index_starts += solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
             neuron_weight_synapse_starts += solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index);
@@ -160,11 +151,6 @@ void WeightUpdater::copy_weights_of_neuron_to_partial_solution(
   PartialSolution& partial, uint32 inner_neuron_weight_index_starts
 ) const{ /*!Note: After shared weight optimization, this part is to be re-worked */
   uint32 weights_copied = 0;
-  partial.set_weight_table(
-    partial.memory_filter_index(inner_neuron_index),
-    net.weight_table(net.neuron_array(neuron_index).memory_filter_idx())
-  );
-  ++weights_copied; /* ++ for Memory ratio */
   SynapseIterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
     IndexSynapseInterval weight_synapse, sint32 network_weight_index
   ){
@@ -180,13 +166,6 @@ void WeightUpdater::copy_weight_of_neuron_to_partial_solution(
   PartialSolution& partial, uint32 inner_neuron_weight_index_starts
 ) const{ /*!Note: After shared weight optimization, this part is to be re-worked */
   uint32 weights_copied = 0;
-  if(weight_index == net.neuron_array(neuron_index).memory_filter_idx()){
-    partial.set_weight_table(
-      partial.memory_filter_index(inner_neuron_index),
-      net.weight_table(net.neuron_array(neuron_index).memory_filter_idx())
-    );
-  }
-  ++weights_copied; /* ++ for Memory ratio */
   SynapseIterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](
     IndexSynapseInterval weight_synapse, sint32 network_weight_index
   ){

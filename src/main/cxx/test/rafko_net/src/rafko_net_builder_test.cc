@@ -67,7 +67,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   InputSynapseInterval temp_input_interval;
   sdouble32 used_weight = double_literal(0.5);
   TransferFunctions used_transfer_function = transfer_function_sigmoid;
-  vector<sdouble32> weight_table {double_literal(0.0),double_literal(0.0)};
+  vector<sdouble32> weight_table {double_literal(0.0),double_literal(0.0),double_literal(0.0)};
   weight_table[0] = used_weight;
   REQUIRE( nullptr != &(weight_table[0]) );
   REQUIRE( weight_table[0] == used_weight);
@@ -77,34 +77,31 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
 
   /* Neuron 0 Has an input of 1 */
   neuron_table[0].set_transfer_function_idx(used_transfer_function);
-  neuron_table[0].set_memory_filter_idx(0); /* Weight 0 in the weight_table */
   temp_input_interval.set_starts(0); /* Input Starting from 0 */
   temp_input_interval.set_interval_size(1); /* 1 Input */
   *neuron_table[0].add_input_indices() = temp_input_interval;
   temp_index_interval.set_starts(0); /* Weight 0 in the weight_table */
-  temp_index_interval.set_interval_size(2); /* Weight0 + bias0 in the weight_table */
+  temp_index_interval.set_interval_size(3); /* Spike function weight + Weight0 + bias0 in the weight_table */
   *neuron_table[0].add_input_weights() = temp_index_interval;
   REQUIRE( true == NeuronInfo::is_neuron_valid( neuron_table[0]) );
 
   /* Neuron 1 Has Neuron 0 as input */
   neuron_table[1].set_transfer_function_idx(used_transfer_function);
-  neuron_table[1].set_memory_filter_idx(0);
   temp_input_interval.set_starts(0);
   temp_input_interval.set_interval_size(1);
   *neuron_table[1].add_input_indices() = temp_input_interval;
   temp_index_interval.set_starts(0);
-  temp_index_interval.set_interval_size(2);
+  temp_index_interval.set_interval_size(3);
   *neuron_table[1].add_input_weights() = temp_index_interval;
   REQUIRE( true == NeuronInfo::is_neuron_valid( neuron_table[1]) );
 
   /* Neuron 2 Also has Neuron 0 as input */
   neuron_table[2].set_transfer_function_idx(used_transfer_function);
-  neuron_table[2].set_memory_filter_idx(0);
   temp_input_interval.set_starts(0);
   temp_input_interval.set_interval_size(1);
   *neuron_table[2].add_input_indices() = temp_input_interval;
   temp_index_interval.set_starts(0);
-  temp_index_interval.set_interval_size(2);
+  temp_index_interval.set_interval_size(3);
   *neuron_table[2].add_input_weights() = temp_index_interval;
   REQUIRE( true == NeuronInfo::is_neuron_valid( neuron_table[2]) );
 
@@ -121,7 +118,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
     REQUIRE( 0 < net->neuron_array_size() );
     REQUIRE( 0 < net->weight_table_size() );
     CHECK( 3 == net->neuron_array_size() );
-    CHECK( 2 == net->weight_table_size() );
+    CHECK( 3 == net->weight_table_size() );
     CHECK( used_weight == net->weight_table(0) );
 
     /* Check parameters for each neuron */
@@ -132,7 +129,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
     CHECK( 0 == net->neuron_array(0).input_indices(0).starts() );
     REQUIRE( 0 < net->neuron_array(0).input_weights_size() );
     CHECK( 1 == net->neuron_array(0).input_weights_size() );
-    CHECK( 2 == net->neuron_array(0).input_weights(0).interval_size() );
+    CHECK( 3 == net->neuron_array(0).input_weights(0).interval_size() );
     CHECK( 0 == net->neuron_array(0).input_weights(0).starts() );
     CHECK(
       weight_table[net->neuron_array(0).input_weights(0).starts()]
@@ -150,7 +147,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
     CHECK( 0 == net->neuron_array(1).input_indices(0).starts() );
     REQUIRE( 0 < net->neuron_array(1).input_weights_size() );
     CHECK( 1 == net->neuron_array(1).input_weights_size() );
-    CHECK( 2 == net->neuron_array(1).input_weights(0).interval_size() );
+    CHECK( 3 == net->neuron_array(1).input_weights(0).interval_size() );
     CHECK( 0 == net->neuron_array(1).input_weights(0).starts() );
     CHECK(
       weight_table[net->neuron_array(1).input_weights(0).starts()]
@@ -167,7 +164,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
     CHECK( 1 == net->neuron_array(2).input_indices(0).interval_size() );
     CHECK( 0 == net->neuron_array(2).input_indices(0).starts() );
     REQUIRE( 0 < net->neuron_array(2).input_weights_size() );
-    CHECK( 2 == net->neuron_array(2).input_weights(0).interval_size() );
+    CHECK( 3 == net->neuron_array(2).input_weights(0).interval_size() );
     CHECK( 0 == net->neuron_array(2).input_weights(0).starts() );
     CHECK(
       weight_table[net->neuron_array(2).input_weights(0).starts()]
@@ -250,9 +247,6 @@ RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
     number_of_input_weights = 0;
     REQUIRE( 0 < net->neuron_array(i).input_weights_size() );
     for(sint32 weight_syn_iterator = 0; weight_syn_iterator < net->neuron_array(i).input_weights_size(); ++weight_syn_iterator){
-      /* Bias and memory filter index has to point inside the weight table array*/
-      REQUIRE( net->weight_table_size() > static_cast<sint32>(net->neuron_array(i).memory_filter_idx()) );
-
       /* Weights */
       REQUIRE( /* Every weight synapse element has to point inside the weight table array */
         net->weight_table_size() >= /* Equality is permitted here, because the interval iterates from (start) to (start + size - 1) */

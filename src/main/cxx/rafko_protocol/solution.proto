@@ -43,8 +43,7 @@ message PartialSolution{
    * A representation of the actual neuron to be used in this intermediate solution
    * - sizes are of @output_data.interval_size()
    */
-  repeated TransferFunctions neuron_transfer_functions = 11;
-  repeated uint32 memory_filter_index = 12;
+   repeated TransferFunctions neuron_transfer_functions = 11;
 
   /** ################################################################################################
    * Synapse information

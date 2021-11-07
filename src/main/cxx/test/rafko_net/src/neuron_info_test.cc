@@ -48,9 +48,6 @@ TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
   /* Unfortunately checking against the weight table is not possible without Net context */
   CHECK( false == NeuronInfo::is_neuron_valid(neuron) );
 
-  neuron.set_memory_filter_idx(0);
-  CHECK( false == NeuronInfo::is_neuron_valid(neuron) );
-
   neuron.set_transfer_function_idx(transfer_function_identity);
   CHECK( true == NeuronInfo::is_neuron_valid(neuron) );
 

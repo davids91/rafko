@@ -142,21 +142,10 @@ void test_solution_solver_multithread(uint16 threads){
         solution.mutable_partial_solutions(3)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       } /* Modify weights */
 
-      /* Modify memory filters and transfer functions */
-      solution.mutable_partial_solutions(0)->set_weight_table(solution.partial_solutions(0).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      solution.mutable_partial_solutions(0)->set_weight_table(solution.partial_solutions(0).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+      /* Modify transfer functions */
       solution.mutable_partial_solutions(0)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(0).neuron_transfer_functions_size()),TransferFunction::next());
-
-      solution.mutable_partial_solutions(1)->set_weight_table(solution.partial_solutions(1).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      solution.mutable_partial_solutions(1)->set_weight_table(solution.partial_solutions(1).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       solution.mutable_partial_solutions(1)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(1).neuron_transfer_functions_size()),TransferFunction::next());
-
-      solution.mutable_partial_solutions(2)->set_weight_table(solution.partial_solutions(2).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      solution.mutable_partial_solutions(2)->set_weight_table(solution.partial_solutions(2).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       solution.mutable_partial_solutions(2)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(2).neuron_transfer_functions_size()),TransferFunction::next());
-
-      solution.mutable_partial_solutions(3)->set_weight_table(solution.partial_solutions(3).memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-      solution.mutable_partial_solutions(3)->set_weight_table(solution.partial_solutions(3).memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
       solution.mutable_partial_solutions(3)->set_neuron_transfer_functions(rand()%(solution.partial_solutions(3).neuron_transfer_functions_size()),TransferFunction::next());
     }
 
@@ -395,7 +384,9 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   uint32 overall_inputs_in_neuron;
   sint32 input_index;
   sdouble32 neuron_data;
+  sdouble32 spike_function_weight;
   uint32 neuron_input_iterator = 0;
+  bool first_weight_in_synapse;
   while(
     (number_of_neurons > solved_neurons) /* Until all of the Neurons are solved */
     &&(0 < solved_neurons_in_loop) /* but in case no neurons could be solved in this loop, infinite loop is suspected */
@@ -411,25 +402,32 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
         solved_inputs_in_neuron = 0;
         neuron_input_iterator = 0;
         neuron_data = 0;
+        first_weight_in_synapse = true;
+        spike_function_weight = double_literal(0.0);
         SynapseIterator<>::iterate(net->neuron_array(neuron_iterator).input_weights(),
         [&](IndexSynapseInterval weight_synapse, sint32 weight_index){
-          if(neuron_input_iterator < neuron_input_synapses.size()){
-            input_index = neuron_input_synapses[neuron_input_iterator];
-            if(
-              SynapseIterator<>::is_index_input(input_index) /* Neuron input points to input data */
-              ||(true == solved[input_index]) /* or the current input points to a neuron which is already solved */
-            ){ /* the input counts as solved */
-              ++solved_inputs_in_neuron;
+          if(true == first_weight_in_synapse){
+            first_weight_in_synapse = false;
+            spike_function_weight = net->weight_table(weight_index);
+          }else{
+            if(neuron_input_iterator < neuron_input_synapses.size()){
+              input_index = neuron_input_synapses[neuron_input_iterator];
+              if(
+                SynapseIterator<>::is_index_input(input_index) /* Neuron input points to input data */
+                ||(true == solved[input_index]) /* or the current input points to a neuron which is already solved */
+              ){ /* the input counts as solved */
+                ++solved_inputs_in_neuron;
+              }
+              if(SynapseIterator<>::is_index_input(input_index)){
+                input_index = SynapseIterator<>::input_index_from_synapse_index(input_index);
+                neuron_data += net_input[input_index] * net->weight_table(weight_index);
+              }else{
+                neuron_data += manual_neuron_values[input_index] * net->weight_table(weight_index);
+              }
+              ++neuron_input_iterator;
+            }else{ /* After the inputs, every weight is the bias */
+              neuron_data += net->weight_table(weight_index);
             }
-            if(SynapseIterator<>::is_index_input(input_index)){
-              input_index = SynapseIterator<>::input_index_from_synapse_index(input_index);
-              neuron_data += net_input[input_index] * net->weight_table(weight_index);
-            }else{
-              neuron_data += manual_neuron_values[input_index] * net->weight_table(weight_index);
-            }
-            ++neuron_input_iterator;
-          }else{ /* After the inputs, every weight before the spike parameter is the bias */
-            neuron_data += net->weight_table(weight_index);
           }
         });
         if(solved_inputs_in_neuron == overall_inputs_in_neuron){
@@ -438,9 +436,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
             neuron_data
           );
           manual_neuron_values[neuron_iterator] = SpikeFunction::get_value(
-            net->weight_table(net->neuron_array(neuron_iterator).memory_filter_idx()),
-            neuron_data,
-            manual_neuron_values[neuron_iterator]
+            spike_function_weight, neuron_data, manual_neuron_values[neuron_iterator]
           );
           solved[neuron_iterator] = true;
           ++solved_neurons;
@@ -519,7 +515,7 @@ TEST_CASE("Solution Solver memory test", "[solve][memory]"){
   for(uint32 weight_index = 0; weight_index < net->weight_table_size(); ++weight_index){
     net->set_weight_table(weight_index, double_literal(1.0));
   }
-  net->set_weight_table(0u,double_literal(0.0)); /* Set the memory filter of the only neuron to 0, so the previous value of it would not modify the current one through the spike function*/
+  net->set_weight_table(0u,double_literal(0.0)); /* Set the memory filter of the only neuron to 0, so the previous value of it would not modify the current one through the spike function */
 
   Solution* solution = SolutionBuilder(service_context).build(*net);
   unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());

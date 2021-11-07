@@ -29,13 +29,15 @@ namespace rafko_net {
 DataPool<sdouble32> PartialSolution_solver::common_data_pool;
 
 void PartialSolution_solver::solve_internal(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
-  sdouble32 new_neuron_data = 0;
+  sdouble32 new_neuron_data = double_literal(0.0);
   sdouble32 new_neuron_input;
+  sdouble32 spike_function_weight;
   uint32 weight_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   uint32 input_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   uint32 input_synapse_index = 0; /* Which synapse is being processed inside the Neuron */
   uint32 input_index_offset = 0;
   sint32 input_index;
+  bool first_weight_in_synapse;
 
   /* Collect the input data to solve the partial solution */
   input_iterator.skim([&](InputSynapseInterval input_synapse){
@@ -59,29 +61,33 @@ void PartialSolution_solver::solve_internal(const vector<sdouble32>& input_data,
   input_index_offset = 0;
   for(uint16 neuron_iterator = 0; neuron_iterator < detail.output_data().interval_size(); ++neuron_iterator){
     new_neuron_data = 0;
+    first_weight_in_synapse = true;
+    spike_function_weight = double_literal(0.0);
     internal_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse, sint32 weight_index){
-      if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
-        input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
-        if(SynapseIterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
-          input_index = SynapseIterator<>::input_index_from_synapse_index(input_index - input_index_offset);
-          new_neuron_input = temp_data[input_index];
-        }else{ /* Neuron gets its input internaly */
-          input_index = detail.output_data().starts() + input_index + input_index_offset;
-          new_neuron_input = output_neuron_data.get_element(0)[input_index];
-        }
-        ++input_index_offset; /* Step the input index to the next input */
-        if(input_index_offset >= detail.inside_indices(input_synapse_iterator_start + input_synapse_index).interval_size()){
-          input_index_offset = 0; /* In case the next input would ascend above the current patition, go to next one */
-          ++input_synapse_index;
-          /*!Note: It is possible to increase the @weight_synapse_index above @detail.weight_synapse_number(neuron_iterator)
-           * but that isn't chekced here, mainly for performance reasons.
-           **/
-        }
-      }else /* Every input above the number assigned to the internal Neuron shall count as an input of 1.0 */
-        new_neuron_input = double_literal(1.0);
+      if(true == first_weight_in_synapse){ /* as per structure, the first weight is for the spike function */
+        first_weight_in_synapse = false;
+        spike_function_weight = detail.weight_table(weight_index);
+      }else{ /* the next weights are for inputs and biases */
+        if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
+          input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
+          if(SynapseIterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
+            input_index = SynapseIterator<>::input_index_from_synapse_index(input_index - input_index_offset);
+            new_neuron_input = temp_data[input_index];
+          }else{ /* Neuron gets its input internaly */
+            input_index = detail.output_data().starts() + input_index + input_index_offset;
+            new_neuron_input = output_neuron_data.get_element(0,input_index);
+          }
+          ++input_index_offset; /* Step the input index to the next input */
+          if(input_index_offset >= detail.inside_indices(input_synapse_iterator_start + input_synapse_index).interval_size()){
+            input_index_offset = 0; /* In case the next input would ascend above the current patition, go to next one */
+            ++input_synapse_index;
+          }
+        }else /* Any additional weight shall count as biases, so the input value is set to 1.0 */
+          new_neuron_input = double_literal(1.0);
 
-      /* The weighted input shall be added to the calculated value */
-      new_neuron_data += new_neuron_input * detail.weight_table(weight_index);
+        /* The weighted input shall be added to the calculated value */
+        new_neuron_data += new_neuron_input * detail.weight_table(weight_index);
+      }
     },weight_synapse_iterator_start, detail.weight_synapse_number(neuron_iterator));
     weight_synapse_iterator_start += detail.weight_synapse_number(neuron_iterator);
     input_synapse_iterator_start += input_synapse_index;
@@ -93,8 +99,7 @@ void PartialSolution_solver::solve_internal(const vector<sdouble32>& input_data,
     );
 
     new_neuron_data = SpikeFunction::get_value( /* apply spike function */
-      detail.weight_table(detail.memory_filter_index(neuron_iterator)),
-      new_neuron_data, output_neuron_data.get_element(0, (detail.output_data().starts() + neuron_iterator))
+      spike_function_weight, new_neuron_data, output_neuron_data.get_element(0, (detail.output_data().starts() + neuron_iterator))
     );
 
     output_neuron_data.set_element( /* Store the resulting Neuron value */
@@ -109,7 +114,6 @@ bool PartialSolution_solver::is_valid(void) const{
     &&(static_cast<int>(detail.output_data().interval_size()) == detail.index_synapse_number_size())
     &&(static_cast<int>(detail.output_data().interval_size()) == detail.weight_synapse_number_size())
     &&(static_cast<int>(detail.output_data().interval_size()) == detail.neuron_transfer_functions_size())
-    &&(static_cast<int>(detail.output_data().interval_size()) == detail.memory_filter_index_size())
   ){
     uint32 weight_synapse_number = 0;
     uint32 index_synapse_number = 0;

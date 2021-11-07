@@ -40,12 +40,8 @@ uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& ne
     SynapseIterator<InputSynapseInterval> input_iterator(net.neuron_array(neuron_index).input_indices());
     partial.mutable_output_data()->set_interval_size(partial.output_data().interval_size() + 1u);
 
-    /* Copy in Neuron parameters */
+    /* Copy in Neuron parameters and weights from the net */
     partial.add_neuron_transfer_functions(net.neuron_array(neuron_index).transfer_function_idx());
-    partial.add_memory_filter_index(partial.weight_table_size());
-    partial.add_weight_table(net.weight_table(net.neuron_array(neuron_index).memory_filter_idx()));
-
-    /* Copy in weights from the net */
     partial.add_weight_synapse_number(net.neuron_array(neuron_index).input_weights_size());
     weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
       temp_synapse_interval.set_starts(partial.weight_table_size());

@@ -63,22 +63,19 @@ void manual_2_neuron_partial_solution(PartialSolution& partial_solution, uint32 
   temp_index_interval.set_interval_size(2);
   *partial_solution.mutable_output_data() = temp_index_interval;
 
+  partial_solution.add_weight_table(double_literal(0.0)); /* spike function weight for first neuron */
   for(uint32 i = 0; i < number_of_inputs; ++i){
     partial_solution.add_weight_table(double_literal(1.0)); /* weight for the inputs coming to the first Neuron */
   } /* Every weight shall be modified in this example, so they'll all have thir own weight table entry */
-  partial_solution.add_weight_table(double_literal(50.0)); /* a bias value */
-  partial_solution.add_weight_table(double_literal(0.0)); /* a memory ratio value */
+  partial_solution.add_weight_table(double_literal(50.0)); /* first neuron bias value */
+  partial_solution.add_weight_table(double_literal(0.0)); /* spike function weight for second neuron */
   partial_solution.add_weight_table(double_literal(1.0)); /* Weight for the first Neuron */
-  partial_solution.add_weight_table(double_literal(10.0)); /* a bias value */
-  partial_solution.add_weight_table(double_literal(0.0)); /* a memory ratio value */
+  partial_solution.add_weight_table(double_literal(10.0)); /* 2nd neuron bias value */
 
   /**###################################################################################################
    * The first neuron shall have the inputs
    */
   partial_solution.add_neuron_transfer_functions(transfer_function_identity);
-  partial_solution.add_memory_filter_index(
-    number_of_inputs               + 1u
-  ); /* input weights + first bias + first index */
 
   /* inputs go to neuron1 */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights */
@@ -88,27 +85,22 @@ void manual_2_neuron_partial_solution(PartialSolution& partial_solution, uint32 
 
   partial_solution.add_weight_synapse_number(1u);
   temp_index_interval.set_starts(0u);
-  temp_index_interval.set_interval_size(number_of_inputs + 1); /* Neuron 1 has the inputs in its only weight synapse */
+  temp_index_interval.set_interval_size(1u + number_of_inputs + 1u); /* Neuron 1 has the input weights, the bias and the spike function weight */
   *partial_solution.add_weight_indices() = temp_index_interval;
 
   /**###################################################################################################
    * The second Neuron shall only have the first neuron as input
    */
   partial_solution.add_neuron_transfer_functions(transfer_function_identity);
-  partial_solution.add_memory_filter_index(
-    number_of_inputs          + 1u                      + 1u                  + 1u          + 1u
-  ); /* input weights + bias1 + first memory ratio value + first neuron weight + second bias + after the previous index */
-
   /* neuron1 goes to neuron2;  that is the output which isn't in the inside indexes */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights*/
   temp_input_interval.set_starts(0u); /* The input synapse starts at the 1st internal Neuron (index 0) */
   temp_input_interval.set_interval_size(1u); /* Neuron 2 has an input synapse of size 1 plus a bias*/
   *partial_solution.add_inside_indices() = temp_input_interval;
+
   partial_solution.add_weight_synapse_number(1u);
-  temp_index_interval.set_starts(
-    number_of_inputs             + 1u            + 1u
-  ); /* number of inputs + bias1 + memory_ratio1 + index start*/
-  temp_index_interval.set_interval_size(2); /* Neuron 2 has a an weight synapse of size 1 + a bias*/
+  temp_index_interval.set_starts(1u + number_of_inputs + 1u); /* spike weight 1 + number of inputs + bias1 */
+  temp_index_interval.set_interval_size(1u + 1u + 1u); /* a spike function weight; a weight synapse of size 1 + a bias */
   *partial_solution.add_weight_indices() = temp_index_interval;
 }
 
@@ -116,23 +108,27 @@ void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdou
   ServiceContext service_context;
   TransferFunction trasfer_function(service_context);
 
-  /* Neuron 1 = transfer_function( ( input0 * weight0 + input1 * weight1 ... inputN * weightN ) + bias0 )*/
+  /* Neuron 1 */
   sdouble32 neuron1_result = 0;
-  for(uint32 weight_iterator = 0; weight_iterator < partial_inputs.size(); ++weight_iterator){
-    neuron1_result += (partial_inputs[weight_iterator] * partial_solution.weight_table(weight_iterator));
+  for(uint32 weight_iterator = 1; weight_iterator <= partial_inputs.size(); ++weight_iterator){
+    neuron1_result += (partial_inputs[weight_iterator - 1u] * partial_solution.weight_table(weight_iterator));
   }
-  neuron1_result += partial_solution.weight_table(partial_inputs.size());
+  neuron1_result += partial_solution.weight_table(1u + partial_inputs.size()); /* spike weight 1 + inputs */
   neuron1_result = trasfer_function.get_value(partial_solution.neuron_transfer_functions(0),neuron1_result);
-  prev_neuron_output[neuron_offset + 0] = prev_neuron_output[neuron_offset + 0] * partial_solution.weight_table(partial_solution.memory_filter_index(0))
-   + neuron1_result * (double_literal(1.0) - partial_solution.weight_table(partial_solution.memory_filter_index(0)));
+  prev_neuron_output[neuron_offset + 0] = prev_neuron_output[neuron_offset + 0] * partial_solution.weight_table(0)
+   + neuron1_result * (double_literal(1.0) - partial_solution.weight_table(0));
 
-  /* Neuron 2 = transfer_function( (Neuron1 * weight[inputs + 1]) + bias1 ) */
-  sdouble32 neuron2_result = (prev_neuron_output[neuron_offset + 0] * partial_solution.weight_table(partial_inputs.size() + 1u + 1u))
-   + partial_solution.weight_table(partial_inputs.size() + 1u + 1u + 1u);
+  /* Neuron 2 */
+  sdouble32 neuron2_result = (
+    (prev_neuron_output[neuron_offset + 0] * partial_solution.weight_table(1u + partial_inputs.size() + 1u + 1u))
+    + partial_solution.weight_table(1u + partial_inputs.size() + 1u + 1u + 1u)
+  );
 
   neuron2_result = trasfer_function.get_value(partial_solution.neuron_transfer_functions(1),neuron2_result);
-  prev_neuron_output[neuron_offset + 1] = prev_neuron_output[neuron_offset + 1] * partial_solution.weight_table(partial_solution.memory_filter_index(1))
-   + neuron2_result * (double_literal(1.0) - partial_solution.weight_table(partial_solution.memory_filter_index(1)));
+  prev_neuron_output[neuron_offset + 1] = (
+    prev_neuron_output[neuron_offset + 1] * partial_solution.weight_table(1u + partial_inputs.size() + 1u)
+    + ( neuron2_result * (double_literal(1.0) - partial_solution.weight_table(1u + partial_inputs.size() + 1u)) )
+ );
 }
 
 void manaual_fully_connected_network_result(
@@ -150,8 +146,10 @@ void manaual_fully_connected_network_result(
   if(0 == neuron_data.size())neuron_data = vector<sdouble32>(neuron_number);
   sdouble32 new_neuron_data = 0;
   sdouble32 neuron_input_value = 0;
+  sdouble32 spike_function_weight;
   uint32 input_synapse_index = 0;
   uint32 input_index_offset = 0;
+  bool first_weight_in_synapse;
   for(uint32 neuron_iterator = 0; neuron_iterator < neuron_number; ++neuron_iterator){
     const Neuron& neuron = network.neuron_array(neuron_iterator);
     new_neuron_data = 0;
@@ -160,35 +158,42 @@ void manaual_fully_connected_network_result(
 
     if(0 < previous_data.size())
       REQUIRE( neuron_data.size() == previous_data.size() );
+    first_weight_in_synapse = true;
     SynapseIterator<>::iterate(neuron.input_weights(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
-      if(static_cast<sdouble32>(input_synapse_index) < neuron.input_indices_size()){ /* Only get input from the net if it's explicitly defined */
-        REQUIRE( 1 >= neuron.input_indices(input_synapse_index).reach_past_loops() ); /* Only the last loop and the current can be handled in this test yet */
-        if(SynapseIterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
-          neuron_input_value = inputs[SynapseIterator<>::input_index_from_synapse_index(
-            neuron.input_indices(input_synapse_index).starts() - input_index_offset
-          )];
-        else if(1 == neuron.input_indices(input_synapse_index).reach_past_loops())
-          neuron_input_value = previous_data[ /* Neuron input is from network input 1 loop from the past */
+      if(true == first_weight_in_synapse){
+        first_weight_in_synapse = false;
+        spike_function_weight = network.weight_table(neuron_weight_index);
+      }else{
+        if(static_cast<sdouble32>(input_synapse_index) < neuron.input_indices_size()){ /* Only get input from the net if it's explicitly defined */
+          REQUIRE( 1 >= neuron.input_indices(input_synapse_index).reach_past_loops() ); /* Only the last loop and the current can be handled in this test yet */
+          if(SynapseIterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
+            neuron_input_value = inputs[SynapseIterator<>::input_index_from_synapse_index(
+              neuron.input_indices(input_synapse_index).starts() - input_index_offset
+            )];
+          else if(1 == neuron.input_indices(input_synapse_index).reach_past_loops())
+            neuron_input_value = previous_data[ /* Neuron input is from network input 1 loop from the past */
+              neuron.input_indices(input_synapse_index).starts() + input_index_offset
+            ];
+          else neuron_input_value = neuron_data[ /* Neuron input is from the current internal data of the network */
             neuron.input_indices(input_synapse_index).starts() + input_index_offset
           ];
-        else neuron_input_value = neuron_data[ /* Neuron input is from the current internal data of the network */
-          neuron.input_indices(input_synapse_index).starts() + input_index_offset
-        ];
-        ++input_index_offset;
-        if(neuron.input_indices(input_synapse_index).interval_size() <= input_index_offset){
-          input_index_offset = 0;
-          ++input_synapse_index;
+          ++input_index_offset;
+          if(neuron.input_indices(input_synapse_index).interval_size() <= input_index_offset){
+            input_index_offset = 0;
+            ++input_synapse_index;
+          }
+        }else{
+          neuron_input_value = 1.0;
         }
-      }else{
-        neuron_input_value = 1.0;
+        new_neuron_data += neuron_input_value * network.weight_table(neuron_weight_index);
       }
-      new_neuron_data += neuron_input_value * network.weight_table(neuron_weight_index);
     }); /* For every weight in the Neuron sum the weigthed input*/
     /* apply transfer function */
     new_neuron_data = trasfer_function.get_value(neuron.transfer_function_idx(),new_neuron_data);
-    neuron_data[neuron_iterator] = /* Apply memory filter and save output to Neuron data */
-      neuron_data[neuron_iterator] * (network.weight_table(neuron.memory_filter_idx()))
-      + new_neuron_data * (double_literal(1.0) - network.weight_table(neuron.memory_filter_idx()));
+    neuron_data[neuron_iterator] = ( /* Apply memory filter and save output to Neuron data */
+      (neuron_data[neuron_iterator] * spike_function_weight)
+      + new_neuron_data * (double_literal(1.0) - spike_function_weight)
+    );
   } /* For every Neuron */
 }
 
@@ -210,29 +215,27 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
       /* Since Neurons take their inputs from the partial solution input, test iterates over it */
       SynapseIterator<InputSynapseInterval> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
       const uint32 first_neuron_index_in_partial = solution.partial_solutions(partial_solution_iterator).output_data().starts();
-      for( /* Skim through the inner neurons in the partial solutiomake n until the current one if found */
+      for( /* Skim through the inner neurons in the partial solution until the current one is found */
         uint32 i_neuron_iter = 0; i_neuron_iter < solution.partial_solutions(partial_solution_iterator).output_data().interval_size();++i_neuron_iter
       ){ /*!Note: i_neuron_iter == inner neuron iterator */
         if(neuron_iterator == static_cast<sint32>(first_neuron_index_in_partial + i_neuron_iter)){
           /* If the current neuron being checked is the one in the partial solution under i_neuron_iter */
           neuron_synapse_element_iterator = 0;
 
-          /* Test iterates over the Neurons input weights, to see if they match with the wights in the Network */
+          /* Test iterates over the Neurons input weights, to see if they match with the weights of the Neurons inside the Network */
           SynapseIterator<> inner_neuron_weight_iterator(solution.partial_solutions(partial_solution_iterator).weight_indices());
           SynapseIterator<> neuron_weight_iterator(net.neuron_array(neuron_iterator).input_weights());
 
           /* Inner Neuron inputs point to indexes in the partial solution input ( when SynapseIterator<>::is_index_input is true ) */
           expected_inputs = 0;
-          counted_inputs = 0;
           inner_neuron_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
             expected_inputs += weight_synapse.interval_size();
-          },[&](IndexSynapseInterval weight_synapse, sint32 input_index){
+          },[&](IndexSynapseInterval weight_synapse, sint32 weight_index){
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
-            REQUIRE(
-              solution.partial_solutions(partial_solution_iterator).weight_table(input_index)
+            CHECK(
+              solution.partial_solutions(partial_solution_iterator).weight_table(weight_index)
               == net.weight_table(neuron_weight_iterator[neuron_synapse_element_iterator])
             );
-            ++counted_inputs;
             ++neuron_synapse_element_iterator;
           },weight_synapse_offset,solution.partial_solutions(partial_solution_iterator).weight_synapse_number(i_neuron_iter));
 

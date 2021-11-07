@@ -91,9 +91,6 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
       /* Add the Neurons */
       expPrevLayerOutput = 0;
       for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++){
-        arg_weight_table[weightIt] = arg_weight_initer->next_memory_filter();
-        arg_neuron_array[neurIt].set_memory_filter_idx(weightIt);
-        ++weightIt;
         if(is_allowed_transfer_functions_by_layer_set){
           arg_neuron_array[neurIt].set_transfer_function_idx(
             TransferFunction::next(arg_allowed_transfer_functions_by_layer[layerIt])
@@ -109,8 +106,12 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
 
         /* Add the previous layer to the built net */
         temp_index_interval.set_starts(weightIt);
-        temp_index_interval.set_interval_size(previous_size); /* Previous layer */
+        temp_index_interval.set_interval_size(previous_size + 1u); /* Previous layer + the spike function weight */
         *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
+
+        /* Add the spike function weight as the first weight of the Neuron */
+        arg_weight_table[weightIt] = arg_weight_initer->next_memory_filter();
+        ++weightIt;
 
         if(0 == layerIt){
           temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0));

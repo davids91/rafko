@@ -83,7 +83,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
 
   /* The result should change in accordance with the parameters */
   srand (time(nullptr));
-  for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
+  for(uint8 variant_iterator = 0; variant_iterator < 1; variant_iterator++){
     SynapseIterator<>::iterate(partial_solution.weight_indices(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
       partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     },0u,1u); /* Mess with the weights of the first Neuron */
@@ -95,12 +95,6 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
-    solver.solve(network_inputs, neuron_data);
-    manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-    CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
-
-    partial_solution.set_weight_table(partial_solution.memory_filter_index(0),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
-    partial_solution.set_weight_table(partial_solution.memory_filter_index(1),static_cast<sdouble32>(rand()%11) / double_literal(10.0));
     solver.solve(network_inputs, neuron_data);
     manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
@@ -130,11 +124,10 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(network_inputs.size());
   *partial_solution.mutable_output_data() = temp_index_interval;
-  partial_solution.add_weight_table(double_literal(0.0));  /* A weight for the memory filter */
+  partial_solution.add_weight_table(double_literal(0.0));  /* A weight for the spike function */
   for(uint32 i = 0; i < network_inputs.size(); ++i){
     partial_solution.add_weight_table(double_literal(1.0));
     partial_solution.add_neuron_transfer_functions(transfer_function_identity);
-    partial_solution.add_memory_filter_index(0);
 
     partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights */
     temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(i));
@@ -142,8 +135,8 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
     *partial_solution.add_inside_indices() = temp_input_interval;
 
     partial_solution.add_weight_synapse_number(1);
-    temp_index_interval.set_starts(1u);
-    temp_index_interval.set_interval_size(1u); /* weight of 1 here */
+    temp_index_interval.set_starts(0u);
+    temp_index_interval.set_interval_size(1u + 1u); /* weight1 + 1 weight for the spike function*/
     *partial_solution.add_weight_indices() = temp_index_interval;
   }
 
