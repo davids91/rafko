@@ -29,8 +29,6 @@ namespace rafko_utilities{
 
 using std::vector;
 
-using rafko_net::InputSynapseInterval;
-
 /**
  * @brief      This class describes a ringbuffer designed to store the Memory of a Neural Network.
  *             At the life-cycle of a Neural network one solution counts as a "loop", where the data
@@ -155,72 +153,12 @@ public:
   }
 
   /**
-   * @brief      Utility function to get an element from the given sequence.
-   *             Please also refer to the description of @get_sequence_index
-   *
-   * @param[in]  sequence_index             The sequence index
-   * @param[in]  input_synapse              The input synapse
-   * @param[in]  element_offset_from_start  The element offset from start
-   *
-   * @return     The buffer element in the given sequence
-   */
-  sdouble32 get_const_element(uint32 sequence_index, InputSynapseInterval input_synapse, uint32 element_offset_from_start) const{
-    if(static_cast<sint32>(get_sequence_size()) > get_sequence_index(sequence_index,input_synapse)){
-      if(input_synapse.starts() + element_offset_from_start < data[get_sequence_index(sequence_index,input_synapse)].size())
-        return get_const_element(
-          get_sequence_index(sequence_index,input_synapse)
-        )[input_synapse.starts() + element_offset_from_start];
-      else throw std::runtime_error("Buffer element index out of bounds!");
-    }else return 0.0;
-  }
-
-  /**
-   * @brief      Utility element to get a buffer under the given sequence based on a past reach back value
-   *             provided in the given input synapse
-   *
-   * @param[in]  sequence_index  The sequence index
-   * @param[in]  input_synapse   The input synapse
-   *
-   * @return     The constant element.
-   */
-  const vector<sdouble32>& get_const_element(uint32 sequence_index, InputSynapseInterval input_synapse) const{
-    if(static_cast<sint32>(get_sequence_size()) > get_sequence_index(sequence_index,input_synapse)){
-        return get_const_element(get_sequence_index(sequence_index,input_synapse));
-    }else throw std::runtime_error("Buffer index out of bounds!");
-  }
-
-  /**
    * @brief      Gets the number of buffers stored in the object
    *
    * @return     The sequence size.
    */
   uint32 get_sequence_size(void) const{
     return data.size();
-  }
-
-  /**
-   * @brief      Calculates the index to reach the neuron data at the @sequence_index th
-   *             evaluation of a data sample which was the last @past_index th loop.
-   *             Since the evaluation goes from the 0th item in the sequence,
-   *             by the time every sequence is evaluated, the neuron_data_sequences buffer
-   *             should contain the hidden data form every Neuron at the end of every solution.
-   *             At that point, the "latest" neuron data array should be under
-   *             neuron_data_sequences.get_element(0).
-   *             If a Network is recurrent (has inputs "from the past"), what it would have
-   *             as input at the last sequence is at index 0. If it would have input from
-   *             "the past", the inputs from the past would be under
-   *             neuron_data_sequences.get_element(past_index).
-   *             In case the following data needs to be accessed: what would the network see as input
-   *             data in the @sequence_index 'th step, if that network would take input from the
-   *             past ( @past_index loops before that step ) => the below function shall be used.
-   *
-   * @param[in]  sequence_index  The sequence index
-   * @param[in]  input_synapse   The input synapse containing the used past index
-   *
-   * @return     The buffer index.
-   */
-  sint32 get_sequence_index(uint32 sequence_index, InputSynapseInterval input_synapse) const{
-    return get_sequence_index(sequence_index, input_synapse.reach_past_loops());
   }
 
   /**

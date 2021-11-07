@@ -29,7 +29,6 @@ using std::vector;
 using std::copy;
 
 using rafko_utilities::DataRingbuffer;
-using rafko_net::InputSynapseInterval;
 using rafko_mainframe::ServiceContext;
 
 /*###############################################################################################
@@ -84,7 +83,6 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
   uint32 sequence_number = 5;
   uint32 buffer_size = 30;
   DataRingbuffer buffer(sequence_number, buffer_size);
-  InputSynapseInterval input_synapse;
   vector<sdouble32> data_sample(buffer_size);
 
   /* Simulate some runs: each element in the buffer shall have the value of it's past value */
@@ -102,28 +100,6 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
   for(uint32 i = 0; i < sequence_number; i++)
     std::cout << "[" << i << "]-";
   std::cout << "sequence index" << std::endl; */
-
-  /* See if the first sequence reach back only to that index */
-  input_synapse.set_reach_past_loops(0);
-  CHECK( static_cast<sint32>(buffer.get_sequence_size()) > buffer.get_sequence_index(0, input_synapse) );
-  CHECK( static_cast<sint32>(sequence_number-1) == buffer.get_sequence_index(0, input_synapse) );
-
-  for(uint32 i = 1; i < sequence_number; ++i){
-    input_synapse.set_reach_past_loops(i);
-    CHECK( static_cast<sint32>(buffer.get_sequence_size()) <= buffer.get_sequence_index(0, input_synapse) );
-  }
-
-  /* See if later sequences reach back to the relevant index */
-  for(uint32 sequence_iterator = 1; sequence_iterator < sequence_number; ++sequence_iterator){
-    for(uint32 reach_back_count = 0; reach_back_count <= sequence_iterator; ++reach_back_count){
-      input_synapse.set_reach_past_loops(reach_back_count);
-      CHECK( static_cast<sint32>(buffer.get_sequence_size()) > buffer.get_sequence_index(sequence_iterator, input_synapse) );
-      CHECK( static_cast<sint32>((sequence_number - sequence_iterator - 1) + reach_back_count) == buffer.get_sequence_index(sequence_iterator, input_synapse) );
-      CHECK( buffer.get_const_element(buffer.get_sequence_index(sequence_iterator, input_synapse))[0] == buffer.get_sequence_index(sequence_iterator, input_synapse) );
-      CHECK( buffer.get_const_element(sequence_iterator,input_synapse,0) == buffer.get_sequence_index(sequence_iterator, input_synapse) );
-      CHECK( buffer.get_const_element(sequence_iterator,input_synapse)[0] == buffer.get_sequence_index(sequence_iterator, input_synapse) );
-    }
-  }
 }
 
 } /* namespace rafko_net_test */
