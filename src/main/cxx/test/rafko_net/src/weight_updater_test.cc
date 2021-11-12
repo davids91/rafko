@@ -65,7 +65,7 @@ TEST_CASE("Weight updater test","[build][weight-update]"){
   }
   weight_updater.update_solution_with_weights(*solution);
 
-   check_if_the_same(*net, *solution);
+  check_if_the_same(*net, *solution);
 
   /* Change a single weight and take it over into the generated solution */
   for(uint32 variant = 0; variant < 10; ++variant){
