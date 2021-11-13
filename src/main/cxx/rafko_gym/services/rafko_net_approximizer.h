@@ -75,10 +75,10 @@ public:
   , net_solution(SolutionBuilder(service_context).build(net))
   , environment(environment_)
   , solver(SolutionSolver::Builder(*net_solution, service_context).build())
+  , weight_updater(UpdaterFactory::build_weight_updater(net, *net_solution, weight_updater_, service_context))
   , applied_direction(net.weight_table_size())
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
   {
-    weight_updater = UpdaterFactory::build_weight_updater(net,weight_updater_,service_context);
     environment.full_evaluation(*solver);
   }
 

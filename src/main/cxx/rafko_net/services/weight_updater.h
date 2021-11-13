@@ -40,8 +40,9 @@ using rafko_mainframe::ServiceContext;
 class WeightUpdater{
 public:
   WeightUpdater(
-    RafkoNet& rafko_net, ServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
+    RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
   ): net(rafko_net)
+  ,  solution(solution_)
   ,  service_context(service_context_)
   ,  required_iterations_for_step(required_iterations_for_step_)
   ,  weights_to_do_in_one_thread(1u + static_cast<uint32>(net.weight_table_size()/service_context.get_max_solve_threads()))
@@ -67,10 +68,10 @@ public:
    * @param      gradients           The gradients
    * @param      solution            The solution
    */
-  void iterate(const vector<sdouble32>& gradients, Solution& solution){
+  void iterate(const vector<sdouble32>& gradients){
     calculate_velocity(gradients);
     update_weights_with_velocity();
-    update_solution_with_weights(solution);
+    update_solution_with_weights();
     iteration = (iteration + 1) % required_iterations_for_step;
     finished = (0 == iteration);
   }
@@ -79,20 +80,17 @@ public:
    * @brief      Copies the weights in the stored @RafkoNet reference into the provided solution.
    *             It supposes that the solution is one already built, and it is built from
    *             the same @RafkoNet referenced in the updater. Uses a different thread for every partial solution.
-   *
-   * @param      solution  The solution
    */
-  void update_solution_with_weights(Solution& solution) const;
+  void update_solution_with_weights(void) const;
 
   /**
    * @brief      Copies the weights in the stored @RafkoNet reference into the provided solution.
    *             It supposes that the solution is one already built, and it is built from
    *             the same @RafkoNet referenced in the updater. Uses a different thread for every partial solution.
    *
-   * @param      solution       The solution
    * @param[in]  weight_index   The index of the weight to take over fro the @RafkoNet
    */
-  void update_solution_with_weight(Solution& solution, uint32 weight_index) const;
+  void update_solution_with_weight(uint32 weight_index) const;
 
   /**
    * @brief      Tells if an iteration is at its valid state or not based on
@@ -128,6 +126,7 @@ public:
 
 protected:
   RafkoNet& net;
+  Solution& solution;
   ServiceContext& service_context;
   const uint32 required_iterations_for_step;
   const uint32 weights_to_do_in_one_thread;

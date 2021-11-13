@@ -24,14 +24,14 @@ namespace rafko_net{
 
 class WeightUpdaterAdam : public WeightUpdater{
 public:
-  WeightUpdaterAdam(RafkoNet& rafko_net, ServiceContext& service_context_)
-  :  WeightUpdater(rafko_net, service_context_)
+  WeightUpdaterAdam(RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_)
+  :  WeightUpdater(rafko_net, solution_, service_context_)
   ,  iteration_count(0)
   ,  moment(rafko_net.weight_table_size(),double_literal(0.0))
   ,  raw_moment(rafko_net.weight_table_size(),double_literal(0.0))
   { }
 
-  void iterate(const vector<sdouble32>& gradients,Solution& solution){
+  void iterate(const vector<sdouble32>& gradients){
     for(uint32 weight_index = 0; weight_index < moment.size(); ++weight_index){
       moment[weight_index] = (
         (service_context.get_beta() * moment[weight_index])
@@ -45,7 +45,7 @@ public:
         )
       );
     }
-    WeightUpdater::iterate(gradients, solution);
+    WeightUpdater::iterate(gradients);
     ++iteration_count;
   }
 

@@ -24,13 +24,13 @@ namespace rafko_net{
 
 class WeightUpdaterMomentum : public WeightUpdater{
 public:
-  WeightUpdaterMomentum(RafkoNet& rafko_net, ServiceContext& service_context_)
-  :  WeightUpdater(rafko_net, service_context_)
+  WeightUpdaterMomentum(RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_)
+  :  WeightUpdater(rafko_net, solution_, service_context_)
   ,  previous_velocity(rafko_net.weight_table_size(),double_literal(0.0))
   { }
 
-  void iterate(const vector<sdouble32>& gradients,Solution& solution){
-    WeightUpdater::iterate(gradients, solution);
+  void iterate(const vector<sdouble32>& gradients){
+    WeightUpdater::iterate(gradients);
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
 

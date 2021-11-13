@@ -38,27 +38,28 @@ public:
   /**
    * @brief      Builds a weight updater.
    *
-   * @param      net             The net to base the weight updater upon
+   * @param      net             The network to base the weight updater upon
+   * @param      solution        A reference of the Solution built from the network
    * @param[in]  weight_updater  The weight updater type
    * @param      context         The service context
    *
    * @return     The weight updater.
    */
   static unique_ptr<WeightUpdater> build_weight_updater(
-    RafkoNet& net, Weight_updaters weight_updater, ServiceContext& context
+    RafkoNet& net, Solution& solution, Weight_updaters weight_updater, ServiceContext& context
   ){
     switch(weight_updater){
       case weight_updater_momentum:
-        return make_unique<WeightUpdaterMomentum>(net,context);
+        return make_unique<WeightUpdaterMomentum>(net, solution, context);
       case weight_updater_nesterovs:
-        return make_unique<WeightUpdaterNesterovs>(net,context);
+        return make_unique<WeightUpdaterNesterovs>(net, solution, context);
       case weight_updater_adam:
-        return make_unique<WeightUpdaterAdam>(net,context);
+        return make_unique<WeightUpdaterAdam>(net, solution, context);
       case weight_updater_amsgrad:
-        return make_unique<WeightUpdaterAMSGrad>(net,context);
+        return make_unique<WeightUpdaterAMSGrad>(net, solution, context);
       case weight_updater_default:
       default:
-        return make_unique<WeightUpdater>(net,context);
+        return make_unique<WeightUpdater>(net, solution, context);
     };
   }
 };

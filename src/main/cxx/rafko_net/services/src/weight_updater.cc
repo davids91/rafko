@@ -59,7 +59,7 @@ void WeightUpdater::update_weights_with_velocity(void){
   });
 }
 
-void WeightUpdater::update_solution_with_weight(Solution& solution, uint32 weight_index) const{
+void WeightUpdater::update_solution_with_weight(uint32 weight_index) const{
   /* Iterate through the neurons in the network */
   for(uint32 neuron_index = 0; static_cast<sint32>(neuron_index) < net.neuron_array_size(); ++neuron_index){
     bool is_neuron_relevant_to_weight = false;
@@ -102,7 +102,7 @@ void WeightUpdater::update_solution_with_weight(Solution& solution, uint32 weigh
 }
 
 
-void WeightUpdater::update_solution_with_weights(Solution& solution) const{
+void WeightUpdater::update_solution_with_weights(void) const{
   sint32 partial_start_index = 0;
   while(partial_start_index < solution.partial_solutions_size()){
     if(
@@ -124,7 +124,7 @@ void WeightUpdater::update_solution_with_weights(Solution& solution) const{
         }
       }
     }else{ /* It is efficient to use multithreading */
-      execution_threads.start_and_block([this, partial_start_index, &solution](uint32 thread_index){
+      execution_threads.start_and_block([this, partial_start_index](uint32 thread_index){
         const sint32 partial_index = partial_start_index + thread_index;
         if(partial_index < solution.partial_solutions_size()){
           uint32 neuron_weight_synapse_starts = 0;
