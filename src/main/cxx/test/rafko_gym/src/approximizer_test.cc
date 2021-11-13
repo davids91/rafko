@@ -166,7 +166,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   ServiceContext service_context = ServiceContext()
     .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
     .set_training_strategy(rafko_net::Training_strategy::training_strategy_stop_if_training_error_zero,true)
-    .set_training_strategy(rafko_net::Training_strategy::training_strategy_early_stopping,true)
+    .set_training_strategy(rafko_net::Training_strategy::training_strategy_early_stopping,false)
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
   uint32 number_of_samples = 128;
 

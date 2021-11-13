@@ -21,15 +21,14 @@
 #include "rafko_global.h"
 
 #include <vector>
+#include <utility>
+#include <unordered_map>
 
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/service_context.h"
 
 namespace rafko_net{
-
-using std::ref;
-using std::vector;
 
 using rafko_utilities::ThreadGroup;
 using rafko_mainframe::ServiceContext;
@@ -41,15 +40,17 @@ class WeightUpdater{
 public:
   WeightUpdater(
     RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
-  ): net(rafko_net)
-  ,  solution(solution_)
-  ,  service_context(service_context_)
-  ,  required_iterations_for_step(required_iterations_for_step_)
-  ,  weights_to_do_in_one_thread(1u + static_cast<uint32>(net.weight_table_size()/service_context.get_max_solve_threads()))
-  ,  iteration(0)
-  ,  finished(false)
-  ,  current_velocity(rafko_net.weight_table_size(),double_literal(0.0))
-  ,  execution_threads(service_context.get_max_solve_threads())
+  ):net(rafko_net)
+  , solution(solution_)
+  , service_context(service_context_)
+  , required_iterations_for_step(required_iterations_for_step_)
+  , weights_to_do_in_one_thread(1u + static_cast<uint32>(net.weight_table_size()/service_context.get_max_solve_threads()))
+  , iteration(0)
+  , finished(false)
+  , current_velocity(rafko_net.weight_table_size(),double_literal(0.0))
+  , execution_threads(service_context.get_max_solve_threads())
+  , weights_in_partials(rafko_net.weight_table_size())
+  , neurons_in_partials(solution.partial_solutions_size())
   { };
 
 
@@ -68,7 +69,7 @@ public:
    * @param      gradients           The gradients
    * @param      solution            The solution
    */
-  void iterate(const vector<sdouble32>& gradients){
+  void iterate(const std::vector<sdouble32>& gradients){
     calculate_velocity(gradients);
     update_weights_with_velocity();
     update_solution_with_weights();
@@ -118,7 +119,7 @@ public:
    *
    * @return     The current velocity.
    */
-  const vector<sdouble32>& get_current_velocity() const{
+  const std::vector<sdouble32>& get_current_velocity() const{
     return current_velocity;
   }
 
@@ -132,7 +133,7 @@ protected:
   const uint32 weights_to_do_in_one_thread;
   uint32 iteration;
   bool finished;
-  vector<sdouble32> current_velocity;
+  std::vector<sdouble32> current_velocity;
 
   /**
    * @brief      Gets the new value for one weight based on the gradients.
@@ -155,19 +156,21 @@ protected:
    *
    * @return     The new velocity.
    */
-  sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients) const{
+  sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients) const{
     return (gradients[weight_index] * service_context.get_learning_rate());
   }
 
 private:
   ThreadGroup execution_threads;
+  mutable std::unordered_map<uint32,std::vector<std::pair<uint32,uint32>>> weights_in_partials; /* key: Weight index; {{partial_index, weight_index},...{..}} */
+  mutable std::unordered_map<uint32, uint32> neurons_in_partials; /* key: Neuron index; value :Partial index */
 
   /**
    * @brief      Calculates and stroes the required velocity for a weight based on the provided gradients
    *
    * @param[in]  gradients  The gradients array of size equal to the weights of the configured net
    */
-  void calculate_velocity(const vector<sdouble32>& gradients);
+  void calculate_velocity(const std::vector<sdouble32>& gradients);
 
   /**
    * @brief      The function to update every weight of the referenced @RafkoNet
@@ -183,7 +186,7 @@ private:
    * @param[in]  weight_index        The weight index
    * @param[in]  weight_number       The weight number
    */
-  void calculate_velocity_thread(const vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number);
+  void calculate_velocity_thread(const std::vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number);
 
   /**
    * @brief      A thread to calculate the latest velocity based on the gradients
@@ -193,6 +196,26 @@ private:
    * @param[in]  weight_number  The weight number
    */
   void update_weight_with_velocity(uint32 weight_index, uint32 weight_number);
+
+  /**
+   * @brief      Provides a list of partials and weight indices inside them for every given network weight_index
+   *             Each weight might be present inside multiple partials, but shall not be repeated multiple times
+   *             inside each partial.
+   *
+   * @param[in]  network_weight_index   The Weight index inside the @RafkoNet
+   *
+   * @return     A vector of the following structure: {{partial index,weight_index},...,{...}}
+   */
+  std::vector<std::pair<uint32,uint32>>& get_relevant_partial_weight_indices_for(uint32 network_weight_index) const;
+
+  /**
+   * @brief      Provides the partial index the given neuron_index belongs to
+   *
+   * @param[in]  neuron_index   The Neuron index inside the @RafkoNet
+   *
+   * @return     The index of the partial solution the Neuron belongs to
+   */
+  uint32 get_relevant_partial_index_for(uint32 neuron_index) const;
 
   /**
    * @brief      Copies the weights of a Neuron from the referenced @RafkoNet

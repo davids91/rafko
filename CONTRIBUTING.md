@@ -4,7 +4,7 @@ Contributing
 When Contributing, please consider that I have limited resources, so I might not be able to respond immediately. The Style with a few exceptions follows the [Google Style Guide](https://google.github.io/styleguide/). All suggestions welcome!
 
 Rafko Style Guide
- ===
+===
 
   - Naming best practices:
     - namespace names: `have_underscore_between_words`
