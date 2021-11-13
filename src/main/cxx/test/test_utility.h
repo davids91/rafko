@@ -37,7 +37,7 @@ using rafko_net::RafkoNet;
 using rafko_net::Solution;
 using rafko_net::PartialSolution;
 using rafko_gym::DataAggregate;
-using rafko_net::CostFunctions;
+using rafko_net::Cost_functions;
 using rafko_mainframe::ServiceContext;
 
 /**

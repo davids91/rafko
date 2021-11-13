@@ -39,7 +39,7 @@ enum Network_recurrence{
  */
 message Neuron{
   /* index of the weight for the memory filter. 1.0: keep its previous value instead of the newly calculated one */
-  TransferFunctions transfer_function_idx = 3; /* index of the transfer function this Neuron uses, empty is invalid */
+  Transfer_functions transfer_function_idx = 3; /* index of the transfer function this Neuron uses, empty is invalid */
 
   /**
    * Input weights shall only contain positive intervals,

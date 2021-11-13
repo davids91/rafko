@@ -31,7 +31,7 @@ namespace rafko_net_test {
 
 using rafko_net::Neuron;
 using rafko_net::RafkoNet;
-using rafko_net::TransferFunctions;
+using rafko_net::Transfer_functions;
 using rafko_net::RafkoNetBuilder;
 using rafko_net::NeuronInfo;
 using rafko_net::transfer_function_identity;
@@ -66,7 +66,7 @@ RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   IndexSynapseInterval temp_index_interval;
   InputSynapseInterval temp_input_interval;
   sdouble32 used_weight = double_literal(0.5);
-  TransferFunctions used_transfer_function = transfer_function_sigmoid;
+  Transfer_functions used_transfer_function = transfer_function_sigmoid;
   vector<sdouble32> weight_table {double_literal(0.0),double_literal(0.0),double_literal(0.0)};
   weight_table[0] = used_weight;
   REQUIRE( nullptr != &(weight_table[0]) );

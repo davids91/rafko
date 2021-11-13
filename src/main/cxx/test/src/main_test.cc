@@ -42,7 +42,7 @@ using rafko_utilities::DataRingbuffer;
 using rafko_gym::DataAggregate;
 using rafko_net::TransferFunction;
 using rafko_net::transfer_function_identity;
-using rafko_net::CostFunctions;
+using rafko_net::Cost_functions;
 using rafko_net::InputSynapseInterval;
 using rafko_net::IndexSynapseInterval;
 using rafko_net::SolutionBuilder;

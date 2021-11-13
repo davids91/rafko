@@ -22,7 +22,7 @@ namespace rafko_net{
 bool NeuronInfo::is_neuron_valid(const Neuron& neuron)
 {
   if(
-    (TransferFunctions_IsValid(neuron.transfer_function_idx())) /* Transfer Function ID is valid */
+    (Transfer_functions_IsValid(neuron.transfer_function_idx())) /* Transfer Function ID is valid */
     &&(transfer_function_unknown < neuron.transfer_function_idx()) /* Transfer Function ID is known */
     &&(( /* Either the input is consistent */
       (0 < neuron.input_indices_size()) /* There are any inputs */

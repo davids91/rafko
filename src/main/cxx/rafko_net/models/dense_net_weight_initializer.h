@@ -57,7 +57,7 @@ public:
    * @brief      Configuration functions
    */
   void set(uint32 expected_input_number, sdouble32 expected_input_maximum_value_);
-  sdouble32 next_weight_for(TransferFunctions used_transfer_function) const;
+  sdouble32 next_weight_for(Transfer_functions used_transfer_function) const;
   sdouble32 next_memory_filter() const;
   sdouble32 next_bias() const;
 
@@ -74,7 +74,7 @@ private:
    *
    * @return     Expected weight amplitude
    */
-  sdouble32 get_weight_amplitude(TransferFunctions used_transfer_function) const;
+  sdouble32 get_weight_amplitude(Transfer_functions used_transfer_function) const;
 
 };
 

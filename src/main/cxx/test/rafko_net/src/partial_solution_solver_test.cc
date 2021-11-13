@@ -32,7 +32,7 @@ namespace rafko_net_test {
 using std::vector;
 using std::reference_wrapper;
 
-using rafko_net::TransferFunctions;
+using rafko_net::Transfer_functions;
 using rafko_net::transfer_function_identity;
 using rafko_utilities::DataRingbuffer;
 using rafko_net::PartialSolution;

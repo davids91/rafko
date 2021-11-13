@@ -31,7 +31,7 @@ using std::max;
 
 using rafko_mainframe::ServiceContext;
 
-sdouble32 DenseNetWeightInitializer::get_weight_amplitude(TransferFunctions used_transfer_function) const{
+sdouble32 DenseNetWeightInitializer::get_weight_amplitude(Transfer_functions used_transfer_function) const{
   sdouble32 amplitude;
   switch(used_transfer_function){
     case transfer_function_relu:
@@ -42,7 +42,7 @@ sdouble32 DenseNetWeightInitializer::get_weight_amplitude(TransferFunctions used
   return max(context.get_epsilon(),amplitude);
 }
 
-sdouble32 DenseNetWeightInitializer::next_weight_for(TransferFunctions used_transfer_function) const{
+sdouble32 DenseNetWeightInitializer::next_weight_for(Transfer_functions used_transfer_function) const{
   return ((rand()%2 == 0)?-double_literal(1.0):double_literal(1.0)) * limit_weight(
     (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
   );

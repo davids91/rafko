@@ -44,7 +44,7 @@ using rafko_mainframe::ServiceContext;
  */
 class CostFunction{
 public:
-  CostFunction(uint32 feature_size_, CostFunctions the_function_, ServiceContext& service_context)
+  CostFunction(uint32 feature_size_, Cost_functions the_function_, ServiceContext& service_context)
   : context(service_context)
   , process_threads()
   , thread_results()
@@ -109,7 +109,7 @@ public:
    *
    * @return     The type.
    */
-  CostFunctions get_type(void){
+  Cost_functions get_type(void){
     return the_function;
   }
 
@@ -183,7 +183,7 @@ protected:
     uint32 feature_start_index_in_neuron, uint32 number_to_add
   );
 private:
-  CostFunctions the_function; /* cost function type */
+  Cost_functions the_function; /* cost function type */
   ThreadGroup execution_threads;
 
   /**

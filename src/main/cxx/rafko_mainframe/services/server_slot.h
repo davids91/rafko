@@ -118,9 +118,9 @@ public:
   /**
    * @brief      Queries relevant information about the @ServerSlot.
    *
-   * @param[in]  request  uses @request_bitstring to ask for @SlotInfo_field values
+   * @param[in]  request  uses @request_bitstring to ask for @Slot_info_field values
    *
-   * @return     Information packets returned in the order given by @SlotInfo_field.
+   * @return     Information packets returned in the order given by @Slot_info_field.
    */
   virtual SlotInfo get_info(uint32 request_bitstring) = 0;
 

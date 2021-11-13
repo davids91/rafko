@@ -33,8 +33,8 @@ using std::uniform_int_distribution;
 using std::vector;
 
 using rafko_net::RafkoNetBuilder;
-using rafko_net::TransferFunctions;
-using rafko_net::TransferFunctions_IsValid;
+using rafko_net::Transfer_functions;
+using rafko_net::Transfer_functions_IsValid;
 
 string ServerSlot::generate_uuid(void){
   static random_device dev;
@@ -110,10 +110,10 @@ void ServerSlot::get_data_sample(shared_ptr<DataAggregate> data_set, uint32 samp
 RafkoNet* ServerSlot::build_network_from_request(BuildNetworkRequest&& request){
   if(0 < request.allowed_transfers_by_layer_size()){
     uint32 layer_index = 0;
-    vector<vector<TransferFunctions>> allowed_transfers(request.allowed_transfers_by_layer_size());
+    vector<vector<Transfer_functions>> allowed_transfers(request.allowed_transfers_by_layer_size());
     for(const sint32& allowed : request.allowed_transfers_by_layer()){
-      if(TransferFunctions_IsValid(static_cast<TransferFunctions>(allowed)))
-        allowed_transfers[layer_index++] = vector<TransferFunctions>(1, static_cast<TransferFunctions>(allowed));
+      if(Transfer_functions_IsValid(static_cast<Transfer_functions>(allowed)))
+        allowed_transfers[layer_index++] = vector<Transfer_functions>(1, static_cast<Transfer_functions>(allowed));
       else throw std::runtime_error("Unknown transfer function detected!");
     }
     return RafkoNetBuilder(context).input_size(request.input_size())
