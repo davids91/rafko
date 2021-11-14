@@ -1,22 +1,18 @@
 add_library(rafko_net)
 target_include_directories(rafko_net PUBLIC ${PROJECT_SOURCE_DIR} models services)
 target_link_libraries(rafko_net PUBLIC rafko_protocol)
-set(NET_INTERFACE
-  models/cost_function_squared_error.h
-  models/cost_function_mse.h
+set(NET_INTERFACE_SERVICES
   services/synapse_iterator.h
   services/weight_updater_adam.h
   services/weight_updater_amsgrad.h
   services/weight_updater_momentum.h
   services/weight_updater_nesterovs.h
 )
-set(NET_HEADERS
-  models/cost_function.h
-  models/dense_net_weight_initializer.h
-  models/neuron_info.h
-  models/spike_function.h #TODO: Generalize and move specialized source to interfaces
-  models/transfer_function.h
-  models/weight_initializer.h
+set(NET_INTERFACE_MODELS
+  models/cost_function_squared_error.h
+  models/cost_function_mse.h
+)
+set(NET_HEADER_SERVICES
   services/backpropagation_queue_wrapper.h
   services/function_factory.h
   services/neuron_router.h
@@ -29,13 +25,17 @@ set(NET_HEADERS
   services/weight_experience_space.h
   services/weight_updater.h
 )
-set(NET_PUBLIC_HEADERS
-  ${NET_INTERFACE}
-  ${NET_HEADERS}
+set(NET_HEADER_MODELS
+  models/cost_function.h
+  models/dense_net_weight_initializer.h
+  models/neuron_info.h
+  models/spike_function.h #TODO: Generalize and move specialized source to interfaces
+  models/transfer_function.h
+  models/weight_initializer.h
 )
 target_sources(rafko_net
-  INTERFACE ${NET_INTERFACE}
-  PUBLIC ${NET_HEADERS}
+  INTERFACE ${NET_INTERFACE_SERVICES}
+  PUBLIC ${NET_HEADER_SERVICES} ${NET_HEADER_MODELS}
   PRIVATE
   models/src/dense_net_weight_initializer.cc
   models/src/neuron_info.cc
@@ -51,7 +51,12 @@ target_sources(rafko_net
   services/src/weight_experience_space.cc
   services/src/weight_updater.cc
 )
+
 install(
-  FILES ${NET_PUBLIC_HEADERS}
-  DESTINATION include/rafko_net
+  FILES ${NET_HEADER_MODELS} ${NET_INTERFACE_MODELS}
+  DESTINATION include/rafko_net/models
+)
+install(
+  FILES ${NET_HEADER_SERVICES} ${NET_INTERFACE_SERVICES}
+  DESTINATION include/rafko_net/services
 )

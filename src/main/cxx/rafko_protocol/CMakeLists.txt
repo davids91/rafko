@@ -52,6 +52,6 @@ protobuf_generate(
 
 install(
   DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol
-  DESTINATION include/rafko_protocol
+  DESTINATION include/
   FILES_MATCHING PATTERN "*.h"
 )

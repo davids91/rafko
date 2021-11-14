@@ -36,14 +36,19 @@ if(BUILD_MAINFRAME)
   add_subdirectory(rafko_mainframe)
 endif()
 
-add_library(rafko_full INTERFACE)
-target_link_libraries(rafko_full INTERFACE rafko_protocol rafko_utilities rafko_net rafko_gym)
+add_library(rafko_full)
+target_link_libraries(rafko_full PUBLIC rafko_protocol rafko_utilities rafko_net rafko_gym)
 
 if(MAKE_TESTS)
   enable_testing()
   add_subdirectory(test)
 endif()
 
+
+install(
+  FILES rafko_global.h
+  DESTINATION include/
+)
 
 set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/lib")
 install( TARGETS rafko_full
