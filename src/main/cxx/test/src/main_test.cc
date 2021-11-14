@@ -323,7 +323,7 @@ void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set
   std::cout.precision(2);
   DataRingbuffer output_data_copy(0,0);
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
-    std::cout << "["<< data_set.get_label_sample(raw_label_index)[0] <<"]";
+    std::cout << "\t\t["<< data_set.get_label_sample(raw_label_index)[0] <<"]";
     const DataRingbuffer& output_data = sample_solver->solve(
       data_set.get_input_sample(raw_inputs_index),
       ( (0u == data_set.get_prefill_inputs_number())&&(0u == j) ),
@@ -338,7 +338,7 @@ void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set
   std::cout << "------<>------actual:" << std::endl;
 
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
-    std::cout << "["<< neuron_data[j] <<"]";
+    std::cout << "\t\t["<< neuron_data[j] <<"]";
   }
   std::cout << std::endl;
   std::cout << "Errors for sequence: " << std::endl;

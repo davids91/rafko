@@ -174,20 +174,10 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   vector<RafkoNet*> nets = vector<RafkoNet*>();
   nets.push_back(RafkoNetBuilder(service_context)
     .input_size(2).expected_input_range(double_literal(1.0))
-    .set_recurrence_to_layer()
-    .allowed_transfer_functions_by_layer(
-    //   {
-    //     {transfer_function_selu},
-    //     {transfer_function_selu},
-    //     {transfer_function_selu}
-    //   }
-    // ).dense_layers({10,10,1})
-    {
-      {transfer_function_selu},
-      {transfer_function_selu},
-    }
-  ).dense_layers({2,1})
-
+    .set_recurrence_to_self()
+    .allowed_transfer_functions_by_layer({
+      {transfer_function_selu}, {transfer_function_selu},
+    }).dense_layers({10,1})
   );
 
   /* Create dataset, test set and optimizers; optimize nets */
@@ -225,7 +215,6 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
   std::cout << "Approximizing net.." << std::endl;
   std::cout.precision(15);
-  // while(abs(train_error) > service_context.get_learning_rate()){
   while(!approximizer.stop_training()){
     start = steady_clock::now();
     approximizer.collect_approximates_from_weight_gradients();
@@ -248,8 +237,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     << "Minimum: ["<< minimum_error <<"];"
     << "Avg_gradient: [" << avg_gradient << "]; "
     << "Iteration: ["<< iteration <<"];   "
-    << "Duration: ["<< current_duration <<"ms];   "
-    << std::endl;
+    << "Duration: ["<< current_duration <<"ms];   ";
     if(0 == (iteration % 100)){
       approximizer.full_evaluation();
       print_training_sample((rand()%number_of_samples), *train_set, *nets[0], service_context);
@@ -257,7 +245,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     ++iteration;
   }
   if(1 < number_of_steps)average_duration /= number_of_steps;
-  cout << endl << "Optimum reached in " << number_of_steps
+  std::cout << std::endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
   unique_ptr<SolutionSolver> after_solver(SolutionSolver::Builder(*SolutionBuilder(service_context).build(*nets[0]), service_context).build());
