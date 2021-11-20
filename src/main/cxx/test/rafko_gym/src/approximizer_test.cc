@@ -231,13 +231,14 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     train_error = train_set->get_error_avg();
     test_error = test_set->get_error_avg();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
-    cout << "\r\tError:" << std::setprecision(9)
+    cout << "\tError:" << std::setprecision(9)
     << "Training:[" << train_error << "]; "
     << "Test:[" << test_error << "]; "
     << "Minimum: ["<< minimum_error <<"];"
     << "Avg_gradient: [" << avg_gradient << "]; "
     << "Iteration: ["<< iteration <<"];   "
-    << "Duration: ["<< current_duration <<"ms];   ";
+    << "Duration: ["<< current_duration <<"ms];   "
+    << std::endl;
     if(0 == (iteration % 100)){
       approximizer.full_evaluation();
       print_training_sample((rand()%number_of_samples), *train_set, *nets[0], service_context);
