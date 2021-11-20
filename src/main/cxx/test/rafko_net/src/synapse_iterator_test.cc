@@ -57,6 +57,7 @@ TEST_CASE("Synapse Iteration","[synapse-iteration]"){
   REQUIRE( 110 == iter.size() );
 
   iter.iterate([&](InputSynapseInterval input_synapse, sint32 index){
+    parameter_not_used(input_synapse);
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     ++manual_index;
@@ -95,6 +96,7 @@ TEST_CASE("Synapse iteration on a range","[synapse-iteration]"){
   REQUIRE( 110 == iter.size() );
 
   iter.iterate([&](InputSynapseInterval input_synapse, sint32 index){
+    parameter_not_used(input_synapse);
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     ++manual_index;
@@ -133,6 +135,7 @@ TEST_CASE("Synapse iteration including negative numbers","[synapse-iteration]"){
   REQUIRE( 110 == iter.size() );
 
   iter.iterate([&](InputSynapseInterval input_synapse, sint32 index){
+    parameter_not_used(input_synapse);
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     --manual_index;
@@ -254,6 +257,7 @@ TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
     element_index = synapse_indexes[i][0]; /* the start of the synapse currently being iterated over */
     iteration_count = 0;
     iter.iterate([&](IndexSynapseInterval interval, sint32 synapse_index){
+      parameter_not_used(interval);
       CHECK( element_index == synapse_index );
       ++element_index;
       ++iteration_count;
@@ -270,6 +274,7 @@ TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
     iteration_count = 0;
     iteration_in_this_synapse = 0;
     iter.iterate([&](IndexSynapseInterval interval, sint32 synapse_index){
+      parameter_not_used(interval);
       if(iteration_in_this_synapse >= synapse_indexes[current_synapse][1]){
         ++current_synapse;
         iteration_in_this_synapse = 0;

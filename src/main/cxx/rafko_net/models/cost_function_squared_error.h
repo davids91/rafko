@@ -38,6 +38,7 @@ public:
 
 protected:
   sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const{
+    parameter_not_used(sample_number);
     return error_value / double_literal(2.0);
   }
 
@@ -46,6 +47,7 @@ protected:
   }
 
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const{
+    parameter_not_used(sample_number);
     return -(label_value - feature_value);
   }
 

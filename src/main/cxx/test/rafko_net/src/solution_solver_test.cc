@@ -261,7 +261,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   };
 
   /* Build the above described net */
-  ServiceContext service_context = ServiceContext().set_device_max_megabytes(max_space_mb);
+  ServiceContext service_context = ServiceContext().set_arena_ptr(arena).set_device_max_megabytes(max_space_mb);
   RafkoNetBuilder net_builder = RafkoNetBuilder(service_context);
   net_builder.input_size(5).expected_input_range(double_literal(5.0));
   if(network_recurrence_to_self == recurrence)
@@ -406,6 +406,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
         spike_function_weight = double_literal(0.0);
         SynapseIterator<>::iterate(net->neuron_array(neuron_iterator).input_weights(),
         [&](IndexSynapseInterval weight_synapse, sint32 weight_index){
+          parameter_not_used(weight_synapse);
           if(true == first_weight_in_synapse){
             first_weight_in_synapse = false;
             spike_function_weight = net->weight_table(weight_index);
@@ -512,7 +513,7 @@ TEST_CASE("Solution Solver memory test", "[solve][memory]"){
     .allowed_transfer_functions_by_layer({{transfer_function_identity}})
     .dense_layers({1});
 
-  for(uint32 weight_index = 0; weight_index < net->weight_table_size(); ++weight_index){
+  for(sint32 weight_index = 0; weight_index < net->weight_table_size(); ++weight_index){
     net->set_weight_table(weight_index, double_literal(1.0));
   }
   net->set_weight_table(0u,double_literal(0.0)); /* Set the memory filter of the only neuron to 0, so the previous value of it would not modify the current one through the spike function */

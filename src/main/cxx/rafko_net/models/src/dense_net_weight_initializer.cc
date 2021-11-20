@@ -34,10 +34,14 @@ using rafko_mainframe::ServiceContext;
 sdouble32 DenseNetWeightInitializer::get_weight_amplitude(Transfer_functions used_transfer_function) const{
   sdouble32 amplitude;
   switch(used_transfer_function){
-    case transfer_function_relu:
+  case transfer_function_elu:
+  case transfer_function_relu:
+  case transfer_function_selu:
     amplitude = (sqrt(2 / (expected_input_number))); /* Kaiming initialization */
+    break;
   default:
     amplitude = (sqrt(2 / (expected_input_number * expected_input_maximum_value)));
+    break;
   }
   return max(context.get_epsilon(),amplitude);
 }

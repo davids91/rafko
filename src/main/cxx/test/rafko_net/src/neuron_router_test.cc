@@ -88,6 +88,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
         /* And check its dependencies */
         SynapseIterator<InputSynapseInterval>::iterate(net->neuron_array(layer_start + i).input_indices(),
         [&](InputSynapseInterval input_synapse, sint32 synapse_input_index){
+          parameter_not_used(input_synapse);
           if( /* Every net-internal Neuron input.. */
             (!SynapseIterator<>::is_index_input(synapse_input_index))
             &&(!net_iterator.is_neuron_processed(synapse_input_index))

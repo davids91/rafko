@@ -160,6 +160,7 @@ void manaual_fully_connected_network_result(
       REQUIRE( neuron_data.size() == previous_data.size() );
     first_weight_in_synapse = true;
     SynapseIterator<>::iterate(neuron.input_weights(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
+      parameter_not_used(weight_synapse);
       if(true == first_weight_in_synapse){
         first_weight_in_synapse = false;
         spike_function_weight = network.weight_table(neuron_weight_index);
@@ -231,6 +232,7 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
           inner_neuron_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
             expected_inputs += weight_synapse.interval_size();
           },[&](IndexSynapseInterval weight_synapse, sint32 weight_index){
+            parameter_not_used(weight_synapse);
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
             CHECK(
               solution.partial_solutions(partial_solution_iterator).weight_table(weight_index)

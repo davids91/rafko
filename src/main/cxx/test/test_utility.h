@@ -134,6 +134,6 @@ extern std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_seq
  */
 extern void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& ringbuffer_data);
 
-};
+} /* namespace rafko_net_test */
 
 #endif /* TEST_UTILITY_H */

@@ -165,7 +165,7 @@ void RafkoNetApproximizer::add_to_fragment(uint32 weight_index, sdouble32 gradie
       (
         ((0 < gradient_fragment.weight_synapses(weight_syn_index).starts())
         &&((gradient_fragment.weight_synapses(weight_syn_index).starts()-1) <= static_cast<sint32>(weight_index)))
-        ||((0 == gradient_fragment.weight_synapses(weight_syn_index).starts())&&(0 <= weight_index))
+        ||(0 == gradient_fragment.weight_synapses(weight_syn_index).starts())
       )&&( /* ..and the one after the last index */
         (gradient_fragment.weight_synapses(weight_syn_index).starts() + gradient_fragment.weight_synapses(weight_syn_index).interval_size())
         >= weight_index
@@ -228,6 +228,7 @@ void RafkoNetApproximizer::apply_fragment(void){
     SynapseIterator<>::iterate(gradient_fragment.weight_synapses(), [&](
       IndexSynapseInterval interval, sint32 weight_index
     ){
+      parameter_not_used(interval);
       applied_direction[weight_index] += gradient_fragment.values(fragment_value_index);
       ++fragment_value_index;
     });

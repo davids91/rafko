@@ -48,6 +48,7 @@ uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& ne
       temp_synapse_interval.set_interval_size(weight_synapse.interval_size());
       *partial.add_weight_indices() = temp_synapse_interval;
     },[&](IndexSynapseInterval weight_synapse, sint32 weight_index){
+      parameter_not_used(weight_synapse);
       partial.add_weight_table(net.weight_table(weight_index));
     });
 

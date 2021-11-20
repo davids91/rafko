@@ -214,11 +214,13 @@ public:
     }else last_reached_synapse = 0;
 
     iterate_terminatable([&](Interval_type interval_synapse){
+      parameter_not_used(interval_synapse);
       ++last_reached_synapse;
       last_reached_index = iteration_helper;
       previous_last_reached_index = last_reached_index;
       return true;
     },[&](Interval_type interval_synapse, sint32 synapse_index){
+      parameter_not_used(interval_synapse);
       if(iteration_helper < index){
         ++iteration_helper;
         return true;
@@ -237,7 +239,7 @@ public:
   /**
    * @brief      Gives back a copy of the synapse under the given index:
    *             In a synapse with multiple intervals, the index refers to
-   *             the number of indices, not the number of intervals.
+   *             the number of contained indices, not the number of intervals.
    *
    * @param[in]  index  The index
    *
@@ -252,6 +254,8 @@ public:
       result = interval_synapse;
       return true;
     },[&](Interval_type interval_synapse, sint32 synapse_index){
+      parameter_not_used(interval_synapse);
+      parameter_not_used(synapse_index);
       if(iteration_helper < index){
         ++iteration_helper;
         return true; /* Found the synapse we have been looking for */

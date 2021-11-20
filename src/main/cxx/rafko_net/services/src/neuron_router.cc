@@ -214,6 +214,7 @@ bool NeuronRouter::is_neuron_without_dependency(uint32 neuron_index){
       /* The Neuron is not processed, but included in the subset. Check its inputs! */
       SynapseIterator<InputSynapseInterval>::iterate_terminatable(net.neuron_array(neuron_index).input_indices(),
       [&](InputSynapseInterval input_synapse, sint32 synapse_input_index){
+        parameter_not_used(input_synapse);
         if(!is_neuron_processed(synapse_input_index)){ /* If Neuron input is not processed */
           /* then the input must be in front of the Neuron inside the subset */
           for(deque<uint32>::iterator iter = net_subset.begin(); iter != neuron_in_subset; ++iter){
@@ -247,6 +248,7 @@ vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_index){
         SynapseIterator<InputSynapseInterval>::iterate(
           net.neuron_array(net_subset[subset_iterator]).input_indices(),
           [&](InputSynapseInterval input_synapse, sint32 synapse_index){
+            parameter_not_used(input_synapse);
             if(synapse_index == static_cast<sint32>(neuron_index)){
               result.push_back(net_subset[subset_iterator]);
             }

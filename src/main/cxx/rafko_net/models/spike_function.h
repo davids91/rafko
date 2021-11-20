@@ -48,6 +48,7 @@ public:
    * @return     The derivative from data.
    */
   static sdouble32 get_derivative(sdouble32 parameter, sdouble32 transfer_function_output, sdouble32 previous_value){
+    parameter_not_used(parameter);
     return (previous_value - transfer_function_output);
   }
 };

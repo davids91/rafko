@@ -55,7 +55,7 @@ public:
     uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
       train_set.get_sequence_size() - service_context.get_memory_truncation() + 1 /* ..not all result output values are evaluated.. */
     )); /* ..only service_context.get_memory_truncation(), starting at a random index inside bounds */
-    evaluate(agent, train_set, sequence_start_index, service_context.get_minibatch_size(), start_index_inside_sequence, service_context.get_memory_truncation());
+    evaluate(agent, train_set, sequence_start_index, service_context.get_minibatch_size(), start_index_inside_sequence, used_sequence_truncation);
     ++loops_unchecked; ++iteration;
     return -train_set.get_error_sum();
   }
@@ -105,7 +105,7 @@ private:
 
   uint32 iteration = 1;
   uint32 loops_unchecked;
-  uint32 sequence_truncation;
+  uint32 used_sequence_truncation;
 
   /**
    * @brief      Evaluate the given data set with the given parameters

@@ -62,7 +62,7 @@ public:
     const vector<sdouble32>& input, DataRingbuffer& output,
     const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool, uint32 used_data_pool_start = 0
   ) const;
-  const uint32 get_output_data_size(void) const{
+  uint32 get_output_data_size(void) const{
     return solution.output_neuron_number();
   }
   using Agent::solve;

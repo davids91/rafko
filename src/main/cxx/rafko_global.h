@@ -36,5 +36,6 @@ typedef uint16* p_uint16;
 typedef sdouble32* p_sdouble32;
 
 #define double_literal(number) (number) /* double precision floating point number literals should have these wrappers to make transition to float, or long literals easier */
+#define parameter_not_used(param) ((void)param)
 
 #endif /* defined RAFKO_GLOBAL_H */

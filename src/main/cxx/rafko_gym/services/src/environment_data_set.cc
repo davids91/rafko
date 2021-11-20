@@ -38,7 +38,7 @@ EnvironmentDataSet::EnvironmentDataSet(ServiceContext& service_context_, DataAgg
 )
 , execution_threads(service_context.get_max_processing_threads())
 , loops_unchecked(service_context.get_tolerance_loop_value() + 1u)
-, sequence_truncation(min(service_context.get_memory_truncation(), train_set.get_sequence_size()))
+, used_sequence_truncation(min(service_context.get_memory_truncation(), train_set.get_sequence_size()))
 {
   (void)service_context.set_minibatch_size(max(1u,min(
     train_set.get_number_of_sequences(),service_context.get_minibatch_size()
@@ -51,7 +51,7 @@ EnvironmentDataSet::EnvironmentDataSet(ServiceContext& service_context_, DataAgg
 
 void EnvironmentDataSet::evaluate(
   Agent& agent, DataAggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
-  uint32 start_index_in_sequence, uint32 sequence_tructaion
+  uint32 start_index_in_sequence, uint32 sequence_truncation
 ){
   if(data_set.get_number_of_sequences() < (sequence_start + sequences_to_evaluate))
     throw std::runtime_error("Sequence interval out of bounds!");

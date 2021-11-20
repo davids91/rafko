@@ -76,8 +76,8 @@ public:
   , environment(environment_)
   , solver(SolutionSolver::Builder(*net_solution, service_context).build())
   , weight_updater(UpdaterFactory::build_weight_updater(net, *net_solution, weight_updater_, service_context))
-  , applied_direction(net.weight_table_size())
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
+  , applied_direction(net.weight_table_size())
   {
     environment.full_evaluation(*solver);
   }
@@ -179,7 +179,7 @@ public:
   bool stop_training(void){
     return(
       (1u < iteration)
-      &&(
+      &&((
         (
           service_context.get_training_strategy(rafko_net::Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
           &&(service_context.get_learning_rate() >= -environment.get_training_fitness())
@@ -191,7 +191,7 @@ public:
         service_context.get_training_strategy(rafko_net::Training_strategy::training_strategy_early_stopping)
         &&(environment.get_testing_fitness() < (min_test_error - (min_test_error * service_context.get_delta())))
         &&((iteration - min_test_error_was_at_iteration) > service_context.get_tolerance_loop_value())
-      )
+      ))
     );
   }
 

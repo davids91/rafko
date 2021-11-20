@@ -54,6 +54,7 @@ public:
 
 private:
   sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
+    parameter_not_used(gradients); /* the variable moment contains the processed value of the gradients, so no need to use it here again. */
     return ( service_context.get_learning_rate() * moment[weight_index] / ( std::sqrt(raw_moment_max[weight_index]) + service_context.get_epsilon() ) );
   }
 

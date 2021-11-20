@@ -223,13 +223,11 @@ private:
    *             The @PartialSolution must be built from the RafkoNet, as a pre-requisite.
    *
    * @param[in]  neuron_index                      The index of the Neuron inside the @SparsNet
-   * @param[in]  inner_neuron_index                The index of the Neuron inside the @PartialSolution
    * @param      partial                           The partial solution to update
    * @param[in]  inner_neuron_weight_index_starts  The index in the weight table (of the @PartialSolution) where the inner neuron weights start
    */
   void copy_weights_of_neuron_to_partial_solution(
-    uint32 neuron_index, uint32 inner_neuron_index,
-    PartialSolution& partial, uint32 inner_neuron_weight_index_starts
+    uint32 neuron_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts
   ) const;
 
   /**
@@ -239,13 +237,11 @@ private:
    *
    * @param[in]  neuron_index                      The index of the Neuron inside the @SparsNet
    * @param[in]  weight_index                      The index of the Neurons weight inside the weight table of @SparsNet
-   * @param[in]  inner_neuron_index                The index of the Neuron inside the @PartialSolution
    * @param      partial                           The partial solution to update
    * @param[in]  inner_neuron_weight_index_starts  The index in the weight table (of the @PartialSolution) where the inner neuron weights start
    */
   void copy_weight_of_neuron_to_partial_solution(
-    uint32 neuron_index, uint32 weight_index, uint32 inner_neuron_index,
-    PartialSolution& partial, uint32 inner_neuron_weight_index_starts
+    uint32 neuron_index, uint32 weight_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts
   ) const;
 };
 
