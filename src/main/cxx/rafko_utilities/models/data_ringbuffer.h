@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef DataRingbuffer_H
-#define DataRingbuffer_H
+#ifndef DATA_RINGBUFFER_H
+#define DATA_RINGBUFFER_H
 
 #include "rafko_global.h"
 
@@ -212,4 +212,4 @@ private:
 
 } /* namespace rafko_utilities */
 
-#endif /* DATA_RING_BUFFER_H */
+#endif /* DATA_RINGBUFFER_H */

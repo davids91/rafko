@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef ENVIRONMENT_DATA_SET_H
-#define ENVIRONMENT_DATA_SET_H
+#ifndef RAFKO_ENVIRONMENT_DATA_SET_H
+#define RAFKO_ENVIRONMENT_DATA_SET_H
 
 #include "rafko_global.h"
 
@@ -26,8 +26,8 @@
 #include "rafko_utilities/services/thread_group.h"
 
 #include "rafko_gym/models/data_aggregate.h"
-#include "rafko_gym/services/environment.h"
-#include "rafko_gym/services/agent.h"
+#include "rafko_gym/services/rafko_environment.h"
+#include "rafko_gym/services/rafko_agent.h"
 
 namespace rafko_gym{
 
@@ -37,18 +37,18 @@ using std::reference_wrapper;
 /**
  * @brief      A class representing an environment using a train and test set
  */
-class RAFKO_FULL_EXPORT EnvironmentDataSet : public Environment{
+class RAFKO_FULL_EXPORT RafkoEnvironmentDataSet : public RafkoEnvironment{
 public:
-  EnvironmentDataSet(ServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_);
+  RafkoEnvironmentDataSet(RafkoServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_);
 
-  sdouble32 full_evaluation(Agent& agent){
+  sdouble32 full_evaluation(RafkoAgent& agent){
     evaluate(agent, train_set, 0u, train_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
     evaluate(agent, test_set, 0u, test_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
     loops_unchecked = 0u;
     return -train_set.get_error_sum();
   }
 
-  sdouble32 stochastic_evaluation(Agent& agent, uint32 seed = 0){
+  sdouble32 stochastic_evaluation(RafkoAgent& agent, uint32 seed = 0){
     if(0 < seed)srand(seed);
     check(agent);
     uint32 sequence_start_index = (rand()%(train_set.get_number_of_sequences() - service_context.get_minibatch_size() + 1));
@@ -83,7 +83,7 @@ public:
    *
    * @param[in]      agent    The actor to be evaluated in the current environment
    */
-  void check(Agent& agent){
+  void check(RafkoAgent& agent){
     if(
       (loops_unchecked >= service_context.get_tolerance_loop_value())
       ||(loops_unchecked > (train_set.get_error_sum()/service_context.get_learning_rate()))
@@ -94,10 +94,10 @@ public:
     }
   }
 
-  ~EnvironmentDataSet(void) = default;
+  ~RafkoEnvironmentDataSet(void) = default;
 
 private:
-  ServiceContext& service_context;
+  RafkoServiceContext& service_context;
   DataAggregate& train_set;
   DataAggregate& test_set;
   vector<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
@@ -118,7 +118,7 @@ private:
    * @param[in]  sequence_tructaion         The number of labels to evaluate inside every evaluated sequence
    */
   void evaluate(
-    Agent& agent, DataAggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
+    RafkoAgent& agent, DataAggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_tructaion
   );
 
@@ -131,8 +131,8 @@ private:
    * @param[in]  sequence_index      The sequence to be evaluated inside the @data_set
    * @param[in]  thread_index        The index of the thread the function is used with inside @solve_threads
    */
-  void evaluate_single_sequence(Agent& agent, DataAggregate& data_set, uint32 sequence_index, uint32 thread_index);
+  void evaluate_single_sequence(RafkoAgent& agent, DataAggregate& data_set, uint32 sequence_index, uint32 thread_index);
 };
 
 } /* namespace rafko_gym */
-#endif /* ENVIRONMENT_DATA_SET_H */
+#endif /* RAFKO_ENVIRONMENT_DATA_SET_H */

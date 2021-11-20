@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef WEIGHT_UPDATER_H
-#define WEIGHT_UPDATER_H
+#ifndef RAFKO_WEIGHT_UPDATER_H
+#define RAFKO_WEIGHT_UPDATER_H
 
 #include "rafko_global.h"
 
@@ -26,20 +26,20 @@
 
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_utilities/services/thread_group.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 
 namespace rafko_net{
 
 using rafko_utilities::ThreadGroup;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 /**
  * @brief      Base implementation for updating weights for netowrks based on weight gradients
  */
-class RAFKO_FULL_EXPORT WeightUpdater{
+class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
-  WeightUpdater(
-    RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
+  RafkoWeightUpdater(
+    RafkoNet& rafko_net, Solution& solution_, RafkoServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
   ):net(rafko_net)
   , solution(solution_)
   , service_context(service_context_)
@@ -123,12 +123,12 @@ public:
     return current_velocity;
   }
 
-  virtual ~WeightUpdater() = default;
+  virtual ~RafkoWeightUpdater() = default;
 
 protected:
   RafkoNet& net;
   Solution& solution;
-  ServiceContext& service_context;
+  RafkoServiceContext& service_context;
   const uint32 required_iterations_for_step;
   const uint32 weights_to_do_in_one_thread;
   uint32 iteration;
@@ -247,4 +247,4 @@ private:
 
 } /* namespace rafko_net */
 
-#endif /* WEIGHT_UPDATER_H */
+#endif /* RAFKO_WEIGHT_UPDATER_H */

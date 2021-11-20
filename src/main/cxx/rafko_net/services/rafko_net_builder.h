@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef SPARSE_NET_BUILDER_H
-#define SPARSE_NET_BUILDER_H
+#ifndef RAFKO_NET_BUILDER_H
+#define RAFKO_NET_BUILDER_H
 
 #include "rafko_global.h"
 
@@ -41,7 +41,7 @@ using std::shared_ptr;
  */
 class RAFKO_FULL_EXPORT RafkoNetBuilder{
 public:
-  RafkoNetBuilder(ServiceContext& service_context_)
+  RafkoNetBuilder(RafkoServiceContext& service_context_)
   :  context(service_context_)
   { }
 
@@ -203,7 +203,7 @@ public:
   RafkoNet* build();
 
 private:
-  ServiceContext& context;
+  RafkoServiceContext& context;
 
   /**
    * Helper variables to see if different required arguments are set inside the builder
@@ -274,4 +274,4 @@ private:
 };
 
 } /* namespace rafko_net */
-#endif /* SPARSE_NET_BUILDER_H */
+#endif /* RAFKO_NET_BUILDER_H */

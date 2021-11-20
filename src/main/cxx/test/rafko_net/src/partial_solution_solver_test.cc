@@ -21,7 +21,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/services/partial_solution_solver.h"
@@ -41,7 +41,7 @@ using rafko_net::TransferFunction;
 using rafko_net::IndexSynapseInterval;
 using rafko_net::InputSynapseInterval;
 using rafko_net::SynapseIterator;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 /*###############################################################################################
  * Testing if the solver processes a partial_solution detail correctly
@@ -56,7 +56,7 @@ using rafko_mainframe::ServiceContext;
  */
 
 TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-solution][manual]" ){
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
   DataRingbuffer neuron_data(1,2);
   PartialSolution partial_solution;
   vector<uint32> helper_vector_uint;
@@ -114,7 +114,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
  * - see if the input is collected correctly
  */
 TEST_CASE("Test Partial solution input collection","[solve][partial-solution][input_collection]"){
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
   PartialSolution partial_solution;
   vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
   IndexSynapseInterval temp_index_interval;

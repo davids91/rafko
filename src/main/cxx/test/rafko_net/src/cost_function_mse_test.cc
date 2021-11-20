@@ -20,7 +20,7 @@
 
 #include <random>
 
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/models/cost_function.h"
 #include "rafko_net/models/cost_function_mse.h"
 
@@ -28,7 +28,7 @@
 namespace rafko_net_test {
 
 using rafko_net::CostFunctionMSE;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 using std::vector;
 
@@ -38,7 +38,7 @@ using std::vector;
  * - Calculate the distances to it
  * */
 TEST_CASE( "Error function test", "[training][error-function]" ) {
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
 
   /* create fake data and fake features with a given distance */
   uint16 dataset_size = 500;

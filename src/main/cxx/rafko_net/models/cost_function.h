@@ -26,7 +26,7 @@
 #include <tuple>
 
 #include "rafko_utilities/services/thread_group.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 
 namespace rafko_net{
 
@@ -36,7 +36,7 @@ using std::future;
 using std::tuple;
 
 using rafko_utilities::ThreadGroup;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 /**
  * @brief      Error function handling and utilities, provides a hook for a computation
@@ -44,7 +44,7 @@ using rafko_mainframe::ServiceContext;
  */
 class RAFKO_FULL_EXPORT CostFunction{
 public:
-  CostFunction(uint32 feature_size_, Cost_functions the_function_, ServiceContext& service_context)
+  CostFunction(uint32 feature_size_, Cost_functions the_function_, RafkoServiceContext& service_context)
   : context(service_context)
   , process_threads()
   , thread_results()
@@ -116,7 +116,7 @@ public:
   virtual ~CostFunction(void) = default;
 
 protected:
-  ServiceContext& context;
+  RafkoServiceContext& context;
   vector<thread> process_threads;
   vector<vector<future<sdouble32>>> thread_results;
   uint32 feature_size;

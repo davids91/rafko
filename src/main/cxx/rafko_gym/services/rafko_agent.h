@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef AGENT_H
-#define AGENT_H
+#ifndef RAFKO_AGENT_H
+#define RAFKO_AGENT_H
 
 #include "rafko_global.h"
 
@@ -40,9 +40,9 @@ using rafko_net::Solution;
  * @brief      This class serves as a base for reinforcement learning agent, which provides output data
  *              based on different inputs
  */
-class RAFKO_FULL_EXPORT Agent{
+class RAFKO_FULL_EXPORT RafkoAgent{
 public:
-  Agent(const Solution& brain_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1)
+  RafkoAgent(const Solution& brain_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1)
   : brain(brain_)
   , required_temp_data_number_per_thread(required_temp_data_number_per_thread_)
   , required_temp_data_size(required_temp_data_size_)
@@ -91,7 +91,7 @@ public:
     return brain;
   }
 
-  virtual ~Agent(void) = default;
+  virtual ~RafkoAgent(void) = default;
 
   /**
    * @brief     Provides the size of the buffer it was declared with
@@ -112,4 +112,4 @@ private:
 };
 
 } /* namespace rafko_gym */
-#endif /* AGENT_H */
+#endif /* RAFKO_AGENT_H */

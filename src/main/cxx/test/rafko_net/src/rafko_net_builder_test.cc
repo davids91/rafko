@@ -22,7 +22,7 @@
 
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/synapse_iterator.h"
@@ -42,7 +42,7 @@ using rafko_net::transfer_function_selu;
 using rafko_net::InputSynapseInterval;
 using rafko_net::IndexSynapseInterval;
 using rafko_net::SynapseIterator;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 using std::make_shared;
 using std::shared_ptr;
@@ -60,7 +60,7 @@ using std::vector;
  * 1st and 2nd neurons will have the first as input both
  * */
 RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
-  ServiceContext service_context = ServiceContext().set_arena_ptr(arena);
+  RafkoServiceContext service_context = RafkoServiceContext().set_arena_ptr(arena);
 
   /* Create the single Weight Table */
   IndexSynapseInterval temp_index_interval;
@@ -202,7 +202,7 @@ TEST_CASE("Constructing small net manually using arena","[build][arena][small][m
  * And check manually the connections
  */
 RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
-  ServiceContext service_context = ServiceContext().set_arena_ptr(arena);
+  RafkoServiceContext service_context = RafkoServiceContext().set_arena_ptr(arena);
   unique_ptr<RafkoNetBuilder> builder(make_unique<RafkoNetBuilder>(service_context));
   builder->input_size(5)
     .output_neuron_number(2)

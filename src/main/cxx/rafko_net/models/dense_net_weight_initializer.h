@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef DenseNetWeightInitializer_H
-#define DenseNetWeightInitializer_H
+#ifndef DENSE_NET_WEIGHT_INITIALIZER_H
+#define DENSE_NET_WEIGHT_INITIALIZER_H
 
 #include "rafko_net/models/weight_initializer.h"
 
@@ -35,12 +35,12 @@ public:
    *             To srand with time(nullptr), the constructor needs to be called with
    *             a true boolean argument or given a seed value.
    */
-  DenseNetWeightInitializer(bool seed, ServiceContext& service_context)
+  DenseNetWeightInitializer(bool seed, RafkoServiceContext& service_context)
   :  WeightInitializer(service_context)
   { if(seed)srand(static_cast<uint32>(time(nullptr))); }
 
   DenseNetWeightInitializer(
-    ServiceContext& service_context, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
+    RafkoServiceContext& service_context, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
   ): WeightInitializer(service_context)
   {
     memMin = max(double_literal(0.0), min(double_literal(1.0), memRatioMin));
@@ -48,7 +48,7 @@ public:
   }
 
   DenseNetWeightInitializer(
-    uint32 seed, ServiceContext& service_context,
+    uint32 seed, RafkoServiceContext& service_context,
     sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0)
   ): DenseNetWeightInitializer(service_context, memRatioMin, memRatioMax)
   { srand(seed); }
@@ -80,4 +80,4 @@ private:
 
 } /* namespace rafko_net */
 
-#endif /* DenseNetWeightInitializer_H */
+#endif /* DENSE_NET_WEIGHT_INITIALIZER_H */

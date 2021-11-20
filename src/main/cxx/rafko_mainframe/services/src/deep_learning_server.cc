@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/services/deep_learning_server.h"
+#include "rafko_mainframe/services/rafko_deep_learning_server.h"
 
 #include <thread>
 

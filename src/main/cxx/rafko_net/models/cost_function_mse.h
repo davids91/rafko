@@ -26,13 +26,13 @@ namespace rafko_net{
 
 using std::vector;
 
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 /**
  * @brief      Error function handling and utilities for MSE: C0 = 1/2n(y-y')^2 */
 class RAFKO_FULL_EXPORT CostFunctionMSE : public CostFunction{
 public:
-  CostFunctionMSE(uint32 feature_size_, ServiceContext& service_context)
+  CostFunctionMSE(uint32 feature_size_, RafkoServiceContext& service_context)
   : CostFunction(feature_size_, cost_function_mse, service_context)
   { };
 

@@ -15,12 +15,12 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef ENVIRONMENT_H
-#define ENVIRONMENT_H
+#ifndef RAFKO_ENVIRONMENT_H
+#define RAFKO_ENVIRONMENT_H
 
 #include "rafko_global.h"
 
-#include "rafko_gym/services/agent.h"
+#include "rafko_gym/services/rafko_agent.h"
 
 namespace RAFKO_FULL_EXPORT rafko_gym{
 
@@ -28,7 +28,7 @@ namespace RAFKO_FULL_EXPORT rafko_gym{
  * @brief      A class representing an environment, producing fitness/error value. Error values are negative, while fittness
  *             values are positive
  */
-class Environment{
+class RafkoEnvironment{
 public:
   /**
    * @brief      Evaluates the given agent and returns with its error/fittness value
@@ -36,7 +36,7 @@ public:
    * @param[in]      agent    The actor to be evaluated in the current environment
    * @return         The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 full_evaluation(Agent& agent) = 0;
+  virtual sdouble32 full_evaluation(RafkoAgent& agent) = 0;
 
   /**
    * @brief      Evaluates the given agent in a stochastic manner and returns with its error/fittness value
@@ -45,10 +45,10 @@ public:
    * @param[in]      seed    A helper value to make Stochastic evaluation deterministicly reproducible
    * @return         The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 stochastic_evaluation(Agent& agent, uint32 seed = 0u) = 0;
+  virtual sdouble32 stochastic_evaluation(RafkoAgent& agent, uint32 seed = 0u) = 0;
 
   /**
-   * @brief      Saves the Environment state
+   * @brief      Saves the RafkoEnvironment state
    */
   virtual void push_state(void) = 0;
 
@@ -71,9 +71,9 @@ public:
    */
   virtual void pop_state(void) = 0;
 
-  virtual ~Environment(void) = default;
+  virtual ~RafkoEnvironment(void) = default;
 };
 
 } /* namespace rafko_gym */
 
-#endif /* ENVIRONMENT_H */
+#endif /* RAFKO_ENVIRONMENT_H */

@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef SPARSE_NET_APPROXIMIZER_H
-#define SPARSE_NET_APPROXIMIZER_H
+#ifndef RAFKO_NET_APPROXIMIZER_H
+#define RAFKO_NET_APPROXIMIZER_H
 
 #include "rafko_global.h"
 
@@ -27,14 +27,14 @@
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
 
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
 #include "rafko_net/services/updater_factory.h"
-#include "rafko_net/services/weight_updater.h"
+#include "rafko_net/services/rafko_weight_updater.h"
 
-#include "rafko_gym/services/agent.h"
-#include "rafko_gym/services/environment.h"
+#include "rafko_gym/services/rafko_agent.h"
+#include "rafko_gym/services/rafko_environment.h"
 
 namespace RAFKO_FULL_EXPORT rafko_gym{
 
@@ -42,11 +42,11 @@ using std::min;
 using std::vector;
 using std::unique_ptr;
 
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 using rafko_net::RafkoNet;
 using rafko_net::SolutionBuilder;
 using rafko_net::SolutionSolver;
-using rafko_net::WeightUpdater;
+using rafko_net::RafkoWeightUpdater;
 using rafko_net::Weight_updaters;
 using rafko_net::GradientFragment;
 using rafko_net::UpdaterFactory;
@@ -68,7 +68,7 @@ public:
    * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
   RafkoNetApproximizer(
-    ServiceContext& service_context_, RafkoNet& neural_network, Environment& environment_,
+    RafkoServiceContext& service_context_, RafkoNet& neural_network, RafkoEnvironment& environment_,
     Weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
   ):service_context(service_context_)
   , net(neural_network)
@@ -196,12 +196,12 @@ public:
   }
 
 private:
-  ServiceContext& service_context;
+  RafkoServiceContext& service_context;
   RafkoNet& net;
   Solution* net_solution;
-  Environment& environment;
-  unique_ptr<Agent> solver;
-  unique_ptr<WeightUpdater> weight_updater;
+  RafkoEnvironment& environment;
+  unique_ptr<RafkoAgent> solver;
+  unique_ptr<RafkoWeightUpdater> weight_updater;
   GradientFragment gradient_fragment;
   uint32 stochastic_evaluation_loops;
 
@@ -241,4 +241,4 @@ private:
 
 } /* namespace rafko_gym */
 
-#endif /* SPARSE_NET_APPROXIMIZER_H */
+#endif /* RAFKO_NET_APPROXIMIZER_H */

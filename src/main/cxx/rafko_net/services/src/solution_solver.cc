@@ -26,7 +26,7 @@ namespace rafko_net{
 using std::function;
 using std::ref;
 
-SolutionSolver::Builder::Builder(const Solution& to_solve, ServiceContext& context)
+SolutionSolver::Builder::Builder(const Solution& to_solve, RafkoServiceContext& context)
 :  solution(to_solve)
 ,  service_context(context)
 {

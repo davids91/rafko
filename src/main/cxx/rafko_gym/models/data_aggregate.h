@@ -29,9 +29,9 @@
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
 
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 
-#include "rafko_gym/services/agent.h"
+#include "rafko_gym/services/rafko_agent.h"
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_utilities/models/data_pool.h"
 #include "rafko_net/models/cost_function.h"
@@ -46,7 +46,7 @@ using std::move;
 using std::mutex;
 using std::tuple;
 
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 using rafko_utilities::ThreadGroup;
 using rafko_net::RafkoNet;
 using rafko_net::DataSet;
@@ -87,7 +87,7 @@ using rafko_net::Cost_functions;
  */
 class RAFKO_FULL_EXPORT DataAggregate{
 public:
-  DataAggregate(ServiceContext& service_context_, DataSet& samples_, shared_ptr<CostFunction> cost_function_)
+  DataAggregate(RafkoServiceContext& service_context_, DataSet& samples_, shared_ptr<CostFunction> cost_function_)
   :  service_context(service_context_)
   ,  sequence_size(std::max(1u,samples_.sequence_size()))
   ,  input_samples(samples_.inputs_size() / samples_.input_size())
@@ -106,7 +106,7 @@ public:
   }
 
   DataAggregate(
-    ServiceContext& service_context_,
+    RafkoServiceContext& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
     shared_ptr<CostFunction> cost_function_, uint32 sequence_size_ = 1
   ): service_context(service_context_)
@@ -126,7 +126,7 @@ public:
   }
 
   DataAggregate(
-    ServiceContext& service_context_,
+    RafkoServiceContext& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
     RafkoNet& net, Cost_functions the_function, uint32 sequence_size_ = 1
   ): service_context(service_context_)
@@ -377,7 +377,7 @@ private:
     sdouble32 error_sum;
   };
 
-  ServiceContext& service_context;
+  RafkoServiceContext& service_context;
   uint32 sequence_size;
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;

@@ -22,7 +22,7 @@
 #include <memory>
 
 #include "rafko_protocol/common.pb.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_net/models/cost_function_mse.h"
 
@@ -34,14 +34,14 @@ using std::vector;
 using rafko_net::DataSet;
 using rafko_gym::DataAggregate;
 using rafko_net::CostFunctionMSE;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 /*###############################################################################################
  * Testing Data aggregate implementation and seeing if it converts @DataSet correctly
  * into the data item wih statistics, and take care of statistic error data correctly
  * */
 TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
   sdouble32 expected_label = double_literal(50.0);
@@ -213,7 +213,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
  * are working as expected
  * */
 TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
   const uint32 sample_number = 50;
   const uint32 sequence_size = 5;
   const uint32 selected_index = rand()%(sample_number * sequence_size);

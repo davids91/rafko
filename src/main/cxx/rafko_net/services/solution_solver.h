@@ -28,7 +28,7 @@
 #include <functional>
 
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_gym/services/agent.h"
+#include "rafko_gym/services/rafko_agent.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/services/thread_group.h"
 
@@ -43,13 +43,13 @@ using std::unique_ptr;
 
 using rafko_utilities::ThreadGroup;
 using rafko_utilities::DataRingbuffer;
-using rafko_gym::Agent;
+using rafko_gym::RafkoAgent;
 
 /**
  * @brief      This class Processes a @Solution given in its constructor and handles
  *             the distribution of the needed resources for it.
  */
-class RAFKO_FULL_EXPORT SolutionSolver : public Agent{
+class RAFKO_FULL_EXPORT SolutionSolver : public RafkoAgent{
 public:
   SolutionSolver(const SolutionSolver& other) = delete;/* Copy constructor */
   SolutionSolver(SolutionSolver&& other) = delete; /* Move constructor */
@@ -57,7 +57,7 @@ public:
   SolutionSolver& operator=(SolutionSolver&& other) = delete; /* Move assignment */
   ~SolutionSolver(void) = default;
 
-  /* +++ Methods taken from @Agent +++ */
+  /* +++ Methods taken from @RafkoAgent +++ */
   void solve(
     const vector<sdouble32>& input, DataRingbuffer& output,
     const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool, uint32 used_data_pool_start = 0
@@ -65,14 +65,14 @@ public:
   uint32 get_output_data_size(void) const{
     return solution.output_neuron_number();
   }
-  using Agent::solve;
-  /* --- Methods taken from @Agent --- */
+  using RafkoAgent::solve;
+  /* --- Methods taken from @RafkoAgent --- */
 
 private:
   SolutionSolver(
-    const Solution& to_solve, ServiceContext& context, vector<vector<PartialSolution_solver>> partial_solvers_,
+    const Solution& to_solve, RafkoServiceContext& context, vector<vector<PartialSolution_solver>> partial_solvers_,
     uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
-  ): Agent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_processing_threads())
+  ): RafkoAgent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_processing_threads())
   ,  solution(to_solve)
   ,  service_context(context)
   ,  partial_solvers(partial_solvers_)
@@ -80,7 +80,7 @@ private:
   { }
 
   const Solution& solution;
-  ServiceContext& service_context;
+  RafkoServiceContext& service_context;
   vector<vector<PartialSolution_solver>> partial_solvers;
   mutable mutex threads_mutex;
   ThreadGroup execution_threads;
@@ -88,7 +88,7 @@ private:
 public:
   class Builder{
   public:
-    Builder(const Solution& to_solve, ServiceContext& context);
+    Builder(const Solution& to_solve, RafkoServiceContext& context);
     unique_ptr<SolutionSolver> build(void){
       return unique_ptr<SolutionSolver>(new SolutionSolver(
         solution, service_context, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread
@@ -96,7 +96,7 @@ public:
     }
   private:
     const Solution& solution;
-    ServiceContext& service_context;
+    RafkoServiceContext& service_context;
     vector<vector<PartialSolution_solver>> partial_solvers;
     uint32 max_tmp_size_needed = 0;
     uint32 max_tmp_data_needed_per_thread = 0;

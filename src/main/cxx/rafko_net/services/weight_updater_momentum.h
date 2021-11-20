@@ -18,19 +18,19 @@
 #ifndef WEIGHT_UPDATER_MOMENTUM_H
 #define WEIGHT_UPDATER_MOMENTUM_H
 
-#include "rafko_net/services/weight_updater.h"
+#include "rafko_net/services/rafko_weight_updater.h"
 
 namespace rafko_net{
 
-class RAFKO_FULL_EXPORT WeightUpdaterMomentum : public WeightUpdater{
+class RAFKO_FULL_EXPORT RafkoWeightUpdaterMomentum : public RafkoWeightUpdater{
 public:
-  WeightUpdaterMomentum(RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_)
-  :  WeightUpdater(rafko_net, solution_, service_context_)
+  RafkoWeightUpdaterMomentum(RafkoNet& rafko_net, Solution& solution_, RafkoServiceContext& service_context_)
+  :  RafkoWeightUpdater(rafko_net, solution_, service_context_)
   ,  previous_velocity(rafko_net.weight_table_size(),double_literal(0.0))
   { }
 
   void iterate(const vector<sdouble32>& gradients){
-    WeightUpdater::iterate(gradients);
+    RafkoWeightUpdater::iterate(gradients);
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
 

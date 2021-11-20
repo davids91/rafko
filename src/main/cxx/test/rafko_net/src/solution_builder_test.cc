@@ -20,7 +20,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
@@ -35,7 +35,7 @@ using rafko_net::SolutionSolver;
 using rafko_net::SynapseIterator;
 using rafko_net::network_recurrence_to_self;
 using rafko_net::network_recurrence_to_layer;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 using std::unique_ptr;
 using std::shared_ptr;
@@ -46,7 +46,7 @@ using std::vector;
  * Testing Solution generation using the @RafkoNetBuilder and the @SolutionBuilder
  * */
 Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, vector<uint32> net_structure, uint32 recursion){
-  ServiceContext service_context = ServiceContext()
+  RafkoServiceContext service_context = RafkoServiceContext()
   .set_max_solve_threads(4).set_device_max_megabytes(device_max_megabytes)
   .set_arena_ptr(arena);
 

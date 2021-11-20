@@ -23,7 +23,7 @@ set(NET_HEADER_SERVICES
   services/rafko_net_builder.h
   services/updater_factory.h
   services/weight_experience_space.h
-  services/weight_updater.h
+  services/rafko_weight_updater.h
 )
 set(NET_HEADER_MODELS
   models/cost_function.h

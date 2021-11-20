@@ -20,7 +20,7 @@
 #include <vector>
 #include <thread>
 
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_utilities/models/data_pool.h"
 
 namespace rafko_net_test {

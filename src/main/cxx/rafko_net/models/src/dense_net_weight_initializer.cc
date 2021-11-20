@@ -29,7 +29,7 @@ namespace rafko_net {
 using std::min;
 using std::max;
 
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 sdouble32 DenseNetWeightInitializer::get_weight_amplitude(Transfer_functions used_transfer_function) const{
   sdouble32 amplitude;

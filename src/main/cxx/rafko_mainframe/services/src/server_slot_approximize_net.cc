@@ -201,7 +201,7 @@ void ServerSlotApproximizeNet::update_trainer(void){
     if(environment_data_set){
       environment_data_set.reset();
     }
-    environment_data_set = std::make_shared<EnvironmentDataSet>(
+    environment_data_set = std::make_shared<RafkoEnvironmentDataSet>(
       context, *training_set, *test_set
     );
     network_approximizer = std::make_unique<RafkoNetApproximizer>(

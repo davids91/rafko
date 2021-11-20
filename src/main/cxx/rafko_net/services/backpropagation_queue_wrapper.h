@@ -18,11 +18,11 @@
 #ifndef BACKPROPAGATION_WRAPPER_H
 #define BACKPROPAGATION_WRAPPER_H
 
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 
 namespace rafko_net{
 
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 /**
  * @brief      Wrapper function to generate BackpropagationQueue objects from @RafkoNet
@@ -30,7 +30,7 @@ using rafko_mainframe::ServiceContext;
  */
 class BackpropagationQueueWrapper{
 public:
-  BackpropagationQueueWrapper(RafkoNet& net, ServiceContext& context);
+  BackpropagationQueueWrapper(RafkoNet& net, RafkoServiceContext& context);
   BackpropagationQueue operator()(){
     return gradient_step;
   }

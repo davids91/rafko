@@ -24,22 +24,22 @@
 
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/models/cost_function_mse.h"
 #include "rafko_gym/models/data_aggregate.h"
-#include "rafko_gym/services/environment_data_set.h"
+#include "rafko_gym/services/rafko_environment_data_set.h"
 
 namespace rako_gym_test {
 
 using std::vector;
 using std::reference_wrapper;
 
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 using rafko_utilities::DataRingbuffer;
-using rafko_gym::Agent;
+using rafko_gym::RafkoAgent;
 using rafko_gym::DataAggregate;
-using rafko_gym::EnvironmentDataSet;
+using rafko_gym::RafkoEnvironmentDataSet;
 using rafko_net::Solution;
 using rafko_net::DataSet;
 using rafko_net::CostFunctionMSE;
@@ -47,16 +47,16 @@ using rafko_net::CostFunctionMSE;
 /*###############################################################################################
  * Testing if the data-set environment produces correct error values
  * */
-class DummyAgent : public Agent{
+class DummyRafkoAgent : public RafkoAgent{
 public:
-  DummyAgent(Solution& solution) : Agent(solution,0,0,4) { }
+  DummyRafkoAgent(Solution& solution) : RafkoAgent(solution,0,0,4) { }
   void solve(const vector<sdouble32>&, DataRingbuffer& output, const vector<reference_wrapper<vector<sdouble32>>>&, uint32 ) const{
     output = result;
   }
   void set_result(sdouble32 value){
     result.set_element(0,0,value);
   }
-  ~DummyAgent() = default;
+  ~DummyRafkoAgent() = default;
 private:
   DataRingbuffer result{1,1};
 };
@@ -64,7 +64,7 @@ private:
 TEST_CASE("Testing Dataset environment", "[environment]"){
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
-  ServiceContext service_context = ServiceContext()
+  RafkoServiceContext service_context = RafkoServiceContext()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
@@ -84,13 +84,13 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   /* Create the environment and dummy agent */
   DataAggregate training_set(service_context, data_set, std::make_unique<CostFunctionMSE>(1, service_context));
   DataAggregate test_set(service_context, data_set, std::make_unique<CostFunctionMSE>(1, service_context));
-  EnvironmentDataSet environment(service_context, training_set, test_set);
+  RafkoEnvironmentDataSet environment(service_context, training_set, test_set);
   Solution solution;
   solution.set_neuron_number(1);
   solution.set_output_neuron_number(1);
   solution.set_network_memory_length(1);
   solution.add_cols(1);
-  DummyAgent agent(solution);
+  DummyRafkoAgent agent(solution);
 
   /* Set some error and see if the environment produces the expected */
   agent.set_result(expected_label - set_distance);

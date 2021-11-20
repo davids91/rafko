@@ -20,7 +20,7 @@
 
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/models/cost_function_mse.h"
 #include "rafko_net/services/rafko_net_builder.h"
@@ -40,7 +40,7 @@ using std::chrono::steady_clock;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 using rafko_utilities::DataRingbuffer;
 using rafko_net::RafkoNet;
 using rafko_net::RafkoNetBuilder;
@@ -59,8 +59,8 @@ using rafko_net::FunctionFactory;
 using rafko_net::Solution;
 using rafko_net::SolutionBuilder;
 using rafko_net::SolutionSolver;
-using rafko_gym::Environment;
-using rafko_gym::EnvironmentDataSet;
+using rafko_gym::RafkoEnvironment;
+using rafko_gym::RafkoEnvironmentDataSet;
 using rafko_gym::RafkoNetApproximizer;
 using rafko_gym::DataAggregate;
 
@@ -69,7 +69,7 @@ using rafko_gym::DataAggregate;
  * */
 TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"){
   google::protobuf::Arena arena;
-  ServiceContext service_context = ServiceContext()
+  RafkoServiceContext service_context = RafkoServiceContext()
     .set_max_processing_threads(7)
     .set_learning_rate(1e-1).set_arena_ptr(&arena);
 
@@ -102,7 +102,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
     *nets[0], cost_function_squared_error
   );
-  EnvironmentDataSet env(service_context, *train_set, *test_set);
+  RafkoEnvironmentDataSet env(service_context, *train_set, *test_set);
   RafkoNetApproximizer approximizer(service_context, *nets[0], env, weight_updater_default);
 
   /* adding a simple-weight-gradient fragment */
@@ -163,7 +163,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
  * */
 TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
-  ServiceContext service_context = ServiceContext()
+  RafkoServiceContext service_context = RafkoServiceContext()
     .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
     .set_training_strategy(rafko_net::Training_strategy::training_strategy_stop_if_training_error_zero,true)
     .set_training_strategy(rafko_net::Training_strategy::training_strategy_early_stopping,false)
@@ -194,7 +194,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
     *nets[0], cost_function_squared_error, /* Sequence size */4
-  );  EnvironmentDataSet env(service_context, *train_set, *test_set);
+  );  RafkoEnvironmentDataSet env(service_context, *train_set, *test_set);
   RafkoNetApproximizer approximizer(service_context, *nets[0], env, weight_updater_amsgrad,1);
 
   sdouble32 train_error = 1.0;

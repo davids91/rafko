@@ -25,7 +25,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_gym/models/data_aggregate.h"
 
 namespace rafko_net_test {
@@ -38,7 +38,7 @@ using rafko_net::Solution;
 using rafko_net::PartialSolution;
 using rafko_gym::DataAggregate;
 using rafko_net::Cost_functions;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 /**
  * @brief      generates a partial partial_solution manually based on the Neural Network structure:
@@ -102,7 +102,7 @@ extern void print_weights(RafkoNet& net, Solution& solution);
  * @param      net                    The net
  * @param      service_context        The service context
  */
-extern void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set, RafkoNet& net, ServiceContext& service_context);
+extern void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set, RafkoNet& net, RafkoServiceContext& service_context);
 
 /**
  * @brief      Creates a normalized dataset for addition: basically adding two numbers together.

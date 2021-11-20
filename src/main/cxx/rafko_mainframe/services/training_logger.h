@@ -25,7 +25,7 @@
 
 #include "rafko_protocol/logger.pb.h"
 
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 
 namespace rafko_mainframe{
 
@@ -38,7 +38,7 @@ using std::vector;
  */
 class Training_logger{
 public:
-  Training_logger(string id_, ServiceContext& service_context)
+  Training_logger(string id_, RafkoServiceContext& service_context)
   :  id(id_)
   ,  context(service_context)
   ,  measurement()
@@ -50,7 +50,7 @@ public:
 
 private:
   string id;
-  ServiceContext& context;
+  RafkoServiceContext& context;
   Measurement measurement;
   uint32 changes_since;
 };

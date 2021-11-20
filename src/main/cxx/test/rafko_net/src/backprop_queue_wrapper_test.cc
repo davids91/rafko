@@ -23,7 +23,7 @@
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/backpropagation_queue_wrapper.h"
@@ -39,7 +39,7 @@ using rafko_net::SynapseIterator;
 using rafko_net::BackpropagationQueue;
 using rafko_net::BackpropagationQueueWrapper;
 using rafko_net::NeuronRouter;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 using std::unique_ptr;
 using std::make_unique;
@@ -54,7 +54,7 @@ using std::vector;
  *   that means no input of a neuron shall be calulated before it
  * */
 TEST_CASE( "Testing backpropagation queue", "" ) {
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
   unique_ptr<RafkoNetBuilder> builder(make_unique<RafkoNetBuilder>(service_context));
   builder->input_size(10).expected_input_range(double_literal(5.0));
 

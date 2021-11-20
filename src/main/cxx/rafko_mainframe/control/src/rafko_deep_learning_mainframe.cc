@@ -6,7 +6,7 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
 
-#include "rafko_mainframe/services/deep_learning_server.h"
+#include "rafko_mainframe/services/rafko_deep_learning_server.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;

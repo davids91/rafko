@@ -22,7 +22,7 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
@@ -39,7 +39,7 @@ using rafko_net::RafkoNet;
 using rafko_net::NeuronRouter;
 using rafko_net::SynapseIterator;
 using rafko_net::InputSynapseInterval;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 /*###############################################################################################
  * Testing if the iteration is correctly processing the Sparse net
@@ -48,7 +48,7 @@ using rafko_mainframe::ServiceContext;
  *    Because of the structure of a fully connected Net, one iteration would involve one layer exactly
  * */
 TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small]" ){
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
   /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};
   unique_ptr<RafkoNetBuilder> net_builder = make_unique<RafkoNetBuilder>(service_context);
@@ -120,7 +120,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
  *  by building a Neuron network, ommiting neurons from the subset, and then checking return values
  * */
 TEST_CASE( "Testing Neural Network router dependency interface", "[neuron-iteration][neuron-dependency]" ){
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
 
   /* Build a net and router */
   vector<uint32> layer_structure = {2,3,3,5};

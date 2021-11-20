@@ -22,7 +22,7 @@
 
 #include <memory>
 
-#include "rafko_net/services/weight_updater.h"
+#include "rafko_net/services/rafko_weight_updater.h"
 #include "rafko_net/services/weight_updater_momentum.h"
 #include "rafko_net/services/weight_updater_nesterovs.h"
 #include "rafko_net/services/weight_updater_amsgrad.h"
@@ -45,21 +45,21 @@ public:
    *
    * @return     The weight updater.
    */
-  static unique_ptr<WeightUpdater> build_weight_updater(
-    RafkoNet& net, Solution& solution, Weight_updaters weight_updater, ServiceContext& context
+  static unique_ptr<RafkoWeightUpdater> build_weight_updater(
+    RafkoNet& net, Solution& solution, Weight_updaters weight_updater, RafkoServiceContext& context
   ){
     switch(weight_updater){
       case weight_updater_momentum:
-        return make_unique<WeightUpdaterMomentum>(net, solution, context);
+        return make_unique<RafkoWeightUpdaterMomentum>(net, solution, context);
       case weight_updater_nesterovs:
-        return make_unique<WeightUpdaterNesterovs>(net, solution, context);
+        return make_unique<RafkoWeightUpdaterNesterovs>(net, solution, context);
       case weight_updater_adam:
-        return make_unique<WeightUpdaterAdam>(net, solution, context);
+        return make_unique<RafkoWeightUpdaterAdam>(net, solution, context);
       case weight_updater_amsgrad:
-        return make_unique<WeightUpdaterAMSGrad>(net, solution, context);
+        return make_unique<RafkoWeightUpdaterAMSGrad>(net, solution, context);
       case weight_updater_default:
       default:
-        return make_unique<WeightUpdater>(net, solution, context);
+        return make_unique<RafkoWeightUpdater>(net, solution, context);
     };
   }
 };

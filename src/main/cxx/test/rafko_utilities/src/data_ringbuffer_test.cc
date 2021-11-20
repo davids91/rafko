@@ -20,7 +20,7 @@
 
 #include <vector>
 
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 
 namespace rafko_net_test {
@@ -29,7 +29,7 @@ using std::vector;
 using std::copy;
 
 using rafko_utilities::DataRingbuffer;
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
 /*###############################################################################################
  * Testing Ringbuffer implementation by creating a ringbuffer object and adding new entries in
@@ -43,7 +43,7 @@ void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& ringbuf
 }
 
 TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
   uint32 buffer_number = 5;
   uint32 buffer_size = 30;
   vector<sdouble32> data_sample(buffer_size, double_literal(0.0));
@@ -79,7 +79,7 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
  * - get_sequence_index
  * */
 TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-handling]"){
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
   uint32 sequence_number = 5;
   uint32 buffer_size = 30;
   DataRingbuffer buffer(sequence_number, buffer_size);

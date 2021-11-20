@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef PartialSolution_H
-#define PartialSolution_H
+#ifndef PARTIAL_SOLUTION_SOLVER_H
+#define PARTIAL_SOLUTION_SOLVER_H
 
 #include "rafko_global.h"
 
@@ -44,7 +44,7 @@ using rafko_utilities::DataRingbuffer;
 class PartialSolution_solver{
 
 public:
-  PartialSolution_solver(const PartialSolution& partial_solution, ServiceContext& service_context)
+  PartialSolution_solver(const PartialSolution& partial_solution, RafkoServiceContext& service_context)
   :  detail(partial_solution)
   ,  internal_weight_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())
@@ -147,4 +147,4 @@ private:
 };
 
 } /* namespace rafko_net */
-#endif /* PartialSolution_H */
+#endif /* PARTIAL_SOLUTION_SOLVER_H */

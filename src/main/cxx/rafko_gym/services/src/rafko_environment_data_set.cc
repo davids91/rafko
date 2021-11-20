@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_gym/services/environment_data_set.h"
+#include "rafko_gym/services/rafko_environment_data_set.h"
 
 #include <cmath>
 
@@ -28,7 +28,7 @@ using std::max;
 
 using rafko_utilities::DataRingbuffer;
 
-EnvironmentDataSet::EnvironmentDataSet(ServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_)
+RafkoEnvironmentDataSet::RafkoEnvironmentDataSet(RafkoServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_)
 : service_context(service_context_)
 , train_set(train_set_)
 , test_set(test_set_)
@@ -49,8 +49,8 @@ EnvironmentDataSet::EnvironmentDataSet(ServiceContext& service_context_, DataAgg
   neuron_outputs_to_evaluate.back().resize(train_set.get_number_of_label_samples());
 }
 
-void EnvironmentDataSet::evaluate(
-  Agent& agent, DataAggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
+void RafkoEnvironmentDataSet::evaluate(
+  RafkoAgent& agent, DataAggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation
 ){
   if(data_set.get_number_of_sequences() < (sequence_start + sequences_to_evaluate))
@@ -73,7 +73,7 @@ void EnvironmentDataSet::evaluate(
   data_set.conceal_from_multithreading();
 }
 
-void EnvironmentDataSet::evaluate_single_sequence(Agent& agent, DataAggregate& data_set, uint32 sequence_index, uint32 thread_index){
+void RafkoEnvironmentDataSet::evaluate_single_sequence(RafkoAgent& agent, DataAggregate& data_set, uint32 sequence_index, uint32 thread_index){
   if(data_set.get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */
     /*!Note: This might happen because of the number of used threads might point to a grater index, than the number of sequences;
      * Which is mainly because of division remainder between number fo threads and the number of sequences

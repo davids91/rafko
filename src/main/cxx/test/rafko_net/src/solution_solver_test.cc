@@ -24,7 +24,7 @@
 
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/service_context.h"
+#include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_net/models/transfer_function.h"
@@ -37,7 +37,7 @@
 
 namespace rafko_net_test{
 
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 using rafko_utilities::DataRingbuffer;
 using rafko_utilities::ThreadGroup;
 using rafko_net::RafkoNetBuilder;
@@ -74,10 +74,10 @@ using std::vector;
  * - @PartialSolution [1][1]: takes half from each previous @PartialSolution
  */
 void test_solution_solver_multithread(uint16 threads){
-  ServiceContext service_context;
+  RafkoServiceContext service_context;
 
   /* Define the input, @Solution and partial solution table */
-  ServiceContext context = ServiceContext().set_max_solve_threads(threads);
+  RafkoServiceContext context = RafkoServiceContext().set_max_solve_threads(threads);
   Solution solution;
   solution.set_network_memory_length(1);
   solution.set_neuron_number(8);
@@ -193,7 +193,7 @@ TEST_CASE("Solution solver manual testing","[solve][small][manual-solve]"){
  * Testing if the solution solver produces a correct output, given a built @RafkoNet
  */
 void testing_solution_solver_manually(google::protobuf::Arena* arena){
-  ServiceContext service_context = ServiceContext()
+  RafkoServiceContext service_context = RafkoServiceContext()
   .set_max_solve_threads(4).set_device_max_megabytes(2048)
   .set_arena_ptr(arena);
   vector<uint32> net_structure = {20,40,30,10,20};
@@ -261,7 +261,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   };
 
   /* Build the above described net */
-  ServiceContext service_context = ServiceContext().set_arena_ptr(arena).set_device_max_megabytes(max_space_mb);
+  RafkoServiceContext service_context = RafkoServiceContext().set_arena_ptr(arena).set_device_max_megabytes(max_space_mb);
   RafkoNetBuilder net_builder = RafkoNetBuilder(service_context);
   net_builder.input_size(5).expected_input_range(double_literal(5.0));
   if(network_recurrence_to_self == recurrence)
@@ -332,7 +332,7 @@ TEST_CASE("Solution Solver test with memory", "[solve][memory]"){
  * and compare the calculated results to the one provided by the solution.
  */
 void test_generated_net_by_calculation(google::protobuf::Arena* arena){
-  ServiceContext service_context = ServiceContext().set_arena_ptr(arena);
+  RafkoServiceContext service_context = RafkoServiceContext().set_arena_ptr(arena);
   vector<sdouble32> net_input = {
     double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)
   };
@@ -467,7 +467,7 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
   vector<sdouble32> net_input = {
     double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)
   };
-  ServiceContext service_context = ServiceContext();
+  RafkoServiceContext service_context = RafkoServiceContext();
   RafkoNet* net = RafkoNetBuilder(service_context)
     .input_size(5).expected_input_range(double_literal(5.0))
     .dense_layers(net_structure);
@@ -505,7 +505,7 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
  * Test if the solver is able to remember the previous neuron values correctly
  */
 TEST_CASE("Solution Solver memory test", "[solve][memory]"){
-  ServiceContext service_context = ServiceContext();
+  RafkoServiceContext service_context = RafkoServiceContext();
   RafkoNet* net = RafkoNetBuilder(service_context)
     .input_size(1).expected_input_range(double_literal(5.0))
     .set_recurrence_to_self()

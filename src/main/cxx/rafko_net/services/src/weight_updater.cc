@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/weight_updater.h"
+#include "rafko_net/services/rafko_weight_updater.h"
 
 #include <set>
 
@@ -23,15 +23,15 @@
 
 namespace rafko_net{
 
-using rafko_mainframe::ServiceContext;
+using rafko_mainframe::RafkoServiceContext;
 
-void WeightUpdater::calculate_velocity_thread(const std::vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number){
+void RafkoWeightUpdater::calculate_velocity_thread(const std::vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number){
   for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
     current_velocity[weight_index + weight_iterator] = get_new_velocity(weight_index + weight_iterator, gradients);
   }
 }
 
-void WeightUpdater::update_weight_with_velocity(uint32 weight_index, uint32 weight_number){
+void RafkoWeightUpdater::update_weight_with_velocity(uint32 weight_index, uint32 weight_number){
   for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
     net.set_weight_table(
       weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator)
@@ -39,7 +39,7 @@ void WeightUpdater::update_weight_with_velocity(uint32 weight_index, uint32 weig
   }
 }
 
-void WeightUpdater::calculate_velocity(const std::vector<sdouble32>& gradients){
+void RafkoWeightUpdater::calculate_velocity(const std::vector<sdouble32>& gradients){
   execution_threads.start_and_block([this, &gradients](uint32 thread_index){
     sint32 weight_index_start = weights_to_do_in_one_thread * thread_index;
     if(weight_index_start < net.weight_table_size()){
@@ -51,7 +51,7 @@ void WeightUpdater::calculate_velocity(const std::vector<sdouble32>& gradients){
   });
 }
 
-void WeightUpdater::update_weights_with_velocity(void){
+void RafkoWeightUpdater::update_weights_with_velocity(void){
   execution_threads.start_and_block([this](uint32 thread_index){
     sint32 weight_index_start = weights_to_do_in_one_thread * thread_index;
     if(weight_index_start < net.weight_table_size()){
@@ -61,7 +61,7 @@ void WeightUpdater::update_weights_with_velocity(void){
   });
 }
 
-uint32 WeightUpdater::get_relevant_partial_index_for(uint32 neuron_index) const{
+uint32 RafkoWeightUpdater::get_relevant_partial_index_for(uint32 neuron_index) const{
   if(0 < neurons_in_partials.count(neuron_index))
     return neurons_in_partials.find(neuron_index)->second;
 
@@ -79,7 +79,7 @@ uint32 WeightUpdater::get_relevant_partial_index_for(uint32 neuron_index) const{
   return static_cast<uint32>(-1); /* not found! */
 }
 
-std::vector<std::pair<uint32,uint32>>& WeightUpdater::get_relevant_partial_weight_indices_for(uint32 network_weight_index) const{
+std::vector<std::pair<uint32,uint32>>& RafkoWeightUpdater::get_relevant_partial_weight_indices_for(uint32 network_weight_index) const{
   if(0 < weights_in_partials.count(network_weight_index))
     return weights_in_partials.find(network_weight_index)->second;
 
@@ -137,7 +137,7 @@ std::vector<std::pair<uint32,uint32>>& WeightUpdater::get_relevant_partial_weigh
   return weights_in_partials.find(network_weight_index)->second;
 }
 
-void WeightUpdater::update_solution_with_weight(uint32 weight_index) const{
+void RafkoWeightUpdater::update_solution_with_weight(uint32 weight_index) const{
   assert(static_cast<sint32>(weight_index) < net.weight_table_size());
   std::vector<std::pair<uint32, uint32>>& relevant_partial_weights = get_relevant_partial_weight_indices_for(weight_index);
   for(std::pair<uint32,uint32>& relevant_partial_weight : relevant_partial_weights){
@@ -147,7 +147,7 @@ void WeightUpdater::update_solution_with_weight(uint32 weight_index) const{
   }
 }
 
-void WeightUpdater::update_solution_with_weights(void) const{
+void RafkoWeightUpdater::update_solution_with_weights(void) const{
   sint32 partial_start_index = 0;
   while(partial_start_index < solution.partial_solutions_size()){
     if(
@@ -189,7 +189,7 @@ void WeightUpdater::update_solution_with_weights(void) const{
   } /* while(partial_start_index < solution.partial_solutions_size()) */
 }
 
-void WeightUpdater::copy_weights_of_neuron_to_partial_solution(
+void RafkoWeightUpdater::copy_weights_of_neuron_to_partial_solution(
   uint32 neuron_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts
 ) const{ /*!Note: After shared weight optimization, this part is to be re-worked */
   uint32 weights_copied = 0;
@@ -201,7 +201,7 @@ void WeightUpdater::copy_weights_of_neuron_to_partial_solution(
   });
 }
 
-void WeightUpdater::copy_weight_of_neuron_to_partial_solution(uint32 neuron_index, uint32 weight_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts) const{
+void RafkoWeightUpdater::copy_weight_of_neuron_to_partial_solution(uint32 neuron_index, uint32 weight_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts) const{
   /*!Note: After shared weight optimization, this part is to be re-worked */
   uint32 weights_copied = 0;
   SynapseIterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 network_weight_index){

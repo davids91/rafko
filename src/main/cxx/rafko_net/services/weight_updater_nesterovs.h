@@ -15,26 +15,26 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef WEIGHT_UPDATER_NESTEROV_H
-#define WEIGHT_UPDATER_NESTEROV_H
+#ifndef WEIGHT_UPDATER_NESTEROVS_H
+#define WEIGHT_UPDATER_NESTEROVS_H
 
-#include "rafko_net/services/weight_updater.h"
+#include "rafko_net/services/rafko_weight_updater.h"
 
 namespace rafko_net{
 
-class RAFKO_FULL_EXPORT WeightUpdaterNesterovs : public WeightUpdater{
+class RAFKO_FULL_EXPORT RafkoWeightUpdaterNesterovs : public RafkoWeightUpdater{
 public:
-  WeightUpdaterNesterovs(RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_)
-  :  WeightUpdater(rafko_net, solution_, service_context_, 2)
+  RafkoWeightUpdaterNesterovs(RafkoNet& rafko_net, Solution& solution_, RafkoServiceContext& service_context_)
+  :  RafkoWeightUpdater(rafko_net, solution_, service_context_, 2)
   { }
 
   void iterate(const vector<sdouble32>& gradients){
-    WeightUpdater::iterate(gradients);
+    RafkoWeightUpdater::iterate(gradients);
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
 
   void start(void){
-    WeightUpdater::start();
+    RafkoWeightUpdater::start();
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity_at_start.begin());
   }
 
@@ -56,4 +56,4 @@ private:
 
 } /* namespace rafko_net */
 
-#endif /* WEIGHT_UPDATER_NESTEROV_H */
+#endif /* WEIGHT_UPDATER_NESTEROVS_H */

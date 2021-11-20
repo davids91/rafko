@@ -590,7 +590,7 @@ public class DashboardController implements Initializable {
                     .setStepSize(1e-2).setMinibatchSize(64).setMemoryTruncation(3)
                     .build())
             .setCostFunction(RafkoCommon.cost_functions.cost_function_mse)
-            .setWeightUpdater(RafkoCommon.weight_updaters.weight_updater_momentum);
+            .setRafkoWeightUpdater(RafkoCommon.weight_updaters.weight_updater_momentum);
 
         if(
             (0 < selected_slot_state)

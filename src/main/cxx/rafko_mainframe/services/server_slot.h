@@ -149,7 +149,7 @@ private:
   google::protobuf::Arena arena;
 
 protected:
-  ServiceContext context;
+  RafkoServiceContext context;
   ServiceSlot* service_slot;
 
   /**

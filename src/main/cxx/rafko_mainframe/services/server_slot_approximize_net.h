@@ -30,7 +30,7 @@ namespace rafko_mainframe{
 using rafko_net::CostFunction;
 using rafko_gym::DataAggregate;
 using rafko_gym::RafkoNetApproximizer;
-using rafko_gym::EnvironmentDataSet;
+using rafko_gym::RafkoEnvironmentDataSet;
 
 using std::unique_ptr;
 using std::shared_ptr;
@@ -112,7 +112,7 @@ private:
   shared_ptr<CostFunction> cost_function;
   shared_ptr<DataAggregate> training_set;
   shared_ptr<DataAggregate> test_set;
-  shared_ptr<EnvironmentDataSet> environment_data_set;
+  shared_ptr<RafkoEnvironmentDataSet> environment_data_set;
   unique_ptr<RafkoNetApproximizer> network_approximizer;
 
   uint32 iteration = 0;
