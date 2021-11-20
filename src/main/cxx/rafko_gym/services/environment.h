@@ -22,7 +22,7 @@
 
 #include "rafko_gym/services/agent.h"
 
-namespace rafko_gym{
+namespace RAFKO_FULL_EXPORT rafko_gym{
 
 /**
  * @brief      A class representing an environment, producing fitness/error value. Error values are negative, while fittness

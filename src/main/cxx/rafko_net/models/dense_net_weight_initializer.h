@@ -27,7 +27,7 @@ namespace rafko_net {
  *             under @WeightInitializer. The Aim of this specialization is to provide correct weight,
  *             bias and memory filter initalization to Fully Connected(Dense) Feedforward Neural networks.
  */
-class DenseNetWeightInitializer : public WeightInitializer{
+class RAFKO_FULL_EXPORT DenseNetWeightInitializer : public WeightInitializer{
 public:
 
   /**

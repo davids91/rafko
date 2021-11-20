@@ -36,7 +36,7 @@ using std::mutex;
  *              data acess. The container is thread-safe.
  */
 template<class T>
-class DataPool{
+class RAFKO_FULL_EXPORT DataPool{
 public:
   DataPool(uint32 pool_size, uint32 expected_buffer_size)
   : buffer_pool(pool_size, vector<T>())

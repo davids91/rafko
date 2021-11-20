@@ -48,7 +48,7 @@ using std::size_t;
  *          defined in the constructor of the template object. The class itself is not thread safe! Use a mutex
  *          to run the same instance from multiple threads.
  */
-class ThreadGroup{
+class RAFKO_FULL_EXPORT ThreadGroup{
 public:
   ThreadGroup(uint32 number_of_threads)
   {

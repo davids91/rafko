@@ -30,7 +30,7 @@ using rafko_mainframe::ServiceContext;
 
 /**
  * @brief      Error function handling and utilities for Squared Error: C0 = ((y-y')^2)/2 */
-class CostFunctionSquaredError : public CostFunction{
+class RAFKO_FULL_EXPORT CostFunctionSquaredError : public CostFunction{
 public:
   CostFunctionSquaredError(uint32 feature_size_, ServiceContext& service_context)
   : CostFunction(feature_size_, cost_function_squared_error, service_context)

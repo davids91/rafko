@@ -42,7 +42,7 @@ using rafko_mainframe::ServiceContext;
  * @brief      Error function handling and utilities, provides a hook for a computation
  *             function to be run on every sample by feature.
  */
-class CostFunction{
+class RAFKO_FULL_EXPORT CostFunction{
 public:
   CostFunction(uint32 feature_size_, Cost_functions the_function_, ServiceContext& service_context)
   : context(service_context)

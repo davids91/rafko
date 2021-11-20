@@ -1,5 +1,5 @@
 add_library(rafko_utilities INTERFACE)
-target_include_directories(rafko_utilities INTERFACE ${PROJECT_SOURCE_DIR}  models services)
+target_include_directories(rafko_utilities INTERFACE ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}  models services)
 target_link_libraries(rafko_utilities INTERFACE rafko_protocol)
 set(UTIL_INTERFACE_MODELS
   models/data_pool.h

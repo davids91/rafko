@@ -36,7 +36,7 @@
 #include "rafko_gym/services/agent.h"
 #include "rafko_gym/services/environment.h"
 
-namespace rafko_gym{
+namespace RAFKO_FULL_EXPORT rafko_gym{
 
 using std::min;
 using std::vector;

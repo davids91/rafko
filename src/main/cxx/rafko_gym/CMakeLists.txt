@@ -1,6 +1,6 @@
-add_library(rafko_gym)
+add_library(rafko_gym OBJECT)
 target_link_libraries(rafko_gym PUBLIC rafko_protocol rafko_net)
-target_include_directories(rafko_gym PUBLIC ${PROJECT_SOURCE_DIR} models services)
+target_include_directories(rafko_gym PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services)
 set(GYM_INTERFACE_SERVICES
   services/environment_data_set.h
 )

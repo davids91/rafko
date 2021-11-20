@@ -49,7 +49,7 @@ using rafko_gym::Agent;
  * @brief      This class Processes a @Solution given in its constructor and handles
  *             the distribution of the needed resources for it.
  */
-class SolutionSolver : public Agent{
+class RAFKO_FULL_EXPORT SolutionSolver : public Agent{
 public:
   SolutionSolver(const SolutionSolver& other) = delete;/* Copy constructor */
   SolutionSolver(SolutionSolver&& other) = delete; /* Move constructor */

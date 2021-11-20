@@ -22,7 +22,7 @@
 
 namespace rafko_net{
 
-class WeightUpdaterMomentum : public WeightUpdater{
+class RAFKO_FULL_EXPORT WeightUpdaterMomentum : public WeightUpdater{
 public:
   WeightUpdaterMomentum(RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_)
   :  WeightUpdater(rafko_net, solution_, service_context_)

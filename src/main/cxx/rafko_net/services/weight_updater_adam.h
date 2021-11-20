@@ -22,7 +22,7 @@
 
 namespace rafko_net{
 
-class WeightUpdaterAdam : public WeightUpdater{
+class RAFKO_FULL_EXPORT WeightUpdaterAdam : public WeightUpdater{
 public:
   WeightUpdaterAdam(RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_)
   :  WeightUpdater(rafko_net, solution_, service_context_)

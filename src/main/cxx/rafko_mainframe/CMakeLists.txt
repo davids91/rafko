@@ -1,10 +1,10 @@
 set( MAINFRAME_MODEL_HEADERS
   models/service_context.h
 )
+add_library(rafko_mainframe)
+target_include_directories(rafko_mainframe PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services control)
 
 if(BUILD_MAINFRAME)
-  add_library(rafko_mainframe)
-  target_include_directories(rafko_mainframe PUBLIC ${PROJECT_SOURCE_DIR} models services control)
   target_link_libraries(rafko_mainframe PUBLIC rafko_protocol)
   target_sources(rafko_mainframe
     INTERFACE
@@ -30,8 +30,6 @@ if(BUILD_MAINFRAME)
     DESTINATION include/rafko_mainframe/models
   )
 else()
-  add_library(rafko_mainframe)
-  target_include_directories(rafko_mainframe PUBLIC ${PROJECT_SOURCE_DIR} models)
   set_target_properties(rafko_mainframe PROPERTIES LINKER_LANGUAGE CXX)
   target_sources(rafko_mainframe
     INTERFACE

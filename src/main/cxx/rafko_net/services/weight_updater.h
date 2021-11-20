@@ -36,7 +36,7 @@ using rafko_mainframe::ServiceContext;
 /**
  * @brief      Base implementation for updating weights for netowrks based on weight gradients
  */
-class WeightUpdater{
+class RAFKO_FULL_EXPORT WeightUpdater{
 public:
   WeightUpdater(
     RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_, uint32 required_iterations_for_step_ = 1

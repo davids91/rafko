@@ -40,7 +40,7 @@ using std::vector;
  *             the data from the previous loops into the current one. The data under the current loop
  *             needs to keep its contents, while the data from previous loops also need to be stored.
  */
-class DataRingbuffer{
+class RAFKO_FULL_EXPORT DataRingbuffer{
 public:
   DataRingbuffer(uint32 buffer_number, uint32 buffer_size)
   :  current_index(0)

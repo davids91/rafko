@@ -85,7 +85,7 @@ using rafko_net::Cost_functions;
  *             contigous array.
 
  */
-class DataAggregate{
+class RAFKO_FULL_EXPORT DataAggregate{
 public:
   DataAggregate(ServiceContext& service_context_, DataSet& samples_, shared_ptr<CostFunction> cost_function_)
   :  service_context(service_context_)

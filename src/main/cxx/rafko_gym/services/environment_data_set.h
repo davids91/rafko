@@ -37,7 +37,7 @@ using std::reference_wrapper;
 /**
  * @brief      A class representing an environment using a train and test set
  */
-class EnvironmentDataSet : public Environment{
+class RAFKO_FULL_EXPORT EnvironmentDataSet : public Environment{
 public:
   EnvironmentDataSet(ServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_);
 

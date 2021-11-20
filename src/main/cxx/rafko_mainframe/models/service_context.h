@@ -38,7 +38,7 @@ using std::get;
 using rafko_mainframe::ServiceHyperparameters;
 using rafko_net::Training_strategy;
 
-class ServiceContext{
+class RAFKO_FULL_EXPORT ServiceContext{
 public:
   uint16 get_max_solve_threads(void) const{
     return max_solve_threads;

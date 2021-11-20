@@ -40,7 +40,7 @@ using rafko_net::Solution;
  * @brief      This class serves as a base for reinforcement learning agent, which provides output data
  *              based on different inputs
  */
-class Agent{
+class RAFKO_FULL_EXPORT Agent{
 public:
   Agent(const Solution& brain_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1)
   : brain(brain_)

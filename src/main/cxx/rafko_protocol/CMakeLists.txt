@@ -1,9 +1,7 @@
-add_library(rafko_protocol)
-file(MAKE_DIRECTORY   ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol)
+add_library(rafko_protocol OBJECT)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol)
 target_include_directories(rafko_protocol
-  PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen
-  ${Protobuf_INCLUDE_DIRS}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gen
 )
 find_package(Protobuf CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)

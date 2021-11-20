@@ -39,7 +39,7 @@ using std::shared_ptr;
  * manually. The Other is to use one of the higher level construction functions like @RafkoNetBuilder::dense_layers.
  * Some parameters needed to be added unconditionally, which is checked by @RafkoNetBuilder::io_pre_requisites_set.
  */
-class RafkoNetBuilder{
+class RAFKO_FULL_EXPORT RafkoNetBuilder{
 public:
   RafkoNetBuilder(ServiceContext& service_context_)
   :  context(service_context_)

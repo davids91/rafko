@@ -18,6 +18,8 @@
 #ifndef RAFKO_GLOBAL_H
 #define RAFKO_GLOBAL_H
 
+#include "rafko_export.h"
+
 /**
  * GLOBAL TYPES
  */

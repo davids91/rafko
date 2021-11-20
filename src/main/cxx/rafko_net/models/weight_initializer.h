@@ -33,7 +33,7 @@ using std::numeric_limits;
 
 using rafko_mainframe::ServiceContext;
 
-class WeightInitializer{
+class RAFKO_FULL_EXPORT WeightInitializer{
 public:
   /**
    * @brief      Constructs the object.

@@ -22,7 +22,7 @@
 
 namespace rafko_net{
 
-class WeightUpdaterNesterovs : public WeightUpdater{
+class RAFKO_FULL_EXPORT WeightUpdaterNesterovs : public WeightUpdater{
 public:
   WeightUpdaterNesterovs(RafkoNet& rafko_net, Solution& solution_, ServiceContext& service_context_)
   :  WeightUpdater(rafko_net, solution_, service_context_, 2)
