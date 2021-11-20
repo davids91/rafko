@@ -63,23 +63,23 @@ public:
   ,  last_reached_index(0)
   { };
 
-  void iterate(function< void(Interval_type,sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
-    iterate(synapse_interval, do_for_each_index,interval_start,interval_size_);
+  void iterate(function< void(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    iterate(synapse_interval, do_for_each_index, interval_start, interval_size_);
   }
-  void iterate(function< void(Interval_type) > do_for_each_synapse, function< void(Interval_type,sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
-    iterate(synapse_interval, do_for_each_synapse,do_for_each_index,interval_start,interval_size_);
+  void iterate(function< void(Interval_type) > do_for_each_synapse, function< void(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    iterate(synapse_interval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
   }
-  void iterate_terminatable(function< bool(Interval_type,sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
-    iterate_terminatable(synapse_interval, do_for_each_index,interval_start,interval_size_);
+  void iterate_terminatable(function< bool(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    iterate_terminatable(synapse_interval, do_for_each_index, interval_start, interval_size_);
   }
-  void iterate_terminatable(function< bool(Interval_type) > do_for_each_synapse, function< bool(Interval_type,sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
-    iterate_terminatable(synapse_interval, do_for_each_synapse,do_for_each_index,interval_start,interval_size_);
+  void iterate_terminatable(function< bool(Interval_type) > do_for_each_synapse, function< bool(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+    iterate_terminatable(synapse_interval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
   }
   void skim(function< void(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
-    skim(synapse_interval, do_for_each_synapse,interval_start,interval_size_);
+    skim(synapse_interval, do_for_each_synapse, interval_start, interval_size_);
   }
   void skim_terminatable(function< bool(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
-    skim_terminatable(synapse_interval, do_for_each_synapse,interval_start,interval_size_);
+    skim_terminatable(synapse_interval, do_for_each_synapse, interval_start, interval_size_);
   }
 
   static void skim(
@@ -95,7 +95,7 @@ public:
 
   static void iterate(
     const RepeatedPtrField<Interval_type>& arg_synapse_interval,
-    function< void(Interval_type,sint32) > do_for_each_index,
+    function< void(sint32) > do_for_each_index,
     uint32 interval_start = 0, uint32 interval_size_ = 0
   ){
     uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
@@ -104,12 +104,12 @@ public:
       uint32 this_interval_start = arg_synapse_interval[syn_iter].starts();
       if(!is_index_input(this_interval_start)){
         for(uint32 input_iterator = 0; input_iterator < this_interval_size ;++input_iterator){
-          do_for_each_index( arg_synapse_interval[syn_iter], (this_interval_start + input_iterator) );
+          do_for_each_index(this_interval_start + input_iterator);
         }
       }
       else /* current @starts. element is from the input, iterate in a negative way */
         for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator){
-          do_for_each_index( arg_synapse_interval[syn_iter], (this_interval_start - input_iterator) );
+          do_for_each_index(this_interval_start - input_iterator);
         }
     } /* For every synapse */
   }
@@ -117,7 +117,7 @@ public:
   static void iterate(
     const RepeatedPtrField<Interval_type>& arg_synapse_interval,
     function< void(Interval_type) > do_for_each_synapse,
-    function< void(Interval_type,sint32) > do_for_each_index,
+    function< void(sint32) > do_for_each_index,
     uint32 interval_start = 0, uint32 interval_size_ = 0
   ){
     uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
@@ -127,11 +127,11 @@ public:
       uint32 this_interval_start = arg_synapse_interval[syn_iter].starts();
       if(!is_index_input(this_interval_start)){
         for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator){
-          do_for_each_index( arg_synapse_interval[syn_iter], (this_interval_start + input_iterator) );
+          do_for_each_index(this_interval_start + input_iterator);
         }
       }else{ /* current @starts. element is from the input, iterate in a negative way */
         for(sint32 input_iterator = 0; static_cast<uint32>(input_iterator) < this_interval_size;++input_iterator){
-          do_for_each_index( arg_synapse_interval[syn_iter], (this_interval_start - input_iterator) );
+          do_for_each_index(this_interval_start - input_iterator);
         }
       }
     } /* For every synapse */
@@ -150,7 +150,7 @@ public:
 
   static void iterate_terminatable(
     const RepeatedPtrField<Interval_type>& arg_synapse_interval,
-    function< bool(Interval_type,sint32) > do_for_each_index,
+    function< bool(sint32) > do_for_each_index,
     uint32 interval_start = 0, uint32 interval_size_ = 0
   ){
     uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
@@ -159,11 +159,11 @@ public:
       uint32 this_interval_start = arg_synapse_interval[syn_iter].starts();
       if(!is_index_input(this_interval_start)){
         for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
-          if(!do_for_each_index( arg_synapse_interval[syn_iter], (this_interval_start + input_iterator)) )
+          if(!do_for_each_index(this_interval_start + input_iterator))
             return;
       }else{ /* current @starts. element is from the input, iterate in a negative way */
         for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
-          if(!do_for_each_index( arg_synapse_interval[syn_iter], (this_interval_start - input_iterator)) )
+          if(!do_for_each_index(this_interval_start - input_iterator))
             return;
       }
     } /* For every synapse */
@@ -172,7 +172,7 @@ public:
   static void iterate_terminatable(
     const RepeatedPtrField<Interval_type>& arg_synapse_interval,
     function< bool(Interval_type) > do_for_each_synapse,
-    function< bool(Interval_type,sint32) > do_for_each_index,
+    function< bool(sint32) > do_for_each_index,
     uint32 interval_start = 0, uint32 interval_size_ = 0
   ){
     uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
@@ -183,11 +183,11 @@ public:
       uint32 this_interval_start = arg_synapse_interval[syn_iter].starts();
       if(!is_index_input(this_interval_start)){
         for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
-          if(!do_for_each_index( arg_synapse_interval[syn_iter], (this_interval_start + input_iterator)) )
+          if(!do_for_each_index(this_interval_start + input_iterator))
             return;
       }else{ /* current @starts. element is from the input, iterate in a negative way */
         for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
-          if(!do_for_each_index( arg_synapse_interval[syn_iter], (this_interval_start - input_iterator)) )
+          if(!do_for_each_index(this_interval_start - input_iterator))
             return;
       }
     } /* For every synapse */
@@ -219,8 +219,7 @@ public:
       last_reached_index = iteration_helper;
       previous_last_reached_index = last_reached_index;
       return true;
-    },[&](Interval_type interval_synapse, sint32 synapse_index){
-      parameter_not_used(interval_synapse);
+    },[&](sint32 synapse_index){
       if(iteration_helper < index){
         ++iteration_helper;
         return true;
@@ -253,8 +252,7 @@ public:
     iterate_terminatable([&](Interval_type interval_synapse){
       result = interval_synapse;
       return true;
-    },[&](Interval_type interval_synapse, sint32 synapse_index){
-      parameter_not_used(interval_synapse);
+    },[&](sint32 synapse_index){
       parameter_not_used(synapse_index);
       if(iteration_helper < index){
         ++iteration_helper;

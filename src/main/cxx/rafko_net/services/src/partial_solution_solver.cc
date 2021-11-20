@@ -63,8 +63,7 @@ void PartialSolution_solver::solve_internal(const vector<sdouble32>& input_data,
     new_neuron_data = 0;
     first_weight_in_synapse = true;
     spike_function_weight = double_literal(0.0);
-    internal_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse, sint32 weight_index){
-      parameter_not_used(weight_synapse);
+    internal_weight_iterator.iterate([&](sint32 weight_index){
       if(true == first_weight_in_synapse){ /* as per structure, the first weight is for the spike function */
         first_weight_in_synapse = false;
         spike_function_weight = detail.weight_table(weight_index);

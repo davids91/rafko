@@ -118,10 +118,14 @@ uint32 NeuronRouter::get_next_neuron(vector<uint32>& visiting, bool strict){
       }); /* Skim through its input synapses */
     }
     number_of_processed_inputs = start_input_index_from;
-    iter.iterate_terminatable([&](InputSynapseInterval input_synapse, sint32 synapse_input_index){
+    uint32 current_backreach;
+    iter.iterate_terminatable([&](InputSynapseInterval input_synapse){
+      current_backreach = input_synapse.reach_past_loops();
+      return true;
+    },[&](sint32 synapse_input_index){
       if(
         (SynapseIterator<>::is_index_input(synapse_input_index))
-        ||(0 < input_synapse.reach_past_loops()) /* Inputs from the past count as already processed */
+        ||(0 < current_backreach) /* Inputs from the past count as already processed */
         ||(is_neuron_processed(synapse_input_index))
         ||((!strict)&&(is_neuron_reserved(synapse_input_index)))
         /*!Note: In non-strict mode usually the whole of the net is collected into the subset in order,
@@ -212,9 +216,7 @@ bool NeuronRouter::is_neuron_without_dependency(uint32 neuron_index){
     deque<uint32>::iterator neuron_in_subset = std::find(net_subset.begin(), net_subset.end(), neuron_index);
     if(net_subset.end() != neuron_in_subset){ /* The Neuron must be included in the subset if it's not processed already to not have any dependencies */
       /* The Neuron is not processed, but included in the subset. Check its inputs! */
-      SynapseIterator<InputSynapseInterval>::iterate_terminatable(net.neuron_array(neuron_index).input_indices(),
-      [&](InputSynapseInterval input_synapse, sint32 synapse_input_index){
-        parameter_not_used(input_synapse);
+      SynapseIterator<InputSynapseInterval>::iterate_terminatable(net.neuron_array(neuron_index).input_indices(),[&](sint32 synapse_input_index){
         if(!is_neuron_processed(synapse_input_index)){ /* If Neuron input is not processed */
           /* then the input must be in front of the Neuron inside the subset */
           for(deque<uint32>::iterator iter = net_subset.begin(); iter != neuron_in_subset; ++iter){
@@ -247,8 +249,7 @@ vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_index){
         /* go through the subset and omit the Neurons who have this one as a dependency */
         SynapseIterator<InputSynapseInterval>::iterate(
           net.neuron_array(net_subset[subset_iterator]).input_indices(),
-          [&](InputSynapseInterval input_synapse, sint32 synapse_index){
-            parameter_not_used(input_synapse);
+          [&](sint32 synapse_index){
             if(synapse_index == static_cast<sint32>(neuron_index)){
               result.push_back(net_subset[subset_iterator]);
             }

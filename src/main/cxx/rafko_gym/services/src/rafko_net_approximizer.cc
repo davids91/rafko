@@ -225,10 +225,7 @@ void RafkoNetApproximizer::apply_fragment(void){
       applied_direction.begin() + gradient_fragment.weight_synapses(0).starts()
     );
   }else{
-    SynapseIterator<>::iterate(gradient_fragment.weight_synapses(), [&](
-      IndexSynapseInterval interval, sint32 weight_index
-    ){
-      parameter_not_used(interval);
+    SynapseIterator<>::iterate(gradient_fragment.weight_synapses(), [&](sint32 weight_index){
       applied_direction[weight_index] += gradient_fragment.values(fragment_value_index);
       ++fragment_value_index;
     });

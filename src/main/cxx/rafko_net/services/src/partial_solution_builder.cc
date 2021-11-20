@@ -47,8 +47,7 @@ uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& ne
       temp_synapse_interval.set_starts(partial.weight_table_size());
       temp_synapse_interval.set_interval_size(weight_synapse.interval_size());
       *partial.add_weight_indices() = temp_synapse_interval;
-    },[&](IndexSynapseInterval weight_synapse, sint32 weight_index){
-      parameter_not_used(weight_synapse);
+    },[&](sint32 weight_index){
       partial.add_weight_table(net.weight_table(weight_index));
     });
 
@@ -58,15 +57,16 @@ uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& ne
     previous_neuron_input_index = input_synapse.size(); /* Input value to point above the size of the input */
     const uint32 index_synapse_previous_size = partial.inside_indices_size();
 
+    uint32 current_backreach;
     input_iterator.iterate([&](InputSynapseInterval interval_synapse){
+      current_backreach = interval_synapse.reach_past_loops();
       if(interval_synapse.reach_past_loops() > max_reach_back)
          max_reach_back = interval_synapse.reach_past_loops();
-    },[&](InputSynapseInterval interval_synapse, sint32 neuron_input_index){ /* Put each Neuron input into the @PartialSolution */
-      if(!look_for_neuron_input(neuron_input_index, interval_synapse.reach_past_loops(), input_synapse, partial)){
+    },[&](sint32 neuron_input_index){ /* Put each Neuron input into the @PartialSolution */
+      if(!look_for_neuron_input(neuron_input_index, current_backreach, input_synapse, partial)){
         /* Check if the partial input synapse needs to be closed */
         if( /* if the Neuron has any inputs from the past or not found internally */
-          (0 < interval_synapse.reach_past_loops())
-          ||(!look_for_neuron_input_internally(neuron_input_index, partial))
+          (0 < current_backreach)||(!look_for_neuron_input_internally(neuron_input_index, partial))
         ){
           if( /* Close input synapse if */
             (0 < partial_input_synapse_count) /* There is one open already */
@@ -76,9 +76,8 @@ uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& ne
               )||(
                 (!SynapseIterator<>::is_index_input(neuron_input_index))
                 &&(input_synapse.back() != neuron_input_index-1)
-              )||(/* Current index not in same memory depth */
-                input_synapse.last_synapse().reach_past_loops() != interval_synapse.reach_past_loops()
-            ))
+              )||(input_synapse.last_synapse().reach_past_loops() != current_backreach) /* Current index not in same memory depth */
+            )
           ){
             partial_input_synapse_count = 0; /* Close synapse! */
           }
@@ -94,10 +93,7 @@ uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& ne
             SynapseIterator<>::synapse_index_from_input_index(input_synapse.size()), 0,
             neuron_synapse_count, partial.mutable_inside_indices()
           );
-          add_to_synapse(
-            neuron_input_index, interval_synapse.reach_past_loops(),
-            partial_input_synapse_count, partial.mutable_input_data()
-          );
+          add_to_synapse(neuron_input_index, current_backreach,partial_input_synapse_count, partial.mutable_input_data());
         }/* Neuron input was found internally in the @PartialSolution */
       }/* Neuron input was found in the @PartialSolution inputs, continue to look for it.. */
     });
@@ -119,13 +115,14 @@ bool PartialSolutionBuilder::look_for_neuron_input(
   SynapseIterator<InputSynapseInterval>& input_synapse, PartialSolution& partial
 ){
   uint32 candidate_synapse_index = input_synapse.size();
-  input_synapse.iterate_terminatable([&](InputSynapseInterval interval_synapse, sint32 synapse_index){
+  uint32 current_backreach;
+  input_synapse.iterate_terminatable([&](InputSynapseInterval interval_synapse){
+    current_backreach = interval_synapse.reach_past_loops();
+    return true;
+  },[&](sint32 synapse_index){
     if(candidate_synapse_index == input_synapse.size()) candidate_synapse_index = 0;
-    if( /* If the index as well as the time of input matches */
-      (input_reach_back == interval_synapse.reach_past_loops())
-      &&(synapse_index == neuron_input_index)
-    ){ /* No need to continue Synapse iteration, found the right candidate! */
-      return false;
+    if((input_reach_back == current_backreach)&&(synapse_index == neuron_input_index)){ /* If the index as well as the time of input matches */
+      return false; /* No need to continue Synapse iteration, found the right candidate! */
     }else{ /* Step the candidate iterator forward to the next index in the input array */
       ++candidate_synapse_index;
       return true;

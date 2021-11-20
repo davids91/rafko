@@ -405,8 +405,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
         first_weight_in_synapse = true;
         spike_function_weight = double_literal(0.0);
         SynapseIterator<>::iterate(net->neuron_array(neuron_iterator).input_weights(),
-        [&](IndexSynapseInterval weight_synapse, sint32 weight_index){
-          parameter_not_used(weight_synapse);
+        [&](sint32 weight_index){
           if(true == first_weight_in_synapse){
             first_weight_in_synapse = false;
             spike_function_weight = net->weight_table(weight_index);

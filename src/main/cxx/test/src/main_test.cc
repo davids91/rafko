@@ -159,8 +159,7 @@ void manaual_fully_connected_network_result(
     if(0 < previous_data.size())
       REQUIRE( neuron_data.size() == previous_data.size() );
     first_weight_in_synapse = true;
-    SynapseIterator<>::iterate(neuron.input_weights(),[&](IndexSynapseInterval weight_synapse, sint32 neuron_weight_index){
-      parameter_not_used(weight_synapse);
+    SynapseIterator<>::iterate(neuron.input_weights(),[&](sint32 neuron_weight_index){
       if(true == first_weight_in_synapse){
         first_weight_in_synapse = false;
         spike_function_weight = network.weight_table(neuron_weight_index);
@@ -231,8 +230,7 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
           expected_inputs = 0;
           inner_neuron_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
             expected_inputs += weight_synapse.interval_size();
-          },[&](IndexSynapseInterval weight_synapse, sint32 weight_index){
-            parameter_not_used(weight_synapse);
+          },[&](sint32 weight_index){
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
             CHECK(
               solution.partial_solutions(partial_solution_iterator).weight_table(weight_index)
@@ -249,10 +247,13 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
           /* Neuron inputs point to indexes in the partial solution input ( when SynapseIterator<>::is_index_input s true ) */
           neuron_synapse_element_iterator = 0;
           counted_inputs = 0;
-          inner_neuron_input_iterator.iterate([&](InputSynapseInterval input_synapse, sint32 input_index){
+          uint32 current_reachback;
+          inner_neuron_input_iterator.iterate([&](InputSynapseInterval input_synapse){
+            current_reachback = input_synapse.reach_past_loops();
+          },[&](sint32 input_index){
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
             if(!SynapseIterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
-              CHECK( 0 == input_synapse.reach_past_loops() ); /* Internal inputs should always be taken from the current loop */
+              CHECK( 0 == current_reachback ); /* Internal inputs should always be taken from the current loop */
               REQUIRE(
                 static_cast<sint32>(first_neuron_index_in_partial + input_index)
                 == neuron_input_iterator[neuron_synapse_element_iterator]
