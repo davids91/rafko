@@ -32,11 +32,9 @@ add_subdirectory(rafko_protocol)
 add_subdirectory(rafko_utilities)
 add_subdirectory(rafko_net)
 add_subdirectory(rafko_gym)
-if(BUILD_MAINFRAME)
-  add_subdirectory(rafko_mainframe)
-endif()
+add_subdirectory(rafko_mainframe)
 
-add_library(rafko_full)
+add_library(rafko_full SHARED)
 target_link_libraries(rafko_full PUBLIC rafko_protocol rafko_utilities rafko_net rafko_gym)
 
 if(MAKE_TESTS)
@@ -55,6 +53,6 @@ install( TARGETS rafko_full
   EXPORT rafko_export
   LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
   ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
-  RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+  RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
   PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
 )
