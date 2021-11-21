@@ -19,6 +19,7 @@ if(MAKE_TESTS)
       rafko_utilities/src/data_pool_test.cc
       rafko_utilities/src/data_ringbuffer_test.cc
       rafko_utilities/src/thread_group_test.cc
+      rafko_utilities/src/const_vector_subrange_test.cc
       rafko_net/src/backprop_queue_wrapper_test.cc
       rafko_net/src/cost_function_mse_test.cc
       rafko_net/src/neuron_info_test.cc

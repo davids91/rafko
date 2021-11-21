@@ -20,7 +20,7 @@
 
 #include "rafko_net/models/cost_function.h"
 #include "rafko_gym/models/data_aggregate.h"
-#include "rafko_gym/services/environment_data_set.h"
+#include "rafko_gym/services/rafko_environment_data_set.h"
 #include "rafko_gym/services/rafko_net_approximizer.h"
 
 #include "rafko_mainframe/services/server_slot_run_net.h"

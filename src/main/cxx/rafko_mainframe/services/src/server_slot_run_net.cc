@@ -17,7 +17,7 @@
 
 #include "rafko_mainframe/services/server_slot_run_net.h"
 
-#include "rafko_utilities/models/data_ringbuffer.h"
+#include "rafko_utilities/models/const_vector_subrange.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 
@@ -66,10 +66,10 @@ NeuralIOStream ServerSlotRunNet::run_net_once(const NeuralIOStream& data_stream)
         data_stream.package().begin() + sequence_start_index,
         data_stream.package().begin() + sequence_start_index + data_stream.input_size(),
       };
-      const DataRingbuffer& neuron_data = network_solver->solve(input,true,0);
+      rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = network_solver->solve(input,true,0);
       std::copy(
-        neuron_data.get_const_element(0).end() - network_solution->output_neuron_number(),
-        neuron_data.get_const_element(0).end(),
+        neuron_data.cend() - network_solution->output_neuron_number(),
+        neuron_data.cend(),
         result_package.begin() + sequence_start_index
       );
       sequence_start_index += data_stream.feature_size();

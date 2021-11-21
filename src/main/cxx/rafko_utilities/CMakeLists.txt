@@ -4,6 +4,7 @@ target_link_libraries(rafko_utilities INTERFACE rafko_protocol)
 set(UTIL_INTERFACE_MODELS
   models/data_pool.h
   models/data_ringbuffer.h
+  models/const_vector_subrange.h
 )
 set(UTIL_INTERFACE_SERVICES
   services/thread_group.h

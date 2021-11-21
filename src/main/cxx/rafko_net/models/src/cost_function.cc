@@ -45,7 +45,6 @@ void CostFunction::get_feature_errors(
   });
 }
 
-static std::mutex cout_mutex;
 void CostFunction::feature_errors_thread(
   const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
   uint32 label_start, uint32 error_start, uint32 neuron_data_start_index,
@@ -54,7 +53,6 @@ void CostFunction::feature_errors_thread(
   uint32 neuron_data_start_index_in_thread = neuron_data_start_index + (thread_index * labels_to_evaluate_in_one_thread);
   uint32 label_start_in_thread = label_start + (thread_index * labels_to_evaluate_in_one_thread);
   uint32 error_start_in_thread = error_start + (thread_index * labels_to_evaluate_in_one_thread);
-  uint32 feature_size = labels[label_start].size();
   sint32 labels_to_evaluate_in_this_thread = std::min( /* Because of the alignment, one thread might include more, .. */
     labels_to_evaluate_in_one_thread, /* ..than the actual size of the labels/neurons, so labels to evaluate in this thread might.. */
     std::min(     /* ..go under 0. No labels are evaluated in this case. */
@@ -68,8 +66,9 @@ void CostFunction::feature_errors_thread(
   for(sint32 label_iterator = 0; label_iterator < labels_to_evaluate_in_this_thread; ++label_iterator){
     errors_for_labels[error_start_in_thread + label_iterator] = error_post_process(
       summarize_errors(
-        labels[label_start_in_thread + label_iterator], neuron_data[neuron_data_start_index_in_thread + label_iterator],
-        (neuron_data[neuron_data_start_index_in_thread + label_iterator].size() - feature_size), feature_size
+        labels[label_start_in_thread + label_iterator],
+        neuron_data[neuron_data_start_index_in_thread + label_iterator],
+        /* feature_start_index */0, /* number_to_eval */labels[label_start].size()
       ), sample_number
     );
   }
@@ -79,15 +78,16 @@ sdouble32 CostFunction::get_feature_error(
   const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data,
   uint32 max_threads, uint32 outer_thread_index, uint32 sample_number
 ){
-  uint32 feature_start_inside_neuron = neuron_data.size() - feature_size;
   sdouble32 error_value = 0;
+  uint32 feature_start = 0;
+  assert( labels.size() == neuron_data.size() );
   const uint32 feature_number = 1 + static_cast<uint32>(labels.size()/max_threads);
-  for(uint32 thread_index = 0; ((thread_index < max_threads) && (neuron_data.size() > feature_start_inside_neuron)); ++thread_index){
+  for(uint32 thread_index = 0; ((thread_index < max_threads) && (feature_start < labels.size())); ++thread_index){
     thread_results[outer_thread_index].push_back(async(std::launch::async,
-      &CostFunction::summarize_errors, this, ref(labels), ref(neuron_data), feature_start_inside_neuron,
-      min(feature_number, static_cast<uint32>(neuron_data.size() - feature_start_inside_neuron))
+      &CostFunction::summarize_errors, this, ref(labels), ref(neuron_data),
+      feature_start, std::min(feature_number, static_cast<uint32>(labels.size() - feature_start))
     ));
-    feature_start_inside_neuron += feature_number;
+    feature_start += feature_number;
   }
   while(0 < thread_results[outer_thread_index].size()){ /* wait for threads */
     error_value += thread_results[outer_thread_index].back().get();
@@ -98,15 +98,11 @@ sdouble32 CostFunction::get_feature_error(
 
 sdouble32 CostFunction::summarize_errors(
   const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data,
-  uint32 feature_start_index_in_neuron, uint32 number_to_add
+  uint32 feature_start_index, uint32 number_to_eval
 ){
   sdouble32 local_error = 0;
-  for(uint32 feature_iterator = 0; feature_iterator < number_to_add; ++feature_iterator){
-    local_error += get_cell_error( /* (start + featureSize - netsize) gives back the index in the label */
-      labels[feature_start_index_in_neuron + feature_iterator + feature_size - neuron_data.size()],
-      neuron_data[feature_start_index_in_neuron + feature_iterator]
-    );
-  }
+  for(uint32 feature_iterator = 0; feature_iterator < number_to_eval; ++feature_iterator)
+    local_error += get_cell_error(labels[feature_start_index + feature_iterator], neuron_data[feature_start_index + feature_iterator]);
   return local_error;
 }
 

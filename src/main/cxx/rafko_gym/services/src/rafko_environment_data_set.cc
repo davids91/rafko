@@ -92,9 +92,9 @@ void RafkoEnvironmentDataSet::evaluate_single_sequence(RafkoAgent& agent, DataAg
     /* Solve the data and store the result after the inital "prefill" */
     for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
       bool reset = ( (0u == data_set.get_prefill_inputs_number())&&(0u == sequence_iterator) );
-      const DataRingbuffer& neuron_output = agent.solve(data_set.get_input_sample(raw_inputs_index), reset, thread_index);
+      rafko_utilities::ConstVectorSubrange<sdouble32> neuron_output = agent.solve(data_set.get_input_sample(raw_inputs_index), reset, thread_index);
       std::copy( /* copy the result to the eval array */
-        neuron_output.get_const_element(0).begin(),neuron_output.get_const_element(0).end(),
+        neuron_output.cbegin(), neuron_output.cend(),
         neuron_outputs_to_evaluate[(thread_index * data_set.get_sequence_size()) + sequence_iterator].begin()
       );
       ++raw_label_index;

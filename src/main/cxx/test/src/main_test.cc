@@ -24,6 +24,7 @@
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
+#include "rafko_utilities/models/const_vector_subrange.h"
 #include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/services/synapse_iterator.h"
@@ -38,7 +39,6 @@ int main( int argc, char* argv[] ) {
 
 namespace rafko_net_test {
 
-using rafko_utilities::DataRingbuffer;
 using rafko_gym::DataAggregate;
 using rafko_net::TransferFunction;
 using rafko_net::transfer_function_identity;
@@ -324,16 +324,16 @@ void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set
   std::cout << std::endl;
   std::cout << "--------------expected:" << std::endl;
   std::cout.precision(2);
-  DataRingbuffer output_data_copy(0,0);
+  rafko_utilities::DataRingbuffer output_data_copy(0,0);
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
     std::cout << "\t\t["<< data_set.get_label_sample(raw_label_index)[0] <<"]";
-    const DataRingbuffer& output_data = sample_solver->solve(
+    rafko_utilities::ConstVectorSubrange output_data = sample_solver->solve(
       data_set.get_input_sample(raw_inputs_index),
       ( (0u == data_set.get_prefill_inputs_number())&&(0u == j) ),
-      0u
+      /* thread index */0u
     );
-    neuron_data[j] = output_data.get_const_element(0).back();
-    output_data_copy = output_data;
+    neuron_data[j] = output_data.back();
+    output_data_copy = sample_solver->get_memory(0);
     ++raw_label_index;
     ++raw_inputs_index;
   }

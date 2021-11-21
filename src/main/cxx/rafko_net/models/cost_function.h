@@ -44,11 +44,10 @@ using rafko_mainframe::RafkoServiceContext;
  */
 class RAFKO_FULL_EXPORT CostFunction{
 public:
-  CostFunction(uint32 feature_size_, Cost_functions the_function_, RafkoServiceContext& service_context)
+  CostFunction(Cost_functions the_function_, RafkoServiceContext& service_context)
   : context(service_context)
   , process_threads()
   , thread_results()
-  , feature_size(feature_size_)
   , the_function(the_function_)
   , execution_threads(context.get_sqrt_of_solve_threads())
   {
@@ -100,7 +99,7 @@ public:
    */
   sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const vector<sdouble32>& label, const vector<sdouble32>& neuron_data, uint32 sample_number) const{
     return error_post_process(get_d_cost_over_d_feature(
-      label[feature_index], neuron_data[neuron_data.size() - feature_size + feature_index], sample_number
+      label[feature_index], neuron_data[feature_index], sample_number
     ), sample_number);
   }
 
@@ -119,7 +118,6 @@ protected:
   RafkoServiceContext& context;
   vector<thread> process_threads;
   vector<vector<future<sdouble32>>> thread_results;
-  uint32 feature_size;
 
   /**
    * @brief      The post-processing function to be provided by the implementer
@@ -171,16 +169,16 @@ protected:
    *             by @get_feature_error, which divides the features to almost equal parts,
    *             and calls this function on them.
    *
-   * @param[in]  labels                           The labels
-   * @param[in]  neuron_data                      The neuron data
-   * @param[in]  feature_start_index_in_neuron    The start index of the data to be compared against the labels in the neuron data
-   * @param[in]  number_to_add                    The number of features to calculate
+   * @param[in]  labels                 The labels
+   * @param[in]  neuron_data            The neuron data
+   * @param[in]  feature_start_index    The start index to start comparison from
+   * @param[in]  number_to_eval         The number of features to calculate
    *
    * @return     returns with the error summary under the range {start_index;(start_index + number_to_add)}
    */
   sdouble32 summarize_errors(
     const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data,
-    uint32 feature_start_index_in_neuron, uint32 number_to_add
+    uint32 feature_start_index, uint32 number_to_eval
   );
 private:
   Cost_functions the_function; /* cost function type */

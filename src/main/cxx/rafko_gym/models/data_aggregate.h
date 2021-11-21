@@ -128,7 +128,7 @@ public:
   DataAggregate(
     RafkoServiceContext& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
-    RafkoNet& net, Cost_functions the_function, uint32 sequence_size_ = 1
+    Cost_functions the_function, uint32 sequence_size_ = 1
   ): service_context(service_context_)
   ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(move(input_samples_))
@@ -138,7 +138,7 @@ public:
        vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
        double_literal(1.0)
      })
-  ,  cost_function(FunctionFactory::build_cost_function(net, the_function, service_context_))
+  ,  cost_function(FunctionFactory::build_cost_function(the_function, service_context_))
   ,  exposed_to_multithreading(false)
   ,  error_calculation_threads(service_context_.get_sqrt_of_solve_threads())
   { }

@@ -19,6 +19,9 @@ using grpc::Status;
 using rafko_mainframe::DeepLearningServer;
 
 int main(int argc, char *argv[]){
+  parameter_not_used(argc);
+  parameter_not_used(argv);
+
   std::string server_address("0.0.0.0:50052");
   DeepLearningServer service;
 

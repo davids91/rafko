@@ -58,9 +58,9 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   }
 
   /* one feature distance should be (double_literal(0.5) * (distance)^2 ) */
-  CostFunctionMSE cost(feature_size, service_context);
-  for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
-    CHECK(
+  CostFunctionMSE cost(service_context);
+  for(uint16 sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
+    REQUIRE(
       Approx(
         cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator], dataset_size)
       ).epsilon(double_literal(0.00000000000001))

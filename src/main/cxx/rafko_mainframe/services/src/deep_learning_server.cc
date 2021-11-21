@@ -43,7 +43,7 @@ void DeepLearningServer::loop(void){
           std::cout << "\r";
           std::cout << "slot[" << slot_index << "]"
           << "; iteration:" << iteration[slot_index]
-          << ": training error: "<< 
+          << ": training error: "<<
             server_slots[slot_index]->get_info(slot_info_training_error).info_package(0)
           << "   " << std::endl;
           if(50000 < iteration[slot_index])is_server_slot_running[slot_index] = false;
@@ -58,6 +58,7 @@ void DeepLearningServer::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request,
   ::rafko_mainframe::SlotResponse* response
 ){
+  parameter_not_used(context);
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ add_slot +++ " << std::endl;
   try{
@@ -87,6 +88,7 @@ void DeepLearningServer::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::ServiceSlot* request,
   ::rafko_mainframe::SlotResponse* response
 ){
+  parameter_not_used(context);
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ update_slot +++ " << std::endl;
   try{
@@ -111,6 +113,7 @@ void DeepLearningServer::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request,
   ::rafko_mainframe::SlotResponse* response
 ){
+  parameter_not_used(context);
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ ping +++ " << std::endl;
   try{
@@ -135,6 +138,7 @@ void DeepLearningServer::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::BuildNetworkRequest* request,
   ::rafko_mainframe::SlotResponse* response
 ){
+  parameter_not_used(context);
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ build_network +++ " << std::endl;
   try {
@@ -156,9 +160,10 @@ void DeepLearningServer::loop(void){
 }
 
 ::grpc::Status DeepLearningServer::request_action(
-  ::grpc::ServerContext* context, 
+  ::grpc::ServerContext* context,
   ::grpc::ServerReaderWriter< ::rafko_mainframe::SlotResponse,::rafko_mainframe::SlotRequest>* stream
 ){
+  parameter_not_used(context);
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ request_action +++ " << std::endl;
   try{
@@ -254,6 +259,7 @@ void DeepLearningServer::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request,
   ::rafko_mainframe::SlotInfo* response
 ){
+  parameter_not_used(context);
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ get_info +++ " << std::endl;
   try{
@@ -278,6 +284,7 @@ void DeepLearningServer::loop(void){
   ::grpc::ServerContext* context, const ::rafko_mainframe::SlotRequest* request,
   ::rafko_net::RafkoNet* response
 ){
+  parameter_not_used(context);
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ get_network +++ " << std::endl;
   try{

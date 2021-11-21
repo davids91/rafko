@@ -38,7 +38,6 @@ using std::reference_wrapper;
 using rafko_mainframe::RafkoServiceContext;
 using rafko_utilities::DataRingbuffer;
 using rafko_gym::RafkoAgent;
-using rafko_gym::DataAggregate;
 using rafko_gym::RafkoEnvironmentDataSet;
 using rafko_net::Solution;
 using rafko_net::DataSet;
@@ -82,8 +81,8 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   }
 
   /* Create the environment and dummy agent */
-  DataAggregate training_set(service_context, data_set, std::make_unique<CostFunctionMSE>(1, service_context));
-  DataAggregate test_set(service_context, data_set, std::make_unique<CostFunctionMSE>(1, service_context));
+  rafko_gym::DataAggregate training_set(service_context, data_set, std::make_unique<CostFunctionMSE>(service_context));
+  rafko_gym::DataAggregate test_set(service_context, data_set, std::make_unique<CostFunctionMSE>(service_context));
   RafkoEnvironmentDataSet environment(service_context, training_set, test_set);
   Solution solution;
   solution.set_neuron_number(1);

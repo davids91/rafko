@@ -165,18 +165,7 @@ void ServerSlotApproximizeNet::update_cost_function(){
   ){
     if(cost_function) cost_function.reset();
     service_slot->set_state(service_slot->state() | serv_slot_missing_cost_function);
-    if(0 == (service_slot->state() & serv_slot_missing_net))
-      cost_function = std::move(FunctionFactory::build_cost_function(
-        *network, service_slot->cost_function(), context
-      )); /* Init cost function based on network output */
-    else if(0 == (service_slot->state() & serv_slot_missing_data_set))
-      cost_function = std::move(FunctionFactory::build_cost_function(
-        training_set->get_feature_size(), service_slot->cost_function(), context
-      )); /* Init cost function based on data_aggregate object */
-    else /* Fallback level! In case no objects are initialized yet, but the data_set is already loaded form the request */
-      cost_function = std::move(FunctionFactory::build_cost_function(
-        service_slot->training_set().feature_size(), service_slot->cost_function(), context
-      )); /* Init cost function based on stored training set in server slot object */
+    cost_function = std::move(FunctionFactory::build_cost_function( service_slot->cost_function(), context )); 
     if(cost_function){
       service_slot->set_state(service_slot->state() & ~serv_slot_missing_cost_function);
     }

@@ -87,6 +87,7 @@ public:
   }
 
   SlotInfo get_info(uint32 request_bitstring){
+    parameter_not_used(request_bitstring);
     return SlotInfo(); /* No info to be provided */
   }
 
@@ -107,14 +108,21 @@ public:
   }
 
   void accept_request(uint32 request_bitstring){
+    parameter_not_used(request_bitstring);
     throw std::runtime_error("Direct Requests not supported in a network runner slot!");
   }
 
   NeuralIOStream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const{
+    parameter_not_used(sample_index);
+    parameter_not_used(get_input);
+    parameter_not_used(get_label);
     throw std::runtime_error("Data sets not supported in a network runner slot!");
   }
 
   NeuralIOStream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const{
+    parameter_not_used(sample_index);
+    parameter_not_used(get_input);
+    parameter_not_used(get_label);
     throw std::runtime_error("Data sets not supported in a network runner slot!");
   }
 

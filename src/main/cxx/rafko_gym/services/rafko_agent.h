@@ -26,6 +26,7 @@
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/models/data_pool.h"
+#include "rafko_utilities/models/const_vector_subrange.h"
 
 namespace rafko_gym{
 
@@ -58,13 +59,16 @@ public:
    * @brief      Solves the Solution provided in the constructor, previous neural information is supposedly available in @output buffer
    *
    * @param[in]      input    The input data to be taken
-   * @return         The const buffer reference used as storage of the Neural data of the agent
+   * @return         The output values of the network result
    */
-  const DataRingbuffer& solve(const vector<sdouble32>& input, bool reset_neuron_data, uint32 thread_index = 0){
+  rafko_utilities::ConstVectorSubrange<sdouble32> solve(const vector<sdouble32>& input, bool reset_neuron_data, uint32 thread_index = 0){
     if(max_threads > thread_index){
       if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
       solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread) );
-      return neuron_value_buffers[thread_index];
+      return { /* return with the range of the output Neurons */
+        neuron_value_buffers[thread_index].get_const_element(0).cend() - brain.output_neuron_number(),
+        neuron_value_buffers[thread_index].get_const_element(0).cend()
+      };
     } else throw std::runtime_error("Thread index out of bounds!");
   }
 
@@ -89,6 +93,17 @@ public:
    */
   const Solution& get_solution(void) const{
     return brain;
+  }
+
+  /**
+   * @brief      Provide the raw Neural data
+   *
+   * @param[in]      thread_index     The index of the target thread
+   * @return         A const reference to the raw Neuron data
+   */
+  const DataRingbuffer& get_memory(uint32 thread_index) const{
+    assert(thread_index < neuron_value_buffers.size());
+    return neuron_value_buffers[thread_index];
   }
 
   virtual ~RafkoAgent(void) = default;

@@ -21,13 +21,13 @@
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/rafko_service_context.h"
-#include "rafko_utilities/models/data_ringbuffer.h"
+#include "rafko_utilities/models/const_vector_subrange.h"
 #include "rafko_net/models/cost_function_mse.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/function_factory.h"
 #include "rafko_gym/models/data_aggregate.h"
-#include "rafko_gym/services/environment_data_set.h"
+#include "rafko_gym/services/rafko_environment_data_set.h"
 #include "rafko_gym/services/rafko_net_approximizer.h"
 
 namespace rafko_net_test {
@@ -41,7 +41,6 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
 using rafko_mainframe::RafkoServiceContext;
-using rafko_utilities::DataRingbuffer;
 using rafko_net::RafkoNet;
 using rafko_net::RafkoNetBuilder;
 using rafko_net::CostFunctionMSE;
@@ -93,14 +92,14 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
-    *nets[0], cost_function_squared_error
+    cost_function_squared_error
   );
   tmp1 = create_addition_dataset(10);
   DataAggregate* test_set = google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
-    *nets[0], cost_function_squared_error
+    cost_function_squared_error
   );
   RafkoEnvironmentDataSet env(service_context, *train_set, *test_set);
   RafkoNetApproximizer approximizer(service_context, *nets[0], env, weight_updater_default);
@@ -186,14 +185,14 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
-    *nets[0], cost_function_squared_error, /* Sequence size */4
+    cost_function_squared_error, /* Sequence size */4
   );
   tmp1 = create_sequenced_addition_dataset(number_of_samples * 2, 4);
   DataAggregate* test_set =  google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
-    *nets[0], cost_function_squared_error, /* Sequence size */4
+    cost_function_squared_error, /* Sequence size */4
   );  RafkoEnvironmentDataSet env(service_context, *train_set, *test_set);
   RafkoNetApproximizer approximizer(service_context, *nets[0], env, weight_updater_amsgrad,1);
 
@@ -252,11 +251,11 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   unique_ptr<SolutionSolver> after_solver(SolutionSolver::Builder(*SolutionBuilder(service_context).build(*nets[0]), service_context).build());
 
   sdouble32 error_summary[3] = {0,0,0};
-  CostFunctionMSE after_cost(1, service_context);
+  CostFunctionMSE after_cost(service_context);
   for(uint32 i = 0; i < number_of_samples; ++i){
     bool reset = 0 == (i%(train_set->get_sequence_size()));
-    const DataRingbuffer& neuron_data = after_solver->solve(test_set->get_input_sample(i), reset);
-    error_summary[0] += after_cost.get_feature_error(neuron_data.get_const_element(0), test_set->get_label_sample(i), number_of_samples);
+    rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = after_solver->solve(test_set->get_input_sample(i), reset);
+    error_summary[0] += after_cost.get_feature_error({neuron_data.cbegin(),neuron_data.cend()}, test_set->get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"
   << "\t"  << error_summary[0]

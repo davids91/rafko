@@ -35,17 +35,6 @@ using std::unique_ptr;
 
 class FunctionFactory{
 public:
-  /**
-   * @brief      Builds a cost function.
-   *
-   * @param[in]  net            The @RafkoNet that decides which cost function to build
-   * @param[in]  context        The service context
-   *
-   * @return     The cost function.
-   */
-  static unique_ptr<CostFunction> build_cost_function(const RafkoNet& net, Cost_functions the_function, RafkoServiceContext& context){
-    return build_cost_function(net.output_neuron_number(), the_function, context);
-  }
 
   /**
    * @brief      Builds a cost function.
@@ -56,12 +45,12 @@ public:
    *
    * @return     The cost function.
    */
-  static unique_ptr<CostFunction> build_cost_function(uint32 feature_size, Cost_functions the_function, RafkoServiceContext& context){
+  static unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, RafkoServiceContext& context){
     switch(the_function){
       case cost_function_mse:
-        return std::make_unique<CostFunctionMSE>(feature_size, context);
+        return std::make_unique<CostFunctionMSE>(context);
       case cost_function_squared_error:
-        return std::make_unique<CostFunctionSquaredError>(feature_size, context);
+        return std::make_unique<CostFunctionSquaredError>(context);
       default: throw std::runtime_error("Unknown cost function requested from builder!");
     }
   }
