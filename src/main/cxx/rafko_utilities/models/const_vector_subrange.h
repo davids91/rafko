@@ -25,25 +25,28 @@
 
 namespace rafko_utilities{
 
-template <typename T>
+template <typename T = sdouble32>
 class ConstVectorSubrange{
 public:
-  ConstVectorSubrange(typename std::vector<T>::const_iterator start_, uint32 size_)
+  ConstVectorSubrange(typename std::vector<T>::const_iterator start_, std::size_t size_)
   : start(start_)
   , range_size(size_)
   { }
 
-  ConstVectorSubrange(std::initializer_list<typename std::vector<T>::const_iterator> list)
-  : start(*list.begin())
-  , range_size(std::distance(*list.begin(), *(list.end()-1)))
+  ConstVectorSubrange(typename std::vector<T>::const_iterator begin_, typename std::vector<T>::const_iterator end_)
+  : start(begin_)
+  , range_size(std::distance(start, end_))
   { }
 
   const T& operator[](std::size_t index) const{
     assert(index < range_size);
-    return *(start + index);
+    return *std::next(start, index);
+  }
+  const T& front(void) const{
+    return *cbegin();
   }
   const T& back(void) const{
-    return *(cend()-1);
+    return *std::next(cend(), -1);
   }
   std::size_t size(void) const{
     return range_size;
@@ -52,12 +55,12 @@ public:
     return start;
   }
   const typename std::vector<T>::const_iterator cend(void) const{
-    return (start + range_size);
+    return std::next(start, range_size);
   }
 
 private:
   const typename std::vector<T>::const_iterator start;
-  const uint32 range_size;
+  const std::size_t range_size;
 };
 
 } /* namespace rafko_utilities */
