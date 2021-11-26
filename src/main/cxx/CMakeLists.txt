@@ -10,7 +10,6 @@ project(
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_EXTENSIONS OFF)
-  add_compile_options(-Wall -Wextra -Wpedantic)
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
   set(CMAKE_CXX_VISIBILITY_PRESET hidden)
   set(CMAKE_CXX_VISIBILITY_INLINES_HIDDEN YES)
@@ -29,7 +28,24 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     "Enables build for the included grpc based deep learning service"
     OFF
   )
+  option(STATIC_ANALYZERS
+    "Enables CPPCheck diagnostics for the project"
+    OFF
+  )
+  option(SANITIZE
+    "Enables Gcc address sanitizer to check internal behavior"
+    OFF
+  )
 
+  add_compile_options(-Wall -Wextra -Wpedantic)
+  if(SANITIZE)
+    set(ENV{ASAN_OPTIONS} detect_leaks=0) #All allocated memory on the Arena is detected as leaks, so leak check needs to be disabled
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+  endif()
+  if(STATIC_ANALYZERS)
+    set(CMAKE_CXX_CPPCHECK "cppcheck")
+  endif()
 endif()
 include(GenerateExportHeader)
 find_package(Protobuf REQUIRED)
