@@ -209,7 +209,7 @@ public:
   /**
    * @brief      Sets the error values to the default value
    */
-  void reset_errors(void){
+  void reset_errors(){
     if(!exposed_to_multithreading){
       std::lock_guard<mutex> my_lock(dataset_mutex);
       for(sdouble32& sample_error : error_state.back().sample_errors)
@@ -221,7 +221,7 @@ public:
   /**
    * @brief      Stores the current error values for later re-use
    */
-  void push_state(void){
+  void push_state(){
     if(!exposed_to_multithreading){
       std::lock_guard<mutex> my_lock(dataset_mutex);
       error_state.push_back((error_state.back()));
@@ -231,7 +231,7 @@ public:
   /**
    * @brief      Restores the previously stored state, if there is any
    */
-  void pop_state(void){
+  void pop_state(){
     if(!exposed_to_multithreading){
       std::lock_guard<mutex> my_lock(dataset_mutex);
       if(1 < error_state.size()) error_state.pop_back();
@@ -282,7 +282,7 @@ public:
    *
    * @return     The sum of the errors for all of the samples.
    */
-  sdouble32 get_error_sum(void) const{
+  sdouble32 get_error_sum() const{
     if(!exposed_to_multithreading){
       std::lock_guard<mutex> my_lock(dataset_mutex);
       return error_state.back().error_sum;
@@ -306,7 +306,7 @@ public:
    *
    * @return     The feature size.
    */
-  uint32 get_feature_size(void) const{
+  uint32 get_feature_size() const{
     return label_samples[0].size();
   }
 
@@ -315,7 +315,7 @@ public:
    *
    * @return     The number of input samples.
    */
-  uint32 get_number_of_input_samples(void) const{
+  uint32 get_number_of_input_samples() const{
     return input_samples.size();
   }
 
@@ -324,7 +324,7 @@ public:
    *
    * @return     The number of labels.
    */
-  uint32 get_number_of_label_samples(void) const{
+  uint32 get_number_of_label_samples() const{
     return label_samples.size();
   }
 
@@ -335,7 +335,7 @@ public:
    *
    * @return     The number of sequences.
    */
-  uint32 get_number_of_sequences(void) const{
+  uint32 get_number_of_sequences() const{
     return (get_number_of_label_samples() / sequence_size);
   }
 
@@ -344,7 +344,7 @@ public:
    *
    * @return     Number of consecutive datapoints that count as one sample.
    */
-  uint32 get_sequence_size(void) const{
+  uint32 get_sequence_size() const{
     return sequence_size;
   }
 
@@ -353,7 +353,7 @@ public:
    *
    * @return     The number of inputs to be used for network initialization during training
    */
-  uint32 get_prefill_inputs_number(void) const{
+  uint32 get_prefill_inputs_number() const{
     return prefill_sequences;
   }
 
@@ -361,7 +361,7 @@ public:
    * @brief     Puts the set in a thread-safe state, enabling multi-threaded set access to the error_values vector, but
    *            disabling error_sum calculations(one of the main common part of the set).
    */
-  void expose_to_multithreading(void){
+  void expose_to_multithreading(){
     exposed_to_multithreading = true;
   }
 
@@ -369,7 +369,7 @@ public:
    * @brief     Restores the set to a non-thread-safe state, disabling multi-threaded set access to the error_values vector, but
    *            re-enabling error_sum calculations(one of the main common part of the set). Also re-calculates error value sum
    */
-  void conceal_from_multithreading(void);
+  void conceal_from_multithreading();
 
 private:
   struct error_state_type{

@@ -91,7 +91,7 @@ public:
    *
    * @return     A const reference to the solution the agent is using to produce outputs to the given inputs
    */
-  const Solution& get_solution(void) const{
+  const Solution& get_solution() const{
     return brain;
   }
 
@@ -106,7 +106,7 @@ public:
     return neuron_value_buffers[thread_index];
   }
 
-  virtual ~RafkoAgent(void) = default;
+  virtual ~RafkoAgent() = default;
 
   /**
    * @brief     Provides the size of the buffer it was declared with

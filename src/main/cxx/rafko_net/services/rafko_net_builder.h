@@ -149,7 +149,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& set_recurrence_to_self(void){
+  RafkoNetBuilder& set_recurrence_to_self(){
     recurrence = network_recurrence_to_self;
     return *this;
   }
@@ -160,7 +160,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& set_recurrence_to_layer(void){
+  RafkoNetBuilder& set_recurrence_to_layer(){
     recurrence = network_recurrence_to_layer;
     return *this;
   }

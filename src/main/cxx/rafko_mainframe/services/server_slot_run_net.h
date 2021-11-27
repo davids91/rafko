@@ -52,9 +52,9 @@ public:
   }
 
   void initialize(ServiceSlot&& service_slot_);
-  void refresh_solution(void);
+  void refresh_solution();
   NeuralIOStream run_net_once(const NeuralIOStream& data_stream);
-  ~ServerSlotRunNet(void){ }
+  ~ServerSlotRunNet(){ }
 
   /* Inlinable interfaces */
   void update_network(BuildNetworkRequest&& request){
@@ -82,7 +82,7 @@ public:
     finalize_state();
   }
 
-  void reset(void){
+  void reset(){
     update_network(RafkoNet());
   }
 
@@ -91,11 +91,11 @@ public:
     return SlotInfo(); /* No info to be provided */
   }
 
-  RafkoNet get_network(void) const{
+  RafkoNet get_network() const{
     return *network;
   }
 
-  SlotResponse get_status(void) const{
+  SlotResponse get_status() const{
     SlotResponse ret;
     ret.set_slot_id(service_slot->slot_id());
     ret.set_slot_state(service_slot->state());
@@ -103,7 +103,7 @@ public:
   }
 
   /* Not supported interfaces */
-  void loop(void){
+  void loop(){
     throw std::runtime_error("Loop operation not supported in a network runner slot!");
   }
 

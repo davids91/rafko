@@ -269,7 +269,7 @@ public:
    *
    * @return     Returns the overall number of inputs
    */
-  uint32 size(void) const{
+  uint32 size() const{
     uint32 number_of_inputs = 0;
     skim([&](Interval_type interval){
       number_of_inputs += interval.interval_size();
@@ -282,7 +282,7 @@ public:
    *
    * @return     Size of the Repeatedfiled for the  synapse_intervals
    */
-  uint32 number_of_synapses(void) const{
+  uint32 number_of_synapses() const{
     return synapse_interval.size();
   }
 
@@ -291,7 +291,7 @@ public:
    *
    * @return     the last index of the synapse
    */
-  sint32 back(void) const{
+  sint32 back() const{
     if(0 < synapse_interval.size()){
       sint32 last_index = synapse_interval[synapse_interval.size()-1].starts();
       if(is_index_input(last_index)) last_index -= synapse_interval[synapse_interval.size()-1].interval_size() - 1;
@@ -305,7 +305,7 @@ public:
    *
    * @return     Synapse interval defined by template function
    */
-  Interval_type last_synapse(void) const{
+  Interval_type last_synapse() const{
     if(0 < synapse_interval.size()){
       return synapse_interval[synapse_interval.size()-1];
     }else throw std::runtime_error("Last item requested from empty synapse!");

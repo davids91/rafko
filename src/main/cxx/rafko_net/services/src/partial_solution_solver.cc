@@ -108,7 +108,7 @@ void PartialSolution_solver::solve_internal(const vector<sdouble32>& input_data,
   } /* Go through the neurons */
 }
 
-bool PartialSolution_solver::is_valid(void) const{
+bool PartialSolution_solver::is_valid() const{
   if(
     (0u < detail.output_data().interval_size())
     &&(static_cast<int>(detail.output_data().interval_size()) == detail.index_synapse_number_size())

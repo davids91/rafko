@@ -41,7 +41,7 @@ using std::mutex;
  */
 class DeepLearningServer final : public RafkoDeepLearning::Service{
 public:
-  DeepLearningServer(void)
+  DeepLearningServer()
   :  server_slots()
   ,  server_slot_mutexs()
   ,  is_server_slot_running()
@@ -66,8 +66,8 @@ public:
   /**
    * @brief      The main loop of the server to run to be able to provide the service
    */
-  void loop(void);
-  ~DeepLearningServer(void){ server_slots.clear(); }
+  void loop();
+  ~DeepLearningServer(){ server_slots.clear(); }
 
 private:
   vector<unique_ptr<ServerSlot>> server_slots; /* points to different implementations of a @ServerSlot */

@@ -61,7 +61,7 @@ public:
     update_trainer();
   }
 
-  void loop(void){
+  void loop(){
     if(serv_slot_ok == service_slot->state()){
       network_approximizer->collect_approximates_from_weight_gradients();
       network_approximizer->apply_fragment();
@@ -69,7 +69,7 @@ public:
     }else throw std::runtime_error("Loop called of an invalid server slot!");
   }
 
-  void reset(void){
+  void reset(){
     if(0 < service_slot->state()){
       training_set->reset_errors();
       test_set->reset_errors();
@@ -101,7 +101,7 @@ public:
     }else throw std::runtime_error("Invalid training set queried for sample!");
   }
 
-  ~ServerSlotApproximizeNet(void){
+  ~ServerSlotApproximizeNet(){
     network_approximizer.reset();
     test_set.reset();
     training_set.reset();
@@ -117,8 +117,8 @@ private:
 
   uint32 iteration = 0;
 
-  void update_cost_function(void);
-  void update_trainer(void);
+  void update_cost_function();
+  void update_trainer();
 };
 
 } /* namespace rafko_mainframe */

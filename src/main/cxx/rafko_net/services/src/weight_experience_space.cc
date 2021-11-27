@@ -86,7 +86,7 @@ void WeightExperienceSpace::adapt_weight(uint32 weight_index){
   }
 }
 
-void WeightExperienceSpace::evaluate_weights(void){
+void WeightExperienceSpace::evaluate_weights(){
   last_weight_index = best_weight_index;
   best_weight_index = 0;
   worst_weight_index = 0;
@@ -99,7 +99,7 @@ void WeightExperienceSpace::evaluate_weights(void){
   }
 }
 
-void WeightExperienceSpace::cut(void){
+void WeightExperienceSpace::cut(){
   for(uint32 weight_index = 1; weight_index < experiences.size(); ++weight_index){
     experiences[weight_index] = std::copysign(
       (abs(experiences[weight_index]) - abs(experiences[smallest_experience])), experiences[weight_index]
@@ -107,7 +107,7 @@ void WeightExperienceSpace::cut(void){
   }
 }
 
-sdouble32 WeightExperienceSpace::get_best_weight(void){
+sdouble32 WeightExperienceSpace::get_best_weight(){
   return weight_values[best_weight_index];
 }
 

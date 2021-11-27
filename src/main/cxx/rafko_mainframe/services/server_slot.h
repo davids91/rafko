@@ -40,7 +40,7 @@ using rafko_net::RafkoNet;
  */
 class ServerSlot{
 public:
-  ServerSlot(void)
+  ServerSlot()
   : arena()
   , context()
   {
@@ -60,12 +60,12 @@ public:
   /**
    * @brief      The main loop of the server to run to be able to provide the service
    */
-  virtual void loop(void) = 0;
+  virtual void loop() = 0;
 
   /**
    * @brief      Resets the object.
    */
-  virtual void reset(void) = 0;
+  virtual void reset() = 0;
 
   /**
    * @brief      Build a new network in place of the current one based on the build request
@@ -129,21 +129,21 @@ public:
    *
    * @return     The network currently loaded in the configuration
    */
-  virtual RafkoNet get_network(void) const = 0;
+  virtual RafkoNet get_network() const = 0;
 
   /**
    * @brief      Gets the identifier of the slot
    *
    * @return     The uuid.
    */
-  string get_uuid(void) const;
+  string get_uuid() const;
 
   /**
    * @brief      Provides the status of the server slot.
    *
    * @return     The status, described in the file @proto/deep_learning_service.proto
    */
-  SlotResponse get_status(void) const;
+  SlotResponse get_status() const;
 
 private:
   google::protobuf::Arena arena;
@@ -167,13 +167,13 @@ protected:
    *
    * @return     A random unique Identifier string
    */
-  string generate_uuid(void);
+  string generate_uuid();
 
   /**
    * @brief      Updates status of the service slot so it shall store the induvidual status bits
    *             instead of the final status value. It's safe to call multiple times.
    */
-  void expose_state(void){
+  void expose_state(){
     if(serv_slot_ok == service_slot->state())
       service_slot->set_state(0);
   }
@@ -183,7 +183,7 @@ protected:
    *             In order to set the correct state value, the state needs to be exposed
    *             by @expose_state to update the status flags
    */
-  void finalize_state(void){
+  void finalize_state(){
     if(0 == service_slot->state()) /* No issues found, great! */
       service_slot->set_state(serv_slot_ok);
   }

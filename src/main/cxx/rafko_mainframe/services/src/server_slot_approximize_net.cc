@@ -165,7 +165,7 @@ void ServerSlotApproximizeNet::update_cost_function(){
   ){
     if(cost_function) cost_function.reset();
     service_slot->set_state(service_slot->state() | serv_slot_missing_cost_function);
-    cost_function = std::move(FunctionFactory::build_cost_function( service_slot->cost_function(), context )); 
+    cost_function = std::move(FunctionFactory::build_cost_function( service_slot->cost_function(), context ));
     if(cost_function){
       service_slot->set_state(service_slot->state() & ~serv_slot_missing_cost_function);
     }
@@ -173,7 +173,7 @@ void ServerSlotApproximizeNet::update_cost_function(){
   finalize_state();
 }
 
-void ServerSlotApproximizeNet::update_trainer(void){
+void ServerSlotApproximizeNet::update_trainer(){
   using std::make_unique;
   using std::make_shared;
 

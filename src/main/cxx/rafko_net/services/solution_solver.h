@@ -55,14 +55,14 @@ public:
   SolutionSolver(SolutionSolver&& other) = delete; /* Move constructor */
   SolutionSolver& operator=(const SolutionSolver& other) = delete; /* Copy assignment */
   SolutionSolver& operator=(SolutionSolver&& other) = delete; /* Move assignment */
-  ~SolutionSolver(void) = default;
+  ~SolutionSolver() = default;
 
   /* +++ Methods taken from @RafkoAgent +++ */
   void solve(
     const vector<sdouble32>& input, DataRingbuffer& output,
     const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool, uint32 used_data_pool_start = 0
   ) const;
-  uint32 get_output_data_size(void) const{
+  uint32 get_output_data_size() const{
     return solution.output_neuron_number();
   }
   using RafkoAgent::solve;
@@ -89,7 +89,7 @@ public:
   class Builder{
   public:
     Builder(const Solution& to_solve, RafkoServiceContext& context);
-    unique_ptr<SolutionSolver> build(void){
+    unique_ptr<SolutionSolver> build(){
       return unique_ptr<SolutionSolver>(new SolutionSolver(
         solution, service_context, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread
       ));

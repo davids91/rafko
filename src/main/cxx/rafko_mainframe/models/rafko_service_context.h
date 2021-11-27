@@ -40,31 +40,31 @@ using rafko_net::Training_strategy;
 
 class RAFKO_FULL_EXPORT RafkoServiceContext{
 public:
-  uint16 get_max_solve_threads(void) const{
+  uint16 get_max_solve_threads() const{
     return max_solve_threads;
   }
 
-  uint16 get_sqrt_of_solve_threads(void) const{
+  uint16 get_sqrt_of_solve_threads() const{
     return sqrt_of_solve_threads;
   }
 
-  uint16 get_max_processing_threads(void) const{
+  uint16 get_max_processing_threads() const{
     return max_processing_threads;
   }
 
-  uint16 get_sqrt_of_process_threads(void) const{
+  uint16 get_sqrt_of_process_threads() const{
     return sqrt_of_process_threads;
   }
 
-  uint32 get_tolerance_loop_value(void) const{
+  uint32 get_tolerance_loop_value() const{
     return tolerance_loop_value;
   }
 
-  sdouble32 get_device_max_megabytes(void) const{
+  sdouble32 get_device_max_megabytes() const{
     return device_max_megabytes;
   }
 
-  Arena* get_arena_ptr(void) const{
+  Arena* get_arena_ptr() const{
     return arena_ptr;
   }
 
@@ -90,11 +90,11 @@ public:
     return get<sdouble32>(learning_rate_with_decay[decay_index]);
   }
 
-  uint32 get_minibatch_size(void) const{
+  uint32 get_minibatch_size() const{
     return hypers.minibatch_size();
   }
 
-  uint32 get_memory_truncation(void) const{
+  uint32 get_memory_truncation() const{
     return hypers.memory_truncation();
   }
 
@@ -102,27 +102,27 @@ public:
     return (0u < (static_cast<uint32>(hypers.training_strategies()) & static_cast<uint32>(strategy)));
   }
 
-  sdouble32 get_alpha(void) const{
+  sdouble32 get_alpha() const{
     return hypers.alpha();
   }
 
-  sdouble32 get_beta(void) const{
+  sdouble32 get_beta() const{
     return hypers.beta();
   }
 
-  sdouble32 get_beta_2(void) const{
+  sdouble32 get_beta_2() const{
     return hypers.beta();
   }
 
-  sdouble32 get_gamma(void) const{
+  sdouble32 get_gamma() const{
     return hypers.gamma();
   }
 
-  sdouble32 get_delta(void) const{
+  sdouble32 get_delta() const{
     return hypers.delta();
   }
 
-  sdouble32 get_epsilon(void) const{
+  sdouble32 get_epsilon() const{
     return hypers.epsilon();
   }
 
@@ -130,11 +130,11 @@ public:
     return sqrt_epsilon;
   }
 
-  sdouble32 get_zetta(void) const{
+  sdouble32 get_zetta() const{
     return hypers.zetta();
   }
 
-  sdouble32 get_lambda(void) const{
+  sdouble32 get_lambda() const{
     return hypers.lambda();
   }
 
@@ -249,7 +249,7 @@ public:
     return *this;
   }
 
-  RafkoServiceContext(void){
+  RafkoServiceContext(){
     hypers.set_learning_rate(double_literal(1e-6));
     hypers.set_minibatch_size(64);
     hypers.set_memory_truncation(2);
@@ -285,7 +285,7 @@ private:
    * @brief      Calculates the learning rates for different iteration indices
    *             based on the decay and the initial learning rate
    */
-  void calculate_learning_rate_decay(void){
+  void calculate_learning_rate_decay(){
     sdouble32 learning_rate = get_learning_rate();
     learning_rate_with_decay.clear();
     for(pair<uint32, sdouble32> decay : learning_rate_decay){

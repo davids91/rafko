@@ -107,7 +107,7 @@ void DataAggregate::set_features_for_sequences(
   }else throw std::runtime_error("Sequence index out of bounds!");
 }
 
-void DataAggregate::conceal_from_multithreading(void){
+void DataAggregate::conceal_from_multithreading(){
   exposed_to_multithreading = false;
   error_state.back().error_sum = 0;
   error_calculation_threads.start_and_block(error_calculation_lambda);

@@ -39,7 +39,7 @@ void ServerSlotRunNet::initialize(ServiceSlot&& service_slot_){
   }
 }
 
-void ServerSlotRunNet::refresh_solution(void){
+void ServerSlotRunNet::refresh_solution(){
   expose_state();
   service_slot->set_state(service_slot->state() | serv_slot_missing_solution);
   if(0 < network->neuron_array_size()){

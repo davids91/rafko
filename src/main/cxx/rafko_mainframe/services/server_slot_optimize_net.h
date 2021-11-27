@@ -29,15 +29,15 @@ namespace rafko_mainframe{
 class ServerSlotOptimizeNet : public ServerSlot{
 public:
   void initialize(ServiceSlot&& service_slot_);
-  void loop(void);
-  void reset(void);
+  void loop();
+  void reset();
   void update_network(BuildNetworkRequest&& request);
   void update_network(RafkoNet&& net_);
   void accept_request(uint32 accept_request);
   SlotInfo get_info(uint32 request_bitstring);
   NeuralIOStream get_training_sample(uint32 sample_index, bool get_input, bool get_label) const;
   NeuralIOStream get_testing_sample(uint32 sample_index, bool get_input, bool get_label) const;
-  ~ServerSlotOptimizeNet(void);
+  ~ServerSlotOptimizeNet();
 };
 
 } /* namespace rafko_mainframe */

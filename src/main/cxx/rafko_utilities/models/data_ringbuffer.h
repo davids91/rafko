@@ -53,7 +53,7 @@ public:
   /**
    * @brief      Store the current data and move the iterator forward for the next one
    */
-  void step(void){
+  void step(){
     current_index = (current_index + 1)%(data.size());
     if(1 < data.size())
       std::copy(get_element(1).begin(),get_element(1).end(),get_element(0).begin());
@@ -62,7 +62,7 @@ public:
   /**
    * @brief      Resets every data element to all zeroes.
    */
-  void reset(void){
+  void reset(){
     current_index = (data.size()-1); /* Set the current index into the last index, so at the next @ */
     for(vector<sdouble32>& vector : data)
       for(sdouble32& element : vector) element = double_literal(0.0);
@@ -73,7 +73,7 @@ public:
    *             filling the latest item with zeroes, and setting the
    *             current index one step back into the past.
    */
-  void pop_front(void){
+  void pop_front(){
     std::fill(get_element(0).begin(),get_element(0).end(),double_literal(0.0));
     current_index = get_buffer_index(1);
   }
@@ -95,7 +95,7 @@ public:
    *
    * @return     The non-modifyable raw buffer data
    */
-  const vector<vector<sdouble32>>& get_whole_buffer(void) const{
+  const vector<vector<sdouble32>>& get_whole_buffer() const{
     return data;
   }
 
@@ -157,7 +157,7 @@ public:
    *
    * @return     The sequence size.
    */
-  uint32 get_sequence_size(void) const{
+  uint32 get_sequence_size() const{
     return data.size();
   }
 
@@ -179,7 +179,7 @@ public:
    *
    * @return     Number of elements
    */
-  uint32 buffer_size(void) const{
+  uint32 buffer_size() const{
     return data[0].size();
   }
 
@@ -188,7 +188,7 @@ public:
    *
    * @return     number of buffers available
    */
-  uint32 buffer_number(void) const{
+  uint32 buffer_number() const{
     return data.size();
   }
 

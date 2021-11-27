@@ -82,7 +82,7 @@ public:
     environment.full_evaluation(*solver);
   }
 
-  ~RafkoNetApproximizer(void){
+  ~RafkoNetApproximizer(){
     if(nullptr == service_context.get_arena_ptr())
       delete net_solution;
   }
@@ -95,7 +95,7 @@ public:
    * @brief      Moves the network in a direction based on induvidual weight gradients,
    *             approximates the gradients based on that and then reverts the the weight change
    */
-  void collect_approximates_from_weight_gradients(void);
+  void collect_approximates_from_weight_gradients();
 
   /**
    * @brief      Move the network in the given direction, collect approximate gradient for it
@@ -120,17 +120,17 @@ public:
    *
    * @return     The gradient for all weights.
    */
-  sdouble32 get_gradient_for_all_weights(void);
+  sdouble32 get_gradient_for_all_weights();
 
   /**
    * @brief      Applies the colleted gradient fragment to the configured network
    */
-  void apply_fragment(void);
+  void apply_fragment();
 
   /**
    * @brief      Discards the gradient fragment collected in the past
    */
-  void discard_fragment(void){
+  void discard_fragment(){
     gradient_fragment = GradientFragment();
   }
 
@@ -147,7 +147,7 @@ public:
    *
    * @return     The fragment.
    */
-  const GradientFragment get_fragment(void){
+  const GradientFragment get_fragment(){
     return gradient_fragment;
   }
 
@@ -156,14 +156,14 @@ public:
    *
    * @return     Constant reference to the current weight gradients array
    */
-  const GradientFragment& get_weight_gradient(void) const{
+  const GradientFragment& get_weight_gradient() const{
     return gradient_fragment;
   }
 
   /**
    * @brief      Evaluates the network in the given environment fully
    */
-  void full_evaluation(void){
+  void full_evaluation(){
     environment.full_evaluation(*solver);
     if(min_test_error > environment.get_testing_fitness()){
       min_test_error = environment.get_testing_fitness();
@@ -176,7 +176,7 @@ public:
    *
    * @return     Constant reference to the current weight gradients array
    */
-  bool stop_training(void){
+  bool stop_training(){
     return(
       (1u < iteration)
       &&((
@@ -216,7 +216,7 @@ private:
    *
    * @return         The average of the resulting fitness values of the evaluations
    */
-  sdouble32 stochastic_evaluation(void){
+  sdouble32 stochastic_evaluation(){
     sdouble32 fitness = double_literal(0.0);
     for(uint32 i = 0; i < stochastic_evaluation_loops; ++i)
       fitness += environment.stochastic_evaluation(*solver, iteration);

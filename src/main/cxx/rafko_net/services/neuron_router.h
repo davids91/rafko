@@ -174,15 +174,15 @@ public:
    *
    * @return     The subset size.
    */
-  uint32 get_subset_size(void) const{
+  uint32 get_subset_size() const{
     return net_subset.size();
   }
 
-  uint32 get_subset_size_bytes(void) const{
+  uint32 get_subset_size_bytes() const{
     return net_subset_size_bytes;
   }
 
-  sdouble32 get_subset_size_megabytes(void) const{
+  sdouble32 get_subset_size_megabytes() const{
     return( static_cast<sdouble32>(net_subset_size_bytes) / (double_literal(1024.0) * double_literal(1024.0)) );
   }
 
@@ -198,7 +198,7 @@ public:
   /**
    * @brief      Clears the subset and sets the neuron states of the items in it to be in progress.
    */
-  void reset_remaining_subset(void){
+  void reset_remaining_subset(){
     while(0 < net_subset.size())
       confirm_first_subset_element_ommitted(net_subset.front());
     net_subset_size_bytes.store(0);

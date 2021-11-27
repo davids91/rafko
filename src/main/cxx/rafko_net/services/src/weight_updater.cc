@@ -51,7 +51,7 @@ void RafkoWeightUpdater::calculate_velocity(const std::vector<sdouble32>& gradie
   });
 }
 
-void RafkoWeightUpdater::update_weights_with_velocity(void){
+void RafkoWeightUpdater::update_weights_with_velocity(){
   execution_threads.start_and_block([this](uint32 thread_index){
     sint32 weight_index_start = weights_to_do_in_one_thread * thread_index;
     if(weight_index_start < net.weight_table_size()){
@@ -147,7 +147,7 @@ void RafkoWeightUpdater::update_solution_with_weight(uint32 weight_index) const{
   }
 }
 
-void RafkoWeightUpdater::update_solution_with_weights(void) const{
+void RafkoWeightUpdater::update_solution_with_weights() const{
   sint32 partial_start_index = 0;
   while(partial_start_index < solution.partial_solutions_size()){
     if(

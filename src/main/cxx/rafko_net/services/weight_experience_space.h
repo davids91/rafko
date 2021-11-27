@@ -55,14 +55,14 @@ public:
    *
    * @return     the value of the weight with the best experience
    */
-  sdouble32 get_best_weight(void);
+  sdouble32 get_best_weight();
 
   /**
    * @brief      Gets the weights stored in the range of the space
    *
    * @return     A const reference of the vector containing the weight values corresponding with stored experiences.
    */
-  const vector<sdouble32> get_weights(void) const{
+  const vector<sdouble32> get_weights() const{
     return weight_values;
   }
 
@@ -84,7 +84,7 @@ public:
    *
    * @return     The value of the previous best weight.
    */
-  sdouble32 get_last_weight(void) const{
+  sdouble32 get_last_weight() const{
     return weight_values[last_weight_index];
   }
 
@@ -93,7 +93,7 @@ public:
    *
    * @return     The left neighbour of best weight, in case of the first and lest element, the weight itself is returned.
    */
-  sdouble32 get_left_neighbour_of_best(void) const{
+  sdouble32 get_left_neighbour_of_best() const{
     return weight_values[std::max(1u,best_weight_index)-1];
   }
 
@@ -102,7 +102,7 @@ public:
    *
    * @return     The right neighbour of best weight, in case of the first and lest element, the weight itself is returned.
    */
-  sdouble32 get_right_neighbour_of_best(void) const{
+  sdouble32 get_right_neighbour_of_best() const{
     return weight_values[std::min(static_cast<uint32>(weight_values.size())-2u,best_weight_index)+1];
   }
 
@@ -111,7 +111,7 @@ public:
    *
    * @return     A constant reference of the vector of the experience values corresponding to each stored weight.
    */
-  const vector<sdouble32> get_weight_experiences(void) const{
+  const vector<sdouble32> get_weight_experiences() const{
     return experiences;
   }
 
@@ -127,7 +127,7 @@ private:
   /**
    * @brief      Updates @best_weight_index and @worst_weight_index based on the @experiences vector
    */
-  void evaluate_weights(void);
+  void evaluate_weights();
 
   /**
    * @brief      Pushes the given weight in the direction of its neightbours based on the experience values
@@ -140,7 +140,7 @@ private:
    * @brief      Cuts the experience vector with the value of its smallest absolute experience,
    *             to avoid overflow with new experiences
    */
-  void cut(void);
+  void cut();
 
 };
 

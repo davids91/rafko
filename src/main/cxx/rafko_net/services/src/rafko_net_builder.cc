@@ -196,7 +196,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
   }else throw std::runtime_error("Input Output Pre-requisites failed;Unable to determine Net Structure!");
 }
 
-RafkoNet* RafkoNetBuilder::build(void){
+RafkoNet* RafkoNetBuilder::build(){
   if( /* Required arguments are set */
     (is_input_size_set && is_output_neuron_number_set)
     &&(is_neuron_array_set && is_weight_table_set) /* needed arguments are set */

@@ -42,19 +42,19 @@ public:
     assert(index < range_size);
     return *std::next(start, index);
   }
-  const T& front(void) const{
+  const T& front() const{
     return *begin();
   }
-  const T& back(void) const{
+  const T& back() const{
     return *std::next(end(), -1);
   }
-  std::size_t size(void) const{
+  std::size_t size() const{
     return range_size;
   }
-  const typename std::vector<T>::const_iterator begin(void) const{
+  const typename std::vector<T>::const_iterator begin() const{
     return start;
   }
-  const typename std::vector<T>::const_iterator end(void) const{
+  const typename std::vector<T>::const_iterator end() const{
     return std::next(start, range_size);
   }
 

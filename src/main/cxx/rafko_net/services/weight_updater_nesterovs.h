@@ -33,7 +33,7 @@ public:
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
 
-  void start(void){
+  void start(){
     RafkoWeightUpdater::start();
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity_at_start.begin());
   }

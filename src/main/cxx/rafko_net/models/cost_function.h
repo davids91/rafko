@@ -108,11 +108,11 @@ public:
    *
    * @return     The type.
    */
-  Cost_functions get_type(void){
+  Cost_functions get_type(){
     return the_function;
   }
 
-  virtual ~CostFunction(void) = default;
+  virtual ~CostFunction() = default;
 
 protected:
   RafkoServiceContext& context;

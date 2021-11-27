@@ -95,7 +95,7 @@ public:
     return next_weight_for(transfer_function_identity);
   }
 
-  virtual ~WeightInitializer(void) = default;
+  virtual ~WeightInitializer() = default;
 
 protected:
   RafkoServiceContext& context;

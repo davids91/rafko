@@ -96,7 +96,7 @@ public:
   /**
    * @brief     Returns the number of worker threads handled in this group
    */
-  uint32 get_number_of_threads(void) const{
+  uint32 get_number_of_threads() const{
     return threads.size();
   }
 

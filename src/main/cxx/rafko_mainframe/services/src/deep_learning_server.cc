@@ -30,7 +30,7 @@ using rafko_net::Transfer_functions_IsValid;
 using std::lock_guard;
 using std::thread;
 
-void DeepLearningServer::loop(void){
+void DeepLearningServer::loop(){
   lock_guard<mutex> my_lock(server_mutex);
   for(uint32 i = 0; i < server_slots.size(); ++i){
     if(0 < is_server_slot_running[i]){

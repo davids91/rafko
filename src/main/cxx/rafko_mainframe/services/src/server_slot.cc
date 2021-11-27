@@ -36,7 +36,7 @@ using rafko_net::RafkoNetBuilder;
 using rafko_net::Transfer_functions;
 using rafko_net::Transfer_functions_IsValid;
 
-string ServerSlot::generate_uuid(void){
+string ServerSlot::generate_uuid(){
   static random_device dev;
   static mt19937 rng(dev());
 
@@ -54,7 +54,7 @@ string ServerSlot::generate_uuid(void){
   return res;
 }
 
-SlotResponse ServerSlot::get_status(void) const{
+SlotResponse ServerSlot::get_status() const{
   SlotResponse response;
   response.set_slot_id(get_uuid());
   response.set_slot_state(service_slot->state());
@@ -62,7 +62,7 @@ SlotResponse ServerSlot::get_status(void) const{
 }
 
 
-string ServerSlot::get_uuid(void) const{
+string ServerSlot::get_uuid() const{
   if(0 != service_slot->slot_id().compare("")) return service_slot->slot_id();
     else throw std::runtime_error("Empty UUID is queried!");
 }

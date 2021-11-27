@@ -57,7 +57,7 @@ public:
   /**
    * @brief      The function to signal the weight updater that an iteration have started
    */
-  void start(void){
+  void start(){
     iteration = 0;
     finished = false;
   }
@@ -82,7 +82,7 @@ public:
    *             It supposes that the solution is one already built, and it is built from
    *             the same @RafkoNet referenced in the updater. Uses a different thread for every partial solution.
    */
-  void update_solution_with_weights(void) const;
+  void update_solution_with_weights() const;
 
   /**
    * @brief      Copies the weights in the stored @RafkoNet reference into the provided solution.
@@ -178,7 +178,7 @@ private:
    *             It starts multiple threads, dividing almost equally the number of weights
    *             to be updated in each thread.
    */
-  void update_weights_with_velocity(void);
+  void update_weights_with_velocity();
 
   /**
    * @brief      A thread to update the weights of the @SpraseNet, called by @update_weights_with_velocity

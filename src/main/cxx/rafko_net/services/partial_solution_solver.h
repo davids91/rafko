@@ -98,7 +98,7 @@ public:
     *
     * @return     True if detail is valid, False otherwise.
     */
-   uint32 get_required_tmp_data_size(void) const{
+   uint32 get_required_tmp_data_size() const{
      return input_iterator.size();
    }
 
@@ -108,7 +108,7 @@ public:
    *
    * @return     True if detail is valid, False otherwise.
    */
-  bool is_valid(void) const;
+  bool is_valid() const;
 
 private:
   static DataPool<sdouble32> common_data_pool;

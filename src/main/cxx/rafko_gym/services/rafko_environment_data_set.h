@@ -60,21 +60,21 @@ public:
     return -train_set.get_error_sum();
   }
 
-  void push_state(void){
+  void push_state(){
     train_set.push_state();
     test_set.push_state();
   }
 
-  void pop_state(void){
+  void pop_state(){
     train_set.pop_state();
     test_set.pop_state();
   }
 
-  sdouble32 get_training_fitness(void){
+  sdouble32 get_training_fitness(){
     return -train_set.get_error_avg();
   }
 
-  sdouble32 get_testing_fitness(void){
+  sdouble32 get_testing_fitness(){
     return -test_set.get_error_avg();
   }
 
@@ -94,7 +94,7 @@ public:
     }
   }
 
-  ~RafkoEnvironmentDataSet(void) = default;
+  ~RafkoEnvironmentDataSet() = default;
 
 private:
   RafkoServiceContext& service_context;
