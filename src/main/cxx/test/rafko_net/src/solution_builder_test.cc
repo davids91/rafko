@@ -61,14 +61,12 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
   }
 
   RafkoNet* net;
-  REQUIRE_NOTHROW(
-    net = builder.dense_layers(net_structure)
-  );
+  REQUIRE_NOTHROW( net = builder.dense_layers(net_structure) );
 
   Solution* solution;
-  REQUIRE_NOTHROW(
-    solution = SolutionBuilder(service_context).build(*net)
-  );
+  REQUIRE_NOTHROW( solution = SolutionBuilder(service_context).build(*net) );
+
+  CHECK( net->input_data_size() ==   solution->network_input_size() );
 
   sint32 expected_partial_number = 0;
   for(sint32 i = 0; i < solution->cols_size(); ++i){

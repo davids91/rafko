@@ -87,6 +87,7 @@ message Solution{
   uint32 neuron_number = 1; /* Number of Neurons the @Solution has */
   uint32 output_neuron_number = 2; /* Number of outputs the @Solution has */
   uint32 network_memory_length = 3; /* How many runs a network should be able to remember */
+  uint32 network_input_size = 4; /* The expected input size of the network */
   repeated uint32 cols = 10; /* How many columns each row has, size gives back number of rows */
   repeated PartialSolution partial_solutions = 11; /* The number of outputs this solution has is the summary of the last rows internal Neuron */
 }

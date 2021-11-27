@@ -21,6 +21,7 @@
 #include <deque>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/neuron_router.h"
@@ -38,11 +39,11 @@ using std::lock_guard;
 Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
   NeuronRouter neuron_router(net);
   Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(service_context.get_arena_ptr());
-  uint32 overall_partial_solution_count = 0;
+  uint32 overall_partial_solution_count = 0u;
   sdouble32 remaining_megabytes_in_row = 0;
   sdouble32 current_neuron_megabyte_size;
-  uint32 reach_back; /* for each partial solution in the currently built row */
-  uint32 reach_back_max = 0;
+  uint32 reach_back_max = 0u;
+  uint32 reach_index_max = 0u;
   uint32 current_neuron_index;
   bool has_neuron = false;
 
@@ -82,10 +83,13 @@ Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
           }
           if(0u == this_partial.output_data().interval_size()) /* The first Neuron inside the partial solution shall determine its start */
             this_partial.mutable_output_data()->set_starts(current_neuron_index);
-          reach_back = PartialSolutionBuilder::add_neuron_to_partial_solution(net, current_neuron_index, this_partial);
+          std::pair<uint32,uint32> neuron_input_params = PartialSolutionBuilder::add_neuron_to_partial_solution(net, current_neuron_index, this_partial);
           remaining_megabytes_in_row -= current_neuron_megabyte_size;
           remaining_megabytes_in_partial -= current_neuron_megabyte_size;
-          if(reach_back_max < reach_back)reach_back_max = reach_back;
+          if(reach_back_max < std::get<0>(neuron_input_params))
+            reach_back_max = std::get<0>(neuron_input_params);
+          if(reach_index_max < std::get<1>(neuron_input_params))
+            reach_index_max = std::get<1>(neuron_input_params);
           if(neuron_router.confirm_first_subset_element_processed(current_neuron_index)){
             has_neuron = neuron_router.get_first_neuron_index_from_subset(current_neuron_index);
           }
@@ -110,7 +114,9 @@ Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
 
   solution->set_output_neuron_number(net.output_neuron_number());
   solution->set_neuron_number(net.neuron_array_size());
-  solution->set_network_memory_length(reach_back_max + 1); /* Current loop is "0" reachback, so length should be at least 1 */
+  solution->set_network_memory_length(reach_back_max + 1u); /* Current loop is "0" reachback, so length should be at least 1 */
+  solution->set_network_input_size(reach_index_max + 1u);
+  assert( net.input_data_size() == reach_index_max + 1u);
   return solution;
 }
 

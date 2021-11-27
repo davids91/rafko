@@ -19,6 +19,8 @@
 #define PARTIAL_SOLUTION_BUILDER_H
 
 #include "rafko_global.h"
+
+#include <utility>
 #include <functional>
 
 #include "rafko_protocol/rafko_net.pb.h"
@@ -26,10 +28,7 @@
 
 #include "rafko_net/services/synapse_iterator.h"
 
-
 namespace rafko_net{
-
-using google::protobuf::RepeatedPtrField;
 
 /**
  * @brief      Front-end to create partial solution objects by adding Neurons into them.
@@ -37,7 +36,17 @@ using google::protobuf::RepeatedPtrField;
  */
 class PartialSolutionBuilder{
 public:
-  static uint32 add_neuron_to_partial_solution(const RafkoNet& net, uint32 neuron_index, PartialSolution& partial);
+  /**
+   * @brief      Looks for the given Neuron index in the @PartialSolution input,
+   *             and adds the input to it if found
+   *
+   * @param[in]  net            The network to read the Neuron from
+   * @param[in]  neuron_index   The index of the Neuron to read inside the @RafkoNet
+   * @param      partial        The reference of the partial solution to add the Neuron into
+   *
+   * @return     returns the input parameters of the Neurons: {maximum reach back in Neural memory, maximum input index reached}
+   */
+  static std::pair<uint32,uint32> add_neuron_to_partial_solution(const RafkoNet& net, uint32 neuron_index, PartialSolution& partial);
 
 private:
   /**
@@ -48,7 +57,7 @@ private:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  static void add_to_synapse(sint32 index, uint32 reach_back, uint32& current_synapse_count, RepeatedPtrField<InputSynapseInterval>* synapse_intervals){
+  static void add_to_synapse(sint32 index, uint32 reach_back, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals){
     if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
       ++current_synapse_count;
       synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
@@ -69,7 +78,7 @@ private:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  static void add_to_synapse(sint32 index, uint32& current_synapse_count, RepeatedPtrField<IndexSynapseInterval>* synapse_intervals){
+  static void add_to_synapse(sint32 index, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<IndexSynapseInterval>* synapse_intervals){
     if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
       ++current_synapse_count;
       synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);

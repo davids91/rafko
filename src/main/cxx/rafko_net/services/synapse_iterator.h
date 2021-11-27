@@ -322,6 +322,18 @@ public:
     return(0 > index);
   }
 
+
+  /**
+   * @brief      Determines whether the specified input interval is pointing to the inputs, rather than internal Neuron data.
+   *
+   * @param[in]  interval   A const reference to the interval to examine
+   *
+   * @return     True if the specified interval is pointing to network input, False otherwise.
+   */
+  static bool is_synapse_input(const Interval_type& interval){
+    return(is_index_input(interval.starts()));
+  }
+
   /**
    * @brief      Converts synapse input index to an index usable in an input array
    *

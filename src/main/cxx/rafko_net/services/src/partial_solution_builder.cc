@@ -26,7 +26,7 @@ uint32 PartialSolutionBuilder::partial_input_synapse_count = 0;
 sint32 PartialSolutionBuilder::previous_neuron_input_index;
 uint8 PartialSolutionBuilder::previous_neuron_input_source;
 
-uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& net, uint32 neuron_index, PartialSolution& partial){
+std::pair<uint32,uint32> PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& net, uint32 neuron_index, PartialSolution& partial){
   SynapseIterator<InputSynapseInterval> input_synapse(partial.input_data());
   previous_neuron_input_index = input_synapse.size();
   previous_neuron_input_source = neuron_input_none;
@@ -35,6 +35,7 @@ uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& ne
 
   if(net.neuron_array_size() > static_cast<int>(neuron_index)){
     uint32 max_reach_back = 0;
+    uint32 max_reach_index = 0;
     IndexSynapseInterval temp_synapse_interval;
     SynapseIterator<> weight_iterator(net.neuron_array(neuron_index).input_weights());
     SynapseIterator<InputSynapseInterval> input_iterator(net.neuron_array(neuron_index).input_indices());
@@ -61,7 +62,11 @@ uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& ne
     input_iterator.iterate([&](InputSynapseInterval interval_synapse){
       current_backreach = interval_synapse.reach_past_loops();
       if(interval_synapse.reach_past_loops() > max_reach_back)
-         max_reach_back = interval_synapse.reach_past_loops();
+        max_reach_back = interval_synapse.reach_past_loops();
+      if(SynapseIterator<InputSynapseInterval>::is_synapse_input(interval_synapse)){
+        uint32 input_index = SynapseIterator<InputSynapseInterval>::synapse_index_from_input_index(interval_synapse.starts()) + interval_synapse.interval_size() - 1u;
+        if(max_reach_index < input_index)max_reach_index = input_index;
+      }
     },[&](sint32 neuron_input_index){ /* Put each Neuron input into the @PartialSolution */
       if(!look_for_neuron_input(neuron_input_index, current_backreach, input_synapse, partial)){
         /* Check if the partial input synapse needs to be closed */
@@ -106,7 +111,7 @@ uint32 PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& ne
       &&(0 == partial.input_data(partial.input_data_size()-1).interval_size())
     )partial.mutable_input_data()->RemoveLast();
 
-    return max_reach_back;
+    return std::make_pair(max_reach_back, max_reach_index);
   }else throw std::runtime_error("Neuron index is out of bounds from net neuron array!");
 }
 

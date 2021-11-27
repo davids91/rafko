@@ -39,7 +39,6 @@ TEST_CASE("Vector subrange", "[data-handling][sub-range]"){
   CHECK( big_vec.back() == my_range.back() );
   CHECK( big_vec.front() == my_range.front() );
 
-
   for(uint32 i = 0; i < big_vec.size(); i++){
     REQUIRE( big_vec[i] == my_range[i] );
   }
