@@ -165,8 +165,8 @@ void test_solution_solver_multithread(uint16 threads){
     /* Check result of the solution */
     REQUIRE( solution_solver->get_solution().output_neuron_number() <= neuron_data.size());
     network_output_vector = {
-      neuron_data.cend() - solution_solver->get_solution().output_neuron_number(),
-      neuron_data.cend()
+      neuron_data.end() - solution_solver->get_solution().output_neuron_number(),
+      neuron_data.end()
     };
     REQUIRE( network_output_vector.size() == solution.output_neuron_number() );
 
@@ -211,8 +211,8 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
 
   rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = solver->solve(net_input, true);
   vector<sdouble32> result = {
-    neuron_data.cend() - solver->get_solution().output_neuron_number(),
-    neuron_data.cend()
+    neuron_data.end() - solver->get_solution().output_neuron_number(),
+    neuron_data.end()
   };
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size());
   manaual_fully_connected_network_result(net_input, {}, expected_neuron_data, net_structure, *net);
@@ -231,8 +231,8 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   unique_ptr<SolutionSolver> solver2(SolutionSolver::Builder(*solution2, service_context).build());
   rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data2 = solver2->solve(net_input, true);
   result = {
-    neuron_data2.cend() - solver2->get_solution().output_neuron_number(),
-    neuron_data2.cend()
+    neuron_data2.end() - solver2->get_solution().output_neuron_number(),
+    neuron_data2.end()
   };
 
   /* Verify once more if the calculated values match the expected ones */
@@ -278,8 +278,8 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = solver->solve(net_input, true);
   vector<sdouble32> result = {
-    (neuron_data.cend() - solver->get_solution().output_neuron_number()),
-    neuron_data.cend()
+    (neuron_data.end() - solver->get_solution().output_neuron_number()),
+    neuron_data.end()
   };
   vector<sdouble32> previous_neuron_data = vector<sdouble32>(net->neuron_array_size());
   vector<sdouble32> expected_neuron_data = vector<sdouble32>(net->neuron_array_size()); /* Should be all zeroes the first time */
@@ -295,7 +295,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
 
   for(uint32 loop = 0; loop < 5; ++loop){ /* Re-verify with additional runs, at least 3, more shouldn't hurt */
     rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = solver->solve(net_input, false);
-    result = {neuron_data.cend() - solver->get_solution().output_neuron_number(), neuron_data.cend()};
+    result = {neuron_data.end() - solver->get_solution().output_neuron_number(), neuron_data.end()};
     previous_neuron_data = vector<sdouble32>(expected_neuron_data);
     manaual_fully_connected_network_result(net_input, previous_neuron_data, expected_neuron_data, net_structure, *net);
     expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
@@ -480,8 +480,8 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
   /* solve in a single thread */
   rafko_utilities::ConstVectorSubrange<sdouble32> single_thread_output_buffer = solver->solve(net_input, true);
   const vector<sdouble32> single_thread_output = {
-    single_thread_output_buffer.cbegin(),
-    single_thread_output_buffer.cend()
+    single_thread_output_buffer.begin(),
+    single_thread_output_buffer.end()
   };
 
   /* solve from multiple threads */
@@ -491,8 +491,8 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
   executor.start_and_block([&](uint32 thread_index){
     rafko_utilities::ConstVectorSubrange<sdouble32> thread_output_buffer = solver->solve(net_input, true, thread_index);
     thread_outputs[thread_index] = {
-      thread_output_buffer.cbegin(),
-      thread_output_buffer.cend()
+      thread_output_buffer.begin(),
+      thread_output_buffer.end()
     };
   });
 

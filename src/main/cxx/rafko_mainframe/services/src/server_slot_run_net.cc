@@ -68,8 +68,8 @@ NeuralIOStream ServerSlotRunNet::run_net_once(const NeuralIOStream& data_stream)
       };
       rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = network_solver->solve(input,true,0);
       std::copy(
-        neuron_data.cend() - network_solution->output_neuron_number(),
-        neuron_data.cend(),
+        neuron_data.end() - network_solution->output_neuron_number(),
+        neuron_data.end(),
         result_package.begin() + sequence_start_index
       );
       sequence_start_index += data_stream.feature_size();

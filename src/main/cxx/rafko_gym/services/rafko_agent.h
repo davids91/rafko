@@ -66,8 +66,8 @@ public:
       if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
       solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread) );
       return { /* return with the range of the output Neurons */
-        neuron_value_buffers[thread_index].get_const_element(0).cend() - brain.output_neuron_number(),
-        neuron_value_buffers[thread_index].get_const_element(0).cend()
+        neuron_value_buffers[thread_index].get_const_element(0).end() - brain.output_neuron_number(),
+        neuron_value_buffers[thread_index].get_const_element(0).end()
       };
     } else throw std::runtime_error("Thread index out of bounds!");
   }

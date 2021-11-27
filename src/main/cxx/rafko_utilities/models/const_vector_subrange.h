@@ -43,18 +43,18 @@ public:
     return *std::next(start, index);
   }
   const T& front(void) const{
-    return *cbegin();
+    return *begin();
   }
   const T& back(void) const{
-    return *std::next(cend(), -1);
+    return *std::next(end(), -1);
   }
   std::size_t size(void) const{
     return range_size;
   }
-  const typename std::vector<T>::const_iterator cbegin(void) const{
+  const typename std::vector<T>::const_iterator begin(void) const{
     return start;
   }
-  const typename std::vector<T>::const_iterator cend(void) const{
+  const typename std::vector<T>::const_iterator end(void) const{
     return std::next(start, range_size);
   }
 

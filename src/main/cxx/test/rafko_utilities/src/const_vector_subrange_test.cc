@@ -32,10 +32,10 @@ using std::vector;
  * */
 TEST_CASE("Vector subrange", "[data-handling][sub-range]"){
   std::vector<sdouble32> big_vec = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-  rafko_utilities::ConstVectorSubrange<> my_range{ big_vec.cbegin(), big_vec.cend() };
+  rafko_utilities::ConstVectorSubrange<> my_range{ big_vec.begin(), big_vec.end() };
 
   REQUIRE( big_vec.size() == my_range.size() );
-  REQUIRE( std::next( big_vec.cend(), -1 ) == std::next( my_range.cend(), -1 ) );
+  REQUIRE( std::next( big_vec.end(), -1 ) == std::next( my_range.end(), -1 ) );
   CHECK( big_vec.back() == my_range.back() );
   CHECK( big_vec.front() == my_range.front() );
 
