@@ -25,15 +25,17 @@
 
 namespace rafko_utilities{
 
-template <typename T = sdouble32>
+template <typename Iterator = std::vector<sdouble32>::const_iterator>
 class ConstVectorSubrange{
 public:
-  ConstVectorSubrange(typename std::vector<T>::const_iterator start_, std::size_t size_)
+  using T = typename Iterator::value_type;
+
+  ConstVectorSubrange(Iterator start_, std::size_t size_)
   : start(start_)
   , range_size(size_)
   { }
 
-  ConstVectorSubrange(typename std::vector<T>::const_iterator begin_, typename std::vector<T>::const_iterator end_)
+  ConstVectorSubrange(Iterator begin_, Iterator end_)
   : start(begin_)
   , range_size(std::distance(start, end_))
   { }
@@ -51,15 +53,15 @@ public:
   std::size_t size() const{
     return range_size;
   }
-  const typename std::vector<T>::const_iterator begin() const{
+  Iterator begin() const{
     return start;
   }
-  const typename std::vector<T>::const_iterator end() const{
+  Iterator end() const{
     return std::next(start, range_size);
   }
 
 private:
-  const typename std::vector<T>::const_iterator start;
+  const Iterator start;
   const std::size_t range_size;
 };
 

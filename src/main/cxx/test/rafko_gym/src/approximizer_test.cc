@@ -254,7 +254,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   CostFunctionMSE after_cost(service_context);
   for(uint32 i = 0; i < number_of_samples; ++i){
     bool reset = 0 == (i%(train_set->get_sequence_size()));
-    rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = after_solver->solve(test_set->get_input_sample(i), reset);
+    rafko_utilities::ConstVectorSubrange<> neuron_data = after_solver->solve(test_set->get_input_sample(i), reset);
     error_summary[0] += after_cost.get_feature_error({neuron_data.begin(),neuron_data.end()}, test_set->get_label_sample(i), number_of_samples);
   }
   std::cout << "==================================\n Error summaries:"

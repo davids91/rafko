@@ -160,7 +160,7 @@ void test_solution_solver_multithread(uint16 threads){
     partial_solution_solver_0_1.solve(network_inputs, neuron_data_partials); /* row 0, column 1 */
     partial_solution_solver_1_0.solve(network_inputs, neuron_data_partials); /* row 1, column 0 */
     partial_solution_solver_1_1.solve(network_inputs, neuron_data_partials); /* row 1, column 1 */
-    rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = solution_solver->solve(network_inputs, false);
+    rafko_utilities::ConstVectorSubrange<> neuron_data = solution_solver->solve(network_inputs, false);
 
     /* Check result of the solution */
     REQUIRE( solution_solver->get_solution().output_neuron_number() <= neuron_data.size());
@@ -209,7 +209,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());
 
-  rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = solver->solve(net_input, true);
+  rafko_utilities::ConstVectorSubrange<> neuron_data = solver->solve(net_input, true);
   vector<sdouble32> result = {
     neuron_data.end() - solver->get_solution().output_neuron_number(),
     neuron_data.end()
@@ -229,7 +229,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   Solution* solution2 = SolutionBuilder(service_context).build(*net);
 
   unique_ptr<SolutionSolver> solver2(SolutionSolver::Builder(*solution2, service_context).build());
-  rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data2 = solver2->solve(net_input, true);
+  rafko_utilities::ConstVectorSubrange<> neuron_data2 = solver2->solve(net_input, true);
   result = {
     neuron_data2.end() - solver2->get_solution().output_neuron_number(),
     neuron_data2.end()
@@ -276,7 +276,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = solver->solve(net_input, true);
+  rafko_utilities::ConstVectorSubrange<> neuron_data = solver->solve(net_input, true);
   vector<sdouble32> result = {
     (neuron_data.end() - solver->get_solution().output_neuron_number()),
     neuron_data.end()
@@ -294,7 +294,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   }
 
   for(uint32 loop = 0; loop < 5; ++loop){ /* Re-verify with additional runs, at least 3, more shouldn't hurt */
-    rafko_utilities::ConstVectorSubrange<sdouble32> neuron_data = solver->solve(net_input, false);
+    rafko_utilities::ConstVectorSubrange<> neuron_data = solver->solve(net_input, false);
     result = {neuron_data.end() - solver->get_solution().output_neuron_number(), neuron_data.end()};
     previous_neuron_data = vector<sdouble32>(expected_neuron_data);
     manaual_fully_connected_network_result(net_input, previous_neuron_data, expected_neuron_data, net_structure, *net);
@@ -371,7 +371,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  rafko_utilities::ConstVectorSubrange<sdouble32> network_output = solver->solve(net_input, true);
+  rafko_utilities::ConstVectorSubrange<> network_output = solver->solve(net_input, true);
 
   /* Calculate the network manually */
   TransferFunction transfer_function(service_context);
@@ -478,7 +478,7 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
   unique_ptr<SolutionSolver> solver(SolutionSolver::Builder(*solution, service_context).build());
 
   /* solve in a single thread */
-  rafko_utilities::ConstVectorSubrange<sdouble32> single_thread_output_buffer = solver->solve(net_input, true);
+  rafko_utilities::ConstVectorSubrange<> single_thread_output_buffer = solver->solve(net_input, true);
   const vector<sdouble32> single_thread_output = {
     single_thread_output_buffer.begin(),
     single_thread_output_buffer.end()
@@ -489,7 +489,7 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
   ThreadGroup executor(thread_number);
   vector<vector<sdouble32>> thread_outputs(thread_number);
   executor.start_and_block([&](uint32 thread_index){
-    rafko_utilities::ConstVectorSubrange<sdouble32> thread_output_buffer = solver->solve(net_input, true, thread_index);
+    rafko_utilities::ConstVectorSubrange<> thread_output_buffer = solver->solve(net_input, true, thread_index);
     thread_outputs[thread_index] = {
       thread_output_buffer.begin(),
       thread_output_buffer.end()

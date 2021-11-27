@@ -61,7 +61,7 @@ public:
    * @param[in]      input    The input data to be taken
    * @return         The output values of the network result
    */
-  rafko_utilities::ConstVectorSubrange<sdouble32> solve(const vector<sdouble32>& input, bool reset_neuron_data, uint32 thread_index = 0){
+  rafko_utilities::ConstVectorSubrange<> solve(const vector<sdouble32>& input, bool reset_neuron_data, uint32 thread_index = 0){
     if(max_threads > thread_index){
       if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
       solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread) );
