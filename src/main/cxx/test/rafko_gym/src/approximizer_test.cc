@@ -30,7 +30,7 @@
 #include "rafko_gym/services/rafko_environment_data_set.h"
 #include "rafko_gym/services/rafko_net_approximizer.h"
 
-namespace rafko_net_test {
+namespace rafko_gym_test {
 
 using std::vector;
 using std::cout;
@@ -263,4 +263,4 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
 
 }
 
-} /* namespace rafko_net_test */
+} /* namespace rafko_gym_test */

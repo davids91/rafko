@@ -30,7 +30,7 @@
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_gym/services/rafko_environment_data_set.h"
 
-namespace rako_gym_test {
+namespace rafko_gym_test {
 
 using std::vector;
 using std::reference_wrapper;
@@ -88,6 +88,7 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   solution.set_neuron_number(1);
   solution.set_output_neuron_number(1);
   solution.set_network_memory_length(1);
+  solution.set_network_input_size(1);
   solution.add_cols(1);
   DummyRafkoAgent agent(solution);
 

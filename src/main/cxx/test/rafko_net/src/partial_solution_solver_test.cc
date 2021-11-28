@@ -30,18 +30,9 @@
 namespace rafko_net_test {
 
 using std::vector;
-using std::reference_wrapper;
 
-using rafko_net::Transfer_functions;
-using rafko_net::transfer_function_identity;
-using rafko_utilities::DataRingbuffer;
 using rafko_net::PartialSolution;
-using rafko_net::PartialSolution_solver;
-using rafko_net::TransferFunction;
-using rafko_net::IndexSynapseInterval;
-using rafko_net::InputSynapseInterval;
 using rafko_net::SynapseIterator;
-using rafko_mainframe::RafkoServiceContext;
 
 /*###############################################################################################
  * Testing if the solver processes a partial_solution detail correctly
@@ -56,16 +47,16 @@ using rafko_mainframe::RafkoServiceContext;
  */
 
 TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-solution][manual]" ){
-  RafkoServiceContext service_context;
-  DataRingbuffer neuron_data(1,2);
+  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_utilities::DataRingbuffer neuron_data(1,2);
   PartialSolution partial_solution;
   vector<uint32> helper_vector_uint;
   vector<sdouble32> expected_neuron_output;
-  InputSynapseInterval temp_synapse_interval;
+  rafko_net::InputSynapseInterval temp_synapse_interval;
 
   /* Define the input and structure of the network */
   vector<sdouble32> network_inputs = {double_literal(10.0),double_literal(5.0)};
-  manual_2_neuron_partial_solution(partial_solution, network_inputs.size());
+  rafko_test::manual_2_neuron_partial_solution(partial_solution, network_inputs.size());
 
   /* Add relevant Partial solution input (the input of the first @Neuron) */
   temp_synapse_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0));
@@ -73,12 +64,12 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   *partial_solution.add_input_data() = temp_synapse_interval;
 
   /* Test the partial_solution */
-  PartialSolution_solver solver(partial_solution, service_context);
+  rafko_net::PartialSolutionSolver solver(partial_solution, service_context);
 
   /* The result should be according to the calculations */
   solver.solve(network_inputs, neuron_data);
   expected_neuron_output = vector<sdouble32>(2);
-  manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
+  rafko_test::manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
   CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
   /* The result should change in accordance with the parameters */
@@ -92,16 +83,16 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
     },1u,1u); /* Mess with the weights of the second Neuron */
 
     solver.solve(network_inputs, neuron_data);
-    manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
+    rafko_test::manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
     solver.solve(network_inputs, neuron_data);
-    manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
+    rafko_test::manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
-    partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),TransferFunction::next());
+    partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),rafko_net::TransferFunction::next());
     solver.solve(network_inputs, neuron_data);
-    manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
+    rafko_test::manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
     REQUIRE( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
   }
 }
@@ -114,12 +105,12 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
  * - see if the input is collected correctly
  */
 TEST_CASE("Test Partial solution input collection","[solve][partial-solution][input_collection]"){
-  RafkoServiceContext service_context;
+  rafko_mainframe::RafkoServiceContext service_context;
   PartialSolution partial_solution;
   vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
-  IndexSynapseInterval temp_index_interval;
-  InputSynapseInterval temp_input_interval;
-  DataRingbuffer neuron_data(1, network_inputs.size());
+  rafko_net::IndexSynapseInterval temp_index_interval;
+  rafko_net::InputSynapseInterval temp_input_interval;
+  rafko_utilities::DataRingbuffer neuron_data(1, network_inputs.size());
 
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(network_inputs.size());
@@ -127,7 +118,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   partial_solution.add_weight_table(double_literal(0.0));  /* A weight for the spike function */
   for(uint32 i = 0; i < network_inputs.size(); ++i){
     partial_solution.add_weight_table(double_literal(1.0));
-    partial_solution.add_neuron_transfer_functions(transfer_function_identity);
+    partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
 
     partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights */
     temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(i));
@@ -164,7 +155,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Prepare the partial solution */
-  PartialSolution_solver solver(partial_solution, service_context);
+  rafko_net::PartialSolutionSolver solver(partial_solution, service_context);
 
   solver.solve(network_inputs, neuron_data); /* Since the network just spits the inputs back out so the input collection is testable through it*/
   for(uint32 i = 0; i < network_inputs.size(); ++i){

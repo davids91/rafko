@@ -32,9 +32,9 @@ SolutionSolver::Builder::Builder(const Solution& to_solve, RafkoServiceContext& 
 {
   uint32 partial_index_at_row_start = 0;
   for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
-    partial_solvers.push_back(vector<PartialSolution_solver>());
+    partial_solvers.push_back(vector<PartialSolutionSolver>());
     for(uint32 column_index = 0; column_index < solution.cols(row_iterator); ++column_index){
-      partial_solvers[row_iterator].push_back( PartialSolution_solver(
+      partial_solvers[row_iterator].push_back( PartialSolutionSolver(
         solution.partial_solutions(partial_index_at_row_start + column_index), context
       )); /* Initialize a solver for this partial solution element */
       if(partial_solvers[row_iterator][column_index].get_required_tmp_data_size() > max_tmp_size_needed)

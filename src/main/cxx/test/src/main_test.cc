@@ -37,7 +37,7 @@ int main( int argc, char* argv[] ) {
   return result;
 }
 
-namespace rafko_net_test {
+namespace rafko_test {
 
 using rafko_gym::DataAggregate;
 using rafko_net::TransferFunction;
@@ -441,4 +441,4 @@ TEST_CASE("Testing whether binary addition can be solved with a manual program",
 }
 
 
-} /* namsepace rafko_net_test */
+} /* namsepace rafko_test */

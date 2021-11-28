@@ -20,7 +20,7 @@
 
 #include "rafko_utilities/services/thread_group.h"
 
-namespace rafko_net_test {
+namespace rafko_utilities_test {
 
 using std::vector;
 using std::lock_guard;
@@ -63,4 +63,4 @@ TEST_CASE("Thread Group generic use-case test", "[thread-group]"){
   }
 }
 
-} /* namespace rafko_net_test */
+} /* namespace rafko_utilities_test */

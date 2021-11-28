@@ -23,7 +23,7 @@
 #include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_utilities/models/data_pool.h"
 
-namespace rafko_net_test {
+namespace rafko_utilities_test {
 
 using std::vector;
 using std::thread;
@@ -77,4 +77,4 @@ TEST_CASE("Data Pool multi-thread access", "[data-handling][data-pool][multi-thr
   }
 }
 
-} /* namespace rafko_net_test */
+} /* namespace rafko_utilities_test */

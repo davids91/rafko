@@ -41,10 +41,10 @@ using std::atomic;
 using rafko_utilities::DataPool;
 using rafko_utilities::DataRingbuffer;
 
-class PartialSolution_solver{
+class PartialSolutionSolver{
 
 public:
-  PartialSolution_solver(const PartialSolution& partial_solution, RafkoServiceContext& service_context)
+  PartialSolutionSolver(const PartialSolution& partial_solution, RafkoServiceContext& service_context)
   :  detail(partial_solution)
   ,  internal_weight_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())

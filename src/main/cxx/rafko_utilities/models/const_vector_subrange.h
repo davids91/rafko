@@ -20,8 +20,8 @@
 
 #include "rafko_global.h"
 
-#include <iterator>
 #include <vector>
+#include <cassert>
 
 namespace rafko_utilities{
 

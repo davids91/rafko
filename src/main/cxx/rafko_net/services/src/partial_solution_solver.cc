@@ -26,9 +26,9 @@
 
 namespace rafko_net {
 
-DataPool<sdouble32> PartialSolution_solver::common_data_pool;
+DataPool<sdouble32> PartialSolutionSolver::common_data_pool;
 
-void PartialSolution_solver::solve_internal(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
+void PartialSolutionSolver::solve_internal(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
   sdouble32 new_neuron_data = double_literal(0.0);
   sdouble32 new_neuron_input;
   sdouble32 spike_function_weight;
@@ -108,7 +108,7 @@ void PartialSolution_solver::solve_internal(const vector<sdouble32>& input_data,
   } /* Go through the neurons */
 }
 
-bool PartialSolution_solver::is_valid() const{
+bool PartialSolutionSolver::is_valid() const{
   if(
     (0u < detail.output_data().interval_size())
     &&(static_cast<int>(detail.output_data().interval_size()) == detail.index_synapse_number_size())

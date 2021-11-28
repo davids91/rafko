@@ -23,7 +23,7 @@
 #include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 
-namespace rafko_net_test {
+namespace rafko_utilities_test {
 
 using std::vector;
 using std::copy;
@@ -102,4 +102,4 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
   std::cout << "sequence index" << std::endl; */
 }
 
-} /* namespace rafko_net_test */
+} /* namespace rafko_utilities_test */

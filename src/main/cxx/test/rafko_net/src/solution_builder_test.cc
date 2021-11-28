@@ -97,7 +97,7 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
   }
 
   /* Test if the inputs of the partial in the first row only contain input indexes */
-  check_if_the_same(*net, *solution);
+  rafko_test::check_if_the_same(*net, *solution);
 
   if(nullptr == arena){
     delete net;

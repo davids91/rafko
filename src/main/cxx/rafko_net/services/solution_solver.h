@@ -70,7 +70,7 @@ public:
 
 private:
   SolutionSolver(
-    const Solution& to_solve, RafkoServiceContext& context, vector<vector<PartialSolution_solver>> partial_solvers_,
+    const Solution& to_solve, RafkoServiceContext& context, vector<vector<PartialSolutionSolver>> partial_solvers_,
     uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
   ): RafkoAgent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_processing_threads())
   ,  solution(to_solve)
@@ -81,7 +81,7 @@ private:
 
   const Solution& solution;
   RafkoServiceContext& service_context;
-  vector<vector<PartialSolution_solver>> partial_solvers;
+  vector<vector<PartialSolutionSolver>> partial_solvers;
   mutable mutex threads_mutex;
   ThreadGroup execution_threads;
 
@@ -97,7 +97,7 @@ public:
   private:
     const Solution& solution;
     RafkoServiceContext& service_context;
-    vector<vector<PartialSolution_solver>> partial_solvers;
+    vector<vector<PartialSolutionSolver>> partial_solvers;
     uint32 max_tmp_size_needed = 0;
     uint32 max_tmp_data_needed_per_thread = 0;
   };

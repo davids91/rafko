@@ -26,7 +26,7 @@
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_net/models/cost_function_mse.h"
 
-namespace rafko_net_test {
+namespace rafko_gym_test {
 
 using std::unique_ptr;
 using std::vector;
@@ -259,4 +259,4 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
   CHECK( Approx(double_literal(0.0)).margin(0.00000000000001) == data_agr.get_error(selected_index) );
 }
 
-} /* namespace rafko_net_test */
+} /* namespace rafko_gym_test */

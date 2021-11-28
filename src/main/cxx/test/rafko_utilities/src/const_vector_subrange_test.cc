@@ -23,7 +23,7 @@
 
 #include "rafko_utilities/models/const_vector_subrange.h"
 
-namespace rafko_net_test {
+namespace rafko_utilities_test {
 
 using std::vector;
 
@@ -58,4 +58,4 @@ TEST_CASE("Vector subrange", "[data-handling][sub-range]"){
   }
 }
 
-} /* namespace rafko_net_test */
+} /* namespace rafko_utilities_test */
