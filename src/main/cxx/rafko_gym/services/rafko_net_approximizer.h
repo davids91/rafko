@@ -78,9 +78,7 @@ public:
   , weight_updater(UpdaterFactory::build_weight_updater(net, *net_solution, weight_updater_, service_context))
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
   , applied_direction(net.weight_table_size())
-  {
-    environment.full_evaluation(*solver);
-  }
+  { }
 
   ~RafkoNetApproximizer(){
     if(nullptr == service_context.get_arena_ptr())
