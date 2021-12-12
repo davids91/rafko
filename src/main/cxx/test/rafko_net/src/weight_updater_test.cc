@@ -15,11 +15,11 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/catch.hpp"
 #include "test/test_utility.h"
 
 #include <vector>
 #include <memory>
+#include <catch2/catch_test_macros.hpp>
 
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"

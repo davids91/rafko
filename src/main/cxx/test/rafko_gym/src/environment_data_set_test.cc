@@ -15,12 +15,14 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/catch.hpp"
 #include "test/test_utility.h"
 
 #include <vector>
 #include <memory>
 #include <functional>
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/solution.pb.h"
@@ -96,7 +98,7 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   agent.set_result(expected_label - set_distance);
   sdouble32 environment_error = environment.full_evaluation(agent);
   REQUIRE( /* One Error: (distance^2)/(2 * overall number of samples) */
-    Approx( /* Error sum: One Error * overall number of samples  */
+    Catch::Approx( /* Error sum: One Error * overall number of samples  */
       pow(set_distance,2) / double_literal(2.0)
     ).margin(0.00000000000001) == -environment_error
   );
@@ -120,7 +122,7 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   training_set.pop_state();
   agent.set_result(expected_label - set_distance);
   sdouble32 measured_error = environment.stochastic_evaluation(agent, seed);
-  CHECK( Approx(reference_error).margin(0.00000000000001) == measured_error );
+  CHECK( Catch::Approx(reference_error).margin(0.00000000000001) == measured_error );
 }
 
 } /* namespace rako_gym_test */

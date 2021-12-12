@@ -15,11 +15,13 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/catch.hpp"
 #include "test/test_utility.h"
 
 #include <vector>
 #include <memory>
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/common.pb.h"
 #include "rafko_mainframe/models/rafko_service_context.h"
@@ -64,32 +66,32 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 
   /* Test initial error value, then a fully errorless state */
-  CHECK( Approx(data_agr.get_error_sum()).margin(0.00000000000001) == double_literal(1.0) );
+  CHECK( Catch::Approx(data_agr.get_error_sum()).margin(0.00000000000001) == double_literal(1.0) );
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
     data_agr.set_feature_for_label(i,{expected_label});
   }
   sdouble32 initial_error = data_agr.get_error_sum();
-  CHECK( Approx(initial_error).margin(0.00000000000001) == double_literal(0.0) );
+  CHECK( Catch::Approx(initial_error).margin(0.00000000000001) == double_literal(0.0) );
 
   /* Test statistics for it */
   sdouble32 error_sum = double_literal(0.0);
   for(uint32 i = 0; i < data_agr.get_number_of_label_samples(); ++i){
     error_sum += data_agr.get_error(i);
   }
-  CHECK( Approx(error_sum).margin(0.00000000000001) == data_agr.get_error_sum() );
+  CHECK( Catch::Approx(error_sum).margin(0.00000000000001) == data_agr.get_error_sum() );
 
   /* Set all features to the given distance */
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
     data_agr.set_feature_for_label(i,{expected_label - set_distance});
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Approx(
+      Catch::Approx(
         pow(set_distance,2) / (double_literal(2.0) * (sample_number * sequence_size))
       ).margin(0.00000000000001) == data_agr.get_error(i)
     );
   }
 
   CHECK( /* Error: (distance^2)/(2 * overall number of samples) */
-    Approx(
+    Catch::Approx(
       pow(set_distance,2) / double_literal(2.0)
     ).margin(0.00000000000001) == data_agr.get_error_sum()
   );
@@ -116,9 +118,9 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
         (pow((expected_label - faulty_feature),2) / (double_literal(2.0) * (sample_number * sequence_size)))
       )
     );
-    REQUIRE( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
+    REQUIRE( Catch::Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
   }
-  CHECK( Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
+  CHECK( Catch::Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
 
   /* test if the error is stored correctly even when the data is provided in bulk */
   vector<vector<sdouble32>> neuron_data_simulation; /* create dummy neuron data with the configured distance */
@@ -135,13 +137,13 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
 
     for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Approx(
+      Catch::Approx(
         pow(set_distance,2) / (double_literal(2.0) * sample_number * sequence_size)
       ).margin(0.00000000000001) == data_agr.get_error(i)
     );
 
     REQUIRE( /* Error: (distance^2)/2 */
-      Approx(pow(set_distance,2)/double_literal(2.0)).margin(0.00000000000001) == data_agr.get_error_sum()
+      Catch::Approx(pow(set_distance,2)/double_literal(2.0)).margin(0.00000000000001) == data_agr.get_error_sum()
     );
 
     /* Test if the quarter of the set can be updated in bulk */
@@ -152,13 +154,13 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
 
     for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Approx(
+      Catch::Approx(
         pow(set_distance,2) / (double_literal(2.0) * sample_number * sequence_size)
       ).margin(0.00000000000001) == data_agr.get_error(i)
     );
 
     REQUIRE( /* Error: (distance^2)/2 */
-      Approx(pow(set_distance,2)/double_literal(2.0)).margin(0.00000000000001) == data_agr.get_error_sum()
+      Catch::Approx(pow(set_distance,2)/double_literal(2.0)).margin(0.00000000000001) == data_agr.get_error_sum()
     );
 
     /* Check also the bulk sequenced interface */
@@ -169,13 +171,13 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
 
     for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Approx(
+      Catch::Approx(
         pow(set_distance,2) / (double_literal(2.0) * sample_number *sequence_size)
       ).margin(0.00000000000001) == data_agr.get_error(i)
     );
 
     REQUIRE( /* Error: (distance^2)/2 */
-      Approx(pow(set_distance,2)/double_literal(2.0)).margin(0.00000000000001) == data_agr.get_error_sum()
+      Catch::Approx(pow(set_distance,2)/double_literal(2.0)).margin(0.00000000000001) == data_agr.get_error_sum()
     );
 
     /* Check also with sequence truncation */
@@ -190,13 +192,13 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
       for(uint32 sequence_iterator = 0; sequence_iterator < data_agr.get_sequence_size(); ++sequence_iterator){
         if((data_agr.get_sequence_size()/2) > sequence_iterator){ /* first half of the sequence should have have the new error */
           REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-            Approx(
+            Catch::Approx(
               pow(old_set_distence,2) / (double_literal(2.0) * sample_number * sequence_size)
             ).margin(0.00000000000001) == data_agr.get_error(raw_label_index)
           );
         }else{ /* second half of the sequence should have the new error */
           REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-            Approx(
+            Catch::Approx(
               pow(set_distance,2) / (double_literal(2.0) * sample_number * sequence_size)
             ).margin(0.00000000000001) == data_agr.get_error(raw_label_index)
           );
@@ -242,21 +244,21 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
 
   /* Saving state, modifying a feature */
   initial_error = data_agr.get_error_sum();
-  CHECK( Approx(double_literal(0.0)).margin(0.00000000000001) == data_agr.get_error(selected_index) );
+  CHECK( Catch::Approx(double_literal(0.0)).margin(0.00000000000001) == data_agr.get_error(selected_index) );
   data_agr.push_state();
   data_agr.set_feature_for_label(selected_index,{(expected_label - set_distance)});
-  CHECK( Approx(double_literal(0.0)).margin(0.00000000000001) != data_agr.get_error(selected_index) );
+  CHECK( Catch::Approx(double_literal(0.0)).margin(0.00000000000001) != data_agr.get_error(selected_index) );
   CHECK(
-    Approx( /* Error: (distance^2)/(2 * overall number of samples) */
+    Catch::Approx( /* Error: (distance^2)/(2 * overall number of samples) */
       pow(set_distance,2)/(double_literal(2.0) * sample_number * sequence_size)
     ).margin(0.00000000000001) == data_agr.get_error(selected_index)
   );
-  CHECK( Approx(initial_error).margin(0.00000000000001) != data_agr.get_error_sum() );
+  CHECK( Catch::Approx(initial_error).margin(0.00000000000001) != data_agr.get_error_sum() );
 
   /* Restoring state, the error should be the same */
   data_agr.pop_state();
-  CHECK( Approx(initial_error).margin(0.00000000000001) == data_agr.get_error_sum() );
-  CHECK( Approx(double_literal(0.0)).margin(0.00000000000001) == data_agr.get_error(selected_index) );
+  CHECK( Catch::Approx(initial_error).margin(0.00000000000001) == data_agr.get_error_sum() );
+  CHECK( Catch::Approx(double_literal(0.0)).margin(0.00000000000001) == data_agr.get_error(selected_index) );
 }
 
 } /* namespace rafko_gym_test */

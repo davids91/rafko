@@ -15,8 +15,9 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/catch.hpp"
 #include "test/test_utility.h"
+
+#include <catch2/catch_test_macros.hpp>
 
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
@@ -122,7 +123,7 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   approximizer.apply_fragment(); /* Add the negative gradient */
   REQUIRE(
     (nets[0]->weight_table(weight_index) + (weight_gradient * service_context.get_learning_rate()))
-    == Approx(weight_old_value).epsilon(0.00000000000001)
+    == Catch::Approx(weight_old_value).epsilon(0.00000000000001)
   );
 
   /* Continously adding gradients into a single fragment, while redundantly collecting them to see that the effect is the same */
@@ -137,13 +138,13 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
     REQUIRE(
       nets[0]->weight_table(weight_index)
-      == Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
+      == Catch::Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
     );
   }
   approximizer.apply_fragment();
   for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
     CHECK(
-      Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
+      Catch::Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
       == (initial_weights[weight_index] - (correct_weight_delta[weight_index] * service_context.get_learning_rate()))
     );
   }

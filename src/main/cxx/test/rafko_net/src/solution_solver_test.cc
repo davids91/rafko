@@ -15,12 +15,13 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/catch.hpp"
 #include "test/test_utility.h"
 
 #include <vector>
 #include <memory>
 #include <numeric>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
@@ -160,11 +161,11 @@ void test_solution_solver_multithread(uint16 threads){
 
     for(uint32 i = 0; i < network_output_vector.size(); ++i){
       REQUIRE(
-        Approx(neuron_data_partials.get_element(0, solution.neuron_number() - solution.output_neuron_number() + i)).epsilon(double_literal(0.00000000000001))
+        Catch::Approx(neuron_data_partials.get_element(0, solution.neuron_number() - solution.output_neuron_number() + i)).epsilon(double_literal(0.00000000000001))
         == expected_neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]
       );
       REQUIRE(
-        Approx(network_output_vector[i]).epsilon(double_literal(0.00000000000001))
+        Catch::Approx(network_output_vector[i]).epsilon(double_literal(0.00000000000001))
         == expected_neuron_data[solution.neuron_number() - solution.output_neuron_number() + i]
       );
     }
@@ -209,7 +210,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   REQUIRE( net_structure.back() == result.size() );
   REQUIRE( expected_result.size() == result.size() );
   for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
-    CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+    CHECK( Catch::Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
 
   /* Re-veriy with guaranteed multiple partial solutions */
   sdouble32 solution_size_mb = solution->SpaceUsedLong() /* Bytes */* double_literal(1024.0) /* KB */* double_literal(1024.0) /* MB */;
@@ -225,7 +226,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
 
   /* Verify once more if the calculated values match the expected ones */
   for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
-    REQUIRE( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+    REQUIRE( Catch::Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
 
   if(nullptr == arena){
     delete solution2;
@@ -278,7 +279,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
   REQUIRE( net_structure.back() == result.size() );
   REQUIRE( expected_result.size() == result.size() );
   for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator){
-    CHECK( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+    CHECK( Catch::Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
   }
 
   for(uint32 loop = 0; loop < 5; ++loop){ /* Re-verify with additional runs, at least 3, more shouldn't hurt */
@@ -291,7 +292,7 @@ sdouble32 testing_nets_with_memory_manually(google::protobuf::Arena* arena, sdou
     REQUIRE( net_structure.back() == result.size() );
     REQUIRE( expected_result.size() == result.size() );
     for(uint32 result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
-      REQUIRE( Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
+      REQUIRE( Catch::Approx(result[result_iterator]).epsilon(double_literal(0.00000000000001)) == expected_result[result_iterator]);
   }
 
   /* Return with the size of the overall solution */

@@ -15,10 +15,11 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/catch.hpp"
 #include "test/test_utility.h"
 
 #include <random>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/models/cost_function.h"
@@ -61,7 +62,7 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   CostFunctionMSE cost(service_context);
   for(uint16 sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
     REQUIRE(
-      Approx(
+      Catch::Approx(
         cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator], dataset_size)
       ).epsilon(double_literal(0.00000000000001))
       == (double_literal(0.5) * feature_size * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
@@ -73,7 +74,7 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   cost.get_feature_errors(dataset, featureset, label_errors, 0, 0, label_errors.size(), 0, dataset_size);
   for(const sdouble32 label_error : label_errors){
     CHECK(
-      Approx(label_error).epsilon(double_literal(0.00000000000001))
+      Catch::Approx(label_error).epsilon(double_literal(0.00000000000001))
       == (double_literal(0.5) * feature_size * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
     );
   }

@@ -17,8 +17,11 @@
 
 #define CATCH_CONFIG_RUNNER
 
-#include "test/catch.hpp"
 #include "test/test_utility.h"
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_session.hpp>
+#include <cfloat>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"

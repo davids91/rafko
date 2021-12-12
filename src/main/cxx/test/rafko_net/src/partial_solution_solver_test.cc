@@ -14,10 +14,12 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "test/catch.hpp"
+
 #include "test/test_utility.h"
 
 #include <random>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
@@ -70,7 +72,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   solver.solve(network_inputs, neuron_data);
   expected_neuron_output = vector<sdouble32>(2);
   rafko_test::manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-  CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
+  CHECK( Catch::Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
   /* The result should change in accordance with the parameters */
   srand (time(nullptr));
@@ -84,16 +86,16 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
 
     solver.solve(network_inputs, neuron_data);
     rafko_test::manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-    CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
+    CHECK( Catch::Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
     solver.solve(network_inputs, neuron_data);
     rafko_test::manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-    CHECK( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
+    CHECK( Catch::Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
     partial_solution.set_neuron_transfer_functions(rand()%(partial_solution.neuron_transfer_functions_size()),rafko_net::TransferFunction::next());
     solver.solve(network_inputs, neuron_data);
     rafko_test::manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
-    REQUIRE( Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
+    REQUIRE( Catch::Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
   }
 }
 
@@ -159,7 +161,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
 
   solver.solve(network_inputs, neuron_data); /* Since the network just spits the inputs back out so the input collection is testable through it*/
   for(uint32 i = 0; i < network_inputs.size(); ++i){
-    REQUIRE( Approx(network_inputs[i]).epsilon(0.00000000000001) == neuron_data.get_element(0,i));
+    REQUIRE( Catch::Approx(network_inputs[i]).epsilon(0.00000000000001) == neuron_data.get_element(0,i));
   }
 }
 

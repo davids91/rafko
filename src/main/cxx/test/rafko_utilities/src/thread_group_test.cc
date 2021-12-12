@@ -15,8 +15,10 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/catch.hpp"
 #include "test/test_utility.h"
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "rafko_utilities/services/thread_group.h"
 
@@ -59,7 +61,7 @@ TEST_CASE("Thread Group generic use-case test", "[thread-group]"){
       }
     };
     pool.start_and_block(fnc);
-    REQUIRE( Approx(expected).margin(0.00000000000001) == result );
+    REQUIRE( Catch::Approx(expected).margin(0.00000000000001) == result );
   }
 }
 

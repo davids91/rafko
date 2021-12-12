@@ -1,8 +1,15 @@
 if(MAKE_TESTS)
   add_executable(rafko_test)
-  add_test(NAME rafko_test_suite COMMAND rafko_test -d yes)
-  target_link_libraries(rafko_test rafko_full)
+#  add_test(NAME rafko_test_suite COMMAND rafko_test -d yes)
+  add_subdirectory(external/Catch2)
+  set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/test/external/Catch2/extras" ${CMAKE_MODULE_PATH})
+
   target_include_directories(rafko_test PRIVATE ${PROJECT_SOURCE_DIR})
+  target_link_libraries(rafko_test PRIVATE rafko_full Catch2::Catch2)
+
+  include(CTest)
+  include(Catch)
+  catch_discover_tests(rafko_test)
 
   if(TEST_CONVERGENCE)
     target_sources(rafko_test
