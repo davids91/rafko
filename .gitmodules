@@ -1,0 +1,3 @@
+[submodule "Catch2"]
+	path = src/main/cxx/test/external/Catch2
+	url = https://github.com/catchorg/Catch2.git
