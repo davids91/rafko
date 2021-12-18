@@ -51,7 +51,7 @@ using rafko_net::CostFunctionMSE;
 class DummyRafkoAgent : public RafkoAgent{
 public:
   DummyRafkoAgent(Solution& solution) : RafkoAgent(solution,0,0,4) { }
-  void solve(const vector<sdouble32>&, DataRingbuffer& output, const vector<reference_wrapper<vector<sdouble32>>>&, uint32 ) const{
+  void solve(const vector<sdouble32>&, DataRingbuffer& output, const vector<reference_wrapper<vector<sdouble32>>>&, uint32, uint32 ) const{
     output = result;
   }
   void set_result(sdouble32 value){

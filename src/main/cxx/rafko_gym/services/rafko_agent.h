@@ -60,7 +60,7 @@ public:
     if(max_threads > thread_index){
       assert( input.size() == brain.network_input_size() );
       if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
-      solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread) );
+      solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread), thread_index );
       return { /* return with the range of the output Neurons */
         neuron_value_buffers[thread_index].get_const_element(0).end() - brain.output_neuron_number(),
         neuron_value_buffers[thread_index].get_const_element(0).end()
@@ -79,7 +79,7 @@ public:
   virtual void solve(
     const vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,
     const vector<std::reference_wrapper<vector<sdouble32>>>& tmp_data_pool,
-    uint32 used_data_pool_start = 0
+    uint32 used_data_pool_start = 0, uint32 thread_index = 0
   ) const = 0;
 
   /**

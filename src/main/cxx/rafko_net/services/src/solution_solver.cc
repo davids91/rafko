@@ -23,9 +23,6 @@
 
 namespace rafko_net{
 
-using std::function;
-using std::ref;
-
 SolutionSolver::Builder::Builder(const Solution& to_solve, RafkoServiceContext& context)
 :  solution(to_solve)
 ,  service_context(context)
@@ -46,13 +43,26 @@ SolutionSolver::Builder::Builder(const Solution& to_solve, RafkoServiceContext& 
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
 
+SolutionSolver::SolutionSolver(
+  const Solution& to_solve, RafkoServiceContext& context, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
+  uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
+): rafko_gym::RafkoAgent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_processing_threads())
+,  solution(to_solve)
+,  service_context(context)
+,  partial_solvers(partial_solvers_)
+{
+  for(uint32 thread_index = 0; thread_index < context.get_max_processing_threads(); ++ thread_index)
+    execution_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(context.get_max_solve_threads()));
+}
+
 void SolutionSolver::solve(
-  const vector<sdouble32>& input, DataRingbuffer& output,
-  const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool, uint32 used_data_pool_start
+  const std::vector<sdouble32>& input, DataRingbuffer& output,
+  const std::vector<std::reference_wrapper<std::vector<sdouble32>>>& tmp_data_pool,
+  uint32 used_data_pool_start, uint32 thread_index
 ) const{
   if(0 < solution.cols_size()){
     uint32 col_iterator;
-    output.step(); /* move the iterator forward for the next one and store the current data */
+    output.step(); /* move the iterator forward to the next slot and store the current data */
     for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
       if(0 == solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
       col_iterator = 0;
@@ -61,9 +71,11 @@ void SolutionSolver::solve(
         ||(solution.cols(row_iterator) < 2u) /* ..since the number of partial solutions depend on the available device size */
       ){ /* having fewer partial solutions in a row usually implies whether or not multiple threads are needed */
         while(col_iterator < solution.cols(row_iterator)){
-          for(uint16 thread_index = 0; thread_index < service_context.get_max_solve_threads(); ++thread_index){
+          for(uint16 inner_thread_index = 0; inner_thread_index < service_context.get_max_solve_threads(); ++inner_thread_index){
             if(col_iterator < solution.cols(row_iterator)){
-              partial_solvers[row_iterator][col_iterator].solve(ref(input), ref(output), ref(tmp_data_pool[used_data_pool_start + thread_index].get()));
+              partial_solvers[row_iterator][col_iterator].solve(
+                std::ref(input), std::ref(output), std::ref(tmp_data_pool[used_data_pool_start + inner_thread_index].get())
+              );
               ++col_iterator;
             }else break;
           }
@@ -71,12 +83,11 @@ void SolutionSolver::solve(
       }else{
         while(col_iterator < solution.cols(row_iterator)){
           { /* To make the Solver itself thread-safe; the sub-threads need to be guarded with a lock */
-            std::lock_guard<mutex> my_lock(threads_mutex);
-            execution_threads.start_and_block([this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator]
-            (uint32 thread_index){
-              if((col_iterator + thread_index) < solution.cols(row_iterator)){
-                partial_solvers[row_iterator][(col_iterator + thread_index)].solve(
-                  input,output,tmp_data_pool[used_data_pool_start + thread_index].get()
+            execution_threads[thread_index]->start_and_block([this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator]
+            (uint32 inner_thread_index){
+              if((col_iterator + inner_thread_index) < solution.cols(row_iterator)){
+                partial_solvers[row_iterator][(col_iterator + inner_thread_index)].solve(
+                  input,output,tmp_data_pool[used_data_pool_start + inner_thread_index].get()
                 );
               }
             });
@@ -84,7 +95,7 @@ void SolutionSolver::solve(
           col_iterator += service_context.get_max_solve_threads();
         } /* while(col_iterator < solution.cols(row_iterator)) */
       }
-    } /* for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator) */
+    } /* for(every row in the @Solution) */
   }else throw std::runtime_error("A solution of 0 rows!");
 }
 
