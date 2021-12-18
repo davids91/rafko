@@ -6,7 +6,6 @@ target_include_directories(rafko_protocol
 find_package(Protobuf CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 set(PROTO_SOURCES
-  common.proto
   logger.proto
   solution.proto
   rafko_net.proto

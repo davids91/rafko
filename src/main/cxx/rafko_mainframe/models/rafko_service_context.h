@@ -36,7 +36,7 @@ using std::pair;
 using std::get;
 
 using rafko_mainframe::ServiceHyperparameters;
-using rafko_net::Training_strategy;
+using rafko_gym::Training_strategy;
 
 class RAFKO_FULL_EXPORT RafkoServiceContext{
 public:
@@ -98,7 +98,7 @@ public:
     return hypers.memory_truncation();
   }
 
-  bool get_training_strategy(rafko_net::Training_strategy strategy){
+  bool get_training_strategy(rafko_gym::Training_strategy strategy){
     return (0u < (static_cast<uint32>(hypers.training_strategies()) & static_cast<uint32>(strategy)));
   }
 
@@ -262,7 +262,7 @@ public:
     hypers.set_epsilon(1e-8); /* very small positive value almost greater, than double_literal(0.0) */
     hypers.set_zetta(double_literal(0.3));
     hypers.set_lambda(double_literal(1.0507));
-    hypers.set_training_strategies(rafko_net::Training_strategy::training_strategy_unknown);
+    hypers.set_training_strategies(rafko_gym::Training_strategy::training_strategy_unknown);
   }
 
 private:

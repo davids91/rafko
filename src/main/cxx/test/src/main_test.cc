@@ -17,8 +17,6 @@
 
 #define CATCH_CONFIG_RUNNER
 
-#include "test/test_utility.h"
-
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_session.hpp>
 #include <cfloat>
@@ -33,6 +31,8 @@
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
+
+#include "test/test_utility.h"
 
 int main( int argc, char* argv[] ) {
   int result = Catch::Session().run( argc, argv );

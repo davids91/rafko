@@ -18,20 +18,17 @@
 #ifndef UPDATER_FACTORY_H
 #define UPDATER_FACTORY_H
 
-#include "rafko_protocol/common.pb.h"
-
 #include <memory>
 
-#include "rafko_net/services/rafko_weight_updater.h"
-#include "rafko_net/services/weight_updater_momentum.h"
-#include "rafko_net/services/weight_updater_nesterovs.h"
-#include "rafko_net/services/weight_updater_amsgrad.h"
-#include "rafko_net/services/weight_updater_adam.h"
+#include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_protocol/training.pb.h"
+#include "rafko_gym/services/rafko_weight_updater.h"
+#include "rafko_gym/services/weight_updater_momentum.h"
+#include "rafko_gym/services/weight_updater_nesterovs.h"
+#include "rafko_gym/services/weight_updater_amsgrad.h"
+#include "rafko_gym/services/weight_updater_adam.h"
 
-namespace rafko_net{
-
-using std::unique_ptr;
-using std::make_unique;
+namespace rafko_gym{
 
 class UpdaterFactory{
 public:
@@ -45,25 +42,23 @@ public:
    *
    * @return     The weight updater.
    */
-  static unique_ptr<RafkoWeightUpdater> build_weight_updater(
-    RafkoNet& net, Solution& solution, Weight_updaters weight_updater, RafkoServiceContext& context
-  ){
+  static std::unique_ptr<RafkoWeightUpdater> build_weight_updater(rafko_net::RafkoNet& net, rafko_net::Solution& solution, Weight_updaters weight_updater, rafko_mainframe::RafkoServiceContext& context){
     switch(weight_updater){
       case weight_updater_momentum:
-        return make_unique<RafkoWeightUpdaterMomentum>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdaterMomentum>(net, solution, context);
       case weight_updater_nesterovs:
-        return make_unique<RafkoWeightUpdaterNesterovs>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdaterNesterovs>(net, solution, context);
       case weight_updater_adam:
-        return make_unique<RafkoWeightUpdaterAdam>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdaterAdam>(net, solution, context);
       case weight_updater_amsgrad:
-        return make_unique<RafkoWeightUpdaterAMSGrad>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdaterAMSGrad>(net, solution, context);
       case weight_updater_default:
       default:
-        return make_unique<RafkoWeightUpdater>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdater>(net, solution, context);
     };
   }
 };
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */
 
 #endif /* UPDATER_FACTORY_H */

@@ -19,10 +19,8 @@ syntax = "proto3";
 option cc_enable_arenas = true;
 option java_package = "org.rafko.mainframe";
 option java_outer_classname = "RafkoDeepLearningService";
-
 package rafko_mainframe;
 
-import "common.proto";
 import "rafko_net.proto";
 import "training.proto";
 
@@ -154,7 +152,7 @@ message ServiceHyperparameters{
   double learning_rate = 10;
   uint32 minibatch_size = 11;
   uint32 memory_truncation = 12;
-  rafko_net.Training_strategy training_strategies = 13;
+  rafko_gym.Training_strategy training_strategies = 13;
 
   double alpha = 20;
   double beta = 21;
@@ -176,10 +174,10 @@ message ServiceSlot{
 
   ServiceHyperparameters hypers = 21;
   rafko_net.RafkoNet network = 22;
-  rafko_net.DataSet test_set = 23;
-  rafko_net.DataSet training_set = 24;
+  rafko_gym.DataSet test_set = 23;
+  rafko_gym.DataSet training_set = 24;
   rafko_net.Cost_functions cost_function = 25;
-  rafko_net.Weight_updaters weight_updater = 26;
+  rafko_gym.Weight_updaters weight_updater = 26;
 }
 
 /**

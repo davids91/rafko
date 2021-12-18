@@ -15,12 +15,12 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/test_utility.h"
-
 #include <catch2/catch_test_macros.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/services/synapse_iterator.h"
+
+#include "test/test_utility.h"
 
 namespace rafko_net_test {
 

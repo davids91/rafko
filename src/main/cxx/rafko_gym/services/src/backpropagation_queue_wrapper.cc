@@ -15,17 +15,15 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/backpropagation_queue_wrapper.h"
+#include "rafko_gym/services/backpropagation_queue_wrapper.h"
 
 #include "rafko_net/services/neuron_router.h"
 
-namespace rafko_net{
+namespace rafko_gym{
 
-using std::vector;
-
-BackpropagationQueueWrapper::BackpropagationQueueWrapper(RafkoNet& net, RafkoServiceContext& context){
-  vector<vector<uint32>> neuron_queue = vector<vector<uint32>>(1,vector<uint32>(0));
-  NeuronRouter neuron_router(net);
+BackpropagationQueueWrapper::BackpropagationQueueWrapper(rafko_net::RafkoNet& net, rafko_mainframe::RafkoServiceContext& context){
+  std::vector<std::vector<uint32>> neuron_queue = std::vector<std::vector<uint32>>(1,std::vector<uint32>(0));
+  rafko_net::NeuronRouter neuron_router(net);
   uint32 neuron_index;
   uint32 neuron_depth = 0;
   uint32 neurons_done = 0;
@@ -45,14 +43,14 @@ BackpropagationQueueWrapper::BackpropagationQueueWrapper(RafkoNet& net, RafkoSer
         neuron_queue[neuron_depth].begin(),neuron_queue[neuron_depth].begin()
       );
       ++neuron_depth;
-      neuron_queue.push_back(vector<uint32>());
+      neuron_queue.push_back(std::vector<uint32>());
     }
   } /* while(net.neuron_array_size() > static_cast<int>(neurons_done)) */
 
   /* Push queue array into gradient step */
   uint32 previous_added_index = -1;
   uint32 number_of_neurons_in_depth;
-  IndexSynapseInterval tmp_interval = IndexSynapseInterval();
+  rafko_net::IndexSynapseInterval tmp_interval = rafko_net::IndexSynapseInterval();
   for(auto depth_iterator = neuron_queue.rbegin(); depth_iterator != neuron_queue.rend(); ++depth_iterator){
     number_of_neurons_in_depth = 0;
     for(uint32 neuron_index : *depth_iterator){
@@ -74,4 +72,4 @@ BackpropagationQueueWrapper::BackpropagationQueueWrapper(RafkoNet& net, RafkoSer
   }
 }
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */

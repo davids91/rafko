@@ -28,7 +28,7 @@ using rafko_net::FunctionFactory;
 using rafko_net::Cost_functions_IsValid;
 using rafko_net::cost_function_unknown;
 using rafko_net::weight_updater_unknown;
-using rafko_net::Weight_updaters_IsValid;
+using rafko_gym::Weight_updaters_IsValid;
 
 void ServerSlotApproximizeNet::initialize(ServiceSlot&& service_slot_){
   if(serv_slot_to_optimize != service_slot_.type()) throw std::runtime_error("Incorrect Server slot initialization!");

@@ -3,17 +3,12 @@ target_include_directories(rafko_net PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE
 target_link_libraries(rafko_net PUBLIC rafko_protocol)
 set(NET_INTERFACE_SERVICES
   services/synapse_iterator.h
-  services/weight_updater_adam.h
-  services/weight_updater_amsgrad.h
-  services/weight_updater_momentum.h
-  services/weight_updater_nesterovs.h
 )
 set(NET_INTERFACE_MODELS
   models/cost_function_squared_error.h
   models/cost_function_mse.h
 )
 set(NET_HEADER_SERVICES
-  services/backpropagation_queue_wrapper.h
   services/function_factory.h
   services/neuron_router.h
   services/partial_solution_builder.h
@@ -21,9 +16,6 @@ set(NET_HEADER_SERVICES
   services/solution_builder.h
   services/solution_solver.h
   services/rafko_net_builder.h
-  services/updater_factory.h
-  services/weight_experience_space.h
-  services/rafko_weight_updater.h
 )
 set(NET_HEADER_MODELS
   models/cost_function.h
@@ -41,15 +33,12 @@ target_sources(rafko_net
   models/src/neuron_info.cc
   models/src/transfer_function.cc
   models/src/cost_function.cc
-  services/src/backpropagation_queue_wrapper.cc
   services/src/neuron_router.cc
   services/src/partial_solution_builder.cc
   services/src/partial_solution_solver.cc
   services/src/solution_builder.cc
   services/src/rafko_net_builder.cc
   services/src/solution_solver.cc
-  services/src/weight_experience_space.cc
-  services/src/weight_updater.cc
 )
 
 install(

@@ -21,7 +21,7 @@ option java_package = "org.rafko.rafko_net";
 option java_outer_classname = "RafkoSolution";
 package rafko_net;
 
-import "common.proto";
+import "rafko_net.proto";
 
 /**
  * @brief      An intermediate solution as it calculates

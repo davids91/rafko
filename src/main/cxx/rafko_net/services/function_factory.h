@@ -23,7 +23,6 @@
 #include <memory>
 #include <stdexcept>
 
-#include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
 
 #include "rafko_net/models/cost_function_squared_error.h"

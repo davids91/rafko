@@ -15,12 +15,12 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/weight_experience_space.h"
+#include "rafko_gym/services/weight_experience_space.h"
 
 #include <cmath>
 #include <stdexcept>
 
-namespace rafko_net{
+namespace rafko_gym{
 
 using std::abs;
 using std::max;
@@ -112,4 +112,4 @@ sdouble32 WeightExperienceSpace::get_best_weight(){
 }
 
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */

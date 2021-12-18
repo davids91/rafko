@@ -19,7 +19,6 @@
 
 #include <algorithm>
 
-#include "rafko_protocol/common.pb.h"
 #include "rafko_net/services/synapse_iterator.h"
 
 namespace rafko_gym{
@@ -225,7 +224,7 @@ void RafkoNetApproximizer::apply_fragment(){
   }
 
   weight_updater->iterate(applied_direction);
-  gradient_fragment = rafko_net::GradientFragment();
+  gradient_fragment = GradientFragment();
   environment.full_evaluation(*solver);
 }
 

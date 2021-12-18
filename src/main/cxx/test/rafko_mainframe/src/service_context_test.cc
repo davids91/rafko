@@ -15,11 +15,11 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/test_utility.h"
-
 #include <catch2/catch_test_macros.hpp>
 
 #include "rafko_mainframe/models/rafko_service_context.h"
+
+#include "test/test_utility.h"
 
 namespace rafko_mainframe_test {
 

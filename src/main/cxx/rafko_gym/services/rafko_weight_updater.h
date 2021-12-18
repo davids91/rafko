@@ -25,11 +25,12 @@
 #include <unordered_map>
 #include <mutex>
 
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/rafko_service_context.h"
 
-namespace rafko_net{
+namespace rafko_gym{
 
 /**
  * @brief      Base implementation for updating weights for netowrks based on weight gradients
@@ -37,7 +38,7 @@ namespace rafko_net{
 class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
   RafkoWeightUpdater(
-    RafkoNet& rafko_net, Solution& solution_, rafko_mainframe::RafkoServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
+    rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
   ):net(rafko_net)
   , solution(solution_)
   , service_context(service_context_)
@@ -124,8 +125,8 @@ public:
   virtual ~RafkoWeightUpdater() = default;
 
 protected:
-  RafkoNet& net;
-  Solution& solution;
+  rafko_net::RafkoNet& net;
+  rafko_net::Solution& solution;
   rafko_mainframe::RafkoServiceContext& service_context;
   const uint32 required_iterations_for_step;
   const uint32 weights_to_do_in_one_thread;
@@ -226,10 +227,10 @@ private:
    * @param[in]  inner_neuron_weight_index_starts  The index in the weight table (of the @PartialSolution) where the inner neuron weights start
    */
   void copy_weights_of_neuron_to_partial_solution(
-    uint32 neuron_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts
+    uint32 neuron_index, rafko_net::PartialSolution& partial, uint32 inner_neuron_weight_index_starts
   ) const;
 };
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */
 
 #endif /* RAFKO_WEIGHT_UPDATER_H */

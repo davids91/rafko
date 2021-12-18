@@ -17,13 +17,23 @@
 
 syntax = "proto3";
 option cc_enable_arenas = true;
-option java_package = "org.rafko.rafko_net";
+option java_package = "org.rafko.rafko_gym";
 option java_outer_classname = "RafkoTraining";
+package rafko_gym;
 
-package rafko_net;
+import "rafko_net.proto";
 
-import "common.proto";
-
+/** @brief      Describes the available weight updaters implemented in the framework
+ */
+enum Weight_updaters{
+  weight_updater_unknown = 0;
+  weight_updater_default = 1;
+  weight_updater_momentum = 2;
+  weight_updater_nesterovs = 3;
+  weight_updater_adam = 4;
+  weight_updater_amsgrad = 5;
+  weight_updater_end = 512;
+}
 
 /** @brief      Different configurable strategies while training
  */
@@ -59,7 +69,7 @@ message DataSet{
  */
 message BackpropagationQueue{
   repeated uint32 cols = 1; /* Number of neurons to be calculated at once */
-  repeated IndexSynapseInterval neuron_synapses = 2; /* Neuron indices encapsulating the whole network */
+  repeated rafko_net.IndexSynapseInterval neuron_synapses = 2; /* Neuron indices encapsulating the whole network */
 }
 
 /**
@@ -70,5 +80,5 @@ message BackpropagationQueue{
  */
 message GradientFragment{
   repeated double values = 3; /* Weight update values inside the fragment. The values follow one another in the order they appear based on the @weight_synapses member */
-  repeated IndexSynapseInterval weight_synapses = 2; /* The indices of the weights ( in the @RafkoNet ) for the values stored in the fragment */
+  repeated rafko_net.IndexSynapseInterval weight_synapses = 2; /* The indices of the weights ( in the @RafkoNet ) for the values stored in the fragment */
 }

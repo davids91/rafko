@@ -15,36 +15,23 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/test_utility.h"
-
 #include <memory>
 #include <catch2/catch_test_macros.hpp>
 
-#include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
 #include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/backpropagation_queue_wrapper.h"
 #include "rafko_net/services/neuron_router.h"
 
-namespace rafko_net_test {
+#include "rafko_gym/services/backpropagation_queue_wrapper.h"
 
-using rafko_net::RafkoNet;
-using rafko_net::RafkoNetBuilder;
-using rafko_net::IndexSynapseInterval;
-using rafko_net::InputSynapseInterval;
-using rafko_net::SynapseIterator;
-using rafko_net::BackpropagationQueue;
-using rafko_net::BackpropagationQueueWrapper;
-using rafko_net::NeuronRouter;
-using rafko_mainframe::RafkoServiceContext;
+#include "test/test_utility.h"
 
-using std::unique_ptr;
-using std::make_unique;
+namespace rafko_gym_test {
+
 using std::vector;
-
 
 /*###############################################################################################
  * Testing Backpropagation order:
@@ -54,24 +41,24 @@ using std::vector;
  *   that means no input of a neuron shall be calulated before it
  * */
 TEST_CASE( "Testing backpropagation queue", "" ) {
-  RafkoServiceContext service_context;
-  unique_ptr<RafkoNetBuilder> builder(make_unique<RafkoNetBuilder>(service_context));
+  rafko_mainframe::RafkoServiceContext service_context;
+  std::unique_ptr<rafko_net::RafkoNetBuilder> builder(std::make_unique<rafko_net::RafkoNetBuilder>(service_context));
   builder->input_size(10).expected_input_range(double_literal(5.0));
 
-  unique_ptr<RafkoNet> net(builder->dense_layers({20,10,3,5,5}));
-  NeuronRouter router(*net);
+  std::unique_ptr<rafko_net::RafkoNet> net(builder->dense_layers({20,10,3,5,5}));
+  rafko_net::NeuronRouter router(*net);
 
   /* Create a backrpop queue */
-  BackpropagationQueueWrapper queue_wrapper(*net, service_context);
-  BackpropagationQueue queue = queue_wrapper();
+  rafko_gym::BackpropagationQueueWrapper queue_wrapper(*net, service_context);
+  rafko_gym::BackpropagationQueue queue = queue_wrapper();
 
   /* Check integrity */
   vector<uint32> neuron_depth = vector<uint32>(net->neuron_array_size(), 0);
   uint32 num_neurons = 0;
   uint32 current_depth = 0;
   uint32 current_row = 0;
-  REQUIRE( 0 < SynapseIterator<>(queue.neuron_synapses()).size() );
-  SynapseIterator<>::iterate(queue.neuron_synapses(),[&](sint32 neuron_index){
+  REQUIRE( 0 < rafko_net::SynapseIterator<>(queue.neuron_synapses()).size() );
+  rafko_net::SynapseIterator<>::iterate(queue.neuron_synapses(),[&](sint32 neuron_index){
     REQUIRE( net->neuron_array_size() > neuron_index ); /* all indexes shall be inside network bounds */
     ++num_neurons;
     neuron_depth[neuron_index] = current_depth;
@@ -91,12 +78,13 @@ TEST_CASE( "Testing backpropagation queue", "" ) {
   }
   CHECK( net->neuron_array_size() == static_cast<sint32>(num_neurons) ); /* Neuron column numbers shall add up the number of Neurons */
 
-  SynapseIterator<>::iterate(queue.neuron_synapses(),[&](sint32 neuron_index){
-    SynapseIterator<InputSynapseInterval>::iterate(net->neuron_array(neuron_index).input_indices(),[=](sint32 input_index){
-      if(!SynapseIterator<>::is_index_input(input_index))
+  rafko_net::SynapseIterator<>::iterate(queue.neuron_synapses(),[&](sint32 neuron_index){
+    rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>::iterate(net->neuron_array(neuron_index).input_indices(),
+    [=](sint32 input_index){
+      if(!rafko_net::SynapseIterator<>::is_index_input(input_index))
       CHECK( neuron_depth[neuron_index] < neuron_depth[input_index] );
     });
   });
 }
 
-} /* namespace rafko_net_test */
+} /* namespace rafko_gym_test */

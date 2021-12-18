@@ -15,15 +15,13 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/test_utility.h"
-
 #include <catch2/catch_test_macros.hpp>
 
-#include "rafko_net/services/weight_experience_space.h"
+#include "rafko_gym/services/weight_experience_space.h"
 
-namespace rafko_net_test {
+#include "test/test_utility.h"
 
-using rafko_net::WeightExperienceSpace;
+namespace rafko_gym_test {
 
 /*###############################################################################################
  * Testing whether or not the correct weight values are generated in a weight experience space
@@ -32,7 +30,7 @@ TEST_CASE("Testing weight experience space weight values","[weightxp]"){
   sdouble32 weight_min = double_literal(-1.0);
   sdouble32 weight_max = double_literal(1.0);
   sdouble32 weight_step = double_literal(0.2);
-  WeightExperienceSpace wxp_space = WeightExperienceSpace(weight_min, weight_max, weight_step);
+  rafko_gym::WeightExperienceSpace wxp_space = rafko_gym::WeightExperienceSpace(weight_min, weight_max, weight_step);
 
   uint32 weight_index = 0;
   for(sdouble32 weight = weight_min; weight < weight_max; weight += weight_step){
@@ -43,4 +41,4 @@ TEST_CASE("Testing weight experience space weight values","[weightxp]"){
   }
 }
 
-} /* namespace rafko_net_test */
+} /* namespace rafko_gym_test */

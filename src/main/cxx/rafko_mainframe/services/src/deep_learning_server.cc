@@ -19,7 +19,7 @@
 
 #include <thread>
 
-#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 
 #include "rafko_mainframe/services/server_slot_factory.h"
 

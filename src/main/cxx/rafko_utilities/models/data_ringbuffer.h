@@ -23,7 +23,7 @@
 #include <vector>
 #include <stdexcept>
 
-#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 
 namespace rafko_utilities{
 

@@ -24,7 +24,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace rafko_net{
+namespace rafko_gym{
 
 using std::vector;
 
@@ -144,6 +144,6 @@ private:
 
 };
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */
 
 #endif /*  WEIGHT_EXPERIENCE_SPACE_H */

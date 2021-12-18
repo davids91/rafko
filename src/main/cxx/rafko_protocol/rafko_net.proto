@@ -21,7 +21,28 @@ option java_package = "org.rafko.rafko_net";
 option java_outer_classname = "RafkoRafkoNet";
 package rafko_net;
 
-import "common.proto";
+/** @brief      Indexes of the transfer function a neuron is able to use
+ *              on the weigthed sum of its operation
+ */
+enum Transfer_functions{
+  transfer_function_unknown = 0;
+  transfer_function_identity = 1;
+  transfer_function_sigmoid = 2;
+  transfer_function_tanh = 3;
+  transfer_function_elu = 4;
+  transfer_function_selu = 5;
+  transfer_function_relu = 6;
+  transfer_function_end = 512;
+}
+
+/** @brief      Indexes of the error functions a Neural Network is able to use
+ *              to calculate the gradient of the weights
+ */
+enum Cost_functions{
+  cost_function_unknown = 0;
+  cost_function_squared_error = 1; /* ( (expected-calculated)^2 ) */
+  cost_function_mse = 2; /* ( 0.5*(expected-calculated)^2 )/dataset_size */
+}
 
 /** @brief      Network basically describes the connections a recurrent network has
  *              with the past runs. This enumeration is for a utility which is for
@@ -32,6 +53,35 @@ enum Network_recurrence{
   network_recurrence_unknown = 0;
   network_recurrence_to_self = 1;
   network_recurrence_to_layer = 2;
+}
+
+/**
+ * @brief      These classes describes a synapse each. A synapse corresponds with a table of intervals.
+ *             The number of @starts and @sizes should always be equal. Each pair of them describes
+ *             an index interval where @starts[x] states where the interval x is starting, and @sizes[x]
+ *             denotes the number of indices present in taht interval. The intervals are free to overlap
+ *             or coincide.
+ *             The element @starts can be of negative number. The sign of it denotes a different kind of iteration
+ *             on the given interval. In case the sign is negative for that element, the interval it describes grows
+ *             in the negative direction. This way two kinds of intervals can be stored in the same synapse.
+ *             Positive interval starts at 0, goes on indefinitely: [0,+inf]
+ *             -Positive intervals usually denote enclosed relationships (e.g.: internal neurons in a @PartialSolution)
+ *             Negative interval starts at -1, goes backwards indefinitely: [-1,-inf]
+ *             - Negative intervals usually denote external relationships (e.g.: input data of the Neurons in the @Net
+ *               or inputs of an Inner Neuron, taken from the @PartialSolution input synapses )
+ *             In the class @SynapseIterator there are methods to map negative intervals into positive array numbers.
+ *             The -1 becomes index 0, -2 ==> 1 and so on... This is needed to be able to use negative intervals as
+ *             indexes in arrays.
+ */
+message InputSynapseInterval{
+  uint32 reach_past_loops = 1; /* How far in the past runs of the network is taken from. 0 is current run. */
+  sint32 starts = 10; /* Starting indexes of intervals */
+  uint32 interval_size = 11; /* Sizes of intervals */
+}
+
+message IndexSynapseInterval{
+  sint32 starts = 10; /* Starting indexes of intervals */
+  uint32 interval_size = 11; /* Sizes of intervals */
 }
 
 /** @brief      Takes input, assigns weights to them and processes

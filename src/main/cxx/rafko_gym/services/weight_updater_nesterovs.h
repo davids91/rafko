@@ -18,13 +18,13 @@
 #ifndef WEIGHT_UPDATER_NESTEROVS_H
 #define WEIGHT_UPDATER_NESTEROVS_H
 
-#include "rafko_net/services/rafko_weight_updater.h"
+#include "rafko_gym/services/rafko_weight_updater.h"
 
-namespace rafko_net{
+namespace rafko_gym{
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterNesterovs : public RafkoWeightUpdater{
 public:
-  RafkoWeightUpdaterNesterovs(RafkoNet& rafko_net, Solution& solution_, RafkoServiceContext& service_context_)
+  RafkoWeightUpdaterNesterovs(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoServiceContext& service_context_)
   :  RafkoWeightUpdater(rafko_net, solution_, service_context_, 2)
   { }
 
@@ -54,6 +54,6 @@ private:
   vector<sdouble32> previous_velocity;
 };
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */
 
 #endif /* WEIGHT_UPDATER_NESTEROVS_H */

@@ -32,10 +32,8 @@ typedef signed int sint32;
 typedef signed short sint16;
 typedef signed char sint8;
 typedef double sdouble32;
-typedef uint16* p_uint16;
-typedef sdouble32* p_sdouble32;
 
-#define double_literal(number) (number) /* double precision floating point number literals should have these wrappers to make transition to float, or long literals easier */
+#define double_literal(number) (number) /* floating point number literals should have these wrappers to make transition to float, or long literals easier */
 #define parameter_not_used(param) ((void)param)
 
 #endif /* defined RAFKO_GLOBAL_H */

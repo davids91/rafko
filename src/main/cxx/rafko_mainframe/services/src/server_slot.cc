@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 
-#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/services/rafko_net_builder.h"
 
 namespace rafko_mainframe{

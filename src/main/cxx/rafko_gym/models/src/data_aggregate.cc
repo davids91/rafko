@@ -22,7 +22,7 @@ namespace rafko_gym{
 
 rafko_utilities::DataPool<sdouble32> DataAggregate::common_datapool(1,1);
 
-void DataAggregate::fill(rafko_net::DataSet& samples){
+void DataAggregate::fill(rafko_gym::DataSet& samples){
   uint32 feature_start_index = 0;
   uint32 input_start_index = 0;
   /*!Note: One cycle can be used for both, because there will always be at least as many inputs as labels */

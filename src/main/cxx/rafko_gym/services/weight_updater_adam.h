@@ -18,13 +18,13 @@
 #ifndef WEIGHT_UPDATER_ADAM_H
 #define WEIGHT_UPDATER_ADAM_H
 
-#include "rafko_net/services/rafko_weight_updater.h"
+#include "rafko_gym/services/rafko_weight_updater.h"
 
-namespace rafko_net{
+namespace rafko_gym{
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterAdam : public RafkoWeightUpdater{
 public:
-  RafkoWeightUpdaterAdam(RafkoNet& rafko_net, Solution& solution_, RafkoServiceContext& service_context_)
+  RafkoWeightUpdaterAdam(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoServiceContext& service_context_)
   :  RafkoWeightUpdater(rafko_net, solution_, service_context_)
   ,  iteration_count(0)
   ,  moment(rafko_net.weight_table_size(),double_literal(0.0))
@@ -81,6 +81,6 @@ private:
   vector<sdouble32> raw_moment;
 };
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */
 
 #endif /* WEIGHT_UPDATER_ADAM_H */

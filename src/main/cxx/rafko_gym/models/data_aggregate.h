@@ -26,7 +26,6 @@
 #include <mutex>
 #include <tuple>
 
-#include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
 
 #include "rafko_mainframe/models/rafko_service_context.h"
@@ -74,7 +73,7 @@ using std::vector;
  */
 class RAFKO_FULL_EXPORT DataAggregate{
 public:
-  DataAggregate(rafko_mainframe::RafkoServiceContext& service_context_, rafko_net::DataSet& samples_, std::shared_ptr<rafko_net::CostFunction> cost_function_)
+  DataAggregate(rafko_mainframe::RafkoServiceContext& service_context_, rafko_gym::DataSet& samples_, std::shared_ptr<rafko_net::CostFunction> cost_function_)
   :  service_context(service_context_)
   ,  sequence_size(std::max(1u,samples_.sequence_size()))
   ,  input_samples(samples_.inputs_size() / samples_.input_size())
@@ -384,14 +383,14 @@ private:
   static rafko_utilities::DataPool<sdouble32> common_datapool;
 
   /**
-   * @brief      Converting the @rafko_net::DataSet message to vectors
+   * @brief      Converting the @rafko_gym::DataSet message to vectors
    *
    * @param      samples  The data set to parse
    */
-  void fill(rafko_net::DataSet& samples);
+  void fill(rafko_gym::DataSet& samples);
 
   /**
-   * @brief          Converting the @rafko_net::DataSet message to vectors
+   * @brief          Converting the @rafko_gym::DataSet message to vectors
    *
    * @param[in]      error_start    The starting index to read from in @error_state.sample_errors
    * @param[in]      errors_to_sum  The number of errors to add to @error_state.error_sum

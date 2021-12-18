@@ -15,13 +15,13 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/rafko_weight_updater.h"
+#include "rafko_gym/services/rafko_weight_updater.h"
 
 #include <set>
 
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace rafko_net{
+namespace rafko_gym{
 
 using rafko_mainframe::RafkoServiceContext;
 
@@ -67,7 +67,7 @@ uint32 RafkoWeightUpdater::get_relevant_partial_index_for(uint32 neuron_index) c
     return neurons_in_partials.find(neuron_index)->second;
 
   for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
-    PartialSolution& partial = *solution.mutable_partial_solutions(partial_index);
+    rafko_net::PartialSolution& partial = *solution.mutable_partial_solutions(partial_index);
     if( /* if the output of the partial solution contains the neuron */
       (static_cast<sint32>(neuron_index) >= partial.output_data().starts())
       &&(neuron_index < (partial.output_data().starts() + partial.output_data().interval_size()))
@@ -89,7 +89,7 @@ std::vector<std::pair<uint32,uint32>>& RafkoWeightUpdater::get_relevant_partial_
   for(uint32 neuron_index = 0; static_cast<sint32>(neuron_index) < net.neuron_array_size(); ++neuron_index){
     uint32 weight_relative_index = 0u;
     /* iterate through the weights of the current neuron */
-    SynapseIterator<>::iterate_terminatable(net.neuron_array(neuron_index).input_weights(),
+    rafko_net::SynapseIterator<>::iterate_terminatable(net.neuron_array(neuron_index).input_weights(),
     [&relevant_neuron_weights, network_weight_index, neuron_index, &weight_relative_index](uint32 weight_index){
       if(weight_index == network_weight_index){
         relevant_neuron_weights.push_back({neuron_index, weight_relative_index});
@@ -108,14 +108,14 @@ std::vector<std::pair<uint32,uint32>>& RafkoWeightUpdater::get_relevant_partial_
     if(static_cast<sint32>(partial_index) < solution.partial_solutions_size()){ /* found a partial for the neuron! */
       if(0 == found_partials.count(partial_index)){ /* only add a partial index one time */
         found_partials.insert(partial_index);
-        PartialSolution& partial = *solution.mutable_partial_solutions(partial_index);
+        rafko_net::PartialSolution& partial = *solution.mutable_partial_solutions(partial_index);
         uint32 inner_neuron_weight_synapse_starts = 0;
         uint32 inner_neuron_weight_index_starts = 0;
         for(uint32 inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
           if((partial.output_data().starts() + inner_neuron_index) == std::get<0>(relevant_neural_data)){ /* found the relevant Neuron! */
             uint32 inner_neuron_relative_index = 0;
             /* Iterate through the Neuron indices */
-            SynapseIterator<>::iterate_terminatable(partial.weight_indices(),[&](sint32 inner_neuron_weight_index){
+            rafko_net::SynapseIterator<>::iterate_terminatable(partial.weight_indices(),[&](sint32 inner_neuron_weight_index){
               if(std::get<1>(relevant_neural_data) == inner_neuron_relative_index){
                 relevant_partials.push_back({partial_index, inner_neuron_weight_index});
                 return false;
@@ -193,10 +193,10 @@ void RafkoWeightUpdater::update_solution_with_weights() const{
 }
 
 void RafkoWeightUpdater::copy_weights_of_neuron_to_partial_solution(
-  uint32 neuron_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts
+  uint32 neuron_index, rafko_net::PartialSolution& partial, uint32 inner_neuron_weight_index_starts
 ) const{ /*!Note: After shared weight optimization, this part is to be re-worked */
   uint32 weights_copied = 0;
-  SynapseIterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 network_weight_index){
+  rafko_net::SynapseIterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 network_weight_index){
     partial.set_weight_table(
       (inner_neuron_weight_index_starts + weights_copied), net.weight_table(network_weight_index)
     );
@@ -204,4 +204,4 @@ void RafkoWeightUpdater::copy_weights_of_neuron_to_partial_solution(
   });
 }
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */

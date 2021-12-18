@@ -15,12 +15,12 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/test_utility.h"
-
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
 #include "rafko_utilities/services/thread_group.h"
+
+#include "test/test_utility.h"
 
 namespace rafko_utilities_test {
 

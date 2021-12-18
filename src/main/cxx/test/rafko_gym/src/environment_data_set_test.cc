@@ -15,8 +15,6 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/test_utility.h"
-
 #include <vector>
 #include <memory>
 #include <functional>
@@ -24,13 +22,15 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/models/cost_function_mse.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_gym/services/rafko_environment_data_set.h"
+
+#include "test/test_utility.h"
 
 namespace rafko_gym_test {
 
@@ -42,7 +42,7 @@ using rafko_utilities::DataRingbuffer;
 using rafko_gym::RafkoAgent;
 using rafko_gym::RafkoEnvironmentDataSet;
 using rafko_net::Solution;
-using rafko_net::DataSet;
+using rafko_gym::DataSet;
 using rafko_net::CostFunctionMSE;
 
 /*###############################################################################################

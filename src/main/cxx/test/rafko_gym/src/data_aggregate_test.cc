@@ -15,25 +15,25 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/test_utility.h"
-
 #include <vector>
 #include <memory>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_net/models/cost_function_mse.h"
+
+#include "test/test_utility.h"
 
 namespace rafko_gym_test {
 
 using std::unique_ptr;
 using std::vector;
 
-using rafko_net::DataSet;
+using rafko_gym::DataSet;
 using rafko_gym::DataAggregate;
 using rafko_net::CostFunctionMSE;
 using rafko_mainframe::RafkoServiceContext;

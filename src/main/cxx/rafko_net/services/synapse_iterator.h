@@ -25,7 +25,7 @@
 
 #include <google/protobuf/repeated_field.h>
 
-#include "rafko_protocol/common.pb.h"
+#include "rafko_protocol/rafko_net.pb.h"
 
 namespace rafko_net{
 

@@ -15,8 +15,6 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "test/test_utility.h"
-
 #include <vector>
 #include <memory>
 #include <numeric>
@@ -35,6 +33,8 @@
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
+
+#include "test/test_utility.h"
 
 namespace rafko_net_test{
 
