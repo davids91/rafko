@@ -18,7 +18,6 @@
 #include "rafko_net/services/solution_builder.h"
 
 #include <cmath>
-#include <deque>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -30,11 +29,6 @@
 #include "rafko_net/services/partial_solution_builder.h"
 
 namespace rafko_net{
-
-using std::deque;
-using std::unique_ptr;
-using std::ref;
-using std::lock_guard;
 
 Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
   NeuronRouter neuron_router(net);

@@ -20,9 +20,9 @@
 
 namespace rafko_gym{
 
-DataPool<sdouble32> DataAggregate::common_datapool(1,1);
+rafko_utilities::DataPool<sdouble32> DataAggregate::common_datapool(1,1);
 
-void DataAggregate::fill(DataSet& samples){
+void DataAggregate::fill(rafko_net::DataSet& samples){
   uint32 feature_start_index = 0;
   uint32 input_start_index = 0;
   /*!Note: One cycle can be used for both, because there will always be at least as many inputs as labels */
@@ -43,14 +43,14 @@ void DataAggregate::fill(DataSet& samples){
 void DataAggregate::set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data){
   if(label_samples.size() > sample_index){
     if(!exposed_to_multithreading){
-      std::lock_guard<mutex> my_lock(dataset_mutex);
+      std::lock_guard<std::mutex> my_lock(dataset_mutex);
       error_state.back().error_sum -= error_state.back().sample_errors[sample_index];
     }
     error_state.back().sample_errors[sample_index] = cost_function->get_feature_error(
       label_samples[sample_index], neuron_data, get_number_of_label_samples()
     );
     if(!exposed_to_multithreading){
-      std::lock_guard<mutex> my_lock(dataset_mutex);
+      std::lock_guard<std::mutex> my_lock(dataset_mutex);
       error_state.back().error_sum += error_state.back().sample_errors[sample_index];
     }
   }else throw std::runtime_error("Sample index out of bounds!");
@@ -117,7 +117,7 @@ void DataAggregate::accumulate_error_sum(uint32 error_start, uint32 errors_to_su
   sdouble32 local_error = 0;
   for(uint32 sample_index = error_start; sample_index < (error_start + errors_to_sum) ; ++sample_index)
     local_error += error_state.back().sample_errors[sample_index];
-  std::lock_guard<mutex> my_lock(dataset_mutex);
+  std::lock_guard<std::mutex> my_lock(dataset_mutex);
   error_state.back().error_sum += local_error;
 }
 

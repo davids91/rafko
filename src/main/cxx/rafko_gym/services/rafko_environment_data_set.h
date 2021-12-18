@@ -32,14 +32,13 @@
 namespace rafko_gym{
 
 using std::vector;
-using std::reference_wrapper;
 
 /**
  * @brief      A class representing an environment using a train and test set
  */
 class RAFKO_FULL_EXPORT RafkoEnvironmentDataSet : public RafkoEnvironment{
 public:
-  RafkoEnvironmentDataSet(RafkoServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_);
+  RafkoEnvironmentDataSet(rafko_mainframe::RafkoServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_);
 
   sdouble32 full_evaluation(RafkoAgent& agent){
     evaluate(agent, train_set, 0u, train_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
@@ -97,11 +96,11 @@ public:
   ~RafkoEnvironmentDataSet() = default;
 
 private:
-  RafkoServiceContext& service_context;
+  rafko_mainframe::RafkoServiceContext& service_context;
   DataAggregate& train_set;
   DataAggregate& test_set;
   vector<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
-  ThreadGroup execution_threads;
+  rafko_utilities::ThreadGroup execution_threads;
 
   uint32 iteration = 1;
   uint32 loops_unchecked;

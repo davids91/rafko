@@ -31,11 +31,6 @@
 namespace rafko_gym{
 
 using std::vector;
-using std::reference_wrapper;
-
-using rafko_utilities::DataPool;
-using rafko_utilities::DataRingbuffer;
-using rafko_net::Solution;
 
 /**
  * @brief      This class serves as a base for reinforcement learning agent, which provides output data
@@ -43,20 +38,20 @@ using rafko_net::Solution;
  */
 class RAFKO_FULL_EXPORT RafkoAgent{
 public:
-  RafkoAgent(const Solution& brain_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1)
+  RafkoAgent(const rafko_net::Solution& brain_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1)
   : brain(brain_)
   , required_temp_data_number_per_thread(required_temp_data_number_per_thread_)
   , required_temp_data_size(required_temp_data_size_)
   , max_threads(max_threads_)
   , common_data_pool((required_temp_data_number_per_thread * max_threads_), required_temp_data_size_)
-  , neuron_value_buffers(max_threads, DataRingbuffer( brain.network_memory_length(), brain.neuron_number()))
+  , neuron_value_buffers(max_threads, rafko_utilities::DataRingbuffer( brain.network_memory_length(), brain.neuron_number()))
   { /* A temporary buffer is allocated for every required future usage per thread */
     for(uint32 tmp_data_index = 0; tmp_data_index < (required_temp_data_number_per_thread * max_threads); ++tmp_data_index)
       used_data_buffers.push_back(common_data_pool.reserve_buffer(required_temp_data_size));
   }
 
   /**
-   * @brief      Solves the Solution provided in the constructor, previous neural information is supposedly available in @output buffer
+   * @brief      Solves the rafko_net::Solution provided in the constructor, previous neural information is supposedly available in @output buffer
    *
    * @param[in]      input    The input data to be taken
    * @return         The output values of the network result
@@ -74,7 +69,7 @@ public:
   }
 
   /**
-   * @brief      Solves the Solution provided in the constructor, previous neural information is supposedly available in @output buffer
+   * @brief      Solves the rafko_net::Solution provided in the constructor, previous neural information is supposedly available in @output buffer
    *
    * @param[in]      input                    The input data to be taken
    * @param          output                   The used Output data to write the results to
@@ -82,8 +77,8 @@ public:
    * @param[in]      used_data_pool_start     The first index inside @tmp_data_pool to be used
    */
   virtual void solve(
-    const vector<sdouble32>& input, DataRingbuffer& output,
-    const vector<reference_wrapper<vector<sdouble32>>>& tmp_data_pool,
+    const vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,
+    const vector<std::reference_wrapper<vector<sdouble32>>>& tmp_data_pool,
     uint32 used_data_pool_start = 0
   ) const = 0;
 
@@ -92,7 +87,7 @@ public:
    *
    * @return     A const reference to the solution the agent is using to produce outputs to the given inputs
    */
-  const Solution& get_solution() const{
+  const rafko_net::Solution& get_solution() const{
     return brain;
   }
 
@@ -102,7 +97,7 @@ public:
    * @param[in]      thread_index     The index of the target thread
    * @return         A const reference to the raw Neuron data
    */
-  const DataRingbuffer& get_memory(uint32 thread_index) const{
+  const rafko_utilities::DataRingbuffer& get_memory(uint32 thread_index) const{
     assert(thread_index < neuron_value_buffers.size());
     return neuron_value_buffers[thread_index];
   }
@@ -117,14 +112,14 @@ public:
   }
 
 private:
-  const Solution& brain;
+  const rafko_net::Solution& brain;
   uint32 required_temp_data_number_per_thread;
   uint32 required_temp_data_size;
   uint32 max_threads;
 
-  DataPool<sdouble32> common_data_pool;
-  vector<DataRingbuffer> neuron_value_buffers; /* One DataRingbuffer per thread */
-  vector<reference_wrapper<vector<sdouble32>>> used_data_buffers;
+  rafko_utilities::DataPool<sdouble32> common_data_pool;
+  vector<rafko_utilities::DataRingbuffer> neuron_value_buffers; /* One rafko_utilities::DataRingbuffer per thread */
+  vector<std::reference_wrapper<vector<sdouble32>>> used_data_buffers;
 };
 
 } /* namespace rafko_gym */

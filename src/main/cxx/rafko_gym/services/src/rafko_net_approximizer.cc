@@ -24,13 +24,6 @@
 
 namespace rafko_gym{
 
-using std::make_unique;
-using std::lock_guard;
-using std::ref;
-
-using rafko_net::SynapseIterator;
-using rafko_net::IndexSynapseInterval;
-
 void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
   vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
   sdouble32 gradient_overview = get_gradient_for_all_weights() * service_context.get_learning_rate(iteration);
@@ -158,7 +151,7 @@ void RafkoNetApproximizer::add_to_fragment(uint32 weight_index, sdouble32 gradie
   uint32 values_index = 0;
   uint32 values_index_target = gradient_fragment.values_size();
   uint32 weight_synapse_index_target = gradient_fragment.weight_synapses_size();
-  IndexSynapseInterval tmp_synapse_interval;
+  rafko_net::IndexSynapseInterval tmp_synapse_interval;
 
   for(uint32 weight_syn_index = 0; static_cast<sint32>(weight_syn_index) < gradient_fragment.weight_synapses_size(); ++weight_syn_index){
     if( /* If the weight synapse is at or in-between the first index before the start of the synapse.. */
@@ -225,14 +218,14 @@ void RafkoNetApproximizer::apply_fragment(){
       applied_direction.begin() + gradient_fragment.weight_synapses(0).starts()
     );
   }else{
-    SynapseIterator<>::iterate(gradient_fragment.weight_synapses(), [&](sint32 weight_index){
+    rafko_net::SynapseIterator<>::iterate(gradient_fragment.weight_synapses(), [&](sint32 weight_index){
       applied_direction[weight_index] += gradient_fragment.values(fragment_value_index);
       ++fragment_value_index;
     });
   }
 
   weight_updater->iterate(applied_direction);
-  gradient_fragment = GradientFragment();
+  gradient_fragment = rafko_net::GradientFragment();
   environment.full_evaluation(*solver);
 }
 

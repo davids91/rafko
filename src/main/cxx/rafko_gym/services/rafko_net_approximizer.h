@@ -38,18 +38,7 @@
 
 namespace RAFKO_FULL_EXPORT rafko_gym{
 
-using std::min;
 using std::vector;
-using std::unique_ptr;
-
-using rafko_mainframe::RafkoServiceContext;
-using rafko_net::RafkoNet;
-using rafko_net::SolutionBuilder;
-using rafko_net::SolutionSolver;
-using rafko_net::RafkoWeightUpdater;
-using rafko_net::Weight_updaters;
-using rafko_net::GradientFragment;
-using rafko_net::UpdaterFactory;
 
 /**
  * @brief      This class approximates gradients for a @Dataset and @RafkoNet.
@@ -68,14 +57,14 @@ public:
    * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
   RafkoNetApproximizer(
-    RafkoServiceContext& service_context_, RafkoNet& neural_network, RafkoEnvironment& environment_,
-    Weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
+    rafko_mainframe::RafkoServiceContext& service_context_, rafko_net::RafkoNet& neural_network, RafkoEnvironment& environment_,
+    rafko_net::Weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
   ):service_context(service_context_)
   , net(neural_network)
-  , net_solution(SolutionBuilder(service_context).build(net))
+  , net_solution(rafko_net::SolutionBuilder(service_context).build(net))
   , environment(environment_)
-  , solver(SolutionSolver::Builder(*net_solution, service_context).build())
-  , weight_updater(UpdaterFactory::build_weight_updater(net, *net_solution, weight_updater_, service_context))
+  , solver(rafko_net::SolutionSolver::Builder(*net_solution, service_context).build())
+  , weight_updater(rafko_net::UpdaterFactory::build_weight_updater(net, *net_solution, weight_updater_, service_context))
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
   , applied_direction(net.weight_table_size())
   { }
@@ -129,7 +118,7 @@ public:
    * @brief      Discards the gradient fragment collected in the past
    */
   void discard_fragment(){
-    gradient_fragment = GradientFragment();
+    gradient_fragment = rafko_net::GradientFragment();
   }
 
   /**
@@ -145,7 +134,7 @@ public:
    *
    * @return     The fragment.
    */
-  const GradientFragment get_fragment(){
+  const rafko_net::GradientFragment get_fragment(){
     return gradient_fragment;
   }
 
@@ -154,7 +143,7 @@ public:
    *
    * @return     Constant reference to the current weight gradients array
    */
-  const GradientFragment& get_weight_gradient() const{
+  const rafko_net::GradientFragment& get_weight_gradient() const{
     return gradient_fragment;
   }
 
@@ -194,13 +183,13 @@ public:
   }
 
 private:
-  RafkoServiceContext& service_context;
-  RafkoNet& net;
-  Solution* net_solution;
+  rafko_mainframe::RafkoServiceContext& service_context;
+  rafko_net::RafkoNet& net;
+  rafko_net::Solution* net_solution;
   RafkoEnvironment& environment;
-  unique_ptr<RafkoAgent> solver;
-  unique_ptr<RafkoWeightUpdater> weight_updater;
-  GradientFragment gradient_fragment;
+  std::unique_ptr<RafkoAgent> solver;
+  std::unique_ptr<rafko_net::RafkoWeightUpdater> weight_updater;
+  rafko_net::GradientFragment gradient_fragment;
   uint32 stochastic_evaluation_loops;
 
   uint32 iteration = 1;

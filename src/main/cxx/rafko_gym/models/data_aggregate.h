@@ -40,19 +40,6 @@
 namespace rafko_gym{
 
 using std::vector;
-using std::shared_ptr;
-using std::unique_ptr;
-using std::move;
-using std::mutex;
-using std::tuple;
-
-using rafko_mainframe::RafkoServiceContext;
-using rafko_utilities::ThreadGroup;
-using rafko_net::RafkoNet;
-using rafko_net::DataSet;
-using rafko_net::FunctionFactory;
-using rafko_net::CostFunction;
-using rafko_net::Cost_functions;
 
 /**
  * @brief      A Data set container complete with adaptive error statistics, which is
@@ -87,7 +74,7 @@ using rafko_net::Cost_functions;
  */
 class RAFKO_FULL_EXPORT DataAggregate{
 public:
-  DataAggregate(RafkoServiceContext& service_context_, DataSet& samples_, shared_ptr<CostFunction> cost_function_)
+  DataAggregate(rafko_mainframe::RafkoServiceContext& service_context_, rafko_net::DataSet& samples_, std::shared_ptr<rafko_net::CostFunction> cost_function_)
   :  service_context(service_context_)
   ,  sequence_size(std::max(1u,samples_.sequence_size()))
   ,  input_samples(samples_.inputs_size() / samples_.input_size())
@@ -106,13 +93,13 @@ public:
   }
 
   DataAggregate(
-    RafkoServiceContext& service_context_,
+    rafko_mainframe::RafkoServiceContext& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
-    shared_ptr<CostFunction> cost_function_, uint32 sequence_size_ = 1
+    std::shared_ptr<rafko_net::CostFunction> cost_function_, uint32 sequence_size_ = 1
   ): service_context(service_context_)
   ,  sequence_size(std::max(1u,sequence_size_))
-  ,  input_samples(move(input_samples_))
-  ,  label_samples(move(label_samples_))
+  ,  input_samples(std::move(input_samples_))
+  ,  label_samples(std::move(label_samples_))
   ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
   ,  error_state(double_literal(1.0),{
        vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
@@ -126,19 +113,19 @@ public:
   }
 
   DataAggregate(
-    RafkoServiceContext& service_context_,
+    rafko_mainframe::RafkoServiceContext& service_context_,
     vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
-    Cost_functions the_function, uint32 sequence_size_ = 1
+    rafko_net::Cost_functions the_function, uint32 sequence_size_ = 1
   ): service_context(service_context_)
   ,  sequence_size(std::max(1u,sequence_size_))
-  ,  input_samples(move(input_samples_))
-  ,  label_samples(move(label_samples_))
+  ,  input_samples(std::move(input_samples_))
+  ,  label_samples(std::move(label_samples_))
   ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
   ,  error_state(double_literal(1.0),{
        vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
        double_literal(1.0)
      })
-  ,  cost_function(FunctionFactory::build_cost_function(the_function, service_context_))
+  ,  cost_function(rafko_net::FunctionFactory::build_cost_function(the_function, service_context_))
   ,  exposed_to_multithreading(false)
   ,  error_calculation_threads(service_context_.get_sqrt_of_solve_threads())
   { }
@@ -211,7 +198,7 @@ public:
    */
   void reset_errors(){
     if(!exposed_to_multithreading){
-      std::lock_guard<mutex> my_lock(dataset_mutex);
+      std::lock_guard<std::mutex> my_lock(dataset_mutex);
       for(sdouble32& sample_error : error_state.back().sample_errors)
         sample_error = (double_literal(1.0)/label_samples.size());
       error_state.back().error_sum = double_literal(1.0);
@@ -223,7 +210,7 @@ public:
    */
   void push_state(){
     if(!exposed_to_multithreading){
-      std::lock_guard<mutex> my_lock(dataset_mutex);
+      std::lock_guard<std::mutex> my_lock(dataset_mutex);
       error_state.push_back((error_state.back()));
     }else throw std::runtime_error("Can't modify state while set is exposed to multithreading!");
   }
@@ -233,7 +220,7 @@ public:
    */
   void pop_state(){
     if(!exposed_to_multithreading){
-      std::lock_guard<mutex> my_lock(dataset_mutex);
+      std::lock_guard<std::mutex> my_lock(dataset_mutex);
       if(1 < error_state.size()) error_state.pop_back();
     }else throw std::runtime_error("Can't modify state while set is exposed to multithreading!");
   }
@@ -284,7 +271,7 @@ public:
    */
   sdouble32 get_error_sum() const{
     if(!exposed_to_multithreading){
-      std::lock_guard<mutex> my_lock(dataset_mutex);
+      std::lock_guard<std::mutex> my_lock(dataset_mutex);
       return error_state.back().error_sum;
     } else throw std::runtime_error("Can't query error state while the set is exposd to multithreading");
   }
@@ -296,7 +283,7 @@ public:
    */
   sdouble32 get_error_avg() const{
     if(!exposed_to_multithreading){
-      std::lock_guard<mutex> my_lock(dataset_mutex);
+      std::lock_guard<std::mutex> my_lock(dataset_mutex);
       return error_state.back().error_sum / get_number_of_label_samples();
     } else throw std::runtime_error("Can't query error state while the set is exposd to multithreading");
   }
@@ -377,34 +364,34 @@ private:
     sdouble32 error_sum;
   };
 
-  RafkoServiceContext& service_context;
+  rafko_mainframe::RafkoServiceContext& service_context;
   uint32 sequence_size;
   vector<vector<sdouble32>> input_samples;
   vector<vector<sdouble32>> label_samples;
   uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
   vector<error_state_type> error_state;
-  shared_ptr<CostFunction> cost_function;
+  std::shared_ptr<rafko_net::CostFunction> cost_function;
   bool exposed_to_multithreading; /* basically decides whether or not error sum calculation is enabled. */
-  mutable mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a mutex is required */
+  mutable std::mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a std::mutex is required */
   const std::function<void(uint32)> error_calculation_lambda =  [this](uint32 thread_index){
     uint32 length = error_state.back().sample_errors.size() / service_context.get_sqrt_of_solve_threads();
     uint32 start = length * thread_index;
     length = std::min(length, static_cast<uint32>(error_state.back().sample_errors.size() - start));
     accumulate_error_sum(start, length);
   };
-  ThreadGroup error_calculation_threads;
+  rafko_utilities::ThreadGroup error_calculation_threads;
 
-  static DataPool<sdouble32> common_datapool;
+  static rafko_utilities::DataPool<sdouble32> common_datapool;
 
   /**
-   * @brief      Converting the @DataSet message to vectors
+   * @brief      Converting the @rafko_net::DataSet message to vectors
    *
    * @param      samples  The data set to parse
    */
-  void fill(DataSet& samples);
+  void fill(rafko_net::DataSet& samples);
 
   /**
-   * @brief          Converting the @DataSet message to vectors
+   * @brief          Converting the @rafko_net::DataSet message to vectors
    *
    * @param[in]      error_start    The starting index to read from in @error_state.sample_errors
    * @param[in]      errors_to_sum  The number of errors to add to @error_state.error_sum
