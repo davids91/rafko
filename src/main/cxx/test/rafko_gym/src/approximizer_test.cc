@@ -18,6 +18,7 @@
 #include "test/test_utility.h"
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/common.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
@@ -88,14 +89,14 @@ TEST_CASE("Testing aprroximization fragment handling","[approximize][fragments]"
   );
 
   /* Create dataset, test set and aprroximizer */
-  std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> tmp1 = create_addition_dataset(5);
+  std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> tmp1 = rafko_test::create_addition_dataset(5);
   DataAggregate* train_set = google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
     cost_function_squared_error
   );
-  tmp1 = create_addition_dataset(10);
+  tmp1 = rafko_test::create_addition_dataset(10);
   DataAggregate* test_set = google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
@@ -181,14 +182,14 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   );
 
   /* Create dataset, test set and optimizers; optimize nets */
-  std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> tmp1 = create_sequenced_addition_dataset(number_of_samples, 4);
+  std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> tmp1 = rafko_test::create_sequenced_addition_dataset(number_of_samples, 4);
   DataAggregate* train_set =  google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
     vector<vector<sdouble32>>(std::get<1>(tmp1)),
     cost_function_squared_error, /* Sequence size */4
   );
-  tmp1 = create_sequenced_addition_dataset(number_of_samples * 2, 4);
+  tmp1 = rafko_test::create_sequenced_addition_dataset(number_of_samples * 2, 4);
   DataAggregate* test_set =  google::protobuf::Arena::Create<DataAggregate>(
     service_context.get_arena_ptr(), service_context,
     vector<vector<sdouble32>>(std::get<0>(tmp1)),
@@ -241,7 +242,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
     << std::endl;
     if(0 == (iteration % 100)){
       approximizer.full_evaluation();
-      print_training_sample((rand()%number_of_samples), *train_set, *nets[0], service_context);
+      rafko_test::print_training_sample((rand()%number_of_samples), *train_set, *nets[0], service_context);
     }
     ++iteration;
   }
@@ -249,7 +250,7 @@ TEST_CASE("Testing basic aprroximization","[approximize][feed-forward]"){
   std::cout << std::endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << endl;
 
-  unique_ptr<SolutionSolver> after_solver(SolutionSolver::Builder(*SolutionBuilder(service_context).build(*nets[0]), service_context).build());
+  std::unique_ptr<SolutionSolver> after_solver(SolutionSolver::Builder(*SolutionBuilder(service_context).build(*nets[0]), service_context).build());
 
   sdouble32 error_summary[3] = {0,0,0};
   CostFunctionMSE after_cost(service_context);
