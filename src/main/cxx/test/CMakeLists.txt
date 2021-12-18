@@ -1,6 +1,5 @@
 if(MAKE_TESTS)
   add_executable(rafko_test)
-#  add_test(NAME rafko_test_suite COMMAND rafko_test -d yes)
   add_subdirectory(external/Catch2)
   set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/test/external/Catch2/extras" ${CMAKE_MODULE_PATH})
 

@@ -27,16 +27,11 @@
 
 namespace rafko_net {
 
-using std::shared_ptr;
-
 RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
-
-  using std::make_shared;
-
   uint32 previous_size = 0;
   uint32 numNeurons = 0;
   InputSynapseInterval temp_input_interval;
-  IndexSynapseInterval temp_index_interval;
+  IndexSynapseInterval weight_synapse;
   /* Calculate number of weights needed overall
    * - Input Layer shall have a weight for every input for every neuron
    * - Input Layer shall have a weight for every bias and memory_filter for every neuron
@@ -104,10 +99,9 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
           arg_neuron_array[neurIt].transfer_function_idx()
         );
 
-        /* Add the previous layer to the built net */
-        temp_index_interval.set_starts(weightIt);
-        temp_index_interval.set_interval_size(previous_size + 1u); /* Previous layer + the spike function weight */
-        *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
+        /* Add the weights for the previous layer to the built net */
+        weight_synapse.set_starts(weightIt);
+        weight_synapse.set_interval_size(previous_size + 1u); /* Previous layer + the spike function weight */
 
         /* Add the spike function weight as the first weight of the Neuron */
         arg_weight_table[weightIt] = arg_weight_initer->next_memory_filter();
@@ -132,10 +126,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
 
         /* Add recurrence of the Neuron */
         if(network_recurrence_to_self == recurrence){ /* recurrence to self */
-          /* Add the weight synapse */
-          temp_index_interval.set_starts(weightIt);
-          temp_index_interval.set_interval_size(1 + 1); /* self-recurrence + a bias */
-          *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
+          weight_synapse.set_interval_size(weight_synapse.interval_size() + 1 + 1); /* Update the weight synapse size: self-recurrence + a bias */
 
           /* Add the weight */
           arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
@@ -149,10 +140,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
           temp_input_interval.set_reach_past_loops(1);
           *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
         }else if(network_recurrence_to_layer == recurrence){ /* recurrence to layer */
-          /* Add the weight synapse */
-          temp_index_interval.set_starts(weightIt);
-          temp_index_interval.set_interval_size(layer_sizes[layerIt] + 1); /* Current layer + a bias */
-          *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
+          weight_synapse.set_interval_size(weight_synapse.interval_size() + layer_sizes[layerIt] + 1); /* Update the weight synapse size: Current layer + a bias */
 
           /* Add the weights */
           for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < layer_sizes[layerIt]; neuron_weight_iterator++){
@@ -170,13 +158,11 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
           temp_input_interval.set_reach_past_loops(1);
           *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
         }else{ /* Only bias */
-          temp_index_interval.set_starts(weightIt);
-          temp_index_interval.set_interval_size(1); /* a lone bias weight */
-          *arg_neuron_array[neurIt].add_input_weights() = temp_index_interval;
+          weight_synapse.set_interval_size(weight_synapse.interval_size()+1); /* Update the weight synapse size: 1 bias */
         }
-
         arg_weight_table[weightIt] = arg_weight_initer->next_bias();
         weightIt++;
+        *arg_neuron_array[neurIt].add_input_weights() = weight_synapse;
         neurIt++; /* Step the neuron iterator forward */
       }
 
@@ -188,7 +174,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
         layer_input_starts_at += previous_size;
       }
       previous_size = layer_sizes[layerIt];
-    } /* Itearte through all of the layers */
+    } /* Iterate through all of the layers */
 
     set_weight_table(ret);
     set_neuron_array(ret);
