@@ -52,6 +52,7 @@ void RafkoWeightUpdater::calculate_velocity(const std::vector<sdouble32>& gradie
 }
 
 void RafkoWeightUpdater::update_weights_with_velocity(){
+  std::lock_guard<std::mutex> my_lock(reference_mutex);
   execution_threads.start_and_block([this](uint32 thread_index){
     sint32 weight_index_start = weights_to_do_in_one_thread * thread_index;
     if(weight_index_start < net.weight_table_size()){
@@ -138,6 +139,7 @@ std::vector<std::pair<uint32,uint32>>& RafkoWeightUpdater::get_relevant_partial_
 }
 
 void RafkoWeightUpdater::update_solution_with_weight(uint32 weight_index) const{
+  std::lock_guard<std::mutex> my_lock(reference_mutex);
   assert(static_cast<sint32>(weight_index) < net.weight_table_size());
   std::vector<std::pair<uint32, uint32>>& relevant_partial_weights = get_relevant_partial_weight_indices_for(weight_index);
   for(std::pair<uint32,uint32>& relevant_partial_weight : relevant_partial_weights){
@@ -148,6 +150,7 @@ void RafkoWeightUpdater::update_solution_with_weight(uint32 weight_index) const{
 }
 
 void RafkoWeightUpdater::update_solution_with_weights() const{
+  std::lock_guard<std::mutex> my_lock(reference_mutex);
   sint32 partial_start_index = 0;
   while(partial_start_index < solution.partial_solutions_size()){
     if(
@@ -197,19 +200,6 @@ void RafkoWeightUpdater::copy_weights_of_neuron_to_partial_solution(
     partial.set_weight_table(
       (inner_neuron_weight_index_starts + weights_copied), net.weight_table(network_weight_index)
     );
-    ++weights_copied;
-  });
-}
-
-void RafkoWeightUpdater::copy_weight_of_neuron_to_partial_solution(uint32 neuron_index, uint32 weight_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts) const{
-  /*!Note: After shared weight optimization, this part is to be re-worked */
-  uint32 weights_copied = 0;
-  SynapseIterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](sint32 network_weight_index){
-    if(static_cast<sint32>(weight_index) == network_weight_index){
-      partial.set_weight_table(
-        (inner_neuron_weight_index_starts + weights_copied), net.weight_table(network_weight_index)
-      );
-    }
     ++weights_copied;
   });
 }

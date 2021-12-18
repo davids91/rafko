@@ -23,6 +23,7 @@
 #include <vector>
 #include <utility>
 #include <unordered_map>
+#include <mutex>
 
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_utilities/services/thread_group.h"
@@ -30,16 +31,13 @@
 
 namespace rafko_net{
 
-using rafko_utilities::ThreadGroup;
-using rafko_mainframe::RafkoServiceContext;
-
 /**
  * @brief      Base implementation for updating weights for netowrks based on weight gradients
  */
 class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
   RafkoWeightUpdater(
-    RafkoNet& rafko_net, Solution& solution_, RafkoServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
+    RafkoNet& rafko_net, Solution& solution_, rafko_mainframe::RafkoServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
   ):net(rafko_net)
   , solution(solution_)
   , service_context(service_context_)
@@ -128,7 +126,7 @@ public:
 protected:
   RafkoNet& net;
   Solution& solution;
-  RafkoServiceContext& service_context;
+  rafko_mainframe::RafkoServiceContext& service_context;
   const uint32 required_iterations_for_step;
   const uint32 weights_to_do_in_one_thread;
   uint32 iteration;
@@ -161,9 +159,10 @@ protected:
   }
 
 private:
-  ThreadGroup execution_threads;
+  rafko_utilities::ThreadGroup execution_threads;
   mutable std::unordered_map<uint32,std::vector<std::pair<uint32,uint32>>> weights_in_partials; /* key: Weight index; {{partial_index, weight_index},...{..}} */
   mutable std::unordered_map<uint32, uint32> neurons_in_partials; /* key: Neuron index; value :Partial index */
+  mutable std::mutex reference_mutex;
 
   /**
    * @brief      Calculates and stroes the required velocity for a weight based on the provided gradients
@@ -228,20 +227,6 @@ private:
    */
   void copy_weights_of_neuron_to_partial_solution(
     uint32 neuron_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts
-  ) const;
-
-  /**
-   * @brief      Copies the weight of a Neuron under the given index from the referenced @RafkoNets
-   *             weight table into the partial solution reference provided as an argument.
-   *             The @PartialSolution must be built from the RafkoNet, as a pre-requisite.
-   *
-   * @param[in]  neuron_index                      The index of the Neuron inside the @SparsNet
-   * @param[in]  weight_index                      The index of the Neurons weight inside the weight table of @SparsNet
-   * @param      partial                           The partial solution to update
-   * @param[in]  inner_neuron_weight_index_starts  The index in the weight table (of the @PartialSolution) where the inner neuron weights start
-   */
-  void copy_weight_of_neuron_to_partial_solution(
-    uint32 neuron_index, uint32 weight_index, PartialSolution& partial, uint32 inner_neuron_weight_index_starts
   ) const;
 };
 
