@@ -18,7 +18,7 @@
 syntax = "proto3";
 option cc_enable_arenas = true;
 option java_package = "org.rafko.rafko_net";
-option java_outer_classname = "RafkoRafkoNet";
+option java_outer_classname = "RafkoNet";
 package rafko_net;
 
 /** @brief      Indexes of the transfer function a neuron is able to use
@@ -53,6 +53,15 @@ enum Network_recurrence{
   network_recurrence_unknown = 0;
   network_recurrence_to_self = 1;
   network_recurrence_to_layer = 2;
+}
+
+/** @brief      Different features a group of Neurons(may even the whole network) might have.
+ */
+enum Neuron_group_features{
+  neuron_group_feature_unknown = 0;
+  neuron_group_feature_softmax = 1;
+  neuron_group_feature_disentanglement = 2;
+  neuron_group_feature_dropout_regularization = 3;
 }
 
 /**
@@ -107,12 +116,21 @@ message Neuron{
   repeated InputSynapseInterval input_indices = 11;
 }
 
+/** @brief      A message representing a group of Neurons inside the Neural network
+ *              associated with a given feature
+ */
+message FeatureGroup{
+  Neuron_group_features feature = 1;
+  repeated IndexSynapseInterval relevant_neurons = 10;
+}
+
 /** @brief      A sparse net implementation containing the
  *              Neurons and optimization cache files
  */
 message RafkoNet{
   uint32 input_data_size = 10; /* Number of inputs (floating point numbers) accepted by the Neural network */
   uint32 output_neuron_number = 11; /* Number of outputs the Neural network has */
+  repeated FeatureGroup neuron_group_features = 12; /* Neurons grouped together for features. The same features may be repeated with different neuron indices */
 
   repeated Neuron neuron_array = 20; /* Array of Neurons the network has */
   repeated double weight_table = 21; /* Stores individual weights used by the Neurons */

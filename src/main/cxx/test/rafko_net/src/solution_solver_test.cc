@@ -116,7 +116,7 @@ void test_solution_solver_multithread(uint16 threads){
   vector<sdouble32> network_output_vector;
   rafko_utilities::DataRingbuffer neuron_data_partials(1,8);
 
-  for(uint8 variant_iterator = 0; variant_iterator < 100; variant_iterator++){
+  for(uint8 variant_iterator = 0; variant_iterator < 10u; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights biases and memory filters */
       for(sint32 i = 0; i < solution.partial_solutions(0).weight_table_size(); ++i){
         solution.mutable_partial_solutions(0)->set_weight_table(i,static_cast<sdouble32>(rand()%11) / double_literal(10.0));

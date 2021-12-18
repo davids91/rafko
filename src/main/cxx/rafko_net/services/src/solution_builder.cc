@@ -17,7 +17,7 @@
 
 #include "rafko_net/services/solution_builder.h"
 
-#include <cmath>
+#include <math.h>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -84,9 +84,9 @@ Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
             reach_back_max = std::get<0>(neuron_input_params);
           if(reach_index_max < std::get<1>(neuron_input_params))
             reach_index_max = std::get<1>(neuron_input_params);
-          if(neuron_router.confirm_first_subset_element_processed(current_neuron_index)){
-            has_neuron = neuron_router.get_first_neuron_index_from_subset(current_neuron_index);
-          }
+          std::vector<std::reference_wrapper<const FeatureGroup>> features_solved_by_neuron = neuron_router.confirm_first_subset_element_processed(current_neuron_index);
+          for(const FeatureGroup& feature : features_solved_by_neuron){ *this_partial.add_solved_features() = feature; }
+          has_neuron = neuron_router.get_first_neuron_index_from_subset(current_neuron_index);
         }/* while(able to put Neurons into the current subset) */
         if(0u == this_partial.output_data().interval_size()){
           solution->mutable_partial_solutions()->RemoveLast();

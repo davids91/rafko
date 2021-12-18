@@ -60,6 +60,27 @@ public:
    * @param[in]  neuron  The neuron reference
    */
   static bool is_neuron_valid(const Neuron& neuron);
+
+  /**
+   * @brief      Determines whether the given feature is relevant to calculating ( solving ) the neural network
+   *
+   * @param[in]  feature  The feature to be considered
+   */
+  static bool is_feature_relevant_to_solution(Neuron_group_features feature);
+
+  /**
+   * @brief      Determines whether the given feature is relevant to the error / fitness value of the neural network
+   *
+   * @param[in]  feature  The feature to be considered
+   */
+  static bool is_feature_relevant_to_performance(Neuron_group_features feature); /* as in fitness / error */
+
+  /**
+   * @brief      Determines whether the given feature is relevant to the training of the neural network
+   *
+   * @param[in]  feature  The feature to be considered
+   */
+  static bool is_feature_relevant_to_training(Neuron_group_features feature);
 };
 
 } /* namespace rafko_net */

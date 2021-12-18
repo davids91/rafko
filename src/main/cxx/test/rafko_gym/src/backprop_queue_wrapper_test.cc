@@ -40,7 +40,7 @@ using std::vector;
  *   no inputs(dependencies) can have a lower order of the back-propagation
  *   that means no input of a neuron shall be calulated before it
  * */
-TEST_CASE( "Testing backpropagation queue", "" ) {
+TEST_CASE( "Testing backpropagation queue", "[build][backprop]" ) {
   rafko_mainframe::RafkoServiceContext service_context;
   std::unique_ptr<rafko_net::RafkoNetBuilder> builder(std::make_unique<rafko_net::RafkoNetBuilder>(service_context));
   builder->input_size(10).expected_input_range(double_literal(5.0));

@@ -21,32 +21,30 @@
 #include "rafko_global.h"
 
 #include <deque>
+#include <vector>
 #include <mutex>
 #include <atomic>
 #include <functional>
 #include <stdexcept>
+#include <utility>
+#include <assert.h>
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_net/services/feature_group_cache.h"
 
 namespace rafko_net {
 
-using std::unique_ptr;
-using std::vector;
-using std::deque;
-using std::atomic;
-using std::mutex;
-
 /**
  * @brief      This class describes a neuron router which iterates through the given @RafkoNet,
-               collecting a subset of Neurons from the thread, all of whom are able to be solved without
-               waiting for any other Neurons. The subset is being collected based on the input relations
-               between the Neurons. The Neurons at the beginning of the net only take in input data,
-               so they already have their inputs ready. Any other Neurons build upon that, with each Iteration
-               some additional @Neuron nodes are collected into a subset. That subset is later to be used by
-               the @SolutionBuilder to compile @PartialSolutions.
-               If a Neuron is solvable, its state is being set to "reserved", and collected into the subset.
-               After an iteration the state update from the subset needs to be handled by whoever has access to
-               the Neuron indexes inside.
+ *             collecting a subset of Neurons from the thread, all of whom are able to be solved without
+ *             waiting for any other Neurons. The subset is being collected based on the input relations
+ *             between the Neurons. The Neurons at the beginning of the net only take in input data,
+ *             so they already have their inputs ready. Any other Neurons build upon that, with each Iteration
+ *             some additional @Neuron nodes are collected into a subset. That subset is later to be used by
+ *             the @SolutionBuilder to compile @PartialSolutions.
+ *             If a Neuron is solvable, its state is being set to "reserved", and collected into the subset.
+ *             After an iteration the state update from the subset needs to be handled by whoever has access to
+ *             the Neuron indexes inside.
  */
 class NeuronRouter{
 public:
@@ -101,15 +99,9 @@ public:
    *
    * @param[in]  neuron_index  The neuron index to compare against
    *
-   * @return     Operation success
+   * @return     List of @neuron_group_features inside the @RafkoNet solved by processing this Neuron
    */
-  bool confirm_first_subset_element_processed(uint32 neuron_index){
-    if((!collection_running)&&(0 < net_subset.size())&&(neuron_index == net_subset.front())){
-      (neuron_states[neuron_index])->store(neuron_state_processed_value(neuron_index));
-      net_subset.pop_front();
-      return true;
-    }else return false;
-  }
+  std::vector<std::reference_wrapper<const FeatureGroup>> confirm_first_subset_element_processed(uint32 neuron_index);
 
   /**
    * @brief      If the index in the arguments matches the first index in the subset,
@@ -139,7 +131,7 @@ public:
    *
    * @return     { description_of_the_return_value }
    */
-  bool confirm_first_subset_element_ommitted(uint32 neuron_index, deque<uint32>& paired_array){
+  bool confirm_first_subset_element_ommitted(uint32 neuron_index, std::deque<uint32>& paired_array){
     if(
       (0 < net_subset.size())&&(neuron_index == net_subset.front())
       &&(net_subset.size() == paired_array.size())
@@ -156,7 +148,7 @@ public:
    *
    * @param[in]  the_front  The front
    */
-  void reset_all_except(vector<uint32> the_front){
+  void reset_all_except(std::vector<uint32> the_front){
     uint32 front_index = 0;
     for(uint32 subset_index : net_subset){
       if(the_front.size() == front_index)
@@ -191,7 +183,7 @@ public:
    *
    * @return     The subset.
    */
-  const deque<uint32>& get_subset() const{
+  const std::deque<uint32>& get_subset() const{
     return net_subset;
   }
 
@@ -244,9 +236,14 @@ private:
   bool collection_running = false;
 
   /**
+   * helper variables representing the relevant features the router needs to consider
+   */
+  std::vector<FeatureGroupCache> tracked_features;
+
+  /**
    * Number of already processed output layer Neurons
    */
-  atomic<uint32> output_layer_iterator;
+  std::atomic<uint32> output_layer_iterator;
 
   /**
    * For each @Neuron in @RafkoNet stores the processed state. Values:
@@ -254,20 +251,25 @@ private:
    *  - Number of processed children + 1 in case the Neuron is reserved
    *  - Number of processed children + 2 in case the Neuron is processed
    */
-  vector<unique_ptr<atomic<uint32>>> neuron_states;
+  std::vector<std::unique_ptr<std::atomic<uint32>>> neuron_states;
 
   /**
    * Number of inputs a Neuron has, based on the input index synapse sizes
    */
-  vector<uint32> neuron_number_of_inputs;
+  std::vector<uint32> neuron_number_of_inputs;
+
+  /**
+   * A vector of references to each feature the neuron is relevant to
+   */
+  std::vector<std::vector<std::reference_wrapper<FeatureGroupCache>>> features_assigned_to_neurons;
 
   /**
    * A subset of the net representing independent solutions
    */
-  mutex net_subset_mutex;
-  std::atomic<sdouble32> net_subset_size_bytes; /* The size of the currently partial solution to be built in bytes */
-  deque<uint32> net_subset_index;
-  deque<uint32> net_subset;
+  std::mutex net_subset_mutex;
+  std::atomic<sdouble32> net_subset_size_bytes = double_literal(0.0); /* The size of the currently partial solution to be built in bytes */
+  std::deque<uint32> net_subset_index;
+  std::deque<uint32> net_subset;
 
   /**
    * The number of times the algorithm ran to look for Neuron candidates, it is used to decide relevance to the currently finished subset.
@@ -291,7 +293,7 @@ private:
    * @param      visiting       A Vector containing the currently visiting Neuron along with the path leading to it
    * @return     The next neuron to move the iteration to
    */
-  uint32 get_next_neuron(vector<uint32>& visiting, bool strict);
+  uint32 get_next_neuron(std::vector<uint32>& visiting, bool strict);
 
   /**
    * @brief      Called form inside @collect_subset_thread; Adds a neuron into subset and updates relevant build states
@@ -316,7 +318,7 @@ private:
    * @param[in]  neuron_index  The neuron index
    * @param      paired_array  The paired array
    */
-  void omit_from_subset(uint32 neuron_index, deque<uint32>& paired_array);
+  void omit_from_subset(uint32 neuron_index, std::deque<uint32>& paired_array);
 
   /**
    * @brief      Gets the elements in the current subset depending on the given Neuron index
@@ -326,7 +328,7 @@ private:
    *
    * @return     A list of the neuron indices inside the subset depending on this one.
    */
-  vector<uint32> get_dependents_in_subset_of(uint32 neuron_index);
+  std::vector<uint32> get_dependents_in_subset_of(uint32 neuron_index);
 
   /**
    * @brief      Decides the next Neuron to iterate to and increases the output layer iterator if needed
@@ -334,37 +336,70 @@ private:
    * @param      visiting       The visiting
    * @param      visiting_next  The visiting next
    */
-  void step(vector<uint32>& visiting, uint32 visiting_next);
+  void step(std::vector<uint32>& visiting, uint32 visiting_next);
 
   /**
-   * @brief       functions to help build partial solutions
+   * @brief      function to support graph traversal of the Neural network
    *
    * @param[in]  neuron_index  The neuron index inside @neuron_number_of_inputs and @neuron_states
    *
-   * @return     Information depending on the function
+   * @return     Provides the value inside inside @neuron_states in case the @Neuron is reserved
    */
-  uint32 neuron_state_reserved_value(uint32 neuron_index) const{
-    return neuron_number_of_inputs[neuron_index] + 1u;
-  }
-  uint32 neuron_state_processed_value(uint32 neuron_index) const{
-    return neuron_number_of_inputs[neuron_index] + 2u;
-  }
-  sint32 neuron_state_iteration_value(uint32 neuron_index) const{
-    return (*neuron_states[neuron_index] - neuron_state_processed_value(neuron_index));
-  }
-  uint32 neuron_iteration_relevance(uint32 neuron_index) const{
-    return static_cast<uint32>(std::max( 0, neuron_state_iteration_value(neuron_index) ));
-  }
-  sint32 neuron_state_next_iteration_value(uint32 neuron_index, uint16 iteration) const{
-    return (neuron_state_processed_value(neuron_index) + iteration + 1u);
-  }
-   bool is_neuron_subset_candidate(uint32 neuron_index, uint16 iteration) const{
-    return(
-      (neuron_iteration_relevance(neuron_index) <= iteration)
-      &&(!is_neuron_processed(neuron_index))
-      &&(!is_neuron_reserved(neuron_index))
-    );
-  }
+  uint32 neuron_state_reserved_value(uint32 neuron_index) const;
+
+  /**
+   * @brief      function to support graph traversal of the @RafkoNet
+   *
+   * @param[in]  neuron_index  The neuron index inside @neuron_number_of_inputs and @neuron_states
+   *
+   * @return     Provides the value inside inside @neuron_states in case the @Neuron is already processed
+   */
+  uint32 neuron_state_processed_value(uint32 neuron_index) const;
+
+  /**
+   * @brief      function to support graph traversal of the @RafkoNet
+   *
+   * @param[in]  neuron_index  The neuron index inside @neuron_number_of_inputs and @neuron_states
+   *
+   * @return     Returns with a the value to be stored inside @neuron_states in case the Neuron is relevant to the current iteration
+   */
+  sint32 neuron_state_iteration_value(uint32 neuron_index) const;
+
+  /**
+   * @brief      function to support graph traversal of the @RafkoNet
+   *
+   * @param[in]  neuron_index  The neuron index inside @neuron_number_of_inputs @features_assigned_to_neurons and @neuron_states
+   *
+   * @return     Returns with a helper value for the neuron which helps decide if it relevant to the current iteration or only the next one
+   */
+  uint32 neuron_iteration_relevance(uint32 neuron_index) const;
+
+  /**
+   * @brief      function to support graph traversal of the @RafkoNet
+   *
+   * @param[in]  neuron_index  The neuron index inside @neuron_number_of_inputs @features_assigned_to_neurons and @neuron_states
+   *
+   * @return     Returns with a the value to be stored inside @neuron_states in case the Neuron is relevant to the nex iteration
+   */
+  sint32 neuron_state_next_iteration_value(uint32 neuron_index, uint16 iteration) const;
+
+  /**
+   * @brief       function to support graph traversal of the @RafkoNet
+   *
+   * @param[in]  neuron_index  The neuron index inside @neuron_number_of_inputs @features_assigned_to_neurons and @neuron_states
+   *
+   * @return     true if neuron is eligible to become part of the subset currently under construction
+   */
+  bool is_neuron_subset_candidate(uint32 neuron_index, uint16 iteration) const;
+
+  /**
+   * @brief      function to support graph traversal of the @RafkoNet
+   *
+   * @param[in]  neuron_index  The neuron index inside @neuron_number_of_inputs @features_assigned_to_neurons and @neuron_states
+   *
+   * @return     all solution relevant feature groups assigned for the Neuron is now finished
+   */
+  bool are_neuron_feature_groups_finished_for(uint32 neuron_index);
 };
 
 } /* namespace rafko_net */

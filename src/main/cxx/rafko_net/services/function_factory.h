@@ -30,8 +30,6 @@
 
 namespace rafko_net{
 
-using std::unique_ptr;
-
 class FunctionFactory{
 public:
 
@@ -44,7 +42,7 @@ public:
    *
    * @return     The cost function.
    */
-  static unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, RafkoServiceContext& context){
+  static std::unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, RafkoServiceContext& context){
     switch(the_function){
       case cost_function_mse:
         return std::make_unique<CostFunctionMSE>(context);

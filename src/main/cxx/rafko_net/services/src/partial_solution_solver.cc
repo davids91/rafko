@@ -19,7 +19,7 @@
 
 #include <algorithm>
 #include <stdexcept>
-#include <cmath>
+#include <math.h>
 
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/models/spike_function.h"

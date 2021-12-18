@@ -26,40 +26,51 @@
 
 namespace rafko_net{
 
-NeuronRouter::NeuronRouter(const RafkoNet& rafko_net) : net(rafko_net){
-  output_layer_iterator = (net.neuron_array_size() - net.output_neuron_number()); /* Start to process Ouptut Layer Neurons */
-  neuron_states = vector<unique_ptr<atomic<uint32>>>(); /* Every Neuron has 0 child processed at first */
-  neuron_number_of_inputs = vector<uint32>(net.neuron_array_size(),0);
-  iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
+NeuronRouter::NeuronRouter(const RafkoNet& rafko_net)
+: net(rafko_net)
+, output_layer_iterator(net.neuron_array_size() - net.output_neuron_number())
+, neuron_number_of_inputs(net.neuron_array_size())
+, features_assigned_to_neurons(net.neuron_array_size())
+{
   for(int neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator){
       for(int synapse_iterator = 0;
         synapse_iterator < net.neuron_array(neuron_iterator).input_indices_size();
         ++synapse_iterator
       ) neuron_number_of_inputs[neuron_iterator] += net.neuron_array(neuron_iterator).input_indices(synapse_iterator).interval_size();
-      neuron_states.push_back(std::make_unique<atomic<uint32>>());
+      neuron_states.push_back(std::make_unique<std::atomic<uint32>>());
   } /* Calculating how many children one Neuron has */
-  net_subset_size_bytes = double_literal(0.0);
-  net_subset = std::deque<uint32>();
-  net_subset_index = std::deque<uint32>();
-  collection_running = false;
+
+  for(sint32 feature_index = 0; feature_index < rafko_net.neuron_group_features_size(); feature_index++){
+    /* For each relevant feature group */
+    const FeatureGroup& feature_group = rafko_net.neuron_group_features(feature_index);
+    if( true ==  NeuronInfo::is_feature_relevant_to_solution(feature_group.feature()) ){
+      tracked_features.push_back( FeatureGroupCache(feature_group, features_assigned_to_neurons) );
+    }/* if(feature group is relevant) */
+  }/* for(each feature group in the network) */
+
+  //(done)for each Neuron store in a vector to which feature groups they belong to
+  //(done)and in order for an input to be shown processed, all relevant feature groups need to be finished
+  //to see the feature groups solved: at confirming each Neuron processed the feature groups will have a counter of solved relevant neurons
+  //confirming a Neuron to be processed shall increase that counter
+  //( each Neuron in a feature group can be solved, because the feature groups are only checked for Neuron inputs )
+  //( if Neuron is itself, feature group calculation shall be applied after it took its input )
+  //optionally it shall aldo provide the information that a Neuron have solved a feature group
+  //which needs to be handled by the user (e.g.: Solution builder) ( e.g. for softmax, apply it to the Neuron data )
 }
 
 void NeuronRouter::collect_subset(uint8 arg_max_solve_threads, sdouble32 arg_device_max_megabytes, bool strict){
-
-  using std::thread;
-
   collection_running = true;
-  vector<thread> processing_threads;
+  std::vector<std::thread> processing_threads;
   for(uint8 thread_iterator = 0; thread_iterator < arg_max_solve_threads; thread_iterator++){
     processing_threads.push_back(
-      thread(
+      std::thread(
         &NeuronRouter::collect_subset_thread,
         this, arg_max_solve_threads, arg_device_max_megabytes, thread_iterator, strict
       )
     ); /* Add threads for processing */
   }
 
-  std::for_each(processing_threads.begin(),processing_threads.end(),[](thread& processing_thread){
+  std::for_each(processing_threads.begin(),processing_threads.end(),[](std::thread& processing_thread){
     if(true == processing_thread.joinable())processing_thread.join();
   });
   if(strict) /* in strict mode, all Neurons are independent, so the order of the queue doesn't matter */
@@ -69,10 +80,10 @@ void NeuronRouter::collect_subset(uint8 arg_max_solve_threads, sdouble32 arg_dev
 }
 
 void NeuronRouter::collect_subset_thread(uint8 arg_max_solve_threads, sdouble32 arg_device_max_megabytes, uint8 thread_index, bool strict){
-  /**
+  /** @brief visiting:
    * In order of the iteration, the visited neuron indexes. The First Index is always one of the Output Layer Neurons
    */
-  vector<uint32> visiting(1,
+  std::vector<uint32> visiting(1,
     (output_layer_iterator + ((net.neuron_array_size()-1-output_layer_iterator)/arg_max_solve_threads)*thread_index)
   ); /* The first Neuron to be visited is decided based on the number of threads, to make sure the threads are as independent as possible */
   uint32 visiting_next = visiting.back();
@@ -89,7 +100,7 @@ void NeuronRouter::collect_subset_thread(uint8 arg_max_solve_threads, sdouble32 
   }
 }
 
-uint32 NeuronRouter::get_next_neuron(vector<uint32>& visiting, bool strict){
+uint32 NeuronRouter::get_next_neuron(std::vector<uint32>& visiting, bool strict){
   uint32 visiting_next = 0;
   uint32 start_input_index_from = 0;
   uint32 number_of_processed_inputs = 0;
@@ -124,13 +135,22 @@ uint32 NeuronRouter::get_next_neuron(vector<uint32>& visiting, bool strict){
       return true;
     },[&](sint32 synapse_input_index){
       if(
-        (SynapseIterator<>::is_index_input(synapse_input_index))
-        ||(0 < current_backreach) /* Inputs from the past count as already processed */
-        ||(is_neuron_processed(synapse_input_index))
-        ||((!strict)&&(is_neuron_reserved(synapse_input_index)))
-        /*!Note: In non-strict mode usually the whole of the net is collected into the subset in order,
-         * which might be undesirable compared to the Neurons being collected into smaller non-dependent subsets.
-         **/
+        ( /* check if the input is the Neuron is itself, because then it automatically counts as finished */
+          (!SynapseIterator<>::is_index_input(synapse_input_index))
+          &&(static_cast<sint32>(visiting.back()) == synapse_input_index)
+        )||(( /* check for each input of the neuron if they are finished */
+          (SynapseIterator<>::is_index_input(synapse_input_index))
+          ||(0 < current_backreach) /* Inputs from the past count as already processed */
+          ||(is_neuron_processed(synapse_input_index))
+          ||((!strict)&&(is_neuron_reserved(synapse_input_index)))
+          /*!Note: In non-strict mode usually the whole of the net is collected into the subset in order,
+           * which might be undesirable compared to the Neurons being collected into smaller non-dependent subsets.
+           **/
+         )&&(
+           (SynapseIterator<>::is_index_input(synapse_input_index))
+           ||(are_neuron_feature_groups_finished_for(synapse_input_index))
+           /*!Note: the index reference is never called with Inputs ( with negative index values ) because of the || clause */
+       ))
       ){
         ++number_of_processed_inputs;
         return true;
@@ -187,12 +207,12 @@ void NeuronRouter::add_neuron_into_subset(uint32 neuron_index){
   }
 }
 
-void NeuronRouter::step(vector<uint32>& visiting, uint32 visiting_next){
+void NeuronRouter::step(std::vector<uint32>& visiting, uint32 visiting_next){
   uint32 tmp_index = 0;
   if(visiting_next != visiting.back()){ /* found another Neuron to iterate to because the index values differ (because visiting_next is updated!) */
     visiting.push_back(visiting_next);
-  }else if(1 < visiting.size()){ /* haven't found another Neuron to iterate to, try with parent Neuron, if there is any */
-    visiting.pop_back(); /* remove latest Neuron from the queue, go to its parent in the next iteration */
+  }else if(1 < visiting.size()){ /* haven't found another Neuron to iterate to, try with parent Neuron, if there is any.. */
+    visiting.pop_back(); /* --> remove latest Neuron from the queue, go to its parent in the next iteration */
   }
   if(1 == visiting.size()){ /* The Visiting vector is down to it's last element, which is the visit-starting output layer neuron */
     tmp_index = visiting.back();
@@ -200,8 +220,7 @@ void NeuronRouter::step(vector<uint32>& visiting, uint32 visiting_next){
       visiting.back()++; /* If Neuron is processed, reserved or not relevant to the current iteration go to the next one */
     }/*!Note: It is possible to get out of bounds here, it will mean that this thread is finished, and collection ( if needed ) will restart in the next iteration */
     if(
-      (is_neuron_processed(tmp_index))
-      &&(tmp_index == output_layer_iterator) /* If the Neuron at @output_layer_iterator is processed */
+      (is_neuron_processed(tmp_index))&&(tmp_index == output_layer_iterator) /* If the Neuron at @output_layer_iterator is processed */
       &&(static_cast<int>(output_layer_iterator) < (net.neuron_array_size()-1)) /* And it shall remain in bounds of the array */
     ){ /*  step the output_layer_iterator forward! */
       (void)output_layer_iterator.compare_exchange_strong( tmp_index, (tmp_index+1) );
@@ -210,16 +229,52 @@ void NeuronRouter::step(vector<uint32>& visiting, uint32 visiting_next){
   } /* (1 == visiting.size()) */
 }
 
+std::vector<std::reference_wrapper<const FeatureGroup>> NeuronRouter::confirm_first_subset_element_processed(uint32 neuron_index){
+  assert(!collection_running);
+  assert(0 < net_subset.size());
+  assert(neuron_index == net_subset.front());
+  std::vector<std::reference_wrapper<FeatureGroupCache>> solved_features;
+  std::vector<std::reference_wrapper<const FeatureGroup>> retval;
+
+
+  (neuron_states[neuron_index])->store(neuron_state_processed_value(neuron_index));
+  net_subset.pop_front();
+
+  /* Look for the solved features */
+  for(uint32 feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
+    FeatureGroupCache& feature = features_assigned_to_neurons[neuron_index][feature_index];
+    feature.neuron_triggered();
+    if(feature.solved()){
+      solved_features.push_back(feature);
+      retval.push_back(feature.get_host());
+    }
+  }
+
+  /* Removed already solved features from Neuron feature vetor cache */
+  for(uint32 feature_index = 0; feature_index < solved_features.size(); feature_index++){
+      FeatureGroupCache& solved_feature = solved_features[feature_index];
+      SynapseIterator<>::iterate(solved_feature.get_host().relevant_neurons(), [&](sint32 neuron_index){
+        /* find feature in Neuron assigned features */
+        std::vector<std::reference_wrapper<FeatureGroupCache>>& neuron_features_vecor = features_assigned_to_neurons[neuron_index];
+        std::vector<std::reference_wrapper<FeatureGroupCache>>::iterator it = std::find(
+          neuron_features_vecor.begin(), neuron_features_vecor.end(), std::ref(solved_feature)
+        );
+        if(it != neuron_features_vecor.end()){ neuron_features_vecor.erase(it); }
+      });
+  }
+  return retval;
+}
+
 bool NeuronRouter::is_neuron_without_dependency(uint32 neuron_index){
   bool ret = true;
   if(!is_neuron_processed(neuron_index)){
-    deque<uint32>::iterator neuron_in_subset = std::find(net_subset.begin(), net_subset.end(), neuron_index);
+    std::deque<uint32>::iterator neuron_in_subset = std::find(net_subset.begin(), net_subset.end(), neuron_index);
     if(net_subset.end() != neuron_in_subset){ /* The Neuron must be included in the subset if it's not processed already to not have any dependencies */
       /* The Neuron is not processed, but included in the subset. Check its inputs! */
       SynapseIterator<InputSynapseInterval>::iterate_terminatable(net.neuron_array(neuron_index).input_indices(),[&](sint32 synapse_input_index){
         if(!is_neuron_processed(synapse_input_index)){ /* If Neuron input is not processed */
           /* then the input must be in front of the Neuron inside the subset */
-          for(deque<uint32>::iterator iter = net_subset.begin(); iter != neuron_in_subset; ++iter){
+          for(std::deque<uint32>::iterator iter = net_subset.begin(); iter != neuron_in_subset; ++iter){
             if(static_cast<sint32>(*iter) == synapse_input_index)
               return true; /* Found the Neuron input before its parent! Input OK, but continue searching. */
           }
@@ -232,8 +287,8 @@ bool NeuronRouter::is_neuron_without_dependency(uint32 neuron_index){
   }return true; /* Neuron is already processed, theoritically it shouldn't have any pending dependecies.. */
 }
 
-vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_index){
-  vector<uint32> result;
+std::vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_index){
+  std::vector<uint32> result;
   if(0 < net_subset.size()){
     /* Find Neuron in subset */
     uint32 subset_index = net_subset.size();
@@ -263,7 +318,7 @@ vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_index){
 
 void NeuronRouter::omit_from_subset(uint32 neuron_index){
   if(collection_running)throw std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
-  vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
+  std::vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
   for(uint32 neuron : to_remove){
     (neuron_states[neuron])->store(0); /* set its state back to 0 */
     for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
@@ -279,10 +334,10 @@ void NeuronRouter::omit_from_subset(uint32 neuron_index){
   }
 }
 
-void NeuronRouter::omit_from_subset(uint32 neuron_index, deque<uint32>& paired_array){
+void NeuronRouter::omit_from_subset(uint32 neuron_index, std::deque<uint32>& paired_array){
   if(collection_running)throw std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
   if(get_subset_size() != paired_array.size()) throw std::runtime_error("Subset size doesn't match with the paired array!");
-  vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
+  std::vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
   for(uint32 neuron : to_remove){
     (neuron_states[neuron])->store(0); /* set its state back to 0 */
     for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
@@ -297,6 +352,46 @@ void NeuronRouter::omit_from_subset(uint32 neuron_index, deque<uint32>& paired_a
   for(uint32 neuron : to_remove){
     omit_from_subset(neuron, paired_array);
   }
+}
+
+uint32 NeuronRouter::neuron_state_reserved_value(uint32 neuron_index) const{
+  assert(neuron_index < neuron_number_of_inputs.size());
+  return neuron_number_of_inputs[neuron_index] + 1u;
+}
+
+uint32 NeuronRouter::neuron_state_processed_value(uint32 neuron_index) const{
+  assert(neuron_index < neuron_number_of_inputs.size());
+  return neuron_number_of_inputs[neuron_index] + 2u;
+}
+
+sint32 NeuronRouter::neuron_state_iteration_value(uint32 neuron_index) const{
+  return (*neuron_states[neuron_index] - neuron_state_processed_value(neuron_index));
+}
+
+uint32 NeuronRouter::neuron_iteration_relevance(uint32 neuron_index) const{
+  return static_cast<uint32>(std::max( 0, neuron_state_iteration_value(neuron_index) ));
+}
+
+sint32 NeuronRouter::neuron_state_next_iteration_value(uint32 neuron_index, uint16 iteration) const{
+  return (neuron_state_processed_value(neuron_index) + iteration + 1u);
+}
+
+bool NeuronRouter::is_neuron_subset_candidate(uint32 neuron_index, uint16 iteration) const{
+  return(
+    (neuron_iteration_relevance(neuron_index) <= iteration)
+    &&(!is_neuron_processed(neuron_index))
+    &&(!is_neuron_reserved(neuron_index))
+  );
+}
+
+bool NeuronRouter::are_neuron_feature_groups_finished_for(uint32 neuron_index){
+  assert(neuron_index < features_assigned_to_neurons.size());
+  bool finished = true;
+  for(uint32 feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
+    FeatureGroupCache& feature = features_assigned_to_neurons[neuron_index][feature_index].get();
+    if(!feature.solved()) finished = false;
+  }
+  return finished;
 }
 
 } /* namespace rafko_net */

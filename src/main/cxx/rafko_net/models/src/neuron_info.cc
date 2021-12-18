@@ -49,4 +49,28 @@ bool NeuronInfo::is_neuron_valid(const Neuron& neuron)
   } else return false;
 }
 
+bool NeuronInfo::is_feature_relevant_to_solution(Neuron_group_features feature){
+  switch(feature){
+    case neuron_group_feature_softmax: return true;
+    case neuron_group_feature_disentanglement: return false;
+    case neuron_group_feature_dropout_regularization: return true;
+    default: return false;
+  }
+}
+
+bool NeuronInfo::is_feature_relevant_to_performance(Neuron_group_features feature){
+  switch(feature){
+    case neuron_group_feature_softmax: return false;
+    case neuron_group_feature_disentanglement: return true;
+    case neuron_group_feature_dropout_regularization: return false;
+    default: return false;
+  }
+
+}
+
+bool NeuronInfo::is_feature_relevant_to_training(Neuron_group_features feature){
+  parameter_not_used(feature);
+  return false; /* no relevant feature is implemented yet...*/
+}
+
 } /* namespace rafko_net */

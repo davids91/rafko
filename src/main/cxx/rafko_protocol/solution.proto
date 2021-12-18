@@ -38,6 +38,7 @@ message PartialSolution{
   repeated double weight_table = 2; /* stores the weights paired to @inside_indexes for the inputs of the Neurons; Ranges [0.0,1.0) */
   repeated InputSynapseInterval input_data = 3; /* @PartialSolution input: negative intervals are network inputs, positives are inner neuron data */
   IndexSynapseInterval output_data = 4; /* @PartialSolution output; The inner Neurons mapped to Neuron indices in the @RafkoNet */
+  repeated FeatureGroup solved_features = 5;
 
   /** ################################################################################################
    * A representation of the actual neuron to be used in this intermediate solution
@@ -88,6 +89,7 @@ message Solution{
   uint32 output_neuron_number = 2; /* Number of outputs the @Solution has */
   uint32 network_memory_length = 3; /* How many runs a network should be able to remember */
   uint32 network_input_size = 4; /* The expected input size of the network */
+
   repeated uint32 cols = 10; /* How many columns each row has, size gives back number of rows */
   repeated PartialSolution partial_solutions = 11; /* The number of outputs this solution has is the summary of the last rows internal Neuron */
 }

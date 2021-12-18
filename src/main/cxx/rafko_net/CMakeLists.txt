@@ -33,6 +33,7 @@ target_sources(rafko_net
   models/src/neuron_info.cc
   models/src/transfer_function.cc
   models/src/cost_function.cc
+  services/src/feature_group_cache.cc
   services/src/neuron_router.cc
   services/src/partial_solution_builder.cc
   services/src/partial_solution_solver.cc
