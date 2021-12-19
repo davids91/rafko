@@ -349,7 +349,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   service_context.set_device_max_megabytes( /* Introduce segmentation into the solution to test roboustness */
     (solution->SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */)/double_literal(4.0)
   );
-  if(nullptr == arena){
+  if((nullptr == arena)&&(nullptr != solution)){
     delete solution;
   }
   REQUIRE_NOTHROW(

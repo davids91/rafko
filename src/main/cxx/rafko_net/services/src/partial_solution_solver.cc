@@ -106,7 +106,6 @@ void PartialSolutionSolver::solve_internal(const vector<sdouble32>& input_data, 
       0, detail.output_data().starts() + neuron_iterator, new_neuron_data
     );
   } /*for(neuron_iterator --> every Neuron)*/
-  #warning "Network features associated for the current partial are yet to be implemented.."
 }
 
 bool PartialSolutionSolver::is_valid() const{

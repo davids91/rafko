@@ -18,8 +18,10 @@
 #include "rafko_net/services/solution_solver.h"
 
 #include <stdexcept>
+#include <mutex>
 
 #include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/services/rafko_net_feature_executor.h"
 
 namespace rafko_net{
 
@@ -50,6 +52,7 @@ SolutionSolver::SolutionSolver(
 ,  solution(to_solve)
 ,  service_context(context)
 ,  partial_solvers(partial_solvers_)
+,  feature_executor(execution_threads)
 {
   for(uint32 thread_index = 0; thread_index < context.get_max_processing_threads(); ++ thread_index)
     execution_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(context.get_max_solve_threads()));
@@ -62,10 +65,14 @@ void SolutionSolver::solve(
 ) const{
   if(0 < solution.cols_size()){
     uint32 col_iterator;
+    std::mutex solved_features_mutex;
+    std::vector<std::reference_wrapper<const FeatureGroup>> solved_features;
+
     output.step(); /* move the iterator forward to the next slot and store the current data */
     for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
       if(0 == solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
       col_iterator = 0;
+      uint32 partial_index_at_row_start = 0;
       if( /* Don't use the threadgroup if there is no need for multiple threads.. */
         (solution.cols(row_iterator) < service_context.get_max_solve_threads()/2u)
         ||(solution.cols(row_iterator) < 2u) /* ..since the number of partial solutions depend on the available device size */
@@ -76,6 +83,9 @@ void SolutionSolver::solve(
               partial_solvers[row_iterator][col_iterator].solve(
                 std::ref(input), std::ref(output), std::ref(tmp_data_pool[used_data_pool_start + inner_thread_index].get())
               );
+              const PartialSolution& partial = solution.partial_solutions(partial_index_at_row_start + col_iterator);
+              for(sint32 feature_index = 0; feature_index < partial.solved_features_size(); feature_index++)
+                solved_features.push_back( partial.solved_features(feature_index) );
               ++col_iterator;
             }else break;
           }
@@ -83,18 +93,33 @@ void SolutionSolver::solve(
       }else{
         while(col_iterator < solution.cols(row_iterator)){
           { /* To make the Solver itself thread-safe; the sub-threads need to be guarded with a lock */
-            execution_threads[thread_index]->start_and_block([this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator]
-            (uint32 inner_thread_index){
+            execution_threads[thread_index]->start_and_block(
+            [this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator, partial_index_at_row_start, &solved_features_mutex, &solved_features](uint32 inner_thread_index){
               if((col_iterator + inner_thread_index) < solution.cols(row_iterator)){
                 partial_solvers[row_iterator][(col_iterator + inner_thread_index)].solve(
                   input,output,tmp_data_pool[used_data_pool_start + inner_thread_index].get()
                 );
+                const PartialSolution& partial = solution.partial_solutions(partial_index_at_row_start + (col_iterator + inner_thread_index));
+                for(sint32 feature_index = 0; feature_index < partial.solved_features_size(); feature_index++){
+                  std::lock_guard<std::mutex> my_lock(solved_features_mutex);
+                  solved_features.push_back( partial.solved_features(feature_index) );
+                  /*!Note: multiple features might be solved at the same time, but theoretically they shouldn't clash
+                   * because of the Neuron router filtering.
+                   */
+                }
               }
             });
           }
           col_iterator += service_context.get_max_solve_threads();
         } /* while(col_iterator < solution.cols(row_iterator)) */
       }
+      /*!Note: Triggered feature groups are only solved after the row for consistency, since columns inside rows are solved in paralell,
+       * and each column may contain feature relevant to any @Neuron inside the the current row.
+       */
+      for(uint32 feature_index = 0; feature_index < solved_features.size(); feature_index++){
+        feature_executor.execute(solved_features[feature_index], output.get_element(0u));
+      }
+      partial_index_at_row_start += solution.cols(row_iterator);
     } /* for(every row in the @Solution) */
   }else throw std::runtime_error("A solution of 0 rows!");
 }

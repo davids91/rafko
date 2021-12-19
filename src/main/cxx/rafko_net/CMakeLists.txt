@@ -16,6 +16,7 @@ set(NET_HEADER_SERVICES
   services/solution_builder.h
   services/solution_solver.h
   services/rafko_net_builder.h
+  services/rafko_net_feature_executor.h
 )
 set(NET_HEADER_MODELS
   models/cost_function.h
@@ -24,6 +25,7 @@ set(NET_HEADER_MODELS
   models/spike_function.h #TODO: Generalize and move specialized source to interfaces
   models/transfer_function.h
   models/weight_initializer.h
+  models/rafko_softmax_feature.h
 )
 target_sources(rafko_net
   INTERFACE ${NET_INTERFACE_SERVICES}
@@ -33,6 +35,7 @@ target_sources(rafko_net
   models/src/neuron_info.cc
   models/src/transfer_function.cc
   models/src/cost_function.cc
+  models/src/rafko_softmax_feature.cc
   services/src/feature_group_cache.cc
   services/src/neuron_router.cc
   services/src/partial_solution_builder.cc

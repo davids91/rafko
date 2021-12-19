@@ -32,6 +32,7 @@
 #include "rafko_utilities/services/thread_group.h"
 
 #include "rafko_net/services/partial_solution_solver.h"
+#include "rafko_net/services/rafko_net_feature_executor.h"
 
 namespace rafko_net{
 
@@ -69,6 +70,7 @@ private:
   RafkoServiceContext& service_context;
   std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> execution_threads;
+  RafkoNetFeatureExecutor feature_executor;
 
 public:
   class Builder{
