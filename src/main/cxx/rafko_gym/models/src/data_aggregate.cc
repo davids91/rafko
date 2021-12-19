@@ -16,7 +16,7 @@
  */
 #include "rafko_gym/models/data_aggregate.h"
 
-#include <cmath>
+#include <math.h>
 
 namespace rafko_gym{
 

@@ -17,7 +17,7 @@
 
 #include "rafko_net/models/transfer_function.h"
 
-#include <cmath>
+#include <math.h>
 
 namespace rafko_net {
 

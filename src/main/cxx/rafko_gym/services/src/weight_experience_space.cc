@@ -17,7 +17,7 @@
 
 #include "rafko_gym/services/weight_experience_space.h"
 
-#include <cmath>
+#include <math.h>
 #include <stdexcept>
 
 namespace rafko_gym{

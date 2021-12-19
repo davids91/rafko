@@ -20,7 +20,7 @@
 
 #include "rafko_net/models/cost_function.h"
 
-#include <cmath>
+#include <math.h>
 
 namespace rafko_net{
 

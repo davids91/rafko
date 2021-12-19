@@ -20,7 +20,7 @@
 
 #include "rafko_global.h"
 
-#include <cmath>
+#include <math.h>
 #include <stdexcept>
 #include <vector>
 

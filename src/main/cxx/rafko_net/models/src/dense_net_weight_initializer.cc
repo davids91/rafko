@@ -18,7 +18,7 @@
 
 #include <time.h>
 
-#include <cmath>
+#include <math.h>
 #include <cstdlib>
 #include <algorithm>
 

@@ -21,7 +21,7 @@
 
 #include "rafko_global.h"
 
-#include <cmath>
+#include <math.h>
 
 #include "rafko_mainframe/models/rafko_service_context.h"
 

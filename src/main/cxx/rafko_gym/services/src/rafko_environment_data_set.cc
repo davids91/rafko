@@ -17,7 +17,7 @@
 
 #include "rafko_gym/services/rafko_environment_data_set.h"
 
-#include <cmath>
+#include <math.h>
 
 #include "rafko_utilities/models/data_ringbuffer.h"
 
