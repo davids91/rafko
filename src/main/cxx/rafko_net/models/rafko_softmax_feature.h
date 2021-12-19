@@ -21,6 +21,7 @@
 #include "rafko_global.h"
 
 #include <vector>
+#include <utility>
 #include <google/protobuf/repeated_field.h>
 
 #include "rafko_protocol/rafko_net.pb.h"
@@ -33,8 +34,13 @@ namespace rafko_net{
  */
 class RafkoSoftmaxFeature{
 public:
-  static sdouble32 get_maximum_from(const std::vector<sdouble32>& neuron_data, const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons, rafko_utilities::ThreadGroup& execution_threads);
+
   static void calculate(std::vector<sdouble32>& neuron_data, const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons, rafko_utilities::ThreadGroup& execution_threads);
+
+private:
+
+  static std::pair<sdouble32,sdouble32> get_max_and_expsum(const std::vector<sdouble32>& neuron_data, const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons, rafko_utilities::ThreadGroup& execution_threads);
+
 };
 
 } /* namespace rafko_net */
