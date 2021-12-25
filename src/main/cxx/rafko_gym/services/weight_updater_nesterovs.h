@@ -28,7 +28,7 @@ public:
   :  RafkoWeightUpdater(rafko_net, solution_, service_context_, 2)
   { }
 
-  void iterate(const vector<sdouble32>& gradients){
+  void iterate(const std::vector<sdouble32>& gradients){
     RafkoWeightUpdater::iterate(gradients);
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
@@ -39,7 +39,7 @@ public:
   }
 
 private:
-  sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
+  sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients){
     if(!is_finished()) return (
       (previous_velocity[weight_index] * service_context.get_gamma())
       + (gradients[weight_index] * service_context.get_learning_rate())
@@ -50,8 +50,8 @@ private:
     );
   }
 
-  vector<sdouble32> previous_velocity_at_start;
-  vector<sdouble32> previous_velocity;
+  std::vector<sdouble32> previous_velocity_at_start;
+  std::vector<sdouble32> previous_velocity;
 };
 
 } /* namespace rafko_gym */

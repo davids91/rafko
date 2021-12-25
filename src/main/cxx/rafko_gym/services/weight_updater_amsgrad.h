@@ -31,7 +31,7 @@ public:
   ,  raw_moment_max(rafko_net.weight_table_size(),double_literal(0.0))
   { }
 
-  void iterate(const vector<sdouble32>& gradients){
+  void iterate(const std::vector<sdouble32>& gradients){
     sdouble32 raw_moment;
     for(uint32 weight_index = 0; weight_index < moment.size(); ++weight_index){
       moment[weight_index] = (
@@ -53,15 +53,15 @@ public:
   }
 
 private:
-  sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
+  sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients){
     parameter_not_used(gradients); /* the variable moment contains the processed value of the gradients, so no need to use it here again. */
     return ( service_context.get_learning_rate() * moment[weight_index] / ( std::sqrt(raw_moment_max[weight_index]) + service_context.get_epsilon() ) );
   }
 
   uint32 iteration_count;
 
-  vector<sdouble32> moment;
-  vector<sdouble32> raw_moment_max;
+  std::vector<sdouble32> moment;
+  std::vector<sdouble32> raw_moment_max;
 };
 
 } /* namespace rafko_gym */

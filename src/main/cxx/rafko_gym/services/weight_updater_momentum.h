@@ -29,20 +29,20 @@ public:
   ,  previous_velocity(rafko_net.weight_table_size(),double_literal(0.0))
   { }
 
-  void iterate(const vector<sdouble32>& gradients){
+  void iterate(const std::vector<sdouble32>& gradients){
     RafkoWeightUpdater::iterate(gradients);
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
 
 private:
-  sdouble32 get_new_velocity(uint32 weight_index, const vector<sdouble32>& gradients){
+  sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients){
     return (
       (previous_velocity[weight_index] * service_context.get_gamma())
       + (gradients[weight_index] * service_context.get_learning_rate())
     );
   }
 
-  vector<sdouble32> previous_velocity;
+  std::vector<sdouble32> previous_velocity;
 };
 
 } /* namespace rafko_gym */

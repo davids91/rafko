@@ -30,8 +30,6 @@
 
 namespace rafko_gym{
 
-using std::vector;
-
 /**
  * @brief      This class serves as a base for reinforcement learning agent, which provides output data
  *              based on different inputs
@@ -56,7 +54,7 @@ public:
    * @param[in]      input    The input data to be taken
    * @return         The output values of the network result
    */
-  rafko_utilities::ConstVectorSubrange<> solve(const vector<sdouble32>& input, bool reset_neuron_data, uint32 thread_index = 0){
+  rafko_utilities::ConstVectorSubrange<> solve(const std::vector<sdouble32>& input, bool reset_neuron_data = true, uint32 thread_index = 0){
     if(max_threads > thread_index){
       assert( input.size() == brain.network_input_size() );
       if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
@@ -77,8 +75,8 @@ public:
    * @param[in]      used_data_pool_start     The first index inside @tmp_data_pool to be used
    */
   virtual void solve(
-    const vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,
-    const vector<std::reference_wrapper<vector<sdouble32>>>& tmp_data_pool,
+    const std::vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,
+    const std::vector<std::reference_wrapper<std::vector<sdouble32>>>& tmp_data_pool,
     uint32 used_data_pool_start = 0, uint32 thread_index = 0
   ) const = 0;
 
@@ -97,7 +95,7 @@ public:
    * @param[in]      thread_index     The index of the target thread
    * @return         A const reference to the raw Neuron data
    */
-  const rafko_utilities::DataRingbuffer& get_memory(uint32 thread_index) const{
+  const rafko_utilities::DataRingbuffer& get_memory(uint32 thread_index = 0) const{
     assert(thread_index < neuron_value_buffers.size());
     return neuron_value_buffers[thread_index];
   }
@@ -118,8 +116,8 @@ private:
   uint32 max_threads;
 
   rafko_utilities::DataPool<sdouble32> common_data_pool;
-  vector<rafko_utilities::DataRingbuffer> neuron_value_buffers; /* One rafko_utilities::DataRingbuffer per thread */
-  vector<std::reference_wrapper<vector<sdouble32>>> used_data_buffers;
+  std::vector<rafko_utilities::DataRingbuffer> neuron_value_buffers; /* One rafko_utilities::DataRingbuffer per thread */
+  std::vector<std::reference_wrapper<std::vector<sdouble32>>> used_data_buffers;
 };
 
 } /* namespace rafko_gym */

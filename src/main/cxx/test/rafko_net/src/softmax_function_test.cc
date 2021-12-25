@@ -74,23 +74,21 @@ static void check_softmax_values(std::vector<sdouble32>& neuron_data, rafko_net:
 
 }
 
-TEST_CASE( "Checkig whether the softmax function is calculating correctly", "[features][softmax]" ){
+TEST_CASE( "Checkig whether the softmax function is calculating correctly with whole arrays", "[features][softmax]" ){
   std::vector<sdouble32> neuron_data{double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0)};
   rafko_net::FeatureGroup mockup;
   rafko_utilities::ThreadGroup threads(4);
   rafko_net::IndexSynapseInterval tmp_interval;
 
   mockup.set_feature(rafko_net::neuron_group_feature_softmax);
-  tmp_interval.set_starts(0);
-  tmp_interval.set_interval_size(neuron_data.size());
-  *mockup.add_relevant_neurons() = tmp_interval;
+  mockup.add_relevant_neurons()->set_interval_size(neuron_data.size());
   check_softmax_values(neuron_data, mockup, threads);
 
   neuron_data = {double_literal(1.0)};
   mockup.mutable_relevant_neurons(0)->set_interval_size(neuron_data.size());
   check_softmax_values(neuron_data, mockup, threads);
 
-  for(uint32 variant = 0; variant < 10u; ++variant){ /* see if the whole array is calculated correctly */
+  for(uint32 variant = 0; variant < 10u; ++variant){
     neuron_data.clear(); /* set data to exaimne */
     for(sint32 i = 0; i < rand()%100; ++i){
       neuron_data.push_back( static_cast<sdouble32>(rand()%10)/10 );
@@ -101,8 +99,16 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly", "[fe
     rafko_net::ThreadGroup loop_threads((rand()%16) + 1u);
     check_softmax_values(neuron_data, mockup, loop_threads);
   }
+}
 
-  for(uint32 variant = 0; variant < 10u; ++variant){ /* see if random parts of the array are calculated correctly */
+TEST_CASE( "Checkig whether the softmax function is calculating correctly with multiple random synapses inside an array", "[features][softmax]" ){
+  std::vector<sdouble32> neuron_data{double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0)};
+  rafko_net::FeatureGroup mockup;
+  rafko_utilities::ThreadGroup threads(4);
+  rafko_net::IndexSynapseInterval tmp_interval;
+
+  mockup.set_feature(rafko_net::neuron_group_feature_softmax);
+  for(uint32 variant = 0; variant < 10u; ++variant){
     neuron_data.clear(); /* set data to examine */
     for(sint32 i = 0; i < rand()%200; ++i){
       neuron_data.push_back( static_cast<sdouble32>(rand()%10)/10 );
@@ -127,7 +133,7 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly", "[fe
     rafko_net::ThreadGroup loop_threads((rand()%16) + 1u);
     check_softmax_values(neuron_data, mockup, loop_threads);
   }
-
 }
+
 
 } /* namespace rafko_net_test */
