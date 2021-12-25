@@ -29,6 +29,7 @@
 #include "rafko_mainframe/models/rafko_service_context.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
 
@@ -42,22 +43,10 @@ int main( int argc, char* argv[] ) {
 
 namespace rafko_test {
 
-using rafko_gym::DataAggregate;
-using rafko_net::TransferFunction;
-using rafko_net::transfer_function_identity;
-using rafko_net::Cost_functions;
-using rafko_net::InputSynapseInterval;
-using rafko_net::IndexSynapseInterval;
-using rafko_net::SolutionBuilder;
-using rafko_net::SolutionSolver;
-using rafko_net::SynapseIterator;
-using rafko_net::Neuron;
-using rafko_mainframe::RafkoServiceContext;
+void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset){
 
-void manual_2_neuron_partial_solution(PartialSolution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset){
-
-  InputSynapseInterval temp_input_interval;
-  IndexSynapseInterval temp_index_interval;
+  rafko_net::InputSynapseInterval temp_input_interval;
+  rafko_net::IndexSynapseInterval temp_index_interval;
 
   /**###################################################################################################
    * Neuron global parameters in partial
@@ -78,11 +67,11 @@ void manual_2_neuron_partial_solution(PartialSolution& partial_solution, uint32 
   /**###################################################################################################
    * The first neuron shall have the inputs
    */
-  partial_solution.add_neuron_transfer_functions(transfer_function_identity);
+  partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
 
   /* inputs go to neuron1 */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights */
-  temp_input_interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0)); /* Input index synapse starts at the beginning of the data */
+  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(0)); /* Input index synapse starts at the beginning of the data */
   temp_input_interval.set_interval_size(number_of_inputs); /* Neuron 1 has an input index synapse of the inputs */
   *partial_solution.add_inside_indices() = temp_input_interval;
 
@@ -94,7 +83,7 @@ void manual_2_neuron_partial_solution(PartialSolution& partial_solution, uint32 
   /**###################################################################################################
    * The second Neuron shall only have the first neuron as input
    */
-  partial_solution.add_neuron_transfer_functions(transfer_function_identity);
+  partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
   /* neuron1 goes to neuron2;  that is the output which isn't in the inside indexes */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights*/
   temp_input_interval.set_starts(0u); /* The input synapse starts at the 1st internal Neuron (index 0) */
@@ -107,9 +96,9 @@ void manual_2_neuron_partial_solution(PartialSolution& partial_solution, uint32 
   *partial_solution.add_weight_indices() = temp_index_interval;
 }
 
-void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdouble32>& prev_neuron_output, const PartialSolution& partial_solution, uint32 neuron_offset){
-  RafkoServiceContext service_context;
-  TransferFunction trasfer_function(service_context);
+void manual_2_neuron_result(const std::vector<sdouble32>& partial_inputs, std::vector<sdouble32>& prev_neuron_output, const rafko_net::PartialSolution& partial_solution, uint32 neuron_offset){
+  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_net::TransferFunction trasfer_function(service_context);
 
   /* Neuron 1 */
   sdouble32 neuron1_result = 0;
@@ -135,18 +124,18 @@ void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdou
 }
 
 void manaual_fully_connected_network_result(
-  vector<sdouble32>& inputs, vector<sdouble32> previous_data, vector<sdouble32>& neuron_data,
-  vector<uint32> layer_structure, RafkoNet network
+  std::vector<sdouble32>& inputs, std::vector<sdouble32> previous_data, std::vector<sdouble32>& neuron_data,
+  std::vector<uint32> layer_structure, rafko_net::RafkoNet network
 ){
-  RafkoServiceContext service_context;
-  TransferFunction trasfer_function(service_context);
+  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_net::TransferFunction trasfer_function(service_context);
 
   uint32 neuron_number = 0;
   for(uint32 layer_iterator = 0; layer_iterator < layer_structure.size(); ++layer_iterator){ /* Go through all of the layers, count the number of Neurons */
     neuron_number += layer_structure[layer_iterator]; /* Sum the number of neurons accoding to the given layer structure */
   }
   REQUIRE(static_cast<sint32>(neuron_number) == network.neuron_array_size());
-  if(0 == neuron_data.size())neuron_data = vector<sdouble32>(neuron_number);
+  if(0 == neuron_data.size())neuron_data = std::vector<sdouble32>(neuron_number);
   sdouble32 new_neuron_data = 0;
   sdouble32 neuron_input_value = 0;
   sdouble32 spike_function_weight;
@@ -154,7 +143,7 @@ void manaual_fully_connected_network_result(
   uint32 input_index_offset = 0;
   bool first_weight_in_synapse;
   for(uint32 neuron_iterator = 0; neuron_iterator < neuron_number; ++neuron_iterator){
-    const Neuron& neuron = network.neuron_array(neuron_iterator);
+    const rafko_net::Neuron& neuron = network.neuron_array(neuron_iterator);
     new_neuron_data = 0;
     input_synapse_index = 0;
     input_index_offset = 0;
@@ -162,15 +151,15 @@ void manaual_fully_connected_network_result(
     if(0 < previous_data.size())
       REQUIRE( neuron_data.size() == previous_data.size() );
     first_weight_in_synapse = true;
-    SynapseIterator<>::iterate(neuron.input_weights(),[&](sint32 neuron_weight_index){
+    rafko_net::SynapseIterator<>::iterate(neuron.input_weights(),[&](sint32 neuron_weight_index){
       if(true == first_weight_in_synapse){
         first_weight_in_synapse = false;
         spike_function_weight = network.weight_table(neuron_weight_index);
       }else{
         if(static_cast<sdouble32>(input_synapse_index) < neuron.input_indices_size()){ /* Only get input from the net if it's explicitly defined */
           REQUIRE( 1 >= neuron.input_indices(input_synapse_index).reach_past_loops() ); /* Only the last loop and the current can be handled in this test yet */
-          if(SynapseIterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
-            neuron_input_value = inputs[SynapseIterator<>::input_index_from_synapse_index(
+          if(rafko_net::SynapseIterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
+            neuron_input_value = inputs[rafko_net::SynapseIterator<>::input_index_from_synapse_index(
               neuron.input_indices(input_synapse_index).starts() - input_index_offset
             )];
           else if(1 == neuron.input_indices(input_synapse_index).reach_past_loops())
@@ -200,7 +189,7 @@ void manaual_fully_connected_network_result(
   } /* For every Neuron */
 }
 
-void check_if_the_same(RafkoNet& net, Solution& solution){
+void check_if_the_same(rafko_net::RafkoNet& net, rafko_net::Solution& solution){
   uint32 input_synapse_offset;
   uint32 weight_synapse_offset;
   uint32 neuron_synapse_element_iterator;
@@ -216,7 +205,7 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
       weight_synapse_offset = 0;
 
       /* Since Neurons take their inputs from the partial solution input, test iterates over it */
-      SynapseIterator<InputSynapseInterval> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
+      rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> partial_input_iterator(solution.partial_solutions(partial_solution_iterator).input_data());
       const uint32 first_neuron_index_in_partial = solution.partial_solutions(partial_solution_iterator).output_data().starts();
       for( /* Skim through the inner neurons in the partial solution until the current one is found */
         uint32 i_neuron_iter = 0; i_neuron_iter < solution.partial_solutions(partial_solution_iterator).output_data().interval_size();++i_neuron_iter
@@ -226,12 +215,12 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
           neuron_synapse_element_iterator = 0;
 
           /* Test iterates over the Neurons input weights, to see if they match with the weights of the Neurons inside the Network */
-          SynapseIterator<> inner_neuron_weight_iterator(solution.partial_solutions(partial_solution_iterator).weight_indices());
-          SynapseIterator<> neuron_weight_iterator(net.neuron_array(neuron_iterator).input_weights());
+          rafko_net::SynapseIterator<> inner_neuron_weight_iterator(solution.partial_solutions(partial_solution_iterator).weight_indices());
+          rafko_net::SynapseIterator<> neuron_weight_iterator(net.neuron_array(neuron_iterator).input_weights());
 
           /* Inner Neuron inputs point to indexes in the partial solution input ( when SynapseIterator<>::is_index_input is true ) */
           expected_inputs = 0;
-          inner_neuron_weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
+          inner_neuron_weight_iterator.iterate([&](rafko_net::IndexSynapseInterval weight_synapse){
             expected_inputs += weight_synapse.interval_size();
           },[&](sint32 weight_index){
             REQUIRE( neuron_weight_iterator.size() > neuron_synapse_element_iterator );
@@ -244,18 +233,18 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
 
           /* Test if all of the neurons inputs are are the same as the ones in the net */
           /* Test iterates over the inner neurons synapse to see if it matches the Neuron synapse */
-          SynapseIterator<InputSynapseInterval> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
-          SynapseIterator<InputSynapseInterval> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
+          rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> inner_neuron_input_iterator(solution.partial_solutions(partial_solution_iterator).inside_indices());
+          rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> neuron_input_iterator(net.neuron_array(neuron_iterator).input_indices());
 
           /* Neuron inputs point to indexes in the partial solution input ( when SynapseIterator<>::is_index_input s true ) */
           neuron_synapse_element_iterator = 0;
           counted_inputs = 0;
           uint32 current_reachback;
-          inner_neuron_input_iterator.iterate([&](InputSynapseInterval input_synapse){
+          inner_neuron_input_iterator.iterate([&](rafko_net::InputSynapseInterval input_synapse){
             current_reachback = input_synapse.reach_past_loops();
           },[&](sint32 input_index){
             REQUIRE( neuron_input_iterator.size() > neuron_synapse_element_iterator );
-            if(!SynapseIterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
+            if(!rafko_net::SynapseIterator<>::is_index_input(input_index)){ /* Inner neuron takes its input internally */
               CHECK( 0 == current_reachback ); /* Internal inputs should always be taken from the current loop */
               REQUIRE(
                 static_cast<sint32>(first_neuron_index_in_partial + input_index)
@@ -263,11 +252,11 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
               );
             }else{ /* Inner Neuron takes its input from the partial solution input */
               REQUIRE( /* Input indices match */
-                partial_input_iterator[SynapseIterator<>::input_index_from_synapse_index(input_index)]
+                partial_input_iterator[rafko_net::SynapseIterator<>::input_index_from_synapse_index(input_index)]
                 == neuron_input_iterator[neuron_synapse_element_iterator]
               );
              REQUIRE( /* The time the neuron takes its input also match */
-                partial_input_iterator.synapse_under(SynapseIterator<>::input_index_from_synapse_index(input_index)).reach_past_loops()
+                partial_input_iterator.synapse_under(rafko_net::SynapseIterator<>::input_index_from_synapse_index(input_index)).reach_past_loops()
                 == neuron_input_iterator.synapse_under(neuron_synapse_element_iterator).reach_past_loops()
               );
             }
@@ -286,7 +275,7 @@ void check_if_the_same(RafkoNet& net, Solution& solution){
   } /*(uint32 neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator)*/
 }
 
-void print_weights(RafkoNet& net, Solution& solution){
+void print_weights(rafko_net::RafkoNet& net, rafko_net::Solution& solution){
   std::cout << "net("<< net.weight_table_size() << " weights):";
   for(sint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
     std::cout << "["<< net.weight_table(weight_index) <<"]";
@@ -300,9 +289,9 @@ void print_weights(RafkoNet& net, Solution& solution){
   }
 }
 
-void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set, RafkoNet& net, RafkoServiceContext& service_context){
-  unique_ptr<SolutionSolver> sample_solver(SolutionSolver::Builder(*SolutionBuilder(service_context).build(net), service_context).build());
-  vector<sdouble32> neuron_data(data_set.get_sequence_size());
+void print_training_sample(uint32 sample_sequence_index, rafko_gym::DataAggregate& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoServiceContext& service_context){
+  std::unique_ptr<rafko_net::SolutionSolver> sample_solver(rafko_net::SolutionSolver::Builder(*rafko_net::SolutionBuilder(service_context).build(net), service_context).build());
+  std::vector<sdouble32> neuron_data(data_set.get_sequence_size());
   uint32 raw_label_index = sample_sequence_index;
   uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());
   raw_label_index *= data_set.get_sequence_size();
@@ -355,7 +344,7 @@ void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set
 
   std::cout << "==============" << std::endl;
   std::cout << "Neural memory for current sequence: " << std::endl;
-  for(const vector<sdouble32>& vector : output_data_copy.get_whole_buffer()){
+  for(const std::vector<sdouble32>& vector : output_data_copy.get_whole_buffer()){
     for(const sdouble32& element : vector) std::cout << "[" << element << "]";
     std::cout << std::endl;
   }
@@ -366,12 +355,10 @@ void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set
   std::cout << std::endl;
 }
 
-std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_addition_dataset(uint32 number_of_samples){
+std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> create_addition_dataset(uint32 number_of_samples){
 
-  using std::vector;
-
-  vector<vector<sdouble32>> net_inputs(number_of_samples);
-  vector<vector<sdouble32>> net_labels(number_of_samples);
+  std::vector<std::vector<sdouble32>> net_inputs(number_of_samples);
+  std::vector<std::vector<sdouble32>> net_labels(number_of_samples);
 
   srand(time(nullptr));
   sdouble32 max_x = DBL_MIN;
@@ -391,17 +378,17 @@ std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_addition_d
   return std::make_pair(net_inputs,net_labels);
 }
 
-std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size){
+std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size){
   uint32 carry_bit;
-  vector<vector<sdouble32>> net_inputs(sequence_size * number_of_samples);
-  vector<vector<sdouble32>> net_labels(sequence_size * number_of_samples);
+  std::vector<std::vector<sdouble32>> net_inputs(sequence_size * number_of_samples);
+  std::vector<std::vector<sdouble32>> net_labels(sequence_size * number_of_samples);
 
   srand(time(nullptr));
   for(uint32 i = 0;i < number_of_samples;++i){
     carry_bit = 0;
     for(uint32 j = 0;j <sequence_size;++j){ /* Add testing and training sequences randomly */
-      net_inputs[(sequence_size * i) + j] = vector<sdouble32>(2);
-      net_labels[(sequence_size * i) + j] = vector<sdouble32>(1);
+      net_inputs[(sequence_size * i) + j] = std::vector<sdouble32>(2);
+      net_labels[(sequence_size * i) + j] = std::vector<sdouble32>(1);
       net_inputs[(sequence_size * i) + j][0] = static_cast<sdouble32>(rand()%2);
       net_inputs[(sequence_size * i) + j][1] = static_cast<sdouble32>(rand()%2);
 
@@ -424,9 +411,9 @@ std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_sequenced_
 TEST_CASE("Testing whether binary addition can be solved with a manual program","[meta]"){
   uint32 sequence_size = 4;
   uint32 number_of_samples = 10;
-  std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> dataset = create_sequenced_addition_dataset(number_of_samples, sequence_size);
-  vector<vector<sdouble32>>& inputs = std::get<0>(dataset);
-  vector<vector<sdouble32>>& labels = std::get<1>(dataset);
+  std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> dataset = create_sequenced_addition_dataset(number_of_samples, sequence_size);
+  std::vector<std::vector<sdouble32>>& inputs = std::get<0>(dataset);
+  std::vector<std::vector<sdouble32>>& labels = std::get<1>(dataset);
 
   for(uint32 sample_iterator = 0; sample_iterator < number_of_samples; ++sample_iterator){
     sdouble32 carry_bit = 0;
@@ -443,5 +430,30 @@ TEST_CASE("Testing whether binary addition can be solved with a manual program",
   }
 }
 
+rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoServiceContext& service_context){
+  std::vector<uint32> net_structure;
+  while((rand()%10 < 9)||(4 > net_structure.size()))
+    net_structure.push_back(static_cast<uint32>(rand()%30) + 1u);
+
+  uint8 num_of_features = rand()%(net_structure.size()/2) + 1u;
+  rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(service_context)
+    .input_size(input_size)
+    .expected_input_range(double_literal(5.0));
+
+  uint8 layer_of_feature_index = 0;
+  uint32 layer_start_index = 0;
+  uint8 feature_index;
+  for(feature_index = 0u; feature_index < num_of_features; feature_index++){
+    if(layer_of_feature_index >= net_structure.size())break;
+    uint8 layer_diff = 1u + ((rand()%(net_structure.size() - layer_of_feature_index)) / 2);
+    for(uint8 i = 0; i < layer_diff; ++i){
+      layer_start_index += net_structure[layer_of_feature_index + i];
+    }
+    layer_of_feature_index += layer_diff;
+    builder.add_feature_to_layer(layer_of_feature_index, rafko_net::neuron_group_feature_softmax);
+  }
+
+  return builder.dense_layers(net_structure);
+}
 
 } /* namsepace rafko_test */

@@ -30,16 +30,6 @@
 
 namespace rafko_test {
 
-using std::vector;
-using std::unique_ptr;
-
-using rafko_net::RafkoNet;
-using rafko_net::Solution;
-using rafko_net::PartialSolution;
-using rafko_gym::DataAggregate;
-using rafko_net::Cost_functions;
-using rafko_mainframe::RafkoServiceContext;
-
 /**
  * @brief      generates a partial partial_solution manually based on the Neural Network structure:
  *             2 Neurons: The first neuron has the inputs and the second has the first neuron
@@ -47,7 +37,7 @@ using rafko_mainframe::RafkoServiceContext;
  * @param      partial_solution  The partial solution
  * @param[in]  number_of_inputs  The number of inputs to the network
  */
-extern void manual_2_neuron_partial_solution(PartialSolution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset = 0);
+extern void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset = 0);
 
 /** @brief Calculates the result of the partial partial_solution manually based on the structure provided by @manual_2_neuron_partial_solution
  *         In case there are more than 2 inputs, all of them shall be processed with the same weight
@@ -61,7 +51,7 @@ extern void manual_2_neuron_partial_solution(PartialSolution& partial_solution, 
  * @param[in]  partial_solution    The partial solution containing the weights andmisc parameters of the calculation
  * @param[in]  neuron_offset       THe neuron offset in which the partial solution is present in the whole network
  */
-extern void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vector<sdouble32>& prev_neuron_output, const PartialSolution& partial_solution, uint32 neuron_offset = 0);
+extern void manual_2_neuron_result(const std::vector<sdouble32>& partial_inputs, std::vector<sdouble32>& prev_neuron_output, const rafko_net::PartialSolution& partial_solution, uint32 neuron_offset = 0);
 
 /**
  * @brief      Calculates the result of a fully connected Network for the given inputs
@@ -73,8 +63,8 @@ extern void manual_2_neuron_result(const vector<sdouble32>& partial_inputs, vect
  * @param[in]  network          The network
  */
 extern void manaual_fully_connected_network_result(
-  vector<sdouble32>& inputs, vector<sdouble32> previous_data, vector<sdouble32>& neuron_data,
-  vector<uint32> layer_structure, RafkoNet network
+  std::vector<sdouble32>& inputs, std::vector<sdouble32> previous_data, std::vector<sdouble32>& neuron_data,
+  std::vector<uint32> layer_structure, rafko_net::RafkoNet network
 );
 
 /**
@@ -84,7 +74,7 @@ extern void manaual_fully_connected_network_result(
  * @param      net       The net
  * @param      solution  The solution
  */
-extern void check_if_the_same(RafkoNet& net, Solution& solution);
+extern void check_if_the_same(rafko_net::RafkoNet& net, rafko_net::Solution& solution);
 
 /**
  * @brief      Prints weights for the given arguments
@@ -92,7 +82,7 @@ extern void check_if_the_same(RafkoNet& net, Solution& solution);
  * @param      net       The net
  * @param      solution  The solution
  */
-extern void print_weights(RafkoNet& net, Solution& solution);
+extern void print_weights(rafko_net::RafkoNet& net, rafko_net::Solution& solution);
 
 /**
  * @brief      Prints a training sample of the given data set, under the given index. Expects 2 inputs and one output!
@@ -102,7 +92,7 @@ extern void print_weights(RafkoNet& net, Solution& solution);
  * @param      net                    The net
  * @param      service_context        The service context
  */
-extern void print_training_sample(uint32 sample_sequence_index, DataAggregate& data_set, RafkoNet& net, RafkoServiceContext& service_context);
+extern void print_training_sample(uint32 sample_sequence_index, rafko_gym::DataAggregate& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoServiceContext& service_context);
 
 /**
  * @brief      Creates a normalized dataset for addition: basically adding two numbers together.
@@ -112,7 +102,7 @@ extern void print_training_sample(uint32 sample_sequence_index, DataAggregate& d
  *
  * @return     The addition dataset. For each sample: Inputs: [a][b]; Outputs: [a+b]
  */
-extern std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_addition_dataset(uint32 number_of_samples);
+extern std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> create_addition_dataset(uint32 number_of_samples);
 
 /**
  * @brief      Creates a normalized dataset for adding binary numbers: each number is stored
@@ -124,7 +114,7 @@ extern std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_add
  *
  * @return     The addition dataset. For each sample: Inputs: [[a0][...][an]][[b0][...][bn]]; Labels: [[result0][...][resultn]]
  */
-extern std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size);
+extern std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size);
 
 /**
  * @brief      Checks if the two arguments match or not
@@ -132,7 +122,15 @@ extern std::pair<vector<vector<sdouble32>>,vector<vector<sdouble32>>> create_seq
  * @param      sample_data      The sample data
  * @param      ringbuffer_data  The ringbuffer data
  */
-extern void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& ringbuffer_data);
+extern void check_data_match(std::vector<sdouble32>& sample_data, std::vector<sdouble32>& ringbuffer_data);
+
+/**
+ * @brief      Generates a random Fully connected Dense network with some Layers set to have the softmax feature
+ *
+ * @param[in]  input_size       The size of the input vector accepted by the produces network
+ * @param      service_context  Contextual information
+ */
+extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoServiceContext& service_context);
 
 } /* namespace rafko_test */
 
