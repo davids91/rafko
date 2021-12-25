@@ -32,23 +32,21 @@ std::pair<sdouble32,sdouble32> RafkoSoftmaxFeature::get_max_and_expsum(const std
     sdouble32 thread_max_value = -std::numeric_limits<double>::max();
     sdouble32 thread_expsum = double_literal(0);
     SynapseIterator<> relevant_neuron_iterator(relevant_neurons);
-    uint32 relevant_neuron_number = relevant_neuron_iterator.size();
-    uint32 neurons_to_do_in_one_thread = 1u + (relevant_neuron_number/execution_threads.get_number_of_threads());
-    uint32 start_index = std::min(
-      static_cast<uint32>( std::max(0, (static_cast<sint32>(relevant_neuron_number) - 1)) ),
-      (neurons_to_do_in_one_thread * thread_index)
-    );
-    uint32 neurons_to_do_in_this_thread = std::min(neurons_to_do_in_one_thread, (relevant_neuron_number - start_index));
+    uint32 neurons_to_do_in_one_thread = 1u + (relevant_neuron_iterator.size()/execution_threads.get_number_of_threads());
+    uint32 start_index = std::min( relevant_neuron_iterator.size(), (neurons_to_do_in_one_thread * thread_index) );
+    uint32 neurons_to_do_in_this_thread = std::min(neurons_to_do_in_one_thread, (relevant_neuron_iterator.size() - start_index));
     for(uint32 synapse_index = 0; synapse_index < neurons_to_do_in_this_thread; synapse_index++){
-      expsum += std::exp(neuron_data[start_index + synapse_index]);
-      if(neuron_data[start_index + synapse_index] > thread_max_value)
-        thread_max_value = neuron_data[start_index + synapse_index];
+      thread_expsum += std::exp(neuron_data[relevant_neuron_iterator[start_index + synapse_index]]);
+      if(neuron_data[relevant_neuron_iterator[start_index + synapse_index]] > thread_max_value)
+        thread_max_value = neuron_data[relevant_neuron_iterator[start_index + synapse_index]];
     }
 
-    std::lock_guard<std::mutex> my_lock(return_value_mutex);
-    expsum += thread_expsum;
-    if(thread_max_value > max_value)
-      max_value = thread_max_value;
+    if(0u < neurons_to_do_in_this_thread){
+      std::lock_guard<std::mutex> my_lock(return_value_mutex);
+      expsum += thread_expsum;
+      if(thread_max_value > max_value)
+        max_value = thread_max_value;
+    }
   });
   return std::make_pair(max_value, expsum);
 }
@@ -57,25 +55,21 @@ void RafkoSoftmaxFeature::calculate(std::vector<sdouble32>& neuron_data, const g
   std::pair<sdouble32,sdouble32> softmax_params = get_max_and_expsum(neuron_data, relevant_neurons, execution_threads);
   execution_threads.start_and_block([&execution_threads, &softmax_params, &neuron_data, &relevant_neurons](uint32 thread_index){
     SynapseIterator<> relevant_neuron_iterator(relevant_neurons);
-    uint32 relevant_neuron_number = relevant_neuron_iterator.size();
-    uint32 neurons_to_do_in_one_thread = 1u + (relevant_neuron_number/execution_threads.get_number_of_threads());
-    uint32 start_index = std::min(
-      static_cast<uint32>( std::max(0, (static_cast<sint32>(relevant_neuron_number) - 1)) ),
-      (neurons_to_do_in_one_thread * thread_index)
-    );
-    uint32 neurons_to_do_in_this_thread = std::min(neurons_to_do_in_one_thread, (relevant_neuron_number - start_index));
+    uint32 neurons_to_do_in_one_thread = 1u + (relevant_neuron_iterator.size()/execution_threads.get_number_of_threads());
+    uint32 start_index = std::min( relevant_neuron_iterator.size(), (neurons_to_do_in_one_thread * thread_index) );
+    uint32 neurons_to_do_in_this_thread = std::min(neurons_to_do_in_one_thread, (relevant_neuron_iterator.size() - start_index));
+
     for(uint32 synapse_index = 0; synapse_index < neurons_to_do_in_this_thread; synapse_index++){
-      neuron_data[start_index + synapse_index] = ( /*!Note: https://stackoverflow.com/questions/34968722/how-to-implement-the-softmax-function-in-python */
-        std::exp(neuron_data[start_index + synapse_index] - std::get<0>(softmax_params))
+      neuron_data[relevant_neuron_iterator[start_index + synapse_index]] = ( /*!Note: https://stackoverflow.com/questions/34968722/how-to-implement-the-softmax-function-in-python */
+        std::exp(neuron_data[relevant_neuron_iterator[start_index + synapse_index]] - std::get<0>(softmax_params))
         / ( std::get<1>(softmax_params) / std::exp(std::get<0>(softmax_params)) )
       ); /* x = (x - max(x)) / (expsum(x) / exp(max(x))) */
       /*!Note: to make the softmax function numerically stable, the maximum value is subtracted from all values, and the sum is corrected for that.
        * Because the maximum value is not known during the calculation of the sum, it needs to be corrected by dividing the sum with exp(max(x)).
-       * This is possible, because exp(x-c) = exp(x) / exp(c) for every element in the sum.
+       * This is possible, because expq(x-c) = exp(x) / exp(c) for every element in the sum.
        */
     }
   });
-  /* modify the value of each Neuron */
 }
 
 } /* namespace rafko_net */

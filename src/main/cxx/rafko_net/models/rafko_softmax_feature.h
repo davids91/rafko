@@ -35,10 +35,27 @@ namespace rafko_net{
 class RafkoSoftmaxFeature{
 public:
 
+  /**
+   * @brief      Calculate the softmax function by setting the data values provided in the arguments
+   *             to be of sum of one.
+   *
+   * @param      neuron_data        The array containing the neuron data to update
+   * @param[in]  relevant_neurons   The index values of the relevant neurons to apply the function on
+   * @param[in]  execution_threads  Used execution threads
+   */
   static void calculate(std::vector<sdouble32>& neuron_data, const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons, rafko_utilities::ThreadGroup& execution_threads);
 
 private:
 
+  /**
+   * @brief      Calculate the maximum value and the sum of exp(x) for the relevant Neurons
+   *
+   * @param[in]  neuron_data        The array containing the neuron data to update
+   * @param[in]  relevant_neurons   The index values of the relevant neurons to apply the function on
+   * @param[in]  execution_threads  Used execution threads
+   *
+   * @return     an std::pair of {maximum value of the Neuron data values, the sum of e^(Neuron values))};
+   */
   static std::pair<sdouble32,sdouble32> get_max_and_expsum(const std::vector<sdouble32>& neuron_data, const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons, rafko_utilities::ThreadGroup& execution_threads);
 
 };

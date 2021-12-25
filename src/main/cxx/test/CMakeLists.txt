@@ -37,6 +37,7 @@ if(MAKE_TESTS)
       rafko_net/src/solution_solver_test.cc
       rafko_net/src/rafko_net_builder_test.cc
       rafko_net/src/synapse_iterator_test.cc
+      rafko_net/src/softmax_function_test.cc
       rafko_mainframe/src/service_context_test.cc
     )
   endif()

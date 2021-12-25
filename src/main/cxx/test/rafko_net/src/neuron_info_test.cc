@@ -25,67 +25,60 @@
 
 namespace rafko_net_test {
 
-  using rafko_net::Neuron;
-  using rafko_net::NeuronInfo;
-  using rafko_net::IndexSynapseInterval;
-  using rafko_net::InputSynapseInterval;
-  using rafko_net::SynapseIterator;
-  using rafko_net::transfer_function_identity;
-
 /*###############################################################################################
  * Testing Neuron Validation
  * */
 TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
 
-  IndexSynapseInterval temp_index_interval;
-  InputSynapseInterval temp_input_interval;
+  rafko_net::IndexSynapseInterval temp_index_interval;
+  rafko_net::InputSynapseInterval temp_input_interval;
 
   /* Empty Neuron should be invalid */
-  Neuron neuron = Neuron();
-  CHECK( false == NeuronInfo::is_neuron_valid(neuron) );
+  rafko_net::Neuron neuron = rafko_net::Neuron();
+  CHECK( false == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
   /* Setting some parameters */
   /* Unfortunately checking against the weight table is not possible without Net context */
-  CHECK( false == NeuronInfo::is_neuron_valid(neuron) );
+  CHECK( false == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
-  neuron.set_transfer_function_idx(transfer_function_identity);
-  CHECK( true == NeuronInfo::is_neuron_valid(neuron) );
+  neuron.set_transfer_function_idx(rafko_net::transfer_function_identity);
+  CHECK( true == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
   /* Setting indexing information */
   temp_index_interval.set_starts(0); /* Adding weight inputs */
   temp_index_interval.set_interval_size(0);
   *neuron.add_input_weights() = temp_index_interval;
-  CHECK( false == NeuronInfo::is_neuron_valid(neuron) );
+  CHECK( false == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
   temp_input_interval.set_starts(0); /* Adding an index input of a non-matching number */
   temp_input_interval.set_interval_size(5);
   *neuron.add_input_indices() = temp_input_interval;
-  CHECK( false == NeuronInfo::is_neuron_valid(neuron) );
+  CHECK( false == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
   temp_index_interval.set_starts(0); /* Extending input indices to match weights */
   temp_index_interval.set_interval_size(4);
   *neuron.add_input_weights() = temp_index_interval;
-  CHECK( false == NeuronInfo::is_neuron_valid(neuron) );
+  CHECK( false == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
   temp_index_interval.set_starts(4);
   temp_index_interval.set_interval_size(1);
   *neuron.add_input_weights() = temp_index_interval;
-  CHECK( true == NeuronInfo::is_neuron_valid(neuron) );
+  CHECK( true == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
   temp_index_interval.set_starts(5); /* Adding additional weights */
   temp_index_interval.set_interval_size(5); /* ..should still be a valid state, since the extra weights count as biases */
   *neuron.add_input_weights() = temp_index_interval;
-  CHECK( true == NeuronInfo::is_neuron_valid(neuron) );
+  CHECK( true == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
   temp_input_interval.set_starts(5); /* Indices to follow number of weights */
   temp_input_interval.set_interval_size(3);
   *neuron.add_input_indices() = temp_input_interval;
-  CHECK( true == NeuronInfo::is_neuron_valid(neuron) );
+  CHECK( true == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
   temp_input_interval.set_starts(8); /* Indices to follow number of weights */
   temp_input_interval.set_interval_size(2);
   *neuron.add_input_indices() = temp_input_interval;
-  CHECK( true == NeuronInfo::is_neuron_valid(neuron) );
+  CHECK( true == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 }
 
 } /* namespace rafko_net_test */
