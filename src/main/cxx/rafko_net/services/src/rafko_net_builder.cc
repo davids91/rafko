@@ -19,6 +19,7 @@
 
 #include <time.h>
 
+#include <algorithm>
 #include <stdexcept>
 
 #include "rafko_net/models/dense_net_weight_initializer.h"
@@ -61,6 +62,12 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
     uint64 neurIt = 0;
     sdouble32 expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);
 
+    /* sort the requested features by layer */
+    std::sort(layer_features.begin(),layer_features.end(),
+    [](const std::pair<uint32,Neuron_group_features>& a, const std::pair<uint32,Neuron_group_features>& b){
+      return /* a less, than b */(std::get<0>(a) < std::get<0>(b));
+    });
+
     ret->set_input_data_size(arg_input_size);
     ret->set_output_neuron_number(layer_sizes.back());
 
@@ -82,6 +89,16 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
         (0 == layerIt)?(arg_input_size):(layer_sizes[layerIt-1]),
         expPrevLayerOutput
       );
+
+      /* Store the features for this layer */
+      if( (0u < layer_features.size()) && (std::get<0>(layer_features.front()) == layerIt) && (0 < layer_sizes[layerIt]) ){
+        FeatureGroup feature_to_add;
+        feature_to_add.set_feature(std::get<1>(layer_features.front()));
+        feature_to_add.add_relevant_neurons()->set_interval_size(layer_sizes[layerIt]);
+        feature_to_add.mutable_relevant_neurons(0)->set_starts(neurIt);
+        *ret->add_neuron_group_features() = feature_to_add;
+        layer_features.erase(layer_features.begin());
+      }
 
       /* Add the Neurons */
       expPrevLayerOutput = 0;

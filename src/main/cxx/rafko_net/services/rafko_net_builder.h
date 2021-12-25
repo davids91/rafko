@@ -23,6 +23,7 @@
 #include <vector>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/models/transfer_function.h"
@@ -30,8 +31,6 @@
 #include "rafko_net/models/neuron_info.h"
 
 namespace rafko_net {
-
-using std::shared_ptr;
 
 /**
  * @brief RafkoNetBuilder: Builder class to compile Sparse Neural Networks
@@ -92,7 +91,7 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  RafkoNetBuilder& weight_initializer(shared_ptr<WeightInitializer> initializer){
+  RafkoNetBuilder& weight_initializer(std::shared_ptr<WeightInitializer> initializer){
     if(nullptr != initializer){
       arg_weight_initer = initializer;
       is_weight_initializer_set = true;
@@ -107,7 +106,7 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  RafkoNetBuilder& neuron_array(vector<Neuron> arr){
+  RafkoNetBuilder& neuron_array(std::vector<Neuron> arr){
     if((0 < arr.size())&&(NeuronInfo::is_neuron_valid(arr.back()))){
       arg_neuron_array = arr;
       is_neuron_array_set = true;
@@ -122,7 +121,7 @@ public:
    *
    * @return     reference for chaining
    */
-  RafkoNetBuilder& weight_table(vector<sdouble32> table){
+  RafkoNetBuilder& weight_table(std::vector<sdouble32> table){
     if(0 < table.size()){
       arg_weight_table = table;
       is_weight_table_set = true;
@@ -137,7 +136,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& allowed_transfer_functions_by_layer(vector<vector<Transfer_functions> > filter){
+  RafkoNetBuilder& allowed_transfer_functions_by_layer(std::vector<std::vector<Transfer_functions> > filter){
     arg_allowed_transfer_functions_by_layer = filter;
     is_allowed_transfer_functions_by_layer_set = true;
     return *this;
@@ -166,6 +165,17 @@ public:
   }
 
   /**
+   * @brief      If supported, produced network will also contain for every layer
+   *             the activation of the layer from the previous run
+   *
+   * @return     builder reference for chaining
+   */
+  RafkoNetBuilder& add_feature_to_layer(uint32 layer_index, Neuron_group_features feature){
+    layer_features.push_back(std::make_pair(layer_index, feature));
+    return *this;
+  }
+
+  /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
    *             and function arguments
    *
@@ -175,7 +185,7 @@ public:
    *
    * @return   the built neural network
    */
-  RafkoNet* dense_layers(vector<uint32> layer_sizes, vector<vector<Transfer_functions>> transfer_function_filter){
+  RafkoNet* dense_layers(std::vector<uint32> layer_sizes, std::vector<std::vector<Transfer_functions>> transfer_function_filter){
     (void)allowed_transfer_functions_by_layer(transfer_function_filter);
     return dense_layers(layer_sizes);
   }
@@ -187,7 +197,7 @@ public:
    *
    * @return     the built neural network
    */
-  RafkoNet* dense_layers(vector<uint32> layer_sizes);
+  RafkoNet* dense_layers(std::vector<uint32> layer_sizes);
 
   /**
    * @brief    creates a Neural network from the given Arguments. Requires the following
@@ -225,17 +235,17 @@ private:
   /**
    * The array containing the neurons while RafkoNetBuilder::build is used
    */
-  vector<Neuron> arg_neuron_array;
+  std::vector<Neuron> arg_neuron_array;
 
   /**
    * The array containing the used weights in the network while RafkoNetBuilder::build is used
    */
-  vector<sdouble32> arg_weight_table;
+  std::vector<sdouble32> arg_weight_table;
 
   /**
    * Weight Initializer argument, which guides the initial net Weights
    */
-  shared_ptr<WeightInitializer> arg_weight_initer;
+  std::shared_ptr<WeightInitializer> arg_weight_initer;
 
   /**
    * Number of inputs the net-to-be-built shall accept
@@ -247,7 +257,8 @@ private:
    */
   uint32 arg_output_neuron_number = 0;
 
-  vector<vector<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
+  std::vector<std::vector<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
+  std::vector<std::pair<uint32,Neuron_group_features>> layer_features;
 
   /**
    * @brief RafkoNetBuilder::set_neuron_array: moves the neuron_array argument into the RafkoNet
