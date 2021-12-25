@@ -192,13 +192,12 @@ public:
 
   /**
    * @brief      Direct access to an indvidual synapse index. Warning! very greedy!
-   *             Instead of overflow it returns with 0 in case the given index is bigger, than the synapse size
    *
    * @param[in]  index  The index
    *
    * @return     The Synapse index under the @index-th step into the iteration
    */
-  int operator[](int index){
+  int operator[](int index) const{
     if(0 == size())throw std::runtime_error("Empty synapse iterator reached for subscript!");
     sint32 result_index;
     uint32 previous_last_reached_index = 0;
@@ -230,6 +229,38 @@ public:
     --last_reached_synapse;
     last_reached_index = previous_last_reached_index;
     return result_index;
+  }
+
+  /**
+   * @brief      Equality operator with another synapse: the two will match when all of their synapses are the same
+   *
+   * @param[in]  index  The other iterator to compare to
+   *
+   * @return     true if the two SynapseIterators match
+   */
+  bool operator==(const SynapseIterator<Interval_type>& other) const{
+    uint32 synapse_index = 0u;
+    uint32 match = true;
+    iterate_terminatable([other, &synapse_index, &match](sint32 index){
+      if(index != other[synapse_index]){
+        match = false;
+        return false;
+      }
+      ++synapse_index;
+      return true;
+    });
+    return match;
+  }
+
+  /**
+   * @brief      Non-equality operator with another synapse
+   *
+   * @param[in]  index  The other iterator to compare to
+   *
+   * @return     true if the two SynapseIterators matchn't
+   */
+  bool operator!=(const SynapseIterator<Interval_type>& other) const{
+    return !(*this == other);
   }
 
   /**
@@ -356,8 +387,8 @@ public:
 
 private:
   const google::protobuf::RepeatedPtrField<Interval_type>& synapse_interval;
-  uint32 last_reached_synapse;
-  uint32 last_reached_index;
+  mutable uint32 last_reached_synapse;
+  mutable uint32 last_reached_index;
   static uint32 interval_size; /* temporary variable */
 
   /**
