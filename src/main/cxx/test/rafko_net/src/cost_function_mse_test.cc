@@ -27,27 +27,21 @@
 
 namespace rafko_net_test {
 
-using rafko_net::CostFunctionMSE;
-using rafko_mainframe::RafkoServiceContext;
-
-using std::vector;
-
 /*###############################################################################################
  * Testing Error function
  * - Create a dummy featureset and labelset with a given distance
  * - Calculate the distances to it
  * */
-TEST_CASE( "Error function test", "[training][error-function]" ) {
-  RafkoServiceContext service_context;
+TEST_CASE( "Error function mean squared error test", "[training][error-function]" ) {
+  rafko_mainframe::RafkoServiceContext service_context;
 
   /* create fake data and fake features with a given distance */
   uint16 dataset_size = 500;
   uint32 feature_size = 20;
   sdouble32 distance = double_literal(10.0);
 
-  vector<vector<sdouble32>> dataset = vector<vector<sdouble32>>(dataset_size,vector<sdouble32>(feature_size));
-  vector<vector<sdouble32>> featureset = vector<vector<sdouble32>>(dataset_size,vector<sdouble32>(feature_size));
-  srand(time(nullptr));
+  std::vector<std::vector<sdouble32>> dataset = std::vector<std::vector<sdouble32>>(dataset_size,std::vector<sdouble32>(feature_size));
+  std::vector<std::vector<sdouble32>> featureset = std::vector<std::vector<sdouble32>>(dataset_size,std::vector<sdouble32>(feature_size));
   for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
       for(uint16 feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){
         dataset[sample_iterator][feature_iterator] = static_cast<sdouble32>(rand()%dataset_size);
@@ -58,7 +52,7 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   }
 
   /* one feature distance should be (double_literal(0.5) * (distance)^2 ) */
-  CostFunctionMSE cost(service_context);
+  rafko_net::CostFunctionMSE cost(service_context);
   for(uint16 sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
     REQUIRE(
       Catch::Approx(
@@ -69,7 +63,7 @@ TEST_CASE( "Error function test", "[training][error-function]" ) {
   }
 
   /* Test if the whole dataset can be processed in one function call */
-  vector<sdouble32> label_errors(dataset_size,0);
+  std::vector<sdouble32> label_errors(dataset_size,0);
   cost.get_feature_errors(dataset, featureset, label_errors, 0, 0, label_errors.size(), 0, dataset_size);
   for(const sdouble32 label_error : label_errors){
     CHECK(

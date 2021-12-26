@@ -30,6 +30,8 @@ if(MAKE_TESTS)
       rafko_utilities/src/thread_group_test.cc
       rafko_utilities/src/const_vector_subrange_test.cc
       rafko_net/src/cost_function_mse_test.cc
+      rafko_net/src/cost_function_cross_entropy_test.cc
+      rafko_net/src/cost_function_binary_cross_entropy_test.cc
       rafko_net/src/neuron_info_test.cc
       rafko_net/src/neuron_router_test.cc
       rafko_net/src/partial_solution_solver_test.cc

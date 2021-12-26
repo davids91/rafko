@@ -184,7 +184,7 @@ message ServiceSlot{
  * @brief      Describes a Rafko Deep Learning Service
  */
 service RafkoDeepLearning{
-  rpc add_slot(ServiceSlot) returns (SlotResponse) {} /* If possible adds a new slot into the server, then retudrns the status and ID of it */
+  rpc add_slot(ServiceSlot) returns (SlotResponse) {} /* If possible adds a new slot into the server, then returns the status and ID of it */
   rpc update_slot(ServiceSlot) returns (SlotResponse) {} /* Modify existing slot; the ID must be provided */
 
   rpc ping(SlotRequest) returns (SlotResponse) {} /* Pings a slot, the response repeats the slot id and state if valid */

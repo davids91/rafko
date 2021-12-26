@@ -40,7 +40,10 @@ protected:
   }
 
   sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
-    return ( label_value * std::log(feature_value) + ((double_literal(1.0) - label_value) * std::log((double_literal(1.0) - feature_value))) );
+    return (
+      label_value * std::log(std::max(double_literal(0.0000000000000001),feature_value))
+      +( (double_literal(1.0) - label_value) * std::log(double_literal(1.0) - std::min(double_literal(0.9999999999999999), feature_value)) )
+    );
   }
 
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const{
