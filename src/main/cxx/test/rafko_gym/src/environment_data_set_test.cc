@@ -93,10 +93,11 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   solution.set_network_input_size(1);
   solution.add_cols(1);
   DummyRafkoAgent agent(solution);
+  environment.install_agent(agent);
 
   /* Set some error and see if the environment produces the expected */
   agent.set_result(expected_label - set_distance);
-  sdouble32 environment_error = environment.full_evaluation(agent);
+  sdouble32 environment_error = environment.full_evaluation();
   REQUIRE( /* One Error: (distance^2)/(2 * overall number of samples) */
     Catch::Approx( /* Error sum: One Error * overall number of samples  */
       pow(set_distance,2) / double_literal(2.0)
@@ -121,7 +122,7 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   sdouble32 reference_error = -training_set.get_error_sum();
   training_set.pop_state();
   agent.set_result(expected_label - set_distance);
-  sdouble32 measured_error = environment.stochastic_evaluation(agent, seed);
+  sdouble32 measured_error = environment.stochastic_evaluation(seed);
   CHECK( Catch::Approx(reference_error).margin(0.00000000000001) == measured_error );
 }
 

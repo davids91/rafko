@@ -31,21 +31,26 @@ namespace RAFKO_FULL_EXPORT rafko_gym{
 class RafkoEnvironment{
 public:
   /**
-   * @brief      Evaluates the given agent and returns with its error/fittness value
+   * @brief      Installs an agent to the environment
    *
-   * @param[in]      agent    The actor to be evaluated in the current environment
-   * @return         The resulting error/fitness value summary of the evaluation
+   * @param      agent    The actor to be evaluated in the current environment
    */
-  virtual sdouble32 full_evaluation(RafkoAgent& agent) = 0;
+  virtual void install_agent(RafkoAgent& agent) = 0;
 
   /**
-   * @brief      Evaluates the given agent in a stochastic manner and returns with its error/fittness value
+   * @brief      Evaluates installed agents and returns with its error/fittness value
    *
-   * @param[in]      agent    The actor to be evaluated in the current environment
+   * @return     The resulting error/fitness value summary of the evaluation
+   */
+  virtual sdouble32 full_evaluation() = 0;
+
+  /**
+   * @brief          Evaluates installed agents in a stochastic manner and returns with its error/fittness value
+   *
    * @param[in]      seed    A helper value to make Stochastic evaluation deterministicly reproducible
    * @return         The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 stochastic_evaluation(RafkoAgent& agent, uint32 seed = 0u) = 0;
+  virtual sdouble32 stochastic_evaluation(uint32 seed = 0u) = 0;
 
   /**
    * @brief      Saves the RafkoEnvironment state

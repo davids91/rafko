@@ -66,7 +66,7 @@ public:
   , weight_updater(UpdaterFactory::build_weight_updater(net, *net_solution, weight_updater_, service_context))
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
   , applied_direction(net.weight_table_size())
-  { }
+  { environment.install_agent(*solver); }
 
   ~RafkoNetApproximizer(){
     if(nullptr == service_context.get_arena_ptr())
@@ -150,7 +150,7 @@ public:
    * @brief      Evaluates the network in the given environment fully
    */
   void full_evaluation(){
-    environment.full_evaluation(*solver);
+    environment.full_evaluation();
     if(min_test_error > environment.get_testing_fitness()){
       min_test_error = environment.get_testing_fitness();
       min_test_error_was_at_iteration = iteration;
@@ -205,7 +205,7 @@ private:
   sdouble32 stochastic_evaluation(){
     sdouble32 fitness = double_literal(0.0);
     for(uint32 i = 0; i < stochastic_evaluation_loops; ++i)
-      fitness += environment.stochastic_evaluation(*solver, iteration);
+      fitness += environment.stochastic_evaluation(iteration);
     return fitness / static_cast<sdouble32>(stochastic_evaluation_loops);
   }
 

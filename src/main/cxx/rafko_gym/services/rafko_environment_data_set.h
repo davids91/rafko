@@ -31,8 +31,6 @@
 
 namespace rafko_gym{
 
-using std::vector;
-
 /**
  * @brief      A class representing an environment using a train and test set
  */
@@ -40,21 +38,25 @@ class RAFKO_FULL_EXPORT RafkoEnvironmentDataSet : public RafkoEnvironment{
 public:
   RafkoEnvironmentDataSet(rafko_mainframe::RafkoServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_);
 
-  sdouble32 full_evaluation(RafkoAgent& agent){
-    evaluate(agent, train_set, 0u, train_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
-    evaluate(agent, test_set, 0u, test_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
+  void install_agent(RafkoAgent& agent){
+    agents.push_back(agent);
+  }
+
+  sdouble32 full_evaluation(){
+    evaluate(agents.back(), train_set, 0u, train_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
+    evaluate(agents.back(), test_set, 0u, test_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
     loops_unchecked = 0u;
     return -train_set.get_error_sum();
   }
 
-  sdouble32 stochastic_evaluation(RafkoAgent& agent, uint32 seed = 0){
+  sdouble32 stochastic_evaluation(uint32 seed = 0){
     if(0 < seed)srand(seed);
-    check(agent);
+    check();
     uint32 sequence_start_index = (rand()%(train_set.get_number_of_sequences() - service_context.get_minibatch_size() + 1));
     uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
       train_set.get_sequence_size() - service_context.get_memory_truncation() + 1 /* ..not all result output values are evaluated.. */
     )); /* ..only service_context.get_memory_truncation(), starting at a random index inside bounds */
-    evaluate(agent, train_set, sequence_start_index, service_context.get_minibatch_size(), start_index_inside_sequence, used_sequence_truncation);
+    evaluate(agents.back(), train_set, sequence_start_index, service_context.get_minibatch_size(), start_index_inside_sequence, used_sequence_truncation);
     ++loops_unchecked; ++iteration;
     return -train_set.get_error_sum();
   }
@@ -82,13 +84,13 @@ public:
    *
    * @param[in]      agent    The actor to be evaluated in the current environment
    */
-  void check(RafkoAgent& agent){
+  void check(){
     if(
       (loops_unchecked >= service_context.get_tolerance_loop_value())
       ||(loops_unchecked > (train_set.get_error_sum()/service_context.get_learning_rate()))
       ||(loops_unchecked > (test_set.get_error_sum()/service_context.get_learning_rate()))
     ){ /* calculate the error value for the agent in this environment */
-      full_evaluation(agent);
+      full_evaluation();
       loops_unchecked = 0;
     }
   }
@@ -97,9 +99,10 @@ public:
 
 private:
   rafko_mainframe::RafkoServiceContext& service_context;
+  std::vector<std::reference_wrapper<RafkoAgent>> agents;
   DataAggregate& train_set;
   DataAggregate& test_set;
-  vector<vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
+  std::vector<std::vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   rafko_utilities::ThreadGroup execution_threads;
 
   uint32 iteration = 1;
