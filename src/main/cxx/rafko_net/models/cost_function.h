@@ -59,17 +59,30 @@ public:
   };
 
   /**
-   * @brief      Gets the error for a feature for a label set under the given index
+   * @brief      Gets the error for a feature for a feature-label pair under the given index
    *
-   * @param[in]  labels         The array containing the labels to compare the given neuron data to
-   * @param[in]  neuron_data    The neuron data to compare for the given labels array
+   * @param[in]  label          The array containing the label array to compare the given neuron data to
+   * @param[in]  neuron_data    The neuron data to compare for the given label array
    * @param[in]  sample_number  The overall count of the samples to be used in the final calculations(e.g. in mean squared error)
    *
    * @return     The feature error.
    */
-  sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 sample_number){
-    return get_feature_error(labels, neuron_data, context.get_sqrt_of_solve_threads(), 0, sample_number);
+  sdouble32 get_feature_error(const vector<sdouble32>& label, const vector<sdouble32>& neuron_data, uint32 sample_number){
+    return get_feature_error(label, neuron_data, context.get_sqrt_of_solve_threads(), 0, sample_number);
   }
+
+  /**
+   * @brief      Corresponding to the other function in this class with the same name, without default one-threaded parameters given.
+   *
+   * @param[in]  label               The array containing the label to compare the given neuron data to
+   * @param[in]  neuron_data         The neuron data to compare for the given label array
+   * @param[in]  max_threads         The maximum threads to be used for the curren processing run
+   * @param[in]  outer_thread_index  The index to be used for this processing run, basically to find out which @thread_results array to use
+   * @param[in]  sample_number       The overall count of the samples to be used in the final calculations(e.g. in mean squared error)
+   *
+   * @return     The overall error produced by the given label-data pair.
+   */
+  sdouble32 get_feature_error(const vector<sdouble32>& label, const vector<sdouble32>& neuron_data, uint32 max_threads, uint32 outer_thread_index, uint32 sample_number);
 
   /**
    * @brief      Gets the error produced by the sequences of the given label-data pair
@@ -149,20 +162,6 @@ protected:
    * @return     The derivative of the elements of the label-data pair
    */
   virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const = 0;
-
-  /**
-   * @brief      Corresponding to the other function in this class with the same name, without default one-threaded parameters given.
-   *
-   * @param[in]  labels              The array containing the labels to compare the given neuron data to
-   * @param[in]  neuron_data         The neuron data to compare for the given labels array
-   * @param[in]  max_threads         The maximum threads to be used for the curren processing run
-   * @param[in]  outer_thread_index  The index to be used for this processing run, basically to find out which @thread_results array to use
-   * @param[in]  sample_number       The overall count of the samples to be used in the final calculations(e.g. in mean squared error)
-   *
-   * @return     The overall error produced by the given label-data pair.
-   */
-  sdouble32 get_feature_error(const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data, uint32 max_threads, uint32 outer_thread_index, uint32 sample_number);
-
 
   /**
    * @brief      Summarizes the errors given back by @get_cell_error for all of the features. It's called
