@@ -110,6 +110,15 @@ public:
    */
   bool is_valid() const;
 
+  /**
+   * @brief      Provides the partial solution the solver is calculating
+   *
+   * @return     const reference to the encapsulated @PartialSolution
+   */
+  const PartialSolution& get_partial() const{
+    return detail;
+  }
+
 private:
   static DataPool<sdouble32> common_data_pool;
 
