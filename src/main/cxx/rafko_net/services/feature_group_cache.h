@@ -33,16 +33,13 @@ class FeatureGroupCache{
 private:
   const FeatureGroup& feature_in_network;
   const uint32 num_of_neurons_needed;
-
-  uint32 num_of_neurons_solved = 0u;
-
 public:
   const uint32 checksum;
 
-  FeatureGroupCache(const FeatureGroup& host, std::vector<std::vector<std::reference_wrapper<FeatureGroupCache>>> neuron_cache)
+  FeatureGroupCache(const FeatureGroup& host)
   : feature_in_network(host)
   , num_of_neurons_needed(SynapseIterator<>(host.relevant_neurons()).size())
-  , checksum(construct_and_apply(host, neuron_cache))
+  , checksum(construct(host))
   { }
 
   void neuron_triggered(){ ++num_of_neurons_solved; }
@@ -51,15 +48,16 @@ public:
 
   const FeatureGroup& get_host(){ return feature_in_network; }
 private:
+  uint32 num_of_neurons_solved = 0u;
 
-    /**
-     * @brief      Calculate the checksum for the object and apply itself to every relevant neuron inside the cache
-     *
-     * @param[in]  host              A const reference of the feature descriptor this cache points to
-     * @param      neuron_cache      An array for each neuron which contains the features a Neuron is relevant to
-     * @return     The calculated checksum for the object
-     */
-    uint32 construct_and_apply(const FeatureGroup& host, std::vector<std::vector<std::reference_wrapper<FeatureGroupCache>>> neuron_cache);
+  /**
+   * @brief      Calculate the checksum for the object and apply itself to every relevant neuron inside the cache
+   *
+   * @param[in]  host              A const reference of the feature descriptor this cache points to
+   *
+   * @return     The calculated checksum for the object
+   */
+  uint32 construct(const FeatureGroup& host);
 };
 
 inline bool operator==(const FeatureGroupCache& a, const FeatureGroupCache& b){ return a.checksum == b.checksum; }

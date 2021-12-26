@@ -95,7 +95,7 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly with w
 
   for(uint32 variant = 0; variant < 10u; ++variant){
     neuron_data.clear(); /* set data to exaimne */
-    for(sint32 i = 0; i < rand()%100; ++i){
+    for(sint32 i = 0; (i < rand()%100)||(0 == neuron_data.size()); ++i){
       neuron_data.push_back( static_cast<sdouble32>(rand()%10)/10 );
     }
 
@@ -204,6 +204,35 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
   }
 }
 
+TEST_CASE("Checking if the Solution Builder is correctly producing the softmax features", "[features][build]"){
+  rafko_mainframe::RafkoServiceContext service_context;
+  std::unique_ptr<rafko_net::RafkoNet> net;
+  std::unique_ptr<rafko_net::Solution> solution;
+
+  for(uint32 variant = 0; variant < 1u; ++variant){
+    net = std::unique_ptr<rafko_net::RafkoNet>(rafko_test::generate_random_net_with_softmax_features(3, service_context));
+    solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(service_context).build(*net));
+
+    /* every softmax feature inside the @RafkoNet should be found inside the @Solution */
+    for(const rafko_net::FeatureGroup& feature : net->neuron_group_features()){
+      bool found = false;
+      for(const rafko_net::PartialSolution& partial : solution->partial_solutions()){
+        for(const rafko_net::FeatureGroup& partial_feature : partial.solved_features()){
+          if(
+            (feature.feature() == partial_feature.feature())
+            &&(rafko_net::SynapseIterator<>(feature.relevant_neurons()) == rafko_net::SynapseIterator<>(partial_feature.relevant_neurons()))
+          ){
+            found = true;
+            goto Found_feature_in_partials;
+          }
+        }/* for( every solved feature in partial solution ) */
+      }/* for( every partial in solution ) */
+      Found_feature_in_partials:;
+      REQUIRE( found == true );
+    }/* for( every feature in network ) */
+    net.reset();
+  }
+}
 
 
 } /* namespace rafko_net_test */

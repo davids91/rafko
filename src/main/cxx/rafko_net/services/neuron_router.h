@@ -259,9 +259,9 @@ private:
   std::vector<uint32> neuron_number_of_inputs;
 
   /**
-   * A vector of references to each feature the neuron is relevant to
+   * A vector of index values which points to an element inside of the the tracked feature array
    */
-  std::vector<std::vector<std::reference_wrapper<FeatureGroupCache>>> features_assigned_to_neurons;
+  std::vector<std::vector<uint32>> features_assigned_to_neurons;
 
   /**
    * A subset of the net representing independent solutions

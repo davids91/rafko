@@ -32,7 +32,7 @@ NeuronRouter::NeuronRouter(const RafkoNet& rafko_net)
 , neuron_number_of_inputs(net.neuron_array_size())
 , features_assigned_to_neurons(net.neuron_array_size())
 {
-  for(int neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator){
+  for(int neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator) {
       for(int synapse_iterator = 0;
         synapse_iterator < net.neuron_array(neuron_iterator).input_indices_size();
         ++synapse_iterator
@@ -44,18 +44,13 @@ NeuronRouter::NeuronRouter(const RafkoNet& rafko_net)
     /* For each relevant feature group */
     const FeatureGroup& feature_group = rafko_net.neuron_group_features(feature_index);
     if( true ==  NeuronInfo::is_feature_relevant_to_solution(feature_group.feature()) ){
-      tracked_features.push_back( FeatureGroupCache(feature_group, features_assigned_to_neurons) );
+      tracked_features.push_back( FeatureGroupCache(feature_group) );
+      SynapseIterator<>::iterate(feature_group.relevant_neurons(),[&](sint32 neuron_index){
+        features_assigned_to_neurons[neuron_index].push_back(tracked_features.size() - 1u);
+      });
+      /*!Note: tracked_features should be unchanged after constructor.. */
     }/* if(feature group is relevant) */
   }/* for(each feature group in the network) */
-
-  //(done)for each Neuron store in a vector to which feature groups they belong to
-  //(done)and in order for an input to be shown processed, all relevant feature groups need to be finished
-  //to see the feature groups solved: at confirming each Neuron processed the feature groups will have a counter of solved relevant neurons
-  //confirming a Neuron to be processed shall increase that counter
-  //( each Neuron in a feature group can be solved, because the feature groups are only checked for Neuron inputs )
-  //( if Neuron is itself, feature group calculation shall be applied after it took its input )
-  //optionally it shall aldo provide the information that a Neuron have solved a feature group
-  //which needs to be handled by the user (e.g.: Solution builder) ( e.g. for softmax, apply it to the Neuron data )
 }
 
 void NeuronRouter::collect_subset(uint8 arg_max_solve_threads, sdouble32 arg_device_max_megabytes, bool strict){
@@ -233,32 +228,27 @@ std::vector<std::reference_wrapper<const FeatureGroup>> NeuronRouter::confirm_fi
   assert(!collection_running);
   assert(0 < net_subset.size());
   assert(neuron_index == net_subset.front());
-  std::vector<std::reference_wrapper<FeatureGroupCache>> solved_features;
+  std::vector<uint32> solved_features; /* of index values pointing to tracked_features */
   std::vector<std::reference_wrapper<const FeatureGroup>> retval;
-
 
   (neuron_states[neuron_index])->store(neuron_state_processed_value(neuron_index));
   net_subset.pop_front();
 
   /* Look for the solved features */
   for(uint32 feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
-    FeatureGroupCache& feature = features_assigned_to_neurons[neuron_index][feature_index];
+    FeatureGroupCache& feature = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
     feature.neuron_triggered();
     if(feature.solved()){
-      solved_features.push_back(feature);
+      solved_features.push_back(features_assigned_to_neurons[neuron_index][feature_index]);
       retval.push_back(feature.get_host());
     }
   }
 
-  /* Removed already solved features from Neuron feature vetor cache */
-  for(uint32 feature_index = 0; feature_index < solved_features.size(); feature_index++){
-      FeatureGroupCache& solved_feature = solved_features[feature_index];
-      SynapseIterator<>::iterate(solved_feature.get_host().relevant_neurons(), [&](sint32 neuron_index){
+  for(uint32 feature_index : solved_features){ /* Removed already solved features from Neuron feature vector cache */
+      SynapseIterator<>::iterate(tracked_features[feature_index].get_host().relevant_neurons(), [&](sint32 neuron_index){
         /* find feature in Neuron assigned features */
-        std::vector<std::reference_wrapper<FeatureGroupCache>>& neuron_features_vecor = features_assigned_to_neurons[neuron_index];
-        std::vector<std::reference_wrapper<FeatureGroupCache>>::iterator it = std::find(
-          neuron_features_vecor.begin(), neuron_features_vecor.end(), std::ref(solved_feature)
-        );
+        std::vector<uint32>& neuron_features_vecor = features_assigned_to_neurons[neuron_index];
+        std::vector<uint32>::iterator it = std::find(neuron_features_vecor.begin(), neuron_features_vecor.end(), feature_index);
         if(it != neuron_features_vecor.end()){ neuron_features_vecor.erase(it); }
       });
   }
@@ -386,12 +376,11 @@ bool NeuronRouter::is_neuron_subset_candidate(uint32 neuron_index, uint16 iterat
 
 bool NeuronRouter::are_neuron_feature_groups_finished_for(uint32 neuron_index){
   assert(neuron_index < features_assigned_to_neurons.size());
-  bool finished = true;
   for(uint32 feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
-    FeatureGroupCache& feature = features_assigned_to_neurons[neuron_index][feature_index].get();
-    if(!feature.solved()) finished = false;
+    FeatureGroupCache& feature = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
+    if(!feature.solved()) return false;
   }
-  return finished;
+  return true;
 }
 
 } /* namespace rafko_net */
