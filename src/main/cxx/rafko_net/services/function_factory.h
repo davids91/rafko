@@ -27,6 +27,8 @@
 
 #include "rafko_net/models/cost_function_squared_error.h"
 #include "rafko_net/models/cost_function_mse.h"
+#include "rafko_net/models/cost_function_cross_entropy.h"
+#include "rafko_net/models/cost_function_binary_cross_entropy.h"
 
 namespace rafko_net{
 
@@ -46,8 +48,12 @@ public:
     switch(the_function){
       case cost_function_mse:
         return std::make_unique<CostFunctionMSE>(context);
-      case cost_function_squared_error:
-        return std::make_unique<CostFunctionSquaredError>(context);
+        case cost_function_squared_error:
+          return std::make_unique<CostFunctionSquaredError>(context);
+        case cost_function_cross_entropy:
+          return std::make_unique<CostFunctionCrossEntropy>(context);
+        case cost_function_binary_cross_entropy:
+          return std::make_unique<CostFunctionBinaryCrossEntropy>(context);
       default: throw std::runtime_error("Unknown cost function requested from builder!");
     }
   }

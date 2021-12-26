@@ -7,6 +7,8 @@ set(NET_INTERFACE_SERVICES
 set(NET_INTERFACE_MODELS
   models/cost_function_squared_error.h
   models/cost_function_mse.h
+  models/cost_function_cross_entropy.h
+  models/cost_function_binary_cross_entropy.h
 )
 set(NET_HEADER_SERVICES
   services/function_factory.h

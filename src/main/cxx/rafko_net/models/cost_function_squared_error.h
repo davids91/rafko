@@ -24,15 +24,12 @@
 
 namespace rafko_net{
 
-using std::vector;
-
-using rafko_mainframe::RafkoServiceContext;
-
 /**
- * @brief      Error function handling and utilities for Squared Error: C0 = ((y-y')^2)/2 */
+ * @brief      Error function handling and utilities for Squared Error: C0 = ((y-y')^2)/2
+ */
 class RAFKO_FULL_EXPORT CostFunctionSquaredError : public CostFunction{
 public:
-  CostFunctionSquaredError(RafkoServiceContext& service_context)
+  CostFunctionSquaredError(rafko_mainframe::RafkoServiceContext& service_context)
   : CostFunction(cost_function_squared_error, service_context)
   { };
 
