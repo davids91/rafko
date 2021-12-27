@@ -22,7 +22,7 @@
 
 namespace rafko_mainframe{
 
-void Training_logger::log(uint32 iteration, const std::vector<uint32>& coordinates, const std::vector<std::string>& tags, const std::vector<sdouble32>& data){
+void TrainingLogger::log(uint32 iteration, const std::vector<uint32>& coordinates, const std::vector<std::string>& tags, const std::vector<sdouble32>& data){
   DataPackage measured;
   measured.set_iteration(iteration);
   for(const uint32& coordinate : coordinates) measured.add_coordinates(coordinate);
@@ -34,7 +34,7 @@ void Training_logger::log(uint32 iteration, const std::vector<uint32>& coordinat
     flush();
 }
 
-void Training_logger::flush(){
+void TrainingLogger::flush(){
   std::filebuf logfile;
   logfile.open(id+".log", std::ios::out | std::ios::binary | std::ios::trunc);
   std::ostream log_stream(&logfile);

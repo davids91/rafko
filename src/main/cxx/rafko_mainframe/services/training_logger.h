@@ -33,9 +33,9 @@ namespace rafko_mainframe{
  * @brief      This class is a helper utility to create measurements about the neuron activations and experiences
  *             during training
  */
-class Training_logger{
+class TrainingLogger{
 public:
-  Training_logger(std::string id_, RafkoSettings& settings)
+  TrainingLogger(std::string id_, RafkoSettings& settings)
   :  id(id_)
   ,  settings(settings)
   ,  measurement()
