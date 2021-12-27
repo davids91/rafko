@@ -106,12 +106,12 @@ rafko_net::RafkoNet* ServerSlot::build_network_from_request(BuildNetworkRequest&
         allowed_transfers[layer_index++] = std::vector<rafko_net::Transfer_functions>(1, static_cast<rafko_net::Transfer_functions>(allowed));
       else throw std::runtime_error("Unknown transfer function detected!");
     }
-    return rafko_net::RafkoNetBuilder(context).input_size(request.input_size())
+    return rafko_net::RafkoNetBuilder(settings).input_size(request.input_size())
       .expected_input_range(request.expected_input_range())
       .allowed_transfer_functions_by_layer(allowed_transfers)
       .dense_layers({request.layer_sizes().begin(),request.layer_sizes().end()});
   }else{
-    return rafko_net::RafkoNetBuilder(context).input_size(request.input_size())
+    return rafko_net::RafkoNetBuilder(settings).input_size(request.input_size())
       .expected_input_range(request.expected_input_range())
       .dense_layers({request.layer_sizes().begin(),request.layer_sizes().end()});
   }

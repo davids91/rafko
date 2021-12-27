@@ -38,23 +38,23 @@ public:
    * @param      net             The network to base the weight updater upon
    * @param      solution        A reference of the Solution built from the network
    * @param[in]  weight_updater  The weight updater type
-   * @param      context         The service context
+   * @param      settings         The service settings
    *
    * @return     The weight updater.
    */
-  static std::unique_ptr<RafkoWeightUpdater> build_weight_updater(rafko_net::RafkoNet& net, rafko_net::Solution& solution, Weight_updaters weight_updater, rafko_mainframe::RafkoServiceContext& context){
+  static std::unique_ptr<RafkoWeightUpdater> build_weight_updater(rafko_net::RafkoNet& net, rafko_net::Solution& solution, Weight_updaters weight_updater, rafko_mainframe::RafkoSettings& settings){
     switch(weight_updater){
       case weight_updater_momentum:
-        return std::make_unique<RafkoWeightUpdaterMomentum>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdaterMomentum>(net, solution, settings);
       case weight_updater_nesterovs:
-        return std::make_unique<RafkoWeightUpdaterNesterovs>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdaterNesterovs>(net, solution, settings);
       case weight_updater_adam:
-        return std::make_unique<RafkoWeightUpdaterAdam>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdaterAdam>(net, solution, settings);
       case weight_updater_amsgrad:
-        return std::make_unique<RafkoWeightUpdaterAMSGrad>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdaterAMSGrad>(net, solution, settings);
       case weight_updater_default:
       default:
-        return std::make_unique<RafkoWeightUpdater>(net, solution, context);
+        return std::make_unique<RafkoWeightUpdater>(net, solution, settings);
     };
   }
 };

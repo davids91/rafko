@@ -25,7 +25,7 @@ namespace rafko_gym{
 
 void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
   std::vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
-  sdouble32 gradient_overview = get_gradient_for_all_weights() * service_context.get_learning_rate(iteration);
+  sdouble32 gradient_overview = get_gradient_for_all_weights() * settings.get_learning_rate(iteration);
   sdouble32 greatest_weight_value = double_literal(0.0);
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
     weight_gradients[weight_index] = get_single_weight_gradient(weight_index);
@@ -38,7 +38,7 @@ void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
     ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
         * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
         */
-    weight_gradients[weight_index] *= service_context.get_learning_rate(iteration);
+    weight_gradients[weight_index] *= settings.get_learning_rate(iteration);
   }
   convert_direction_to_gradient(weight_gradients,true);
   ++iteration;
@@ -75,7 +75,7 @@ void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<sdouble32>&
     epsilon_addition = max_error / (max_error - std::min(error_positive_direction,error_negative_direction));
     /*!Note: In case the error delta between minimum and maximum error is small relative to the maximum error,
      * the gradient seems to be flat enough to slow training down, so
-     * weight epsilon will be increased during approximation to help explore surrounding context more.
+     * weight epsilon will be increased during approximation to help explore surrounding settings more.
      */
 
     for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
@@ -89,7 +89,7 @@ void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<sdouble32>&
 
 sdouble32 RafkoNetApproximizer::get_single_weight_gradient(uint32 weight_index){
   sdouble32 gradient;
-  const sdouble32 current_epsilon = service_context.get_sqrt_epsilon() * epsilon_addition;
+  const sdouble32 current_epsilon = settings.get_sqrt_epsilon() * epsilon_addition;
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
 
   /* Push the choosen weight in one direction */
@@ -119,7 +119,7 @@ sdouble32 RafkoNetApproximizer::get_gradient_for_all_weights(){
   sdouble32 gradient;
   sdouble32 error_negative_direction;
   sdouble32 error_positive_direction;
-  const sdouble32 current_epsilon = service_context.get_sqrt_epsilon();
+  const sdouble32 current_epsilon = settings.get_sqrt_epsilon();
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
 
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){

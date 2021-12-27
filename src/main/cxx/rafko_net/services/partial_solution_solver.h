@@ -35,11 +35,11 @@ namespace rafko_net {
 class PartialSolutionSolver{
 
 public:
-  PartialSolutionSolver(const PartialSolution& partial_solution, rafko_mainframe::RafkoServiceContext& service_context)
+  PartialSolutionSolver(const PartialSolution& partial_solution, rafko_mainframe::RafkoSettings& settings)
   :  detail(partial_solution)
   ,  internal_weight_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())
-  ,  transfer_function(service_context)
+  ,  transfer_function(settings)
   { }
 
   /**

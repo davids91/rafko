@@ -29,8 +29,8 @@ namespace rafko_net{
  */
 class RAFKO_FULL_EXPORT CostFunctionSquaredError : public CostFunction{
 public:
-  CostFunctionSquaredError(rafko_mainframe::RafkoServiceContext& service_context)
-  : CostFunction(cost_function_squared_error, service_context)
+  CostFunctionSquaredError(rafko_mainframe::RafkoSettings& settings)
+  : CostFunction(cost_function_squared_error, settings)
   { };
 
 protected:

@@ -140,9 +140,9 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly with m
 }
 
 TEST_CASE("Checking if the network builder is correctly placing the softmax feature into the built network", "[features][build][manual]"){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   std::unique_ptr<rafko_net::RafkoNet> net = std::unique_ptr<rafko_net::RafkoNet>(
-    rafko_net::RafkoNetBuilder(service_context).input_size(5)
+    rafko_net::RafkoNetBuilder(settings).input_size(5)
       .expected_input_range(double_literal(5.0))
       .add_feature_to_layer(0, rafko_net::neuron_group_feature_softmax)
       .add_feature_to_layer(2, rafko_net::neuron_group_feature_softmax)
@@ -163,7 +163,7 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
 }
 
 TEST_CASE("Checking if the network builder is correctly placing the softmax feature into the built network", "[features][build]"){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   std::unique_ptr<rafko_net::RafkoNet> net;
   for(uint32 variant = 0; variant < 10u; ++variant){
     std::vector<uint32> net_structure;
@@ -171,7 +171,7 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
       net_structure.push_back(static_cast<uint32>(rand()%30) + 1u);
 
     uint8 num_of_features = rand()%(net_structure.size()/2) + 1u;
-    rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(service_context)
+    rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
       .input_size(5)
       .expected_input_range(double_literal(5.0));
 
@@ -204,13 +204,13 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
 }
 
 TEST_CASE("Checking if the Solution Builder is correctly producing the softmax features in the solution builder", "[features][build]"){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   std::unique_ptr<rafko_net::RafkoNet> net;
   std::unique_ptr<rafko_net::Solution> solution;
 
   for(uint32 variant = 0; variant < 10u; ++variant){
-    net = std::unique_ptr<rafko_net::RafkoNet>(rafko_test::generate_random_net_with_softmax_features(3, service_context));
-    solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(service_context).build(*net));
+    net = std::unique_ptr<rafko_net::RafkoNet>(rafko_test::generate_random_net_with_softmax_features(3, settings));
+    solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(settings).build(*net));
 
     /* every softmax feature inside the @RafkoNet should be found inside the @Solution */
     for(const rafko_net::FeatureGroup& feature : net->neuron_group_features()){
@@ -234,14 +234,14 @@ TEST_CASE("Checking if the Solution Builder is correctly producing the softmax f
 }
 
 TEST_CASE("Checking if the network solver is correctly producing the softmax feature values through the solution solver", "[features][build]"){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   std::unique_ptr<rafko_net::RafkoNet> net;
   std::unique_ptr<rafko_net::Solution> solution;
   std::unique_ptr<rafko_net::SolutionSolver> solver;
   for(uint32 variant = 0; variant < 10u; ++variant){
-    net = std::unique_ptr<rafko_net::RafkoNet>(rafko_test::generate_random_net_with_softmax_features(3, service_context));
-    solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(service_context).build(*net));
-    solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(*solution, service_context).build());
+    net = std::unique_ptr<rafko_net::RafkoNet>(rafko_test::generate_random_net_with_softmax_features(3, settings));
+    solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(settings).build(*net));
+    solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(*solution, settings).build());
 
     (void)solver->solve({double_literal(0),double_literal(6),double_literal(5)});
     rafko_utilities::DataRingbuffer neuron_data = solver->get_memory();

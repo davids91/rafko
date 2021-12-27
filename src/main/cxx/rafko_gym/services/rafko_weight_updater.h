@@ -28,7 +28,7 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_utilities/services/thread_group.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 namespace rafko_gym{
 
@@ -38,16 +38,16 @@ namespace rafko_gym{
 class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
   RafkoWeightUpdater(
-    rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoServiceContext& service_context_, uint32 required_iterations_for_step_ = 1
+    rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_, uint32 required_iterations_for_step_ = 1
   ):net(rafko_net)
   , solution(solution_)
-  , service_context(service_context_)
+  , settings(settings_)
   , required_iterations_for_step(required_iterations_for_step_)
-  , weights_to_do_in_one_thread(1u + static_cast<uint32>(net.weight_table_size()/service_context.get_max_solve_threads()))
+  , weights_to_do_in_one_thread(1u + static_cast<uint32>(net.weight_table_size()/settings.get_max_solve_threads()))
   , iteration(0)
   , finished(false)
   , current_velocity(rafko_net.weight_table_size(),double_literal(0.0))
-  , execution_threads(service_context.get_max_solve_threads())
+  , execution_threads(settings.get_max_solve_threads())
   , weights_in_partials(rafko_net.weight_table_size())
   , neurons_in_partials(solution.partial_solutions_size())
   { };
@@ -127,7 +127,7 @@ public:
 protected:
   rafko_net::RafkoNet& net;
   rafko_net::Solution& solution;
-  rafko_mainframe::RafkoServiceContext& service_context;
+  rafko_mainframe::RafkoSettings& settings;
   const uint32 required_iterations_for_step;
   const uint32 weights_to_do_in_one_thread;
   uint32 iteration;
@@ -156,7 +156,7 @@ protected:
    * @return     The new velocity.
    */
   sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients) const{
-    return (gradients[weight_index] * service_context.get_learning_rate());
+    return (gradients[weight_index] * settings.get_learning_rate());
   }
 
 private:

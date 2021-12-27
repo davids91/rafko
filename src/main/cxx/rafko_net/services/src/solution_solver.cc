@@ -25,16 +25,16 @@
 
 namespace rafko_net{
 
-SolutionSolver::Builder::Builder(const Solution& to_solve, rafko_mainframe::RafkoServiceContext& context)
+SolutionSolver::Builder::Builder(const Solution& to_solve, rafko_mainframe::RafkoSettings& settings)
 :  solution(to_solve)
-,  service_context(context)
+,  settings(settings)
 {
   uint32 partial_index_at_row_start = 0;
   for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
     partial_solvers.push_back(std::vector<PartialSolutionSolver>());
     for(uint32 column_index = 0; column_index < solution.cols(row_iterator); ++column_index){
       partial_solvers[row_iterator].push_back( PartialSolutionSolver(
-        solution.partial_solutions(partial_index_at_row_start + column_index), context
+        solution.partial_solutions(partial_index_at_row_start + column_index), settings
       )); /* Initialize a solver for this partial solution element */
       if(partial_solvers[row_iterator][column_index].get_required_tmp_data_size() > max_tmp_size_needed)
         max_tmp_size_needed = partial_solvers[row_iterator][column_index].get_required_tmp_data_size();
@@ -46,16 +46,16 @@ SolutionSolver::Builder::Builder(const Solution& to_solve, rafko_mainframe::Rafk
 }
 
 SolutionSolver::SolutionSolver(
-  const Solution& to_solve, rafko_mainframe::RafkoServiceContext& context, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
+  const Solution& to_solve, rafko_mainframe::RafkoSettings& settings, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
   uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
-): rafko_gym::RafkoAgent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_processing_threads())
+): rafko_gym::RafkoAgent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, settings.get_max_processing_threads())
 ,  solution(to_solve)
-,  service_context(context)
+,  settings(settings)
 ,  partial_solvers(partial_solvers_)
 ,  feature_executor(execution_threads)
 {
-  for(uint32 thread_index = 0; thread_index < context.get_max_processing_threads(); ++ thread_index)
-    execution_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(context.get_max_solve_threads()));
+  for(uint32 thread_index = 0; thread_index < settings.get_max_processing_threads(); ++ thread_index)
+    execution_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_solve_threads()));
 }
 
 void SolutionSolver::solve(
@@ -73,11 +73,11 @@ void SolutionSolver::solve(
       if(0 == solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
       col_iterator = 0;
       if( /* Don't use the threadgroup if there is no need for multiple threads.. */
-        (solution.cols(row_iterator) < service_context.get_max_solve_threads()/2u)
+        (solution.cols(row_iterator) < settings.get_max_solve_threads()/2u)
         ||(solution.cols(row_iterator) < 2u) /* ..since the number of partial solutions depend on the available device size */
       ){ /* having fewer partial solutions in a row usually implies whether or not multiple threads are needed */
         while(col_iterator < solution.cols(row_iterator)){
-          for(uint16 inner_thread_index = 0; inner_thread_index < service_context.get_max_solve_threads(); ++inner_thread_index){
+          for(uint16 inner_thread_index = 0; inner_thread_index < settings.get_max_solve_threads(); ++inner_thread_index){
             if(col_iterator < solution.cols(row_iterator)){
               partial_solvers[row_iterator][col_iterator].solve(
                 std::ref(input), std::ref(output), std::ref(tmp_data_pool[used_data_pool_start + inner_thread_index].get())
@@ -109,7 +109,7 @@ void SolutionSolver::solve(
               }
             });
           }
-          col_iterator += service_context.get_max_solve_threads();
+          col_iterator += settings.get_max_solve_threads();
         } /* while(col_iterator < solution.cols(row_iterator)) */
       }
       /*!Note: Triggered feature groups are only solved after the row for consistency, since columns inside rows are solved in paralell,

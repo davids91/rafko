@@ -24,8 +24,8 @@ namespace rafko_gym{
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterMomentum : public RafkoWeightUpdater{
 public:
-  RafkoWeightUpdaterMomentum(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoServiceContext& service_context_)
-  :  RafkoWeightUpdater(rafko_net, solution_, service_context_)
+  RafkoWeightUpdaterMomentum(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_)
+  :  RafkoWeightUpdater(rafko_net, solution_, settings_)
   ,  previous_velocity(rafko_net.weight_table_size(),double_literal(0.0))
   { }
 
@@ -37,8 +37,8 @@ public:
 private:
   sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients){
     return (
-      (previous_velocity[weight_index] * service_context.get_gamma())
-      + (gradients[weight_index] * service_context.get_learning_rate())
+      (previous_velocity[weight_index] * settings.get_gamma())
+      + (gradients[weight_index] * settings.get_learning_rate())
     );
   }
 

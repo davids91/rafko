@@ -40,8 +40,8 @@ namespace rafko_net {
  */
 class RAFKO_FULL_EXPORT RafkoNetBuilder{
 public:
-  RafkoNetBuilder(rafko_mainframe::RafkoServiceContext& service_context_)
-  :  context(service_context_)
+  RafkoNetBuilder(rafko_mainframe::RafkoSettings& settings_)
+  :  settings(settings_)
   { }
 
   /**
@@ -213,7 +213,7 @@ public:
   RafkoNet* build();
 
 private:
-  rafko_mainframe::RafkoServiceContext& context;
+  rafko_mainframe::RafkoSettings& settings;
 
   /**
    * Helper variables to see if different required arguments are set inside the builder

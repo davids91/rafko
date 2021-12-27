@@ -59,10 +59,10 @@ sdouble32 TransferFunction::get_value(Transfer_functions function, sdouble32 dat
     case transfer_function_sigmoid: return 1/(1+exp(-data));
     case transfer_function_tanh: return tanh(data);
     case transfer_function_elu:
-      if(0 >= data) return context.get_alpha() * (exp(data) -1);
+      if(0 >= data) return settings.get_alpha() * (exp(data) -1);
       else return data;
     case transfer_function_selu:
-      if(0 >= data) return ((context.get_alpha() * exp(data)) - context.get_alpha()) * context.get_lambda();
+      if(0 >= data) return ((settings.get_alpha() * exp(data)) - settings.get_alpha()) * settings.get_lambda();
       else return data;
     case transfer_function_relu: return std::max(double_literal(0.0),data);
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
@@ -75,11 +75,11 @@ sdouble32 TransferFunction::get_derivative(Transfer_functions function, sdouble3
     case transfer_function_sigmoid: return exp(data)/pow((exp(data) + 1),2);
     case transfer_function_tanh: return 1/cosh(data);
     case transfer_function_elu:
-      if(0 >= data) return context.get_alpha() + get_value(function,data);
+      if(0 >= data) return settings.get_alpha() + get_value(function,data);
       else return 1;
     case transfer_function_selu:
-      if(0 >= data) return (context.get_lambda() * context.get_alpha() * exp(data));
-      else return context.get_lambda();
+      if(0 >= data) return (settings.get_lambda() * settings.get_alpha() * exp(data));
+      else return settings.get_lambda();
     case transfer_function_relu:
       if(0 >= data) return 0;
       else return 1;

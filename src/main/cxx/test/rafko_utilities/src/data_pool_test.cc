@@ -20,7 +20,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_utilities/models/data_pool.h"
 
 #include "test/test_utility.h"

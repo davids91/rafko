@@ -29,8 +29,8 @@ namespace rafko_net{
  */
 class RAFKO_FULL_EXPORT CostFunctionMSE : public CostFunction{
 public:
-  CostFunctionMSE(rafko_mainframe::RafkoServiceContext& service_context)
-  : CostFunction(cost_function_mse, service_context)
+  CostFunctionMSE(rafko_mainframe::RafkoSettings& settings)
+  : CostFunction(cost_function_mse, settings)
   { };
 
 protected:

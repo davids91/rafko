@@ -20,7 +20,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 namespace rafko_gym{
 
@@ -30,7 +30,7 @@ namespace rafko_gym{
  */
 class BackpropagationQueueWrapper{
 public:
-  BackpropagationQueueWrapper(rafko_net::RafkoNet& net, rafko_mainframe::RafkoServiceContext& context);
+  BackpropagationQueueWrapper(rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings);
   BackpropagationQueue operator()(){
     return gradient_step;
   }

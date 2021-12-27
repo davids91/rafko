@@ -24,8 +24,8 @@ namespace rafko_gym{
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterAMSGrad : public RafkoWeightUpdater{
 public:
-  RafkoWeightUpdaterAMSGrad(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoServiceContext& service_context_)
-  :  RafkoWeightUpdater(rafko_net, solution_, service_context_)
+  RafkoWeightUpdaterAMSGrad(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_)
+  :  RafkoWeightUpdater(rafko_net, solution_, settings_)
   ,  iteration_count(0)
   ,  moment(rafko_net.weight_table_size(),double_literal(0.0))
   ,  raw_moment_max(rafko_net.weight_table_size(),double_literal(0.0))
@@ -35,13 +35,13 @@ public:
     sdouble32 raw_moment;
     for(uint32 weight_index = 0; weight_index < moment.size(); ++weight_index){
       moment[weight_index] = (
-        (service_context.get_beta() * moment[weight_index])
-        + ( ((double_literal(1.0) - service_context.get_beta()) * gradients[weight_index]) )
+        (settings.get_beta() * moment[weight_index])
+        + ( ((double_literal(1.0) - settings.get_beta()) * gradients[weight_index]) )
       );
       raw_moment = (
-        (service_context.get_beta_2() * raw_moment_max[weight_index])
+        (settings.get_beta_2() * raw_moment_max[weight_index])
         + (
-          ((double_literal(1.0) - service_context.get_beta_2())
+          ((double_literal(1.0) - settings.get_beta_2())
           * std::pow(gradients[weight_index], double_literal(2.0)))
         )
       );
@@ -55,7 +55,7 @@ public:
 private:
   sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients){
     parameter_not_used(gradients); /* the variable moment contains the processed value of the gradients, so no need to use it here again. */
-    return ( service_context.get_learning_rate() * moment[weight_index] / ( std::sqrt(raw_moment_max[weight_index]) + service_context.get_epsilon() ) );
+    return ( settings.get_learning_rate() * moment[weight_index] / ( std::sqrt(raw_moment_max[weight_index]) + settings.get_epsilon() ) );
   }
 
   uint32 iteration_count;

@@ -30,8 +30,8 @@ namespace rafko_net{
  */
 class RAFKO_FULL_EXPORT CostFunctionCrossEntropy : public CostFunction{
 public:
-  CostFunctionCrossEntropy(rafko_mainframe::RafkoServiceContext& service_context)
-  : CostFunction(cost_function_cross_entropy, service_context)
+  CostFunctionCrossEntropy(rafko_mainframe::RafkoSettings& settings)
+  : CostFunction(cost_function_cross_entropy, settings)
   { };
 
 protected:

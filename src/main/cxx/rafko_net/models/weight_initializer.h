@@ -23,7 +23,7 @@
 
 #include <math.h>
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 namespace rafko_net {
 
@@ -32,8 +32,8 @@ public:
   /**
    * @brief      Constructs the object.
    */
-  WeightInitializer(rafko_mainframe::RafkoServiceContext& service_context) noexcept
-  : context(service_context)
+  WeightInitializer(rafko_mainframe::RafkoSettings& settings) noexcept
+  : settings(settings)
   { };
 
   /**
@@ -92,7 +92,7 @@ public:
   virtual ~WeightInitializer() = default;
 
 protected:
-  rafko_mainframe::RafkoServiceContext& context;
+  rafko_mainframe::RafkoSettings& settings;
 
   /**
    * @brief      Limits the given weight into the limits used in the Neural Network

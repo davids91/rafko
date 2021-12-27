@@ -20,7 +20,7 @@
 
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
@@ -37,12 +37,12 @@ namespace rafko_gym_test {
  * - Check if the updated weights match the ones copied to the solution
  */
 TEST_CASE("Weight updater test","[build][weight-update]"){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   std::vector<uint32> net_structure = {2,4,3,1,2};
   std::vector<sdouble32> net_input = {double_literal(10.0),double_literal(20.0),double_literal(30.0),double_literal(40.0),double_literal(50.0)};
-  std::unique_ptr<rafko_net::RafkoNet> net(rafko_net::RafkoNetBuilder(service_context).input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure));
-  std::unique_ptr<rafko_net::Solution> solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(service_context).build(*net));
-  rafko_gym::RafkoWeightUpdater weight_updater(*net, *solution, service_context);
+  std::unique_ptr<rafko_net::RafkoNet> net(rafko_net::RafkoNetBuilder(settings).input_size(5).expected_input_range(double_literal(5.0)).dense_layers(net_structure));
+  std::unique_ptr<rafko_net::Solution> solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(settings).build(*net));
+  rafko_gym::RafkoWeightUpdater weight_updater(*net, *solution, settings);
   rafko_test::check_if_the_same(*net, *solution);
 
   /* Change the weights in the network and take them over into the generated solution */

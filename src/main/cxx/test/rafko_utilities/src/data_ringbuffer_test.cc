@@ -18,7 +18,7 @@
 #include <vector>
 #include <catch2/catch_test_macros.hpp>
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 
 #include "test/test_utility.h"
@@ -37,7 +37,7 @@ void check_data_match(std::vector<sdouble32>& sample_data, std::vector<sdouble32
 }
 
 TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   uint32 buffer_number = 5;
   uint32 buffer_size = 30;
   std::vector<sdouble32> data_sample(buffer_size, double_literal(0.0));
@@ -73,7 +73,7 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
  * - get_sequence_index
  * */
 TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-handling]"){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   uint32 sequence_number = 5;
   uint32 buffer_size = 30;
   rafko_utilities::DataRingbuffer buffer(sequence_number, buffer_size);

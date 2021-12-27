@@ -21,7 +21,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_net/models/cost_function_mse.h"
 
@@ -34,7 +34,7 @@ namespace rafko_gym_test {
  * into the data item wih statistics, and take care of statistic error data correctly
  * */
 TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
   sdouble32 expected_label = double_literal(50.0);
@@ -52,7 +52,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   }
 
   /* Create @DataAggregate from @DataSet */
-  rafko_gym::DataAggregate data_agr(service_context, data_set, std::make_unique<rafko_net::CostFunctionMSE>(service_context));
+  rafko_gym::DataAggregate data_agr(settings, data_set, std::make_unique<rafko_net::CostFunctionMSE>(settings));
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 
@@ -206,7 +206,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
  * are working as expected
  * */
 TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   const uint32 sample_number = 50;
   const uint32 sequence_size = 5;
   const uint32 selected_index = rand()%(sample_number * sequence_size);
@@ -225,7 +225,7 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
     data_set.add_labels(expected_label);
   }
 
-  rafko_gym::DataAggregate data_agr(service_context, data_set, std::make_unique<rafko_net::CostFunctionMSE>(service_context));
+  rafko_gym::DataAggregate data_agr(settings, data_set, std::make_unique<rafko_net::CostFunctionMSE>(settings));
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 

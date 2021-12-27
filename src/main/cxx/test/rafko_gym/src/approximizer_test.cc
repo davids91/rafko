@@ -19,7 +19,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_utilities/models/const_vector_subrange.h"
 #include "rafko_net/models/cost_function_mse.h"
 #include "rafko_net/services/rafko_net_builder.h"
@@ -38,16 +38,16 @@ namespace rafko_gym_test {
  * */
 TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]"){
   google::protobuf::Arena arena;
-  rafko_mainframe::RafkoServiceContext service_context = rafko_mainframe::RafkoServiceContext()
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(7)
     .set_learning_rate(1e-1).set_arena_ptr(&arena);
 
   /* Create nets */
   std::vector<rafko_net::RafkoNet*> nets = std::vector<rafko_net::RafkoNet*>();
   /*!Note: no need for smart pointers, because ownership is in the arena.
-    * The builder automatically uses the arena pointer provided in the context.
+    * The builder automatically uses the arena pointer provided in the settings.
     */
-  nets.push_back(rafko_net::RafkoNetBuilder(service_context)
+  nets.push_back(rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range(double_literal(1.0))
     .allowed_transfer_functions_by_layer(
       {
@@ -59,20 +59,20 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
   /* Create dataset, test set and aprroximizer */
   std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = rafko_test::create_addition_dataset(5);
   rafko_gym::DataAggregate* train_set = google::protobuf::Arena::Create<rafko_gym::DataAggregate>(
-    service_context.get_arena_ptr(), service_context,
+    settings.get_arena_ptr(), settings,
     std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
     std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
     rafko_net::cost_function_squared_error
   );
   tmp1 = rafko_test::create_addition_dataset(10);
   rafko_gym::DataAggregate* test_set = google::protobuf::Arena::Create<rafko_gym::DataAggregate>(
-    service_context.get_arena_ptr(), service_context,
+    settings.get_arena_ptr(), settings,
     std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
     std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
     rafko_net::cost_function_squared_error
   );
-  rafko_gym::RafkoEnvironmentDataSet env(service_context, *train_set, *test_set);
-  rafko_gym::RafkoNetApproximizer approximizer(service_context, *nets[0], env, rafko_gym::weight_updater_default);
+  rafko_gym::RafkoEnvironmentDataSet env(settings, *train_set, *test_set);
+  rafko_gym::RafkoNetApproximizer approximizer(settings, *nets[0], env, rafko_gym::weight_updater_default);
 
   /* adding a simple-weight-gradient fragment */
   uint32 weight_index = rand()%(nets[0]->weight_table_size());
@@ -91,7 +91,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
 
   approximizer.apply_fragment(); /* Add the negative gradient */
   REQUIRE(
-    (nets[0]->weight_table(weight_index) + (weight_gradient * service_context.get_learning_rate()))
+    (nets[0]->weight_table(weight_index) + (weight_gradient * settings.get_learning_rate()))
     == Catch::Approx(weight_old_value).epsilon(0.00000000000001)
   );
 
@@ -114,7 +114,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
   for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
     CHECK(
       Catch::Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
-      == (initial_weights[weight_index] - (correct_weight_delta[weight_index] * service_context.get_learning_rate()))
+      == (initial_weights[weight_index] - (correct_weight_delta[weight_index] * settings.get_learning_rate()))
     );
   }
 }
@@ -132,7 +132,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
  * */
 TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
-  rafko_mainframe::RafkoServiceContext service_context = rafko_mainframe::RafkoServiceContext()
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero,true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping,false)
@@ -141,7 +141,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
 
   /* Create nets */
   std::vector<rafko_net::RafkoNet*> nets = std::vector<rafko_net::RafkoNet*>();
-  nets.push_back(rafko_net::RafkoNetBuilder(service_context)
+  nets.push_back(rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range(double_literal(1.0))
     .set_recurrence_to_self()
     .allowed_transfer_functions_by_layer({
@@ -152,20 +152,20 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   /* Create dataset, test set and optimizers; optimize nets */
   std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = rafko_test::create_sequenced_addition_dataset(number_of_samples, 4);
   rafko_gym::DataAggregate* train_set =  google::protobuf::Arena::Create<rafko_gym::DataAggregate>(
-    service_context.get_arena_ptr(), service_context,
+    settings.get_arena_ptr(), settings,
     std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
     std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
     rafko_net::cost_function_squared_error, /* Sequence size */4
   );
   tmp1 = rafko_test::create_sequenced_addition_dataset(number_of_samples * 2, 4);
   rafko_gym::DataAggregate* test_set =  google::protobuf::Arena::Create<rafko_gym::DataAggregate>(
-    service_context.get_arena_ptr(), service_context,
+    settings.get_arena_ptr(), settings,
     std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
     std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
     rafko_net::cost_function_squared_error, /* Sequence size */4
   );
-  rafko_gym::RafkoEnvironmentDataSet env(service_context, *train_set, *test_set);
-  rafko_gym::RafkoNetApproximizer approximizer(service_context, *nets[0], env, rafko_gym::weight_updater_amsgrad,1);
+  rafko_gym::RafkoEnvironmentDataSet env(settings, *train_set, *test_set);
+  rafko_gym::RafkoNetApproximizer approximizer(settings, *nets[0], env, rafko_gym::weight_updater_amsgrad,1);
 
   sdouble32 train_error = 1.0;
   sdouble32 test_error = 1.0;
@@ -211,7 +211,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     << std::endl;
     if(0 == (iteration % 100)){
       approximizer.full_evaluation();
-      rafko_test::print_training_sample((rand()%number_of_samples), *train_set, *nets[0], service_context);
+      rafko_test::print_training_sample((rand()%number_of_samples), *train_set, *nets[0], settings);
     }
     ++iteration;
   }
@@ -220,12 +220,12 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   << " steps!(average runtime: "<< average_duration << " ms)" << std::endl;
 
   std::unique_ptr<rafko_net::SolutionSolver> after_solver(
-    rafko_net::SolutionSolver::Builder(*rafko_net::SolutionBuilder(service_context).build(*nets[0]), service_context)
+    rafko_net::SolutionSolver::Builder(*rafko_net::SolutionBuilder(settings).build(*nets[0]), settings)
       .build()
   );
 
   sdouble32 error_summary[3] = {0,0,0};
-  rafko_net::CostFunctionMSE after_cost(service_context);
+  rafko_net::CostFunctionMSE after_cost(settings);
   for(uint32 i = 0; i < number_of_samples; ++i){
     bool reset = 0 == (i%(train_set->get_sequence_size()));
     rafko_utilities::ConstVectorSubrange<> neuron_data = after_solver->solve(test_set->get_input_sample(i), reset);

@@ -23,23 +23,23 @@
 
 namespace rafko_gym{
 
-RafkoEnvironmentDataSet::RafkoEnvironmentDataSet(rafko_mainframe::RafkoServiceContext& service_context_, DataAggregate& train_set_, DataAggregate& test_set_)
-: service_context(service_context_)
+RafkoEnvironmentDataSet::RafkoEnvironmentDataSet(rafko_mainframe::RafkoSettings& settings_, DataAggregate& train_set_, DataAggregate& test_set_)
+: settings(settings_)
 , train_set(train_set_)
 , test_set(test_set_)
 , neuron_outputs_to_evaluate( /* For every thread, 1 sequence is evaluated.. */
-  (service_context.get_max_processing_threads() * train_set.get_sequence_size() + 1u),
+  (settings.get_max_processing_threads() * train_set.get_sequence_size() + 1u),
   std::vector<sdouble32>(train_set_.get_feature_size()) /* ..plus for the label errors one additional vector is needed */
 )
-, execution_threads(service_context.get_max_processing_threads())
-, loops_unchecked(service_context.get_tolerance_loop_value() + 1u)
-, used_sequence_truncation(std::min(service_context.get_memory_truncation(), train_set.get_sequence_size()))
+, execution_threads(settings.get_max_processing_threads())
+, loops_unchecked(settings.get_tolerance_loop_value() + 1u)
+, used_sequence_truncation(std::min(settings.get_memory_truncation(), train_set.get_sequence_size()))
 {
-  (void)service_context.set_minibatch_size(std::max(1u,std::min(
-    train_set.get_number_of_sequences(),service_context.get_minibatch_size()
+  (void)settings.set_minibatch_size(std::max(1u,std::min(
+    train_set.get_number_of_sequences(),settings.get_minibatch_size()
   )));
-  (void)service_context.set_memory_truncation(std::max(1u,std::min(
-    train_set.get_sequence_size(), service_context.get_memory_truncation()
+  (void)settings.set_memory_truncation(std::max(1u,std::min(
+    train_set.get_sequence_size(), settings.get_memory_truncation()
   )));
   neuron_outputs_to_evaluate.back().resize(train_set.get_number_of_label_samples());
 }
@@ -55,13 +55,13 @@ void RafkoEnvironmentDataSet::evaluate(
     throw std::runtime_error("Network output size doesn't match size of provided labels!");
 
   data_set.expose_to_multithreading();
-  for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += service_context.get_max_processing_threads()){
+  for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += settings.get_max_processing_threads()){
     execution_threads.start_and_block([this, &agent, &data_set, sequence_index](uint32 thread_index){
       evaluate_single_sequence(agent, data_set, sequence_index, thread_index);
     });
     data_set.set_features_for_sequences( /* Upload results to the data set */
       neuron_outputs_to_evaluate, 0u,
-      sequence_index, std::min(((sequence_start + sequences_to_evaluate) - (sequence_index)), static_cast<uint32>(service_context.get_max_processing_threads())),
+      sequence_index, std::min(((sequence_start + sequences_to_evaluate) - (sequence_index)), static_cast<uint32>(settings.get_max_processing_threads())),
       start_index_in_sequence, sequence_truncation, neuron_outputs_to_evaluate.back()
     );
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */

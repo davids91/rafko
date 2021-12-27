@@ -35,22 +35,22 @@ public:
    *             To srand with time(nullptr), the constructor needs to be called with
    *             a true boolean argument or given a seed value.
    */
-  DenseNetWeightInitializer(bool seed, rafko_mainframe::RafkoServiceContext& service_context)
-  :  WeightInitializer(service_context)
+  DenseNetWeightInitializer(bool seed, rafko_mainframe::RafkoSettings& settings)
+  :  WeightInitializer(settings)
   { if(seed)srand(static_cast<uint32>(time(nullptr))); }
 
   DenseNetWeightInitializer(
-    rafko_mainframe::RafkoServiceContext& service_context, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
-  ): WeightInitializer(service_context)
+    rafko_mainframe::RafkoSettings& settings, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
+  ): WeightInitializer(settings)
   {
     memMin = std::max(double_literal(0.0), std::min(double_literal(1.0), memRatioMin));
     memMax = std::min(double_literal(1.0), std::max(memMin,memRatioMax));
   }
 
   DenseNetWeightInitializer(
-    uint32 seed, rafko_mainframe::RafkoServiceContext& service_context,
+    uint32 seed, rafko_mainframe::RafkoSettings& settings,
     sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0)
-  ): DenseNetWeightInitializer(service_context, memRatioMin, memRatioMax)
+  ): DenseNetWeightInitializer(settings, memRatioMin, memRatioMax)
   { srand(seed); }
 
   /**

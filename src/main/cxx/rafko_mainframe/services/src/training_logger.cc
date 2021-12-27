@@ -30,7 +30,7 @@ void Training_logger::log(uint32 iteration, const std::vector<uint32>& coordinat
   for(const sdouble32& data_element : data) measured.add_data(data_element);
   *measurement.add_packs() = measured;
   ++changes_since;
-  if(context.get_tolerance_loop_value() < changes_since)
+  if(settings.get_tolerance_loop_value() < changes_since)
     flush();
 }
 

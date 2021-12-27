@@ -36,9 +36,9 @@ class ServerSlot{
 public:
   ServerSlot()
   : arena()
-  , context()
+  , settings()
   {
-    (void)context.set_arena_ptr(&arena);
+    (void)settings.set_arena_ptr(&arena);
     service_slot = google::protobuf::Arena::CreateMessage<ServiceSlot>(&arena);
     service_slot->set_slot_id(generate_uuid());
   }
@@ -143,7 +143,7 @@ private:
   google::protobuf::Arena arena;
 
 protected:
-  RafkoServiceContext context;
+  RafkoSettings settings;
   ServiceSlot* service_slot;
 
   /**

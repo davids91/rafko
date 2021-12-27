@@ -39,7 +39,7 @@ public:
   ,  network_solver()
   {
     service_slot->set_type(serv_slot_to_run);
-    network = google::protobuf::Arena::CreateMessage<rafko_net::RafkoNet>(context.get_arena_ptr());
+    network = google::protobuf::Arena::CreateMessage<rafko_net::RafkoNet>(settings.get_arena_ptr());
   }
 
   void initialize(ServiceSlot&& service_slot_);

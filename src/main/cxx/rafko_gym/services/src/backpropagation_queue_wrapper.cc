@@ -21,7 +21,7 @@
 
 namespace rafko_gym{
 
-BackpropagationQueueWrapper::BackpropagationQueueWrapper(rafko_net::RafkoNet& net, rafko_mainframe::RafkoServiceContext& context){
+BackpropagationQueueWrapper::BackpropagationQueueWrapper(rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings){
   std::vector<std::vector<uint32>> neuron_queue = std::vector<std::vector<uint32>>(1,std::vector<uint32>(0));
   rafko_net::NeuronRouter neuron_router(net);
   uint32 neuron_index;
@@ -31,7 +31,7 @@ BackpropagationQueueWrapper::BackpropagationQueueWrapper(rafko_net::RafkoNet& ne
 
   while(net.neuron_array_size() > static_cast<int>(neurons_done)){
     /* Collect a strict subset from the net */
-    neuron_router.collect_subset(context.get_max_solve_threads(),context.get_device_max_megabytes(),true);
+    neuron_router.collect_subset(settings.get_max_solve_threads(),settings.get_device_max_megabytes(),true);
     while(neuron_router.get_first_neuron_index_from_subset(neuron_index)){
       neuron_queue.back().push_back(neuron_index);
       ++neurons_done;

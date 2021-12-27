@@ -1,5 +1,5 @@
 set( MAINFRAME_MODEL_HEADERS
-  models/rafko_service_context.h
+  models/rafko_settings.h
 )
 add_library(rafko_mainframe)
 target_include_directories(rafko_mainframe PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services control)

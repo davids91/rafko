@@ -20,7 +20,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/models/cost_function.h"
 #include "rafko_net/models/cost_function_binary_cross_entropy.h"
 
@@ -34,7 +34,7 @@ namespace rafko_net_test {
  * - Calculate the distances to it
  * */
 TEST_CASE( "Error function binary cross entropy test", "[training][error-function]" ) {
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
 
   /* create fake data and fake features with a given distance */
   uint16 dataset_size = 500;
@@ -53,7 +53,7 @@ TEST_CASE( "Error function binary cross entropy test", "[training][error-functio
       }
   }
 
-  rafko_net::CostFunctionBinaryCrossEntropy cost(service_context);
+  rafko_net::CostFunctionBinaryCrossEntropy cost(settings);
   std::vector<sdouble32> calculated_errors;
   for(uint16 sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
     calculated_errors.push_back(double_literal(0.0));

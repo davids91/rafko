@@ -20,7 +20,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/neuron_router.h"
@@ -39,15 +39,15 @@ namespace rafko_gym_test {
  *   that means no input of a neuron shall be calulated before it
  * */
 TEST_CASE( "Testing backpropagation queue", "[build][backprop]" ) {
-  rafko_mainframe::RafkoServiceContext service_context;
-  std::unique_ptr<rafko_net::RafkoNetBuilder> builder(std::make_unique<rafko_net::RafkoNetBuilder>(service_context));
+  rafko_mainframe::RafkoSettings settings;
+  std::unique_ptr<rafko_net::RafkoNetBuilder> builder(std::make_unique<rafko_net::RafkoNetBuilder>(settings));
   builder->input_size(10).expected_input_range(double_literal(5.0));
 
   std::unique_ptr<rafko_net::RafkoNet> net(builder->dense_layers({20,10,3,5,5}));
   rafko_net::NeuronRouter router(*net);
 
   /* Create a backrpop queue */
-  rafko_gym::BackpropagationQueueWrapper queue_wrapper(*net, service_context);
+  rafko_gym::BackpropagationQueueWrapper queue_wrapper(*net, settings);
   rafko_gym::BackpropagationQueue queue = queue_wrapper();
 
   /* Check integrity */

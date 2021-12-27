@@ -40,8 +40,8 @@ void ServerSlotRunNet::refresh_solution(){
   expose_state();
   service_slot->set_state(service_slot->state() | serv_slot_missing_solution);
   if(0 < network->neuron_array_size()){
-    network_solution = rafko_net::SolutionBuilder(context).build(*network);
-    network_solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(*network_solution, context).build());
+    network_solution = rafko_net::SolutionBuilder(settings).build(*network);
+    network_solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(*network_solution, settings).build());
     service_slot->set_state(service_slot->state() & ~serv_slot_missing_solution);
   }else service_slot->set_state(service_slot->state() | serv_slot_missing_net);
   finalize_state();

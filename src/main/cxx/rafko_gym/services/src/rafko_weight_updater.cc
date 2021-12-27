@@ -152,7 +152,7 @@ void RafkoWeightUpdater::update_solution_with_weights() const{
   sint32 partial_start_index = 0;
   while(partial_start_index < solution.partial_solutions_size()){
     if(
-      (static_cast<uint32>(solution.partial_solutions_size()) < (service_context.get_max_solve_threads()/2))
+      (static_cast<uint32>(solution.partial_solutions_size()) < (settings.get_max_solve_threads()/2))
       ||(solution.partial_solutions_size() < 2)
     ){
       for(sint32 partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){

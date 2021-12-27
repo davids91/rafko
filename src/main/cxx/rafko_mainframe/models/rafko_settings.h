@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef RAFKO_SERVICE_CONTEXT_H
-#define RAFKO_SERVICE_CONTEXT_H
+#ifndef RAFKO_SETTINGS_H
+#define RAFKO_SETTINGS_H
 
 #include "rafko_global.h"
 
@@ -28,8 +28,8 @@
 #include "rafko_protocol/deep_learning_service.pb.h"
 
 namespace rafko_mainframe{
-  
-class RAFKO_FULL_EXPORT RafkoServiceContext{
+
+class RAFKO_FULL_EXPORT RafkoSettings{
 public:
   uint16 get_max_solve_threads() const{
     return max_solve_threads;
@@ -129,18 +129,18 @@ public:
     return hypers.lambda();
   }
 
-  RafkoServiceContext& set_learning_rate(sdouble32 learning_rate_){
+  RafkoSettings& set_learning_rate(sdouble32 learning_rate_){
     hypers.set_learning_rate(learning_rate_);
     calculate_learning_rate_decay();
     return *this;
   }
 
-  RafkoServiceContext& set_minibatch_size(uint32 minibatch_size_){
+  RafkoSettings& set_minibatch_size(uint32 minibatch_size_){
     hypers.set_minibatch_size(minibatch_size_);
     return *this;
   }
 
-  RafkoServiceContext& set_max_solve_threads(sdouble32 max_solve_threads_){
+  RafkoSettings& set_max_solve_threads(sdouble32 max_solve_threads_){
     max_solve_threads = max_solve_threads_;
     sqrt_of_solve_threads = static_cast<uint16>(std::max(
       double_literal(1.0), std::sqrt(static_cast<sdouble32>(max_solve_threads))
@@ -148,7 +148,7 @@ public:
     return *this;
   }
 
-  RafkoServiceContext& set_max_processing_threads(uint16 max_processing_threads_){
+  RafkoSettings& set_max_processing_threads(uint16 max_processing_threads_){
     max_processing_threads = max_processing_threads_;
     sqrt_of_process_threads = static_cast<uint16>(std::max(
       double_literal(1.0), std::sqrt(static_cast<sdouble32>(max_processing_threads))
@@ -160,68 +160,68 @@ public:
     tolerance_loop_value = tolerance_loop_value_;
   }
 
-  RafkoServiceContext& set_device_max_megabytes(sdouble32 device_max_megabytes_){
+  RafkoSettings& set_device_max_megabytes(sdouble32 device_max_megabytes_){
     device_max_megabytes = device_max_megabytes_;
     return *this;
   }
 
-  RafkoServiceContext& set_arena_ptr(google::protobuf::Arena* arena_ptr_){
+  RafkoSettings& set_arena_ptr(google::protobuf::Arena* arena_ptr_){
     arena_ptr = arena_ptr_;
     return *this;
   }
 
-  RafkoServiceContext& set_memory_truncation(uint32 memory_truncation_){
+  RafkoSettings& set_memory_truncation(uint32 memory_truncation_){
     hypers.set_memory_truncation(memory_truncation_);
     return *this;
   }
 
-  RafkoServiceContext& set_alpha(sdouble32 alpha_){
+  RafkoSettings& set_alpha(sdouble32 alpha_){
     hypers.set_epsilon(alpha_);
     return *this;
   }
 
-  RafkoServiceContext& set_beta(sdouble32 beta_){
+  RafkoSettings& set_beta(sdouble32 beta_){
     hypers.set_beta(beta_);
     return *this;
   }
 
-  RafkoServiceContext& set_beta_2(sdouble32 beta_){
+  RafkoSettings& set_beta_2(sdouble32 beta_){
     hypers.set_beta(beta_);
     return *this;
   }
 
-  RafkoServiceContext& set_gamma(sdouble32 gamma_){
+  RafkoSettings& set_gamma(sdouble32 gamma_){
     hypers.set_gamma(gamma_);
     return *this;
   }
 
-  RafkoServiceContext& set_delta(sdouble32 delta_){
+  RafkoSettings& set_delta(sdouble32 delta_){
     hypers.set_delta(delta_);
     return *this;
   }
 
-  RafkoServiceContext& set_epsilon(sdouble32 epsilon_){
+  RafkoSettings& set_epsilon(sdouble32 epsilon_){
     hypers.set_epsilon(epsilon_);
     sqrt_epsilon = std::sqrt(epsilon_);
     return *this;
   }
 
-  RafkoServiceContext& set_zetta(sdouble32 zetta_){
+  RafkoSettings& set_zetta(sdouble32 zetta_){
     hypers.set_zetta(zetta_);
     return *this;
   }
 
-  RafkoServiceContext& set_lambda(sdouble32 lambda_){
+  RafkoSettings& set_lambda(sdouble32 lambda_){
     hypers.set_lambda(lambda_);
     return *this;
   }
 
-  RafkoServiceContext& set_hypers(rafko_mainframe::ServiceHyperparameters hypers_){
+  RafkoSettings& set_hypers(rafko_mainframe::ServiceHyperparameters hypers_){
     hypers.CopyFrom(hypers_);
     return *this;
   }
 
-  RafkoServiceContext& set_training_strategy(rafko_gym::Training_strategy strategy, bool enable){
+  RafkoSettings& set_training_strategy(rafko_gym::Training_strategy strategy, bool enable){
     if(enable){
       hypers.set_training_strategies(
         static_cast<rafko_gym::Training_strategy>(static_cast<uint32>(hypers.training_strategies()) | static_cast<uint32>(strategy))
@@ -234,13 +234,13 @@ public:
     return *this;
   }
 
-  RafkoServiceContext& set_learning_rate_decay(std::vector<std::pair<uint32,sdouble32>>&& iteration_with_value){
+  RafkoSettings& set_learning_rate_decay(std::vector<std::pair<uint32,sdouble32>>&& iteration_with_value){
     learning_rate_decay = std::move(iteration_with_value);
     calculate_learning_rate_decay();
     return *this;
   }
 
-  RafkoServiceContext(){
+  RafkoSettings(){
     hypers.set_learning_rate(double_literal(1e-6));
     hypers.set_minibatch_size(64);
     hypers.set_memory_truncation(2);
@@ -288,4 +288,4 @@ private:
 
 } /* namespace rafko_mainframe */
 
-#endif /* RAFKO_SERVICE_CONTEXT_H */
+#endif /* RAFKO_SETTINGS_H */

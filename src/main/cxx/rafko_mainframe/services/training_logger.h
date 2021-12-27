@@ -25,7 +25,7 @@
 
 #include "rafko_protocol/logger.pb.h"
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 namespace rafko_mainframe{
 
@@ -35,9 +35,9 @@ namespace rafko_mainframe{
  */
 class Training_logger{
 public:
-  Training_logger(std::string id_, RafkoServiceContext& service_context)
+  Training_logger(std::string id_, RafkoSettings& settings)
   :  id(id_)
-  ,  context(service_context)
+  ,  settings(settings)
   ,  measurement()
   ,  changes_since()
   { }
@@ -47,7 +47,7 @@ public:
 
 private:
   std::string id;
-  RafkoServiceContext& context;
+  RafkoSettings& settings;
   Measurement measurement;
   uint32 changes_since;
 };

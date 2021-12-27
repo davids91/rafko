@@ -32,7 +32,7 @@ namespace rafko_net{
 
 Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
   NeuronRouter neuron_router(net);
-  Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(service_context.get_arena_ptr());
+  Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(settings.get_arena_ptr());
   uint32 overall_partial_solution_count = 0u;
   sdouble32 remaining_megabytes_in_row = 0;
   sdouble32 current_neuron_megabyte_size;
@@ -44,17 +44,17 @@ Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
   if(0 == net.output_neuron_number()) throw std::runtime_error("Can't build a solution with 0 output Neurons!");
   while(!neuron_router.finished()){ /* Until the whole network is processed */
     if( (!optimize_to_gpu)&&(0 == solution->cols_size()) )
-      neuron_router.collect_subset(service_context.get_max_solve_threads(),service_context.get_device_max_megabytes(), false);
-    else neuron_router.collect_subset(service_context.get_max_solve_threads(),service_context.get_device_max_megabytes(), true);
+      neuron_router.collect_subset(settings.get_max_solve_threads(),settings.get_device_max_megabytes(), false);
+    else neuron_router.collect_subset(settings.get_max_solve_threads(),settings.get_device_max_megabytes(), true);
 
-    remaining_megabytes_in_row = service_context.get_device_max_megabytes();
-    const sdouble32 max_megabytes_in_one_partial = ( remaining_megabytes_in_row / static_cast<sdouble32>(service_context.get_max_solve_threads()) );
+    remaining_megabytes_in_row = settings.get_device_max_megabytes();
+    const sdouble32 max_megabytes_in_one_partial = ( remaining_megabytes_in_row / static_cast<sdouble32>(settings.get_max_solve_threads()) );
     overall_partial_solution_count = solution->partial_solutions_size();
 
     if(0u < neuron_router.get_subset_size()){
-      for(uint32 partial_index_in_row = 0; partial_index_in_row < service_context.get_max_solve_threads(); ++partial_index_in_row){
-        if(nullptr == service_context.get_arena_ptr() ) *solution->add_partial_solutions() = PartialSolution();
-        else *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<PartialSolution>(service_context.get_arena_ptr());
+      for(uint32 partial_index_in_row = 0; partial_index_in_row < settings.get_max_solve_threads(); ++partial_index_in_row){
+        if(nullptr == settings.get_arena_ptr() ) *solution->add_partial_solutions() = PartialSolution();
+        else *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<PartialSolution>(settings.get_arena_ptr());
 
         /* fill up the partial with Neurons */
         PartialSolution& this_partial = *solution->mutable_partial_solutions(solution->partial_solutions_size()-1);

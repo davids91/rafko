@@ -24,7 +24,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/models/cost_function_mse.h"
 #include "rafko_gym/models/data_aggregate.h"
@@ -54,7 +54,7 @@ private:
 TEST_CASE("Testing Dataset environment", "[environment]"){
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
-  rafko_mainframe::RafkoServiceContext service_context = rafko_mainframe::RafkoServiceContext()
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
@@ -72,9 +72,9 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   }
 
   /* Create the environment and dummy agent */
-  rafko_gym::DataAggregate training_set(service_context, data_set, std::make_unique<rafko_net::CostFunctionMSE>(service_context));
-  rafko_gym::DataAggregate test_set(service_context, data_set, std::make_unique<rafko_net::CostFunctionMSE>(service_context));
-  rafko_gym::RafkoEnvironmentDataSet environment(service_context, training_set, test_set);
+  rafko_gym::DataAggregate training_set(settings, data_set, std::make_unique<rafko_net::CostFunctionMSE>(settings));
+  rafko_gym::DataAggregate test_set(settings, data_set, std::make_unique<rafko_net::CostFunctionMSE>(settings));
+  rafko_gym::RafkoEnvironmentDataSet environment(settings, training_set, test_set);
   rafko_net::Solution solution;
   solution.set_neuron_number(1);
   solution.set_output_neuron_number(1);
@@ -98,9 +98,9 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   uint32 seed = rand();
 
   srand(seed);
-  uint32 sequence_start_index = (rand()%(training_set.get_number_of_sequences() - service_context.get_minibatch_size() + 1));
+  uint32 sequence_start_index = (rand()%(training_set.get_number_of_sequences() - settings.get_minibatch_size() + 1));
   training_set.push_state();
-  for(uint32 sequence_index = sequence_start_index; sequence_index < (sequence_start_index + service_context.get_minibatch_size()); ++sequence_index){
+  for(uint32 sequence_index = sequence_start_index; sequence_index < (sequence_start_index + settings.get_minibatch_size()); ++sequence_index){
     for(uint32 label_index = 0; label_index < training_set.get_sequence_size(); ++label_index){
       training_set.set_feature_for_label(
         ((sequence_index * training_set.get_sequence_size()) + label_index),

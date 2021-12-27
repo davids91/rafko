@@ -17,21 +17,21 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 #include "test/test_utility.h"
 
 namespace rafko_mainframe_test {
 
-TEST_CASE("Testing if service context learning rate Schedule is providing the expected learning rates with learning rate decay", "[service]" ) {
+TEST_CASE("Testing if service settings learning rate Schedule is providing the expected learning rates with learning rate decay", "[service]" ) {
   sdouble32 learning_rate = double_literal(10.0);
-  rafko_mainframe::RafkoServiceContext service_context = rafko_mainframe::RafkoServiceContext().set_learning_rate(learning_rate).set_learning_rate_decay({
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_learning_rate(learning_rate).set_learning_rate_decay({
     {5u,double_literal(0.5f)},{10u,double_literal(0.5f)},{15u,double_literal(0.5f)},{20u,double_literal(0.5f)},{25u,double_literal(0.5f)},
   });
   for(int iteration = 0; iteration < 30; ++iteration){
     if( (5 == iteration)||(10 == iteration)||(15 == iteration)||(20 == iteration)||(25 == iteration) )
     learning_rate *= double_literal(0.5);
-    sdouble32 boi = service_context.get_learning_rate(iteration);
+    sdouble32 boi = settings.get_learning_rate(iteration);
     CHECK( learning_rate == boi );
   }
 }

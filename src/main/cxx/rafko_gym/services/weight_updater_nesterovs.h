@@ -24,8 +24,8 @@ namespace rafko_gym{
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterNesterovs : public RafkoWeightUpdater{
 public:
-  RafkoWeightUpdaterNesterovs(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoServiceContext& service_context_)
-  :  RafkoWeightUpdater(rafko_net, solution_, service_context_, 2)
+  RafkoWeightUpdaterNesterovs(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_)
+  :  RafkoWeightUpdater(rafko_net, solution_, settings_, 2)
   { }
 
   void iterate(const std::vector<sdouble32>& gradients){
@@ -41,12 +41,12 @@ public:
 private:
   sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients){
     if(!is_finished()) return (
-      (previous_velocity[weight_index] * service_context.get_gamma())
-      + (gradients[weight_index] * service_context.get_learning_rate())
+      (previous_velocity[weight_index] * settings.get_gamma())
+      + (gradients[weight_index] * settings.get_learning_rate())
     );
     else return(
-      (previous_velocity_at_start[weight_index] * service_context.get_gamma())
-      + (gradients[weight_index] * service_context.get_learning_rate())
+      (previous_velocity_at_start[weight_index] * settings.get_gamma())
+      + (gradients[weight_index] * settings.get_learning_rate())
     );
   }
 

@@ -26,7 +26,7 @@
 #include "rafko_gym/models/data_aggregate.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/models/const_vector_subrange.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/rafko_net_builder.h"
@@ -97,8 +97,8 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
 }
 
 void manual_2_neuron_result(const std::vector<sdouble32>& partial_inputs, std::vector<sdouble32>& prev_neuron_output, const rafko_net::PartialSolution& partial_solution, uint32 neuron_offset){
-  rafko_mainframe::RafkoServiceContext service_context;
-  rafko_net::TransferFunction trasfer_function(service_context);
+  rafko_mainframe::RafkoSettings settings;
+  rafko_net::TransferFunction trasfer_function(settings);
 
   /* Neuron 1 */
   sdouble32 neuron1_result = 0;
@@ -127,8 +127,8 @@ void manaual_fully_connected_network_result(
   std::vector<sdouble32>& inputs, std::vector<sdouble32> previous_data, std::vector<sdouble32>& neuron_data,
   std::vector<uint32> layer_structure, rafko_net::RafkoNet network
 ){
-  rafko_mainframe::RafkoServiceContext service_context;
-  rafko_net::TransferFunction trasfer_function(service_context);
+  rafko_mainframe::RafkoSettings settings;
+  rafko_net::TransferFunction trasfer_function(settings);
 
   uint32 neuron_number = 0;
   for(uint32 layer_iterator = 0; layer_iterator < layer_structure.size(); ++layer_iterator){ /* Go through all of the layers, count the number of Neurons */
@@ -289,8 +289,8 @@ void print_weights(rafko_net::RafkoNet& net, rafko_net::Solution& solution){
   }
 }
 
-void print_training_sample(uint32 sample_sequence_index, rafko_gym::DataAggregate& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoServiceContext& service_context){
-  std::unique_ptr<rafko_net::SolutionSolver> sample_solver(rafko_net::SolutionSolver::Builder(*rafko_net::SolutionBuilder(service_context).build(net), service_context).build());
+void print_training_sample(uint32 sample_sequence_index, rafko_gym::DataAggregate& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings){
+  std::unique_ptr<rafko_net::SolutionSolver> sample_solver(rafko_net::SolutionSolver::Builder(*rafko_net::SolutionBuilder(settings).build(net), settings).build());
   std::vector<sdouble32> neuron_data(data_set.get_sequence_size());
   uint32 raw_label_index = sample_sequence_index;
   uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());
@@ -430,13 +430,13 @@ TEST_CASE("Testing whether binary addition can be solved with a manual program",
   }
 }
 
-rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoServiceContext& service_context){
+rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoSettings& settings){
   std::vector<uint32> net_structure;
   while((rand()%10 < 9)||(4 > net_structure.size()))
     net_structure.push_back(static_cast<uint32>(rand()%30) + 1u);
 
   uint8 num_of_features = rand()%(net_structure.size()/2) + 1u;
-  rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(service_context)
+  rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
     .input_size(input_size)
     .expected_input_range(double_literal(5.0));
 

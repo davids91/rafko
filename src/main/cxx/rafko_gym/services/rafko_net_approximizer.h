@@ -26,7 +26,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
 
@@ -47,27 +47,27 @@ public:
   /**
    * @brief      Class Constructor
    *
-   * @param      service_context_              The service context in which the object should be executed
+   * @param      settings_                     The service settings in which the object should be executed
    * @param[in]  neural_network                The Network to optimize based on the gradient approximation
    * @param      environment_                  The Data Environment the network should be evaluated in
    * @param[in]  weight_updater_               The Weight updater to help convergence
    * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
   RafkoNetApproximizer(
-    rafko_mainframe::RafkoServiceContext& service_context_, rafko_net::RafkoNet& neural_network, RafkoEnvironment& environment_,
+    rafko_mainframe::RafkoSettings& settings_, rafko_net::RafkoNet& neural_network, RafkoEnvironment& environment_,
     Weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
-  ):service_context(service_context_)
+  ):settings(settings_)
   , net(neural_network)
-  , net_solution(rafko_net::SolutionBuilder(service_context).build(net))
+  , net_solution(rafko_net::SolutionBuilder(settings).build(net))
   , environment(environment_)
-  , solver(rafko_net::SolutionSolver::Builder(*net_solution, service_context).build())
-  , weight_updater(UpdaterFactory::build_weight_updater(net, *net_solution, weight_updater_, service_context))
+  , solver(rafko_net::SolutionSolver::Builder(*net_solution, settings).build())
+  , weight_updater(UpdaterFactory::build_weight_updater(net, *net_solution, weight_updater_, settings))
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
   , applied_direction(net.weight_table_size())
   { environment.install_agent(*solver); }
 
   ~RafkoNetApproximizer(){
-    if(nullptr == service_context.get_arena_ptr())
+    if(nullptr == settings.get_arena_ptr())
       delete net_solution;
   }
   RafkoNetApproximizer(const RafkoNetApproximizer& other) = delete;/* Copy constructor */
@@ -165,22 +165,22 @@ public:
       (1u < iteration)
       &&((
         (
-          service_context.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
-          &&(service_context.get_learning_rate() >= -environment.get_training_fitness())
+          settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
+          &&(settings.get_learning_rate() >= -environment.get_training_fitness())
         )||(
-          service_context.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
+          settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
           &&(double_literal(0.0) ==  -environment.get_training_fitness())
         )
       )||(
-        service_context.get_training_strategy(Training_strategy::training_strategy_early_stopping)
-        &&(environment.get_testing_fitness() < (min_test_error - (min_test_error * service_context.get_delta())))
-        &&((iteration - min_test_error_was_at_iteration) > service_context.get_tolerance_loop_value())
+        settings.get_training_strategy(Training_strategy::training_strategy_early_stopping)
+        &&(environment.get_testing_fitness() < (min_test_error - (min_test_error * settings.get_delta())))
+        &&((iteration - min_test_error_was_at_iteration) > settings.get_tolerance_loop_value())
       ))
     );
   }
 
 private:
-  rafko_mainframe::RafkoServiceContext& service_context;
+  rafko_mainframe::RafkoSettings& settings;
   rafko_net::RafkoNet& net;
   rafko_net::Solution* net_solution;
   RafkoEnvironment& environment;

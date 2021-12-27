@@ -30,7 +30,7 @@ void CostFunction::get_feature_errors(
   if((neuron_data.size() < labels_to_evaluate)||(0 == neuron_data.size()))
     throw std::runtime_error("Can't evaluate more labels, than there is data provided!");
 
-  const uint32 labels_to_do_in_a_thread = 1u + static_cast<uint32>(labels_to_evaluate/context.get_sqrt_of_solve_threads());
+  const uint32 labels_to_do_in_a_thread = 1u + static_cast<uint32>(labels_to_evaluate/settings.get_sqrt_of_solve_threads());
   execution_threads.start_and_block([this, &labels, &neuron_data, &errors_for_labels, label_start, error_start, neuron_start, labels_to_do_in_a_thread, labels_to_evaluate, sample_number](uint32 thread_index){
     feature_errors_thread(
       std::ref(labels), std::ref(neuron_data), std::ref(errors_for_labels),

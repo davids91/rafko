@@ -56,7 +56,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
       ||(arg_output_neuron_number == layer_sizes.back()) /* Or compliant to the Dense layer */
     )
   ){
-    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(context.get_arena_ptr());
+    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(settings.get_arena_ptr());
     uint32 layer_input_starts_at = 0;
     uint64 weightIt = 0;
     uint64 neurIt = 0;
@@ -74,7 +74,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
     previous_size = arg_input_size;
 
     if(!is_weight_initializer_set){
-      weight_initializer(std::make_shared<DenseNetWeightInitializer>(context));
+      weight_initializer(std::make_shared<DenseNetWeightInitializer>(settings));
     }
 
     arg_weight_table = std::vector<sdouble32>(numWeights);
@@ -206,7 +206,7 @@ RafkoNet* RafkoNetBuilder::build(){
     &&(0 < arg_weight_table.size())&&(0 < arg_neuron_array.size()) /* There are at least some Neurons and Weights */
     &&(arg_output_neuron_number <= arg_neuron_array.size()) /* Output size isn't too big */
   ){
-    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(context.get_arena_ptr());
+    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(settings.get_arena_ptr());
     ret->set_input_data_size(arg_input_size);
     ret->set_output_neuron_number(arg_output_neuron_number);
     set_weight_table(ret);

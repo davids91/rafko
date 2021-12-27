@@ -40,20 +40,20 @@ public:
    *
    * @param[in]  feature_size   The size of one feature
    * @param[in]  the_function   The cost function to build
-   * @param[in]  context        The service context
+   * @param[in]  settings        The service settings
    *
    * @return     The cost function.
    */
-  static std::unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, rafko_mainframe::RafkoServiceContext& context){
+  static std::unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, rafko_mainframe::RafkoSettings& settings){
     switch(the_function){
       case cost_function_mse:
-        return std::make_unique<CostFunctionMSE>(context);
+        return std::make_unique<CostFunctionMSE>(settings);
         case cost_function_squared_error:
-          return std::make_unique<CostFunctionSquaredError>(context);
+          return std::make_unique<CostFunctionSquaredError>(settings);
         case cost_function_cross_entropy:
-          return std::make_unique<CostFunctionCrossEntropy>(context);
+          return std::make_unique<CostFunctionCrossEntropy>(settings);
         case cost_function_binary_cross_entropy:
-          return std::make_unique<CostFunctionBinaryCrossEntropy>(context);
+          return std::make_unique<CostFunctionBinaryCrossEntropy>(settings);
       default: throw std::runtime_error("Unknown cost function requested from builder!");
     }
   }

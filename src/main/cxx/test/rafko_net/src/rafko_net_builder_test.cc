@@ -19,7 +19,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/synapse_iterator.h"
@@ -37,7 +37,7 @@ namespace rafko_net_test {
  * 1st and 2nd neurons will have the first as input both
  * */
 rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
-  rafko_mainframe::RafkoServiceContext service_context = rafko_mainframe::RafkoServiceContext().set_arena_ptr(arena);
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(arena);
 
   /* Create the single Weight Table */
   rafko_net::IndexSynapseInterval temp_index_interval;
@@ -83,7 +83,7 @@ rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   REQUIRE( true == rafko_net::NeuronInfo::is_neuron_valid( neuron_table[2]) );
 
   /* Pass the net into the builder */
-  std::shared_ptr<rafko_net::RafkoNetBuilder> builder(std::make_shared<rafko_net::RafkoNetBuilder>(service_context));
+  std::shared_ptr<rafko_net::RafkoNetBuilder> builder(std::make_shared<rafko_net::RafkoNetBuilder>(settings));
   builder->input_size(1).expected_input_range(double_literal(1.0)).output_neuron_number(2)
     .neuron_array(neuron_table).weight_table(weight_table);
 
@@ -179,8 +179,8 @@ TEST_CASE("Constructing small net manually using arena","[build][arena][small][m
  * And check manually the connections
  */
 rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
-  rafko_mainframe::RafkoServiceContext service_context = rafko_mainframe::RafkoServiceContext().set_arena_ptr(arena);
-  std::unique_ptr<rafko_net::RafkoNetBuilder> builder(std::make_unique<rafko_net::RafkoNetBuilder>(service_context));
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(arena);
+  std::unique_ptr<rafko_net::RafkoNetBuilder> builder(std::make_unique<rafko_net::RafkoNetBuilder>(settings));
   builder->input_size(5)
     .output_neuron_number(2)
     .expected_input_range(double_literal(5.0));

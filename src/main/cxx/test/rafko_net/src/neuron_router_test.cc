@@ -20,7 +20,7 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
@@ -37,10 +37,10 @@ namespace rafko_net_test {
  *    Because of the structure of a fully connected Net, one iteration would involve one layer exactly
  * */
 TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small]" ){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   /* Build a net and router */
   std::vector<uint32> layer_structure = {2,3,3,5};
-  std::unique_ptr<rafko_net::RafkoNetBuilder> net_builder = std::make_unique<rafko_net::RafkoNetBuilder>(service_context);
+  std::unique_ptr<rafko_net::RafkoNetBuilder> net_builder = std::make_unique<rafko_net::RafkoNetBuilder>(settings);
   net_builder->input_size(5).output_neuron_number(5).expected_input_range(double_literal(5.0));
   std::unique_ptr<rafko_net::RafkoNet> net = std::unique_ptr<rafko_net::RafkoNet>(net_builder->dense_layers(layer_structure));
   net_builder.reset();
@@ -109,12 +109,12 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
  *  by building a Neuron network, ommiting neurons from the subset, and then checking return values
  * */
 TEST_CASE( "Testing Neural Network router dependency interface", "[neuron-iteration][neuron-dependency]" ){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
 
   /* Build a net and router */
   std::vector<uint32> layer_structure = {2,3,3,5};
   std::unique_ptr<rafko_net::RafkoNet> net(
-    rafko_net::RafkoNetBuilder(service_context)
+    rafko_net::RafkoNetBuilder(settings)
     .input_size(5).output_neuron_number(5)
     .expected_input_range(double_literal(5.0))
     .dense_layers(layer_structure)

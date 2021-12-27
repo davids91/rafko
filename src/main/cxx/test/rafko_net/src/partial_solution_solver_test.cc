@@ -21,7 +21,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/services/partial_solution_solver.h"
@@ -44,7 +44,7 @@ namespace rafko_net_test {
  */
 
 TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-solution][manual]" ){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   rafko_utilities::DataRingbuffer neuron_data(1,2);
   rafko_net::PartialSolution partial_solution;
   std::vector<uint32> helper_vector_uint;
@@ -61,7 +61,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   *partial_solution.add_input_data() = temp_synapse_interval;
 
   /* Test the partial_solution */
-  rafko_net::PartialSolutionSolver solver(partial_solution, service_context);
+  rafko_net::PartialSolutionSolver solver(partial_solution, settings);
 
   /* The result should be according to the calculations */
   solver.solve(network_inputs, neuron_data);
@@ -102,7 +102,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
  * - see if the input is collected correctly
  */
 TEST_CASE("Test Partial solution input collection","[solve][partial-solution][input_collection]"){
-  rafko_mainframe::RafkoServiceContext service_context;
+  rafko_mainframe::RafkoSettings settings;
   rafko_net::PartialSolution partial_solution;
   std::vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
   rafko_net::IndexSynapseInterval temp_index_interval;
@@ -152,7 +152,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Prepare the partial solution */
-  rafko_net::PartialSolutionSolver solver(partial_solution, service_context);
+  rafko_net::PartialSolutionSolver solver(partial_solution, settings);
 
   solver.solve(network_inputs, neuron_data); /* Since the network just spits the inputs back out so the input collection is testable through it*/
   for(uint32 i = 0; i < network_inputs.size(); ++i){

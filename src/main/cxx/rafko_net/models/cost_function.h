@@ -25,7 +25,7 @@
 #include <future>
 
 #include "rafko_utilities/services/thread_group.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 namespace rafko_net{
 
@@ -35,17 +35,17 @@ namespace rafko_net{
  */
 class RAFKO_FULL_EXPORT CostFunction{
 public:
-  CostFunction(Cost_functions the_function_, rafko_mainframe::RafkoServiceContext& service_context)
-  : context(service_context)
+  CostFunction(Cost_functions the_function_, rafko_mainframe::RafkoSettings& settings)
+  : settings(settings)
   , process_threads()
   , thread_results()
   , the_function(the_function_)
-  , execution_threads(context.get_sqrt_of_solve_threads())
+  , execution_threads(settings.get_sqrt_of_solve_threads())
   {
-    process_threads.reserve(context.get_sqrt_of_solve_threads());
-    for(uint32 thread_index = 0; thread_index < context.get_max_solve_threads(); ++thread_index){
+    process_threads.reserve(settings.get_sqrt_of_solve_threads());
+    for(uint32 thread_index = 0; thread_index < settings.get_max_solve_threads(); ++thread_index){
       thread_results.push_back(std::vector<std::future<sdouble32>>());
-      thread_results.back().reserve(context.get_sqrt_of_solve_threads());
+      thread_results.back().reserve(settings.get_sqrt_of_solve_threads());
     }
   };
 
@@ -59,7 +59,7 @@ public:
    * @return     The feature error.
    */
   sdouble32 get_feature_error(const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data, uint32 sample_number){
-    return get_feature_error(label, neuron_data, context.get_sqrt_of_solve_threads(), 0, sample_number);
+    return get_feature_error(label, neuron_data, settings.get_sqrt_of_solve_threads(), 0, sample_number);
   }
 
   /**
@@ -119,7 +119,7 @@ public:
   virtual ~CostFunction() = default;
 
 protected:
-  rafko_mainframe::RafkoServiceContext& context;
+  rafko_mainframe::RafkoSettings& settings;
   std::vector<std::thread> process_threads;
   std::vector<std::vector<std::future<sdouble32>>> thread_results;
 

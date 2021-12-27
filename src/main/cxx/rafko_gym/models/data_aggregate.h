@@ -28,7 +28,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 #include "rafko_gym/services/rafko_agent.h"
 #include "rafko_utilities/services/thread_group.h"
@@ -71,8 +71,8 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT DataAggregate{
 public:
-  DataAggregate(rafko_mainframe::RafkoServiceContext& service_context_, rafko_gym::DataSet& samples_, std::shared_ptr<rafko_net::CostFunction> cost_function_)
-  :  service_context(service_context_)
+  DataAggregate(rafko_mainframe::RafkoSettings& settings_, rafko_gym::DataSet& samples_, std::shared_ptr<rafko_net::CostFunction> cost_function_)
+  :  settings(settings_)
   ,  sequence_size(std::max(1u,samples_.sequence_size()))
   ,  input_samples(samples_.inputs_size() / samples_.input_size())
   ,  label_samples(samples_.labels_size() / samples_.feature_size())
@@ -83,17 +83,17 @@ public:
      })
   ,  cost_function(cost_function_)
   ,  exposed_to_multithreading(false)
-  ,  error_calculation_threads(service_context_.get_sqrt_of_solve_threads())
+  ,  error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
     else fill(samples_);
   }
 
   DataAggregate(
-    rafko_mainframe::RafkoServiceContext& service_context_,
+    rafko_mainframe::RafkoSettings& settings_,
     std::vector<std::vector<sdouble32>>&& input_samples_, std::vector<std::vector<sdouble32>>&& label_samples_,
     std::shared_ptr<rafko_net::CostFunction> cost_function_, uint32 sequence_size_ = 1
-  ): service_context(service_context_)
+  ): settings(settings_)
   ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(std::move(input_samples_))
   ,  label_samples(std::move(label_samples_))
@@ -104,16 +104,16 @@ public:
      })
   ,  cost_function(cost_function_)
   ,  exposed_to_multithreading(false)
-  ,  error_calculation_threads(service_context_.get_sqrt_of_solve_threads())
+  ,  error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
   }
 
   DataAggregate(
-    rafko_mainframe::RafkoServiceContext& service_context_,
+    rafko_mainframe::RafkoSettings& settings_,
     std::vector<std::vector<sdouble32>>&& input_samples_, std::vector<std::vector<sdouble32>>&& label_samples_,
     rafko_net::Cost_functions the_function, uint32 sequence_size_ = 1
-  ): service_context(service_context_)
+  ): settings(settings_)
   ,  sequence_size(std::max(1u,sequence_size_))
   ,  input_samples(std::move(input_samples_))
   ,  label_samples(std::move(label_samples_))
@@ -122,9 +122,9 @@ public:
        std::vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
        double_literal(1.0)
      })
-  ,  cost_function(rafko_net::FunctionFactory::build_cost_function(the_function, service_context_))
+  ,  cost_function(rafko_net::FunctionFactory::build_cost_function(the_function, settings_))
   ,  exposed_to_multithreading(false)
-  ,  error_calculation_threads(service_context_.get_sqrt_of_solve_threads())
+  ,  error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   { }
 
   /**
@@ -361,7 +361,7 @@ private:
     sdouble32 error_sum;
   };
 
-  rafko_mainframe::RafkoServiceContext& service_context;
+  rafko_mainframe::RafkoSettings& settings;
   uint32 sequence_size;
   std::vector<std::vector<sdouble32>> input_samples;
   std::vector<std::vector<sdouble32>> label_samples;
@@ -371,7 +371,7 @@ private:
   bool exposed_to_multithreading; /* basically decides whether or not error sum calculation is enabled. */
   mutable std::mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a std::mutex is required */
   const std::function<void(uint32)> error_calculation_lambda =  [this](uint32 thread_index){
-    uint32 length = error_state.back().sample_errors.size() / service_context.get_sqrt_of_solve_threads();
+    uint32 length = error_state.back().sample_errors.size() / settings.get_sqrt_of_solve_threads();
     uint32 start = length * thread_index;
     length = std::min(length, static_cast<uint32>(error_state.back().sample_errors.size() - start));
     accumulate_error_sum(start, length);

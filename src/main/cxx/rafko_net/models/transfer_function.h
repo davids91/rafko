@@ -22,7 +22,7 @@
 
 #include <vector>
 
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 namespace rafko_net{
 
@@ -31,8 +31,8 @@ namespace rafko_net{
  */
 class TransferFunction{
 public:
-  TransferFunction(rafko_mainframe::RafkoServiceContext& service_context)
-  : context(service_context)
+  TransferFunction(rafko_mainframe::RafkoSettings& settings)
+  : settings(settings)
   { }
 
   /**
@@ -80,7 +80,7 @@ public:
    */
   sdouble32 get_derivative(Transfer_functions function, sdouble32 data) const;
 private:
-  rafko_mainframe::RafkoServiceContext& context;
+  rafko_mainframe::RafkoSettings& settings;
 };
 
 } /* namespace rafko_net */

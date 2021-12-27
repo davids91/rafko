@@ -25,7 +25,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/rafko_service_context.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_gym/models/data_aggregate.h"
 
 namespace rafko_test {
@@ -90,9 +90,9 @@ extern void print_weights(rafko_net::RafkoNet& net, rafko_net::Solution& solutio
  * @param[in]  sample_sequence_index  The sample sequence index
  * @param      data_set               The data set
  * @param      net                    The net
- * @param      service_context        The service context
+ * @param      settings               The service settings
  */
-extern void print_training_sample(uint32 sample_sequence_index, rafko_gym::DataAggregate& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoServiceContext& service_context);
+extern void print_training_sample(uint32 sample_sequence_index, rafko_gym::DataAggregate& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings);
 
 /**
  * @brief      Creates a normalized dataset for addition: basically adding two numbers together.
@@ -128,9 +128,9 @@ extern void check_data_match(std::vector<sdouble32>& sample_data, std::vector<sd
  * @brief      Generates a random Fully connected Dense network with some Layers set to have the softmax feature
  *
  * @param[in]  input_size       The size of the input vector accepted by the produces network
- * @param      service_context  Contextual information
+ * @param      settings  Contextual information
  */
-extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoServiceContext& service_context);
+extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoSettings& settings);
 
 } /* namespace rafko_test */
 
