@@ -27,45 +27,30 @@
 #include "test/test_utility.h"
 
 namespace rafko_net_test {
-
-using rafko_net::RafkoNetBuilder;
-using rafko_net::RafkoNet;
-using rafko_net::SolutionBuilder;
-using rafko_net::Solution;
-using rafko_net::SolutionSolver;
-using rafko_net::SynapseIterator;
-using rafko_net::network_recurrence_to_self;
-using rafko_net::network_recurrence_to_layer;
-using rafko_mainframe::RafkoServiceContext;
-
-using std::unique_ptr;
-using std::shared_ptr;
-using std::make_unique;
-using std::vector;
-
+  
 /*###############################################################################################
  * Testing Solution generation using the @RafkoNetBuilder and the @SolutionBuilder
  * */
-Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, vector<uint32> net_structure, uint32 recursion){
-  RafkoServiceContext service_context = RafkoServiceContext()
+rafko_net::Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble32 device_max_megabytes, std::vector<uint32> net_structure, uint32 recursion){
+  rafko_mainframe::RafkoServiceContext service_context = rafko_mainframe::RafkoServiceContext()
   .set_max_solve_threads(4).set_device_max_megabytes(device_max_megabytes)
   .set_arena_ptr(arena);
 
-  RafkoNetBuilder builder = RafkoNetBuilder(service_context);
+  rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(service_context);
 
   builder.input_size(50).expected_input_range(double_literal(5.0)).output_neuron_number(net_structure.back());
 
-  if(network_recurrence_to_self == recursion){
+  if(rafko_net::network_recurrence_to_self == recursion){
     builder.set_recurrence_to_self();
-  }else if(network_recurrence_to_layer == recursion){
+  }else if(rafko_net::network_recurrence_to_layer == recursion){
     builder.set_recurrence_to_layer();
   }
 
-  RafkoNet* net;
+  rafko_net::RafkoNet* net;
   REQUIRE_NOTHROW( net = builder.dense_layers(net_structure) );
 
-  Solution* solution;
-  REQUIRE_NOTHROW( solution = SolutionBuilder(service_context).build(*net) );
+  rafko_net::Solution* solution;
+  REQUIRE_NOTHROW( solution = rafko_net::SolutionBuilder(service_context).build(*net) );
 
   CHECK( net->input_data_size() ==   solution->network_input_size() );
 
@@ -110,54 +95,54 @@ Solution* test_solution_builder_manually(google::protobuf::Arena* arena, sdouble
 
 TEST_CASE( "Building a solution from a small net", "[build][small][build-only]" ){
   sdouble32 space_used_megabytes = 0;
-  unique_ptr<Solution> solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{2,2,3,1,2},0));
+  std::unique_ptr<rafko_net::Solution> solution = std::unique_ptr<rafko_net::Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{2,2,3,1,2},0));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
   solution.reset();
 
   /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
-  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{2,2,3,1,2},0));
+  solution = std::unique_ptr<rafko_net::Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{2,2,3,1,2},0));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   solution.reset();
 
   /* again, but With recursion enabled */
-  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{20,20,30,10,5},0x02));
+  solution = std::unique_ptr<rafko_net::Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{20,20,30,10,5},0x02));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
   solution.reset();
 
   /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
-  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{2,2,3,1,2},0x02));
+  solution = std::unique_ptr<rafko_net::Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{2,2,3,1,2},0x02));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
 }
 
 TEST_CASE( "Building a solution from a bigger net", "[build][build-only]" ){
   sdouble32 space_used_megabytes = 0;
-  unique_ptr<Solution> solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{20,20,30,10,5},0));
+  std::unique_ptr<rafko_net::Solution> solution = std::unique_ptr<rafko_net::Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{20,20,30,10,5},0));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
   solution.reset();
 
   /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
-  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{20,20,30,10,5},0));
+  solution = std::unique_ptr<rafko_net::Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{20,20,30,10,5},0));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   solution.reset();
 
   /* again, but With recursion enabled */
-  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{20,20,30,10,5},0x02));
+  solution = std::unique_ptr<rafko_net::Solution>(test_solution_builder_manually(nullptr,double_literal(2048.0),{20,20,30,10,5},0x02));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
   space_used_megabytes = solution->SpaceUsedLong() /* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */;
   solution.reset();
 
   /* test it again, but with intentionally dividing the partial solutions by multiple numbers */
-  solution = unique_ptr<Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{20,20,30,10,5},0x02));
+  solution = std::unique_ptr<rafko_net::Solution>(test_solution_builder_manually(nullptr,space_used_megabytes/double_literal(5.0),{20,20,30,10,5},0x02));
   REQUIRE( nullptr != solution );
   REQUIRE( 0 < solution->SpaceUsedLong() );
 }

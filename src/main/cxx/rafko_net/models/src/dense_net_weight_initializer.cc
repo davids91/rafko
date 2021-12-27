@@ -26,11 +26,6 @@
 
 namespace rafko_net {
 
-using std::min;
-using std::max;
-
-using rafko_mainframe::RafkoServiceContext;
-
 sdouble32 DenseNetWeightInitializer::get_weight_amplitude(Transfer_functions used_transfer_function) const{
   sdouble32 amplitude;
   switch(used_transfer_function){
@@ -43,7 +38,7 @@ sdouble32 DenseNetWeightInitializer::get_weight_amplitude(Transfer_functions use
     amplitude = (sqrt(2 / (expected_input_number * expected_input_maximum_value)));
     break;
   }
-  return max(context.get_epsilon(),amplitude);
+  return std::max(context.get_epsilon(),amplitude);
 }
 
 sdouble32 DenseNetWeightInitializer::next_weight_for(Transfer_functions used_transfer_function) const{

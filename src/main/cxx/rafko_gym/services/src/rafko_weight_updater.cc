@@ -23,8 +23,6 @@
 
 namespace rafko_gym{
 
-using rafko_mainframe::RafkoServiceContext;
-
 void RafkoWeightUpdater::calculate_velocity_thread(const std::vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number){
   for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
     current_velocity[weight_index + weight_iterator] = get_new_velocity(weight_index + weight_iterator, gradients);

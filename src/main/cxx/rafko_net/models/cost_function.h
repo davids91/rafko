@@ -23,20 +23,11 @@
 #include <vector>
 #include <thread>
 #include <future>
-#include <tuple>
 
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/rafko_service_context.h"
 
 namespace rafko_net{
-
-using std::vector;
-using std::thread;
-using std::future;
-using std::tuple;
-
-using rafko_utilities::ThreadGroup;
-using rafko_mainframe::RafkoServiceContext;
 
 /**
  * @brief      Error function handling and utilities, provides a hook for a computation
@@ -44,7 +35,7 @@ using rafko_mainframe::RafkoServiceContext;
  */
 class RAFKO_FULL_EXPORT CostFunction{
 public:
-  CostFunction(Cost_functions the_function_, RafkoServiceContext& service_context)
+  CostFunction(Cost_functions the_function_, rafko_mainframe::RafkoServiceContext& service_context)
   : context(service_context)
   , process_threads()
   , thread_results()
@@ -53,7 +44,7 @@ public:
   {
     process_threads.reserve(context.get_sqrt_of_solve_threads());
     for(uint32 thread_index = 0; thread_index < context.get_max_solve_threads(); ++thread_index){
-      thread_results.push_back(vector<future<sdouble32>>());
+      thread_results.push_back(std::vector<std::future<sdouble32>>());
       thread_results.back().reserve(context.get_sqrt_of_solve_threads());
     }
   };
@@ -67,7 +58,7 @@ public:
    *
    * @return     The feature error.
    */
-  sdouble32 get_feature_error(const vector<sdouble32>& label, const vector<sdouble32>& neuron_data, uint32 sample_number){
+  sdouble32 get_feature_error(const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data, uint32 sample_number){
     return get_feature_error(label, neuron_data, context.get_sqrt_of_solve_threads(), 0, sample_number);
   }
 
@@ -82,7 +73,7 @@ public:
    *
    * @return     The overall error produced by the given label-data pair.
    */
-  sdouble32 get_feature_error(const vector<sdouble32>& label, const vector<sdouble32>& neuron_data, uint32 max_threads, uint32 outer_thread_index, uint32 sample_number);
+  sdouble32 get_feature_error(const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data, uint32 max_threads, uint32 outer_thread_index, uint32 sample_number);
 
   /**
    * @brief      Gets the error produced by the sequences of the given label-data pair
@@ -97,7 +88,7 @@ public:
    * @param[in]  sample_number       The number of overall samples, required for post-processing
    */
   void get_feature_errors(
-    const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+    const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
     uint32 label_start, uint32 error_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
   );
 
@@ -110,7 +101,7 @@ public:
    *
    * @return     The gradient of the cost function in regards to its input
    */
-  sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const vector<sdouble32>& label, const vector<sdouble32>& neuron_data, uint32 sample_number) const{
+  sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data, uint32 sample_number) const{
     return error_post_process(get_d_cost_over_d_feature(
       label[feature_index], neuron_data[feature_index], sample_number
     ), sample_number);
@@ -128,9 +119,9 @@ public:
   virtual ~CostFunction() = default;
 
 protected:
-  RafkoServiceContext& context;
-  vector<thread> process_threads;
-  vector<vector<future<sdouble32>>> thread_results;
+  rafko_mainframe::RafkoServiceContext& context;
+  std::vector<std::thread> process_threads;
+  std::vector<std::vector<std::future<sdouble32>>> thread_results;
 
   /**
    * @brief      The post-processing function to be provided by the implementer
@@ -176,12 +167,12 @@ protected:
    * @return     returns with the error summary under the range {start_index;(start_index + number_to_add)}
    */
   sdouble32 summarize_errors(
-    const vector<sdouble32>& labels, const vector<sdouble32>& neuron_data,
+    const std::vector<sdouble32>& labels, const std::vector<sdouble32>& neuron_data,
     uint32 feature_start_index, uint32 number_to_eval
   );
 private:
   Cost_functions the_function; /* cost function type */
-  ThreadGroup execution_threads;
+  rafko_utilities::ThreadGroup execution_threads;
 
   /**
    * @brief      A Thread being used to sum up the error for each label-data pair and load the result into the provided error vector
@@ -198,7 +189,7 @@ private:
    * @param[in]  thread_index                           The index of the thread the errors are accumulated in
    */
   void feature_errors_thread(
-    const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+    const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
     uint32 label_start, uint32 error_start, uint32 neuron_data_start_index,
     uint32 labels_to_evaluate_in_one_thread, uint32 labels_evaluating_overall, uint32 sample_number, uint32 thread_index
   );

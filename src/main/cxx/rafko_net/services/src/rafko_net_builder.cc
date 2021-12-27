@@ -28,7 +28,7 @@
 
 namespace rafko_net {
 
-RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
+RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
   uint32 previous_size = 0;
   uint32 numNeurons = 0;
   InputSynapseInterval temp_input_interval;
@@ -77,8 +77,8 @@ RafkoNet* RafkoNetBuilder::dense_layers(vector<uint32> layer_sizes){
       weight_initializer(std::make_shared<DenseNetWeightInitializer>(context));
     }
 
-    arg_weight_table = vector<sdouble32>(numWeights);
-    arg_neuron_array = vector<Neuron>(numNeurons);
+    arg_weight_table = std::vector<sdouble32>(numWeights);
+    arg_neuron_array = std::vector<Neuron>(numNeurons);
 
     previous_size = arg_input_size;
     for(uint32 layerIt = 0; layerIt < layer_sizes.size(); layerIt++)

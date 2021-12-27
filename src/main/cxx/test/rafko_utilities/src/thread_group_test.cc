@@ -24,25 +24,20 @@
 
 namespace rafko_utilities_test {
 
-using std::vector;
-using std::lock_guard;
-
-using rafko_net::ThreadGroup;
-
 /*###############################################################################################
  * Testing if data pool is thread-safe
  * */
 TEST_CASE("Thread Group generic use-case test", "[thread-group]"){
   const uint32 number_of_threads = 5;
-  vector<sdouble32> test_buffer;
+  std::vector<sdouble32> test_buffer;
   sdouble32 expected;
   sdouble32 result = 0;
   std::mutex cout_mutex;
 
-  ThreadGroup pool(number_of_threads);
+  rafko_utilities::ThreadGroup pool(number_of_threads);
 
   for(uint32 i = 0; i < 1000; ++i){
-    test_buffer = vector<sdouble32>(rand()%500);
+    test_buffer = std::vector<sdouble32>(rand()%500);
     std::for_each(test_buffer.begin(),test_buffer.end(),[](sdouble32& element){
       element = rand()%10;
     });
@@ -56,7 +51,7 @@ TEST_CASE("Thread Group generic use-case test", "[thread-group]"){
       if(start < test_buffer.size()) /* More threads could be available, than needed */
         for(size_t i = 0; i < length; ++i) sum += test_buffer[start + i];
       { /* accumulate the full results */
-        lock_guard<std::mutex> my_lock(cout_mutex);
+        std::lock_guard<std::mutex> my_lock(cout_mutex);
         result += sum;
       }
     };

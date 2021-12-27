@@ -23,13 +23,6 @@
 
 namespace rafko_mainframe{
 
-using rafko_net::SolutionBuilder;
-using rafko_net::FunctionFactory;
-using rafko_net::Cost_functions_IsValid;
-using rafko_net::cost_function_unknown;
-using rafko_net::weight_updater_unknown;
-using rafko_gym::Weight_updaters_IsValid;
-
 void ServerSlotApproximizeNet::initialize(ServiceSlot&& service_slot_){
   if(serv_slot_to_optimize != service_slot_.type()) throw std::runtime_error("Incorrect Server slot initialization!");
   else{
@@ -50,8 +43,8 @@ void ServerSlotApproximizeNet::initialize(ServiceSlot&& service_slot_){
       &&(0 < service_slot_.test_set().inputs_size())
     )*service_slot->mutable_test_set() = service_slot_.test_set();
     if(
-      (Weight_updaters_IsValid(service_slot_.weight_updater()))
-      &&(weight_updater_unknown != service_slot_.weight_updater())
+      (rafko_gym::Weight_updaters_IsValid(service_slot_.weight_updater()))
+      &&(rafko_gym::weight_updater_unknown != service_slot_.weight_updater())
     )service_slot->set_weight_updater(service_slot_.weight_updater());
     if(service_slot_.has_hypers())(void)context.set_hypers(service_slot_.hypers());
 
@@ -68,8 +61,8 @@ void ServerSlotApproximizeNet::initialize(ServiceSlot&& service_slot_){
      * COST FUNCTION
      * #################################################################### */
     if(
-      Cost_functions_IsValid(service_slot_.cost_function())
-      &&(cost_function_unknown != service_slot_.cost_function())
+      rafko_net::Cost_functions_IsValid(service_slot_.cost_function())
+      &&(rafko_net::cost_function_unknown != service_slot_.cost_function())
     )service_slot->set_cost_function(service_slot_.cost_function());
     update_cost_function();
     expose_state();
@@ -83,7 +76,7 @@ void ServerSlotApproximizeNet::initialize(ServiceSlot&& service_slot_){
     ){
       service_slot->set_state(service_slot->state() | serv_slot_missing_data_set);
       if(training_set)training_set.reset();
-      training_set = std::make_shared<DataAggregate>(context, *service_slot->mutable_training_set(), cost_function);
+      training_set = std::make_shared<rafko_gym::DataAggregate>(context, *service_slot->mutable_training_set(), cost_function);
       if(training_set)
         service_slot->set_state(service_slot->state() & ~serv_slot_missing_data_set);
       service_slot->set_state(service_slot->state() | serv_slot_missing_trainer); /* data set have changed, trainer needs to be re-initialized */
@@ -97,7 +90,7 @@ void ServerSlotApproximizeNet::initialize(ServiceSlot&& service_slot_){
         (service_slot_.training_set().inputs_size() == service_slot_.test_set().inputs_size())
         &&(service_slot_.training_set().labels_size() == service_slot_.test_set().labels_size())
       ){
-        training_set = std::make_shared<DataAggregate>(context, *service_slot_.mutable_test_set(), cost_function);
+        training_set = std::make_shared<rafko_gym::DataAggregate>(context, *service_slot_.mutable_test_set(), cost_function);
       }else test_set = training_set;
       service_slot->set_state(service_slot->state() | serv_slot_missing_trainer); /* data set have changed, trainer needs to be re-initialized */
     }else test_set = training_set;
@@ -149,14 +142,14 @@ void ServerSlotApproximizeNet::update_cost_function(){
   if(
     (cost_function)
     &&( /* in case there's a cost function object, but an invalid cost function type stored */
-      (!Cost_functions_IsValid(service_slot->cost_function()))
-      ||(cost_function_unknown == service_slot->cost_function())
+      (!rafko_net::Cost_functions_IsValid(service_slot->cost_function()))
+      ||(rafko_net::cost_function_unknown == service_slot->cost_function())
       ||(service_slot->cost_function() != cost_function->get_type())
     ) /* or the stored cost function type doesn't match the objects */
   )cost_function.reset();
   if(!cost_function)service_slot->set_state(service_slot->state() | serv_slot_missing_cost_function);
   if(
-    (cost_function_unknown != service_slot->cost_function())
+    (rafko_net::cost_function_unknown != service_slot->cost_function())
     &&(
       (0 == (service_slot->state() & serv_slot_missing_net))
       ||(0 == (service_slot->state() & serv_slot_missing_data_set))
@@ -165,7 +158,7 @@ void ServerSlotApproximizeNet::update_cost_function(){
   ){
     if(cost_function) cost_function.reset();
     service_slot->set_state(service_slot->state() | serv_slot_missing_cost_function);
-    cost_function = std::move(FunctionFactory::build_cost_function( service_slot->cost_function(), context ));
+    cost_function = std::move(rafko_net::FunctionFactory::build_cost_function( service_slot->cost_function(), context ));
     if(cost_function){
       service_slot->set_state(service_slot->state() & ~serv_slot_missing_cost_function);
     }
@@ -174,13 +167,11 @@ void ServerSlotApproximizeNet::update_cost_function(){
 }
 
 void ServerSlotApproximizeNet::update_trainer(){
-  using std::make_unique;
-  using std::make_shared;
 
   expose_state();
   if(
-    (Weight_updaters_IsValid(service_slot->weight_updater()))
-    &&(weight_updater_unknown != service_slot->weight_updater())
+    (rafko_gym::Weight_updaters_IsValid(service_slot->weight_updater()))
+    &&(rafko_gym::weight_updater_unknown != service_slot->weight_updater())
     &&(0 == (service_slot->state() & serv_slot_missing_data_set))
     &&(0 == (service_slot->state() & serv_slot_missing_net))
   ){
@@ -190,10 +181,10 @@ void ServerSlotApproximizeNet::update_trainer(){
     if(environment_data_set){
       environment_data_set.reset();
     }
-    environment_data_set = std::make_shared<RafkoEnvironmentDataSet>(
+    environment_data_set = std::make_shared<rafko_gym::RafkoEnvironmentDataSet>(
       context, *training_set, *test_set
     );
-    network_approximizer = std::make_unique<RafkoNetApproximizer>(
+    network_approximizer = std::make_unique<rafko_gym::RafkoNetApproximizer>(
       context, *network, *environment_data_set, service_slot->weight_updater()
     );
     if(network_approximizer){

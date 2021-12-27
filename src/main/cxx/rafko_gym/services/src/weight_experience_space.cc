@@ -22,9 +22,6 @@
 
 namespace rafko_gym{
 
-using std::abs;
-using std::max;
-
 WeightExperienceSpace::WeightExperienceSpace(sdouble32 weight_min_, sdouble32 weight_max_, sdouble32 weight_step_)
 :  weight_min(weight_min_)
 ,  weight_max(weight_max_)
@@ -51,7 +48,7 @@ WeightExperienceSpace::WeightExperienceSpace(sdouble32 weight_min_, sdouble32 we
 
 sdouble32 WeightExperienceSpace::add_experience(sdouble32 value){
   experiences[best_weight_index] += value;
-  if(abs(experiences[best_weight_index]) < abs(experiences[smallest_experience])){
+  if(std::abs(experiences[best_weight_index]) < std::abs(experiences[smallest_experience])){
     smallest_experience = best_weight_index;
     cut();
   }
@@ -71,7 +68,7 @@ void WeightExperienceSpace::adapt_weight(uint32 weight_index){
     sdouble32 right_weight_xp = experiences[weight_index+1] + experiences[weight_index];
 
     /* Then normalize the weight experience values */
-    sdouble32 max_xp = max(abs(left_weight_xp),abs(right_weight_xp));
+    sdouble32 max_xp = std::max(std::abs(left_weight_xp),std::abs(right_weight_xp));
     left_weight_xp /= max_xp;
     right_weight_xp /= max_xp;
 
@@ -102,7 +99,7 @@ void WeightExperienceSpace::evaluate_weights(){
 void WeightExperienceSpace::cut(){
   for(uint32 weight_index = 1; weight_index < experiences.size(); ++weight_index){
     experiences[weight_index] = std::copysign(
-      (abs(experiences[weight_index]) - abs(experiences[smallest_experience])), experiences[weight_index]
+      (std::abs(experiences[weight_index]) - std::abs(experiences[smallest_experience])), experiences[weight_index]
     );
   }
 }

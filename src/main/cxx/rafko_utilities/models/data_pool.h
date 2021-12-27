@@ -26,11 +26,7 @@
 #include <algorithm>
 
 namespace rafko_utilities{
-
-using std::vector;
-using std::deque;
-using std::mutex;
-
+  
 /**
  * @brief      This data container allocates buffers on-demand and handles
  *              data acess. The container is thread-safe.
@@ -39,34 +35,34 @@ template<class T>
 class RAFKO_FULL_EXPORT DataPool{
 public:
   DataPool(uint32 pool_size, uint32 expected_buffer_size)
-  : buffer_pool(pool_size, vector<T>())
+  : buffer_pool(pool_size, std::vector<T>())
   {
-    std::for_each(buffer_pool.begin(),buffer_pool.end(),[=](vector<T>& buf){
+    std::for_each(buffer_pool.begin(),buffer_pool.end(),[=](std::vector<T>& buf){
       buf.reserve(expected_buffer_size);
     });
   }
 
   DataPool() = default;
 
-  vector<T>& reserve_buffer(uint32 number_of_elements){
-    std::lock_guard<mutex> my_lock(buffers_mutex);
+  std::vector<T>& reserve_buffer(uint32 number_of_elements){
+    std::lock_guard<std::mutex> my_lock(buffers_mutex);
   	for(uint32 buffer_index = 0; buffer_index < buffer_pool.size();++buffer_index){
   		if(0u == buffer_pool[buffer_index].size()){ /* if the vector[buffer_index] has 0 elements --> the vector is free */
   			buffer_pool[buffer_index].resize(number_of_elements); /* reserve the vector */
   			return buffer_pool[buffer_index]; /* and make it available */
   		}
   	}
-  	buffer_pool.push_back(vector<T>(number_of_elements));
+  	buffer_pool.push_back(std::vector<T>(number_of_elements));
   	return buffer_pool.back();
   }
 
-  void release_buffer(vector<T>& buffer){
+  void release_buffer(std::vector<T>& buffer){
   	buffer.resize(0);
   }
 
 private:
-  deque<vector<T>> buffer_pool;
-  mutex buffers_mutex;
+  std::deque<std::vector<T>> buffer_pool;
+  std::mutex buffers_mutex;
 };
 
 } /* namespace rafko_utilities */

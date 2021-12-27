@@ -31,8 +31,6 @@
 
 namespace rafko_gym_test {
 
-using std::vector;
-
 /*###############################################################################################
  * Testing Backpropagation order:
  * - Backpropagation queue shall set an order of calculation for the Neurons
@@ -53,7 +51,7 @@ TEST_CASE( "Testing backpropagation queue", "[build][backprop]" ) {
   rafko_gym::BackpropagationQueue queue = queue_wrapper();
 
   /* Check integrity */
-  vector<uint32> neuron_depth = vector<uint32>(net->neuron_array_size(), 0);
+  std::vector<uint32> neuron_depth = std::vector<uint32>(net->neuron_array_size(), 0);
   uint32 num_neurons = 0;
   uint32 current_depth = 0;
   uint32 current_row = 0;

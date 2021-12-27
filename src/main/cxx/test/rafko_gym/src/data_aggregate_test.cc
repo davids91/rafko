@@ -16,7 +16,6 @@
  */
 
 #include <vector>
-#include <memory>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
@@ -30,27 +29,19 @@
 
 namespace rafko_gym_test {
 
-using std::unique_ptr;
-using std::vector;
-
-using rafko_gym::DataSet;
-using rafko_gym::DataAggregate;
-using rafko_net::CostFunctionMSE;
-using rafko_mainframe::RafkoServiceContext;
-
 /*###############################################################################################
  * Testing Data aggregate implementation and seeing if it converts @DataSet correctly
  * into the data item wih statistics, and take care of statistic error data correctly
  * */
 TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
-  RafkoServiceContext service_context;
+  rafko_mainframe::RafkoServiceContext service_context;
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
   /* Create a @DataSet and fill it with data */
-  DataSet data_set = DataSet();
+  rafko_gym::DataSet data_set = rafko_gym::DataSet();
   data_set.set_input_size(1);
   data_set.set_feature_size(1);
   data_set.set_sequence_size(sequence_size);
@@ -61,7 +52,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   }
 
   /* Create @DataAggregate from @DataSet */
-  DataAggregate data_agr(service_context, data_set, std::make_unique<CostFunctionMSE>(service_context));
+  rafko_gym::DataAggregate data_agr(service_context, data_set, std::make_unique<rafko_net::CostFunctionMSE>(service_context));
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 
@@ -123,13 +114,13 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   CHECK( Catch::Approx(error_sum).epsilon(0.00000000000001) == data_agr.get_error_sum() );
 
   /* test if the error is stored correctly even when the data is provided in bulk */
-  vector<vector<sdouble32>> neuron_data_simulation; /* create dummy neuron data with the configured distance */
+  std::vector<std::vector<sdouble32>> neuron_data_simulation; /* create dummy neuron data with the configured distance */
   /*!Note: since the simulated neuron data is always at the same generated value here, it doesn't matter where the evaluation starts from inside the neuron buffer,
    *       i.e. what is the value of neuron_buffer_index, as long as the evaluation is inside the bounds of the array.
    */
   for(uint32 variant = 0; variant < 100; ++variant){
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
-    neuron_data_simulation = vector<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
+    neuron_data_simulation = std::vector<std::vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
 
     /* Test if the half of the set can be updated in bulk */
     data_agr.set_features_for_labels(neuron_data_simulation, 0, 0, (sample_number * sequence_size)/2); /* set the error for the first half */
@@ -165,7 +156,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
 
     /* Check also the bulk sequenced interface */
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
-    neuron_data_simulation = vector<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
+    neuron_data_simulation = std::vector<std::vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), 0, data_agr.get_sequence_size());
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), 0, data_agr.get_sequence_size());
 
@@ -183,7 +174,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
     /* Check also with sequence truncation */
     sdouble32 old_set_distence = set_distance;
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
-    neuron_data_simulation = vector<vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
+    neuron_data_simulation = std::vector<std::vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), data_agr.get_sequence_size()/2, data_agr.get_sequence_size()/2);
     data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), data_agr.get_sequence_size()/2, data_agr.get_sequence_size()/2);
 
@@ -215,7 +206,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
  * are working as expected
  * */
 TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
-  RafkoServiceContext service_context;
+  rafko_mainframe::RafkoServiceContext service_context;
   const uint32 sample_number = 50;
   const uint32 sequence_size = 5;
   const uint32 selected_index = rand()%(sample_number * sequence_size);
@@ -224,7 +215,7 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
   sdouble32 initial_error;
 
   /* Create a @DataSet and fill it with data */
-  DataSet data_set = DataSet();
+  rafko_gym::DataSet data_set = rafko_gym::DataSet();
   data_set.set_input_size(1);
   data_set.set_feature_size(1);
   data_set.set_sequence_size(sequence_size);
@@ -234,7 +225,7 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
     data_set.add_labels(expected_label);
   }
 
-  DataAggregate data_agr(service_context, data_set, std::make_unique<CostFunctionMSE>(service_context));
+  rafko_gym::DataAggregate data_agr(service_context, data_set, std::make_unique<rafko_net::CostFunctionMSE>(service_context));
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
 

@@ -29,7 +29,7 @@ RafkoEnvironmentDataSet::RafkoEnvironmentDataSet(rafko_mainframe::RafkoServiceCo
 , test_set(test_set_)
 , neuron_outputs_to_evaluate( /* For every thread, 1 sequence is evaluated.. */
   (service_context.get_max_processing_threads() * train_set.get_sequence_size() + 1u),
-  vector<sdouble32>(train_set_.get_feature_size()) /* ..plus for the label errors one additional vector is needed */
+  std::vector<sdouble32>(train_set_.get_feature_size()) /* ..plus for the label errors one additional vector is needed */
 )
 , execution_threads(service_context.get_max_processing_threads())
 , loops_unchecked(service_context.get_tolerance_loop_value() + 1u)

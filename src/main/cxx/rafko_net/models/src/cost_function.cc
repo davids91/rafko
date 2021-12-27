@@ -20,12 +20,8 @@
 
 namespace rafko_net {
 
-using std::min;
-using std::ref;
-using std::async;
-
 void CostFunction::get_feature_errors(
-  const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+  const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
   uint32 label_start, uint32 error_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
 ){
   if((label_start + labels_to_evaluate) > labels.size())
@@ -37,7 +33,7 @@ void CostFunction::get_feature_errors(
   const uint32 labels_to_do_in_a_thread = 1u + static_cast<uint32>(labels_to_evaluate/context.get_sqrt_of_solve_threads());
   execution_threads.start_and_block([this, &labels, &neuron_data, &errors_for_labels, label_start, error_start, neuron_start, labels_to_do_in_a_thread, labels_to_evaluate, sample_number](uint32 thread_index){
     feature_errors_thread(
-      ref(labels), ref(neuron_data), ref(errors_for_labels),
+      std::ref(labels), std::ref(neuron_data), std::ref(errors_for_labels),
       label_start, error_start, neuron_start,
       labels_to_do_in_a_thread, labels_to_evaluate,
       sample_number, thread_index
@@ -46,7 +42,7 @@ void CostFunction::get_feature_errors(
 }
 
 void CostFunction::feature_errors_thread(
-  const vector<vector<sdouble32>>& labels, const vector<vector<sdouble32>>& neuron_data, vector<sdouble32>& errors_for_labels,
+  const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
   uint32 label_start, uint32 error_start, uint32 neuron_data_start_index,
   uint32 labels_to_evaluate_in_one_thread, uint32 labels_evaluating_overall, uint32 sample_number, uint32 thread_index
 ){
@@ -72,7 +68,7 @@ void CostFunction::feature_errors_thread(
 }
 
 sdouble32 CostFunction::get_feature_error(
-  const vector<sdouble32>& label, const vector<sdouble32>& neuron_data,
+  const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data,
   uint32 max_threads, uint32 outer_thread_index, uint32 sample_number
 ){
   assert( label.size() == neuron_data.size() );
@@ -82,8 +78,8 @@ sdouble32 CostFunction::get_feature_error(
   if(max_threads > 1u){
     const uint32 feature_number = 1 + static_cast<uint32>(label.size()/max_threads);
     for(uint32 thread_index = 0; ((thread_index < max_threads) && (feature_start < label.size())); ++thread_index){
-      thread_results[outer_thread_index].push_back(async(std::launch::async,
-        &CostFunction::summarize_errors, this, ref(label), ref(neuron_data),
+      thread_results[outer_thread_index].push_back(std::async(std::launch::async,
+        &CostFunction::summarize_errors, this, std::ref(label), std::ref(neuron_data),
         feature_start, std::min(feature_number, static_cast<uint32>(label.size() - feature_start))
       ));
       feature_start += feature_number;
@@ -100,7 +96,7 @@ sdouble32 CostFunction::get_feature_error(
 }
 
 sdouble32 CostFunction::summarize_errors(
-  const vector<sdouble32>& label, const vector<sdouble32>& neuron_data,
+  const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data,
   uint32 feature_start_index, uint32 number_to_eval
 ){
   sdouble32 local_error = 0;

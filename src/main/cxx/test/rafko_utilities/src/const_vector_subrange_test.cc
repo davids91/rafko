@@ -25,8 +25,6 @@
 
 namespace rafko_utilities_test {
 
-using std::vector;
-
 /*###############################################################################################
  * Testing if Subvector range works as expected
  * */

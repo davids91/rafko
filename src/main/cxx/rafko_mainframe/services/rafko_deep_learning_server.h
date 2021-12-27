@@ -29,12 +29,6 @@
 
 namespace rafko_mainframe{
 
-using std::vector;
-using std::unique_ptr;
-using std::shared_ptr;
-using std::string;
-using std::mutex;
-
 /**
  * @brief      This class describes a server for deep learning related tasks. The supported operations are described in
  *             the @/proto/deep_learning_services.proto file. Functions defined in the service are thread-safe.
@@ -70,11 +64,11 @@ public:
   ~DeepLearningServer(){ server_slots.clear(); }
 
 private:
-  vector<unique_ptr<ServerSlot>> server_slots; /* points to different implementations of a @ServerSlot */
-  vector<unique_ptr<mutex>> server_slot_mutexs;
-  vector<uint8> is_server_slot_running;
-  vector<uint32> iteration;
-  mutex server_mutex; /* Aims to protect modification of the state of the server ( mainly ServerSlots ) */
+  std::vector<std::unique_ptr<ServerSlot>> server_slots; /* points to different implementations of a @ServerSlot */
+  std::vector<std::unique_ptr<std::mutex>> server_slot_mutexs;
+  std::vector<uint8> is_server_slot_running;
+  std::vector<uint32> iteration;
+  std::mutex server_mutex; /* Aims to protect modification of the state of the server ( mainly ServerSlots ) */
 
   /**
    * @brief      Tries to find the index of the server slot with the given identifier
@@ -83,7 +77,7 @@ private:
    *
    * @return     Index of the slot in @server_slots
    */
-  uint32 find_id(string id);
+  uint32 find_id(std::string id);
 };
 
 } /* namespace rafko_mainframe */

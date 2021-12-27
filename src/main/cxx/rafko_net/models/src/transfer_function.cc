@@ -21,8 +21,6 @@
 
 namespace rafko_net {
 
-using std::max;
-
 Transfer_functions TransferFunction::next(){
   return next({
     transfer_function_identity,
@@ -34,7 +32,7 @@ Transfer_functions TransferFunction::next(){
   });
 }
 
-Transfer_functions TransferFunction::next(vector<Transfer_functions> range){
+Transfer_functions TransferFunction::next(std::vector<Transfer_functions> range){
   Transfer_functions candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
   while(find(range.begin(), range.end(), candidate) == range.end())
     candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
@@ -66,7 +64,7 @@ sdouble32 TransferFunction::get_value(Transfer_functions function, sdouble32 dat
     case transfer_function_selu:
       if(0 >= data) return ((context.get_alpha() * exp(data)) - context.get_alpha()) * context.get_lambda();
       else return data;
-    case transfer_function_relu: return max(double_literal(0.0),data);
+    case transfer_function_relu: return std::max(double_literal(0.0),data);
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }

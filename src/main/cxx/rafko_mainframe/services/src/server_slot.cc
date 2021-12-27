@@ -26,26 +26,16 @@
 
 namespace rafko_mainframe{
 
-using std::string;
-using std::random_device;
-using std::mt19937;
-using std::uniform_int_distribution;
-using std::vector;
+std::string ServerSlot::generate_uuid(){
+  static std::random_device dev;
+  static std::mt19937 rng(dev());
 
-using rafko_net::RafkoNetBuilder;
-using rafko_net::Transfer_functions;
-using rafko_net::Transfer_functions_IsValid;
-
-string ServerSlot::generate_uuid(){
-  static random_device dev;
-  static mt19937 rng(dev());
-
-  uniform_int_distribution<int> dist(0, 15);
+  std::uniform_int_distribution<int> dist(0, 15);
 
   const char *v = "0123456789abcdef";
   const bool dash[] = { 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0 };
 
-  string res;
+  std::string res;
   for (int i = 0; i < 16; i++) {
       if (dash[i]) res += "-";
       res += v[dist(rng)];
@@ -62,12 +52,12 @@ SlotResponse ServerSlot::get_status() const{
 }
 
 
-string ServerSlot::get_uuid() const{
+std::string ServerSlot::get_uuid() const{
   if(0 != service_slot->slot_id().compare("")) return service_slot->slot_id();
     else throw std::runtime_error("Empty UUID is queried!");
 }
 
-void ServerSlot::get_data_sample(shared_ptr<DataAggregate> data_set, uint32 sample_index, NeuralIOStream& target) const{
+void ServerSlot::get_data_sample(std::shared_ptr<rafko_gym::DataAggregate> data_set, uint32 sample_index, NeuralIOStream& target) const{
   if( /* In case the attached training set is valid */
     (data_set) /* Avoid nullpointers */
     &&(sample_index < data_set->get_number_of_label_samples()) /* Avoid out of bounds */
@@ -107,21 +97,21 @@ void ServerSlot::get_data_sample(shared_ptr<DataAggregate> data_set, uint32 samp
   }
 }
 
-RafkoNet* ServerSlot::build_network_from_request(BuildNetworkRequest&& request){
+rafko_net::RafkoNet* ServerSlot::build_network_from_request(BuildNetworkRequest&& request){
   if(0 < request.allowed_transfers_by_layer_size()){
     uint32 layer_index = 0;
-    vector<vector<Transfer_functions>> allowed_transfers(request.allowed_transfers_by_layer_size());
+    std::vector<std::vector<rafko_net::Transfer_functions>> allowed_transfers(request.allowed_transfers_by_layer_size());
     for(const sint32& allowed : request.allowed_transfers_by_layer()){
-      if(Transfer_functions_IsValid(static_cast<Transfer_functions>(allowed)))
-        allowed_transfers[layer_index++] = vector<Transfer_functions>(1, static_cast<Transfer_functions>(allowed));
+      if(rafko_net::Transfer_functions_IsValid(static_cast<rafko_net::Transfer_functions>(allowed)))
+        allowed_transfers[layer_index++] = std::vector<rafko_net::Transfer_functions>(1, static_cast<rafko_net::Transfer_functions>(allowed));
       else throw std::runtime_error("Unknown transfer function detected!");
     }
-    return RafkoNetBuilder(context).input_size(request.input_size())
+    return rafko_net::RafkoNetBuilder(context).input_size(request.input_size())
       .expected_input_range(request.expected_input_range())
       .allowed_transfer_functions_by_layer(allowed_transfers)
       .dense_layers({request.layer_sizes().begin(),request.layer_sizes().end()});
   }else{
-    return RafkoNetBuilder(context).input_size(request.input_size())
+    return rafko_net::RafkoNetBuilder(context).input_size(request.input_size())
       .expected_input_range(request.expected_input_range())
       .dense_layers({request.layer_sizes().begin(),request.layer_sizes().end()});
   }

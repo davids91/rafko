@@ -19,21 +19,12 @@
 #define SERVER_SLOT_RUN_NET_H
 
 #include <memory>
-#include <string>
 
 #include "rafko_net/services/solution_solver.h"
 
 #include "rafko_mainframe/services/server_slot.h"
 
 namespace rafko_mainframe{
-
-using std::vector;
-using rafko_net::RafkoNet;
-using rafko_net::Solution;
-using rafko_net::SolutionSolver;
-
-using std::string;
-using std::unique_ptr;
 
 /**
  * @brief      This class describes a server slot which runs a Neural network
@@ -48,7 +39,7 @@ public:
   ,  network_solver()
   {
     service_slot->set_type(serv_slot_to_run);
-    network = google::protobuf::Arena::CreateMessage<RafkoNet>(context.get_arena_ptr());
+    network = google::protobuf::Arena::CreateMessage<rafko_net::RafkoNet>(context.get_arena_ptr());
   }
 
   void initialize(ServiceSlot&& service_slot_);
@@ -72,7 +63,7 @@ public:
     finalize_state();
   }
 
-  void update_network(RafkoNet&& net_){
+  void update_network(rafko_net::RafkoNet&& net_){
     expose_state();
     if(0 < net_.neuron_array_size()){
       *network = std::move(net_);
@@ -83,7 +74,7 @@ public:
   }
 
   void reset(){
-    update_network(RafkoNet());
+    update_network(rafko_net::RafkoNet());
   }
 
   SlotInfo get_info(uint32 request_bitstring){
@@ -91,7 +82,7 @@ public:
     return SlotInfo(); /* No info to be provided */
   }
 
-  RafkoNet get_network() const{
+  rafko_net::RafkoNet get_network() const{
     return *network;
   }
 
@@ -127,9 +118,9 @@ public:
   }
 
 protected:
-  RafkoNet* network;
-  Solution* network_solution;
-  unique_ptr<SolutionSolver> network_solver;
+  rafko_net::RafkoNet* network;
+  rafko_net::Solution* network_solution;
+  std::unique_ptr<rafko_net::SolutionSolver> network_solver;
 };
 
 } /* namespace rafko_mainframe */

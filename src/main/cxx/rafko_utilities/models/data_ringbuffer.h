@@ -27,8 +27,6 @@
 
 namespace rafko_utilities{
 
-using std::vector;
-
 /**
  * @brief      This class describes a ringbuffer designed to store the Memory of a Neural Network.
  *             At the life-cycle of a Neural network one solution counts as a "loop", where the data
@@ -46,8 +44,8 @@ public:
   :  current_index(0)
   ,  data(buffer_number)
   {
-    for(vector<sdouble32>& buffer : data)
-      buffer = vector<sdouble32>(buffer_size, double_literal(0.0));
+    for(std::vector<sdouble32>& buffer : data)
+      buffer = std::vector<sdouble32>(buffer_size, double_literal(0.0));
   }
 
   /**
@@ -64,7 +62,7 @@ public:
    */
   void reset(){
     current_index = (data.size()-1); /* Set the current index into the last index, so at the next @ */
-    for(vector<sdouble32>& vector : data)
+    for(std::vector<sdouble32>& vector : data)
       for(sdouble32& element : vector) element = double_literal(0.0);
   }
 
@@ -95,7 +93,7 @@ public:
    *
    * @return     The non-modifyable raw buffer data
    */
-  const vector<vector<sdouble32>>& get_whole_buffer() const{
+  const std::vector<std::vector<sdouble32>>& get_whole_buffer() const{
     return data;
   }
 
@@ -133,7 +131,7 @@ public:
    *
    * @return     The reference pointing to a data
    */
-  vector<sdouble32>& get_element(uint32 past_index){
+  std::vector<sdouble32>& get_element(uint32 past_index){
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
     }else throw std::runtime_error("Ringbuffer index out of bounds!");
@@ -146,7 +144,7 @@ public:
    *
    * @return     The reference pointing to a data
    */
-  const vector<sdouble32>& get_const_element(uint32 past_index) const{
+  const std::vector<sdouble32>& get_const_element(uint32 past_index) const{
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
     }else throw std::runtime_error("Ringbuffer index out of bounds!");
@@ -194,7 +192,7 @@ public:
 
 private:
   uint32 current_index;
-  vector<vector<sdouble32>> data;
+  std::vector<std::vector<sdouble32>> data;
 
   /**
    * @brief      Gets the buffer index for the given past index

@@ -28,14 +28,12 @@
 
 namespace rafko_mainframe{
 
-using std::unique_ptr;
-
 /**
  * @brief      Front-end to create server slot objects.
  */
 class ServerSlotFactory{
 public:
-  static unique_ptr<ServerSlot> build_server_slot(Slot_type slot_type){
+  static std::unique_ptr<ServerSlot> build_server_slot(Slot_type slot_type){
     switch(slot_type){
       case serv_slot_to_run: return std::make_unique<ServerSlotRunNet>();
       case serv_slot_to_optimize: return std::make_unique<ServerSlotApproximizeNet>();

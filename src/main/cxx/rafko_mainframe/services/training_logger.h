@@ -29,27 +29,24 @@
 
 namespace rafko_mainframe{
 
-using std::string;
-using std::vector;
-
 /**
  * @brief      This class is a helper utility to create measurements about the neuron activations and experiences
  *             during training
  */
 class Training_logger{
 public:
-  Training_logger(string id_, RafkoServiceContext& service_context)
+  Training_logger(std::string id_, RafkoServiceContext& service_context)
   :  id(id_)
   ,  context(service_context)
   ,  measurement()
   ,  changes_since()
   { }
 
-  void log(uint32 iteration, const vector<uint32>& coordinates, const vector<string>& tags, const vector<sdouble32>& data);
+  void log(uint32 iteration, const std::vector<uint32>& coordinates, const std::vector<std::string>& tags, const std::vector<sdouble32>& data);
   void flush();
 
 private:
-  string id;
+  std::string id;
   RafkoServiceContext& context;
   Measurement measurement;
   uint32 changes_since;

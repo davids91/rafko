@@ -26,8 +26,6 @@
 
 namespace rafko_gym{
 
-using std::vector;
-
 /**
  * @brief      This class describes an experience space for a single weight inside a Neural network.
  *             Experiences can be positive or negative, all of which are stored inside the space in the @experiences
@@ -62,7 +60,7 @@ public:
    *
    * @return     A const reference of the vector containing the weight values corresponding with stored experiences.
    */
-  const vector<sdouble32> get_weights() const{
+  const std::vector<sdouble32> get_weights() const{
     return weight_values;
   }
 
@@ -111,14 +109,14 @@ public:
    *
    * @return     A constant reference of the vector of the experience values corresponding to each stored weight.
    */
-  const vector<sdouble32> get_weight_experiences() const{
+  const std::vector<sdouble32> get_weight_experiences() const{
     return experiences;
   }
 
 private:
   sdouble32 weight_min, weight_max, weight_step;
-  vector<sdouble32> weight_values;
-  vector<sdouble32> experiences;
+  std::vector<sdouble32> weight_values;
+  std::vector<sdouble32> experiences;
   uint32 best_weight_index;
   uint32 worst_weight_index;
   uint32 last_weight_index;

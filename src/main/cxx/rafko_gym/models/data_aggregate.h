@@ -38,8 +38,6 @@
 
 namespace rafko_gym{
 
-using std::vector;
-
 /**
  * @brief      A Data set container complete with adaptive error statistics, which is
  *             not thread safe for the most part.
@@ -80,7 +78,7 @@ public:
   ,  label_samples(samples_.labels_size() / samples_.feature_size())
   ,  prefill_sequences(static_cast<uint32>((samples_.inputs_size() - samples_.labels_size()) / (samples_.labels_size() / sequence_size)))
   ,  error_state(double_literal(1.0),{
-       vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
+       std::vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
        double_literal(1.0)
      })
   ,  cost_function(cost_function_)
@@ -93,7 +91,7 @@ public:
 
   DataAggregate(
     rafko_mainframe::RafkoServiceContext& service_context_,
-    vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
+    std::vector<std::vector<sdouble32>>&& input_samples_, std::vector<std::vector<sdouble32>>&& label_samples_,
     std::shared_ptr<rafko_net::CostFunction> cost_function_, uint32 sequence_size_ = 1
   ): service_context(service_context_)
   ,  sequence_size(std::max(1u,sequence_size_))
@@ -101,7 +99,7 @@ public:
   ,  label_samples(std::move(label_samples_))
   ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
   ,  error_state(double_literal(1.0),{
-       vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
+       std::vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
        double_literal(1.0)
      })
   ,  cost_function(cost_function_)
@@ -113,7 +111,7 @@ public:
 
   DataAggregate(
     rafko_mainframe::RafkoServiceContext& service_context_,
-    vector<vector<sdouble32>>&& input_samples_, vector<vector<sdouble32>>&& label_samples_,
+    std::vector<std::vector<sdouble32>>&& input_samples_, std::vector<std::vector<sdouble32>>&& label_samples_,
     rafko_net::Cost_functions the_function, uint32 sequence_size_ = 1
   ): service_context(service_context_)
   ,  sequence_size(std::max(1u,sequence_size_))
@@ -121,7 +119,7 @@ public:
   ,  label_samples(std::move(label_samples_))
   ,  prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
   ,  error_state(double_literal(1.0),{
-       vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
+       std::vector<sdouble32>(label_samples.size(),(double_literal(1.0)/label_samples.size())),
        double_literal(1.0)
      })
   ,  cost_function(rafko_net::FunctionFactory::build_cost_function(the_function, service_context_))
@@ -136,7 +134,7 @@ public:
    * @param[in]  sample_index  The sample index
    * @param[in]  neuron_data   The neuron data
    */
-  void set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data);
+  void set_feature_for_label(uint32 sample_index, const std::vector<sdouble32>& neuron_data);
 
   /**
    * @brief      Same as @set_feature_for_label but in bulk
@@ -147,7 +145,7 @@ public:
    * @param[in]  labels_to_evaluate       The labels to evaluate
    */
   void set_features_for_labels(
-    const vector<vector<sdouble32>>& neuron_data,
+    const std::vector<std::vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
   );
 
@@ -162,11 +160,11 @@ public:
    * @param[in]  sequence_truncation      The sequence truncation
    */
   void set_features_for_sequences(
-    const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
+    const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
     uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
   ){
-    vector<sdouble32>& resulting_errors = common_datapool.reserve_buffer(sequences_to_evaluate * get_sequence_size());
+    std::vector<sdouble32>& resulting_errors = common_datapool.reserve_buffer(sequences_to_evaluate * get_sequence_size());
     set_features_for_sequences(
       neuron_data, neuron_buffer_index,
       sequence_start_index, sequences_to_evaluate, start_index_in_sequence, sequence_truncation,
@@ -186,10 +184,10 @@ public:
    * @param[in]  sequence_truncation      The sequence truncation
    */
   void set_features_for_sequences(
-    const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
+    const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
     uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation,
-    vector<sdouble32>& tmp_data
+    std::vector<sdouble32>& tmp_data
   );
 
   /**
@@ -231,7 +229,7 @@ public:
    *
    * @return     The input sample.
    */
-  const vector<sdouble32>& get_input_sample(uint32 raw_input_index) const{
+  const std::vector<sdouble32>& get_input_sample(uint32 raw_input_index) const{
     if(input_samples.size() > raw_input_index)
       return input_samples[raw_input_index];
       else throw std::runtime_error("Input sample index out of bounds!");
@@ -244,7 +242,7 @@ public:
    *
    * @return     The label sample.
    */
-  const vector<sdouble32>& get_label_sample(uint32 raw_label_index) const{
+  const std::vector<sdouble32>& get_label_sample(uint32 raw_label_index) const{
     if(label_samples.size() > raw_label_index)
       return label_samples[raw_label_index];
       else throw std::runtime_error("Label sample index out of bounds!");
@@ -359,16 +357,16 @@ public:
 
 private:
   struct error_state_type{
-    vector<sdouble32> sample_errors;
+    std::vector<sdouble32> sample_errors;
     sdouble32 error_sum;
   };
 
   rafko_mainframe::RafkoServiceContext& service_context;
   uint32 sequence_size;
-  vector<vector<sdouble32>> input_samples;
-  vector<vector<sdouble32>> label_samples;
+  std::vector<std::vector<sdouble32>> input_samples;
+  std::vector<std::vector<sdouble32>> label_samples;
   uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
-  vector<error_state_type> error_state;
+  std::vector<error_state_type> error_state;
   std::shared_ptr<rafko_net::CostFunction> cost_function;
   bool exposed_to_multithreading; /* basically decides whether or not error sum calculation is enabled. */
   mutable std::mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a std::mutex is required */

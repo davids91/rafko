@@ -8,27 +8,17 @@
 
 #include "rafko_mainframe/services/rafko_deep_learning_server.h"
 
-using grpc::Server;
-using grpc::ServerBuilder;
-using grpc::ServerContext;
-using grpc::ServerReader;
-using grpc::ServerReaderWriter;
-using grpc::ServerWriter;
-using grpc::Status;
-
-using rafko_mainframe::DeepLearningServer;
-
 int main(int argc, char *argv[]){
   parameter_not_used(argc);
   parameter_not_used(argv);
 
   std::string server_address("0.0.0.0:50052");
-  DeepLearningServer service;
+  rafko_mainframe::DeepLearningServer service;
 
-  ServerBuilder builder;
+  grpc::ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
-  std::unique_ptr<Server> server(builder.BuildAndStart());
+  std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
   std::cout << "Server listening on " << server_address << std::endl;
   std::cout.precision(17);
   while(true){

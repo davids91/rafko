@@ -23,9 +23,6 @@
 
 namespace rafko_mainframe{
 
-using rafko_net::SolutionBuilder;
-using rafko_utilities::DataRingbuffer;
-
 void ServerSlotRunNet::initialize(ServiceSlot&& service_slot_){
   service_slot->set_type(service_slot_.type());
   if(serv_slot_to_run != service_slot->type())
@@ -43,8 +40,8 @@ void ServerSlotRunNet::refresh_solution(){
   expose_state();
   service_slot->set_state(service_slot->state() | serv_slot_missing_solution);
   if(0 < network->neuron_array_size()){
-    network_solution = SolutionBuilder(context).build(*network);
-    network_solver = unique_ptr<SolutionSolver>(SolutionSolver::Builder(*network_solution, context).build());
+    network_solution = rafko_net::SolutionBuilder(context).build(*network);
+    network_solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(*network_solution, context).build());
     service_slot->set_state(service_slot->state() & ~serv_slot_missing_solution);
   }else service_slot->set_state(service_slot->state() | serv_slot_missing_net);
   finalize_state();
@@ -57,10 +54,10 @@ NeuralIOStream ServerSlotRunNet::run_net_once(const NeuralIOStream& data_stream)
   ){
     NeuralIOStream result;
     uint32 sequence_start_index = 0;
-    vector<sdouble32> result_package = vector<sdouble32>( /* reserve enough space for the result.. */
+    std::vector<sdouble32> result_package = std::vector<sdouble32>( /* reserve enough space for the result.. */
       network->output_neuron_number() * data_stream.sequence_size()
     ); /* ..which is the output of the network multiplied by the sequence size */
-    vector<sdouble32> input;
+    std::vector<sdouble32> input;
     for(uint32 sequence = 0; sequence < data_stream.sequence_size(); ++sequence){
       input = { /* Copy the input data to a temporary */
         data_stream.package().begin() + sequence_start_index,

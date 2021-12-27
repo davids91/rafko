@@ -28,16 +28,7 @@
 #include "rafko_protocol/deep_learning_service.pb.h"
 
 namespace rafko_mainframe{
-
-using std::sqrt;
-using google::protobuf::Arena;
-using std::vector;
-using std::pair;
-using std::get;
-
-using rafko_mainframe::ServiceHyperparameters;
-using rafko_gym::Training_strategy;
-
+  
 class RAFKO_FULL_EXPORT RafkoServiceContext{
 public:
   uint16 get_max_solve_threads() const{
@@ -64,22 +55,22 @@ public:
     return device_max_megabytes;
   }
 
-  Arena* get_arena_ptr() const{
+  google::protobuf::Arena* get_arena_ptr() const{
     return arena_ptr;
   }
 
   sdouble32 get_learning_rate(uint32 iteration = 0) const{
-    if((0 == learning_rate_with_decay.size())||(iteration < get<uint32>(learning_rate_with_decay[0])))
+    if((0 == learning_rate_with_decay.size())||(iteration < std::get<uint32>(learning_rate_with_decay[0])))
       return hypers.learning_rate();
-    if(iteration >= get<uint32>(learning_rate_with_decay.back()))
-      return get<sdouble32>(learning_rate_with_decay.back());
+    if(iteration >= std::get<uint32>(learning_rate_with_decay.back()))
+      return std::get<sdouble32>(learning_rate_with_decay.back());
     uint32 decay_index = 0;
     if(iteration >= learning_rate_decay_iteration_cache)
       decay_index = learning_rate_decay_index_cache;
 
     while(
       (decay_index < (learning_rate_with_decay.size()-1u))
-      &&(iteration >= get<uint32>(learning_rate_with_decay[decay_index]))
+      &&(iteration >= std::get<uint32>(learning_rate_with_decay[decay_index]))
     )++decay_index;
 
     --decay_index;
@@ -87,7 +78,7 @@ public:
     learning_rate_decay_iteration_cache = iteration;
     learning_rate_decay_index_cache = decay_index;
 
-    return get<sdouble32>(learning_rate_with_decay[decay_index]);
+    return std::get<sdouble32>(learning_rate_with_decay[decay_index]);
   }
 
   uint32 get_minibatch_size() const{
@@ -152,7 +143,7 @@ public:
   RafkoServiceContext& set_max_solve_threads(sdouble32 max_solve_threads_){
     max_solve_threads = max_solve_threads_;
     sqrt_of_solve_threads = static_cast<uint16>(std::max(
-      double_literal(1.0), sqrt(static_cast<sdouble32>(max_solve_threads))
+      double_literal(1.0), std::sqrt(static_cast<sdouble32>(max_solve_threads))
     ));
     return *this;
   }
@@ -160,7 +151,7 @@ public:
   RafkoServiceContext& set_max_processing_threads(uint16 max_processing_threads_){
     max_processing_threads = max_processing_threads_;
     sqrt_of_process_threads = static_cast<uint16>(std::max(
-      double_literal(1.0), sqrt(static_cast<sdouble32>(max_processing_threads))
+      double_literal(1.0), std::sqrt(static_cast<sdouble32>(max_processing_threads))
     ));
     return *this;
   }
@@ -174,7 +165,7 @@ public:
     return *this;
   }
 
-  RafkoServiceContext& set_arena_ptr(Arena* arena_ptr_){
+  RafkoServiceContext& set_arena_ptr(google::protobuf::Arena* arena_ptr_){
     arena_ptr = arena_ptr_;
     return *this;
   }
@@ -211,7 +202,7 @@ public:
 
   RafkoServiceContext& set_epsilon(sdouble32 epsilon_){
     hypers.set_epsilon(epsilon_);
-    sqrt_epsilon = sqrt(epsilon_);
+    sqrt_epsilon = std::sqrt(epsilon_);
     return *this;
   }
 
@@ -225,25 +216,25 @@ public:
     return *this;
   }
 
-  RafkoServiceContext& set_hypers(ServiceHyperparameters hypers_){
+  RafkoServiceContext& set_hypers(rafko_mainframe::ServiceHyperparameters hypers_){
     hypers.CopyFrom(hypers_);
     return *this;
   }
 
-  RafkoServiceContext& set_training_strategy(Training_strategy strategy, bool enable){
+  RafkoServiceContext& set_training_strategy(rafko_gym::Training_strategy strategy, bool enable){
     if(enable){
       hypers.set_training_strategies(
-        static_cast<Training_strategy>(static_cast<uint32>(hypers.training_strategies()) | static_cast<uint32>(strategy))
+        static_cast<rafko_gym::Training_strategy>(static_cast<uint32>(hypers.training_strategies()) | static_cast<uint32>(strategy))
       );
     }else{
       hypers.set_training_strategies(
-        static_cast<Training_strategy>(static_cast<uint32>(hypers.training_strategies()) & (~static_cast<uint32>(strategy)))
+        static_cast<rafko_gym::Training_strategy>(static_cast<uint32>(hypers.training_strategies()) & (~static_cast<uint32>(strategy)))
       );
     }
     return *this;
   }
 
-  RafkoServiceContext& set_learning_rate_decay(vector<pair<uint32,sdouble32>>&& iteration_with_value){
+  RafkoServiceContext& set_learning_rate_decay(std::vector<std::pair<uint32,sdouble32>>&& iteration_with_value){
     learning_rate_decay = std::move(iteration_with_value);
     calculate_learning_rate_decay();
     return *this;
@@ -271,14 +262,14 @@ private:
   uint16 max_processing_threads = 4;
   uint16 sqrt_of_process_threads = 2;
   uint32 tolerance_loop_value = 100;
-  sdouble32 sqrt_epsilon = sqrt(double_literal(1e-15));
+  sdouble32 sqrt_epsilon = std::sqrt(double_literal(1e-15));
   sdouble32 device_max_megabytes = double_literal(2048);
-  Arena* arena_ptr = nullptr;
-  ServiceHyperparameters hypers = ServiceHyperparameters();
+  google::protobuf::Arena* arena_ptr = nullptr;
+  rafko_mainframe::ServiceHyperparameters hypers = rafko_mainframe::ServiceHyperparameters();
   mutable uint32 learning_rate_decay_iteration_cache = 0;
   mutable uint32 learning_rate_decay_index_cache = 0;
-  vector<pair<uint32, sdouble32>> learning_rate_with_decay;
-  vector<pair<uint32, sdouble32>> learning_rate_decay;
+  std::vector<std::pair<uint32, sdouble32>> learning_rate_with_decay;
+  std::vector<std::pair<uint32, sdouble32>> learning_rate_decay;
 
 
   /**
@@ -288,9 +279,9 @@ private:
   void calculate_learning_rate_decay(){
     sdouble32 learning_rate = get_learning_rate();
     learning_rate_with_decay.clear();
-    for(pair<uint32, sdouble32> decay : learning_rate_decay){
-      learning_rate *= get<sdouble32>(decay);
-      learning_rate_with_decay.push_back({get<uint32>(decay), learning_rate});
+    for(std::pair<uint32, sdouble32> decay : learning_rate_decay){
+      learning_rate *= std::get<sdouble32>(decay);
+      learning_rate_with_decay.push_back({std::get<uint32>(decay), learning_rate});
     }
   }
 };

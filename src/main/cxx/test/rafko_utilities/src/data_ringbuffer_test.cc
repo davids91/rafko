@@ -25,17 +25,11 @@
 
 namespace rafko_utilities_test {
 
-using std::vector;
-using std::copy;
-
-using rafko_utilities::DataRingbuffer;
-using rafko_mainframe::RafkoServiceContext;
-
 /*###############################################################################################
  * Testing Ringbuffer implementation by creating a ringbuffer object and adding new entries in
  *  multiple times, and checking the validity of the data.
  * */
-void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& ringbuffer_data){
+void check_data_match(std::vector<sdouble32>& sample_data, std::vector<sdouble32>& ringbuffer_data){
   REQUIRE(sample_data.size() == ringbuffer_data.size());
   for(uint32 i = 0; i < sample_data.size(); ++i){
     CHECK(sample_data[i] == ringbuffer_data[i]);
@@ -43,12 +37,12 @@ void check_data_match(vector<sdouble32>& sample_data, vector<sdouble32>& ringbuf
 }
 
 TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
-  RafkoServiceContext service_context;
+  rafko_mainframe::RafkoServiceContext service_context;
   uint32 buffer_number = 5;
   uint32 buffer_size = 30;
-  vector<sdouble32> data_sample(buffer_size, double_literal(0.0));
-  vector<sdouble32> previous_data_sample(buffer_size, double_literal(0.0));
-  DataRingbuffer buffer(buffer_number, buffer_size);
+  std::vector<sdouble32> data_sample(buffer_size, double_literal(0.0));
+  std::vector<sdouble32> previous_data_sample(buffer_size, double_literal(0.0));
+  rafko_utilities::DataRingbuffer buffer(buffer_number, buffer_size);
 
   REQUIRE( buffer.buffer_size() == buffer_size );
   REQUIRE( buffer.get_sequence_size() == buffer_number );
@@ -61,7 +55,7 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
   for(uint32 variant = 0; variant < (buffer_number*2); ++variant){
     check_data_match(data_sample, buffer.get_element(0));
     check_data_match(previous_data_sample, buffer.get_element(1));
-    copy(data_sample.begin(),data_sample.end(), previous_data_sample.begin());
+    std::copy(data_sample.begin(),data_sample.end(), previous_data_sample.begin());
     buffer.step();
     for(uint32 b = 0; b < buffer_size; ++b){
       data_sample[b] += b;
@@ -79,18 +73,18 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
  * - get_sequence_index
  * */
 TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-handling]"){
-  RafkoServiceContext service_context;
+  rafko_mainframe::RafkoServiceContext service_context;
   uint32 sequence_number = 5;
   uint32 buffer_size = 30;
-  DataRingbuffer buffer(sequence_number, buffer_size);
-  vector<sdouble32> data_sample(buffer_size);
+  rafko_utilities::DataRingbuffer buffer(sequence_number, buffer_size);
+  std::vector<sdouble32> data_sample(buffer_size);
 
   /* Simulate some runs: each element in the buffer shall have the value of it's past value */
   for(sint32 i = sequence_number-1; i >= 0; --i){
     buffer.step();
     for(sdouble32& sample_element : data_sample)
       sample_element = i;
-    copy(data_sample.begin(),data_sample.end(), buffer.get_element(0).begin());
+    std::copy(data_sample.begin(),data_sample.end(), buffer.get_element(0).begin());
   }
 
   /*!Note: To understand Sequential indexes in the Data ringbuffer, this might help:

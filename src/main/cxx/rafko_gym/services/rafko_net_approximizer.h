@@ -37,8 +37,6 @@
 
 namespace RAFKO_FULL_EXPORT rafko_gym{
 
-using std::vector;
-
 /**
  * @brief      This class approximates gradients for a @Dataset and @RafkoNet.
  *             The approximated gradients are collected into one gradient fragment.
@@ -90,7 +88,7 @@ public:
    * @param      direction         The direction
    * @param[in]  save_to_fragment  Decides wether or not to add the results into the collected gradient fragments
    */
-  void convert_direction_to_gradient(vector<sdouble32>& direction, bool save_to_fragment);
+  void convert_direction_to_gradient(std::vector<sdouble32>& direction, bool save_to_fragment);
 
   /**
    * @brief      Collects the approximate gradient of a single weight
@@ -192,7 +190,7 @@ private:
   uint32 stochastic_evaluation_loops;
 
   uint32 iteration = 1;
-  vector<sdouble32> applied_direction;
+  std::vector<sdouble32> applied_direction;
   sdouble32 epsilon_addition = double_literal(0.0);
   sdouble32 min_test_error = std::numeric_limits<sdouble32>::max();
   uint32 min_test_error_was_at_iteration = 0;

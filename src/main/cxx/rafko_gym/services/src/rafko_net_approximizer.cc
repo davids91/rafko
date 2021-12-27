@@ -24,7 +24,7 @@
 namespace rafko_gym{
 
 void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
-  vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
+  std::vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
   sdouble32 gradient_overview = get_gradient_for_all_weights() * service_context.get_learning_rate(iteration);
   sdouble32 greatest_weight_value = double_literal(0.0);
   for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
@@ -44,12 +44,12 @@ void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
   ++iteration;
 }
 
-void RafkoNetApproximizer::convert_direction_to_gradient(vector<sdouble32>& direction, bool save_to_fragment){
+void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<sdouble32>& direction, bool save_to_fragment){
   if(net.weight_table_size() == static_cast<sint32>(direction.size())){
     sdouble32 error_negative_direction;
     sdouble32 error_positive_direction;
 
-    vector<sdouble32> weight_gradients(net.weight_table_size(), double_literal(0.0));
+    std::vector<sdouble32> weight_gradients(net.weight_table_size(), double_literal(0.0));
     for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
       net.set_weight_table(weight_index, (net.weight_table(weight_index) - direction[weight_index]) );
     } /* apply the direction on which network approximation shall be done */

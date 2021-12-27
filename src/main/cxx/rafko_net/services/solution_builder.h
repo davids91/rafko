@@ -20,20 +20,11 @@
 
 #include "rafko_global.h"
 
-#include <memory>
-#include <vector>
-#include <thread>
-
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_service_context.h"
 
 namespace rafko_net {
-
-using std::vector;
-using std::thread;
-
-using rafko_mainframe::RafkoServiceContext;
 
 /**
  * @brief      Front-end to create a @Soltuion to solve a @RafkoNet. @max_solve_threads
@@ -58,7 +49,7 @@ public:
    *
    * @param[in]  context  The Service context
    */
-  SolutionBuilder(RafkoServiceContext& service_context_)
+  SolutionBuilder(rafko_mainframe::RafkoServiceContext& service_context_)
   :  service_context(service_context_)
   { }
 
@@ -66,14 +57,14 @@ public:
    * @brief      Build the Solution to be solved by @SolutionSolver
    *
    * @param[in]  net               The network to build a solution from
-   * @param[in]  optimize_to_gpu   Should the resulting solution be optimized for large amount of threads
+   * @param[in]  optimize_to_gpu   True, Should the resulting solution be optimized for large amount of threads
    *
    * @return     Builder reference for chaining
    */
   Solution* build(const RafkoNet& net, bool optimize_to_gpu = false);
 
 private:
-  RafkoServiceContext& service_context;
+  rafko_mainframe::RafkoServiceContext& service_context;
 
   static sdouble32 get_size_in_mb(const PartialSolution& partial){
     return partial.SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */;

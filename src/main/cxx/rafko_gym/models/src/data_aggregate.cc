@@ -27,12 +27,12 @@ void DataAggregate::fill(rafko_gym::DataSet& samples){
   uint32 input_start_index = 0;
   /*!Note: One cycle can be used for both, because there will always be at least as many inputs as labels */
   for(uint32 raw_sample_iterator = 0; raw_sample_iterator < input_samples.size(); ++ raw_sample_iterator){
-    input_samples[raw_sample_iterator] = vector<sdouble32>(samples.input_size());
+    input_samples[raw_sample_iterator] = std::vector<sdouble32>(samples.input_size());
     for(uint32 input_iterator = 0; input_iterator < samples.input_size(); ++input_iterator)
       input_samples[raw_sample_iterator][input_iterator] = samples.inputs(input_start_index + input_iterator);
     input_start_index += samples.input_size();
     if(raw_sample_iterator < label_samples.size()){
-      label_samples[raw_sample_iterator] = vector<sdouble32>(samples.feature_size());
+      label_samples[raw_sample_iterator] = std::vector<sdouble32>(samples.feature_size());
       for(uint32 feature_iterator = 0; feature_iterator < samples.feature_size(); ++feature_iterator)
         label_samples[raw_sample_iterator][feature_iterator] = samples.labels(feature_start_index + feature_iterator);
       feature_start_index += samples.feature_size();
@@ -40,7 +40,7 @@ void DataAggregate::fill(rafko_gym::DataSet& samples){
   }
 }
 
-void DataAggregate::set_feature_for_label(uint32 sample_index, const vector<sdouble32>& neuron_data){
+void DataAggregate::set_feature_for_label(uint32 sample_index, const std::vector<sdouble32>& neuron_data){
   if(label_samples.size() > sample_index){
     if(!exposed_to_multithreading){
       std::lock_guard<std::mutex> my_lock(dataset_mutex);
@@ -57,7 +57,7 @@ void DataAggregate::set_feature_for_label(uint32 sample_index, const vector<sdou
 }
 
 void DataAggregate::set_features_for_labels(
-  const vector<vector<sdouble32>>& neuron_data,
+  const std::vector<std::vector<sdouble32>>& neuron_data,
   uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate
 ){
   if((raw_start_index + labels_to_evaluate) <= error_state.back().sample_errors.size()){
@@ -73,10 +73,10 @@ void DataAggregate::set_features_for_labels(
 }
 
 void DataAggregate::set_features_for_sequences(
-  const vector<vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index,
+  const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index,
   uint32 sequence_start_index, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation,
-  vector<sdouble32>& tmp_data
+  std::vector<sdouble32>& tmp_data
 ){
   if((sequence_start_index + sequences_to_evaluate) <= get_number_of_sequences()){
     if((start_index_in_sequence + sequence_truncation) > get_sequence_size())

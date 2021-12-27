@@ -25,13 +25,13 @@
 
 namespace rafko_net{
 
-SolutionSolver::Builder::Builder(const Solution& to_solve, RafkoServiceContext& context)
+SolutionSolver::Builder::Builder(const Solution& to_solve, rafko_mainframe::RafkoServiceContext& context)
 :  solution(to_solve)
 ,  service_context(context)
 {
   uint32 partial_index_at_row_start = 0;
   for(sint32 row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
-    partial_solvers.push_back(vector<PartialSolutionSolver>());
+    partial_solvers.push_back(std::vector<PartialSolutionSolver>());
     for(uint32 column_index = 0; column_index < solution.cols(row_iterator); ++column_index){
       partial_solvers[row_iterator].push_back( PartialSolutionSolver(
         solution.partial_solutions(partial_index_at_row_start + column_index), context
@@ -46,7 +46,7 @@ SolutionSolver::Builder::Builder(const Solution& to_solve, RafkoServiceContext& 
 }
 
 SolutionSolver::SolutionSolver(
-  const Solution& to_solve, RafkoServiceContext& context, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
+  const Solution& to_solve, rafko_mainframe::RafkoServiceContext& context, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
   uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
 ): rafko_gym::RafkoAgent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, context.get_max_processing_threads())
 ,  solution(to_solve)
@@ -59,7 +59,7 @@ SolutionSolver::SolutionSolver(
 }
 
 void SolutionSolver::solve(
-  const std::vector<sdouble32>& input, DataRingbuffer& output,
+  const std::vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,
   const std::vector<std::reference_wrapper<std::vector<sdouble32>>>& tmp_data_pool,
   uint32 used_data_pool_start, uint32 thread_index
 ) const{

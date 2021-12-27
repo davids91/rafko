@@ -34,24 +34,13 @@
 
 namespace rafko_gym_test {
 
-using std::vector;
-using std::reference_wrapper;
-
-using rafko_mainframe::RafkoServiceContext;
-using rafko_utilities::DataRingbuffer;
-using rafko_gym::RafkoAgent;
-using rafko_gym::RafkoEnvironmentDataSet;
-using rafko_net::Solution;
-using rafko_gym::DataSet;
-using rafko_net::CostFunctionMSE;
-
 /*###############################################################################################
  * Testing if the data-set environment produces correct error values
  * */
-class DummyRafkoAgent : public RafkoAgent{
+class DummyRafkoAgent : public rafko_gym::RafkoAgent{
 public:
-  DummyRafkoAgent(Solution& solution) : RafkoAgent(solution,0,0,4) { }
-  void solve(const vector<sdouble32>&, DataRingbuffer& output, const vector<reference_wrapper<vector<sdouble32>>>&, uint32, uint32 ) const{
+  DummyRafkoAgent(rafko_net::Solution& solution) : RafkoAgent(solution,0,0,4) { }
+  void solve(const std::vector<sdouble32>&, rafko_utilities::DataRingbuffer& output, const std::vector<std::reference_wrapper<std::vector<sdouble32>>>&, uint32, uint32 ) const{
     output = result;
   }
   void set_result(sdouble32 value){
@@ -59,20 +48,20 @@ public:
   }
   ~DummyRafkoAgent() = default;
 private:
-  DataRingbuffer result{1,1};
+  rafko_utilities::DataRingbuffer result{1,1};
 };
 
 TEST_CASE("Testing Dataset environment", "[environment]"){
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
-  RafkoServiceContext service_context = RafkoServiceContext()
+  rafko_mainframe::RafkoServiceContext service_context = rafko_mainframe::RafkoServiceContext()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
   /* Create a @DataSet and fill it with data */
-  DataSet data_set = DataSet();
+  rafko_gym::DataSet data_set = rafko_gym::DataSet();
   data_set.set_input_size(1);
   data_set.set_feature_size(1);
   data_set.set_sequence_size(sequence_size);
@@ -83,10 +72,10 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   }
 
   /* Create the environment and dummy agent */
-  rafko_gym::DataAggregate training_set(service_context, data_set, std::make_unique<CostFunctionMSE>(service_context));
-  rafko_gym::DataAggregate test_set(service_context, data_set, std::make_unique<CostFunctionMSE>(service_context));
-  RafkoEnvironmentDataSet environment(service_context, training_set, test_set);
-  Solution solution;
+  rafko_gym::DataAggregate training_set(service_context, data_set, std::make_unique<rafko_net::CostFunctionMSE>(service_context));
+  rafko_gym::DataAggregate test_set(service_context, data_set, std::make_unique<rafko_net::CostFunctionMSE>(service_context));
+  rafko_gym::RafkoEnvironmentDataSet environment(service_context, training_set, test_set);
+  rafko_net::Solution solution;
   solution.set_neuron_number(1);
   solution.set_output_neuron_number(1);
   solution.set_network_memory_length(1);

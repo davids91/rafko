@@ -21,8 +21,6 @@
 #include "rafko_global.h"
 
 #include <vector>
-#include <atomic>
-#include <mutex>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
@@ -34,17 +32,10 @@
 
 namespace rafko_net {
 
-using std::vector;
-using std::mutex;
-using std::atomic;
-
-using rafko_utilities::DataPool;
-using rafko_utilities::DataRingbuffer;
-
 class PartialSolutionSolver{
 
 public:
-  PartialSolutionSolver(const PartialSolution& partial_solution, RafkoServiceContext& service_context)
+  PartialSolutionSolver(const PartialSolution& partial_solution, rafko_mainframe::RafkoServiceContext& service_context)
   :  detail(partial_solution)
   ,  internal_weight_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())
@@ -58,8 +49,8 @@ public:
    * @param      input_data           The reference to collect input data from
    * @param      output_neuron_data   The reference to transfer function output
    */
-   void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data) const{
-     vector<sdouble32>& used_buffer = common_data_pool.reserve_buffer(get_required_tmp_data_size());
+   void solve(const std::vector<sdouble32>& input_data, rafko_utilities::DataRingbuffer& output_neuron_data) const{
+     std::vector<sdouble32>& used_buffer = common_data_pool.reserve_buffer(get_required_tmp_data_size());
      solve_internal(input_data, output_neuron_data, used_buffer);
      common_data_pool.release_buffer(used_buffer);
    }
@@ -72,8 +63,8 @@ public:
     * @param      output_neuron_data   The reference to transfer function output
     * @param      used_data_pool       The reference to a datapool the partial solver may use for intermediate calculations
     */
-   void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data, DataPool<sdouble32>& used_data_pool) const{
-     vector<sdouble32>& used_buffer = used_data_pool.reserve_buffer(get_required_tmp_data_size());
+   void solve(const std::vector<sdouble32>& input_data, rafko_utilities::DataRingbuffer& output_neuron_data, rafko_utilities::DataPool<sdouble32>& used_data_pool) const{
+     std::vector<sdouble32>& used_buffer = used_data_pool.reserve_buffer(get_required_tmp_data_size());
      solve_internal(input_data, output_neuron_data, used_buffer);
      used_data_pool.release_buffer(used_buffer);
    }
@@ -87,7 +78,7 @@ public:
     * @param      output_neuron_data   The reference to transfer function output
     * @param      temp_data            The reference a vector allocated to keep the required collected inputs
     */
-   void solve(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data,  vector<sdouble32>& temp_data) const{
+   void solve(const std::vector<sdouble32>& input_data, rafko_utilities::DataRingbuffer& output_neuron_data, std::vector<sdouble32>& temp_data) const{
      temp_data.resize(get_required_tmp_data_size());
      solve_internal(input_data, output_neuron_data, temp_data);
    }
@@ -120,7 +111,7 @@ public:
   }
 
 private:
-  static DataPool<sdouble32> common_data_pool;
+  static rafko_utilities::DataPool<sdouble32> common_data_pool;
 
   /**
    * The Partial solution to solve
@@ -151,7 +142,7 @@ private:
    * @param      output_neuron_data   The reference to transfer function output
    * @param      temp_data            The reference a vector allocated to keep the required collected inputs
    */
-  void solve_internal(const vector<sdouble32>& input_data, DataRingbuffer& output_neuron_data, vector<sdouble32>& temp_data) const;
+  void solve_internal(const std::vector<sdouble32>& input_data, rafko_utilities::DataRingbuffer& output_neuron_data, std::vector<sdouble32>& temp_data) const;
 
 };
 

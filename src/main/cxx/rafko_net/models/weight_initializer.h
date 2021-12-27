@@ -27,18 +27,12 @@
 
 namespace rafko_net {
 
-using std::min;
-using std::max;
-using std::numeric_limits;
-
-using rafko_mainframe::RafkoServiceContext;
-
 class RAFKO_FULL_EXPORT WeightInitializer{
 public:
   /**
    * @brief      Constructs the object.
    */
-  WeightInitializer(RafkoServiceContext& service_context) noexcept
+  WeightInitializer(rafko_mainframe::RafkoServiceContext& service_context) noexcept
   : context(service_context)
   { };
 
@@ -73,15 +67,15 @@ public:
    * @param[in]  expected_input_maximum_value_     The exponent input maximum
    */
   void set(uint32 expected_input_number_, sdouble32 expected_input_maximum_value_){
-    expected_input_number = max(1u,expected_input_number_);
+    expected_input_number = std::max(1u,expected_input_number_);
     if( /* Primitive check if the given number causes overflow or not */
-      (numeric_limits<sdouble32>::max() > (expected_input_number_ * std::abs(expected_input_maximum_value_)))
+      (std::numeric_limits<sdouble32>::max() > (expected_input_number_ * std::abs(expected_input_maximum_value_)))
     ){
       expected_input_maximum_value = expected_input_maximum_value_;
     }else if(double_literal(0.0) == expected_input_maximum_value_){
-      expected_input_maximum_value = numeric_limits<sdouble32>::epsilon();
+      expected_input_maximum_value = std::numeric_limits<sdouble32>::epsilon();
     }else{ /* Overflow! Use maximum value */
-      expected_input_maximum_value = numeric_limits<sdouble32>::max() / expected_input_number_;
+      expected_input_maximum_value = std::numeric_limits<sdouble32>::max() / expected_input_number_;
     }
   }
 
@@ -98,7 +92,7 @@ public:
   virtual ~WeightInitializer() = default;
 
 protected:
-  RafkoServiceContext& context;
+  rafko_mainframe::RafkoServiceContext& context;
 
   /**
    * @brief      Limits the given weight into the limits used in the Neural Network
@@ -108,7 +102,7 @@ protected:
    * @return     Limited value
    */
   sdouble32 limit_weight(sdouble32 weight) const{
-    return min(double_literal(1.0),max(-double_literal(1.0),weight));
+    return std::min(double_literal(1.0),std::max(-double_literal(1.0),weight));
   }
 
   /**
@@ -119,7 +113,7 @@ protected:
   /**
    * Estimated Maximum value of one @Neuron input
    */
-  sdouble32 expected_input_maximum_value = numeric_limits<sdouble32>::epsilon();
+  sdouble32 expected_input_maximum_value = std::numeric_limits<sdouble32>::epsilon();
 };
 
 } /* namespace rafko_net */

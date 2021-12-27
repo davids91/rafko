@@ -101,7 +101,7 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly with w
 
     mockup.mutable_relevant_neurons(0)->set_interval_size(neuron_data.size()); /* one synapse for the whole array */
 
-    rafko_net::ThreadGroup loop_threads((rand()%16) + 1u);
+    rafko_utilities::ThreadGroup loop_threads((rand()%16) + 1u);
     check_softmax_values(neuron_data, mockup, loop_threads);
   }
 }
@@ -134,7 +134,7 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly with m
       if((start_index + synapse_size) > neuron_data.size())break; /* do not reach beyond the available array */
     }
 
-    rafko_net::ThreadGroup loop_threads((rand()%16) + 1u);
+    rafko_utilities::ThreadGroup loop_threads((rand()%16) + 1u);
     check_softmax_values(neuron_data, mockup, loop_threads);
   }
 }

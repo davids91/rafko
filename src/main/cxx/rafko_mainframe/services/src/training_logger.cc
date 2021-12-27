@@ -22,13 +22,11 @@
 
 namespace rafko_mainframe{
 
-using std::ios;
-
-void Training_logger::log(uint32 iteration, const vector<uint32>& coordinates, const vector<string>& tags, const vector<sdouble32>& data){
+void Training_logger::log(uint32 iteration, const std::vector<uint32>& coordinates, const std::vector<std::string>& tags, const std::vector<sdouble32>& data){
   DataPackage measured;
   measured.set_iteration(iteration);
   for(const uint32& coordinate : coordinates) measured.add_coordinates(coordinate);
-  for(const string& tag : tags) measured.add_tags(tag);
+  for(const std::string& tag : tags) measured.add_tags(tag);
   for(const sdouble32& data_element : data) measured.add_data(data_element);
   *measurement.add_packs() = measured;
   ++changes_since;
@@ -38,7 +36,7 @@ void Training_logger::log(uint32 iteration, const vector<uint32>& coordinates, c
 
 void Training_logger::flush(){
   std::filebuf logfile;
-  logfile.open(id+".log", ios::out | ios::binary | ios::trunc);
+  logfile.open(id+".log", std::ios::out | std::ios::binary | std::ios::trunc);
   std::ostream log_stream(&logfile);
   measurement.SerializeToOstream(&log_stream);
   changes_since = 0;

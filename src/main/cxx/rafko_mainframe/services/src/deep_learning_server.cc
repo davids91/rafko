@@ -25,21 +25,16 @@
 
 namespace rafko_mainframe{
 
-using rafko_net::Transfer_functions;
-using rafko_net::Transfer_functions_IsValid;
-using std::lock_guard;
-using std::thread;
-
 void DeepLearningServer::loop(){
-  lock_guard<mutex> my_lock(server_mutex);
+  std::lock_guard<std::mutex> my_lock(server_mutex);
   for(uint32 i = 0; i < server_slots.size(); ++i){
     if(0 < is_server_slot_running[i]){
       if(server_slot_mutexs[i]->try_lock()){ /* Able to lock the slot */
-        thread loop_thread([&](const uint32 slot_index){ /* start a new thread for the loop operation */
-          lock_guard<mutex> my_slot_lock_(*server_slot_mutexs[slot_index], std::adopt_lock);
+        std::thread loop_thread([&](const uint32 slot_index){ /* start a new thread for the loop operation */
+          std::lock_guard<std::mutex> my_slot_lock_(*server_slot_mutexs[slot_index], std::adopt_lock);
           server_slots[slot_index]->loop();
           ++iteration[slot_index];
-          lock_guard<mutex> my_cout_lock(server_mutex);
+          std::lock_guard<std::mutex> my_cout_lock(server_mutex);
           std::cout << "\r";
           std::cout << "slot[" << slot_index << "]"
           << "; iteration:" << iteration[slot_index]
@@ -62,15 +57,15 @@ void DeepLearningServer::loop(){
   ::grpc::Status return_value = ::grpc::Status::CANCELLED;
   std::cout << " +++ add_slot +++ " << std::endl;
   try{
-    lock_guard<mutex> my_lock(server_mutex);
-    server_slot_mutexs.push_back(std::make_unique<mutex>());
-    server_slots.push_back(unique_ptr<ServerSlot>(
+    std::lock_guard<std::mutex> my_lock(server_mutex);
+    server_slot_mutexs.push_back(std::make_unique<std::mutex>());
+    server_slots.push_back(std::unique_ptr<ServerSlot>(
       ServerSlotFactory::build_server_slot(request->type())
     ));
     is_server_slot_running.push_back(0);
     iteration.push_back(0);
     if(server_slots.back()){ /* If Item successfully added */
-      lock_guard<mutex> my_lock(*server_slot_mutexs.back());
+      std::lock_guard<std::mutex> my_lock(*server_slot_mutexs.back());
       server_slots.back()->initialize(ServiceSlot(*request));
       response->CopyFrom(server_slots.back()->get_status());
       return_value = ::grpc::Status::OK;
@@ -94,7 +89,7 @@ void DeepLearningServer::loop(){
   try{
     const uint32 slot_index = find_id(request->slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
-      lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+      std::lock_guard<std::mutex> my_lock(*server_slot_mutexs[slot_index]);
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
       server_slots[slot_index]->initialize(ServiceSlot(*request));
       response->CopyFrom(server_slots[slot_index]->get_status());
@@ -119,7 +114,7 @@ void DeepLearningServer::loop(){
   try{
     const uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
-      lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+      std::lock_guard<std::mutex> my_lock(*server_slot_mutexs[slot_index]);
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
       response->CopyFrom(server_slots[slot_index]->get_status());
     }
@@ -145,7 +140,7 @@ void DeepLearningServer::loop(){
     const uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
-      lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+      std::lock_guard<std::mutex> my_lock(*server_slot_mutexs[slot_index]);
       server_slots[slot_index]->update_network(BuildNetworkRequest(*request));
       response->CopyFrom(server_slots[slot_index]->get_status());
       return_value = ::grpc::Status::OK;
@@ -173,7 +168,7 @@ void DeepLearningServer::loop(){
       if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
         uint32 request_bitstring = current_request.request_bitstring();
         uint32 request_index = current_request.request_index();
-        lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+        std::lock_guard<std::mutex> my_lock(*server_slot_mutexs[slot_index]);
         std::cout << " on slot["<< slot_index <<"]" << std::endl;
         if(0 < (request_bitstring & serv_slot_to_start)){
           is_server_slot_running[slot_index] = 1;
@@ -236,7 +231,7 @@ void DeepLearningServer::loop(){
           stream->Write(response);
         }
         if(0 < (request_bitstring & serv_slot_to_die)){
-          lock_guard<mutex> my_lock(server_mutex);
+          std::lock_guard<std::mutex> my_lock(server_mutex);
           std::cout << " --- request_action --- " << std::endl;
           return ::grpc::Status::CANCELLED; /* Not implemented yet */
         }
@@ -265,7 +260,7 @@ void DeepLearningServer::loop(){
   try{
     const uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
-      lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+      std::lock_guard<std::mutex> my_lock(*server_slot_mutexs[slot_index]);
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
       response->CopyFrom(server_slots[slot_index]->get_info(request->request_bitstring()));
       return_value = ::grpc::Status::OK;
@@ -290,7 +285,7 @@ void DeepLearningServer::loop(){
   try{
     const uint32 slot_index = find_id(request->target_slot_id());
     if((server_slots.size() > slot_index)&&(server_slots[slot_index])){
-      lock_guard<mutex> my_lock(*server_slot_mutexs[slot_index]);
+      std::lock_guard<std::mutex> my_lock(*server_slot_mutexs[slot_index]);
       std::cout << " on slot["<< slot_index <<"]" << std::endl;
       response->CopyFrom(server_slots[slot_index]->get_network());
       return_value = ::grpc::Status::OK;
@@ -304,7 +299,7 @@ void DeepLearningServer::loop(){
   return return_value;
 }
 
-uint32 DeepLearningServer::find_id(string id){
+uint32 DeepLearningServer::find_id(std::string id){
   uint32 index;
   for(index = 0; index < server_slots.size(); ++index)
     if((server_slots[index])&&(0 == id.compare(server_slots[index]->get_uuid())))

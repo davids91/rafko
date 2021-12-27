@@ -27,14 +27,6 @@
 
 namespace rafko_mainframe{
 
-using rafko_net::CostFunction;
-using rafko_gym::DataAggregate;
-using rafko_gym::RafkoNetApproximizer;
-using rafko_gym::RafkoEnvironmentDataSet;
-
-using std::unique_ptr;
-using std::shared_ptr;
-
 /**
  * @brief      This class describes a server slot which optimizes a Neural network
  *             for its stored datasets if the required input data and parameters are provided.
@@ -55,7 +47,7 @@ public:
     update_trainer();
   }
 
-  void update_network(RafkoNet&& net_){
+  void update_network(rafko_net::RafkoNet&& net_){
     ServerSlotRunNet::update_network(std::move(net_));
     update_cost_function();
     update_trainer();
@@ -109,11 +101,11 @@ public:
   }
 
 private:
-  shared_ptr<CostFunction> cost_function;
-  shared_ptr<DataAggregate> training_set;
-  shared_ptr<DataAggregate> test_set;
-  shared_ptr<RafkoEnvironmentDataSet> environment_data_set;
-  unique_ptr<RafkoNetApproximizer> network_approximizer;
+  std::shared_ptr<rafko_net::CostFunction> cost_function;
+  std::shared_ptr<rafko_gym::DataAggregate> training_set;
+  std::shared_ptr<rafko_gym::DataAggregate> test_set;
+  std::shared_ptr<rafko_gym::RafkoEnvironmentDataSet> environment_data_set;
+  std::unique_ptr<rafko_gym::RafkoNetApproximizer> network_approximizer;
 
   uint32 iteration = 0;
 

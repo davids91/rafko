@@ -26,15 +26,12 @@
 
 namespace rafko_net{
 
-using std::vector;
-using rafko_mainframe::RafkoServiceContext;
-
 /**
  * @brief      Transfer function handling and utilities
  */
 class TransferFunction{
 public:
-  TransferFunction(RafkoServiceContext& service_context)
+  TransferFunction(rafko_mainframe::RafkoServiceContext& service_context)
   : context(service_context)
   { }
 
@@ -52,7 +49,7 @@ public:
    *
    * @return     A random Transfer function according to the given range
    */
-  static Transfer_functions next(vector<Transfer_functions> range);
+  static Transfer_functions next(std::vector<Transfer_functions> range);
 
   /**
    * @brief      Provides the average range of the given Transfer functions output
@@ -83,7 +80,7 @@ public:
    */
   sdouble32 get_derivative(Transfer_functions function, sdouble32 data) const;
 private:
-  RafkoServiceContext& context;
+  rafko_mainframe::RafkoServiceContext& context;
 };
 
 } /* namespace rafko_net */

@@ -28,12 +28,6 @@
 
 namespace rafko_mainframe{
 
-using std::string;
-using std::shared_ptr;
-
-using rafko_gym::DataAggregate;
-using rafko_net::RafkoNet;
-
 /**
  * @brief      This class describes a common ancestor and interface of whatever
  *             is able to run in a @DeepLearningServer.
@@ -79,7 +73,7 @@ public:
    *
    * @param[in]  net_   The network to overwrite the current one
    */
-  virtual void update_network(RafkoNet&& net_) = 0;
+  virtual void update_network(rafko_net::RafkoNet&& net_) = 0;
 
   /**
    * @brief      Accept the request provided in the argument. Implementation may vary.
@@ -129,14 +123,14 @@ public:
    *
    * @return     The network currently loaded in the configuration
    */
-  virtual RafkoNet get_network() const = 0;
+  virtual rafko_net::RafkoNet get_network() const = 0;
 
   /**
    * @brief      Gets the identifier of the slot
    *
    * @return     The uuid.
    */
-  string get_uuid() const;
+  std::string get_uuid() const;
 
   /**
    * @brief      Provides the status of the server slot.
@@ -159,7 +153,7 @@ protected:
    *
    * @return     The built network, belonging to the arena in the service slot
    */
-  RafkoNet* build_network_from_request(BuildNetworkRequest&& request);
+  rafko_net::RafkoNet* build_network_from_request(BuildNetworkRequest&& request);
 
   /**
    * @brief      Generates a unique identifier, with a guarantee that the currently
@@ -167,7 +161,7 @@ protected:
    *
    * @return     A random unique Identifier string
    */
-  string generate_uuid();
+  std::string generate_uuid();
 
   /**
    * @brief      Updates status of the service slot so it shall store the induvidual status bits
@@ -198,7 +192,7 @@ protected:
    *                           the sizes inside the @data_set to copy the information from.
    *                           Whichever size components are not set correctly shall not be copied
    */
-  void get_data_sample(shared_ptr<DataAggregate> data_set, uint32 sample_index, NeuralIOStream& target) const;
+  void get_data_sample(std::shared_ptr<rafko_gym::DataAggregate> data_set, uint32 sample_index, NeuralIOStream& target) const;
 
 };
 

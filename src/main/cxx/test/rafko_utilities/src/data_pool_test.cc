@@ -27,20 +27,15 @@
 
 namespace rafko_utilities_test {
 
-using std::vector;
-using std::thread;
-
-using rafko_utilities::DataPool;
-
 /*###############################################################################################
  * Testing if data pool allocates data with the correct parameters
  * */
 TEST_CASE("Data Pool parameters", "[data-handling][data-pool]"){
   uint32 variants = 100;
-  DataPool<sdouble32> data_pool;
+  rafko_utilities::DataPool<sdouble32> data_pool;
   for(uint32 i = 0; i < variants; ++i){
     uint32 buffer_size = rand()%500;
-    vector<sdouble32>& buffer = data_pool.reserve_buffer(buffer_size);
+    std::vector<sdouble32>& buffer = data_pool.reserve_buffer(buffer_size);
     REQUIRE( buffer.size() == buffer_size );
     data_pool.release_buffer(buffer);
   }
@@ -49,10 +44,10 @@ TEST_CASE("Data Pool parameters", "[data-handling][data-pool]"){
 /*###############################################################################################
  * Testing if data pool is thread-safe
  * */
-void use_buffer_thread(DataPool<sdouble32>& data_pool){
+void use_buffer_thread(rafko_utilities::DataPool<sdouble32>& data_pool){
   uint32 buffer_size = rand()%500;
-  vector<sdouble32>& buffer = data_pool.reserve_buffer(buffer_size);
-  vector<sdouble32> test_buffer = vector<sdouble32>(buffer_size);
+  std::vector<sdouble32>& buffer = data_pool.reserve_buffer(buffer_size);
+  std::vector<sdouble32> test_buffer = std::vector<sdouble32>(buffer_size);
   for(uint32 i = 0; i < buffer_size; ++i){
     test_buffer[i] = rand()%1000;
     buffer[i] = test_buffer[i];
@@ -65,11 +60,11 @@ void use_buffer_thread(DataPool<sdouble32>& data_pool){
 
 TEST_CASE("Data Pool multi-thread access", "[data-handling][data-pool][multi-threading]"){
   uint32 variants = 10;
-  DataPool<sdouble32> data_pool;
+  rafko_utilities::DataPool<sdouble32> data_pool;
   for(uint32 i = 0; i < variants; ++i){
-    vector<thread> threads = vector<thread>();
+    std::vector<std::thread> threads = std::vector<std::thread>();
     for(uint32 j = 0; j < variants; ++j){
-      threads.push_back(thread(&use_buffer_thread, std::ref(data_pool)));
+      threads.push_back(std::thread(&use_buffer_thread, std::ref(data_pool)));
     }
     while(0 < threads.size())
       if(threads.back().joinable()){
