@@ -41,8 +41,7 @@ namespace rafko_utilities{
 class RAFKO_FULL_EXPORT DataRingbuffer{
 public:
   DataRingbuffer(uint32 buffer_number, uint32 buffer_size)
-  :  current_index(0)
-  ,  data(buffer_number)
+  :  data(buffer_number)
   {
     for(std::vector<sdouble32>& buffer : data)
       buffer = std::vector<sdouble32>(buffer_size, double_literal(0.0));
@@ -191,7 +190,7 @@ public:
   }
 
 private:
-  uint32 current_index;
+  uint32 current_index = 0u;
   std::vector<std::vector<sdouble32>> data;
 
   /**

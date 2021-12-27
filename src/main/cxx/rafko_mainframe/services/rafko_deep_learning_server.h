@@ -35,14 +35,6 @@ namespace rafko_mainframe{
  */
 class DeepLearningServer final : public RafkoDeepLearning::Service{
 public:
-  DeepLearningServer()
-  :  server_slots()
-  ,  server_slot_mutexs()
-  ,  is_server_slot_running()
-  ,  iteration()
-  ,  server_mutex()
-  { }
-
   DeepLearningServer(const DeepLearningServer& other) = delete;/* Copy constructor */
   DeepLearningServer(DeepLearningServer&& other) = delete; /* Move constructor */
   DeepLearningServer& operator=(const DeepLearningServer& other) = delete; /* Copy assignment */
@@ -61,7 +53,6 @@ public:
    * @brief      The main loop of the server to run to be able to provide the service
    */
   void loop();
-  ~DeepLearningServer(){ server_slots.clear(); }
 
 private:
   std::vector<std::unique_ptr<ServerSlot>> server_slots; /* points to different implementations of a @ServerSlot */

@@ -82,7 +82,6 @@ public:
        double_literal(1.0)
      })
   ,  cost_function(cost_function_)
-  ,  exposed_to_multithreading(false)
   ,  error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   {
     if(0 != (label_samples.size()%sequence_size))throw std::runtime_error("Sequence size doesn't match label number in Data set!");
@@ -368,7 +367,7 @@ private:
   uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
   std::vector<error_state_type> error_state;
   std::shared_ptr<rafko_net::CostFunction> cost_function;
-  bool exposed_to_multithreading; /* basically decides whether or not error sum calculation is enabled. */
+  bool exposed_to_multithreading = false; /* basically decides whether or not error sum calculation is enabled. */
   mutable std::mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a std::mutex is required */
   const std::function<void(uint32)> error_calculation_lambda =  [this](uint32 thread_index){
     uint32 length = error_state.back().sample_errors.size() / settings.get_sqrt_of_solve_threads();

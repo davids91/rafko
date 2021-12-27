@@ -36,7 +36,7 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT RafkoAgent{
 public:
-  RafkoAgent(const rafko_net::Solution& brain_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1)
+  RafkoAgent(const rafko_net::Solution& brain_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1u)
   : brain(brain_)
   , required_temp_data_number_per_thread(required_temp_data_number_per_thread_)
   , required_temp_data_size(required_temp_data_size_)

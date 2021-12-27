@@ -266,8 +266,8 @@ private:
   sdouble32 device_max_megabytes = double_literal(2048);
   google::protobuf::Arena* arena_ptr = nullptr;
   rafko_mainframe::ServiceHyperparameters hypers = rafko_mainframe::ServiceHyperparameters();
-  mutable uint32 learning_rate_decay_iteration_cache = 0;
-  mutable uint32 learning_rate_decay_index_cache = 0;
+  mutable uint32 learning_rate_decay_iteration_cache = 0u;
+  mutable uint32 learning_rate_decay_index_cache = 0u;
   std::vector<std::pair<uint32, sdouble32>> learning_rate_with_decay;
   std::vector<std::pair<uint32, sdouble32>> learning_rate_decay;
 

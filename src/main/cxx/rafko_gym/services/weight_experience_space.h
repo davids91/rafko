@@ -117,10 +117,10 @@ private:
   sdouble32 weight_min, weight_max, weight_step;
   std::vector<sdouble32> weight_values;
   std::vector<sdouble32> experiences;
-  uint32 best_weight_index;
-  uint32 worst_weight_index;
-  uint32 last_weight_index;
-  uint32 smallest_experience;
+  uint32 best_weight_index = 0u;
+  uint32 worst_weight_index = 0u;
+  uint32 last_weight_index = 0u;
+  uint32 smallest_experience = 0u;
 
   /**
    * @brief      Updates @best_weight_index and @worst_weight_index based on the @experiences vector

@@ -44,8 +44,6 @@ public:
   , settings(settings_)
   , required_iterations_for_step(required_iterations_for_step_)
   , weights_to_do_in_one_thread(1u + static_cast<uint32>(net.weight_table_size()/settings.get_max_solve_threads()))
-  , iteration(0)
-  , finished(false)
   , current_velocity(rafko_net.weight_table_size(),double_literal(0.0))
   , execution_threads(settings.get_max_solve_threads())
   , weights_in_partials(rafko_net.weight_table_size())
@@ -130,8 +128,8 @@ protected:
   rafko_mainframe::RafkoSettings& settings;
   const uint32 required_iterations_for_step;
   const uint32 weights_to_do_in_one_thread;
-  uint32 iteration;
-  bool finished;
+  uint32 iteration = 0u;
+  bool finished = false;
   std::vector<sdouble32> current_velocity;
 
   /**

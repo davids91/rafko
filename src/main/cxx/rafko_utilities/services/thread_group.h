@@ -39,8 +39,7 @@ namespace rafko_utilities{
  */
 class RAFKO_FULL_EXPORT ThreadGroup{
 public:
-  ThreadGroup(uint32 number_of_threads)
-  {
+  ThreadGroup(uint32 number_of_threads){
     assert(0u < number_of_threads);
     for(uint32 i = 0; i < number_of_threads; ++i)
      threads.emplace_back(std::thread(&ThreadGroup::worker, this, i));

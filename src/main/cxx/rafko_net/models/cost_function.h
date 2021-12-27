@@ -37,8 +37,6 @@ class RAFKO_FULL_EXPORT CostFunction{
 public:
   CostFunction(Cost_functions the_function_, rafko_mainframe::RafkoSettings& settings)
   : settings(settings)
-  , process_threads()
-  , thread_results()
   , the_function(the_function_)
   , execution_threads(settings.get_sqrt_of_solve_threads())
   {

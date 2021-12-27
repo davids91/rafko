@@ -30,8 +30,6 @@ WeightExperienceSpace::WeightExperienceSpace(sdouble32 weight_min_, sdouble32 we
 ,  experiences(2 + (weight_max - weight_min)/weight_step)
 ,  best_weight_index(rand()%(weight_values.size()))
 ,  worst_weight_index(rand()%(weight_values.size()))
-,  last_weight_index(0)
-,  smallest_experience(0)
 {
   if(weight_min > weight_max)
     throw std::runtime_error("Minimum value can not be greater, than maximum value!");

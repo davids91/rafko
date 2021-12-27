@@ -56,8 +56,6 @@ class SynapseIterator{
 public:
    SynapseIterator(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval)
   :  synapse_interval(arg_synapse_interval)
-  ,  last_reached_synapse(0)
-  ,  last_reached_index(0)
   { };
 
   void iterate(std::function< void(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
@@ -387,8 +385,8 @@ public:
 
 private:
   const google::protobuf::RepeatedPtrField<Interval_type>& synapse_interval;
-  mutable uint32 last_reached_synapse;
-  mutable uint32 last_reached_index;
+  mutable uint32 last_reached_synapse = 0u;
+  mutable uint32 last_reached_index = 0u;
   static uint32 interval_size; /* temporary variable */
 
   /**

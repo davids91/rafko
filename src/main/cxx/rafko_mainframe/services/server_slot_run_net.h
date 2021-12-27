@@ -34,9 +34,6 @@ class ServerSlotRunNet : public ServerSlot{
 public:
   ServerSlotRunNet()
   :  ServerSlot()
-  ,  network()
-  ,  network_solution()
-  ,  network_solver()
   {
     service_slot->set_type(serv_slot_to_run);
     network = google::protobuf::Arena::CreateMessage<rafko_net::RafkoNet>(settings.get_arena_ptr());
@@ -118,8 +115,8 @@ public:
   }
 
 protected:
-  rafko_net::RafkoNet* network;
-  rafko_net::Solution* network_solution;
+  rafko_net::RafkoNet* network = nullptr;
+  rafko_net::Solution* network_solution = nullptr;
   std::unique_ptr<rafko_net::SolutionSolver> network_solver;
 };
 

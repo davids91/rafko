@@ -26,7 +26,6 @@ class RAFKO_FULL_EXPORT RafkoWeightUpdaterAdam : public RafkoWeightUpdater{
 public:
   RafkoWeightUpdaterAdam(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_)
   :  RafkoWeightUpdater(rafko_net, solution_, settings_)
-  ,  iteration_count(0)
   ,  moment(rafko_net.weight_table_size(),double_literal(0.0))
   ,  raw_moment(rafko_net.weight_table_size(),double_literal(0.0))
   { }
@@ -55,7 +54,7 @@ private:
     );
   }
 
-  uint32 iteration_count;
+  uint32 iteration_count = 0u;
   std::vector<sdouble32> moment;
   std::vector<sdouble32> raw_moment;
 };

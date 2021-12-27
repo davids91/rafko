@@ -34,14 +34,12 @@ namespace rafko_mainframe{
  */
 class ServerSlot{
 public:
-  ServerSlot()
-  : arena()
-  , settings()
-  {
+  ServerSlot() {
     (void)settings.set_arena_ptr(&arena);
     service_slot = google::protobuf::Arena::CreateMessage<ServiceSlot>(&arena);
     service_slot->set_slot_id(generate_uuid());
   }
+
   virtual ~ServerSlot() = default;
 
   /**
