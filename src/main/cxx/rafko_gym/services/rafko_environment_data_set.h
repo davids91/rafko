@@ -26,9 +26,9 @@
 #include "rafko_utilities/services/thread_group.h"
 
 #include "rafko_protocol/training.pb.h"
-#include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/models/rafko_dataset_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
-#include "rafko_gym/services/rafko_environment.h"
+#include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/services/rafko_agent.h"
 
 namespace rafko_gym{
@@ -111,9 +111,9 @@ private:
   rafko_mainframe::RafkoSettings& settings;
   std::vector<std::reference_wrapper<RafkoAgent>> agents;
   RafkoDatasetWrapper training_set;
-  DataAggregate training_cost;
+  RafkoDatasetCost training_cost;
   RafkoDatasetWrapper test_set;
-  DataAggregate test_cost;
+  RafkoDatasetCost test_cost;
   std::vector<std::vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   rafko_utilities::ThreadGroup execution_threads;
 
@@ -132,7 +132,7 @@ private:
    * @param[in]  sequence_tructaion         The number of labels to evaluate inside every evaluated sequence
    */
   void evaluate(
-    RafkoAgent& agent, DataAggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
+    RafkoAgent& agent, RafkoDatasetCost& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_tructaion
   );
 
@@ -145,7 +145,7 @@ private:
    * @param[in]  sequence_index      The sequence to be evaluated inside the @data_set
    * @param[in]  thread_index        The index of the thread the function is used with inside @solve_threads
    */
-  void evaluate_single_sequence(RafkoAgent& agent, DataAggregate& data_set, uint32 sequence_index, uint32 thread_index);
+  void evaluate_single_sequence(RafkoAgent& agent, RafkoDatasetCost& data_set, uint32 sequence_index, uint32 thread_index);
 };
 
 } /* namespace rafko_gym */

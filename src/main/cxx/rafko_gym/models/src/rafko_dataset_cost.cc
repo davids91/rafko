@@ -14,15 +14,15 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/models/rafko_dataset_cost.h"
 
 #include <math.h>
 
 namespace rafko_gym{
 
-rafko_utilities::DataPool<sdouble32> DataAggregate::common_datapool(1,1);
+rafko_utilities::DataPool<sdouble32> RafkoDatasetCost::common_datapool(1,1);
 
-void DataAggregate::set_feature_for_label(uint32 sample_index, const std::vector<sdouble32>& neuron_data){
+void RafkoDatasetCost::set_feature_for_label(uint32 sample_index, const std::vector<sdouble32>& neuron_data){
   assert(dataset.get_number_of_label_samples() > sample_index);
   if(!exposed_to_multithreading){
     std::lock_guard<std::mutex> my_lock(dataset_mutex);
@@ -37,7 +37,7 @@ void DataAggregate::set_feature_for_label(uint32 sample_index, const std::vector
   }
 }
 
-void DataAggregate::set_features_for_labels(
+void RafkoDatasetCost::set_features_for_labels(
   const std::vector<std::vector<sdouble32>>& neuron_data,
   uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate
 ){
@@ -52,7 +52,7 @@ void DataAggregate::set_features_for_labels(
   }
 }
 
-void DataAggregate::set_features_for_sequences(
+void RafkoDatasetCost::set_features_for_sequences(
   const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_start_index,
   uint32 sequence_start_index, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation,
@@ -87,13 +87,13 @@ void DataAggregate::set_features_for_sequences(
   }else throw std::runtime_error("Sequence index out of bounds!");
 }
 
-void DataAggregate::conceal_from_multithreading(){
+void RafkoDatasetCost::conceal_from_multithreading(){
   exposed_to_multithreading = false;
   error_state.back().error_sum = 0;
   error_calculation_threads.start_and_block(error_calculation_lambda);
 }
 
-void DataAggregate::accumulate_error_sum(uint32 error_start, uint32 errors_to_sum){
+void RafkoDatasetCost::accumulate_error_sum(uint32 error_start, uint32 errors_to_sum){
   sdouble32 local_error = 0;
   for(uint32 sample_index = error_start; sample_index < (error_start + errors_to_sum) ; ++sample_index)
     local_error += error_state.back().sample_errors[sample_index];

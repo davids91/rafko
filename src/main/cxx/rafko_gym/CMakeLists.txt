@@ -9,13 +9,13 @@ set(GYM_INTERFACE_SERVICES
   services/weight_updater_nesterovs.h
 )
 set(GYM_HEADER_MODELS
-  models/data_aggregate.h
+  models/rafko_dataset_cost.h
   models/rafko_dataset_wrapper.h
 )
 set(GYM_HEADER_SERVICES
-  models/data_aggregate.h
+  models/rafko_dataset_cost.h
+  models/rafko_environment.h
   services/rafko_agent.h
-  services/rafko_environment.h
   services/rafko_net_approximizer.h
   services/updater_factory.h
   services/rafko_weight_updater.h
@@ -26,7 +26,7 @@ target_sources(rafko_gym
   INTERFACE ${GYM_INTERFACE_SERVICES}
   PUBLIC ${GYM_HEADERS}
   PRIVATE
-  models/src/data_aggregate.cc
+  models/src/rafko_dataset_cost.cc
   models/src/rafko_dataset_wrapper.cc
   services/src/backpropagation_queue_wrapper.cc
   services/src/rafko_environment_data_set.cc

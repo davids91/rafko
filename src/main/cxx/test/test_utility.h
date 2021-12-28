@@ -26,7 +26,7 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/models/rafko_dataset_cost.h"
 
 namespace rafko_test {
 

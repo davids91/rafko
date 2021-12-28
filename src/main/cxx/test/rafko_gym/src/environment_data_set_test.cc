@@ -27,7 +27,7 @@
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_net/models/cost_function_mse.h"
-#include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/models/rafko_dataset_cost.h"
 #include "rafko_gym/services/rafko_environment_data_set.h"
 
 #include "test/test_utility.h"
@@ -73,7 +73,7 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
 
   /* Create the environment and dummy agent */
   rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
-  rafko_gym::DataAggregate training_cost(settings, dataset_wrap, std::make_unique<rafko_net::CostFunctionMSE>(settings));
+  rafko_gym::RafkoDatasetCost training_cost(settings, dataset_wrap, std::make_unique<rafko_net::CostFunctionMSE>(settings));
   rafko_gym::RafkoEnvironmentDataSet environment(settings, dataset, dataset, rafko_net::cost_function_mse);
   rafko_net::Solution solution;
   solution.set_neuron_number(1);

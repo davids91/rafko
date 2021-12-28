@@ -49,7 +49,7 @@ RafkoEnvironmentDataSet::RafkoEnvironmentDataSet(
 }
 
 void RafkoEnvironmentDataSet::evaluate(
-  RafkoAgent& agent, DataAggregate& cost_container, uint32 sequence_start, uint32 sequences_to_evaluate,
+  RafkoAgent& agent, RafkoDatasetCost& cost_container, uint32 sequence_start, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation
 ){
   assert(cost_container.get_dataset().get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
@@ -69,7 +69,7 @@ void RafkoEnvironmentDataSet::evaluate(
   cost_container.conceal_from_multithreading();
 }
 
-void RafkoEnvironmentDataSet::evaluate_single_sequence(RafkoAgent& agent, DataAggregate& cost_container, uint32 sequence_index, uint32 thread_index){
+void RafkoEnvironmentDataSet::evaluate_single_sequence(RafkoAgent& agent, RafkoDatasetCost& cost_container, uint32 sequence_index, uint32 thread_index){
   if(cost_container.get_dataset().get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */
     /*!Note: This might happen because of the number of used threads might point to a grater index, than the number of sequences;
      * Which is mainly because of division remainder between number fo threads and the number of sequences

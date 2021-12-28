@@ -25,7 +25,7 @@
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/function_factory.h"
-#include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/models/rafko_dataset_cost.h"
 #include "rafko_gym/services/rafko_environment_data_set.h"
 #include "rafko_gym/services/rafko_net_approximizer.h"
 

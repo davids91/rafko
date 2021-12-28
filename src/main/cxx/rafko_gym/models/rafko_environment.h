@@ -30,6 +30,7 @@ namespace RAFKO_FULL_EXPORT rafko_gym{
  */
 class RafkoEnvironment{
 public:
+
   /**
    * @brief      Installs an agent to the environment
    *

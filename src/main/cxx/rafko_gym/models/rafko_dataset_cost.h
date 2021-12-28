@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef DATA_AGGREGATE_H
-#define DATA_AGGREGATE_H
+#ifndef RAFKO_DATASET_COST_H
+#define RAFKO_DATASET_COST_H
 
 #include "rafko_global.h"
 
@@ -40,9 +40,9 @@ namespace rafko_gym{
 /**
  * @brief      Error Statistics for a @RafkoDatasetWrapper
  */
-class RAFKO_FULL_EXPORT DataAggregate{
+class RAFKO_FULL_EXPORT RafkoDatasetCost{
 public:
-  DataAggregate(rafko_mainframe::RafkoSettings& settings_, const rafko_gym::RafkoDatasetWrapper& dataset_, std::shared_ptr<rafko_net::CostFunction> cost_function_)
+  RafkoDatasetCost(rafko_mainframe::RafkoSettings& settings_, const rafko_gym::RafkoDatasetWrapper& dataset_, std::shared_ptr<rafko_net::CostFunction> cost_function_)
   : settings(settings_)
   , dataset(dataset_)
   , error_state(double_literal(1.0),{
@@ -52,7 +52,7 @@ public:
   , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   { }
 
-  DataAggregate(rafko_mainframe::RafkoSettings& settings_, const rafko_gym::RafkoDatasetWrapper& dataset_, rafko_net::Cost_functions the_function)
+  RafkoDatasetCost(rafko_mainframe::RafkoSettings& settings_, const rafko_gym::RafkoDatasetWrapper& dataset_, rafko_net::Cost_functions the_function)
   : settings(settings_)
   , dataset(dataset_)
   , error_state(double_literal(1.0),{
@@ -251,4 +251,4 @@ private:
 
 } /* namespace rafko_gym */
 
-#endif /* DATA_AGGREGATE_H */
+#endif /* RAFKO_DATASET_COST_H */

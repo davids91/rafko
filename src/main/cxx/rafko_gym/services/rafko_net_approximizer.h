@@ -33,7 +33,7 @@
 #include "rafko_gym/services/updater_factory.h"
 #include "rafko_gym/services/rafko_weight_updater.h"
 #include "rafko_gym/services/rafko_agent.h"
-#include "rafko_gym/services/rafko_environment.h"
+#include "rafko_gym/models/rafko_environment.h"
 
 namespace RAFKO_FULL_EXPORT rafko_gym{
 

@@ -47,7 +47,7 @@ TEST_CASE("Testing Dataset wrapper creation", "[data-handling]" ) {
     data_set.add_labels(expected_label);
   }
 
-  /* Create @DataAggregate from @DataSet */
+  /* Create @RafkoDatasetCost from @DataSet */
   rafko_gym::RafkoDatasetWrapper data_agr(data_set);
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );
