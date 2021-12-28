@@ -1,29 +1,7 @@
-#include <iostream>
-
-#include <grpc/grpc.h>
-#include <grpcpp/server.h>
-#include <grpcpp/server_builder.h>
-#include <grpcpp/server_context.h>
-#include <grpcpp/security/server_credentials.h>
-
-#include "rafko_mainframe/services/rafko_deep_learning_server.h"
 
 int main(int argc, char *argv[]){
   parameter_not_used(argc);
   parameter_not_used(argv);
 
-  std::string server_address("0.0.0.0:50052");
-  rafko_mainframe::DeepLearningServer service;
-
-  grpc::ServerBuilder builder;
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  builder.RegisterService(&service);
-  std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << server_address << std::endl;
-  std::cout.precision(17);
-  while(true){
-    service.loop();
-  }
-  server->Wait();
   return 0;
 }

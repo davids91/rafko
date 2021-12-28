@@ -10,19 +10,9 @@ if(BUILD_MAINFRAME)
     INTERFACE
     PUBLIC
     ${MAINFRAME_MODEL_HEADERS}
-    services/rafko_deep_learning_server.h
-    services/server_slot_approximize_net.h
-    services/server_slot_factory.h
-    services/server_slot_optimize_net.h
-    services/server_slot_run_net.h
-    services/server_slot.h
     services/training_logger.h
     PRIVATE
     control/src/rafko_deep_learning_mainframe.cc
-    services/src/deep_learning_server.cc
-    services/src/server_slot_approximize_net.cc
-    services/src/server_slot_run_net.cc
-    services/src/server_slot.cc
     services/src/training_logger.cc
   )
   install(
