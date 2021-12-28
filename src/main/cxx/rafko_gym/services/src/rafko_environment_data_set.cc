@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_gym/services/rafko_environment_data_set.h"
+ #include "rafko_gym/services/rafko_environment_data_set.h"
 
 #include <math.h>
 
@@ -23,74 +23,75 @@
 
 namespace rafko_gym{
 
-RafkoEnvironmentDataSet::RafkoEnvironmentDataSet(rafko_mainframe::RafkoSettings& settings_, DataAggregate& train_set_, DataAggregate& test_set_)
-: settings(settings_)
-, train_set(train_set_)
+RafkoEnvironmentDataSet::RafkoEnvironmentDataSet(
+  rafko_mainframe::RafkoSettings& settings_,
+  const DataSet& training_set_, const DataSet& test_set_, rafko_net::Cost_functions cost_function
+):settings(settings_)
+, training_set(training_set_)
+, training_cost(settings, training_set, cost_function)
 , test_set(test_set_)
+, test_cost(settings, test_set, cost_function)
 , neuron_outputs_to_evaluate( /* For every thread, 1 sequence is evaluated.. */
-  (settings.get_max_processing_threads() * train_set.get_sequence_size() + 1u),
-  std::vector<sdouble32>(train_set_.get_feature_size()) /* ..plus for the label errors one additional vector is needed */
+  (settings.get_max_processing_threads() * training_set.get_sequence_size() + 1u),
+  std::vector<sdouble32>(training_set_.feature_size()) /* ..plus for the label errors one additional vector is needed */
 )
 , execution_threads(settings.get_max_processing_threads())
 , loops_unchecked(settings.get_tolerance_loop_value() + 1u)
-, used_sequence_truncation(std::min(settings.get_memory_truncation(), train_set.get_sequence_size()))
+, used_sequence_truncation( std::min(settings.get_memory_truncation(), training_set.get_sequence_size()) )
 {
   (void)settings.set_minibatch_size(std::max(1u,std::min(
-    train_set.get_number_of_sequences(),settings.get_minibatch_size()
+    training_set.get_number_of_sequences(),settings.get_minibatch_size()
   )));
   (void)settings.set_memory_truncation(std::max(1u,std::min(
-    train_set.get_sequence_size(), settings.get_memory_truncation()
+    training_set.get_sequence_size(), settings.get_memory_truncation()
   )));
-  neuron_outputs_to_evaluate.back().resize(train_set.get_number_of_label_samples());
+  neuron_outputs_to_evaluate.back().resize(training_set.get_number_of_label_samples());
 }
 
 void RafkoEnvironmentDataSet::evaluate(
-  RafkoAgent& agent, DataAggregate& data_set, uint32 sequence_start, uint32 sequences_to_evaluate,
+  RafkoAgent& agent, DataAggregate& cost_container, uint32 sequence_start, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation
 ){
-  if(data_set.get_number_of_sequences() < (sequence_start + sequences_to_evaluate))
-    throw std::runtime_error("Sequence interval out of bounds!");
+  assert(cost_container.get_dataset().get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
+  assert(cost_container.get_dataset().get_feature_size() == agent.get_solution().output_neuron_number());
 
-  if(train_set.get_feature_size() != agent.get_solution().output_neuron_number())
-    throw std::runtime_error("Network output size doesn't match size of provided labels!");
-
-  data_set.expose_to_multithreading();
+  cost_container.expose_to_multithreading();
   for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += settings.get_max_processing_threads()){
-    execution_threads.start_and_block([this, &agent, &data_set, sequence_index](uint32 thread_index){
-      evaluate_single_sequence(agent, data_set, sequence_index, thread_index);
+    execution_threads.start_and_block([this, &agent, &cost_container, sequence_index](uint32 thread_index){
+      evaluate_single_sequence(agent, cost_container, sequence_index, thread_index);
     });
-    data_set.set_features_for_sequences( /* Upload results to the data set */
+    cost_container.set_features_for_sequences( /* Upload results to the data set */
       neuron_outputs_to_evaluate, 0u,
       sequence_index, std::min(((sequence_start + sequences_to_evaluate) - (sequence_index)), static_cast<uint32>(settings.get_max_processing_threads())),
       start_index_in_sequence, sequence_truncation, neuron_outputs_to_evaluate.back()
     );
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
-  data_set.conceal_from_multithreading();
+  cost_container.conceal_from_multithreading();
 }
 
-void RafkoEnvironmentDataSet::evaluate_single_sequence(RafkoAgent& agent, DataAggregate& data_set, uint32 sequence_index, uint32 thread_index){
-  if(data_set.get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */
+void RafkoEnvironmentDataSet::evaluate_single_sequence(RafkoAgent& agent, DataAggregate& cost_container, uint32 sequence_index, uint32 thread_index){
+  if(cost_container.get_dataset().get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */
     /*!Note: This might happen because of the number of used threads might point to a grater index, than the number of sequences;
      * Which is mainly because of division remainder between number fo threads and the number of sequences
      * */
     /* Solve the sequence under sequence_index + thread_index */
     uint32 raw_label_index = sequence_index + thread_index;
-    uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());
-    raw_label_index *= data_set.get_sequence_size();
+    uint32 raw_inputs_index = raw_label_index * (cost_container.get_dataset().get_sequence_size() + cost_container.get_dataset().get_prefill_inputs_number());
+    raw_label_index *= cost_container.get_dataset().get_sequence_size();
 
     /* Evaluate the current sequence step by step */
-    for(uint32 prefill_iterator = 0; prefill_iterator < data_set.get_prefill_inputs_number(); ++prefill_iterator){
-      (void)agent.solve(data_set.get_input_sample(raw_inputs_index), (0 == prefill_iterator), thread_index);
+    for(uint32 prefill_iterator = 0; prefill_iterator < cost_container.get_dataset().get_prefill_inputs_number(); ++prefill_iterator){
+      (void)agent.solve(cost_container.get_dataset().get_input_sample(raw_inputs_index), (0 == prefill_iterator), thread_index);
       ++raw_inputs_index;
     } /* The first few labels are there to set an initial state to the network */
 
     /* Solve the data and store the result after the inital "prefill" */
-    for(uint32 sequence_iterator = 0; sequence_iterator < data_set.get_sequence_size(); ++sequence_iterator){
-      bool reset = ( (0u == data_set.get_prefill_inputs_number())&&(0u == sequence_iterator) );
-      rafko_utilities::ConstVectorSubrange<> neuron_output = agent.solve(data_set.get_input_sample(raw_inputs_index), reset, thread_index);
+    for(uint32 sequence_iterator = 0; sequence_iterator < cost_container.get_dataset().get_sequence_size(); ++sequence_iterator){
+      bool reset = ( (0u == cost_container.get_dataset().get_prefill_inputs_number())&&(0u == sequence_iterator) );
+      rafko_utilities::ConstVectorSubrange<> neuron_output = agent.solve(cost_container.get_dataset().get_input_sample(raw_inputs_index), reset, thread_index);
       std::copy( /* copy the result to the eval array */
         neuron_output.begin(), neuron_output.end(),
-        neuron_outputs_to_evaluate[(thread_index * data_set.get_sequence_size()) + sequence_iterator].begin()
+        neuron_outputs_to_evaluate[(thread_index * cost_container.get_dataset().get_sequence_size()) + sequence_iterator].begin()
       );
       ++raw_label_index;
       ++raw_inputs_index;

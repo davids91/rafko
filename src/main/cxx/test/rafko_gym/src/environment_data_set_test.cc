@@ -61,20 +61,20 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   sdouble32 set_distance = double_literal(10.0);
 
   /* Create a @DataSet and fill it with data */
-  rafko_gym::DataSet data_set = rafko_gym::DataSet();
-  data_set.set_input_size(1);
-  data_set.set_feature_size(1);
-  data_set.set_sequence_size(sequence_size);
+  rafko_gym::DataSet dataset = rafko_gym::DataSet();
+  dataset.set_input_size(1);
+  dataset.set_feature_size(1);
+  dataset.set_sequence_size(sequence_size);
 
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
-    data_set.add_inputs(expected_label); /* Input should be irrelevant here */
-    data_set.add_labels(expected_label);
+    dataset.add_inputs(expected_label); /* Input should be irrelevant here */
+    dataset.add_labels(expected_label);
   }
 
   /* Create the environment and dummy agent */
-  rafko_gym::DataAggregate training_set(settings, data_set, std::make_unique<rafko_net::CostFunctionMSE>(settings));
-  rafko_gym::DataAggregate test_set(settings, data_set, std::make_unique<rafko_net::CostFunctionMSE>(settings));
-  rafko_gym::RafkoEnvironmentDataSet environment(settings, training_set, test_set);
+  rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
+  rafko_gym::DataAggregate training_cost(settings, dataset_wrap, std::make_unique<rafko_net::CostFunctionMSE>(settings));
+  rafko_gym::RafkoEnvironmentDataSet environment(settings, dataset, dataset, rafko_net::cost_function_mse);
   rafko_net::Solution solution;
   solution.set_neuron_number(1);
   solution.set_output_neuron_number(1);
@@ -86,6 +86,8 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
 
   /* Set some error and see if the environment produces the expected */
   agent.set_result(expected_label - set_distance);
+  for(uint32 feature_index = 0; feature_index < dataset_wrap.get_number_of_label_samples(); ++feature_index)
+    training_cost.set_feature_for_label( feature_index, {expected_label - set_distance} );
   sdouble32 environment_error = environment.full_evaluation();
   REQUIRE( /* One Error: (distance^2)/(2 * overall number of samples) */
     Catch::Approx( /* Error sum: One Error * overall number of samples  */
@@ -98,18 +100,20 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
   uint32 seed = rand();
 
   srand(seed);
-  uint32 sequence_start_index = (rand()%(training_set.get_number_of_sequences() - settings.get_minibatch_size() + 1));
-  training_set.push_state();
+  uint32 sequence_start_index = (rand()%(training_cost.get_dataset().get_number_of_sequences() - settings.get_minibatch_size() + 1));
+  uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
+    training_cost.get_dataset().get_sequence_size() - settings.get_memory_truncation() + 1 /* ..not all result output values are evaluated.. */
+  )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
+
   for(uint32 sequence_index = sequence_start_index; sequence_index < (sequence_start_index + settings.get_minibatch_size()); ++sequence_index){
-    for(uint32 label_index = 0; label_index < training_set.get_sequence_size(); ++label_index){
-      training_set.set_feature_for_label(
-        ((sequence_index * training_set.get_sequence_size()) + label_index),
+    for(uint32 label_index = 0; label_index < settings.get_memory_truncation(); ++label_index){
+      training_cost.set_feature_for_label(
+        ((sequence_index * training_cost.get_dataset().get_sequence_size()) + start_index_inside_sequence + label_index),
         {expected_label - set_distance}
       );
     }
   }
-  sdouble32 reference_error = -training_set.get_error_sum();
-  training_set.pop_state();
+  sdouble32 reference_error = -training_cost.get_error_sum();
   agent.set_result(expected_label - set_distance);
   sdouble32 measured_error = environment.stochastic_evaluation(seed);
   CHECK( Catch::Approx(reference_error).margin(0.00000000000001) == measured_error );

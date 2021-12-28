@@ -10,6 +10,7 @@ set(GYM_INTERFACE_SERVICES
 )
 set(GYM_HEADER_MODELS
   models/data_aggregate.h
+  models/rafko_dataset_wrapper.h
 )
 set(GYM_HEADER_SERVICES
   models/data_aggregate.h
@@ -26,6 +27,7 @@ target_sources(rafko_gym
   PUBLIC ${GYM_HEADERS}
   PRIVATE
   models/src/data_aggregate.cc
+  models/src/rafko_dataset_wrapper.cc
   services/src/backpropagation_queue_wrapper.cc
   services/src/rafko_environment_data_set.cc
   services/src/rafko_net_approximizer.cc

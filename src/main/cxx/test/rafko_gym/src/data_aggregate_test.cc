@@ -41,20 +41,21 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   sdouble32 set_distance = double_literal(10.0);
 
   /* Create a @DataSet and fill it with data */
-  rafko_gym::DataSet data_set = rafko_gym::DataSet();
-  data_set.set_input_size(1);
-  data_set.set_feature_size(1);
-  data_set.set_sequence_size(sequence_size);
+  rafko_gym::DataSet dataset = rafko_gym::DataSet();
+  dataset.set_input_size(1);
+  dataset.set_feature_size(1);
+  dataset.set_sequence_size(sequence_size);
 
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
-    data_set.add_inputs(expected_label); /* Input should be irrelevant here */
-    data_set.add_labels(expected_label);
+    dataset.add_inputs(expected_label); /* Input should be irrelevant here */
+    dataset.add_labels(expected_label);
   }
 
   /* Create @DataAggregate from @DataSet */
-  rafko_gym::DataAggregate data_agr(settings, data_set, std::make_unique<rafko_net::CostFunctionMSE>(settings));
-  REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
-  REQUIRE( sample_number == data_agr.get_number_of_sequences() );
+  rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
+  rafko_gym::DataAggregate data_agr(settings, dataset_wrap, std::make_unique<rafko_net::CostFunctionMSE>(settings));
+  REQUIRE( 0 == data_agr.get_dataset().get_prefill_inputs_number() );
+  REQUIRE( sample_number == data_agr.get_dataset().get_number_of_sequences() );
 
   /* Test initial error value, then a fully errorless state */
   CHECK( Catch::Approx(data_agr.get_error_sum()).margin(0.00000000000001) == double_literal(1.0) );
@@ -66,7 +67,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
 
   /* Test statistics for it */
   sdouble32 error_sum = double_literal(0.0);
-  for(uint32 i = 0; i < data_agr.get_number_of_label_samples(); ++i){
+  for(uint32 i = 0; i < data_agr.get_dataset().get_number_of_label_samples(); ++i){
     error_sum += data_agr.get_error(i);
   }
   CHECK( Catch::Approx(error_sum).margin(0.00000000000001) == data_agr.get_error_sum() );
@@ -93,9 +94,9 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   sdouble32 faulty_feature;
   uint32 label_index;
   for(uint32 variant = 0;variant < 100; ++variant){
-    label_index = rand()%(data_agr.get_number_of_label_samples());
+    label_index = rand()%(data_agr.get_dataset().get_number_of_label_samples());
     previous_error = data_agr.get_error(label_index);
-    faulty_feature = ( data_agr.get_label_sample(label_index)[0] + set_distance );
+    faulty_feature = ( data_agr.get_dataset().get_label_sample(label_index)[0] + set_distance );
     error_sum = (
       error_sum - previous_error /* remove the current label from the sum */
       + (
@@ -157,8 +158,8 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
     /* Check also the bulk sequenced interface */
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
     neuron_data_simulation = std::vector<std::vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
-    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), 0, data_agr.get_sequence_size());
-    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), 0, data_agr.get_sequence_size());
+    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), 0, data_agr.get_dataset().get_sequence_size());
+    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), 0, data_agr.get_dataset().get_sequence_size());
 
     for(uint32 i = 0; i < (sample_number * sequence_size); ++i)
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
@@ -175,13 +176,13 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
     sdouble32 old_set_distence = set_distance;
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
     neuron_data_simulation = std::vector<std::vector<sdouble32>>(((sample_number * sequence_size)/2), {(expected_label - set_distance)});
-    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), data_agr.get_sequence_size()/2, data_agr.get_sequence_size()/2);
-    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), data_agr.get_sequence_size()/2, data_agr.get_sequence_size()/2);
+    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), data_agr.get_dataset().get_sequence_size()/2, data_agr.get_dataset().get_sequence_size()/2);
+    data_agr.set_features_for_sequences(neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), data_agr.get_dataset().get_sequence_size()/2, data_agr.get_dataset().get_sequence_size()/2);
 
     uint32 raw_label_index = 0;
     for(uint32 sequence_index = 0; sequence_index < sample_number; ++sequence_index){
-      for(uint32 sequence_iterator = 0; sequence_iterator < data_agr.get_sequence_size(); ++sequence_iterator){
-        if((data_agr.get_sequence_size()/2) > sequence_iterator){ /* first half of the sequence should have have the new error */
+      for(uint32 sequence_iterator = 0; sequence_iterator < data_agr.get_dataset().get_sequence_size(); ++sequence_iterator){
+        if((data_agr.get_dataset().get_sequence_size()/2) > sequence_iterator){ /* first half of the sequence should have have the new error */
           REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
             Catch::Approx(
               pow(old_set_distence,2) / (double_literal(2.0) * sample_number * sequence_size)
@@ -215,19 +216,20 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
   sdouble32 initial_error;
 
   /* Create a @DataSet and fill it with data */
-  rafko_gym::DataSet data_set = rafko_gym::DataSet();
-  data_set.set_input_size(1);
-  data_set.set_feature_size(1);
-  data_set.set_sequence_size(sequence_size);
+  rafko_gym::DataSet dataset = rafko_gym::DataSet();
+  dataset.set_input_size(1);
+  dataset.set_feature_size(1);
+  dataset.set_sequence_size(sequence_size);
 
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
-    data_set.add_inputs(expected_label); /* Input should be irrelevant here */
-    data_set.add_labels(expected_label);
+    dataset.add_inputs(expected_label); /* Input should be irrelevant here */
+    dataset.add_labels(expected_label);
   }
 
-  rafko_gym::DataAggregate data_agr(settings, data_set, std::make_unique<rafko_net::CostFunctionMSE>(settings));
-  REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
-  REQUIRE( sample_number == data_agr.get_number_of_sequences() );
+  rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
+  rafko_gym::DataAggregate data_agr(settings, dataset_wrap, std::make_unique<rafko_net::CostFunctionMSE>(settings));
+  REQUIRE( 0 == data_agr.get_dataset().get_prefill_inputs_number() );
+  REQUIRE( sample_number == data_agr.get_dataset().get_number_of_sequences() );
 
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
     data_agr.set_feature_for_label(i,{expected_label});

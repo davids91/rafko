@@ -289,7 +289,10 @@ void print_weights(rafko_net::RafkoNet& net, rafko_net::Solution& solution){
   }
 }
 
-void print_training_sample(uint32 sample_sequence_index, rafko_gym::DataAggregate& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings){
+void print_training_sample(
+  uint32 sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set, rafko_gym::DataAggregate& data_set_cost,
+  rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings
+){
   std::unique_ptr<rafko_net::SolutionSolver> sample_solver(rafko_net::SolutionSolver::Builder(*rafko_net::SolutionBuilder(settings).build(net), settings).build());
   std::vector<sdouble32> neuron_data(data_set.get_sequence_size());
   uint32 raw_label_index = sample_sequence_index;
@@ -338,7 +341,7 @@ void print_training_sample(uint32 sample_sequence_index, rafko_gym::DataAggregat
   std::cout << std::endl;
   std::cout << "Errors for sequence: " << std::endl;
   for(uint32 j = 0;j < data_set.get_sequence_size();++j){
-    std::cout << "{" << data_set.get_error((sample_sequence_index * data_set.get_sequence_size()) + j) << "}";
+    std::cout << "{" << data_set_cost.get_error((sample_sequence_index * data_set.get_sequence_size()) + j) << "}";
   }
   std::cout << std::endl;
 

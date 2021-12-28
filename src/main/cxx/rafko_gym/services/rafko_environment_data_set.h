@@ -25,7 +25,9 @@
 
 #include "rafko_utilities/services/thread_group.h"
 
+#include "rafko_protocol/training.pb.h"
 #include "rafko_gym/models/data_aggregate.h"
+#include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_gym/services/rafko_environment.h"
 #include "rafko_gym/services/rafko_agent.h"
 
@@ -36,47 +38,50 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT RafkoEnvironmentDataSet : public RafkoEnvironment{
 public:
-  RafkoEnvironmentDataSet(rafko_mainframe::RafkoSettings& settings_, DataAggregate& train_set_, DataAggregate& test_set_);
+  RafkoEnvironmentDataSet(
+    rafko_mainframe::RafkoSettings& settings_,
+    const DataSet& training_set_, const DataSet& test_set_, rafko_net::Cost_functions cost_function
+  );
 
   void install_agent(RafkoAgent& agent){
     agents.push_back(agent);
   }
 
   sdouble32 full_evaluation(){
-    evaluate(agents.back(), train_set, 0u, train_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
-    evaluate(agents.back(), test_set, 0u, test_set.get_number_of_sequences(), 0u, train_set.get_sequence_size());
+    evaluate(agents.back(), training_cost, 0u, training_set.get_number_of_sequences(), 0u, training_set.get_sequence_size());
+    evaluate(agents.back(), test_cost, 0u, test_set.get_number_of_sequences(), 0u, test_set.get_sequence_size());
     loops_unchecked = 0u;
-    return -train_set.get_error_sum();
+    return -training_cost.get_error_sum();
   }
 
-  sdouble32 stochastic_evaluation(uint32 seed = 0){
-    if(0 < seed)srand(seed);
+  sdouble32 stochastic_evaluation(uint32 seed = 0u){
+    if(0u < seed)srand(seed);
     check();
-    uint32 sequence_start_index = (rand()%(train_set.get_number_of_sequences() - settings.get_minibatch_size() + 1));
+    uint32 sequence_start_index = (rand()%(training_set.get_number_of_sequences() - settings.get_minibatch_size() + 1));
     uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
-      train_set.get_sequence_size() - settings.get_memory_truncation() + 1 /* ..not all result output values are evaluated.. */
+      training_set.get_sequence_size() - settings.get_memory_truncation() + 1 /* ..not all result output values are evaluated.. */
     )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
-    evaluate(agents.back(), train_set, sequence_start_index, settings.get_minibatch_size(), start_index_inside_sequence, used_sequence_truncation);
+    evaluate(agents.back(), training_cost, sequence_start_index, settings.get_minibatch_size(), start_index_inside_sequence, used_sequence_truncation);
     ++loops_unchecked; ++iteration;
-    return -train_set.get_error_sum();
+    return -training_cost.get_error_sum();
   }
 
   void push_state(){
-    train_set.push_state();
-    test_set.push_state();
+    training_cost.push_state();
+    test_cost.push_state();
   }
 
   void pop_state(){
-    train_set.pop_state();
-    test_set.pop_state();
+    training_cost.pop_state();
+    test_cost.pop_state();
   }
 
   sdouble32 get_training_fitness(){
-    return -train_set.get_error_avg();
+    return -training_cost.get_error_avg();
   }
 
   sdouble32 get_testing_fitness(){
-    return -test_set.get_error_avg();
+    return -test_cost.get_error_avg();
   }
 
   /**
@@ -87,8 +92,8 @@ public:
   void check(){
     if(
       (loops_unchecked >= settings.get_tolerance_loop_value())
-      ||(loops_unchecked > (train_set.get_error_sum()/settings.get_learning_rate()))
-      ||(loops_unchecked > (test_set.get_error_sum()/settings.get_learning_rate()))
+      ||(loops_unchecked > (training_cost.get_error_sum()/settings.get_learning_rate()))
+      ||(loops_unchecked > (test_cost.get_error_sum()/settings.get_learning_rate()))
     ){ /* calculate the error value for the agent in this environment */
       full_evaluation();
       loops_unchecked = 0;
@@ -100,8 +105,10 @@ public:
 private:
   rafko_mainframe::RafkoSettings& settings;
   std::vector<std::reference_wrapper<RafkoAgent>> agents;
-  DataAggregate& train_set;
-  DataAggregate& test_set;
+  RafkoDatasetWrapper training_set;
+  DataAggregate training_cost;
+  RafkoDatasetWrapper test_set;
+  DataAggregate test_cost;
   std::vector<std::vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   rafko_utilities::ThreadGroup execution_threads;
 

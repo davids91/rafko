@@ -21,6 +21,7 @@ if(MAKE_TESTS)
       PRIVATE
       src/main_test.cc
       rafko_gym/src/data_aggregate_test.cc
+      rafko_gym/src/rafko_dataset_wrapper_test.cc
       rafko_gym/src/environment_data_set_test.cc
       rafko_gym/src/backprop_queue_wrapper_test.cc
       rafko_gym/src/weight_updater_test.cc
