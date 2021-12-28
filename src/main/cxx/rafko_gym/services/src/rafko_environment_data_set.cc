@@ -25,7 +25,7 @@ namespace rafko_gym{
 
 RafkoEnvironmentDataSet::RafkoEnvironmentDataSet(
   rafko_mainframe::RafkoSettings& settings_,
-  const DataSet& training_set_, const DataSet& test_set_, rafko_net::Cost_functions cost_function
+  RafkoDatasetWrapper&& training_set_, RafkoDatasetWrapper&& test_set_, rafko_net::Cost_functions cost_function
 ):settings(settings_)
 , training_set(training_set_)
 , training_cost(settings, training_set, cost_function)
@@ -33,7 +33,7 @@ RafkoEnvironmentDataSet::RafkoEnvironmentDataSet(
 , test_cost(settings, test_set, cost_function)
 , neuron_outputs_to_evaluate( /* For every thread, 1 sequence is evaluated.. */
   (settings.get_max_processing_threads() * training_set.get_sequence_size() + 1u),
-  std::vector<sdouble32>(training_set_.feature_size()) /* ..plus for the label errors one additional vector is needed */
+  std::vector<sdouble32>(training_set_.get_feature_size()) /* ..plus for the label errors one additional vector is needed */
 )
 , execution_threads(settings.get_max_processing_threads())
 , loops_unchecked(settings.get_tolerance_loop_value() + 1u)

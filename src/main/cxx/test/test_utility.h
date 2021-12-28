@@ -92,7 +92,7 @@ extern void print_weights(rafko_net::RafkoNet& net, rafko_net::Solution& solutio
  * @param      net                    The net
  * @param      settings               The service settings
  */
-extern void print_training_sample(uint32 sample_sequence_index, rafko_gym::DataAggregate& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings);
+extern void print_training_sample(uint32 sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings);
 
 /**
  * @brief      Creates a normalized dataset for addition: basically adding two numbers together.

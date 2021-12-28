@@ -41,6 +41,11 @@ public:
   RafkoEnvironmentDataSet(
     rafko_mainframe::RafkoSettings& settings_,
     const DataSet& training_set_, const DataSet& test_set_, rafko_net::Cost_functions cost_function
+  ) : RafkoEnvironmentDataSet(settings_, RafkoDatasetWrapper(training_set_), RafkoDatasetWrapper(test_set_), cost_function) { }
+
+  RafkoEnvironmentDataSet(
+    rafko_mainframe::RafkoSettings& settings_,
+    RafkoDatasetWrapper&& training_set_, RafkoDatasetWrapper&& test_set_, rafko_net::Cost_functions cost_function
   );
 
   void install_agent(RafkoAgent& agent){
