@@ -27,7 +27,7 @@
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 
-namespace rafko_net{
+namespace rafko_gym{
 
 /**
  * @brief      Error function handling and utilities, provides a hook for a computation
@@ -193,5 +193,5 @@ private:
   );
 };
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */
 #endif /* COST_FUNCTION_H */

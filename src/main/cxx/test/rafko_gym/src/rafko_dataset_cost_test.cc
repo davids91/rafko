@@ -23,7 +23,7 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_gym/models/rafko_dataset_cost.h"
-#include "rafko_net/models/cost_function_mse.h"
+#include "rafko_gym/services/cost_function_mse.h"
 
 #include "test/test_utility.h"
 
@@ -53,7 +53,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
 
   /* Create @RafkoDatasetCost from @DataSet */
   rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
-  rafko_gym::RafkoDatasetCost data_agr(settings, dataset_wrap, std::make_unique<rafko_net::CostFunctionMSE>(settings));
+  rafko_gym::RafkoDatasetCost data_agr(settings, dataset_wrap, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
   REQUIRE( 0 == data_agr.get_dataset().get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_dataset().get_number_of_sequences() );
 
@@ -227,7 +227,7 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
   }
 
   rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
-  rafko_gym::RafkoDatasetCost data_agr(settings, dataset_wrap, std::make_unique<rafko_net::CostFunctionMSE>(settings));
+  rafko_gym::RafkoDatasetCost data_agr(settings, dataset_wrap, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
   REQUIRE( 0 == data_agr.get_dataset().get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_dataset().get_number_of_sequences() );
 

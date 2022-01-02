@@ -35,17 +35,6 @@ enum Transfer_functions{
   transfer_function_end = 512;
 }
 
-/** @brief      Indexes of the error functions a Neural Network is able to use
- *              to calculate the gradient of the weights
- */
-enum Cost_functions{
-  cost_function_unknown = 0;
-  cost_function_squared_error = 1;          /* ( (expected-calculated)^2 ) */
-  cost_function_mse = 2;                    /* ( 0.5*(expected-calculated)^2 ) / dataset_size */
-  cost_function_cross_entropy = 3;          /* ( calculated*ln(expected) ) */
-  cost_function_binary_cross_entropy = 4;   /* ( calculated*ln(expected) + (1-calculated) * ln(1-expected) ) */
-}
-
 /** @brief      Network basically describes the connections a recurrent network has
  *              with the past runs. This enumeration is for a utility which is for
  *              testing purposes only. Recurrences described here affect

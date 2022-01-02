@@ -15,28 +15,27 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef COST_FUNCTION_SQUARED_ERROR_H
-#define COST_FUNCTION_SQUARED_ERROR_H
+#ifndef COST_FUNCTION_MSE_H
+#define COST_FUNCTION_MSE_H
 
-#include "rafko_net/models/cost_function.h"
+#include "rafko_gym/services/cost_function.h"
 
 #include <math.h>
 
-namespace rafko_net{
+namespace rafko_gym{
 
 /**
- * @brief      Error function handling and utilities for Squared Error: C0 = ((y-y')^2)/2
+ * @brief      Error function handling and utilities for MSE: C0 = 1/2n(y-y')^2
  */
-class RAFKO_FULL_EXPORT CostFunctionSquaredError : public CostFunction{
+class RAFKO_FULL_EXPORT CostFunctionMSE : public CostFunction{
 public:
-  CostFunctionSquaredError(rafko_mainframe::RafkoSettings& settings)
-  : CostFunction(cost_function_squared_error, settings)
+  CostFunctionMSE(rafko_mainframe::RafkoSettings& settings)
+  : CostFunction(cost_function_mse, settings)
   { };
 
 protected:
   sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const{
-    parameter_not_used(sample_number);
-    return error_value / double_literal(2.0);
+    return error_value / static_cast<sdouble32>(sample_number*double_literal(2.0));
   }
 
   sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
@@ -44,13 +43,10 @@ protected:
   }
 
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const{
-    parameter_not_used(sample_number);
-    return -(label_value - feature_value);
+    return -(label_value - feature_value) / static_cast<sdouble32>(sample_number);
   }
-
-private:
-  sdouble32 sample_number;
 };
 
-} /* namespace rafko_net */
-#endif /* COST_FUNCTION_SQUARED_ERROR_H */
+} /* namespace rafko_gym */
+
+#endif /* COST_FUNCTION_MSE_H */

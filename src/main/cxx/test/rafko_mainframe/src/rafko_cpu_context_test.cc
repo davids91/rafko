@@ -26,9 +26,8 @@
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
-#include "rafko_net/models/cost_function_mse.h"
+#include "rafko_gym/services/cost_function_mse.h"
 #include "rafko_gym/models/rafko_dataset_cost.h"
-#include "rafko_gym/services/rafko_environment_data_set.h"
 
 #include "test/test_utility.h"
 
@@ -51,7 +50,7 @@ private:
   rafko_utilities::DataRingbuffer result{1,1};
 };
 
-TEST_CASE("Testing Dataset environment", "[environment]"){
+TEST_CASE("Testing COU context", "[environment]"){
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
@@ -73,8 +72,8 @@ TEST_CASE("Testing Dataset environment", "[environment]"){
 
   /* Create the environment and dummy agent */
   rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
-  rafko_gym::RafkoDatasetCost training_cost(settings, dataset_wrap, std::make_unique<rafko_net::CostFunctionMSE>(settings));
-  rafko_gym::RafkoEnvironmentDataSet environment(settings, dataset, dataset, rafko_net::cost_function_mse);
+  rafko_gym::RafkoDatasetCost training_cost(settings, dataset_wrap, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
+  rafko_gym::RafkoCPUContext environment(settings, dataset, dataset, rafko_gym::cost_function_mse);
   rafko_net::Solution solution;
   solution.set_neuron_number(1);
   solution.set_output_neuron_number(1);

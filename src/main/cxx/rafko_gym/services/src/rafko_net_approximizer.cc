@@ -24,50 +24,50 @@
 namespace rafko_gym{
 
 void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
-  std::vector<sdouble32> weight_gradients(net.weight_table_size(),double_literal(0.0));
-  sdouble32 gradient_overview = get_gradient_for_all_weights() * settings.get_learning_rate(iteration);
+  std::vector<sdouble32> weight_gradients(context.expose_network().weight_table_size(),double_literal(0.0));
+  sdouble32 gradient_overview = get_gradient_for_all_weights() * context.expose_settings().get_learning_rate(iteration);
   sdouble32 greatest_weight_value = double_literal(0.0);
-  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
+  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < context.expose_network().weight_table_size(); ++weight_index){
     weight_gradients[weight_index] = get_single_weight_gradient(weight_index);
     if(greatest_weight_value < std::abs(weight_gradients[weight_index]))
       greatest_weight_value = std::abs(weight_gradients[weight_index]);
   }
-  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
+  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < context.expose_network().weight_table_size(); ++weight_index){
     weight_gradients[weight_index] = ( /* Gradients normalized by the biggest value */
       ( weight_gradients[weight_index] + gradient_overview ) / (greatest_weight_value + std::abs(gradient_overview))
     ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
         * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
         */
-    weight_gradients[weight_index] *= settings.get_learning_rate(iteration);
+    weight_gradients[weight_index] *= context.expose_settings().get_learning_rate(iteration);
   }
   convert_direction_to_gradient(weight_gradients,true);
   ++iteration;
 }
 
 void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<sdouble32>& direction, bool save_to_fragment){
-  if(net.weight_table_size() == static_cast<sint32>(direction.size())){
+  if(context.expose_network().weight_table_size() == static_cast<sint32>(direction.size())){
     sdouble32 error_negative_direction;
     sdouble32 error_positive_direction;
 
-    std::vector<sdouble32> weight_gradients(net.weight_table_size(), double_literal(0.0));
-    for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-      net.set_weight_table(weight_index, (net.weight_table(weight_index) - direction[weight_index]) );
+    std::vector<sdouble32> weight_gradients(context.expose_network().weight_table_size(), double_literal(0.0));
+    for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < context.expose_network().weight_table_size(); ++weight_index){
+      context.expose_network().set_weight_table(weight_index, (context.expose_network().weight_table(weight_index) - direction[weight_index]) );
     } /* apply the direction on which network approximation shall be done */
-    weight_updater->update_solution_with_weights();
+    context.expose_weight_updater().update_solution_with_weights();
 
     /* see the error values at the negative end of the current direction */
-    environment.push_state();
+    context.push_state();
     error_negative_direction = -stochastic_evaluation();
-    environment.pop_state();
+    context.pop_state();
 
     /* see the error values at the positive end of the current direction */
-    for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index)
-      net.set_weight_table(weight_index, (net.weight_table(weight_index) + (direction[weight_index] * double_literal(2.0))) );
-    weight_updater->update_solution_with_weights();
+    for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < context.expose_network().weight_table_size(); ++weight_index)
+      context.expose_network().set_weight_table(weight_index, (context.expose_network().weight_table(weight_index) + (direction[weight_index] * double_literal(2.0))) );
+    context.expose_weight_updater().update_solution_with_weights();
 
-    if(!save_to_fragment)environment.push_state();
+    if(!save_to_fragment)context.push_state();
     error_positive_direction = -stochastic_evaluation();
-    if(!save_to_fragment)environment.pop_state(); /* Restore train set to previous error state, decide if dampening is needed */
+    if(!save_to_fragment)context.pop_state(); /* Restore train set to previous error state, decide if dampening is needed */
 
     /* collect the fragment, revert weight changes */
     sdouble32 max_error = std::max(error_positive_direction,error_negative_direction);
@@ -78,40 +78,40 @@ void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<sdouble32>&
      * weight epsilon will be increased during approximation to help explore surrounding settings more.
      */
 
-    for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
+    for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < context.expose_network().weight_table_size(); ++weight_index){
       weight_gradients[weight_index] = ( ( error_positive_direction - error_negative_direction ) / (max_error) );
        if(save_to_fragment)add_to_fragment( weight_index, (weight_gradients[weight_index] * direction[weight_index]) );
-      net.set_weight_table(weight_index, (net.weight_table(weight_index) - (direction[weight_index])) );
+      context.expose_network().set_weight_table(weight_index, (context.expose_network().weight_table(weight_index) - (direction[weight_index])) );
     }
-    weight_updater->update_solution_with_weights();
+    context.expose_weight_updater().update_solution_with_weights();
   }else throw std::runtime_error("Incompatible direction given to approximate for!");
 }
 
 sdouble32 RafkoNetApproximizer::get_single_weight_gradient(uint32 weight_index){
   sdouble32 gradient;
-  const sdouble32 current_epsilon = settings.get_sqrt_epsilon() * epsilon_addition;
+  const sdouble32 current_epsilon = context.expose_settings().get_sqrt_epsilon() * epsilon_addition;
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
 
   /* Push the choosen weight in one direction */
-  net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
-  weight_updater->update_solution_with_weight(weight_index);
-  environment.push_state(); /* Approximate the modified weights gradient */
+  context.expose_network().set_weight_table(weight_index, (context.expose_network().weight_table(weight_index) + current_epsilon) );
+  context.expose_weight_updater().update_solution_with_weight(weight_index);
+  context.push_state(); /* Approximate the modified weights gradient */
   gradient = -stochastic_evaluation();
-  environment.pop_state();
+  context.pop_state();
 
   /* Push the selected weight in other direction */
-  net.set_weight_table(weight_index, (net.weight_table(weight_index) - current_epsilon_double) );
-  weight_updater->update_solution_with_weight(weight_index);
-  environment.push_state(); /* Approximate the newly modified weights gradient */
+  context.expose_network().set_weight_table(weight_index, (context.expose_network().weight_table(weight_index) - current_epsilon_double) );
+  context.expose_weight_updater().update_solution_with_weight(weight_index);
+  context.push_state(); /* Approximate the newly modified weights gradient */
   sdouble32 new_error_state = -stochastic_evaluation();
-  environment.pop_state();
+  context.pop_state();
 
   /* Calculate the gradient */
   gradient = -(gradient - new_error_state) * (current_epsilon_double);
 
   /* Revert weight modification and the error state with it */
-  net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
-  weight_updater->update_solution_with_weight(weight_index);
+  context.expose_network().set_weight_table(weight_index, (context.expose_network().weight_table(weight_index) + current_epsilon) );
+  context.expose_weight_updater().update_solution_with_weight(weight_index);
   return (gradient);
 }
 
@@ -119,30 +119,30 @@ sdouble32 RafkoNetApproximizer::get_gradient_for_all_weights(){
   sdouble32 gradient;
   sdouble32 error_negative_direction;
   sdouble32 error_positive_direction;
-  const sdouble32 current_epsilon = settings.get_sqrt_epsilon();
+  const sdouble32 current_epsilon = context.expose_settings().get_sqrt_epsilon();
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
 
-  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-    net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
+  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < context.expose_network().weight_table_size(); ++weight_index){
+    context.expose_network().set_weight_table(weight_index, (context.expose_network().weight_table(weight_index) + current_epsilon) );
   } /* Push every weight in a positive epsilon direction */
-  weight_updater->update_solution_with_weights();
-  environment.push_state(); /* Approximate the modified weights gradient */
+  context.expose_weight_updater().update_solution_with_weights();
+  context.push_state(); /* Approximate the modified weights gradient */
   error_positive_direction = -stochastic_evaluation();
-  environment.pop_state();
+  context.pop_state();
 
-  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-    net.set_weight_table(weight_index, (net.weight_table(weight_index) - current_epsilon_double) );
+  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < context.expose_network().weight_table_size(); ++weight_index){
+    context.expose_network().set_weight_table(weight_index, (context.expose_network().weight_table(weight_index) - current_epsilon_double) );
   } /* Push the weights to the other direction */
-  weight_updater->update_solution_with_weights();
-  environment.push_state(); /* Approximate the newly modified weights gradient */
+  context.expose_weight_updater().update_solution_with_weights();
+  context.push_state(); /* Approximate the newly modified weights gradient */
   error_negative_direction = -stochastic_evaluation();
-  environment.pop_state();
+  context.pop_state();
 
   gradient = -(error_positive_direction - error_negative_direction) * (current_epsilon_double);
-  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < net.weight_table_size(); ++weight_index){
-    net.set_weight_table(weight_index, (net.weight_table(weight_index) + current_epsilon) );
+  for(uint32 weight_index = 0; static_cast<sint32>(weight_index) < context.expose_network().weight_table_size(); ++weight_index){
+    context.expose_network().set_weight_table(weight_index, (context.expose_network().weight_table(weight_index) + current_epsilon) );
   } /* Revert weight modifications and the error state with it */
-  weight_updater->update_solution_with_weights();
+  context.expose_weight_updater().update_solution_with_weights();
   return (gradient);
 }
 
@@ -209,7 +209,7 @@ void RafkoNetApproximizer::apply_fragment(){
   uint32 fragment_value_index = 0;
   std::fill(applied_direction.begin(),applied_direction.end(), double_literal(0.0));
 
-  if(weight_updater->is_finished())weight_updater->start();
+  if(context.expose_weight_updater().is_finished())context.expose_weight_updater().start();
   if(1 == gradient_fragment.weight_synapses_size()){
     std::copy(
       gradient_fragment.values().begin(),
@@ -223,9 +223,9 @@ void RafkoNetApproximizer::apply_fragment(){
     });
   }
 
-  weight_updater->iterate(applied_direction);
+  context.expose_weight_updater().iterate(applied_direction);
   gradient_fragment = GradientFragment();
-  environment.full_evaluation();
+  context.full_evaluation();
 }
 
 } /* namespace rafko_gym */

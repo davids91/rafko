@@ -22,17 +22,15 @@ if(MAKE_TESTS)
       src/main_test.cc
       rafko_gym/src/rafko_dataset_cost_test.cc
       rafko_gym/src/rafko_dataset_wrapper_test.cc
-      rafko_gym/src/environment_data_set_test.cc
       rafko_gym/src/backprop_queue_wrapper_test.cc
-      rafko_gym/src/weight_updater_test.cc
       rafko_gym/src/weight_experience_space_test.cc
+      rafko_gym/src/cost_function_mse_test.cc
+      rafko_gym/src/cost_function_cross_entropy_test.cc
+      rafko_gym/src/cost_function_binary_cross_entropy_test.cc
       rafko_utilities/src/data_pool_test.cc
       rafko_utilities/src/data_ringbuffer_test.cc
       rafko_utilities/src/thread_group_test.cc
       rafko_utilities/src/const_vector_subrange_test.cc
-      rafko_net/src/cost_function_mse_test.cc
-      rafko_net/src/cost_function_cross_entropy_test.cc
-      rafko_net/src/cost_function_binary_cross_entropy_test.cc
       rafko_net/src/neuron_info_test.cc
       rafko_net/src/neuron_router_test.cc
       rafko_net/src/partial_solution_solver_test.cc
@@ -41,7 +39,9 @@ if(MAKE_TESTS)
       rafko_net/src/rafko_net_builder_test.cc
       rafko_net/src/synapse_iterator_test.cc
       rafko_net/src/softmax_function_test.cc
+      rafko_net/src/weight_updater_test.cc
       rafko_mainframe/src/service_context_test.cc
+      rafko_mainframe/src/rafko_cpu_context_test.cc
     )
   endif()
 endif()

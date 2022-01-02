@@ -49,7 +49,6 @@ SolutionSolver::SolutionSolver(
   const Solution& to_solve, rafko_mainframe::RafkoSettings& settings, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
   uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
 ): rafko_gym::RafkoAgent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, settings.get_max_processing_threads())
-,  solution(to_solve)
 ,  settings(settings)
 ,  partial_solvers(partial_solvers_)
 ,  feature_executor(execution_threads)
@@ -57,6 +56,14 @@ SolutionSolver::SolutionSolver(
   for(uint32 thread_index = 0; thread_index < settings.get_max_processing_threads(); ++ thread_index)
     execution_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_solve_threads()));
 }
+
+SolutionSolver::SolutionSolver(SolutionSolver&& other) /* Move constructor */
+: rafko_gym::RafkoAgent(other.solution, other.required_temp_data_size, other.required_temp_data_number_per_thread, other.settings.get_max_processing_threads())
+, settings(other.settings)
+, partial_solvers(other.partial_solvers)
+, execution_threads(std::move(other.execution_threads))
+, feature_executor(std::move(other.feature_executor))
+{ }
 
 void SolutionSolver::solve(
   const std::vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,

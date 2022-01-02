@@ -4,14 +4,7 @@ target_link_libraries(rafko_net PUBLIC rafko_protocol)
 set(NET_INTERFACE_SERVICES
   services/synapse_iterator.h
 )
-set(NET_INTERFACE_MODELS
-  models/cost_function_squared_error.h
-  models/cost_function_mse.h
-  models/cost_function_cross_entropy.h
-  models/cost_function_binary_cross_entropy.h
-)
 set(NET_HEADER_SERVICES
-  services/function_factory.h
   services/neuron_router.h
   services/partial_solution_builder.h
   services/partial_solution_solver.h
@@ -21,7 +14,6 @@ set(NET_HEADER_SERVICES
   services/rafko_net_feature_executor.h
 )
 set(NET_HEADER_MODELS
-  models/cost_function.h
   models/dense_net_weight_initializer.h
   models/neuron_info.h
   models/spike_function.h #TODO: Generalize and move specialized source to interfaces
@@ -36,7 +28,6 @@ target_sources(rafko_net
   models/src/dense_net_weight_initializer.cc
   models/src/neuron_info.cc
   models/src/transfer_function.cc
-  models/src/cost_function.cc
   models/src/rafko_softmax_feature.cc
   services/src/feature_group_cache.cc
   services/src/neuron_router.cc
@@ -48,7 +39,7 @@ target_sources(rafko_net
 )
 
 install(
-  FILES ${NET_HEADER_MODELS} ${NET_INTERFACE_MODELS}
+  FILES ${NET_HEADER_MODELS}
   DESTINATION include/rafko_net/models
 )
 install(

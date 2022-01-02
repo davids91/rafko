@@ -14,11 +14,11 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_net/models/cost_function.h"
+#include "rafko_gym/services/cost_function.h"
 
 #include <math.h>
 
-namespace rafko_net {
+namespace rafko_gym {
 
 void CostFunction::get_feature_errors(
   const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
@@ -105,4 +105,4 @@ sdouble32 CostFunction::summarize_errors(
   return local_error;
 }
 
-} /* namespace rafko_net */
+} /* namespace rafko_gym */

@@ -21,10 +21,10 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_utilities/models/const_vector_subrange.h"
-#include "rafko_net/models/cost_function_mse.h"
+#include "rafko_gym/services/cost_function_mse.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
-#include "rafko_net/services/function_factory.h"
+#include "rafko_gym/services/function_factory.h"
 #include "rafko_gym/models/rafko_dataset_cost.h"
 #include "rafko_gym/services/rafko_environment_data_set.h"
 #include "rafko_gym/services/rafko_net_approximizer.h"
@@ -69,7 +69,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
     std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
     std::vector<std::vector<sdouble32>>(std::get<1>(tmp1))
   );
-  rafko_gym::RafkoEnvironmentDataSet env(settings, std::move(*train_set), std::move(*test_set), rafko_net::cost_function_squared_error);
+  rafko_gym::RafkoEnvironmentDataSet env(settings, std::move(*train_set), std::move(*test_set), rafko_gym::cost_function_squared_error);
   rafko_gym::RafkoNetApproximizer approximizer(settings, *nets[0], env, rafko_gym::weight_updater_default);
 
   /* adding a simple-weight-gradient fragment */
@@ -162,7 +162,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
     /* Sequence size */4
   );
-  rafko_gym::RafkoEnvironmentDataSet env(settings, std::move(*train_set), std::move(*test_set), rafko_net::cost_function_squared_error);
+  rafko_gym::RafkoEnvironmentDataSet env(settings, std::move(*train_set), std::move(*test_set), rafko_gym::cost_function_squared_error);
   rafko_gym::RafkoNetApproximizer approximizer(settings, *nets[0], env, rafko_gym::weight_updater_amsgrad,1);
 
   rafko_gym::RafkoDatasetWrapper* after_test_set =  google::protobuf::Arena::Create<rafko_gym::RafkoDatasetWrapper>(
@@ -224,13 +224,13 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   std::cout << std::endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << std::endl;
 
-  std::unique_ptr<rafko_net::SolutionSolver> after_solver(
+  rafko_net::SolutionSolver* after_solver(
     rafko_net::SolutionSolver::Builder(*rafko_net::SolutionBuilder(settings).build(*nets[0]), settings)
       .build()
   );
 
   sdouble32 error_summary[3] = {0,0,0};
-  rafko_net::CostFunctionMSE after_cost(settings);
+  rafko_gym::CostFunctionMSE after_cost(settings);
   for(uint32 i = 0; i < number_of_samples; ++i){
     bool reset = 0 == (i%(after_test_set->get_sequence_size()));
     rafko_utilities::ConstVectorSubrange<> neuron_data = after_solver->solve(after_test_set->get_input_sample(i), reset);

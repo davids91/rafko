@@ -25,12 +25,12 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 
-#include "rafko_net/models/cost_function_squared_error.h"
-#include "rafko_net/models/cost_function_mse.h"
-#include "rafko_net/models/cost_function_cross_entropy.h"
-#include "rafko_net/models/cost_function_binary_cross_entropy.h"
+#include "rafko_gym/services/cost_function_squared_error.h"
+#include "rafko_gym/services/cost_function_mse.h"
+#include "rafko_gym/services/cost_function_cross_entropy.h"
+#include "rafko_gym/services/cost_function_binary_cross_entropy.h"
 
-namespace rafko_net{
+namespace rafko_gym{
 
 class FunctionFactory{
 public:

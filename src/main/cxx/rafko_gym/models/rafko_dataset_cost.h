@@ -29,20 +29,21 @@
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_utilities/models/data_pool.h"
-#include "rafko_net/models/cost_function.h"
-#include "rafko_net/services/function_factory.h"
+#include "rafko_gym/services/cost_function.h"
+#include "rafko_gym/services/function_factory.h"
 
+#include "rafko_gym/models/rafko_objective.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
-#include "rafko_gym/services/rafko_agent.h"
+#include "rafko_gym/models/rafko_agent.h"
 
 namespace rafko_gym{
 
 /**
  * @brief      Error Statistics for a @RafkoDatasetWrapper
  */
-class RAFKO_FULL_EXPORT RafkoDatasetCost{
+class RAFKO_FULL_EXPORT RafkoDatasetCost : public RafkoObjective{
 public:
-  RafkoDatasetCost(rafko_mainframe::RafkoSettings& settings_, const rafko_gym::RafkoDatasetWrapper& dataset_, std::shared_ptr<rafko_net::CostFunction> cost_function_)
+  RafkoDatasetCost(rafko_mainframe::RafkoSettings& settings_, const rafko_gym::RafkoEnvironment& dataset_, std::shared_ptr<rafko_gym::CostFunction> cost_function_)
   : settings(settings_)
   , dataset(dataset_)
   , error_state(double_literal(1.0),{
@@ -52,13 +53,13 @@ public:
   , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   { }
 
-  RafkoDatasetCost(rafko_mainframe::RafkoSettings& settings_, const rafko_gym::RafkoDatasetWrapper& dataset_, rafko_net::Cost_functions the_function)
+  RafkoDatasetCost(rafko_mainframe::RafkoSettings& settings_, const rafko_gym::RafkoEnvironment& dataset_, rafko_gym::Cost_functions the_function)
   : settings(settings_)
   , dataset(dataset_)
   , error_state(double_literal(1.0),{
       std::vector<sdouble32>(dataset.get_number_of_label_samples(),(double_literal(1.0)/dataset.get_number_of_label_samples())), double_literal(1.0)
     })
-  , cost_function(rafko_net::FunctionFactory::build_cost_function(the_function, settings_))
+  , cost_function(rafko_gym::FunctionFactory::build_cost_function(the_function, settings_))
   , exposed_to_multithreading(false)
   , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   { }
@@ -85,16 +86,6 @@ public:
     uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
   );
 
-  /**
-   * @brief      Same as @set_feature_for_label but in bulk
-   *
-   * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
-   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  sequence_start_index     The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
-   * @param[in]  sequences_to_evaluate    The labels to evaluate
-   * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
-   * @param[in]  sequence_truncation      The sequence truncation
-   */
   void set_features_for_sequences(
     const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
     uint32 sequence_start_index, uint32 sequences_to_evaluate,
@@ -109,16 +100,6 @@ public:
     common_datapool.release_buffer(resulting_errors);
   }
 
-  /**
-   * @brief      Same as @set_feature_for_label but in bulk
-   *
-   * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
-   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  sequence_start_index     The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
-   * @param[in]  sequences_to_evaluate    The labels to evaluate
-   * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
-   * @param[in]  sequence_truncation      The sequence truncation
-   */
   void set_features_for_sequences(
     const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
     uint32 sequence_start_index, uint32 sequences_to_evaluate,
@@ -138,9 +119,6 @@ public:
     }else throw std::runtime_error("Can't reset errors while set is exposed to multithreading!");
   }
 
-  /**
-   * @brief      Stores the current error values for later re-use
-   */
   void push_state(){
     if(!exposed_to_multithreading){
       std::lock_guard<std::mutex> my_lock(dataset_mutex);
@@ -148,9 +126,6 @@ public:
     }else throw std::runtime_error("Can't modify state while set is exposed to multithreading!");
   }
 
-  /**
-   * @brief      Restores the previously stored state, if there is any
-   */
   void pop_state(){
     if(!exposed_to_multithreading){
       std::lock_guard<std::mutex> my_lock(dataset_mutex);
@@ -195,18 +170,10 @@ public:
     } else throw std::runtime_error("Can't query error state while the set is exposd to multithreading");
   }
 
-  /**
-   * @brief     Puts the set in a thread-safe state, enabling multi-threaded set access to the error_values vector, but
-   *            disabling error_sum calculations(one of the main common part of the set).
-   */
   void expose_to_multithreading(){
     exposed_to_multithreading = true;
   }
 
-  /**
-   * @brief     Restores the set to a non-thread-safe state, disabling multi-threaded set access to the error_values vector, but
-   *            re-enabling error_sum calculations(one of the main common part of the set). Also re-calculates error value sum
-   */
   void conceal_from_multithreading();
 
   /**
@@ -214,9 +181,18 @@ public:
    *
    * @return     A const reference to the underlying dataset wrapper
    */
-  const RafkoDatasetWrapper& get_dataset(){
+  const RafkoEnvironment& get_dataset(){ /*TODO: factor this out! */
     return dataset;
   }
+
+  const std::vector<sdouble32>& get_feature_fitness_vector()const{
+    return error_state.back().sample_errors;
+  }
+
+  virtual sdouble32 get_feature_fitness()const{
+    return error_state.back().error_sum;
+  }
+
 
 private:
   struct error_state_type{
@@ -226,9 +202,9 @@ private:
   static rafko_utilities::DataPool<sdouble32> common_datapool;
 
   rafko_mainframe::RafkoSettings& settings;
-  const RafkoDatasetWrapper& dataset;
+  const RafkoEnvironment& dataset;
   std::vector<error_state_type> error_state;
-  std::shared_ptr<rafko_net::CostFunction> cost_function;
+  std::shared_ptr<rafko_gym::CostFunction> cost_function;
   bool exposed_to_multithreading = false; /* basically decides whether or not error sum calculation is enabled. */
   mutable std::mutex dataset_mutex; /* when error sum calculation is enabled, the one common point of the dataset might be updated from different threads, so a std::mutex is required */
   const std::function<void(uint32)> error_calculation_lambda =  [this](uint32 thread_index){
