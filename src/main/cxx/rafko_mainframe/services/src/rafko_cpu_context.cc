@@ -45,11 +45,11 @@ RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet& neural_network, rafko_main
 , used_minibatch_size( std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) )
 { neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples()); }
 
-void RafkoCPUContext::set_environment(std::unique_ptr<rafko_gym::RafkoEnvironment> environment_){
+void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_){
   assert(environment_->get_feature_size() == network.output_neuron_number());
   assert(environment_->get_input_size() == network.input_data_size());
   environment.reset();
-  environment = std::move(environment_);
+  environment = environment_;
   uint32 old_output_buffer_num = neuron_outputs_to_evaluate.size();
   uint32 new_output_buffer_num = settings.get_max_processing_threads() * environment->get_sequence_size() + 1u;
   neuron_outputs_to_evaluate.resize(new_output_buffer_num);
@@ -61,17 +61,6 @@ void RafkoCPUContext::set_environment(std::unique_ptr<rafko_gym::RafkoEnvironmen
   neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples());
   used_sequence_truncation = std::min(settings.get_memory_truncation(), environment->get_sequence_size());
   used_minibatch_size = std::min(settings.get_minibatch_size(), environment->get_number_of_sequences());
-}
-
-void RafkoCPUContext::set_objective(std::unique_ptr<rafko_gym::RafkoObjective> objective_){
-  /*TODO: Check if compatible with network object */
-  objective.reset();
-  objective = std::move(objective_);
-}
-
-void RafkoCPUContext::set_weight_updater(std::unique_ptr<rafko_gym::RafkoWeightUpdater> weight_updater_){
-  weight_updater.reset();
-  weight_updater = std::move(weight_updater_);
 }
 
 sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_truncation){

@@ -49,12 +49,19 @@ public:
   }
 
   /**
-   * @brief      Solves the rafko_net::Solution provided in the constructor, previous neural information is supposedly available in @output buffer
+   * @brief      For the provided input, return the result of the neural network
    *
-   * @param[in]      input    The input data to be taken
+   * @param[in]      input                  The input data to be taken
+   * @param[in]      reset_neuron_data      should the internal memory of the solver is to be resetted before solving the neural network
+   * @param[in]      thread_index           The index of thread the solution is to be running from
+   *
    * @return         The output values of the network result
    */
-  rafko_utilities::ConstVectorSubrange<> solve(const std::vector<sdouble32>& input, bool reset_neuron_data = true, uint32 thread_index = 0){
+
+  rafko_utilities::ConstVectorSubrange<> solve(
+    const std::vector<sdouble32>& input,
+    bool reset_neuron_data = true, uint32 thread_index = 0
+  ){
     if(max_threads > thread_index){
       assert( input.size() == solution.network_input_size() );
       if(reset_neuron_data)neuron_value_buffers[thread_index].reset();

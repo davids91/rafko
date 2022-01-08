@@ -293,7 +293,10 @@ void print_training_sample(
   uint32 sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
   rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings
 ){
-  std::unique_ptr<rafko_net::SolutionSolver> sample_solver(rafko_net::SolutionSolver::Builder(*rafko_net::SolutionBuilder(settings).build(net), settings).build());
+  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(net);
+  std::unique_ptr<rafko_net::SolutionSolver> sample_solver(
+    rafko_net::SolutionSolver::Builder(*solution, settings).build()
+  );
   std::vector<sdouble32> neuron_data(data_set.get_sequence_size());
   uint32 raw_label_index = sample_sequence_index;
   uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());

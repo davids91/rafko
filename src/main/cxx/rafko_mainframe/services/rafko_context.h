@@ -49,7 +49,7 @@ public:
    *
    * @param[in]      environment    An environment ready to be moved inside the context
    */
-  virtual void set_environment(std::unique_ptr<rafko_gym::RafkoEnvironment> environment_) = 0;
+  virtual void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_) = 0;
 
   virtual const rafko_gym::RafkoEnvironment& get_environment() = 0;
 
@@ -58,7 +58,7 @@ public:
    *
    * @param[in]      objective    An objective function ready to be moved inside the context
    */
-  virtual void set_objective(std::unique_ptr<rafko_gym::RafkoObjective> objective_) = 0;
+  virtual void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_) = 0;
 
   virtual const rafko_gym::RafkoObjective& get_objective() = 0;
 
@@ -67,7 +67,7 @@ public:
    *
    * @param[in]      weight_updater    A weight updater ready to be moved inside the context
    */
-  virtual void set_weight_updater(std::unique_ptr<rafko_gym::RafkoWeightUpdater> weight_updater_) = 0;
+  virtual void set_weight_updater(rafko_gym::Weight_updaters updater) = 0;
 
   virtual rafko_gym::RafkoWeightUpdater& expose_weight_updater() = 0;
 
@@ -77,6 +77,20 @@ public:
    * @return     The resulting error/fitness value summary of the evaluation
    */
   virtual sdouble32 full_evaluation() = 0;
+
+  /**
+   * @brief      For the provided input, return the result of the neural network
+   *
+   * @param[in]      input                  The input data to be taken
+   * @param[in]      reset_neuron_data      should the internal memory of the solver is to be resetted before solving the neural network
+   * @param[in]      thread_index           The index of thread the solution is to be running from
+   *
+   * @return         The output values of the network result
+   */
+  virtual rafko_utilities::ConstVectorSubrange<> solve(
+    const std::vector<sdouble32>& input,
+    bool reset_neuron_data = true, uint32 thread_index = 0
+  ) = 0;
 
   /**
    * @brief          Evaluates installed agents in a stochastic manner and returns with its error/fittness value
