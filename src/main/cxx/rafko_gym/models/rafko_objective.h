@@ -22,6 +22,8 @@
 
 #include <vector>
 
+#include "rafko_gym/models/rafko_environment.h"
+
 namespace rafko_gym{
 
 /**
@@ -31,78 +33,66 @@ class RAFKO_FULL_EXPORT RafkoObjective{
 public:
 
   /**
+   * @brief      Sets the approximated value for an observed value and provides the calculated fitness.
+   *             assumes that the sequence size of the @environment is 1
+   *
+   * @param[in]  environment                  The environment to evaluate the provided Neuron data on
+   * @param[in]  sample_index             The sample index inside the environment
+   * @param[in]  neuron_data              The neuron data to evaluate
+   * @return     The resulting error
+   */
+  virtual sdouble32 set_feature_for_label(const rafko_gym::RafkoEnvironment& environment, uint32 sample_index, const std::vector<sdouble32>& neuron_data) = 0;
+
+  /**
    * @brief      Same as @set_feature_for_label but in bulk
    *
+   * @param[in]  environment                  The environment to evaluate the provided Neuron data on
+   * @param[in]  neuron_data              The neuron data
+   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
+   * @param[in]  raw_start_index          The raw start index inside the environment labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  labels_to_evaluate       The labels to evaluate
+   * @return     The resulting error
+   */
+  virtual sdouble32 set_features_for_labels(
+     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
+    uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
+  ) = 0;
+
+  /**
+   * @brief      Provides the fitness value
+   *
+   * @param[in]  environment                  The environment to evaluate the provided Neuron data on
    * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
    * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  sequence_start_index     The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  sequence_start_index     The raw start index inside the environment labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
    * @param[in]  sequences_to_evaluate    The labels to evaluate
    * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
    * @param[in]  sequence_truncation      The sequence truncation
+   * @return     The resulting error
    */
-  virtual void set_features_for_sequences(
-    const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
-    uint32 sequence_start_index, uint32 sequences_to_evaluate,
+  virtual sdouble32 set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
+    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
   ) = 0;
 
   /**
    * @brief      Same as @set_feature_for_label but in bulk
    *
+   * @param[in]  environment                  The environment to evaluate the provided Neuron data on
    * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
    * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  sequence_start_index     The raw start index inside the dataset labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  sequence_start_index     The raw start index inside the environment labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
    * @param[in]  sequences_to_evaluate    The labels to evaluate
    * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
    * @param[in]  sequence_truncation      The sequence truncation
+   * @return     The resulting error
    */
-  virtual void set_features_for_sequences(
-    const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
-    uint32 sequence_start_index, uint32 sequences_to_evaluate,
-    uint32 start_index_in_sequence, uint32 sequence_truncation,
-    std::vector<sdouble32>& tmp_data
+  virtual sdouble32 set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
+    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
+    uint32 start_index_in_sequence, uint32 sequence_truncation, std::vector<sdouble32>& tmp_data
   ) = 0;
-
-  /**
-   * @brief      Provides the last measured overall fitness value
-   *
-   * @return     A vector of error/fitness value of all the installed feature arrays
-   */
-  virtual const std::vector<sdouble32>& get_feature_fitness_vector()const = 0;
-
-  /**
-   * @brief      Provides the last measured overall fitness value
-   *
-   * @return     A vector of error/fitness value of all the installed feature arrays
-   */
-  virtual sdouble32 get_feature_fitness()const = 0;
-
-  /**
-   * @brief      Sets the error values to the default value
-   */
-  virtual void reset_errors() = 0;
-
-  /**
-   * @brief      Saves the RafkoEnvironment state
-   */
-  virtual void push_state() = 0;
-
-  /**
-   * @brief      Restores the previously stored environment state
-   */
-  virtual void pop_state() = 0;
-
-  /**
-   * @brief     Puts the set in a thread-safe state, enabling multi-threaded set access to the error_values vector, but
-   *            disabling error_sum calculations(one of the main common part of the set).
-   */
-  virtual void expose_to_multithreading() = 0;
-
-  /**
-   * @brief     Restores the set to a non-thread-safe state, disabling multi-threaded set access to the error_values vector, but
-   *            re-enabling error_sum calculations(one of the main common part of the set). Also re-calculates error value sum
-   */
-  virtual void conceal_from_multithreading() = 0;
 
   virtual ~RafkoObjective() = default;
 };

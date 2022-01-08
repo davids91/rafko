@@ -134,9 +134,9 @@ public:
    * @brief      Evaluates the network in the given environment fully
    */
   void full_evaluation(){
-    context.full_evaluation();
-    if(min_test_error > context.get_objective().get_feature_fitness()){
-      min_test_error = context.get_objective().get_feature_fitness();
+    sdouble32 fitness = context.full_evaluation();
+    if(min_test_error > fitness){
+      min_test_error = fitness;
       min_test_error_was_at_iteration = iteration;
     }
   }
@@ -152,10 +152,10 @@ public:
       &&((
         (
           context.expose_settings().get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
-          &&(context.expose_settings().get_learning_rate() >= -context.get_objective().get_feature_fitness())
+          &&(context.expose_settings().get_learning_rate() >= -min_test_error)
         )||(
           context.expose_settings().get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
-          &&(double_literal(0.0) ==  -context.get_objective().get_feature_fitness())
+          &&(double_literal(0.0) ==  -min_test_error)
         )
       ))
     );

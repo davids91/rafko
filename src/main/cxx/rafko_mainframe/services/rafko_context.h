@@ -81,10 +81,11 @@ public:
   /**
    * @brief          Evaluates installed agents in a stochastic manner and returns with its error/fittness value
    *
-   * @param[in]      seed    A helper value to make Stochastic evaluation deterministicly reproducible
+   * @param[in]      to_seed        A helper value to make Stochastic evaluation deterministicly reproducible
+   * @param[in]      seed_value     A helper value to make Stochastic evaluation deterministicly reproducible
    * @return         The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 stochastic_evaluation(uint32 seed = 0u) = 0;
+  virtual sdouble32 stochastic_evaluation(bool to_seed = false, uint32 seed_value = 0u) = 0;
 
   /**
    * @brief      Saves the context state
@@ -97,7 +98,6 @@ public:
   virtual void pop_state() = 0;
 
   virtual rafko_mainframe::RafkoSettings& expose_settings() = 0;
-  virtual sdouble32 get_current_fitness() = 0;
 
   virtual rafko_net::RafkoNet& expose_network() = 0;
 };

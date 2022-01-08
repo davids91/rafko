@@ -27,7 +27,7 @@
 #include "rafko_protocol/training.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_gym/models/rafko_dataset_cost.h"
+#include "rafko_gym/models/rafko_dataset_wrapper.h"
 
 namespace rafko_test {
 

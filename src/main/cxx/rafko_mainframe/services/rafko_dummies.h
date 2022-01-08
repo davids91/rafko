@@ -31,24 +31,45 @@ namespace rafko_mainframe{
 class RafkoDummyObjective : public rafko_gym::RafkoObjective{
 public:
   ~RafkoDummyObjective() = default;
-  void set_features_for_sequences(
-    const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
-    uint32 sequence_start_index, uint32 sequences_to_evaluate,
+  sdouble32 set_feature_for_label(const rafko_gym::RafkoEnvironment& dataset, uint32 sample_index, const std::vector<sdouble32>& neuron_data){
+    parameter_not_used(dataset);
+    parameter_not_used(sample_index);
+    parameter_not_used(neuron_data);
+    return double_literal(0.0);
+  }
+  sdouble32 set_features_for_labels(
+     const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<sdouble32>>& neuron_data,
+    uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
+  ){
+    parameter_not_used(dataset);
+    parameter_not_used(neuron_data);
+    parameter_not_used(neuron_buffer_index);
+    parameter_not_used(neuron_buffer_index);
+    parameter_not_used(raw_start_index);
+    parameter_not_used(labels_to_evaluate);
+    return double_literal(0.0);
+  }
+  sdouble32 set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<sdouble32>>& neuron_data,
+    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
   ){
+    parameter_not_used(dataset);
     parameter_not_used(neuron_data);
     parameter_not_used(neuron_buffer_index);
     parameter_not_used(sequence_start_index);
     parameter_not_used(sequences_to_evaluate);
     parameter_not_used(start_index_in_sequence);
     parameter_not_used(sequence_truncation);
+    return double_literal(0.0);
   }
-  void set_features_for_sequences(
-    const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
-    uint32 sequence_start_index, uint32 sequences_to_evaluate,
+  sdouble32 set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<sdouble32>>& neuron_data,
+    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation,
     std::vector<sdouble32>& tmp_data
   ){
+    parameter_not_used(dataset);
     parameter_not_used(neuron_data);
     parameter_not_used(neuron_buffer_index);
     parameter_not_used(sequence_start_index);
@@ -56,14 +77,8 @@ public:
     parameter_not_used(start_index_in_sequence);
     parameter_not_used(sequence_truncation);
     parameter_not_used(tmp_data);
+    return double_literal(0.0);
   }
-  const std::vector<sdouble32>& get_feature_fitness_vector()const{ return dummy; }
-  sdouble32 get_feature_fitness()const{ return double_literal(0.0); };
-  void reset_errors(){ };
-  void push_state(){ };
-  void pop_state(){ };
-  void expose_to_multithreading(){ };
-  void conceal_from_multithreading(){ };
 private:
   std::vector<sdouble32> dummy;
 };
