@@ -35,15 +35,15 @@ namespace rafko_gym_test {
  * */
 TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   rafko_mainframe::RafkoSettings settings;
-  uint32 sample_number = 50;
+  uint32 sample_number = 10;
   uint32 sequence_size = 6;
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
-  rafko_gym::DataSet dataset = rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label);
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label));
 
   /* Create @RafkoDatasetCost from @DataSet */
-  rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
+  rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoDatasetCost data_agr(settings, dataset_wrap, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
   REQUIRE( 0 == data_agr.get_dataset().get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_dataset().get_number_of_sequences() );
@@ -53,8 +53,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
     data_agr.set_feature_for_label(i,{expected_label});
   }
-  sdouble32 initial_error = data_agr.get_error_sum();
-  CHECK( Catch::Approx(initial_error).margin(0.00000000000001) == double_literal(0.0) );
+  CHECK( Catch::Approx(data_agr.get_error_sum()).margin(0.00000000000001) == double_literal(0.0) );
 
   /* Test statistics for it */
   sdouble32 error_sum = double_literal(0.0);
@@ -206,9 +205,10 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
   const sdouble32 set_distance = double_literal(10.0);
   sdouble32 initial_error;
 
-  rafko_gym::DataSet dataset = rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label);
-  rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label));
+  rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoDatasetCost data_agr(settings, dataset_wrap, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
+
   REQUIRE( 0 == data_agr.get_dataset().get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_dataset().get_number_of_sequences() );
 

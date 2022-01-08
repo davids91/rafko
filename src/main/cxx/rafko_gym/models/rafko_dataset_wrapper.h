@@ -107,6 +107,10 @@ public:
     return label_samples[0].size();
   }
 
+  uint32 get_input_size() const{
+    return input_samples[0].size();
+  }
+
   uint32 get_number_of_input_samples() const{
     return input_samples.size();
   }

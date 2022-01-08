@@ -47,19 +47,22 @@ TEST_CASE("Testing CPU context", "[environment]"){
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
-
-  rafko_gym::DataSet dataset = rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label);
-
-  std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
-  rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
-  rafko_gym::RafkoDatasetCost training_cost(settings, dataset_wrap, cost);
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, expected_label));
+  std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
+  rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
+  rafko_gym::RafkoDatasetCost training_cost(settings, dataset_wrap, cost);
   rafko_mainframe::RafkoCPUContext context(*network, settings);
   context.set_objective(std::make_unique<rafko_gym::RafkoDatasetCost>(settings, dataset_wrap, cost));
+  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
   for(uint32 feature_index = 0; feature_index < dataset_wrap.get_number_of_label_samples(); ++feature_index)
-    training_cost.set_feature_for_label( feature_index, {expected_label - set_distance} );
+    training_cost.set_feature_for_label(
+      feature_index,
+      std::vector<sdouble32>(network->output_neuron_number(), (expected_label - set_distance))
+    );
+  std::cout << "Full evaluation:" << std::endl;
   sdouble32 environment_error = context.full_evaluation();
   REQUIRE( /* One Error: (distance^2)/(2 * overall number of samples) */
     Catch::Approx( /* Error sum: One Error * overall number of samples  */

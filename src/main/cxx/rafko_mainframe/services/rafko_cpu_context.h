@@ -29,7 +29,6 @@
 
 #include "rafko_mainframe/services/rafko_context.h"
 
-
 namespace rafko_mainframe {
 
 class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
@@ -39,13 +38,25 @@ public:
   ~RafkoCPUContext() = default;
 
   void set_environment(std::unique_ptr<rafko_gym::RafkoEnvironment> environment_){
+    assert(environment_->get_feature_size() == network.output_neuron_number());
+    assert(environment_->get_input_size() == network.input_data_size());
     environment.reset();
     environment = std::move(environment_);
+    uint32 old_output_buffer_num = neuron_outputs_to_evaluate.size();
+    uint32 new_output_buffer_num = settings.get_max_processing_threads() * environment->get_sequence_size() + 1u;
+    neuron_outputs_to_evaluate.resize(new_output_buffer_num);
+    if(old_output_buffer_num < new_output_buffer_num){
+      for(uint32 buffer_index = old_output_buffer_num-1; buffer_index < new_output_buffer_num; ++buffer_index){
+        neuron_outputs_to_evaluate[buffer_index].resize(environment->get_feature_size());
+      }
+    }
+    neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples());
   }
   const rafko_gym::RafkoEnvironment& get_environment(){
     return *environment;
   }
   void set_objective(std::unique_ptr<rafko_gym::RafkoObjective> objective_){
+    /*TODO: Check if compatible with network object */
     objective.reset();
     objective = std::move(objective_);
   }
@@ -117,46 +128,6 @@ public:
   }
 
 private:
-  class RafkoDummyObjective : public rafko_gym::RafkoObjective{
-  public:
-    ~RafkoDummyObjective() = default;
-    void set_features_for_sequences(
-      const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
-      uint32 sequence_start_index, uint32 sequences_to_evaluate,
-      uint32 start_index_in_sequence, uint32 sequence_truncation
-    ){
-      parameter_not_used(neuron_data);
-      parameter_not_used(neuron_buffer_index);
-      parameter_not_used(sequence_start_index);
-      parameter_not_used(sequences_to_evaluate);
-      parameter_not_used(start_index_in_sequence);
-      parameter_not_used(sequence_truncation);
-    }
-    void set_features_for_sequences(
-      const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
-      uint32 sequence_start_index, uint32 sequences_to_evaluate,
-      uint32 start_index_in_sequence, uint32 sequence_truncation,
-      std::vector<sdouble32>& tmp_data
-    ){
-      parameter_not_used(neuron_data);
-      parameter_not_used(neuron_buffer_index);
-      parameter_not_used(sequence_start_index);
-      parameter_not_used(sequences_to_evaluate);
-      parameter_not_used(start_index_in_sequence);
-      parameter_not_used(sequence_truncation);
-      parameter_not_used(tmp_data);
-    }
-    const std::vector<sdouble32>& get_feature_fitness_vector()const{ return dummy; }
-    sdouble32 get_feature_fitness()const{ return double_literal(0.0); };
-    void reset_errors(){ };
-    void push_state(){ };
-    void pop_state(){ };
-    void expose_to_multithreading(){ };
-    void conceal_from_multithreading(){ };
-  private:
-    std::vector<sdouble32> dummy;
-  };
-
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings;
   rafko_net::RafkoNet& network;
@@ -182,15 +153,6 @@ private:
    * @param[in]  sequence_tructaion         The number of labels to evaluate inside every evaluated sequence
    */
   void evaluate(uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion);
-
-  /**
-   * @brief      Evaluate a single sequence. The evaluated sequences lies under @sequence_index + @thread_index
-   *              as inside a multi-threaded evaluation, one thread is to evaluate one sequence
-   *
-   * @param[in]  sequence_index      The sequence to be evaluated inside the @data_set
-   * @param[in]  thread_index        The index of the thread the function is used with inside @solve_threads
-   */
-  void evaluate_single_sequence(uint32 sequence_index, uint32 thread_index);
 };
 
 } /* namespace rafko_mainframe */

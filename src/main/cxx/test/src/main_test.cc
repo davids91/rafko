@@ -454,20 +454,18 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size
   return builder.dense_layers(net_structure);
 }
 
-rafko_gym::DataSet&& create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, sdouble32 expected_label){
-  rafko_gym::DataSet&& dataset = rafko_gym::DataSet();
-  dataset.set_input_size(input_size);
-  dataset.set_feature_size(feature_size);
-  dataset.set_sequence_size(sequence_size);
-
+std::unique_ptr<rafko_gym::DataSet> create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, sdouble32 expected_label){
+  std::unique_ptr<rafko_gym::DataSet> dataset = std::make_unique<rafko_gym::DataSet>();
+  dataset->set_input_size(input_size);
+  dataset->set_feature_size(feature_size);
+  dataset->set_sequence_size(sequence_size);
   for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
     for(uint32 j = 0; j < feature_size; ++j){
-      dataset.add_inputs(expected_label); /* Input should be irrelevant here */
-      dataset.add_labels(expected_label);
+      dataset->add_inputs(expected_label); /* Input should be irrelevant here */
+      dataset->add_labels(expected_label);
     }
   }
-
-  return std::move(dataset);
+  return dataset;
 }
 
 } /* namsepace rafko_test */

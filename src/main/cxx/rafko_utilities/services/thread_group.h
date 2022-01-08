@@ -19,7 +19,7 @@
 #define THREAD_GROUP_H
 
 #include "rafko_global.h"
-
+#include <iostream>
 #include <functional>
 #include <vector>
 #include <thread>
@@ -56,29 +56,29 @@ public:
 
   void start_and_block(const std::function<void(uint32)>& function) const{
     { /* initialize, start.. */
-     std::unique_lock<std::mutex> my_lock(state_mutex);
-     worker_function = &function;
-     state.store(Start);
+      std::unique_lock<std::mutex> my_lock(state_mutex);
+      worker_function = &function;
+      state.store(Start);
     }
     synchroniser.notify_all(); /* Whip the peons */
 
     { /* wait until the work is done */
-     std::unique_lock<std::mutex> my_lock(state_mutex);
-     synchroniser.wait(my_lock,[this](){
-      return (threads.size() <= threads_ready);
-     });
+      std::unique_lock<std::mutex> my_lock(state_mutex);
+      synchroniser.wait(my_lock,[this](){
+        return (threads.size() <= threads_ready);
+      });
     }
     { /* set appropriate state */
-     std::unique_lock<std::mutex> my_lock(state_mutex);
-     state.store(Idle);
+      std::unique_lock<std::mutex> my_lock(state_mutex);
+      state.store(Idle);
     }
     synchroniser.notify_all(); /* Notify worker threads that the main thread is finished */
 
     { /* wait until all threads are notified */
-     std::unique_lock<std::mutex> my_lock(state_mutex);
-     synchroniser.wait(my_lock,[this](){
-      return (0u == threads_ready); /* All threads are notified once the @threads_ready variable is zero again */
-     });
+      std::unique_lock<std::mutex> my_lock(state_mutex);
+      synchroniser.wait(my_lock,[this](){
+        return (0u == threads_ready); /* All threads are notified once the @threads_ready variable is zero again */
+      });
     }
   }
 
@@ -96,38 +96,40 @@ private:
   mutable std::atomic<state_t> state = {Idle};
   mutable std::mutex state_mutex;
   mutable std::condition_variable synchroniser;
-  std::vector<std::thread> threads;
+  std::vector<std::thread> threads; //--> do pointers
 
   void worker(uint32 thread_index){
     while(End != state.load()){ /* Until the pool is stopped */
-     { /* Wait until main thread triggers a task */
-      std::unique_lock<std::mutex> my_lock(state_mutex);
-      synchroniser.wait(my_lock,[this](){
-        return (Idle != state.load());
-      });
-     }
-     if(End != state.load()){ /* In case there are still tasks to execute.. */
-       (*worker_function)(thread_index);/* do the work */
-
-       { /* signal that work is done! */
-        std::unique_lock<std::mutex> my_lock(state_mutex);
-        ++threads_ready; /* increase "done counter" */
-       }
-       synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
-
-       { /* Wait until main thread is closing the iteration */
+      { /* Wait until main thread triggers a task */
         std::unique_lock<std::mutex> my_lock(state_mutex);
         synchroniser.wait(my_lock,[this](){
-          return (Start != state.load());
+          return (Idle != state.load());
         });
-       }
+      }
+      if(End != state.load()){ /* In case there are still tasks to execute.. */
+        { /* signal that work is done! */
+          std::unique_lock<std::mutex> my_lock(state_mutex);
+        }
+        (*worker_function)(thread_index);/* do the work */
+        { /* signal that work is done! */
+          std::unique_lock<std::mutex> my_lock(state_mutex);
+          ++threads_ready; /* increase "done counter" */
+        }
+        synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
 
-       { /* signal that this thread is notified! */
+        { /* Wait until main thread is closing the iteration */
+          std::unique_lock<std::mutex> my_lock(state_mutex);
+          synchroniser.wait(my_lock,[this](){
+            return (Start != state.load());
+          });
+        }
+
+        { /* signal that this thread is notified! */
         std::unique_lock<std::mutex> my_lock(state_mutex);
-        --threads_ready; /* decrease the "done counter" to do so */
-       }
-       synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
-     }
+          --threads_ready; /* decrease the "done counter" to do so */
+        }
+        synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
+      }
     } /*while(END_VALUE != state)*/
   }
 };

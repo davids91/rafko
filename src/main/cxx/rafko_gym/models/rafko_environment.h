@@ -74,6 +74,13 @@ public:
   virtual const std::vector<std::vector<sdouble32>>& get_label_samples()const = 0;
 
   /**
+   * @brief      Gets the number of floating point values the evaluation accepts to produce the label values
+   *
+   * @return     The feature size.
+   */
+  virtual uint32 get_input_size()const = 0;
+
+  /**
    * @brief      Gets the number of values present in the output
    *
    * @return     The feature size.

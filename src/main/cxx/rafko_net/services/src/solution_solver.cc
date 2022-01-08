@@ -57,14 +57,6 @@ SolutionSolver::SolutionSolver(
     execution_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_solve_threads()));
 }
 
-SolutionSolver::SolutionSolver(SolutionSolver&& other) /* Move constructor */
-: rafko_gym::RafkoAgent(other.solution, other.required_temp_data_size, other.required_temp_data_number_per_thread, other.settings.get_max_processing_threads())
-, settings(other.settings)
-, partial_solvers(other.partial_solvers)
-, execution_threads(std::move(other.execution_threads))
-, feature_executor(std::move(other.feature_executor))
-{ }
-
 void SolutionSolver::solve(
   const std::vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,
   const std::vector<std::reference_wrapper<std::vector<sdouble32>>>& tmp_data_pool,
@@ -123,7 +115,7 @@ void SolutionSolver::solve(
        * and each column may contain feature relevant to any @Neuron inside the the current row.
        */
       for(uint32 feature_index = 0; feature_index < solved_features.size(); feature_index++){
-        feature_executor.execute(solved_features[feature_index], output.get_element(0u));
+        feature_executor.execute(solved_features[feature_index], output.get_element(0u), thread_index);
       }
       solved_features.clear();
     } /* for(every row in the @Solution) */

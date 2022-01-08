@@ -146,7 +146,7 @@ extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 inp
  *
  * @return     The created dataset
  */
-extern rafko_gym::DataSet&& create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, sdouble32 expected_label = double_literal(0.0));
+extern std::unique_ptr<rafko_gym::DataSet> create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, sdouble32 expected_label = double_literal(0.0));
 
 } /* namespace rafko_test */
 

@@ -3,6 +3,7 @@ target_include_directories(rafko_mainframe PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_
 
 set( MAINFRAME_HEADERS
   models/rafko_settings.h
+  services/rafko_dummies.h
   services/rafko_context.h
   services/rafko_cpu_context.h
   services/training_logger.h

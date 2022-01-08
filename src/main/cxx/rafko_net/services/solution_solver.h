@@ -43,7 +43,7 @@ namespace rafko_net{
 class RAFKO_FULL_EXPORT SolutionSolver : public rafko_gym::RafkoAgent{
 public:
   SolutionSolver(const SolutionSolver& other) = delete; /* Copy constructor */
-  SolutionSolver(SolutionSolver&& other); /* Move constructor */
+  SolutionSolver(SolutionSolver&& other) = delete; /* Move constructor */
   SolutionSolver& operator=(const SolutionSolver& other) = delete; /* Copy assignment */
   SolutionSolver& operator=(SolutionSolver&& other) = delete; /* Move assignment */
   ~SolutionSolver() = default;
