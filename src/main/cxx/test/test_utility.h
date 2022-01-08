@@ -24,6 +24,7 @@
 #include "rafko_global.h"
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_protocol/training.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_gym/models/rafko_dataset_cost.h"
@@ -128,9 +129,24 @@ extern void check_data_match(std::vector<sdouble32>& sample_data, std::vector<sd
  * @brief      Generates a random Fully connected Dense network with some Layers set to have the softmax feature
  *
  * @param[in]  input_size       The size of the input vector accepted by the produces network
- * @param      settings  Contextual information
+ * @param      settings         Contextual information
+ *
+ * @return     the generated network to be owned by the caller
  */
 extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoSettings& settings);
+
+/**
+ * @brief      Creates a random dataset based on the given parameter
+ *
+ * @param[in]  input_size         The number of expected inputs are stored for the @DataSet
+ * @param[in]  feature_size       The number of features and labels to be stored inside the @DataSet
+ * @param[in]  sample_number      The number of samples to generate
+ * @param[in]  sequence_size      The number of sequences one sample should contain
+ * @param[in]  expected_label     The content of the dataset repeated in the correct structure
+ *
+ * @return     The created dataset
+ */
+extern rafko_gym::DataSet&& create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, sdouble32 expected_label = double_literal(0.0));
 
 } /* namespace rafko_test */
 

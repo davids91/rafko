@@ -32,8 +32,8 @@ RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet& neural_network, rafko_main
 , network(neural_network)
 , network_solution(rafko_net::SolutionBuilder(settings).build(network))
 , agent(rafko_net::SolutionSolver::Builder(*network_solution, settings).build())
-, environment(google::protobuf::Arena::Create<rafko_gym::RafkoDatasetWrapper>(&arena,rafko_gym::DataSet()))
-, objective(google::protobuf::Arena::Create<rafko_gym::RafkoDatasetCost>(&arena, settings, *environment, rafko_gym::cost_function_mse))
+, environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(rafko_gym::DataSet()))
+, objective(std::make_unique<RafkoDummyObjective>())
 , weight_updater(rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, rafko_gym::weight_updater_amsgrad, settings))
 , execution_threads(settings.get_max_processing_threads())
 {

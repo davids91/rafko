@@ -20,7 +20,7 @@
 
 #include "rafko_global.h"
 
-
+#include <memory>
 #include <vector>
 #include <functional>
 
@@ -45,29 +45,29 @@ public:
   virtual ~RafkoContext() = default;
 
   /**
-   * @brief          Accepts an environment to base network evaluation on top of.
+   * @brief          Accepts an environment to base network evaluation on top of and takes ownership of it!
    *
    * @param[in]      environment    An environment ready to be moved inside the context
    */
-  virtual void set_environment(rafko_gym::RafkoEnvironment&& environment) = 0;
+  virtual void set_environment(std::unique_ptr<rafko_gym::RafkoEnvironment> environment_) = 0;
 
   virtual const rafko_gym::RafkoEnvironment& get_environment() = 0;
 
   /**
-   * @brief          Accepts an objective function to base network evaluation on top of.
+   * @brief          Accepts an objective function to base network evaluation on top of and takes ownership of it!
    *
    * @param[in]      objective    An objective function ready to be moved inside the context
    */
-  virtual void set_objective_function(rafko_gym::RafkoObjective&& objective) = 0;
+  virtual void set_objective(std::unique_ptr<rafko_gym::RafkoObjective> objective_) = 0;
 
   virtual const rafko_gym::RafkoObjective& get_objective() = 0;
 
   /**
-   * @brief          Accepts a weight updater to base network evaluation on top of.
+   * @brief          Accepts a weight updater to base network evaluation on top of and takes ownership of it!
    *
    * @param[in]      weight_updater    A weight updater ready to be moved inside the context
    */
-  virtual void set_weight_updater(rafko_gym::RafkoWeightUpdater&& weight_updater) = 0;
+  virtual void set_weight_updater(std::unique_ptr<rafko_gym::RafkoWeightUpdater> weight_updater_) = 0;
 
   virtual rafko_gym::RafkoWeightUpdater& expose_weight_updater() = 0;
 

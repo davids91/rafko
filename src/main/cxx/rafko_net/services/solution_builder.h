@@ -20,6 +20,8 @@
 
 #include "rafko_global.h"
 
+#include <memory>
+
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_settings.h"
@@ -41,7 +43,7 @@ namespace rafko_net {
  *             can be solved in an independent manner. Dependencies inside the Neural network are represented
  *             in the order of the elements in a @solution_chain.
  */
-class SolutionBuilder{
+class RAFKO_FULL_EXPORT SolutionBuilder{
 public:
 
   /**
@@ -61,7 +63,7 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  Solution* build(const RafkoNet& net, bool optimize_to_gpu = false);
+  std::unique_ptr<Solution> build(const RafkoNet& net, bool optimize_to_gpu = false);
 
 private:
   rafko_mainframe::RafkoSettings& settings;

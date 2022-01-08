@@ -20,6 +20,8 @@
 
 #include "rafko_global.h"
 
+#include <memory>
+
 #include "rafko_net/services/solution_solver.h"
 #include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/models/rafko_objective.h"
@@ -30,36 +32,30 @@
 
 namespace rafko_mainframe {
 
-class RafkoCPUContext : public RafkoContext{
+class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
+public:
 
   RafkoCPUContext(rafko_net::RafkoNet& neural_network, rafko_mainframe::RafkoSettings settings_);
-
   ~RafkoCPUContext() = default;
 
-  /**
-   * @brief          Accepts an environment to base network evaluation on top of.
-   *
-   * @param[in]      environment    An environment ready to be moved inside the context
-   */
-  virtual void set_environment(rafko_gym::RafkoEnvironment&& environment) = 0;
-
-  virtual const rafko_gym::RafkoEnvironment& get_environment() = 0;
-
-  /**
-   * @brief          Accepts an objective function to base network evaluation on top of.
-   *
-   * @param[in]      objective    An objective function ready to be moved inside the context
-   */
-  virtual void set_objective_function(rafko_gym::RafkoObjective&& objective) = 0;
-
-  virtual const rafko_gym::RafkoObjective& get_objective() = 0;
-
-  /**
-   * @brief          Accepts a weight updater to base network evaluation on top of.
-   *
-   * @param[in]      weight_updater    A weight updater ready to be moved inside the context
-   */
-  virtual void set_weight_updater(rafko_gym::RafkoWeightUpdater&& weight_updater) = 0;
+  void set_environment(std::unique_ptr<rafko_gym::RafkoEnvironment> environment_){
+    environment.reset();
+    environment = std::move(environment_);
+  }
+  const rafko_gym::RafkoEnvironment& get_environment(){
+    return *environment;
+  }
+  void set_objective(std::unique_ptr<rafko_gym::RafkoObjective> objective_){
+    objective.reset();
+    objective = std::move(objective_);
+  }
+  const rafko_gym::RafkoObjective& get_objective(){
+    return *objective;
+  }
+  void set_weight_updater(std::unique_ptr<rafko_gym::RafkoWeightUpdater> weight_updater_){
+    weight_updater.reset();
+    weight_updater = std::move(weight_updater_);
+  }
 
   rafko_gym::RafkoWeightUpdater& expose_weight_updater(){
     return *weight_updater;
@@ -121,14 +117,54 @@ class RafkoCPUContext : public RafkoContext{
   }
 
 private:
+  class RafkoDummyObjective : public rafko_gym::RafkoObjective{
+  public:
+    ~RafkoDummyObjective() = default;
+    void set_features_for_sequences(
+      const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
+      uint32 sequence_start_index, uint32 sequences_to_evaluate,
+      uint32 start_index_in_sequence, uint32 sequence_truncation
+    ){
+      parameter_not_used(neuron_data);
+      parameter_not_used(neuron_buffer_index);
+      parameter_not_used(sequence_start_index);
+      parameter_not_used(sequences_to_evaluate);
+      parameter_not_used(start_index_in_sequence);
+      parameter_not_used(sequence_truncation);
+    }
+    void set_features_for_sequences(
+      const std::vector<std::vector<sdouble32>>& neuron_data, uint32 neuron_buffer_index,
+      uint32 sequence_start_index, uint32 sequences_to_evaluate,
+      uint32 start_index_in_sequence, uint32 sequence_truncation,
+      std::vector<sdouble32>& tmp_data
+    ){
+      parameter_not_used(neuron_data);
+      parameter_not_used(neuron_buffer_index);
+      parameter_not_used(sequence_start_index);
+      parameter_not_used(sequences_to_evaluate);
+      parameter_not_used(start_index_in_sequence);
+      parameter_not_used(sequence_truncation);
+      parameter_not_used(tmp_data);
+    }
+    const std::vector<sdouble32>& get_feature_fitness_vector()const{ return dummy; }
+    sdouble32 get_feature_fitness()const{ return double_literal(0.0); };
+    void reset_errors(){ };
+    void push_state(){ };
+    void pop_state(){ };
+    void expose_to_multithreading(){ };
+    void conceal_from_multithreading(){ };
+  private:
+    std::vector<sdouble32> dummy;
+  };
+
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings;
   rafko_net::RafkoNet& network;
-  rafko_net::Solution* network_solution;
-  rafko_net::SolutionSolver* agent;
-  rafko_gym::RafkoEnvironment* environment;
-  rafko_gym::RafkoObjective* objective;
-  rafko_gym::RafkoWeightUpdater* weight_updater;
+  std::unique_ptr<rafko_net::Solution> network_solution;
+  std::unique_ptr<rafko_net::SolutionSolver> agent;
+  std::unique_ptr<rafko_gym::RafkoEnvironment> environment;
+  std::unique_ptr<rafko_gym::RafkoObjective> objective;
+  std::unique_ptr<rafko_gym::RafkoWeightUpdater> weight_updater;
 
   std::vector<std::vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   rafko_utilities::ThreadGroup execution_threads;

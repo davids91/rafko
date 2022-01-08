@@ -35,19 +35,7 @@ TEST_CASE("Testing Dataset wrapper creation", "[data-handling]" ) {
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
   sdouble32 expected_label = double_literal(50.0);
-
-  /* Create a @DataSet and fill it with data */
-  rafko_gym::DataSet data_set = rafko_gym::DataSet();
-  data_set.set_input_size(1);
-  data_set.set_feature_size(1);
-  data_set.set_sequence_size(sequence_size);
-
-  for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
-    data_set.add_inputs(expected_label); /* Input should be irrelevant here */
-    data_set.add_labels(expected_label);
-  }
-
-  /* Create @RafkoDatasetCost from @DataSet */
+  rafko_gym::DataSet data_set = rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label);
   rafko_gym::RafkoDatasetWrapper data_agr(data_set);
   REQUIRE( 0 == data_agr.get_prefill_inputs_number() );
   REQUIRE( sample_number == data_agr.get_number_of_sequences() );

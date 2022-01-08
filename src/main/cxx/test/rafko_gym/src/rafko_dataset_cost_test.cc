@@ -40,16 +40,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
-  /* Create a @DataSet and fill it with data */
-  rafko_gym::DataSet dataset = rafko_gym::DataSet();
-  dataset.set_input_size(1);
-  dataset.set_feature_size(1);
-  dataset.set_sequence_size(sequence_size);
-
-  for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
-    dataset.add_inputs(expected_label); /* Input should be irrelevant here */
-    dataset.add_labels(expected_label);
-  }
+  rafko_gym::DataSet dataset = rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label);
 
   /* Create @RafkoDatasetCost from @DataSet */
   rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
@@ -215,17 +206,7 @@ TEST_CASE("Testing Data aggregate for state changes", "[data-handling]" ) {
   const sdouble32 set_distance = double_literal(10.0);
   sdouble32 initial_error;
 
-  /* Create a @DataSet and fill it with data */
-  rafko_gym::DataSet dataset = rafko_gym::DataSet();
-  dataset.set_input_size(1);
-  dataset.set_feature_size(1);
-  dataset.set_sequence_size(sequence_size);
-
-  for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
-    dataset.add_inputs(expected_label); /* Input should be irrelevant here */
-    dataset.add_labels(expected_label);
-  }
-
+  rafko_gym::DataSet dataset = rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
   rafko_gym::RafkoDatasetCost data_agr(settings, dataset_wrap, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
   REQUIRE( 0 == data_agr.get_dataset().get_prefill_inputs_number() );

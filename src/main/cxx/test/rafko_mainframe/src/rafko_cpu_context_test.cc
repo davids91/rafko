@@ -22,72 +22,45 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
+#include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_gym/services/cost_function_mse.h"
 #include "rafko_gym/models/rafko_dataset_cost.h"
+#include "rafko_mainframe/models/rafko_settings.h"
+#include "rafko_mainframe/services/rafko_cpu_context.h"
 
 #include "test/test_utility.h"
 
 namespace rafko_gym_test {
 
 /*###############################################################################################
- * Testing if the data-set environment produces correct error values
+ * Testing if the context produces correct error values
  * */
-class DummyRafkoAgent : public rafko_gym::RafkoAgent{
-public:
-  DummyRafkoAgent(rafko_net::Solution& solution) : RafkoAgent(solution,0,0,4) { }
-  void solve(const std::vector<sdouble32>&, rafko_utilities::DataRingbuffer& output, const std::vector<std::reference_wrapper<std::vector<sdouble32>>>&, uint32, uint32 ) const{
-    output = result;
-  }
-  void set_result(sdouble32 value){
-    result.set_element(0,0,value);
-  }
-  ~DummyRafkoAgent() = default;
-private:
-  rafko_utilities::DataRingbuffer result{1,1};
-};
-
-TEST_CASE("Testing COU context", "[environment]"){
+TEST_CASE("Testing CPU context", "[environment]"){
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
+  google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
-  /* Create a @DataSet and fill it with data */
-  rafko_gym::DataSet dataset = rafko_gym::DataSet();
-  dataset.set_input_size(1);
-  dataset.set_feature_size(1);
-  dataset.set_sequence_size(sequence_size);
+  rafko_gym::DataSet dataset = rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label);
 
-  for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
-    dataset.add_inputs(expected_label); /* Input should be irrelevant here */
-    dataset.add_labels(expected_label);
-  }
-
-  /* Create the environment and dummy agent */
+  std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(dataset);
-  rafko_gym::RafkoDatasetCost training_cost(settings, dataset_wrap, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
-  rafko_gym::RafkoCPUContext environment(settings, dataset, dataset, rafko_gym::cost_function_mse);
-  rafko_net::Solution solution;
-  solution.set_neuron_number(1);
-  solution.set_output_neuron_number(1);
-  solution.set_network_memory_length(1);
-  solution.set_network_input_size(1);
-  solution.add_cols(1);
-  DummyRafkoAgent agent(solution);
-  environment.install_agent(agent);
+  rafko_gym::RafkoDatasetCost training_cost(settings, dataset_wrap, cost);
+  rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
+  rafko_mainframe::RafkoCPUContext context(*network, settings);
+  context.set_objective(std::make_unique<rafko_gym::RafkoDatasetCost>(settings, dataset_wrap, cost));
 
   /* Set some error and see if the environment produces the expected */
-  agent.set_result(expected_label - set_distance);
   for(uint32 feature_index = 0; feature_index < dataset_wrap.get_number_of_label_samples(); ++feature_index)
     training_cost.set_feature_for_label( feature_index, {expected_label - set_distance} );
-  sdouble32 environment_error = environment.full_evaluation();
+  sdouble32 environment_error = context.full_evaluation();
   REQUIRE( /* One Error: (distance^2)/(2 * overall number of samples) */
     Catch::Approx( /* Error sum: One Error * overall number of samples  */
       pow(set_distance,2) / double_literal(2.0)
@@ -113,8 +86,7 @@ TEST_CASE("Testing COU context", "[environment]"){
     }
   }
   sdouble32 reference_error = -training_cost.get_error_sum();
-  agent.set_result(expected_label - set_distance);
-  sdouble32 measured_error = environment.stochastic_evaluation(seed);
+  sdouble32 measured_error = context.stochastic_evaluation(seed);
   CHECK( Catch::Approx(reference_error).margin(0.00000000000001) == measured_error );
 }
 

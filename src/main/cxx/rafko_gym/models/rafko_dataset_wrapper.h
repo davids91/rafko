@@ -66,6 +66,11 @@ public:
   , prefill_sequences(static_cast<uint32>((samples_.inputs_size() - samples_.labels_size()) / (samples_.labels_size() / sequence_size)))
   {
     assert(0 == (label_samples.size()%sequence_size));
+    assert(0 < samples_.input_size());
+    assert(0 < samples_.feature_size());
+    assert(0 < samples_.sequence_size());
+    assert(0 < samples_.inputs_size());
+    assert(0 < samples_.labels_size());
     fill(samples_);
   }
 
@@ -74,7 +79,11 @@ public:
   , input_samples(std::move(input_samples_))
   , label_samples(std::move(label_samples_))
   , prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
-  { assert(0 == (label_samples.size()%sequence_size)); }
+  {
+    assert(0 == (label_samples.size()%sequence_size));
+    assert(0 < input_samples.size());
+    assert(input_samples.size() == label_samples.size());
+  }
 
   const std::vector<sdouble32>& get_input_sample(uint32 raw_input_index) const{
     assert(input_samples.size() > raw_input_index);

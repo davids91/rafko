@@ -75,10 +75,8 @@ public:
   class Builder{
   public:
     Builder(const Solution& to_solve, rafko_mainframe::RafkoSettings& settings);
-    SolutionSolver* build(){
-      return google::protobuf::Arena::Create<SolutionSolver>(
-        settings.get_arena_ptr(), SolutionSolver( solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread )
-      );
+    std::unique_ptr<rafko_net::SolutionSolver> build(){
+      return std::unique_ptr<rafko_net::SolutionSolver>( new SolutionSolver(solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread) );
     }
   private:
     const Solution& solution;

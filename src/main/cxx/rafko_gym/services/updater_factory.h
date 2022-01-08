@@ -18,6 +18,10 @@
 #ifndef UPDATER_FACTORY_H
 #define UPDATER_FACTORY_H
 
+#include "rafko_global.h"
+
+#include <memory>
+
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
 #include "rafko_gym/services/rafko_weight_updater.h"
@@ -28,7 +32,7 @@
 
 namespace rafko_gym{
 
-class UpdaterFactory{
+class RAFKO_FULL_EXPORT UpdaterFactory{
 public:
   /**
    * @brief      Builds a weight updater.
@@ -40,14 +44,14 @@ public:
    *
    * @return     The weight updater; Owner is arena, if settings has a pointer set, otherwise ownership is transferred to the caller of the function.
    */
-  static RafkoWeightUpdater* build_weight_updater(rafko_net::RafkoNet& net, rafko_net::Solution& solution, Weight_updaters weight_updater, rafko_mainframe::RafkoSettings& settings){
+  static std::unique_ptr<RafkoWeightUpdater> build_weight_updater(rafko_net::RafkoNet& net, rafko_net::Solution& solution, Weight_updaters weight_updater, rafko_mainframe::RafkoSettings& settings){
     switch(weight_updater){
-      case weight_updater_momentum:   return google::protobuf::Arena::Create<RafkoWeightUpdaterMomentum>(settings.get_arena_ptr(), net, solution, settings);
-      case weight_updater_nesterovs:  return google::protobuf::Arena::Create<RafkoWeightUpdaterNesterovs>(settings.get_arena_ptr(), net, solution, settings);
-      case weight_updater_adam:       return google::protobuf::Arena::Create<RafkoWeightUpdaterAdam>(settings.get_arena_ptr(), net, solution, settings);
-      case weight_updater_amsgrad:    return google::protobuf::Arena::Create<RafkoWeightUpdaterAMSGrad>(settings.get_arena_ptr(), net, solution, settings);
+      case weight_updater_momentum:   return std::make_unique<RafkoWeightUpdaterMomentum>(net, solution, settings);
+      case weight_updater_nesterovs:  return std::make_unique<RafkoWeightUpdaterNesterovs>(net, solution, settings);
+      case weight_updater_adam:       return std::make_unique<RafkoWeightUpdaterAdam>(net, solution, settings);
+      case weight_updater_amsgrad:    return std::make_unique<RafkoWeightUpdaterAMSGrad>(net, solution, settings);
       case weight_updater_default:
-      default:                        return google::protobuf::Arena::Create<rafko_gym::RafkoWeightUpdater>(settings.get_arena_ptr(), net, solution, settings);
+      default:                        return std::make_unique<rafko_gym::RafkoWeightUpdater>(net, solution, settings);
     };
   }
 };
