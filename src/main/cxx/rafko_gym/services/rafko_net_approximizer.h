@@ -166,11 +166,11 @@ private:
   GradientFragment gradient_fragment;
   uint32 stochastic_evaluation_loops;
 
-  uint32 iteration = 1;
+  uint32 iteration = 1u;
   std::vector<sdouble32> applied_direction;
   sdouble32 epsilon_addition = double_literal(0.0);
   sdouble32 min_test_error = std::numeric_limits<sdouble32>::max();
-  uint32 min_test_error_was_at_iteration = 0;
+  uint32 min_test_error_was_at_iteration = 0u;
 
   /**
    * @brief      Evaluates the network in a stochastic manner the number of configured times and return with the fittness/error value

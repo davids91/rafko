@@ -257,11 +257,11 @@ public:
   }
 
 private:
-  uint16 max_solve_threads = 4;
-  uint16 sqrt_of_solve_threads = 2;
-  uint16 max_processing_threads = 4;
-  uint16 sqrt_of_process_threads = 2;
-  uint32 tolerance_loop_value = 100;
+  uint16 max_solve_threads = 4u;
+  uint16 sqrt_of_solve_threads = 2u;
+  uint16 max_processing_threads = 4u;
+  uint16 sqrt_of_process_threads = 2u;
+  uint32 tolerance_loop_value = 100u;
   sdouble32 sqrt_epsilon = std::sqrt(double_literal(1e-15));
   sdouble32 device_max_megabytes = double_literal(2048);
   google::protobuf::Arena* arena_ptr = nullptr;

@@ -47,7 +47,7 @@ private:
   std::string id;
   RafkoSettings& settings;
   Measurement measurement;
-  uint32 changes_since;
+  uint32 changes_since = 0u;
 };
 
 } /* namespace rafko_mainframe */

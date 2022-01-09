@@ -82,8 +82,8 @@ public:
     const Solution& solution;
     rafko_mainframe::RafkoSettings& settings;
     std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
-    uint32 max_tmp_size_needed = 0;
-    uint32 max_tmp_data_needed_per_thread = 0;
+    uint32 max_tmp_size_needed = 0u;
+    uint32 max_tmp_data_needed_per_thread = 0u;
   };
 };
 

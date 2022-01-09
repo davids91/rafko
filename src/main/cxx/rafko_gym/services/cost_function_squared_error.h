@@ -47,9 +47,6 @@ protected:
     parameter_not_used(sample_number);
     return -(label_value - feature_value);
   }
-
-private:
-  sdouble32 sample_number;
 };
 
 } /* namespace rafko_gym */
