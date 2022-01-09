@@ -1,5 +1,6 @@
 add_library(rafko_mainframe)
 target_include_directories(rafko_mainframe PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services control)
+target_link_libraries(rafko_mainframe PUBLIC rafko_protocol)
 
 set( MAINFRAME_HEADERS
   models/rafko_settings.h
@@ -13,7 +14,6 @@ set( MAINFRAME_SOURCES
   services/src/training_logger.cc
 )
 if(BUILD_MAINFRAME)
-  target_link_libraries(rafko_mainframe PUBLIC rafko_protocol)
   target_sources(rafko_mainframe
     INTERFACE
     PUBLIC

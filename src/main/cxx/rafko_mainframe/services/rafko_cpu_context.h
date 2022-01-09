@@ -35,28 +35,37 @@ namespace rafko_mainframe {
 class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
 public:
 
-  RafkoCPUContext(rafko_net::RafkoNet& neural_network, rafko_mainframe::RafkoSettings settings_);
+  RafkoCPUContext(rafko_net::RafkoNet neural_network, rafko_mainframe::RafkoSettings settings_);
   ~RafkoCPUContext() = default;
 
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
-  const rafko_gym::RafkoEnvironment& get_environment(){
-    return *environment;
-  }
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
     objective = objective_;
-  }
-
-  const rafko_gym::RafkoObjective& get_objective(){
-    return *objective;
   }
 
   void set_weight_updater(rafko_gym::Weight_updaters updater){
     weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, updater, settings);
   }
 
-  rafko_gym::RafkoWeightUpdater& expose_weight_updater(){
-    return *weight_updater;
+  void set_network_weight(uint32 weight_index, sdouble32 weight_value){
+    assert( static_cast<sint32>(weight_index) < network.weight_table_size() );
+    network.set_weight_table(weight_index, weight_value);
+    weight_updater->update_solution_with_weights();
+  };
+
+  void set_network_weights(const std::vector<sdouble32>& weights){
+    assert( static_cast<sint32>(weights.size()) == network.weight_table_size() );
+    *network.mutable_weight_table() = {weights.begin(), weights.end()};
+    weight_updater->update_solution_with_weights();
+  };
+
+  void apply_weight_update(const std::vector<sdouble32>& weight_delta){
+    assert( static_cast<sint32>(weight_delta.size()) == network.weight_table_size() );
+    if(weight_updater->is_finished())
+      weight_updater->start();
+    weight_updater->iterate(weight_delta);
+    weight_updater->update_solution_with_weights();
   };
 
   sdouble32 full_evaluation(){
@@ -78,6 +87,13 @@ public:
     );
   }
 
+  rafko_utilities::ConstVectorSubrange<> solve(
+    const std::vector<sdouble32>& input,
+    bool reset_neuron_data = true, uint32 thread_index = 0
+  ){
+    return agent->solve(input, reset_neuron_data, thread_index);
+  }
+
   void push_state(){
     environment->push_state();
   }
@@ -94,16 +110,10 @@ public:
     return network;
   }
 
-  rafko_utilities::ConstVectorSubrange<> solve(
-    const std::vector<sdouble32>& input,
-    bool reset_neuron_data = true, uint32 thread_index = 0
-  ){ return agent->solve(input, reset_neuron_data, thread_index); }
-
-
 private:
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings;
-  rafko_net::RafkoNet& network;
+  rafko_net::RafkoNet network;
   std::unique_ptr<rafko_net::Solution> network_solution;
   std::unique_ptr<rafko_net::SolutionSolver> agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> environment;

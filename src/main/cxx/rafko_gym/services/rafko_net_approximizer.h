@@ -53,7 +53,8 @@ public:
   RafkoNetApproximizer(rafko_mainframe::RafkoContext& context_, uint32 stochastic_evaluation_loops_ = 1u)
   : context(context_)
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
-  , applied_direction(context.expose_network().weight_table_size())
+  , tmp_weight_table(context.expose_network().weight_table_size())
+  , tmp_weight_gradients(context.expose_network().weight_table_size())
   { }
 
   RafkoNetApproximizer(const RafkoNetApproximizer& other) = delete;/* Copy constructor */
@@ -167,7 +168,8 @@ private:
   uint32 stochastic_evaluation_loops;
 
   uint32 iteration = 1u;
-  std::vector<sdouble32> applied_direction;
+  std::vector<sdouble32> tmp_weight_table;
+  std::vector<sdouble32> tmp_weight_gradients;
   sdouble32 epsilon_addition = double_literal(0.0);
   sdouble32 min_test_error = std::numeric_limits<sdouble32>::max();
   uint32 min_test_error_was_at_iteration = 0u;
