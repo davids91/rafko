@@ -51,6 +51,11 @@ public:
    */
   virtual void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_) = 0;
 
+  /**
+   * @brief       Provides access to the stored environment
+   *
+   * @return      a const reference of the stored environment
+   */
   virtual const rafko_gym::RafkoEnvironment& get_environment() = 0;
 
   /**
@@ -60,6 +65,11 @@ public:
    */
   virtual void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_) = 0;
 
+  /**
+   * @brief       Provides access to the stored objective
+   *
+   * @return      a const reference of the stored objective
+   */
   virtual const rafko_gym::RafkoObjective& get_objective() = 0;
 
   /**
@@ -69,6 +79,11 @@ public:
    */
   virtual void set_weight_updater(rafko_gym::Weight_updaters updater) = 0;
 
+  /**
+   * @brief       Provides access to the stored weight updater
+   *
+   * @return      a const reference of the stored weight updater
+   */
   virtual rafko_gym::RafkoWeightUpdater& expose_weight_updater() = 0;
 
   /**
@@ -111,8 +126,18 @@ public:
    */
   virtual void pop_state() = 0;
 
+  /**
+   * @brief       Provides access to the settings
+   *
+   * @return      a reference of the contained settings
+   */
   virtual rafko_mainframe::RafkoSettings& expose_settings() = 0;
 
+  /**
+   * @brief       Provides the reference the context builds over
+   *
+   * @return      a reference of the referenced network
+   */
   virtual rafko_net::RafkoNet& expose_network() = 0;
 };
 
