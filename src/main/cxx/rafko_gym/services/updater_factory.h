@@ -18,6 +18,8 @@
 #ifndef UPDATER_FACTORY_H
 #define UPDATER_FACTORY_H
 
+#include "rafko_global.h"
+
 #include <memory>
 
 #include "rafko_protocol/rafko_net.pb.h"
@@ -30,7 +32,7 @@
 
 namespace rafko_gym{
 
-class UpdaterFactory{
+class RAFKO_FULL_EXPORT UpdaterFactory{
 public:
   /**
    * @brief      Builds a weight updater.
@@ -40,21 +42,16 @@ public:
    * @param[in]  weight_updater  The weight updater type
    * @param      settings         The service settings
    *
-   * @return     The weight updater.
+   * @return     The weight updater; Owner is arena, if settings has a pointer set, otherwise ownership is transferred to the caller of the function.
    */
   static std::unique_ptr<RafkoWeightUpdater> build_weight_updater(rafko_net::RafkoNet& net, rafko_net::Solution& solution, Weight_updaters weight_updater, rafko_mainframe::RafkoSettings& settings){
     switch(weight_updater){
-      case weight_updater_momentum:
-        return std::make_unique<RafkoWeightUpdaterMomentum>(net, solution, settings);
-      case weight_updater_nesterovs:
-        return std::make_unique<RafkoWeightUpdaterNesterovs>(net, solution, settings);
-      case weight_updater_adam:
-        return std::make_unique<RafkoWeightUpdaterAdam>(net, solution, settings);
-      case weight_updater_amsgrad:
-        return std::make_unique<RafkoWeightUpdaterAMSGrad>(net, solution, settings);
+      case weight_updater_momentum:   return std::make_unique<RafkoWeightUpdaterMomentum>(net, solution, settings);
+      case weight_updater_nesterovs:  return std::make_unique<RafkoWeightUpdaterNesterovs>(net, solution, settings);
+      case weight_updater_adam:       return std::make_unique<RafkoWeightUpdaterAdam>(net, solution, settings);
+      case weight_updater_amsgrad:    return std::make_unique<RafkoWeightUpdaterAMSGrad>(net, solution, settings);
       case weight_updater_default:
-      default:
-        return std::make_unique<RafkoWeightUpdater>(net, solution, settings);
+      default:                        return std::make_unique<rafko_gym::RafkoWeightUpdater>(net, solution, settings);
     };
   }
 };

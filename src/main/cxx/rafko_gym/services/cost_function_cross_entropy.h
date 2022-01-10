@@ -15,23 +15,23 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef COST_FUNCTION_BINARY_CROSS_ENTROPY_H
-#define COST_FUNCTION_BINARY_CROSS_ENTROPY_H
+#ifndef COST_FUNCTION_CROSS_ENTROPY_H
+#define COST_FUNCTION_CROSS_ENTROPY_H
 
-#include "rafko_net/models/cost_function.h"
+#include "rafko_gym/services/cost_function.h"
 
 #include <math.h>
 
-namespace rafko_net{
+namespace rafko_gym{
 
 /**
- * @brief      Error function handling and utilities for Binary Cross entropy sum
+ * @brief      Error function handling and utilities for Cross Entropy
  *             as described in https://datascience.stackexchange.com/questions/9302/the-cross-entropy-error-function-in-neural-networks
  */
-class RAFKO_FULL_EXPORT CostFunctionBinaryCrossEntropy : public CostFunction{
+class RAFKO_FULL_EXPORT CostFunctionCrossEntropy : public CostFunction{
 public:
-  CostFunctionBinaryCrossEntropy(rafko_mainframe::RafkoSettings& settings)
-  : CostFunction(cost_function_binary_cross_entropy, settings)
+  CostFunctionCrossEntropy(rafko_mainframe::RafkoSettings& settings)
+  : CostFunction(cost_function_cross_entropy, settings)
   { };
 
 protected:
@@ -40,18 +40,15 @@ protected:
   }
 
   sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
-    return (
-      label_value * std::log(std::max(double_literal(0.0000000000000001),feature_value))
-      +( (double_literal(1.0) - label_value) * std::log(double_literal(1.0) - std::min(double_literal(0.9999999999999999), feature_value)) )
-    );
+    return ( label_value * std::log(std::max(double_literal(0.0000000000000001),feature_value)) );
   }
 
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const{
     parameter_not_used(label_value);
     parameter_not_used(sample_number);
-    return -( std::log(feature_value) + std::log((double_literal(1.0) - feature_value)) );
+    return -( std::log(feature_value) );
   }
 };
 
-} /* namespace rafko_net */
-#endif /* COST_FUNCTION_BINARY_CROSS_ENTROPY_H */
+} /* namespace rafko_gym */
+#endif /* COST_FUNCTION_CROSS_ENTROPY_H */

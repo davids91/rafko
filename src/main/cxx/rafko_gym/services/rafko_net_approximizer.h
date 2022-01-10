@@ -27,13 +27,13 @@
 #include "rafko_protocol/rafko_net.pb.h"
 
 #include "rafko_mainframe/models/rafko_settings.h"
+#include "rafko_mainframe/services/rafko_context.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
 
 #include "rafko_gym/services/updater_factory.h"
 #include "rafko_gym/services/rafko_weight_updater.h"
-#include "rafko_gym/services/rafko_agent.h"
-#include "rafko_gym/models/rafko_environment.h"
+#include "rafko_gym/models/rafko_agent.h"
 
 namespace RAFKO_FULL_EXPORT rafko_gym{
 
@@ -47,29 +47,16 @@ public:
   /**
    * @brief      Class Constructor
    *
-   * @param      settings_                     The service settings in which the object should be executed
-   * @param[in]  neural_network                The Network to optimize based on the gradient approximation
-   * @param      environment_                  The Data Environment the network should be evaluated in
-   * @param[in]  weight_updater_               The Weight updater to help convergence
+   * @param      context_                      The service context containing the network to enchance
    * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
-  RafkoNetApproximizer(
-    rafko_mainframe::RafkoSettings& settings_, rafko_net::RafkoNet& neural_network, RafkoEnvironment& environment_,
-    Weight_updaters weight_updater_, uint32 stochastic_evaluation_loops_ = 1u
-  ):settings(settings_)
-  , net(neural_network)
-  , net_solution(rafko_net::SolutionBuilder(settings).build(net))
-  , environment(environment_)
-  , solver(rafko_net::SolutionSolver::Builder(*net_solution, settings).build())
-  , weight_updater(UpdaterFactory::build_weight_updater(net, *net_solution, weight_updater_, settings))
+  RafkoNetApproximizer(rafko_mainframe::RafkoContext& context_, uint32 stochastic_evaluation_loops_ = 1u)
+  : context(context_)
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
-  , applied_direction(net.weight_table_size())
-  { environment.install_agent(*solver); }
+  , tmp_weight_table(context.expose_network().weight_table_size())
+  , tmp_weight_gradients(context.expose_network().weight_table_size())
+  { }
 
-  ~RafkoNetApproximizer(){
-    if(nullptr == settings.get_arena_ptr())
-      delete net_solution;
-  }
   RafkoNetApproximizer(const RafkoNetApproximizer& other) = delete;/* Copy constructor */
   RafkoNetApproximizer(RafkoNetApproximizer&& other) = delete; /* Move constructor */
   RafkoNetApproximizer& operator=(const RafkoNetApproximizer& other) = delete; /* Copy assignment */
@@ -148,9 +135,9 @@ public:
    * @brief      Evaluates the network in the given environment fully
    */
   void full_evaluation(){
-    environment.full_evaluation();
-    if(min_test_error > environment.get_testing_fitness()){
-      min_test_error = environment.get_testing_fitness();
+    sdouble32 fitness = context.full_evaluation();
+    if(min_test_error > fitness){
+      min_test_error = fitness;
       min_test_error_was_at_iteration = iteration;
     }
   }
@@ -165,35 +152,27 @@ public:
       (1u < iteration)
       &&((
         (
-          settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
-          &&(settings.get_learning_rate() >= -environment.get_training_fitness())
+          context.expose_settings().get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
+          &&(context.expose_settings().get_learning_rate() >= -min_test_error)
         )||(
-          settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
-          &&(double_literal(0.0) ==  -environment.get_training_fitness())
+          context.expose_settings().get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
+          &&(double_literal(0.0) ==  -min_test_error)
         )
-      )||(
-        settings.get_training_strategy(Training_strategy::training_strategy_early_stopping)
-        &&(environment.get_testing_fitness() < (min_test_error - (min_test_error * settings.get_delta())))
-        &&((iteration - min_test_error_was_at_iteration) > settings.get_tolerance_loop_value())
       ))
     );
   }
 
 private:
-  rafko_mainframe::RafkoSettings& settings;
-  rafko_net::RafkoNet& net;
-  rafko_net::Solution* net_solution;
-  RafkoEnvironment& environment;
-  std::unique_ptr<RafkoAgent> solver;
-  std::unique_ptr<RafkoWeightUpdater> weight_updater;
+  rafko_mainframe::RafkoContext& context;
   GradientFragment gradient_fragment;
   uint32 stochastic_evaluation_loops;
 
-  uint32 iteration = 1;
-  std::vector<sdouble32> applied_direction;
+  uint32 iteration = 1u;
+  std::vector<sdouble32> tmp_weight_table;
+  std::vector<sdouble32> tmp_weight_gradients;
   sdouble32 epsilon_addition = double_literal(0.0);
   sdouble32 min_test_error = std::numeric_limits<sdouble32>::max();
-  uint32 min_test_error_was_at_iteration = 0;
+  uint32 min_test_error_was_at_iteration = 0u;
 
   /**
    * @brief      Evaluates the network in a stochastic manner the number of configured times and return with the fittness/error value
@@ -203,7 +182,7 @@ private:
   sdouble32 stochastic_evaluation(){
     sdouble32 fitness = double_literal(0.0);
     for(uint32 i = 0; i < stochastic_evaluation_loops; ++i)
-      fitness += environment.stochastic_evaluation(iteration);
+      fitness += context.stochastic_evaluation(iteration);
     return fitness / static_cast<sdouble32>(stochastic_evaluation_loops);
   }
 

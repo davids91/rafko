@@ -127,9 +127,9 @@ private:
   /**
    *  definitions to assign a source of a neurons input upon building up the partial solution
    */
-  static const uint8 neuron_input_none = 0;
-  static const uint8 neuron_input_internal = 1;
-  static const uint8 neuron_input_external = 2;
+  static const uint8 neuron_input_none = 0u;
+  static const uint8 neuron_input_internal = 1u;
+  static const uint8 neuron_input_external = 2u;
 };
 
 } /* namespace rafko_net */

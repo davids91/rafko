@@ -21,7 +21,7 @@
 
 #include "rafko_net/services/synapse_iterator.h"
 
-namespace rafko_gym{
+namespace rafko_gym {
 
 void RafkoWeightUpdater::calculate_velocity_thread(const std::vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number){
   for(uint32 weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){

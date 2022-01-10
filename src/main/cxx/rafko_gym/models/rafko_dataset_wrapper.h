@@ -24,6 +24,7 @@
 #include <math.h>
 
 #include "rafko_protocol/training.pb.h"
+#include "rafko_gym/models/rafko_environment.h"
 
 namespace rafko_gym{
 
@@ -56,7 +57,7 @@ namespace rafko_gym{
  *             Despite the above structure, for eligibility of paralellism, the inputs and labels are in a separate,
  *             contigous array.
  */
-class RAFKO_FULL_EXPORT RafkoDatasetWrapper{
+class RAFKO_FULL_EXPORT RafkoDatasetWrapper : public RafkoEnvironment{
 public:
   explicit RafkoDatasetWrapper(const rafko_gym::DataSet& samples_)
   : sequence_size(std::max(1u,samples_.sequence_size()))
@@ -65,6 +66,11 @@ public:
   , prefill_sequences(static_cast<uint32>((samples_.inputs_size() - samples_.labels_size()) / (samples_.labels_size() / sequence_size)))
   {
     assert(0 == (label_samples.size()%sequence_size));
+    assert(0 < samples_.input_size());
+    assert(0 < samples_.feature_size());
+    assert(0 < samples_.sequence_size());
+    assert(0 < samples_.inputs_size());
+    assert(0 < samples_.labels_size());
     fill(samples_);
   }
 
@@ -73,104 +79,64 @@ public:
   , input_samples(std::move(input_samples_))
   , label_samples(std::move(label_samples_))
   , prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
-  { assert(0 == (label_samples.size()%sequence_size)); }
+  {
+    assert(0 == (label_samples.size()%sequence_size));
+    assert(0 < input_samples.size());
+    assert(input_samples.size() == label_samples.size());
+  }
 
-  /**
-   * @brief      Gets an input sample from the set
-   *
-   * @param[in]  sample_index  The sample index
-   *
-   * @return     The input sample.
-   */
   const std::vector<sdouble32>& get_input_sample(uint32 raw_input_index) const{
     assert(input_samples.size() > raw_input_index);
     return input_samples[raw_input_index];
   }
 
-  /**
-   * @brief      Gets an input sample from the set
-   *
-   * @return     A const reference of the input sample.
-   */
   const std::vector<std::vector<sdouble32>>& get_input_samples() const{
     return input_samples;
   }
 
-  /**
-   * @brief      Gets a label sample from the set
-   *
-   * @param[in]  sample_index  The sample index
-   *
-   * @return     The label sample.
-   */
   const std::vector<sdouble32>& get_label_sample(uint32 raw_label_index) const{
     assert(label_samples.size() > raw_label_index);
     return label_samples[raw_label_index];
   }
 
-  /**
-   * @brief      Gets a label sample from the set
-   *
-   * @return     A const reference of the label samples array
-   */
   const std::vector<std::vector<sdouble32>>& get_label_samples() const{
     return label_samples;
   }
 
-  /**
-   * @brief      Gets the number of values present in the output
-   *
-   * @return     The feature size.
-   */
   uint32 get_feature_size() const{
     return label_samples[0].size();
   }
 
-  /**
-   * @brief      Gets the number of raw input arrays stored in the pbject
-   *
-   * @return     The number of input samples.
-   */
+  uint32 get_input_size() const{
+    return input_samples[0].size();
+  }
+
   uint32 get_number_of_input_samples() const{
     return input_samples.size();
   }
 
-  /**
-   * @brief      The number of raw label arrays stored in the object
-   *
-   * @return     The number of labels.
-   */
   uint32 get_number_of_label_samples() const{
     return label_samples.size();
   }
 
-  /**
-   * @brief      Gets the number of sequences stored in the object. One sequence contains
-   *             a number of input and label sample arrays. There might be more input arrays,
-   *             than label arrays in one sequences. The difference is given by @get_prefill_inputs_number
-   *
-   * @return     The number of sequences.
-   */
   uint32 get_number_of_sequences() const{
     return (get_number_of_label_samples() / sequence_size);
   }
 
-  /**
-   * @brief      Gets the size of one sequence
-   *
-   * @return     Number of consecutive datapoints that count as one sample.
-   */
   uint32 get_sequence_size() const{
     return sequence_size;
   }
 
-  /**
-   * @brief      Gets the number of inputs to be used as initializing the network during a training run
-   *
-   * @return     The number of inputs to be used for network initialization during training
-   */
   uint32 get_prefill_inputs_number() const{
     return prefill_sequences;
+  }
+
+  void push_state(){
+    /* TODO: Implement */
+  }
+
+  void pop_state(){
+    /* TODO: Implement */
   }
 
 private:

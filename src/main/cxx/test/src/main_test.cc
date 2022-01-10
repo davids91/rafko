@@ -293,7 +293,10 @@ void print_training_sample(
   uint32 sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
   rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings
 ){
-  std::unique_ptr<rafko_net::SolutionSolver> sample_solver(rafko_net::SolutionSolver::Builder(*rafko_net::SolutionBuilder(settings).build(net), settings).build());
+  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(net);
+  std::unique_ptr<rafko_net::SolutionSolver> sample_solver(
+    rafko_net::SolutionSolver::Builder(*solution, settings).build()
+  );
   std::vector<sdouble32> neuron_data(data_set.get_sequence_size());
   uint32 raw_label_index = sample_sequence_index;
   uint32 raw_inputs_index = raw_label_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());
@@ -452,6 +455,20 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size
   }
 
   return builder.dense_layers(net_structure);
+}
+
+std::unique_ptr<rafko_gym::DataSet> create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, sdouble32 expected_label){
+  std::unique_ptr<rafko_gym::DataSet> dataset = std::make_unique<rafko_gym::DataSet>();
+  dataset->set_input_size(input_size);
+  dataset->set_feature_size(feature_size);
+  dataset->set_sequence_size(sequence_size);
+  for(uint32 i = 0; i < (sample_number * sequence_size); ++i){
+    for(uint32 j = 0; j < feature_size; ++j){
+      dataset->add_inputs(expected_label); /* Input should be irrelevant here */
+      dataset->add_labels(expected_label);
+    }
+  }
+  return dataset;
 }
 
 } /* namsepace rafko_test */

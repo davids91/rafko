@@ -20,7 +20,7 @@
 
 #include "rafko_gym/services/rafko_weight_updater.h"
 
-namespace rafko_gym{
+namespace rafko_gym {
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterAdam : public RafkoWeightUpdater{
 public:

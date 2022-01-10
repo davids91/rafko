@@ -27,7 +27,7 @@
 #include <functional>
 
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_gym/services/rafko_agent.h"
+#include "rafko_gym/models/rafko_agent.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/services/thread_group.h"
 
@@ -42,7 +42,7 @@ namespace rafko_net{
  */
 class RAFKO_FULL_EXPORT SolutionSolver : public rafko_gym::RafkoAgent{
 public:
-  SolutionSolver(const SolutionSolver& other) = delete;/* Copy constructor */
+  SolutionSolver(const SolutionSolver& other) = delete; /* Copy constructor */
   SolutionSolver(SolutionSolver&& other) = delete; /* Move constructor */
   SolutionSolver& operator=(const SolutionSolver& other) = delete; /* Copy assignment */
   SolutionSolver& operator=(SolutionSolver&& other) = delete; /* Move assignment */
@@ -66,7 +66,6 @@ private:
     uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
   );
 
-  const Solution& solution;
   rafko_mainframe::RafkoSettings& settings;
   std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> execution_threads;
@@ -76,17 +75,15 @@ public:
   class Builder{
   public:
     Builder(const Solution& to_solve, rafko_mainframe::RafkoSettings& settings);
-    std::unique_ptr<SolutionSolver> build(){
-      return std::unique_ptr<SolutionSolver>(new SolutionSolver(
-        solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread
-      ));
+    std::unique_ptr<rafko_net::SolutionSolver> build(){
+      return std::unique_ptr<rafko_net::SolutionSolver>( new SolutionSolver(solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread) );
     }
   private:
     const Solution& solution;
     rafko_mainframe::RafkoSettings& settings;
     std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
-    uint32 max_tmp_size_needed = 0;
-    uint32 max_tmp_data_needed_per_thread = 0;
+    uint32 max_tmp_size_needed = 0u;
+    uint32 max_tmp_data_needed_per_thread = 0u;
   };
 };
 

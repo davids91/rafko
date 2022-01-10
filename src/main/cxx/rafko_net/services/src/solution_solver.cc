@@ -49,7 +49,6 @@ SolutionSolver::SolutionSolver(
   const Solution& to_solve, rafko_mainframe::RafkoSettings& settings, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
   uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
 ): rafko_gym::RafkoAgent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, settings.get_max_processing_threads())
-,  solution(to_solve)
 ,  settings(settings)
 ,  partial_solvers(partial_solvers_)
 ,  feature_executor(execution_threads)
@@ -116,7 +115,7 @@ void SolutionSolver::solve(
        * and each column may contain feature relevant to any @Neuron inside the the current row.
        */
       for(uint32 feature_index = 0; feature_index < solved_features.size(); feature_index++){
-        feature_executor.execute(solved_features[feature_index], output.get_element(0u));
+        feature_executor.execute(solved_features[feature_index], output.get_element(0u), thread_index);
       }
       solved_features.clear();
     } /* for(every row in the @Solution) */

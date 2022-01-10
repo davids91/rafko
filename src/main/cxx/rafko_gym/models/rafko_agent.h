@@ -36,31 +36,38 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT RafkoAgent{
 public:
-  RafkoAgent(const rafko_net::Solution& brain_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1u)
-  : brain(brain_)
+  RafkoAgent(const rafko_net::Solution& solution_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1u)
+  : solution(solution_)
   , required_temp_data_number_per_thread(required_temp_data_number_per_thread_)
   , required_temp_data_size(required_temp_data_size_)
   , max_threads(max_threads_)
   , common_data_pool((required_temp_data_number_per_thread * max_threads_), required_temp_data_size_)
-  , neuron_value_buffers(max_threads, rafko_utilities::DataRingbuffer( brain.network_memory_length(), brain.neuron_number()))
+  , neuron_value_buffers(max_threads, rafko_utilities::DataRingbuffer( solution.network_memory_length(), solution.neuron_number()))
   { /* A temporary buffer is allocated for every required future usage per thread */
     for(uint32 tmp_data_index = 0; tmp_data_index < (required_temp_data_number_per_thread * max_threads); ++tmp_data_index)
       used_data_buffers.push_back(common_data_pool.reserve_buffer(required_temp_data_size));
   }
 
   /**
-   * @brief      Solves the rafko_net::Solution provided in the constructor, previous neural information is supposedly available in @output buffer
+   * @brief      For the provided input, return the result of the neural network
    *
-   * @param[in]      input    The input data to be taken
+   * @param[in]      input                  The input data to be taken
+   * @param[in]      reset_neuron_data      should the internal memory of the solver is to be resetted before solving the neural network
+   * @param[in]      thread_index           The index of thread the solution is to be running from
+   *
    * @return         The output values of the network result
    */
-  rafko_utilities::ConstVectorSubrange<> solve(const std::vector<sdouble32>& input, bool reset_neuron_data = true, uint32 thread_index = 0){
+
+  rafko_utilities::ConstVectorSubrange<> solve(
+    const std::vector<sdouble32>& input,
+    bool reset_neuron_data = true, uint32 thread_index = 0
+  ){
     if(max_threads > thread_index){
-      assert( input.size() == brain.network_input_size() );
+      assert( input.size() == solution.network_input_size() );
       if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
       solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread), thread_index );
       return { /* return with the range of the output Neurons */
-        neuron_value_buffers[thread_index].get_const_element(0).end() - brain.output_neuron_number(),
+        neuron_value_buffers[thread_index].get_const_element(0).end() - solution.output_neuron_number(),
         neuron_value_buffers[thread_index].get_const_element(0).end()
       };
     } else throw std::runtime_error("Thread index out of bounds!");
@@ -86,7 +93,7 @@ public:
    * @return     A const reference to the solution the agent is using to produce outputs to the given inputs
    */
   const rafko_net::Solution& get_solution() const{
-    return brain;
+    return solution;
   }
 
   /**
@@ -109,12 +116,13 @@ public:
     return required_temp_data_size;
   }
 
-private:
-  const rafko_net::Solution& brain;
+protected:
+  const rafko_net::Solution& solution;
   uint32 required_temp_data_number_per_thread;
   uint32 required_temp_data_size;
   uint32 max_threads;
 
+private:
   rafko_utilities::DataPool<sdouble32> common_data_pool;
   std::vector<rafko_utilities::DataRingbuffer> neuron_value_buffers; /* One rafko_utilities::DataRingbuffer per thread */
   std::vector<std::reference_wrapper<std::vector<sdouble32>>> used_data_buffers;

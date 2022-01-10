@@ -30,16 +30,15 @@
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 
-namespace rafko_gym{
+namespace rafko_gym {
 
 /**
  * @brief      Base implementation for updating weights for netowrks based on weight gradients
  */
 class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
-  RafkoWeightUpdater(
-    rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_, uint32 required_iterations_for_step_ = 1
-  ):net(rafko_net)
+  RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_, uint32 required_iterations_for_step_ = 1)
+  : net(rafko_net)
   , solution(solution_)
   , settings(settings_)
   , required_iterations_for_step(required_iterations_for_step_)

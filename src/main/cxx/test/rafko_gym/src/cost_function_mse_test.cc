@@ -20,8 +20,8 @@
 #include <catch2/catch_approx.hpp>
 
 #include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_net/models/cost_function.h"
-#include "rafko_net/models/cost_function_mse.h"
+#include "rafko_gym/services/cost_function.h"
+#include "rafko_gym/services/cost_function_mse.h"
 
 #include "test/test_utility.h"
 
@@ -52,7 +52,7 @@ TEST_CASE( "Error function mean squared error test", "[training][error-function]
   }
 
   /* one feature distance should be (double_literal(0.5) * (distance)^2 ) */
-  rafko_net::CostFunctionMSE cost(settings);
+  rafko_gym::CostFunctionMSE cost(settings);
   for(uint16 sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
     REQUIRE(
       Catch::Approx(
