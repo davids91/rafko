@@ -58,26 +58,97 @@ Based on the defined deep learning steps to attain error and gradient informatio
   <tr>
     <th class="tg-c3ow">input_1_0</th>
     <th class="tg-baqh">...</th>
-    <th class="tg-baqh">input_1_x</th>
+    <th class="tg-baqh">input_1_*</th>
   </tr>
 </thead>
 <tbody>
   <tr>
     <td class="tg-c3ow">input_n_0</td>
     <td class="tg-baqh">...</td>
-    <td class="tg-baqh">input_n_y</td>
+    <td class="tg-baqh">input_n_*</td>
   </tr>
   <tr>
     <td class="tg-c3ow" colspan="3">Calculation Kernel</td>
   </tr>
   <tr>
-    <td class="tg-baqh">output_0</td>
+    <td class="tg-baqh">output_0_0</td>
     <td class="tg-baqh">...</td>
-    <td class="tg-baqh">output_z</td>
+    <td class="tg-baqh">output_0_*</td>
   </tr>
 </tbody>
 </table>
 <img align="left" src="../res/flow_arrow_down.png">
 
+## Generic GPU pipeline phase
 
-Each Relevant Object inside the framework(Environment, Objective, Agent) shall implement this general structure to signal compatibility with GPU relevant calculations.
+A phase consists of multiple GPU pipeline steps with defined order. Each step has input is of the same dimensions as the output of the step preceding it, leaving only the first and last steps input to be freely defined. The following example implements a phase with 3 steps, each step takes the input of the preceding step.
+
+<img align="left" src="../res/flow_arrow_down.png">
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-baqh{text-align:center;vertical-align:top}
+.tg .tg-c3ow{border-color:inherit;text-align:center;vertical-align:top}
+.tg .tg-0pky{border-color:inherit;text-align:left;vertical-align:top}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-c3ow">input_1_0</th>
+    <th class="tg-c3ow">...</th>
+    <th class="tg-c3ow">input_1_x</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-c3ow">input_n_0</td>
+    <td class="tg-c3ow">...</td>
+    <td class="tg-c3ow">input_n_y</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow" colspan="3">Calculation Kernel 0</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">output_0_0</td>
+    <td class="tg-c3ow">...</td>
+    <td class="tg-c3ow">output_0_*</td>
+  </tr>
+  <tr>
+    <td class="tg-baqh">output_1_0</td>
+    <td class="tg-baqh">...</td>
+    <td class="tg-baqh">output_1_*</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow" colspan=3>Calculation Kernel 1</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">output_2_0</td>
+    <td class="tg-c3ow">...</td>
+    <td class="tg-c3ow">output_2_*</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow" colspan="3">Calculation Kernel 2</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">output_3_0</td>
+    <td class="tg-c3ow">...</td>
+    <td class="tg-c3ow">output_3_*</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">output_4_0</td>
+    <td class="tg-c3ow">...</td>
+    <td class="tg-c3ow">output_4_*</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">output_5_0</td>
+    <td class="tg-c3ow">...</td>
+    <td class="tg-c3ow">output_5_*</td>
+  </tr>
+</tbody>
+</table>
+<img align="left" src="../res/flow_arrow_down.png">
+
+Each GPU relevant Object inside the framework(Environment, Objective, Agent) shall implement this general structure to signal compatibility with GPU relevant calculations.
