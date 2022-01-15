@@ -35,7 +35,7 @@ namespace rafko_mainframe {
 class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
 public:
 
-  RafkoCPUContext(rafko_net::RafkoNet neural_network, rafko_mainframe::RafkoSettings settings_);
+  RafkoCPUContext(rafko_net::RafkoNet neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
   ~RafkoCPUContext() = default;
 
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);

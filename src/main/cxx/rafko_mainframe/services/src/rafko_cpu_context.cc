@@ -29,9 +29,9 @@
 
 namespace rafko_mainframe{
 
-RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet neural_network, rafko_mainframe::RafkoSettings settings_)
+RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet neural_network_, rafko_mainframe::RafkoSettings settings_)
 : settings(settings_.set_arena_ptr(&arena))
-, network(neural_network)
+, network(neural_network_)
 , network_solution(rafko_net::SolutionBuilder(settings).build(network))
 , agent(rafko_net::SolutionSolver::Builder(*network_solution, settings).build())
 , environment(std::make_unique<RafkoDummyEnvironment>(network.input_data_size(), network.output_neuron_number()))
