@@ -5,10 +5,11 @@ if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
   target_link_libraries(rafko_mainframe PUBLIC rafko_protocol OpenCL::OpenCL)
   set(CONTEXT_HEARDERS_OCL
-    models/rafko_gpu_strategy.h
+    models/rafko_gpu_strategy_phase.h
+    services/src/rafko_gpu_phase.cc
   )
   set(CONTEXT_SOURCES_OCL
-    models/src/rafko_gpu_strategy.cc
+    models/src/rafko_gpu_strategy_phase.cc
     services/src/rafko_gpu_context.cc
   )
 else()
@@ -20,7 +21,7 @@ endif()
 set( MAINFRAME_HEADERS
   ${CONTEXT_HEARDERS_OCL}
   models/rafko_settings.h
-  models/rafko_ndarray_shape.h
+  models/rafko_nbuf_shape.h
   services/rafko_dummies.h
   services/rafko_context.h
   services/rafko_cpu_context.h

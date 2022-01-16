@@ -15,21 +15,27 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
- #include "rafko_mainframe/models/rafko_gpu_strategy.h"
+#include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
 
 namespace rafko_mainframe{
 
 bool RafkoGPUStrategyPhase::isValid(){
-  if(get_step_input_dimensions().size() != get_step_output_dimensions().size())
-    return false;
+  std::vector<std::string> step_names = get_step_names();
+  std::vector<RafkoNBufShape> input_shapes = get_input_shapes();
+  std::vector<RafkoNBufShape> output_shapes = get_output_shapes();
 
-  if(0 == get_step_input_dimensions().size())
-    return false;
+  if(
+    (0u == step_names.size())
+    ||(step_names.size() != get_step_sources().size())
+    ||(step_names.size() != input_shapes.size())
+    ||(step_names.size() != output_shapes.size())
+  ) return false;
 
-  for(uint32 dimension_index = 0; dimension_index < (get_step_input_dimensions().size() - 1); ++dimension_index){
-    if(get_step_output_dimensions()[dimension_index] != get_step_input_dimensions()[dimension_index + 1])
+  for(uint32 dimension_index = 0; dimension_index < (input_shapes.size() - 1); ++dimension_index){
+    if(output_shapes[dimension_index] != input_shapes[dimension_index + 1])
       return false;
   }
+
   return true;
 }
 

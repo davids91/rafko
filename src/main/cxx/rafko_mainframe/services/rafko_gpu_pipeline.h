@@ -15,21 +15,41 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef RAFKO_NDARRAY_SHAPE
-#define RAFKO_NDARRAY_SHAPE
+#ifndef RAFKO_GPU_PIPELINE
+#define RAFKO_GPU_PIPELINE
 
 #include "rafko_global.h"
 
-#include <vector>
+#include <utility>
+#include <string>
+#include <CL/opencl.hpp>
+
+#include "rafko_mainframe/models/rafko_nbuf_shape.h"
+#include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
 
 namespace rafko_mainframe{
 
 /**
- * @brief      A phase of the Deep learning GPU pipeline consisting of several ordered GPU Kernels.
+ * @brief      Deep learning pipeline to handle buffers through feature solve to error calculation
  */
-class RAFKO_FULL_EXPORT RafkoNDArrayShape : public std::vector<uint32>{
+class RafkoGPUPipeline{
+public:
+  RafkoGPUPipeline(){
+    
+  }
+private:
+  cl::Context& opencl_context;
+  cl::Device& opencl_device;
+  cl::CommandQueue& opencl_device_queue;
+
+  std::pair<RafkoNBufShape,cl::Buffer> weights_and_inputs;
+  std::pair<RafkoNBufShape,cl::Buffer> features_and_labels;
+  std::pair<RafkoNBufShape,cl::Buffer> error_value;
+  RafkoGPUPhase solution_phase;
+  RafkoGPUPhase error_phase;
+
 };
 
 } /* namespace rafko_mainframe */
 
-#endif /* RAFKO_NDARRAY_SHAPE */
+#endif /* RAFKO_GPU_PIPELINE */

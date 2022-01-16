@@ -19,9 +19,17 @@
 #define RAFKO_DUMMIES_H
 
 #include "rafko_global.h"
+#if(RAFKO_USES_OPENCL)
+#include <CL/opencl.hpp>
+#endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_gym/models/rafko_objective.h"
 #include "rafko_gym/models/rafko_environment.h"
+
+#if(RAFKO_USES_OPENCL)
+#include "rafko_mainframe/models/rafko_nbuf_shape.h"
+#include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
+#endif/*(RAFKO_USES_OPENCL)*/
 
 namespace rafko_mainframe{
 
@@ -117,6 +125,42 @@ private:
    std::vector<std::vector<sdouble32>> dummy_inputs{{0}};
    std::vector<std::vector<sdouble32>> dummy_labels{{0}};
  };
+
+#if(RAFKO_USES_OPENCL)
+class RafkoDummyGPUStrategyPhase : public RafkoGPUStrategyPhase{
+public:
+  RafkoDummyGPUStrategyPhase(RafkoNBufShape input_shape_, RafkoNBufShape output_shape_)
+  : input_shape(input_shape_)
+  , output_shape(output_shape_)
+  { }
+
+  cl::Program::Sources get_step_sources() const{
+    return{R"(
+      void kernel dummy_kernel(
+        __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
+        __global double* outputs, __constant int* output_sizes, int output_sizes_size
+      ){ }
+    )"};
+  }
+  std::vector<std::string> get_step_names() const{
+    return {"dummy_kernel"};
+  }
+  std::vector<RafkoNBufShape> get_input_shapes() const{
+    return {input_shape};
+  }
+  std::vector<RafkoNBufShape> get_output_shapes() const{
+    return {output_shape};
+  }
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space(){
+    return std::make_tuple(cl::NullRange,cl::NullRange,cl::NullRange);
+  }
+  ~RafkoDummyGPUStrategyPhase() = default;
+private:
+  const RafkoNBufShape input_shape;
+  const RafkoNBufShape output_shape;
+};
+#endif/*(RAFKO_USES_OPENCL)*/
+
 } /* namespace rafko_mainframe */
 
 #endif /* RAFKO_DUMMIES_H */

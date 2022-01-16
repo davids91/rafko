@@ -30,16 +30,13 @@
 #include "rafko_gym/models/rafko_agent.h"
 #include "rafko_gym/services/updater_factory.h"
 
+#include "rafko_mainframe/services/rafko_gpu_phase.h"
 #include "rafko_mainframe/services/rafko_context.h"
 
 namespace rafko_mainframe {
 
 class RAFKO_FULL_EXPORT RafkoGPUContext : public RafkoContext{
 public:
-
-  RafkoGPUContext(rafko_net::RafkoNet neural_network, rafko_mainframe::RafkoSettings settings_);
-  ~RafkoGPUContext() = default;
-
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
@@ -75,6 +72,7 @@ public:
   rafko_net::RafkoNet& expose_network(){
     return network;
   }
+  ~RafkoGPUContext() = default;
 
   class Builder{
   public:
@@ -94,22 +92,29 @@ public:
 private:
 
   RafkoGPUContext(
-    cl::Context&& context_, rafko_mainframe::RafkoSettings&& settings_,
-    rafko_net::RafkoNet&& neural_network_
+    cl::Context&& context_, cl::Device&& device_,
+    rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet&& neural_network_
   );
 
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings;
-  cl::Context opencl_context;
   rafko_net::RafkoNet network;
   std::unique_ptr<rafko_net::Solution> network_solution;
   std::unique_ptr<rafko_net::SolutionSolver> agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> environment;
   std::shared_ptr<rafko_gym::RafkoObjective> objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> weight_updater;
-
   std::vector<std::vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   rafko_utilities::ThreadGroup execution_threads;
+
+  cl::Context opencl_context;
+  cl::Device opencl_device;
+  cl::CommandQueue opencl_queue;
+  cl::Buffer weights_and_inputs;
+  cl::Buffer features_and_labels;
+  cl::Buffer error_value;
+  RafkoGPUPhase solution_phase;
+  RafkoGPUPhase error_phase;
 
   uint32 used_sequence_truncation;
   uint32 used_minibatch_size;

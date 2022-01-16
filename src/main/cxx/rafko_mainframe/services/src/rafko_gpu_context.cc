@@ -51,14 +51,15 @@ std::unique_ptr<RafkoGPUContext> RafkoGPUContext::Builder::build(){
   assert( 0 < devices.size() );
   cl::Context context({devices[selected_device]});
   return std::unique_ptr<RafkoGPUContext>(
-    new RafkoGPUContext(std::move(context), std::move(settings), std::move(network))
+    new RafkoGPUContext(std::move(context), std::move(devices[selected_device]),
+    std::move(settings), std::move(network))
   );
 }
 
 RafkoGPUContext::RafkoGPUContext(
-  cl::Context&& context_, rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet&& neural_network_
+  cl::Context&& context_, cl::Device&& device_,
+  rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet&& neural_network_
 ):settings(settings_.set_arena_ptr(&arena))
-, opencl_context(context_)
 , network(neural_network_)
 , network_solution(rafko_net::SolutionBuilder(settings).build(network))
 , agent(rafko_net::SolutionSolver::Builder(*network_solution, settings).build())
@@ -69,9 +70,33 @@ RafkoGPUContext::RafkoGPUContext(
   (settings.get_max_processing_threads() * environment->get_sequence_size() + 1u),
   std::vector<sdouble32>(network.output_neuron_number()) /* ..plus for the label errors one additional vector is needed */
 ),execution_threads(settings.get_max_processing_threads())
-, used_sequence_truncation( std::min(settings.get_memory_truncation(), environment->get_sequence_size()) )
+, opencl_context(std::move(context_))
+, opencl_device(std::move(device_))
+, opencl_queue(opencl_context, opencl_device)
+, weights_and_inputs(
+  opencl_context, CL_MEM_READ_WRITE, /* Initially at least one input array is to be accepted by the network */
+  (sizeof(sdouble32) * (network.weight_table_size() + network.input_data_size()))
+),features_and_labels(
+  opencl_context, CL_MEM_READ_WRITE, /* Initially at least one feature-error pair is to be evaluated */
+  (sizeof(sdouble32) * (double_literal(2.0) * network.output_neuron_number()))
+),error_value( opencl_context, CL_MEM_READ_WRITE, sizeof(sdouble32) )
+, solution_phase(
+  opencl_context, opencl_device, opencl_queue,
+  std::make_shared<RafkoDummyGPUStrategyPhase>(
+    RafkoNBufShape({network.weight_table_size(), environment->get_feature_size()}),
+    RafkoNBufShape({network.output_neuron_number()})
+  )
+),error_phase(
+  opencl_context, opencl_device, opencl_queue,
+  std::make_shared<RafkoDummyGPUStrategyPhase>(
+    RafkoNBufShape({network.output_neuron_number(), network.output_neuron_number()}),
+    RafkoNBufShape({1u})
+  )
+),used_sequence_truncation( std::min(settings.get_memory_truncation(), environment->get_sequence_size()) )
 , used_minibatch_size( std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) )
-{ neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples()); }
+{
+  neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples());
+}
 
 void RafkoGPUContext::set_network_weight(uint32 weight_index, sdouble32 weight_value){
   assert( static_cast<sint32>(weight_index) < network.weight_table_size() );

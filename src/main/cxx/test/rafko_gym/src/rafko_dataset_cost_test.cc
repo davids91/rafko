@@ -72,7 +72,6 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
     neuron_data_simulation = std::vector<std::vector<sdouble32>>((raw_label_size/2), {(expected_label - set_distance)});
 
     /* Test if the half of the set can be updated in bulk */
-    std::cout << raw_label_size << " labels = (" << sample_number << "*" << sequence_size <<"); distance:" << set_distance << std::endl;
     REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
       Catch::Approx(pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
       == data_objective.set_features_for_labels(dataset_wrap, neuron_data_simulation, 0, 0, raw_label_size/2)

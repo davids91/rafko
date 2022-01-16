@@ -48,6 +48,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(OPENCL_TARGET 120)
     add_compile_definitions(CL_HPP_MINIMUM_OPENCL_VERSION=120)
     add_compile_definitions(CL_HPP_TARGET_OPENCL_VERSION=${OPENCL_TARGET})
+    add_compile_definitions(RAFKO_USES_OPENCL=1)
   endif()
   if(SANITIZE)
     set(ENV{ASAN_OPTIONS} detect_leaks=0) #All allocated memory on the Arena is detected as leaks, so leak check needs to be disabled
