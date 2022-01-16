@@ -69,9 +69,12 @@ public:
   /**
    * @brief      Constructs a buffer containing the output data of the implemented strategy phase
    *
+   * @param[in]  size   The number of elements allegedly allocated in the result.
+   *                    This tries to make sure that the size of the data is known.
+   *
    * @return     The output data with ownership transferred to the caller
    */
-  std::unique_ptr<sdouble32[]> acquire_output();
+  std::unique_ptr<sdouble32[]> acquire_output(std::size_t size);
 
   /**
    * @brief      Loads the output of the Phase into the supported pointer

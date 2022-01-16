@@ -21,6 +21,10 @@
 #include "rafko_global.h"
 
 #include <memory>
+#if(RAFKO_USES_OPENCL)
+#include <string>
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
@@ -65,6 +69,10 @@ public:
    */
   std::unique_ptr<Solution> build(const RafkoNet& net, bool optimize_to_gpu = false);
 
+  #if(RAFKO_USES_OPENCL)
+  static std::string get_kernel_for_solution(const Solution& solution, std::string name, rafko_mainframe::RafkoSettings& settings);
+  #endif/*(RAFKO_USES_OPENCL)*/
+
 private:
   rafko_mainframe::RafkoSettings& settings;
 
@@ -75,6 +83,7 @@ private:
   static uint32 get_last_neuron_index_of_partial(const PartialSolution& partial){
     return (partial.output_data().starts() + partial.output_data().interval_size() - 1u);
   }
+
 };
 
 } /* namespace rafko_net */

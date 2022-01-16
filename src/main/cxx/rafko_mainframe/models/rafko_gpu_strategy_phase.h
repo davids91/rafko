@@ -33,19 +33,20 @@ namespace rafko_mainframe{
  */
 class RafkoGPUStrategyPhase{
 public:
+  
   /**
    * @brief      Provides the kernel source codes of the StrategyPhase in order of execution
    *
    * @return     Vector of {name,source code} pairs in order of intended execution
    */
-   virtual cl::Program::Sources get_step_sources()const = 0;
+  virtual cl::Program::Sources get_step_sources()const = 0;
 
    /**
     * @brief      Provides the kernel function names of the StrategyPhase
     *
     * @return     Vector of {name,source code} pairs in order of intended execution
     */
-   virtual std::vector<std::string> get_step_names()const = 0;
+  virtual std::vector<std::string> get_step_names()const = 0;
 
   /**
    * @brief      Provides the input dimensions of each step in the Strategy Phase

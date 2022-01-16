@@ -22,6 +22,15 @@
 #include <stdexcept>
 #include <utility>
 
+#if(RAFKO_USES_OPENCL)
+#include <regex>
+
+#include "rafko_mainframe/models/rafko_settings.h"
+
+#include "rafko_net/models/transfer_function.h"
+#include "rafko_net/models/spike_function.h"
+#endif/*(RAFKO_USES_OPENCL)*/
+
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/neuron_router.h"
 #include "rafko_net/services/synapse_iterator.h"
@@ -111,7 +120,102 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
   solution->set_network_memory_length(reach_back_max + 1u); /* Current loop is "0" reachback, so length should be at least 1 */
   solution->set_network_input_size(reach_index_max + 1u);
   assert( net.input_data_size() == reach_index_max + 1u);
+
   return solution;
 }
+
+#if(RAFKO_USES_OPENCL)
+std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, std::string name, rafko_mainframe::RafkoSettings& settings){
+  /*!Note: Weight table is supposed to consist of the weight tables of the partial solutions
+   * in the order they are inside the @Solution. Inside the kernel this order is used
+   * to query the wieghts by position in the device weight table.
+   * This note is strictly for one kernel solutions! Networks spanning multiple devices
+   * are to re-think this logic.
+   */
+   std::string source_base = R"(
+     void kernel $$name$$(
+       __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
+       __global double* outputs, __constant int* output_sizes, int output_sizes_size
+     ){
+       if(input_sizes_size == 2){ /* TODO: Signal somehow if something is wrong.. */
+         const int sequence_index = get_global_id(0);
+         const int output_start = sequence_index * $$neuron_array_size$$;
+         const int input_start = $$weight_table_size$$;
+         int weight_table_start = input_sizes[0];
+         $$neuron_operations$$
+       }
+     }
+   )";
+  TransferFunction transfer_function(settings);
+  uint32 weight_table_offset = 0u;
+  std::string neuron_operations;
+  for(const PartialSolution& partial : solution.partial_solutions()){
+    uint32 input_synapse_index = 0u;
+    uint32 input_synapse_index_offset = 0u;
+    uint32 input_start_ofset = 0u;
+    uint32 weight_synapse_start = 0u;
+
+    for(uint32 inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
+      bool first_weight_in_synapse = true;
+      uint32 spike_weight_index;
+      std::string inner_neuron_operation = "output[output_start + " + std::to_string(inner_neuron_index) + "] = (";
+      std::string inner_neuron_input_weight_pairs = "";
+      SynapseIterator<>::iterate(partial.weight_indices(),[&](sint32 weight_index){
+        if(first_weight_in_synapse){
+          first_weight_in_synapse = false;
+          spike_weight_index = weight_table_offset + weight_index;
+        }else{
+          if(input_synapse_index_offset < partial.index_synapse_number(inner_neuron_index)){
+            sint32 input_index = partial.inside_indices(input_synapse_index + input_synapse_index_offset).starts();
+            if(SynapseIterator<>::is_index_input(input_index)){ /* ... input ... */
+              input_index = SynapseIterator<>::input_index_from_synapse_index(input_index - input_start_ofset);
+              inner_neuron_input_weight_pairs += std::string("(")
+              + " inputs[" + std::to_string(input_index) + "]"
+              + " * device_weight_table[" + std::to_string(weight_table_offset + weight_index) + "]"
+              + ") + ";
+            }else{
+              input_index = partial.output_data().starts() + input_index + input_start_ofset;
+              inner_neuron_input_weight_pairs += std::string("(")
+              + " output[output_start + " + std::to_string(input_index) + "]"
+              + " * device_weight_table[" + std::to_string(weight_table_offset + weight_index) + "]"
+              + ") + ";
+            }
+            ++input_start_ofset;
+            if(input_start_ofset >= partial.inside_indices(input_synapse_index + input_synapse_index_offset).interval_size()){
+              input_start_ofset = 0;
+              ++input_synapse_index_offset;
+            }
+          }else{ /* ... bias ... */
+            inner_neuron_input_weight_pairs += std::string("(")
+            + "device_weight_table[" + std::to_string(weight_table_offset + weight_index) + "]"
+            + ") + ";
+          }
+        }
+      }, weight_synapse_start, partial.weight_synapse_number(inner_neuron_index));
+      inner_neuron_input_weight_pairs += "0";
+      inner_neuron_operation += SpikeFunction::get_cl_function_for(
+        "device_weight_table[" + std::to_string(spike_weight_index) + "]" /*parameter*/,
+        transfer_function.get_cl_function_for(
+          partial.neuron_transfer_functions(inner_neuron_index),
+          inner_neuron_input_weight_pairs
+        )/* new_data */,
+        "output[output_start + " + std::to_string(inner_neuron_index) + "]"/* previous_data */
+      );
+      weight_synapse_start += partial.weight_synapse_number(inner_neuron_index);
+      input_synapse_index += input_synapse_index_offset;
+      inner_neuron_operation += ");\n";
+      neuron_operations += inner_neuron_operation;
+    }/*for(each inner neuron)*/
+    weight_table_offset += partial.weight_table_size();
+  }
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$name\\$\\$"), name);
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_array_size\\$\\$"), std::to_string(solution.neuron_number()));
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$weight_table_size\\$\\$"), std::to_string(weight_table_offset));
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_operations\\$\\$"), neuron_operations);
+  std::cout << "Code: \n" << source_base << std::endl;
+  return source_base;
+}
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
 } /* namespace rafko_net */

@@ -21,6 +21,7 @@
 #include "rafko_global.h"
 
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <CL/opencl.hpp>
 
@@ -100,7 +101,7 @@ private:
   rafko_mainframe::RafkoSettings settings;
   rafko_net::RafkoNet network;
   std::unique_ptr<rafko_net::Solution> network_solution;
-  std::unique_ptr<rafko_net::SolutionSolver> agent;
+  std::shared_ptr<rafko_net::SolutionSolver> agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> environment;
   std::shared_ptr<rafko_gym::RafkoObjective> objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> weight_updater;
@@ -113,11 +114,16 @@ private:
   cl::Buffer weights_and_inputs;
   cl::Buffer features_and_labels;
   cl::Buffer error_value;
+  std::mutex solution_phase_mutex;
+  uint32 device_weight_table_size;
   RafkoGPUPhase solution_phase;
+  std::vector<sdouble32> standalone_solution_result;
   RafkoGPUPhase error_phase;
 
   uint32 used_sequence_truncation;
   uint32 used_minibatch_size;
+
+  void upload_weight_table_to_device();
 
 };
 

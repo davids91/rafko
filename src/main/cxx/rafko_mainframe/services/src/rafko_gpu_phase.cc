@@ -114,8 +114,10 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, cl::Buffer& input){
   }
 }
 
-std::unique_ptr<sdouble32[]> RafkoGPUPhase::acquire_output(){
+std::unique_ptr<sdouble32[]> RafkoGPUPhase::acquire_output(std::size_t size){
   RafkoNBufShape output_shape = strategy->get_output_shapes().back();
+
+  assert( size == output_shape.get_number_of_elements() );
   assert( (sizeof(sdouble32) * output_shape.get_number_of_elements()) == output_shape.get_byte_size<sdouble32>() );
 
   std::unique_ptr<sdouble32[]> output(new sdouble32[output_shape.get_number_of_elements()]);

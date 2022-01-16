@@ -19,6 +19,7 @@
 
 #include <assert.h>
 
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_mainframe/services/rafko_dummies.h"
 
@@ -80,13 +81,8 @@ RafkoGPUContext::RafkoGPUContext(
   opencl_context, CL_MEM_READ_WRITE, /* Initially at least one feature-error pair is to be evaluated */
   (sizeof(sdouble32) * (double_literal(2.0) * network.output_neuron_number()))
 ),error_value( opencl_context, CL_MEM_READ_WRITE, sizeof(sdouble32) )
-, solution_phase(
-  opencl_context, opencl_device, opencl_queue,
-  std::make_shared<RafkoDummyGPUStrategyPhase>(
-    RafkoNBufShape({network.weight_table_size(), environment->get_feature_size()}),
-    RafkoNBufShape({network.output_neuron_number()})
-  )
-),error_phase(
+, solution_phase( opencl_context, opencl_device, opencl_queue, agent )
+, error_phase(
   opencl_context, opencl_device, opencl_queue,
   std::make_shared<RafkoDummyGPUStrategyPhase>(
     RafkoNBufShape({network.output_neuron_number(), network.output_neuron_number()}),
@@ -96,20 +92,21 @@ RafkoGPUContext::RafkoGPUContext(
 , used_minibatch_size( std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) )
 {
   neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples());
+  upload_weight_table_to_device(); /*!Note: Also sets device_weight_table_size*/
 }
 
 void RafkoGPUContext::set_network_weight(uint32 weight_index, sdouble32 weight_value){
   assert( static_cast<sint32>(weight_index) < network.weight_table_size() );
   network.set_weight_table(weight_index, weight_value);
   weight_updater->update_solution_with_weights();
-  #warning "Need to update weight in GPU buffers as well"
+  upload_weight_table_to_device(); /* TODO: modify single weight  */
 }
 
 void RafkoGPUContext::set_network_weights(const std::vector<sdouble32>& weights){
   assert( static_cast<sint32>(weights.size()) == network.weight_table_size() );
   *network.mutable_weight_table() = {weights.begin(), weights.end()};
   weight_updater->update_solution_with_weights();
-  #warning "Need to update weights in GPU buffers as well"
+  upload_weight_table_to_device();
 }
 
 void RafkoGPUContext::apply_weight_update(const std::vector<sdouble32>& weight_delta){
@@ -118,8 +115,24 @@ void RafkoGPUContext::apply_weight_update(const std::vector<sdouble32>& weight_d
     weight_updater->start();
   weight_updater->iterate(weight_delta);
   weight_updater->update_solution_with_weights();
-  #warning "Need to update weights in GPU buffers as well"
+  upload_weight_table_to_device();
 }
+
+void RafkoGPUContext::upload_weight_table_to_device(){
+  std::vector<sdouble32> device_weight_table;
+  for(const rafko_net::PartialSolution& partial : network_solution->partial_solutions()){
+    device_weight_table.insert(
+      device_weight_table.end(),
+      partial.weight_table().begin(), partial.weight_table().end()
+    );
+  }
+  device_weight_table_size = device_weight_table.size();
+  cl_int return_value = opencl_queue.enqueueWriteBuffer(
+    weights_and_inputs, CL_TRUE, 0, (sizeof(sdouble32) * device_weight_table.size()), device_weight_table.data()
+  );
+  assert( return_value == CL_SUCCESS );
+}
+
 
 void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_){
   assert(environment_->get_feature_size() == network.output_neuron_number());
@@ -144,6 +157,7 @@ sdouble32 RafkoGPUContext::full_evaluation(){
 }
 
 sdouble32 RafkoGPUContext::stochastic_evaluation(bool to_seed, uint32 seed_value){
+  if(to_seed)srand(seed_value);
   #warning "stochastic_evaluation not implemented yet"
 }
 
@@ -151,8 +165,47 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
   const std::vector<sdouble32>& input,
   bool reset_neuron_data, uint32 thread_index
 ){
-  #warning "solve not implemented yet"
+  parameter_not_used(thread_index);
+  cl_int return_value;
+  if(reset_neuron_data){
+    cl::Event fill_event;
+    return_value = opencl_queue.enqueueFillBuffer<sdouble32>(
+      weights_and_inputs, double_literal(0.0)/*the sdouble32 value*/,
+      device_weight_table_size /*offset*/, input.size()/*size == number of sdouble32*/,
+      NULL/*events to wit for*/, &fill_event
+    );
+    assert( return_value == CL_SUCCESS );
+    assert( fill_event.wait() == CL_SUCCESS );
+  }
+  std::lock_guard<std::mutex> solution_lock(solution_phase_mutex);
+  /*!Note: opencl should theoretically eliminate the need to use the need for multiple threads,
+   * but with the already present speed improvements coming from the usage of it, it doesn't make sense
+   * to create multiple contexts for threads; A simple mutual exclusion lock should do..
+   */
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> sol_space = agent->get_solution_space();
+  std::get<1>(sol_space) = cl::NDRange(1);
+  cl::EnqueueArgs enq = std::make_from_tuple<cl::EnqueueArgs>( std::tuple_cat(std::tie(opencl_queue), sol_space) );
+  return_value = opencl_queue.enqueueWriteBuffer(
+    weights_and_inputs, CL_TRUE,
+    (sizeof(sdouble32) * device_weight_table_size),
+    (sizeof(sdouble32) * input.size()),
+    input.data()
+  );
+  assert( return_value == CL_SUCCESS );
 
+  solution_phase(enq, weights_and_inputs);
+
+  if(static_cast<sint32>(standalone_solution_result.size()) == network.neuron_array_size()){
+    solution_phase.load_output(standalone_solution_result.data(), network.neuron_array_size());
+  }else{
+    std::unique_ptr<sdouble32[]> output_ptr = solution_phase.acquire_output(network.neuron_array_size());
+    standalone_solution_result = std::vector<sdouble32>(output_ptr.get(), output_ptr.get() + network.neuron_array_size());
+  }
+
+  return {
+    standalone_solution_result.end() - network.output_neuron_number(),
+    standalone_solution_result.end()
+  };
 }
 
 } /* namespace rafko_mainframe */
