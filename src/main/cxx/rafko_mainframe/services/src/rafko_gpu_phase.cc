@@ -18,6 +18,7 @@
 #include "rafko_mainframe/services/rafko_gpu_phase.h"
 
 #include <assert.h>
+#include <stdexcept>
 
 namespace rafko_mainframe{
 
@@ -44,7 +45,13 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
   /* Compile Kernel program */
   cl::Program program(opencl_context, sources);
   return_value = program.build({opencl_device});
-  assert( return_value == CL_SUCCESS );
+  if(return_value != CL_SUCCESS){
+    throw std::runtime_error(
+      "OpenCL Kernel compilation failed with error: \n"
+      + program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(opencl_device)
+       + "\n"
+    );
+  }
 
   /* Set buffers, kernel arguments and functors */
   uint32 step_index = 0;

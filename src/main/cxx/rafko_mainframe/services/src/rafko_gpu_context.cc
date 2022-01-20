@@ -120,13 +120,34 @@ void RafkoGPUContext::apply_weight_update(const std::vector<sdouble32>& weight_d
 
 void RafkoGPUContext::upload_weight_table_to_device(){
   std::vector<sdouble32> device_weight_table;
+  uint32 overall_number_of_weights = 0u;
+
   for(const rafko_net::PartialSolution& partial : network_solution->partial_solutions()){
     device_weight_table.insert(
       device_weight_table.end(),
       partial.weight_table().begin(), partial.weight_table().end()
     );
+    overall_number_of_weights += partial.weight_table_size();
   }
   device_weight_table_size = device_weight_table.size();
+  assert( device_weight_table_size == overall_number_of_weights );
+
+  std::cout << "Device weight table: ";
+  for(const sdouble32& num : device_weight_table) std::cout << "{"<< num <<"}";
+  std::cout << std::endl;
+
+  std::cout << "Device weight table comparison: ";
+  uint32 w_index = 0;
+  for(const rafko_net::PartialSolution& partial : network_solution->partial_solutions()){
+    std::cout << "(starts at: " << w_index << ")";
+    for(uint32 i = 0; i < partial.weight_table_size(); ++i){
+      std::cout << "{"<< partial.weight_table(i) <<"}";
+      ++w_index;
+    }
+    std::cout << std::endl;
+  }
+  std::cout << std::endl;
+
   cl_int return_value = opencl_queue.enqueueWriteBuffer(
     weights_and_inputs, CL_TRUE, 0, (sizeof(sdouble32) * device_weight_table.size()), device_weight_table.data()
   );
@@ -154,11 +175,13 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
 
 sdouble32 RafkoGPUContext::full_evaluation(){
 #warning "full_evaluation not implemented yet"
+  return 0;
 }
 
 sdouble32 RafkoGPUContext::stochastic_evaluation(bool to_seed, uint32 seed_value){
   if(to_seed)srand(seed_value);
   #warning "stochastic_evaluation not implemented yet"
+  return 0;
 }
 
 rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
@@ -166,7 +189,9 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
   bool reset_neuron_data, uint32 thread_index
 ){
   parameter_not_used(thread_index);
+
   cl_int return_value;
+  /*TODO: Keep track on Neural Network memory even for single runs*/
   if(reset_neuron_data){
     cl::Event fill_event;
     return_value = opencl_queue.enqueueFillBuffer<sdouble32>(

@@ -50,8 +50,12 @@ class RAFKO_FULL_EXPORT RafkoAgent
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
-  RafkoAgent(const rafko_net::Solution& solution_, uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_, uint32 max_threads_ = 1u)
-  : solution(solution_)
+  RafkoAgent(
+    const rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_,
+    uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_,
+    uint32 max_threads_ = 1u
+  ):settings(settings_)
+  , solution(solution_)
   , required_temp_data_number_per_thread(required_temp_data_number_per_thread_)
   , required_temp_data_size(required_temp_data_size_)
   , max_threads(max_threads_)
@@ -141,14 +145,9 @@ public:
   }
 
   cl::Program::Sources get_step_sources() const{
-    // rafko_mainframe::RafkoSettings settings; /*TODO: get settings reference */
-    // return{rafko_net::SolutionBuilder::get_kernel_for_solution(solution, "agent_solution", settings)};
-    return{R"(
-      void kernel agent_solution(
-        __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
-        __global double* outputs, __constant int* output_sizes, int output_sizes_size
-      ){  }
-    )"};
+    return { rafko_net::SolutionBuilder::get_kernel_for_solution(
+      solution, "agent_solution", settings
+    ) };
   }
   std::vector<std::string> get_step_names() const{
     return {"agent_solution"};
@@ -171,6 +170,7 @@ public:
 #endif/*(RAFKO_USES_OPENCL)*/
 
 protected:
+  rafko_mainframe::RafkoSettings& settings;
   const rafko_net::Solution& solution;
   uint32 required_temp_data_number_per_thread;
   uint32 required_temp_data_size;

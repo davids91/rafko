@@ -59,15 +59,38 @@ sdouble32 TransferFunction::get_value(Transfer_functions function, sdouble32 dat
     case transfer_function_sigmoid: return double_literal(1.0)/(double_literal(1.0)+exp(-data));
     case transfer_function_tanh: return std::tanh(data);
     case transfer_function_elu:
-      if(0 >= data) return settings.get_alpha() * (std::exp(data) -1);
+      if(0 >= data) return settings.get_alpha() * (std::exp(data) - 1);
       else return data;
     case transfer_function_selu:
-      if(0 >= data) return ((settings.get_alpha() * std::exp(data)) - settings.get_alpha()) * settings.get_lambda();
-      else return data;
+      if(0 >= data) return settings.get_lambda() * settings.get_alpha() * (std::exp(data) - double_literal(1.0));
+      else return settings.get_lambda() * data;
     case transfer_function_relu: return std::max(double_literal(0.0),data);
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
+
+#if(RAFKO_USES_OPENCL)
+std::string TransferFunction::get_cl_function_for(Transfer_functions function, std::string x_){
+  std::string x = std::string("(") + x_ + ")";
+  switch(function){
+    case transfer_function_identity: return x;
+    case transfer_function_sigmoid: return "( 1.0/(1.0 + exp(-1.0 * " + x + ")) )";
+    case transfer_function_tanh: return "(tanh(" + x + "))";
+    case transfer_function_elu: return "( max(0.0," + x + ") + (" + std::to_string(settings.get_alpha()) + " * (exp(min(0.0, " + x + ")) - 1.0)) )";
+    case transfer_function_selu:
+    {
+      std::string alpha = std::to_string(settings.get_alpha());
+      std::string lambda = std::to_string(settings.get_lambda());
+      std::string x_negative_component = "min(0.0, " + x + ")";
+      std::string x_positive_component = "max(0.0, " + x + ")";
+      std::string x_negative_scaled = "(" + alpha + " * (exp(" + x_negative_component + ") - 1.0) )";
+      return "( " + lambda + " * (" + x_positive_component + " + " + x_negative_scaled + ") )";
+    }
+    case transfer_function_relu: return "max(0.0," + x + ")";
+    default: throw std::runtime_error("Unidentified transfer function queried for information!");
+  }
+}
+#endif/*(RAFKO_USES_OPENCL)*/
 
 sdouble32 TransferFunction::get_derivative(Transfer_functions function, sdouble32 data) const{
   switch(function){
@@ -86,27 +109,5 @@ sdouble32 TransferFunction::get_derivative(Transfer_functions function, sdouble3
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
-
-#if(RAFKO_USES_OPENCL)
-std::string TransferFunction::get_cl_function_for(Transfer_functions function, std::string x){
-  switch(function){
-    case transfer_function_identity: return x;
-    case transfer_function_sigmoid: return "( 1.0/(1.0 + exp(-1.0 * " + x + ")) )";
-    case transfer_function_tanh: return "(tanh(" + x + "))";
-    case transfer_function_elu: return "( (max(0.0," + x + ") + min(0.0, " + x + ") * " + std::to_string(settings.get_alpha()) + " )";
-    case transfer_function_selu:
-    {
-      std::string alpha = std::to_string(settings.get_alpha());
-      std::string x_negative_component = "min(0.0, " + x + ")";
-      std::string x_positive_component = "max(0.0, " + x + ")";
-      std::string x_negative_scaled = "((" + alpha + " * exp(" + x_negative_component + ")) - " + alpha + ")";
-      return "(" + x_positive_component + " + (" + x_negative_component + " * " + x_negative_scaled + "))";
-    }
-    case transfer_function_relu: return "max(0.0," + x + ")";
-    default: throw std::runtime_error("Unidentified transfer function queried for information!");
-  }
-}
-#endif/*(RAFKO_USES_OPENCL)*/
-
 
 } /* namespace rafko_net */

@@ -58,7 +58,7 @@ public:
 
   #if(RAFKO_USES_OPENCL)
   static std::string get_cl_function_for(std::string parameter, std::string new_data, std::string previous_data){
-    return "((" + previous_data + " * " + parameter + ") + (" + new_data +" * (1.0 - " + parameter + ")))";
+    return "(((" + previous_data + ") * " + parameter + ") + ((" + new_data +") * (1.0 - " + parameter + ")))";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 

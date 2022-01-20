@@ -141,7 +141,6 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
          const int sequence_index = get_global_id(0);
          const int output_start = sequence_index * $$neuron_array_size$$;
          const int input_start = $$weight_table_size$$;
-         int weight_table_start = input_sizes[0];
          $$neuron_operations$$
        }
      }
@@ -150,68 +149,100 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
   uint32 weight_table_offset = 0u;
   std::string neuron_operations;
   for(const PartialSolution& partial : solution.partial_solutions()){
+    SynapseIterator<InputSynapseInterval> partial_input_synapses(partial.input_data());
+    // std::cout << "//partial: "<< partial.output_data().starts() << " -+-> " << partial.output_data().interval_size() << ";" << std::endl;
+    std::cout << std::endl;
     uint32 input_synapse_index = 0u;
     uint32 input_synapse_index_offset = 0u;
-    uint32 input_start_ofset = 0u;
+    uint32 input_start_offset = 0u;
     uint32 weight_synapse_start = 0u;
 
     for(uint32 inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
+      // std::cout << "//inner_neuron["<< inner_neuron_index <<"]" << std::endl;
       bool first_weight_in_synapse = true;
       uint32 spike_weight_index;
-      std::string inner_neuron_operation = "output[output_start + " + std::to_string(inner_neuron_index) + "] = (";
+      std::string inner_neuron_operation = "outputs[output_start + " + std::to_string(partial.output_data().starts() + inner_neuron_index) + "] = (\n";
       std::string inner_neuron_input_weight_pairs = "";
+      /*TODO: Accomodate inputs from the past */
       SynapseIterator<>::iterate(partial.weight_indices(),[&](sint32 weight_index){
         if(first_weight_in_synapse){
           first_weight_in_synapse = false;
-          spike_weight_index = weight_table_offset + weight_index;
+          spike_weight_index = weight_index;
+          inner_neuron_input_weight_pairs += std::string("\n");
         }else{
-          if(input_synapse_index_offset < partial.index_synapse_number(inner_neuron_index)){
+          if(input_synapse_index_offset < partial.index_synapse_number(inner_neuron_index)){ /* ... input ... */
             sint32 input_index = partial.inside_indices(input_synapse_index + input_synapse_index_offset).starts();
-            if(SynapseIterator<>::is_index_input(input_index)){ /* ... input ... */
-              input_index = SynapseIterator<>::input_index_from_synapse_index(input_index - input_start_ofset);
-              inner_neuron_input_weight_pairs += std::string("(")
-              + " inputs[" + std::to_string(input_index) + "]"
-              + " * device_weight_table[" + std::to_string(weight_table_offset + weight_index) + "]"
-              + ") + ";
+            // inner_neuron_input_weight_pairs += std::string("/*") + std::to_string(input_index) + "*/";
+            // std::cout << "//input starts: "<< input_index <<"(offset: " << input_start_offset << ");" << std::endl;
+            if(SynapseIterator<>::is_index_input(input_index)){
+              input_index = partial_input_synapses[SynapseIterator<>::input_index_from_synapse_index(input_index - input_start_offset)];
+              // std::cout << "///-->"<< (input_index) <<";" << std::endl;
+              if(SynapseIterator<>::is_index_input(input_index)){
+                input_index = SynapseIterator<>::input_index_from_synapse_index(input_index);
+                // std::cout << "////input-->"<< (input_index) <<";" << std::endl;
+                inner_neuron_input_weight_pairs += std::string("(")
+                /* input */+ " inputs[input_start + " + std::to_string(input_index) + "]"
+                /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
+                + ") + ";
+              }else{
+                inner_neuron_input_weight_pairs += std::string("(")
+                /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
+                /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
+                + ") + ";
+              }
             }else{
-              input_index = partial.output_data().starts() + input_index + input_start_ofset;
+              input_index = input_index + input_start_offset;
               inner_neuron_input_weight_pairs += std::string("(")
-              + " output[output_start + " + std::to_string(input_index) + "]"
-              + " * device_weight_table[" + std::to_string(weight_table_offset + weight_index) + "]"
+              /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
+              /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
               + ") + ";
             }
-            ++input_start_ofset;
-            if(input_start_ofset >= partial.inside_indices(input_synapse_index + input_synapse_index_offset).interval_size()){
-              input_start_ofset = 0;
+            // std::cout << "//-->"<< (input_index) <<";" << std::endl;
+            ++input_start_offset;
+            if(input_start_offset >= partial.inside_indices(input_synapse_index + input_synapse_index_offset).interval_size()){
+              input_start_offset = 0;
               ++input_synapse_index_offset;
             }
           }else{ /* ... bias ... */
             inner_neuron_input_weight_pairs += std::string("(")
-            + "device_weight_table[" + std::to_string(weight_table_offset + weight_index) + "]"
+            /* bias weight */+ "inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
             + ") + ";
           }
         }
       }, weight_synapse_start, partial.weight_synapse_number(inner_neuron_index));
-      inner_neuron_input_weight_pairs += "0";
+      inner_neuron_input_weight_pairs += "0 \n";
       inner_neuron_operation += SpikeFunction::get_cl_function_for(
-        "device_weight_table[" + std::to_string(spike_weight_index) + "]" /*parameter*/,
+        "inputs[" + std::to_string(weight_table_offset + spike_weight_index)+ "]"/*parameter*/,
         transfer_function.get_cl_function_for(
           partial.neuron_transfer_functions(inner_neuron_index),
           inner_neuron_input_weight_pairs
         )/* new_data */,
-        "output[output_start + " + std::to_string(inner_neuron_index) + "]"/* previous_data */
+        "outputs[output_start + " + std::to_string(partial.output_data().starts() + inner_neuron_index) + "]"/* previous_data */
       );
       weight_synapse_start += partial.weight_synapse_number(inner_neuron_index);
       input_synapse_index += input_synapse_index_offset;
-      inner_neuron_operation += ");\n";
+      input_synapse_index_offset = 0u;
+      inner_neuron_operation += "\n);\n";
       neuron_operations += inner_neuron_operation;
     }/*for(each inner neuron)*/
     weight_table_offset += partial.weight_table_size();
+    /*!Note: Because each partial has a different weight table, an offset is required to keep track in case there are multiple partial solutions
+     * inside the solution.
+     */
   }
   source_base = std::regex_replace(source_base, std::regex("\\$\\$name\\$\\$"), name);
   source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_array_size\\$\\$"), std::to_string(solution.neuron_number()));
   source_base = std::regex_replace(source_base, std::regex("\\$\\$weight_table_size\\$\\$"), std::to_string(weight_table_offset));
   source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_operations\\$\\$"), neuron_operations);
+  std::cout << "Number of Neurons: " << solution.neuron_number() << std::endl;
+  std::cout << "Partial array size: " << solution.partial_solutions_size() << std::endl;
+  std::cout << "*Partials(size: " << solution.partial_solutions_size() + "):";
+  for(const rafko_net::PartialSolution& partial : solution.partial_solutions()){
+      std::cout << "["<< partial.output_data().starts() << " -+-> "<< partial.output_data().interval_size() << "]: ";
+      std::cout << partial.weight_table_size() << " weights;";
+  }
+  std::cout << std::endl;
+
   std::cout << "Code: \n" << source_base << std::endl;
   return source_base;
 }

@@ -46,10 +46,10 @@ SolutionSolver::Builder::Builder(const Solution& to_solve, rafko_mainframe::Rafk
 }
 
 SolutionSolver::SolutionSolver(
-  const Solution& to_solve, rafko_mainframe::RafkoSettings& settings, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
+  const Solution& to_solve, rafko_mainframe::RafkoSettings& settings_, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
   uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
-): rafko_gym::RafkoAgent(to_solve, max_tmp_data_needed, max_tmp_data_needed_per_thread, settings.get_max_processing_threads())
-,  settings(settings)
+): rafko_gym::RafkoAgent(to_solve, settings_, max_tmp_data_needed, max_tmp_data_needed_per_thread, settings_.get_max_processing_threads())
+,  settings(settings_)
 ,  partial_solvers(partial_solvers_)
 ,  feature_executor(execution_threads)
 {
