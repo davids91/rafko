@@ -70,7 +70,9 @@ public:
   std::unique_ptr<Solution> build(const RafkoNet& net, bool optimize_to_gpu = false);
 
   #if(RAFKO_USES_OPENCL)
-  static std::string get_kernel_for_solution(const Solution& solution, std::string name, rafko_mainframe::RafkoSettings& settings);
+  static std::string get_kernel_for_solution(
+    const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_label_num, rafko_mainframe::RafkoSettings& settings
+  );
   #endif/*(RAFKO_USES_OPENCL)*/
 
 private:

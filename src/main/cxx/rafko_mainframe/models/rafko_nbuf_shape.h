@@ -77,7 +77,9 @@ public:
    * @return     Allocated bytes representing the shape of the RafkoNDArray object
    */
   std::unique_ptr<cl_int[]> acquire_shape_buffer(){
-    return std::unique_ptr<cl_int[]>(new cl_int[size()]);
+    std::unique_ptr<cl_int[]> shape_buffer(new cl_int[size()]);
+    std::copy(begin(), end(), shape_buffer.get());
+    return shape_buffer;
   }
 };
 

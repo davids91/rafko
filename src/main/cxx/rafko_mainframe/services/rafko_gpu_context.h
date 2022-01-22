@@ -39,15 +39,8 @@ namespace rafko_mainframe {
 class RAFKO_FULL_EXPORT RafkoGPUContext : public RafkoContext{
 public:
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
-
-  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
-    objective = objective_;
-  }
-
-  void set_weight_updater(rafko_gym::Weight_updaters updater){
-    weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, updater, settings);
-  }
-
+  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_);
+  void set_weight_updater(rafko_gym::Weight_updaters updater);
   void set_network_weight(uint32 weight_index, sdouble32 weight_value);
   void set_network_weights(const std::vector<sdouble32>& weights);
   void apply_weight_update(const std::vector<sdouble32>& weight_delta);
@@ -55,7 +48,7 @@ public:
   sdouble32 stochastic_evaluation(bool to_seed = false, uint32 seed_value = 0u);
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<sdouble32>& input,
-    bool reset_neuron_data = true, uint32 thread_index = 0
+    bool reset_neuron_data = false, uint32 thread_index = 0
   );
 
   void push_state(){
@@ -111,10 +104,9 @@ private:
   cl::Context opencl_context;
   cl::Device opencl_device;
   cl::CommandQueue opencl_queue;
-  cl::Buffer weights_and_inputs;
+  cl::Buffer mode_weights_and_inputs;
   cl::Buffer features_and_labels;
   cl::Buffer error_value;
-  std::mutex solution_phase_mutex;
   uint32 device_weight_table_size;
   RafkoGPUPhase solution_phase;
   std::vector<sdouble32> standalone_solution_result;

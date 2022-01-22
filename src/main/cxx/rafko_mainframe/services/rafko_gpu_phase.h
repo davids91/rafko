@@ -69,20 +69,21 @@ public:
   /**
    * @brief      Constructs a buffer containing the output data of the implemented strategy phase
    *
-   * @param[in]  size   The number of elements allegedly allocated in the result.
-   *                    This tries to make sure that the size of the data is known.
+   * @param[in]  size     The number of elements to take from the output
+   * @param[in]  offset   An offset inside the output buffer to get
    *
    * @return     The output data with ownership transferred to the caller
    */
-  std::unique_ptr<sdouble32[]> acquire_output(std::size_t size);
+  std::unique_ptr<sdouble32[]> acquire_output(std::size_t size, std::size_t offset = 0u);
 
   /**
    * @brief      Loads the output of the Phase into the supported pointer
    *
    * @param[in]  target     The pointer to load the output data into
-   * @param[in]  size       The number of elements allocated in the pointer array
+   * @param[in]  size     The number of elements to take from the output
+   * @param[in]  offset   An offset inside the output buffer to get
    */
-  void load_output(sdouble32* target, std::size_t size);
+  void load_output(sdouble32* target, std::size_t size, std::size_t offset = 0u);
 
   /**
    * @brief      Provides the buffer containing the output data of the implemented
@@ -90,7 +91,7 @@ public:
    *
    * @return     A buffer of the output data on the device
    */
-  const cl::Buffer& get_output_buffer(){
+  cl::Buffer& get_output_buffer(){
     return std::get<0>(kernel_args.back());
   }
 

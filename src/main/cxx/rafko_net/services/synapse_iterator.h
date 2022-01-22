@@ -22,6 +22,7 @@
 
 #include <functional>
 #include <stdexcept>
+#include <assert.h>
 
 #include <google/protobuf/repeated_field.h>
 
@@ -189,14 +190,14 @@ public:
   }
 
   /**
-   * @brief      Direct access to an indvidual synapse index. Warning! very greedy!
+   * @brief      Direct access to an indvidual synapse index.
    *
    * @param[in]  index  The index
    *
    * @return     The Synapse index under the @index-th step into the iteration
    */
   int operator[](int index) const{
-    if(0 == size())throw std::runtime_error("Empty synapse iterator reached for subscript!");
+    assert(0u < size());
     sint32 result_index;
     uint32 previous_last_reached_index = 0;
     sint32 iteration_helper = 0;
@@ -222,11 +223,46 @@ public:
         return false;
       }
     },synapse_start);
-    if(iteration_helper != index)
-      throw std::runtime_error("Index Out of bounds with Synapse Iterator!");
+    assert(iteration_helper == index);
     --last_reached_synapse;
     last_reached_index = previous_last_reached_index;
     return result_index;
+  }
+
+  template<typename InputSynapseInterval>
+  int reach_past_loops(int index){
+    assert(0u < size());
+    sint32 result_reach;
+    uint32 previous_last_reached_index = 0;
+    sint32 iteration_helper = 0;
+    uint32 synapse_start = 0;
+
+    if(static_cast<sint32>(last_reached_index) <= index){
+      synapse_start = last_reached_synapse;
+      iteration_helper = last_reached_index;
+    }else last_reached_synapse = 0;
+
+    sint32 synapse_reach;
+    iterate_terminatable([&](InputSynapseInterval interval_synapse){
+      ++last_reached_synapse;
+      last_reached_index = iteration_helper;
+      previous_last_reached_index = last_reached_index;
+      synapse_reach = interval_synapse.reach_past_loops();
+      return true;
+    },[&](sint32 synapse_index){
+      parameter_not_used(synapse_index);
+      if(iteration_helper < index){
+        ++iteration_helper;
+        return true;
+      }else{
+        result_reach = synapse_reach;
+        return false;
+      }
+    },synapse_start);
+    assert(iteration_helper == index);
+    --last_reached_synapse;
+    last_reached_index = previous_last_reached_index;
+    return result_reach;
   }
 
   /**

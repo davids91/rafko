@@ -54,7 +54,7 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
   }
 
   /* Set buffers, kernel arguments and functors */
-  uint32 step_index = 0;
+  uint32 step_index = 0; /*TODO: Make Kernels focus only on outputs, to not have unused buffers*/
   for(const std::string& step_name : names){
     kernel_args.push_back(std::make_tuple( /* push in each step input */
       cl::Buffer(opencl_context, CL_MEM_READ_WRITE, input_shapes[step_index].get_byte_size<sdouble32>()),
@@ -121,24 +121,23 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, cl::Buffer& input){
   }
 }
 
-std::unique_ptr<sdouble32[]> RafkoGPUPhase::acquire_output(std::size_t size){
+std::unique_ptr<sdouble32[]> RafkoGPUPhase::acquire_output(std::size_t size, std::size_t offset){
   RafkoNBufShape output_shape = strategy->get_output_shapes().back();
 
-  assert( size == output_shape.get_number_of_elements() );
-  assert( (sizeof(sdouble32) * output_shape.get_number_of_elements()) == output_shape.get_byte_size<sdouble32>() );
+  assert( (offset + size) <= output_shape.get_number_of_elements() );
 
-  std::unique_ptr<sdouble32[]> output(new sdouble32[output_shape.get_number_of_elements()]);
-  load_output(output.get(), output_shape.get_number_of_elements());
+  std::unique_ptr<sdouble32[]> output(new sdouble32[size]);
+  load_output(output.get(), size, offset);
   return output;
 }
 
-void RafkoGPUPhase::load_output(sdouble32* target, std::size_t size){
+void RafkoGPUPhase::load_output(sdouble32* target, std::size_t size, std::size_t offset){
   RafkoNBufShape output_shape = strategy->get_output_shapes().back();
-  assert( (sizeof(sdouble32) * size) == output_shape.get_byte_size<sdouble32>() );
+  assert( (sizeof(sdouble32) * size) <= output_shape.get_byte_size<sdouble32>() );
 
   cl::Buffer& output_buffer_cl = std::get<0>(kernel_args.back());
-  cl_int return_value = opencl_device_queue.enqueueReadBuffer( /* download last output from device memory */
-    output_buffer_cl, CL_TRUE, 0, output_shape.get_byte_size<sdouble32>(), target
+  cl_int return_value = opencl_device_queue.enqueueReadBuffer(
+    output_buffer_cl, CL_TRUE, (sizeof(sdouble32) * offset), (sizeof(sdouble32) * size), target
   );
   assert( return_value == CL_SUCCESS );
 }

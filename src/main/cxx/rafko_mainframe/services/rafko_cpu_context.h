@@ -89,7 +89,7 @@ public:
 
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<sdouble32>& input,
-    bool reset_neuron_data = true, uint32 thread_index = 0
+    bool reset_neuron_data = false, uint32 thread_index = 0
   ){
     return agent->solve(input, reset_neuron_data, thread_index);
   }
