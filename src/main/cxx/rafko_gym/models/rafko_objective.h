@@ -22,6 +22,9 @@
 
 #include <vector>
 
+#if(RAFKO_USES_OPENCL)
+#include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
+#endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_gym/models/rafko_environment.h"
 
 namespace rafko_gym{
@@ -29,7 +32,11 @@ namespace rafko_gym{
 /**
  * @brief      This class
  */
-class RAFKO_FULL_EXPORT RafkoObjective{
+class RAFKO_FULL_EXPORT RafkoObjective
+#if(RAFKO_USES_OPENCL)
+: public rafko_mainframe::RafkoGPUStrategyPhase
+#endif/*(RAFKO_USES_OPENCL)*/
+{
 public:
 
   /**
@@ -93,6 +100,11 @@ public:
     uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation, std::vector<sdouble32>& tmp_data
   ) = 0;
+
+  #if(RAFKO_USES_OPENCL)
+  virtual void set_gpu_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_) = 0;
+  #endif/*(RAFKO_USES_OPENCL)*/
+
 
   virtual ~RafkoObjective() = default;
 };

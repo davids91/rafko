@@ -23,9 +23,19 @@
 #include <vector>
 #include <thread>
 #include <future>
+#if(RAFKO_USES_OPENCL)
+#include <utility>
+#include <string>
+#include <regex>
+#include <CL/opencl.hpp>
+#endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/rafko_settings.h"
+#if(RAFKO_USES_OPENCL)
+#include "rafko_mainframe/models/rafko_nbuf_shape.h"
+#include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
+#endif/*(RAFKO_USES_OPENCL)*/
 
 namespace rafko_gym{
 
@@ -33,7 +43,11 @@ namespace rafko_gym{
  * @brief      Error function handling and utilities, provides a hook for a computation
  *             function to be run on every sample by feature.
  */
-class RAFKO_FULL_EXPORT CostFunction{
+class RAFKO_FULL_EXPORT CostFunction
+#if(RAFKO_USES_OPENCL)
+: public rafko_mainframe::RafkoGPUStrategyPhase
+#endif/*(RAFKO_USES_OPENCL)*/
+{
 public:
   CostFunction(Cost_functions the_function_, rafko_mainframe::RafkoSettings& settings)
   : settings(settings)
@@ -116,6 +130,46 @@ public:
 
   virtual ~CostFunction() = default;
 
+  #if(RAFKO_USES_OPENCL)
+
+  void set_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_){
+    pairs_to_evaluate = pairs_to_evaluate_;
+    feature_size = feature_size_;
+  }
+
+  virtual std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const = 0;
+  virtual std::string get_post_process_kernel_source(std::string error_value) const = 0;
+
+  cl::Program::Sources get_step_sources()const;
+  std::vector<std::string> get_step_names()const;
+
+  /**
+   * @brief      Provides the input dimension of the cost function: a configured number of feature-label pairs to evaluate
+   *
+   * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
+   */
+  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes()const  {
+    return { rafko_mainframe::RafkoNBufShape{ /* inputs and labels */
+        pairs_to_evaluate * feature_size,
+        pairs_to_evaluate * feature_size
+    } };
+  }
+
+  /**
+   * @brief      Provides the output dimension of the cost function: one error value for every number of pairs to evaluate
+   *
+   * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
+   */
+  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes()const  {
+    return { rafko_mainframe::RafkoNBufShape{ 1u } };
+  }
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space()  {
+    return std::make_tuple(cl::NullRange,cl::NDRange(pairs_to_evaluate),cl::NullRange);
+  }
+
+  #endif/*(RAFKO_USES_OPENCL)*/
+
+
 protected:
   rafko_mainframe::RafkoSettings& settings;
   std::vector<std::thread> process_threads;
@@ -171,6 +225,11 @@ protected:
 private:
   Cost_functions the_function; /* cost function type */
   rafko_utilities::ThreadGroup execution_threads;
+  #if(RAFKO_USES_OPENCL)
+  uint32 pairs_to_evaluate = 1u;
+  uint32 feature_size = 1u;
+  #endif/*(RAFKO_USES_OPENCL)*/
+
 
   /**
    * @brief      A Thread being used to sum up the error for each label-data pair and load the result into the provided error vector

@@ -41,10 +41,24 @@ protected:
 
   sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
     return (
-      label_value * std::log(std::max(double_literal(0.0000000000000001),feature_value))
+      label_value * std::log(std::max(double_literal(0.0000000000000001), feature_value))
       +( (double_literal(1.0) - label_value) * std::log(double_literal(1.0) - std::min(double_literal(0.9999999999999999), feature_value)) )
     );
   }
+
+  #if(RAFKO_USES_OPENCL)
+  std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
+    std::string one_minus_label_value = "(1.0 - " + label_value + ")";
+    return (
+      "( " + label_value + " * log(max(0.0000000000000001," + feature_value + ")) )"
+      + std::string("+") +
+      "( " + one_minus_label_value + " * log(1.0 - min(0.9999999999999999," + feature_value + ")) )"
+    );
+  }
+  std::string get_post_process_kernel_source(std::string error_value) const{
+    return "((" + error_value + ") / double(sample_number) )";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
 
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const{
     parameter_not_used(label_value);

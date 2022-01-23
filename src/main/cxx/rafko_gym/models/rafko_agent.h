@@ -47,7 +47,7 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT RafkoAgent
 #if(RAFKO_USES_OPENCL)
-: public rafko_mainframe:: RafkoGPUStrategyPhase
+: public rafko_mainframe::RafkoGPUStrategyPhase
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
@@ -63,7 +63,6 @@ public:
   , common_data_pool((required_temp_data_number_per_thread * max_threads_), required_temp_data_size_)
   , neuron_value_buffers(max_threads, rafko_utilities::DataRingbuffer( solution.network_memory_length(), solution.neuron_number()))
   #if(RAFKO_USES_OPENCL)
-  // , device_weight_table_size(0u);
   , device_weight_table_size( std::accumulate(
     solution.partial_solutions().begin(), solution.partial_solutions().end(), 0u,
     [](const uint32& sum, const rafko_net::PartialSolution& partial){
@@ -74,10 +73,6 @@ public:
   { /* A temporary buffer is allocated for every required future usage per thread */
     for(uint32 tmp_data_index = 0; tmp_data_index < (required_temp_data_number_per_thread * max_threads); ++tmp_data_index)
       used_data_buffers.push_back(common_data_pool.reserve_buffer(required_temp_data_size));
-    // #if(RAFKO_USES_OPENCL)
-    // for(const rafko_net::PartialSolution& partial : solution.partial_solutions())
-    //   device_weight_table_size += partial.weight_table_size();
-    // #endif/*(RAFKO_USES_OPENCL)*/
   }
 
   /**
@@ -170,7 +165,7 @@ public:
    * @brief      Provides the input dimension of the agent, which consist of
    *             3 buffers: mode, weights, and (inputs + prefill) for each evaluated sequence
    *
-   * @return     Vector of dimensions in order of @get_steps
+   * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes()const{
     return{ rafko_mainframe::RafkoNBufShape{
@@ -182,7 +177,7 @@ public:
    * @brief      Provides the output dimension of the agent, which consist of
    *             1 buffer: Neuron outputs for each evaluated sequence or network memory
    *
-   * @return     Vector of dimensions in order of @get_steps
+   * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes()const{
     return{ rafko_mainframe::RafkoNBufShape{

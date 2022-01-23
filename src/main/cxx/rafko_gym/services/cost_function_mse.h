@@ -42,9 +42,19 @@ protected:
     return pow((label_value - feature_value),2);
   }
 
+  #if(RAFKO_USES_OPENCL)
+  std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
+    return "pow((" + label_value + " - " + feature_value + "),2.0)";
+  }
+  std::string get_post_process_kernel_source(std::string error_value) const{
+    return "((" + error_value + ") / (double(sample_number) * 2.0) )";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
+
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const{
     return -(label_value - feature_value) / static_cast<sdouble32>(sample_number);
   }
+
 };
 
 } /* namespace rafko_gym */

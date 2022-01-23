@@ -36,12 +36,21 @@ public:
 
 protected:
   sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const{
-    return ( error_value / static_cast<sdouble32>(sample_number) );
+    return ( error_value / static_cast<sdouble32>( sample_number) );
   }
 
   sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
-    return ( label_value * std::log(std::max(double_literal(0.0000000000000001),feature_value)) );
+    return ( label_value * std::log(std::max(double_literal(0.0000000000000001), feature_value)) );
   }
+
+  #if(RAFKO_USES_OPENCL)
+  std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
+    return "( " + label_value + " * log(max(0.0000000000000001," + feature_value + ")) )";
+  }
+  std::string get_post_process_kernel_source(std::string error_value) const{
+    return "((" + error_value + ") / double(sample_number) )";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
 
   sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const{
     parameter_not_used(label_value);

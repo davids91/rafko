@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef RAFKO_CPU_CONTEXT_H
-#define RAFKO_CPU_CONTEXT_H
+#ifndef RAFKO_GPU_CONTEXT_H
+#define RAFKO_GPU_CONTEXT_H
 
 #include "rafko_global.h"
 
@@ -106,19 +106,21 @@ private:
   cl::CommandQueue opencl_queue;
   cl::Buffer mode_weights_and_inputs;
   cl::Buffer features_and_labels;
-  cl::Buffer error_value;
   uint32 device_weight_table_size;
   RafkoGPUPhase solution_phase;
   std::vector<sdouble32> standalone_solution_result;
   RafkoGPUPhase error_phase;
 
+  enum{
+    no_evaluation_ran, full_evaluation_ran, stochastic_evaluation_ran
+  }last_ran_evaluation = no_evaluation_ran;
   uint32 used_sequence_truncation;
   uint32 used_minibatch_size;
 
   void upload_weight_table_to_device();
-
+  void refresh_objective_buffer();
 };
 
 } /* namespace rafko_mainframe */
 
-#endif /* RAFKO_CPU_CONTEXT_H */
+#endif /* RAFKO_GPU_CONTEXT_H */

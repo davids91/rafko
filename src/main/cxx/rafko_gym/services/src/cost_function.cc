@@ -103,4 +103,61 @@ sdouble32 CostFunction::summarize_errors(
   return local_error;
 }
 
+#if(RAFKO_USES_OPENCL)
+std::vector<std::string> CostFunction::get_step_names()const  {
+  return {"cost_function"};
+}
+
+cl::Program::Sources CostFunction::get_step_sources()const {
+  std::string source_base = R"(
+    #pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable
+    /* https://suhorukov.blogspot.com/2011/12/opencl-11-atomic-operations-on-floating.html */
+    inline void AtomicAdd(volatile __global double *source, const double operand) {
+      union { unsigned long intVal; double floatVal; } prevVal, newVal;
+      do {
+        prevVal.floatVal = *source;
+        newVal.floatVal = prevVal.floatVal + operand;
+      } while( atom_cmpxchg((volatile __global unsigned long *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal );
+    }
+
+    void kernel cost_function(
+      __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
+      __global double* outputs, __constant int* output_sizes, int output_sizes_size
+    ){
+      int error_index = get_global_id(0);
+      if( (2 == input_sizes_size)&&(input_sizes[0] == input_sizes[1])&&(1 == output_sizes[0]) ){
+        const int feature_size = $$feature_size$$;
+        const int sample_number = get_global_size(0);
+        double thread_error = 0.0;
+
+        if(0 == error_index){ outputs[0] = 0.0; }
+        barrier(CLK_GLOBAL_MEM_FENCE);
+
+        for(int feature_iterator = 0; feature_iterator < feature_size; ++feature_iterator){
+          int index = (error_index * feature_size) + feature_iterator;
+          thread_error = $$operation_source$$;
+        }
+        thread_error = $$post_process_source$$;
+
+        AtomicAdd(&outputs[0], thread_error);
+        // AtomicAdd(&outputs[0], 5.0);
+        // if(0 == error_index){ outputs[0] = 5.0; }
+      }/*if(IO sizes are correctly set)*/
+    }/*kernel*/
+  )";
+
+  source_base = std::regex_replace(
+    source_base, std::regex("\\$\\$operation_source\\$\\$"),
+    get_operation_kernel_source("inputs[index]","inputs[input_sizes[0] + index]")
+  );
+  source_base = std::regex_replace(
+    source_base, std::regex("\\$\\$post_process_source\\$\\$"),
+    get_post_process_kernel_source("outputs[error_index]")
+  );
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$feature_size\\$\\$"), std::to_string(feature_size));
+  std::cout << "Objective code: " << source_base << std::endl;
+  return{source_base};
+}
+#endif/*(RAFKO_USES_OPENCL)*/
+
 } /* namespace rafko_gym */

@@ -87,8 +87,41 @@ public:
     parameter_not_used(tmp_data);
     return double_literal(0.0);
   }
+
+  #if(RAFKO_USES_OPENCL)
+  void set_gpu_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_){
+    pairs_to_evaluate = pairs_to_evaluate_;
+    feature_size = feature_size_;
+  }
+  cl::Program::Sources get_step_sources() const{
+    return{R"(
+      void kernel dummy_objective(
+        __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
+        __global double* outputs, __constant int* output_sizes, int output_sizes_size
+      ){ }
+    )"};
+  }
+  std::vector<std::string> get_step_names() const{
+    return {"dummy_objective"};
+  }
+  std::vector<RafkoNBufShape> get_input_shapes() const{
+    return { rafko_mainframe::RafkoNBufShape{ /* inputs and labels */
+      pairs_to_evaluate * feature_size,
+      pairs_to_evaluate * feature_size
+    } };
+  }
+  std::vector<RafkoNBufShape> get_output_shapes() const{
+    return {RafkoNBufShape{1}};
+  }
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space(){
+    return std::make_tuple(cl::NullRange,cl::NullRange,cl::NullRange);
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
+
 private:
   std::vector<sdouble32> dummy;
+  uint32 pairs_to_evaluate = 1u;
+  uint32 feature_size = 1u;
 };
 
 /**
@@ -122,8 +155,8 @@ private:
    uint32 get_prefill_inputs_number()const { return 0; }
    ~RafkoDummyEnvironment() = default;
  private:
-   std::vector<std::vector<sdouble32>> dummy_inputs{{0}};
-   std::vector<std::vector<sdouble32>> dummy_labels{{0}};
+   std::vector<std::vector<sdouble32>> dummy_inputs;
+   std::vector<std::vector<sdouble32>> dummy_labels;
  };
 
 #if(RAFKO_USES_OPENCL)

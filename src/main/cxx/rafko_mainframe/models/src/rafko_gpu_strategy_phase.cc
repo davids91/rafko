@@ -17,6 +17,8 @@
 
 #include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
 
+#include  <iostream>
+
 namespace rafko_mainframe{
 
 bool RafkoGPUStrategyPhase::isValid(){
@@ -31,8 +33,8 @@ bool RafkoGPUStrategyPhase::isValid(){
     ||(step_names.size() != output_shapes.size())
   ) return false;
 
-  for(uint32 dimension_index = 0; dimension_index < (input_shapes.size() - 1); ++dimension_index){
-    if(output_shapes[dimension_index] != input_shapes[dimension_index + 1])
+  for(sint32 dimension_index = 0; dimension_index < (static_cast<sint32>(input_shapes.size()) - 1); ++dimension_index){
+    if(input_shapes[dimension_index + 1] != output_shapes[dimension_index])
       return false;
   }
 
