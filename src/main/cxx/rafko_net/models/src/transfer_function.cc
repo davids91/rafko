@@ -74,7 +74,7 @@ std::string TransferFunction::get_cl_function_for(Transfer_functions function, s
   std::string x = std::string("(") + x_ + ")";
   switch(function){
     case transfer_function_identity: return x;
-    case transfer_function_sigmoid: return "( 1.0/(1.0 + exp(-1.0 * " + x + ")) )";
+    case transfer_function_sigmoid: return "( 1.0/(1.0 + exp( -" + x + ")) )";
     case transfer_function_tanh: return "(tanh(" + x + "))";
     case transfer_function_elu: return "( max(0.0," + x + ") + (" + std::to_string(settings.get_alpha()) + " * (exp(min(0.0, " + x + ")) - 1.0)) )";
     case transfer_function_selu:

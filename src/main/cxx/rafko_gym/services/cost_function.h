@@ -150,8 +150,8 @@ public:
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes()const  {
     return { rafko_mainframe::RafkoNBufShape{ /* inputs and labels */
-        pairs_to_evaluate * feature_size,
-        pairs_to_evaluate * feature_size
+      pairs_to_evaluate * feature_size,
+      pairs_to_evaluate * feature_size
     } };
   }
 
@@ -164,6 +164,7 @@ public:
     return { rafko_mainframe::RafkoNBufShape{ 1u } };
   }
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space()  {
+    std::cout << "solution space for cost function: " << pairs_to_evaluate << std::endl;
     return std::make_tuple(cl::NullRange,cl::NDRange(pairs_to_evaluate),cl::NullRange);
   }
 

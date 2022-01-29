@@ -181,7 +181,10 @@ public:
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes()const{
     return{ rafko_mainframe::RafkoNBufShape{
-      sequences_evaluating * std::max(sequence_size, solution.network_memory_length()) * solution.neuron_number()
+      solution.neuron_number() * std::max(
+        sequences_evaluating * sequence_size,
+        solution.network_memory_length()
+      )
     } };
   }
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space(){

@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <stdexcept>
+#include <iostream>
 
 namespace rafko_mainframe{
 
@@ -54,7 +55,7 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
   }
 
   /* Set buffers, kernel arguments and functors */
-  uint32 step_index = 0; /*TODO: Make Kernels focus only on outputs, to not have unused buffers*/
+  uint32 step_index = 0;
   for(const std::string& step_name : names){
     kernel_args.push_back(std::make_tuple( /* push in each step input */
       cl::Buffer(opencl_context, CL_MEM_READ_WRITE, input_shapes[step_index].get_byte_size<sdouble32>()),
@@ -62,11 +63,15 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
       input_shapes[step_index].size()
     ));
     return_value = opencl_device_queue.enqueueWriteBuffer( /* upload buffer dimensions */
-      std::get<1>(kernel_args.back()), CL_FALSE, 0,
+      std::get<1>(kernel_args.back()), CL_FALSE, 0u/*offset*/,
       input_shapes[step_index].get_shape_buffer_byte_size(),
       input_shapes[step_index].acquire_shape_buffer().get(),
       NULL/*events(to wait for)*/, &(*(dimension_write_events.begin() + step_index))
     );
+    std::cout << "input[" << step_index << "]:";
+    for(int i = 0; i < input_shapes[step_index].size(); ++i)
+      std::cout << "{" << input_shapes[step_index].acquire_shape_buffer()[i] << "}";
+    std::cout << std::endl;
     assert( return_value == CL_SUCCESS );
     steps.push_back(cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>(
       program, step_name
@@ -79,7 +84,7 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
     output_shapes.back().size()
   ));
   return_value = opencl_device_queue.enqueueWriteBuffer( /* upload buffer dimensions */
-    std::get<1>(kernel_args.back()), CL_FALSE, 0,
+    std::get<1>(kernel_args.back()), CL_FALSE, 0u/*offset*/,
     output_shapes.back().get_shape_buffer_byte_size(),
     output_shapes.back().acquire_shape_buffer().get(),
     NULL/*events(to wait for)*/, &(*(dimension_write_events.begin() + names.size()))

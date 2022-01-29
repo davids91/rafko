@@ -36,7 +36,7 @@
 
 namespace rafko_gym_test {
 
-TEST_CASE("Testing if CPU context produces correct error values upon full evaluation", "[context]"){
+TEST_CASE("Testing if CPU context produces correct error values upon full evaluation", "[context][CPU][evaluation]"){
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
   google::protobuf::Arena arena;
@@ -81,7 +81,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   CHECK( Catch::Approx(environment_error).margin(0.00000000000001) == -(error_sum / (sample_number * sequence_size)) );
 }
 
-TEST_CASE("Testing if CPU context produces correct error values upon stochastic evaluation", "[context]"){
+TEST_CASE("Testing if CPU context produces correct error values upon stochastic evaluation", "[context][CPU][evaluation]"){
   uint32 seed = rand() + 1;
   uint32 sample_number = 50;
   uint32 sequence_size = 6;

@@ -92,8 +92,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
   }
   for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
     REQUIRE(
-      nets[0]->weight_table(weight_index)
-      == Catch::Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
+      nets[0]->weight_table(weight_index) == Catch::Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
     );
   }
   approximizer.apply_fragment();

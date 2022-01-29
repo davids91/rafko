@@ -89,7 +89,7 @@ RafkoGPUContext::RafkoGPUContext(
 {
   neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples());
   upload_weight_table_to_device(); /*!Note: Also sets device_weight_table_size*/
-  refresh_objective_buffer();
+  refresh_objective();
 }
 
 void RafkoGPUContext::set_network_weight(uint32 weight_index, sdouble32 weight_value){
@@ -116,15 +116,20 @@ void RafkoGPUContext::apply_weight_update(const std::vector<sdouble32>& weight_d
 }
 
 void RafkoGPUContext::upload_weight_table_to_device(){
+  std:: cout << "!!!!!!!!!!!!!!!!!!!!!!Uploading weight table to device!" << std::endl;
   std::vector<sdouble32> device_weight_table;
   uint32 overall_number_of_weights = 0u;
+  std::cout << "solution weight table: ";
   for(const rafko_net::PartialSolution& partial : network_solution->partial_solutions()){
+    for(const sdouble32& w : partial.weight_table())std::cout << "{" << w << "}";
+    std::cout << "|";
     device_weight_table.insert(
       device_weight_table.end(),
       partial.weight_table().begin(), partial.weight_table().end()
     );
     overall_number_of_weights += partial.weight_table_size();
   }
+  std::cout << std::endl;
 
   assert( device_weight_table.size() == overall_number_of_weights );
   device_weight_table_size = device_weight_table.size();
@@ -137,11 +142,13 @@ void RafkoGPUContext::upload_weight_table_to_device(){
   assert( return_value == CL_SUCCESS );
 }
 
-void RafkoGPUContext::refresh_objective_buffer(){
+void RafkoGPUContext::refresh_objective(){
   objective->set_gpu_parameters(
     environment->get_number_of_label_samples(),
     environment->get_feature_size()
   );
+  std::cout << "objective:";
+  error_phase.set_strategy(objective);
   uint32 byte_size = std::max(
     objective->get_input_shapes()[0].get_byte_size<sdouble32>(),
     agent->get_output_shapes()[0].get_byte_size<sdouble32>()
@@ -152,8 +159,7 @@ void RafkoGPUContext::refresh_objective_buffer(){
 
 void RafkoGPUContext::set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
   objective = objective_;
-  error_phase.set_strategy(objective);
-  refresh_objective_buffer();
+  refresh_objective();
 }
 
 void RafkoGPUContext::set_weight_updater(rafko_gym::Weight_updaters updater){
@@ -181,15 +187,30 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
     environment->get_sequence_size(),
     environment->get_prefill_inputs_number()
   );
+  std::cout << "agent:";
   solution_phase.set_strategy(agent);
   mode_weights_and_inputs = cl::Buffer(
     opencl_context, CL_MEM_READ_WRITE, agent->get_input_shapes()[0].get_byte_size<sdouble32>()
   );
-  refresh_objective_buffer();
+  upload_weight_table_to_device();
+  refresh_objective();
 }
 
 sdouble32 RafkoGPUContext::full_evaluation(){
   cl_int return_value;
+  uint32 features_byte_size = (sizeof(sdouble32) * environment->get_number_of_label_samples() * environment->get_feature_size());
+
+  std::cout << "sequence_num: " << environment->get_number_of_sequences() << std::endl;
+  std::cout << "sequence_size: " << environment->get_sequence_size() << std::endl;
+
+  cl::Event neuron_data_reset_event; /* reset data before evaluation */
+  return_value = opencl_queue.enqueueFillBuffer<sdouble32>(
+    solution_phase.get_output_buffer(), double_literal(0.0)/*the sdouble32 value*/,
+    0u /*offset*/, agent->get_output_shapes()[0].get_byte_size<sdouble32>()/*size*/,
+    NULL/*events to wit for*/, &neuron_data_reset_event
+  );
+  assert( return_value == CL_SUCCESS );
+
   if(last_ran_evaluation != stochastic_evaluation_ran){
     /* upload mode info */
     std::unique_ptr<sdouble32> mode = std::unique_ptr<sdouble32>(new sdouble32);
@@ -200,23 +221,47 @@ sdouble32 RafkoGPUContext::full_evaluation(){
     assert( return_value == CL_SUCCESS );
 
     /* upload inputs to device */
+    uint32 input_byte_offset = (sizeof(sdouble32) * (device_weight_table_size + 1u));
     std::vector<cl::Event> input_events(environment->get_number_of_input_samples());
+    std::cout << "upl inputs:";
     for(uint32 raw_input_index = 0; raw_input_index < environment->get_number_of_input_samples(); ++raw_input_index){
+      std::cout << "\t - ";
+      for(const sdouble32& input : environment->get_input_sample(raw_input_index)){
+        std::cout << "["<< input << "]";
+      }
       return_value = opencl_queue.enqueueWriteBuffer(
         mode_weights_and_inputs, CL_FALSE,
-        (sizeof(sdouble32) * (device_weight_table_size + 1u + raw_input_index))/*offset*/,
+        input_byte_offset/*offset*/,
         (sizeof(sdouble32) * environment->get_input_sample(raw_input_index).size())/*size*/,
         environment->get_input_sample(raw_input_index).data(),
         NULL, &input_events[raw_input_index]
       );
       assert( return_value == CL_SUCCESS );
-    }
 
+      input_byte_offset += (sizeof(sdouble32) * environment->get_input_sample(raw_input_index).size());
+    }
+    std::cout << std::endl;
     for(cl::Event& input_event : input_events){
       return_value = input_event.wait();
       assert( return_value == CL_SUCCESS );
     }
   }
+
+  return_value = neuron_data_reset_event.wait();
+  assert( return_value == CL_SUCCESS );
+
+  /*!Debug: see if the input data is uploaded correctly */
+  std::vector<sdouble32> full_uploaded_input(agent->get_input_shapes()[0].get_number_of_elements());
+  return_value = opencl_queue.enqueueReadBuffer( /* download last output from device memory */
+    mode_weights_and_inputs, CL_TRUE/*blocking*/,
+    0/*offset*/, agent->get_input_shapes()[0].get_byte_size<sdouble32>()/*size*/,
+    static_cast<void*>(full_uploaded_input.data())
+  );
+  assert( return_value == CL_SUCCESS );
+
+  std::cout << "full input:";
+  for(const sdouble32& in : full_uploaded_input)std::cout << "[" << in << "]";
+  std::cout << std::endl;
 
   /* run feature phase */
   cl::EnqueueArgs enque_arguments = std::make_from_tuple<cl::EnqueueArgs>(
@@ -225,28 +270,46 @@ sdouble32 RafkoGPUContext::full_evaluation(){
   solution_phase( enque_arguments, mode_weights_and_inputs );
 
   /* load result to @features_and_labels buffer */
-  uint32 features_byte_size = (sizeof(sdouble32) * environment->get_number_of_label_samples() * environment->get_feature_size());
-  cl::Event features_event;
-  return_value = opencl_queue.enqueueCopyBuffer(
-    solution_phase.get_output_buffer() /*src*/,
-    features_and_labels /*dst*/,
-    0/*src_offset*/, 0/*dst_offset*/, features_byte_size/*size*/,
-    NULL /*events to wait for*/, &features_event
-  );
-  assert( return_value == CL_SUCCESS );
+  uint32 byte_offset_solution_phase = 0u;
+  uint32 byte_offset_error_phase = 0u;
+  uint32 sequence_byte_size = environment->get_sequence_size() * environment->get_feature_size() * sizeof(sdouble32);
+  std::vector<cl::Event> features_events(environment->get_number_of_sequences() * environment->get_sequence_size());
+  for(uint32 sequence_index = 0; sequence_index < environment->get_number_of_sequences(); ++sequence_index){
+    for(uint32 feature_index = 0; feature_index < environment->get_sequence_size(); ++feature_index){
+      /* TODO: add prefill offset */
+      /* add neuron_array_offset */
+      byte_offset_solution_phase += ( (network.neuron_array_size() - network.output_neuron_number()) * sizeof(sdouble32) );
+      /* Upload sequence size */
+      return_value = opencl_queue.enqueueCopyBuffer(
+        solution_phase.get_output_buffer() /*src*/, features_and_labels /*dst*/,
+        byte_offset_solution_phase/*src_offset*/, byte_offset_error_phase/*dst_offset*/, sequence_byte_size/*size*/,
+        NULL /*events to wait for*/, &features_events[(sequence_index * environment->get_sequence_size()) + feature_index]
+      );
+      assert( return_value == CL_SUCCESS );
+    }
+    byte_offset_solution_phase += (network.output_neuron_number() * sizeof(sdouble32));
+    byte_offset_error_phase += (network.output_neuron_number() * sizeof(sdouble32));
+  }
 
   if(last_ran_evaluation != stochastic_evaluation_ran){ /* upload labels to device only if they are not already uploaded */
-    std::cout << "number of label samples: " << environment->get_number_of_label_samples() << std::endl;
+    std::cout << "label samples:\t -";
+    uint32 labels_byte_offset = 0u;
     std::vector<cl::Event> label_events(environment->get_number_of_label_samples());
     for(uint32 raw_label_index = 0; raw_label_index < environment->get_number_of_label_samples(); ++raw_label_index){
+      for(const sdouble32& label_element : environment->get_label_sample(raw_label_index))
+        std::cout << "["<< label_element << "]\t";
       return_value = opencl_queue.enqueueWriteBuffer(
         features_and_labels, CL_FALSE,
-        features_byte_size/*offset*/, (sizeof(sdouble32) * environment->get_label_sample(raw_label_index).size())/*size*/,
+        (features_byte_size + labels_byte_offset)/*offset*/,
+        (sizeof(sdouble32) * environment->get_label_sample(raw_label_index).size())/*size*/,
         environment->get_label_sample(raw_label_index).data(),
         NULL, &label_events[raw_label_index]
       );
       assert( return_value == CL_SUCCESS );
+      labels_byte_offset += (sizeof(sdouble32) * environment->get_label_sample(raw_label_index).size());
+      std::cout << "\t - ";
     }
+    std::cout << std::endl;
 
     for(cl::Event& label_event : label_events){
       return_value = label_event.wait();
@@ -254,22 +317,53 @@ sdouble32 RafkoGPUContext::full_evaluation(){
     }
   }
 
-  return_value = features_event.wait();
-  assert( return_value == CL_SUCCESS );
+  for(cl::Event& features_event : features_events){
+    return_value = features_event.wait();
+    assert( return_value == CL_SUCCESS );
+  }
 
   /*!Debug: check the calculated features */
-  std::cout << "agent output size: " << agent->get_output_shapes()[0].get_number_of_elements() << std::endl;
-  std::vector<sdouble32> uploaded_features(agent->get_output_shapes()[0].get_number_of_elements());
+  // std::cout << "agent output size: " << agent->get_output_shapes()[0].get_number_of_elements() << std::endl;
+  std::vector<sdouble32> agent_output(agent->get_output_shapes()[0].get_number_of_elements());
   return_value = opencl_queue.enqueueReadBuffer( /* download last output from device memory */
-    features_and_labels, CL_TRUE/*blocking*/,
+    solution_phase.get_output_buffer(), CL_TRUE/*blocking*/,
     0/*offset*/, agent->get_output_shapes()[0].get_byte_size<sdouble32>()/*size*/,
-    static_cast<void*>(uploaded_features.data())
+    static_cast<void*>(agent_output.data())
   );
   assert( return_value == CL_SUCCESS );
-  std::cout << "Actual Uploaded features:";
-  for(const sdouble32& num : uploaded_features){
+  std::cout << "Agent output:";
+  uint32 out_i = 0;
+  for(const sdouble32& num : agent_output){
+    if(0 == (out_i % network.neuron_array_size())) std::cout << "\t - ";// << std::endl;
+    std::cout << "["<<num<<"]";
+    ++out_i;
+  }
+  std::cout << std::endl;
+  std::vector<sdouble32> uploaded_features_labels(objective->get_input_shapes()[0].get_number_of_elements());
+  return_value = opencl_queue.enqueueReadBuffer( /* download last output from device memory */
+    features_and_labels, CL_TRUE/*blocking*/,
+    0/*offset*/, objective->get_input_shapes()[0].get_byte_size<sdouble32>()/*size*/,
+    static_cast<void*>(uploaded_features_labels.data())
+  );
+  assert( return_value == CL_SUCCESS );
+  std::cout << "Actual Uploaded features and labels:";
+  for(const sdouble32& num : uploaded_features_labels){
     std::cout << "["<<num<<"]";
   }
+  std::cout << std::endl;
+
+  sdouble32 manual_result = 0.0;
+  for(uint32 i = 0; i < uploaded_features_labels.size()/2; ++i){
+    manual_result += std::pow(
+      uploaded_features_labels[i] - uploaded_features_labels[objective->get_input_shapes()[0][0] + i],
+      2.0
+    ) / 2.0;
+  }
+  std::cout << "manual_result: " << (manual_result/environment->get_number_of_label_samples()) << std::endl;
+
+  std::cout << "with structure(" << objective->get_input_shapes().size() << "): ";
+  std::cout << "[" << objective->get_input_shapes()[0][0] <<"]";
+  std::cout << "[" << objective->get_input_shapes()[0][1] <<"]";
   std::cout << std::endl;
 
   /* run error phase */
@@ -279,10 +373,8 @@ sdouble32 RafkoGPUContext::full_evaluation(){
   error_phase( error_enque_arguments, features_and_labels );
 
   /* get resulting error */
-  std::unique_ptr<sdouble32[]> error_value_buffer = error_phase.acquire_output(1u);
   last_ran_evaluation = full_evaluation_ran;
-  return error_value_buffer[0];
-  /* TODO: Keep in mind that the number of Neuron outputs also depend on the network memory, which might be bigger, than the sequence! */
+  return -(error_phase.acquire_output(1u)[0] / environment->get_number_of_label_samples());
 }
 
 sdouble32 RafkoGPUContext::stochastic_evaluation(bool to_seed, uint32 seed_value){
@@ -291,6 +383,7 @@ sdouble32 RafkoGPUContext::stochastic_evaluation(bool to_seed, uint32 seed_value
   /* TODO: Keep in mind that the number of Neuron outputs also depend on the network memory, which might be bigger, than the sequence! */
   return 0;
 }
+/* TODO: Keep sequence truncation in mind  */
 
 rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
   const std::vector<sdouble32>& input,
@@ -309,7 +402,8 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
       NULL/*events to wait for*/, &fill_event
     );
     assert( return_value == CL_SUCCESS );
-    assert( fill_event.wait() == CL_SUCCESS );
+    return_value = fill_event.wait();
+    assert( return_value == CL_SUCCESS );
   }else{ /* Neuron memory not resetted, keep network memory consistent */
     for(uint32 memory_slot = 0; memory_slot < (network_solution->network_memory_length() - 1u); ++memory_slot){
       uint32 network_memory_span_bytes = network_solution->neuron_number() * sizeof(sdouble32);
@@ -320,16 +414,19 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
         network_memory_span_bytes/*size*/, NULL, &fill_event
       );
       assert( return_value == CL_SUCCESS );
-      assert( fill_event.wait() == CL_SUCCESS );
+      return_value = fill_event.wait();
+      assert( return_value == CL_SUCCESS );
     }
   }
 
   /* upload mode info */
-  std::unique_ptr<sdouble32> mode = std::unique_ptr<sdouble32>(new sdouble32);
-  *mode = double_literal(69.420);
-  return_value = opencl_queue.enqueueWriteBuffer(
-    mode_weights_and_inputs, CL_TRUE, 0u/*offset:*/, sizeof(sdouble32)/*size*/, mode.get()
+  return_value = opencl_queue.enqueueFillBuffer<sdouble32>(
+    mode_weights_and_inputs, double_literal(69.420)/*the sdouble32 value*/,
+    0u /*offset*/, sizeof(sdouble32)/*size(bytes)*/,
+    NULL/*events to wit for*/, &fill_event
   );
+  assert( return_value == CL_SUCCESS );
+  return_value = fill_event.wait();
   assert( return_value == CL_SUCCESS );
 
   /* upload inputs */

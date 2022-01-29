@@ -127,21 +127,18 @@ cl::Program::Sources CostFunction::get_step_sources()const {
       int error_index = get_global_id(0);
       if( (2 == input_sizes_size)&&(input_sizes[0] == input_sizes[1])&&(1 == output_sizes[0]) ){
         const int feature_size = $$feature_size$$;
-        const int sample_number = get_global_size(0);
-        double thread_error = 0.0;
 
         if(0 == error_index){ outputs[0] = 0.0; }
         barrier(CLK_GLOBAL_MEM_FENCE);
 
+        double thread_error = 0.0;
         for(int feature_iterator = 0; feature_iterator < feature_size; ++feature_iterator){
           int index = (error_index * feature_size) + feature_iterator;
-          thread_error = $$operation_source$$;
+          thread_error += $$operation_source$$;
         }
         thread_error = $$post_process_source$$;
 
         AtomicAdd(&outputs[0], thread_error);
-        // AtomicAdd(&outputs[0], 5.0);
-        // if(0 == error_index){ outputs[0] = 5.0; }
       }/*if(IO sizes are correctly set)*/
     }/*kernel*/
   )";
@@ -152,10 +149,10 @@ cl::Program::Sources CostFunction::get_step_sources()const {
   );
   source_base = std::regex_replace(
     source_base, std::regex("\\$\\$post_process_source\\$\\$"),
-    get_post_process_kernel_source("outputs[error_index]")
+    get_post_process_kernel_source("thread_error")
   );
   source_base = std::regex_replace(source_base, std::regex("\\$\\$feature_size\\$\\$"), std::to_string(feature_size));
-  std::cout << "Objective code: " << source_base << std::endl;
+  // std::cout << "Objective code: " << source_base << std::endl;
   return{source_base};
 }
 #endif/*(RAFKO_USES_OPENCL)*/

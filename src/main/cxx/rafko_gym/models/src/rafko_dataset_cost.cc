@@ -54,7 +54,7 @@ sdouble32 RafkoDatasetCost::set_features_for_labels(
     std::ref(sum_mutex), std::placeholders::_1
   ) );
   common_datapool.release_buffer(error_labels);
-  return ( error_sum / labels_to_evaluate );
+  return error_sum;
 }
 
 sdouble32 RafkoDatasetCost::set_features_for_sequences(
@@ -63,13 +63,13 @@ sdouble32 RafkoDatasetCost::set_features_for_sequences(
   uint32 start_index_in_sequence, uint32 sequence_truncation
 ){
   std::vector<sdouble32>& resulting_errors = common_datapool.reserve_buffer(sequences_to_evaluate * environment.get_sequence_size());
-  sdouble32 fitness = set_features_for_sequences(
+  sdouble32 error_sum = set_features_for_sequences(
     environment, neuron_data,
     neuron_buffer_index, sequence_start_index, sequences_to_evaluate,
     start_index_in_sequence, sequence_truncation, resulting_errors
   );
   common_datapool.release_buffer(resulting_errors);
-  return fitness;
+  return error_sum;
 }
 
 sdouble32 RafkoDatasetCost::set_features_for_sequences(
@@ -111,7 +111,7 @@ sdouble32 RafkoDatasetCost::set_features_for_sequences(
     std::ref(sum_mutex), std::placeholders::_1
   ) );
   common_datapool.release_buffer(error_labels);
-  return ( error_sum / labels_to_evaluate );
+  return error_sum;
 }
 
 void RafkoDatasetCost::accumulate_error_sum(std::vector<sdouble32>& source, sdouble32& target, uint32 length, std::mutex& error_mutex, uint32 thread_index){

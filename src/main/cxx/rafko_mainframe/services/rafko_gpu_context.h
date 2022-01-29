@@ -118,7 +118,7 @@ private:
   uint32 used_minibatch_size;
 
   void upload_weight_table_to_device();
-  void refresh_objective_buffer();
+  void refresh_objective();
 };
 
 } /* namespace rafko_mainframe */
