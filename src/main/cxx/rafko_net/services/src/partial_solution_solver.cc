@@ -27,7 +27,7 @@
 namespace rafko_net {
 
 rafko_utilities::DataPool<sdouble32> PartialSolutionSolver::common_data_pool;
-
+std::mutex cout_mutex;
 void PartialSolutionSolver::solve_internal(const std::vector<sdouble32>& input_data, rafko_utilities::DataRingbuffer& output_neuron_data,  std::vector<sdouble32>& temp_data) const{
   sdouble32 new_neuron_data = double_literal(0.0);
   sdouble32 new_neuron_input;
@@ -63,6 +63,8 @@ void PartialSolutionSolver::solve_internal(const std::vector<sdouble32>& input_d
     new_neuron_data = 0;
     first_weight_in_synapse = true;
     spike_function_weight = double_literal(0.0);
+    std::lock_guard<std::mutex> lock(cout_mutex);
+    // std::cout << "CPUtron[" << detail.output_data().starts() + neuron_iterator << "]:(";
     internal_weight_iterator.iterate([&](sint32 weight_index){
       if(true == first_weight_in_synapse){ /* as per structure, the first weight is for the spike function */
         first_weight_in_synapse = false;
@@ -84,6 +86,7 @@ void PartialSolutionSolver::solve_internal(const std::vector<sdouble32>& input_d
           }
         }else /* Any additional weight shall count as biases, so the input value is set to 1.0 */
           new_neuron_input = double_literal(1.0);
+        // std::cout << new_neuron_input << "*"  << detail.weight_table(weight_index) << " + ";
 
         /* The weighted input shall be added to the calculated value */
         new_neuron_data += new_neuron_input * detail.weight_table(weight_index);
@@ -94,6 +97,7 @@ void PartialSolutionSolver::solve_internal(const std::vector<sdouble32>& input_d
     input_index_offset = 0;
     input_synapse_index = 0;
 
+    // std::cout << "0) <spike(" << spike_function_weight << " prev: "<< output_neuron_data.get_element(0, (detail.output_data().starts() + neuron_iterator)) << ") = ";
     new_neuron_data = transfer_function.get_value( /* apply transfer function */
       detail.neuron_transfer_functions(neuron_iterator), new_neuron_data
     );
@@ -101,7 +105,7 @@ void PartialSolutionSolver::solve_internal(const std::vector<sdouble32>& input_d
     new_neuron_data = SpikeFunction::get_value( /* apply spike function */
       spike_function_weight, new_neuron_data, output_neuron_data.get_element(0, (detail.output_data().starts() + neuron_iterator))
     );
-
+    // std::cout << new_neuron_data << ";\n";
     output_neuron_data.set_element( /* Store the resulting Neuron value */
       0, detail.output_data().starts() + neuron_iterator, new_neuron_data
     );

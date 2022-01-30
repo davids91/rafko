@@ -35,19 +35,19 @@ namespace rafko_gym_test {
  * */
 TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   rafko_mainframe::RafkoSettings settings;
-  uint32 sample_number = 10;
+  uint32 number_of_sequences = 10;
   uint32 sequence_size = 6;
-  uint32 raw_label_size = sample_number * sequence_size;
+  uint32 raw_label_size = number_of_sequences * sequence_size;
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */,1/* feature size */,sample_number, sequence_size, expected_label));
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */,1/* feature size */,number_of_sequences, sequence_size, expected_label));
 
   /* Create @RafkoDatasetCost from @DataSet */
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoDatasetCost data_objective(settings, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
   REQUIRE( 0 == dataset_wrap.get_prefill_inputs_number() );
-  REQUIRE( sample_number == dataset_wrap.get_number_of_sequences() );
+  REQUIRE( number_of_sequences == dataset_wrap.get_number_of_sequences() );
 
   /* Test initial error value, then a fully errorless state */
   for(uint32 i = 0; i < raw_label_size; ++i){
@@ -56,7 +56,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
 
   /* Set all features to the given distance */
   for(uint32 i = 0; i < raw_label_size; ++i){
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) */
       Catch::Approx( pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
       == data_objective.set_feature_for_label(dataset_wrap, i,{expected_label - set_distance})
     );
@@ -72,30 +72,30 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
     neuron_data_simulation = std::vector<std::vector<sdouble32>>((raw_label_size/2), {(expected_label - set_distance)});
 
     /* Test if the half of the set can be updated in bulk */
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Catch::Approx(pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) */
+      Catch::Approx( (raw_label_size/2) * pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
       == data_objective.set_features_for_labels(dataset_wrap, neuron_data_simulation, 0, 0, raw_label_size/2)
     );
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Catch::Approx( pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) */
+      Catch::Approx( (raw_label_size/2) * pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
       == data_objective.set_features_for_labels(dataset_wrap, neuron_data_simulation, 0, raw_label_size/2, raw_label_size/2)
     );
 
     /* Test if the quarter of the set can be updated in bulk */
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Catch::Approx( pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) */
+      Catch::Approx( (raw_label_size/4) * pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
       == data_objective.set_features_for_labels(dataset_wrap, neuron_data_simulation, 0, (raw_label_size / 4) * 0, raw_label_size/4)
     );
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Catch::Approx( pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) */
+      Catch::Approx( (raw_label_size/4) * pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
       == data_objective.set_features_for_labels(dataset_wrap, neuron_data_simulation, 0, (raw_label_size / 4) * 1, raw_label_size/4)
     );
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Catch::Approx( pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) */
+      Catch::Approx( (raw_label_size/4) * pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
       == data_objective.set_features_for_labels(dataset_wrap, neuron_data_simulation, 0, (raw_label_size / 4) * 2, raw_label_size/4)
     );
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Catch::Approx( pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) */
+      Catch::Approx( (raw_label_size/4) * pow(set_distance,2) / (double_literal(2.0) * raw_label_size) ).margin(0.00000000000001)
       == data_objective.set_features_for_labels(dataset_wrap, neuron_data_simulation, 0, (raw_label_size / 4) * 3, raw_label_size/4)
     );
 
@@ -103,22 +103,22 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
     neuron_data_simulation = std::vector<std::vector<sdouble32>>((raw_label_size/2), {(expected_label - set_distance)});
 
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Catch::Approx( pow(set_distance,2) / (double_literal(2.0) * sample_number *sequence_size) ).margin(0.00000000000001)
-      == data_objective.set_features_for_sequences(dataset_wrap, neuron_data_simulation, 0, (sample_number * 0)/2, (sample_number/2), 0, dataset_wrap.get_sequence_size())
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) */
+      Catch::Approx( ((number_of_sequences * sequence_size)/2) * pow(set_distance,2) / (double_literal(2.0) * number_of_sequences * sequence_size) ).margin(0.00000000000001)
+      == data_objective.set_features_for_sequences(dataset_wrap, neuron_data_simulation, 0, (number_of_sequences * 0)/2, (number_of_sequences/2), 0, dataset_wrap.get_sequence_size())
     );
 
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) */
-      Catch::Approx( pow(set_distance,2) / (double_literal(2.0) * sample_number *sequence_size) ).margin(0.00000000000001)
-      == data_objective.set_features_for_sequences(dataset_wrap, neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), 0, dataset_wrap.get_sequence_size())
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) */
+      Catch::Approx( ((number_of_sequences * sequence_size)/2) * pow(set_distance,2) / (double_literal(2.0) * number_of_sequences * sequence_size) ).margin(0.00000000000001)
+      == data_objective.set_features_for_sequences(dataset_wrap, neuron_data_simulation, 0, (number_of_sequences * 1)/2, (number_of_sequences/2), 0, dataset_wrap.get_sequence_size())
     );
 
     /* Check also with sequence truncation */
     set_distance *= ((rand()%10) / double_literal(10.0)) + 0.1f;
     neuron_data_simulation = std::vector<std::vector<sdouble32>>((raw_label_size/2), {(expected_label - set_distance)});
-    REQUIRE( /* Error: (distance^2)/(2 * overall number of samples) *//*!Note: Because the truncation removes half of the evaluations, the end result should be half as as well.. */
-      Catch::Approx( pow(set_distance,2) / (double_literal(4.0) * raw_label_size) ).margin(0.00000000000001)
-      == data_objective.set_features_for_sequences(dataset_wrap, neuron_data_simulation, 0, (sample_number * 1)/2, (sample_number/2), dataset_wrap.get_sequence_size()/2, dataset_wrap.get_sequence_size()/2)
+    REQUIRE( /* Error: (number_of_checked_samples) * (distance^2)/(2 * overall number of samples) *//*!Note: Because the truncation removes half of the evaluations, the end result should be half as as well.. */
+      Catch::Approx( ((number_of_sequences * sequence_size)/2) * pow(set_distance,2) / (double_literal(4.0) * raw_label_size) ).margin(0.00000000000001)
+      == data_objective.set_features_for_sequences(dataset_wrap, neuron_data_simulation, 0, (number_of_sequences * 1)/2, (number_of_sequences/2), dataset_wrap.get_sequence_size()/2, dataset_wrap.get_sequence_size()/2)
     );
 
   }/*for(variants)*/

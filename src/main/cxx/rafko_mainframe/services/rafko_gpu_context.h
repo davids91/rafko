@@ -66,6 +66,7 @@ public:
   rafko_net::RafkoNet& expose_network(){
     return network;
   }
+
   ~RafkoGPUContext() = default;
 
   class Builder{
@@ -86,7 +87,7 @@ public:
 private:
 
   RafkoGPUContext(
-    cl::Context&& context_, cl::Device&& device_,
+    cl::Context& context_, cl::Device& device_,
     rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet&& neural_network_
   );
 

@@ -153,7 +153,7 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
         int sequence_max_index;
         if(inputs[0] == 0){ /* normal evaluation */
           current_max_backreach = 0;
-          input_start = $$weight_table_offset$$ + (sequence_index * network_input_size);
+          input_start = $$weight_table_offset$$ + (sequence_index * sequence_size * network_input_size);
           output_start = sequence_index * sequence_size * neuron_array_size;
           sequence_start = 0;
           sequence_max_index = sequence_size-1;
@@ -171,8 +171,15 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
           /* --- GENERATED_NEURON_CODE --- */
           // if(1 < get_global_size(0) && 0 == get_global_id(0))
           //   outputs[output_start + 0] = inputs[1];
-          // if(1 < get_global_size(0))
+          // if(1 < sequence_size)
           //   outputs[output_start + 0] = inputs[input_start] + inputs[input_start + 1];
+
+          if(label_index < sequence_max_index){ /* to copy the previous run into the next one */
+            for(int neuron_array_iterator = 0; neuron_array_iterator < neuron_array_size; ++neuron_array_iterator){
+              outputs[output_start + neuron_array_iterator + neuron_array_size] = outputs[output_start + neuron_array_iterator];
+            }
+          }
+
           input_start += network_input_size;
           output_start += neuron_array_size;
           current_max_backreach += 1;
@@ -194,8 +201,8 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
    * are to re-think this logic.
    */
   std::string neuron_operations;
-  std::function<std::string(uint32)> past_reach_guard = [](uint32 past_reach){
-    return "((double) (min(1,max(0,(current_max_backreach + 1 - " + std::to_string(past_reach) + ")))) ) * ";
+  std::function<std::string(uint32, std::string)> past_reach_guard = [](uint32 past_reach, std::string content){
+    return "( (current_max_backreach < " + std::to_string(past_reach) + " )?(0.0):( " + content + ") )";
   };
   for(const PartialSolution& partial : solution.partial_solutions()){
     SynapseIterator<InputSynapseInterval> partial_input_synapses(partial.input_data());
@@ -232,19 +239,31 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
                 /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
                 + ") + ";
               }else{
-                inner_neuron_input_weight_pairs += std::string("(") + ((0 == input_past_reach)?(""):(past_reach_guard(input_past_reach)))
-                /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<sint32>(input_past_reach * solution.neuron_number())) + "]"
-                /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                + ") + ";
+                if(0 != input_past_reach){
+                  inner_neuron_input_weight_pairs += past_reach_guard(input_past_reach, std::string("(")
+                  /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<sint32>(input_past_reach * solution.neuron_number())) + "]"
+                  /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
+                  + ")") + std::string(" + ");
+                }else{ /* input doesn't reach to the past */
+                  inner_neuron_input_weight_pairs += std::string("(")
+                  /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
+                  /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
+                  + ") + ";
+                }
               }
             }else{
               input_index = input_index + input_start_offset;
-              inner_neuron_input_weight_pairs += std::string("(") + ((0 == input_past_reach)?(""):(past_reach_guard(input_past_reach)))
-              /* input */+ " outputs[output_start + " /* TODO: Guard for reachbacks oob */
-                + std::to_string(input_index - static_cast<sint32>(input_past_reach * solution.neuron_number()))
-              + "]"
-              /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-              + ") + ";
+              if(0 != input_past_reach){
+                inner_neuron_input_weight_pairs += past_reach_guard(input_past_reach, std::string("(")
+                /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<sint32>(input_past_reach * solution.neuron_number())) + "]"
+                /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
+                + ")") + std::string(" + ");
+              }else{ /* input doesn't reach to the past */
+                inner_neuron_input_weight_pairs += std::string("(")
+                /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
+                /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
+                + ") + ";
+              }
             }
             ++input_start_offset;
             if(input_start_offset >= partial.inside_indices(input_synapse_index + input_synapse_index_offset).interval_size()){

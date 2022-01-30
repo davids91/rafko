@@ -128,7 +128,7 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
   }/*for(10 variant)*/
 }
 
-TEST_CASE("Testing if full evaluation is working as intended with the GPU context with single sample of sequence size one","[context][GPU][evaluate]"){
+TEST_CASE("Testing full evaluation with the GPU context with single sample of sequence size one","[context][GPU][evaluate]"){
   google::protobuf::Arena arena;
   uint32 sequence_size = 1u;
   uint32 number_of_samples = 1u;
@@ -188,7 +188,7 @@ TEST_CASE("Testing if full evaluation is working as intended with the GPU contex
   }/*for(10 variant)*/
 }
 
-TEST_CASE("Testing if full evaluation is working as intended with the GPU context with multiple labels","[context][GPU][evaluate][multi-label]"){
+TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[context][GPU][evaluate][multi-label]"){
   google::protobuf::Arena arena;
   uint32 sequence_size = 1u;
   uint32 number_of_samples = 1;
@@ -203,14 +203,13 @@ TEST_CASE("Testing if full evaluation is working as intended with the GPU contex
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
-          // {rafko_net::transfer_function_sigmoid},
-          // {rafko_net::transfer_function_tanh},
-          // {rafko_net::transfer_function_elu},
-          // {rafko_net::transfer_function_selu},
-          // {rafko_net::transfer_function_relu},
+          {rafko_net::transfer_function_sigmoid},
+          {rafko_net::transfer_function_tanh},
+          {rafko_net::transfer_function_elu},
+          {rafko_net::transfer_function_selu},
+          {rafko_net::transfer_function_relu},
         }
-      // ).dense_layers({2,2,2,2,2,1});
-      ).dense_layers({1});
+      ).dense_layers({2,2,2,2,2,1});
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
     CHECK_NOTHROW(
       context = (
@@ -221,7 +220,7 @@ TEST_CASE("Testing if full evaluation is working as intended with the GPU contex
     );
 
     rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
-    // REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
+    REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
       settings, rafko_gym::cost_function_squared_error
@@ -229,12 +228,86 @@ TEST_CASE("Testing if full evaluation is working as intended with the GPU contex
 
     reference_context.set_objective(objective);
     context->set_objective(objective);
-    // REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
+    REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
+
+    for(uint32 steps = 0; steps < 5; ++steps){
+      number_of_samples = rand()%10 + 1;
+      (void)context->expose_settings().set_memory_truncation(sequence_size);
+      (void)reference_context.expose_settings().set_memory_truncation(sequence_size);
+      std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = (
+        rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size)
+      );
+      std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+        std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
+        std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
+        sequence_size
+      );
+
+      context->set_environment(environment);
+      reference_context.set_environment(environment);
+
+      REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
+    }/*for(5 consecutive steps)*/
+  }/*for(10 variant)*/
+}
+
+TEST_CASE("Testing full evaluation with the GPU context with multiple labels and sequential data","[context][GPU][evaluate][multi-label][sequence]"){
+  google::protobuf::Arena arena;
+  uint32 sequence_size = 1u;
+  uint32 number_of_samples = 1;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  for(uint32 variant = 0u; variant < 10u; ++variant){
+    rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+      .input_size(2).expected_input_range(double_literal(1.0))
+      .set_recurrence_to_layer()
+      .allowed_transfer_functions_by_layer(
+        {
+          // {rafko_net::transfer_function_identity},
+          // {rafko_net::transfer_function_identity},
+
+          // {rafko_net::transfer_function_identity},
+          // {rafko_net::transfer_function_identity},
+          // {rafko_net::transfer_function_identity},
+          // {rafko_net::transfer_function_identity},
+          // {rafko_net::transfer_function_identity},
+          // {rafko_net::transfer_function_identity},
+
+          {rafko_net::transfer_function_identity},
+          {rafko_net::transfer_function_sigmoid},
+          {rafko_net::transfer_function_tanh},
+          {rafko_net::transfer_function_elu},
+          {rafko_net::transfer_function_selu},
+          {rafko_net::transfer_function_relu},
+        }
+      ).dense_layers({2,2,2,2,2,1});
+    // ).dense_layers({2,1});
+    std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
+    CHECK_NOTHROW(
+      context = (
+        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
+          .select_platform().select_device()
+          .build()
+      )
+    );
+
+    rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
+    REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
+
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+      settings, rafko_gym::cost_function_squared_error
+    );
+
+    reference_context.set_objective(objective);
+    context->set_objective(objective);
+    REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
     for(uint32 steps = 0; steps < 5; ++steps){
       std::cout << "================================================================" << std::endl;
       number_of_samples = rand()%10 + 1;
-      // sequence_size = rand()%10 + 1;
+      sequence_size = rand()%10 + 1;
       (void)context->expose_settings().set_memory_truncation(sequence_size);
       (void)reference_context.expose_settings().set_memory_truncation(sequence_size);
       std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = (
@@ -256,5 +329,7 @@ TEST_CASE("Testing if full evaluation is working as intended with the GPU contex
 
 /* TODO: test for full evaluation; sequences with prefill */
 /* TODO: try to test stochastic evaluation.. */
+/* TODO: test features as well */
+
 
 } /* namespace rako_gym_test */

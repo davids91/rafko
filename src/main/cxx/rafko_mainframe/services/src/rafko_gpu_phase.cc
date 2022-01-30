@@ -116,7 +116,7 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, cl::Buffer& input){
   steps[0](enq,
     input, std::get<1>(kernel_args[0]), std::get<2>(kernel_args[0]),
     std::get<0>(kernel_args[1]), std::get<1>(kernel_args[1]), std::get<2>(kernel_args[1])
-  );
+  ).wait();
   for(uint32 step_index = 1; step_index < steps.size(); ++step_index){
     steps[step_index](enq,
       std::get<0>(kernel_args[step_index - 1]), std::get<1>(kernel_args[step_index - 1]), std::get<2>(kernel_args[step_index - 1]),

@@ -96,7 +96,7 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
       }
     });
     std::cout << "CPU Evaluation:\n";
-    uint32 num_to_eval = std::min(
+    uint32 num_to_eval = environment->get_sequence_size() * std::min(
       ((sequence_start + sequences_to_evaluate) - (sequence_index)),
       static_cast<uint32>(settings.get_max_processing_threads())
     );
@@ -131,7 +131,7 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
     error_sum += error_part;
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
   std::cout << "========================" << std::endl;
-  return -( error_sum / static_cast<sdouble32>(sequences_to_evaluate) );
+  return -( error_sum / static_cast<sdouble32>(sequences_to_evaluate * environment->get_sequence_size()) );
 }
 
 } /* namespace rafko_mainframe */
