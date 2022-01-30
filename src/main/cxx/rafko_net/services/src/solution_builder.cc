@@ -125,7 +125,7 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
 }
 
 #if(RAFKO_USES_OPENCL)
-std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_label_num, rafko_mainframe::RafkoSettings& settings){
+std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_input_num, rafko_mainframe::RafkoSettings& settings){
   /*!Note: Network solve starts from the first memory/sequence slot of the outputs buffer
    * which is calculated from get_global_id(0) and the size of the max(sequence, neuron_memory);
    * UNLESS mode variable input is non-zero.
@@ -143,7 +143,7 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
         const int neuron_array_size = $$neuron_array_size$$;
         const int max_backreach = $$neuron_memory_size$$ - 1;
         const int sequence_size = $$sequence_size$$;
-        const int prefill_label_num = $$prefill_label_num$$;
+        const int prefill_input_num = $$prefill_input_num$$;
         const int network_input_size = $$network_input_size$$;
         int output_start;
         int current_max_backreach;
@@ -153,15 +153,15 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
         int sequence_max_index;
         if(inputs[0] == 0){ /* normal evaluation */
           current_max_backreach = 0;
-          input_start = $$weight_table_offset$$ + (sequence_index * sequence_size * network_input_size);
-          output_start = sequence_index * sequence_size * neuron_array_size;
+          input_start = $$weight_table_offset$$ + (sequence_index * (sequence_size + prefill_input_num) * network_input_size);
+          output_start = sequence_index * (sequence_size + prefill_input_num) * neuron_array_size;
           sequence_start = 0;
-          sequence_max_index = sequence_size-1;
+          sequence_max_index = max(( sequence_size + prefill_input_num ), 1) - 1;
         }else{ /* run-once with memory */
           current_max_backreach = max_backreach;
           input_start = $$weight_table_offset$$;
           output_start = (max_backreach * neuron_array_size); /*$$output_start$$*/
-          sequence_start = (sequence_size - 1);
+          sequence_start = max(( sequence_size + prefill_input_num ), 1) - 1;
           sequence_max_index = sequence_start;
         }
         for(int label_index = sequence_start; label_index <= sequence_max_index; ++label_index){
@@ -171,8 +171,10 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
           /* --- GENERATED_NEURON_CODE --- */
           // if(1 < get_global_size(0) && 0 == get_global_id(0))
           //   outputs[output_start + 0] = inputs[1];
-          // if(1 < sequence_size)
-          //   outputs[output_start + 0] = inputs[input_start] + inputs[input_start + 1];
+          // if(1 < prefill_input_num){
+          //   outputs[output_start + 0] = inputs[input_start + 0];
+          //   outputs[output_start + 1] = inputs[input_start + 1];
+          // }
 
           if(label_index < sequence_max_index){ /* to copy the previous run into the next one */
             for(int neuron_array_iterator = 0; neuron_array_iterator < neuron_array_size; ++neuron_array_iterator){
@@ -182,8 +184,8 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
 
           input_start += network_input_size;
           output_start += neuron_array_size;
-          current_max_backreach += 1;
-
+          if(current_max_backreach < max_backreach)
+            ++current_max_backreach;
         }
       }/*if(input sizes match)*/
     }/* kernel */
@@ -202,7 +204,7 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
    */
   std::string neuron_operations;
   std::function<std::string(uint32, std::string)> past_reach_guard = [](uint32 past_reach, std::string content){
-    return "( (current_max_backreach < " + std::to_string(past_reach) + " )?(0.0):( " + content + ") )";
+    return "( (min(current_max_backreach,max_backreach) < " + std::to_string(past_reach) + " )?(0.0):( " + content + ") )";
   };
   for(const PartialSolution& partial : solution.partial_solutions()){
     SynapseIterator<InputSynapseInterval> partial_input_synapses(partial.input_data());
@@ -299,14 +301,15 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
     /*!Note: Because each partial has a different weight table, an offset is required to keep track in case there are multiple partial solutions
      * inside the solution.
      */
-  }
+    /* TODO: Accomodate softmax here for the relevant partial */
+  }/*for(every partial in the solution)*/
   source_base = std::regex_replace(source_base, std::regex("\\$\\$name\\$\\$"), name);
   source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_array_size\\$\\$"), std::to_string(solution.neuron_number()));
   source_base = std::regex_replace(source_base, std::regex("\\$\\$weight_table_offset\\$\\$"), std::to_string(weight_table_offset));
   source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_memory_size\\$\\$"), std::to_string(solution.network_memory_length()));
   source_base = std::regex_replace(source_base, std::regex("\\$\\$sequence_size\\$\\$"), std::to_string(sequence_size));
   source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_operations\\$\\$"), neuron_operations);
-  source_base = std::regex_replace(source_base, std::regex("\\$\\$prefill_label_num\\$\\$"), std::to_string(prefill_label_num));
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$prefill_input_num\\$\\$"), std::to_string(prefill_input_num));
   source_base = std::regex_replace(source_base, std::regex("\\$\\$network_input_size\\$\\$"), std::to_string(solution.network_input_size()));
   std::cout << "agent code: " << source_base << std::endl;
   return source_base;

@@ -46,7 +46,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, expected_label));
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoDatasetCost reference_cost(settings, cost);
@@ -92,7 +92,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, expected_label));
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoDatasetCost reference_cost(settings, cost);

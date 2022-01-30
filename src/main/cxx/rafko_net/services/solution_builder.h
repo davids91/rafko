@@ -71,7 +71,7 @@ public:
 
   #if(RAFKO_USES_OPENCL)
   static std::string get_kernel_for_solution(
-    const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_label_num, rafko_mainframe::RafkoSettings& settings
+    const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_input_num, rafko_mainframe::RafkoSettings& settings
   );
   #endif/*(RAFKO_USES_OPENCL)*/
 

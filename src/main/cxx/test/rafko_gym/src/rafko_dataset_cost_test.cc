@@ -41,7 +41,7 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   sdouble32 expected_label = double_literal(50.0);
   sdouble32 set_distance = double_literal(10.0);
 
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */,1/* feature size */,number_of_sequences, sequence_size, expected_label));
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */,1/* feature size */,number_of_sequences, sequence_size, 0/*prefill_size*/, expected_label));
 
   /* Create @RafkoDatasetCost from @DataSet */
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);

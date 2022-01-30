@@ -136,7 +136,7 @@ extern void check_data_match(std::vector<sdouble32>& sample_data, std::vector<sd
 extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoSettings& settings);
 
 /**
- * @brief      Creates a random dataset based on the given parameter
+ * @brief      Creates a random dataset based on the given parameters
  *
  * @param[in]  input_size         The number of expected inputs are stored for the @DataSet
  * @param[in]  feature_size       The number of features and labels to be stored inside the @DataSet
@@ -146,7 +146,7 @@ extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 inp
  *
  * @return     The created dataset
  */
-extern std::unique_ptr<rafko_gym::DataSet> create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, sdouble32 expected_label = double_literal(0.0));
+extern std::unique_ptr<rafko_gym::DataSet> create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, uint32 prefill_size = 0u, sdouble32 expected_label = double_literal(0.0));
 
 } /* namespace rafko_test */
 

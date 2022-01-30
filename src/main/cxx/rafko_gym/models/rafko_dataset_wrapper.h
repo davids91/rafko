@@ -63,8 +63,11 @@ public:
   : sequence_size(std::max(1u,samples_.sequence_size()))
   , input_samples(samples_.inputs_size() / samples_.input_size())
   , label_samples(samples_.labels_size() / samples_.feature_size())
-  , prefill_sequences(static_cast<uint32>((samples_.inputs_size() - samples_.labels_size()) / (samples_.labels_size() / sequence_size)))
+  , prefill_sequences( static_cast<uint32>((input_samples.size() - label_samples.size())) / (label_samples.size() / sequence_size) )
   {
+    std::cout << "samples_.inputs_size(): " << input_samples.size() << std::endl;
+    std::cout << "samples_.labels_size(): " << label_samples.size() << std::endl;
+    std::cout << "sequence_size: " << sequence_size << std::endl;
     assert(0 == (label_samples.size()%sequence_size));
     assert(0 < samples_.input_size());
     assert(0 < samples_.feature_size());
