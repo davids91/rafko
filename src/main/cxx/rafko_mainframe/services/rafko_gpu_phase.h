@@ -67,6 +67,16 @@ public:
   void operator()(cl::EnqueueArgs& enq, cl::Buffer& input);
 
   /**
+   * @brief      Executes the implemented strategy phase
+   *
+   * @param[in]  enq      the OpenCL enqeue arguments provided by the caller
+   */
+  void operator()(cl::EnqueueArgs& enq){
+    (*this)(enq, get_input_buffer());
+  }
+
+
+  /**
    * @brief      Constructs a buffer containing the output data of the implemented strategy phase
    *
    * @param[in]  size     The number of elements to take from the output
@@ -84,6 +94,16 @@ public:
    * @param[in]  offset   An offset inside the output buffer to get
    */
   void load_output(sdouble32* target, std::size_t size, std::size_t offset = 0u);
+
+  /**
+   * @brief      Provides the buffer containing the input data of the implemented
+   *             strategy phase inside device memory to upload data to
+   *
+   * @return     A buffer of the input data on the device
+   */
+  cl::Buffer& get_input_buffer(){
+    return std::get<0>(kernel_args.front());
+  }
 
   /**
    * @brief      Provides the buffer containing the output data of the implemented

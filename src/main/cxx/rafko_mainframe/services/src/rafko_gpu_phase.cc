@@ -68,10 +68,6 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
       input_shapes[step_index].acquire_shape_buffer().get(),
       NULL/*events(to wait for)*/, &(*(dimension_write_events.begin() + step_index))
     );
-    std::cout << "input[" << step_index << "]:";
-    for(int i = 0; i < input_shapes[step_index].size(); ++i)
-      std::cout << "{" << input_shapes[step_index].acquire_shape_buffer()[i] << "}";
-    std::cout << std::endl;
     assert( return_value == CL_SUCCESS );
     steps.push_back(cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>(
       program, step_name

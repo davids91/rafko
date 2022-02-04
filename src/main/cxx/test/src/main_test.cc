@@ -434,7 +434,7 @@ TEST_CASE("Testing whether binary addition can be solved with a manual program",
 rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoSettings& settings){
   std::vector<uint32> net_structure;
   while((rand()%10 < 9)||(4 > net_structure.size()))
-    net_structure.push_back(static_cast<uint32>(rand()%30) + 1u);
+    net_structure.push_back(static_cast<uint32>(rand()%5) + 1u);
 
   uint8 num_of_features = rand()%(net_structure.size()/2) + 1u;
   rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)

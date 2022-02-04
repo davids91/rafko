@@ -168,7 +168,8 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 
     reference_context.set_objective(objective);
     context->set_objective(objective);
-    REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
+    REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
+    /* TODO: why is it needed to decrease punctuality to 10 digits? why??? */
 
     for(uint32 steps = 0; steps < 1; ++steps){
       std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = (

@@ -152,7 +152,6 @@ cl::Program::Sources CostFunction::get_step_sources()const {
     get_post_process_kernel_source("thread_error")
   );
   source_base = std::regex_replace(source_base, std::regex("\\$\\$feature_size\\$\\$"), std::to_string(feature_size));
-  // std::cout << "Objective code: " << source_base << std::endl;
   return{source_base};
 }
 #endif/*(RAFKO_USES_OPENCL)*/

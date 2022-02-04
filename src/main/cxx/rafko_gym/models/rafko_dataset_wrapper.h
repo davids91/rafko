@@ -65,9 +65,6 @@ public:
   , label_samples(samples_.labels_size() / samples_.feature_size())
   , prefill_sequences( static_cast<uint32>((input_samples.size() - label_samples.size())) / (label_samples.size() / sequence_size) )
   {
-    std::cout << "samples_.inputs_size(): " << input_samples.size() << std::endl;
-    std::cout << "samples_.labels_size(): " << label_samples.size() << std::endl;
-    std::cout << "sequence_size: " << sequence_size << std::endl;
     assert(0 == (label_samples.size()%sequence_size));
     assert(0 < samples_.input_size());
     assert(0 < samples_.feature_size());
@@ -134,13 +131,9 @@ public:
     return prefill_sequences;
   }
 
-  void push_state(){
-    /* TODO: Implement */
-  }
-
-  void pop_state(){
-    /* TODO: Implement */
-  }
+  /*!Note: There's no state to talk about with this specialization */
+  void push_state(){ }
+  void pop_state(){ }
 
 private:
   const uint32 sequence_size;

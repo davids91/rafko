@@ -181,13 +181,6 @@ public:
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes()const{
-    // std::cout << "agent params: "
-    // << "solution.neuron_number(): " << solution.neuron_number()<< ","
-    // << "prefills: " << prefill_inputs_per_sequence << ","
-    // << "sequences_evaluating: " << sequences_evaluating << ","
-    // << "sequence_size: " << sequence_size << ","
-    // << "mem: " <<solution.network_memory_length() << ","
-    // << std::endl;
     return{ rafko_mainframe::RafkoNBufShape{
       solution.neuron_number() * std::max(
         (sequences_evaluating * (sequence_size + prefill_inputs_per_sequence) ),

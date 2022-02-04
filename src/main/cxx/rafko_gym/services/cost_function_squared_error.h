@@ -39,12 +39,7 @@ protected:
     return error_value / double_literal(2.0);
   }
 
-  mutable std::mutex cout_mutex;
   sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
-    std::lock_guard<std::mutex> lock(cout_mutex);
-    std::cout << "{" + std::to_string(label_value) + "<>" + std::to_string(feature_value) + "} = "
-    + std::to_string(pow((label_value - feature_value),2))
-    << std::endl;
     return pow((label_value - feature_value),2);
   }
 

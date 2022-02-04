@@ -164,7 +164,6 @@ public:
     return { rafko_mainframe::RafkoNBufShape{ 1u } };
   }
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space()  {
-    std::cout << "solution space for cost function: " << pairs_to_evaluate << std::endl;
     return std::make_tuple(cl::NullRange,cl::NDRange(pairs_to_evaluate),cl::NullRange);
   }
 

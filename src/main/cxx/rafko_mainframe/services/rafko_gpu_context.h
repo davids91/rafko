@@ -105,21 +105,28 @@ private:
   cl::Context opencl_context;
   cl::Device opencl_device;
   cl::CommandQueue opencl_queue;
-  cl::Buffer mode_weights_and_inputs;
-  cl::Buffer features_and_labels;
   uint32 device_weight_table_size;
   RafkoGPUPhase solution_phase;
   std::vector<sdouble32> standalone_solution_result;
   RafkoGPUPhase error_phase;
 
   enum{
-    no_evaluation_ran, full_evaluation_ran, stochastic_evaluation_ran
-  }last_ran_evaluation = no_evaluation_ran;
+    not_eval_run, full_eval_run, random_eval_run
+  }last_ran_evaluation = not_eval_run;
+
   uint32 used_sequence_truncation;
   uint32 used_minibatch_size;
 
   void upload_weight_table_to_device();
   void refresh_objective();
+  std::vector<cl::Event> upload_agent_inputs(
+    uint32 sequence_start_index, uint32 buffer_sequence_start_index, uint32 sequences_to_upload
+  );
+  std::vector<cl::Event> upload_labels(
+    uint32 sequence_start_index, uint32 buffer_sequence_start_index,
+    uint32 sequences_to_upload, uint32 buffer_start_byte_offset
+  );
+  std::vector<cl::Event> upload_agent_output(uint32 sequences_to_upload);
 };
 
 } /* namespace rafko_mainframe */
