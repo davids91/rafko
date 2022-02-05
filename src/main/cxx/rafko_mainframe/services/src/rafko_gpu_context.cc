@@ -87,11 +87,36 @@ RafkoGPUContext::RafkoGPUContext(
   refresh_objective();
 }
 
+void RafkoGPUContext::upload_weight_to_device(uint32 weight_index){
+  std::vector<std::pair<uint32,uint32>> relevant_partial_weights = weight_updater->get_relevant_partial_weight_indices_for(
+    weight_index
+  );
+  uint32 weight_table_offset = 0u;
+  uint32 partial_index = 0u;
+  for(const std::pair<uint32,uint32>& index_pair : relevant_partial_weights){
+    while(partial_index < std::get<0>(index_pair)){
+      weight_table_offset += network_solution->partial_solutions(partial_index).weight_table_size();
+      ++partial_index;
+    }
+    uint32 weight_index_in_partial = std::get<1>(index_pair);
+    sdouble32 weight_value = network_solution->partial_solutions(partial_index).weight_table(weight_index_in_partial);
+
+    /* TODO: Update weight at weight_table_offset + std::get<1>(index_pair) */
+    cl_int return_value = opencl_queue.enqueueWriteBuffer(
+      solution_phase.get_input_buffer(), CL_TRUE/* blocking */,
+      (sizeof(sdouble32) * (1u + weight_table_offset + weight_index_in_partial) )/*offset: mode */, sizeof(sdouble32)/*size*/, &weight_value
+    );
+    assert( return_value == CL_SUCCESS );
+  }
+}
+
+
 void RafkoGPUContext::set_network_weight(uint32 weight_index, sdouble32 weight_value){
   assert( static_cast<sint32>(weight_index) < network.weight_table_size() );
   network.set_weight_table(weight_index, weight_value);
-  weight_updater->update_solution_with_weights();
-  upload_weight_table_to_device(); /* TODO: modify single weight  */
+  weight_updater->update_solution_with_weight(weight_index);
+  upload_weight_to_device(weight_index);
+  // upload_weight_table_to_device();
 }
 
 void RafkoGPUContext::set_network_weights(const std::vector<sdouble32>& weights){

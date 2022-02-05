@@ -116,6 +116,7 @@ private:
   }last_ran_evaluation = not_eval_run;
 
   void upload_weight_table_to_device();
+  void upload_weight_to_device(uint32 weight_index);
   void refresh_objective();
   bool last_random_eval_was_seeded = false;
   uint32 last_used_seed;

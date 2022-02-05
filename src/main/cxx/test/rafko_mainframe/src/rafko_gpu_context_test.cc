@@ -592,6 +592,150 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
         );
       }/*for(5 inner consecutive steps)*/
     }/*for(5 consecutive steps)*/
+  }/*for(10 variants)*/
+}
+
+
+TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weights]"){
+  google::protobuf::Arena arena;
+  uint32 sequence_size = rand()%3 + 1;
+  uint32 number_of_sequences = rand()%10 + 2;
+  uint32 feature_size = rand()%5 + 1;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+    .input_size(2).expected_input_range(double_literal(1.0))
+    .set_recurrence_to_layer()
+    .allowed_transfer_functions_by_layer(
+      {
+        {rafko_net::transfer_function_identity},
+        {rafko_net::transfer_function_sigmoid},
+        {rafko_net::transfer_function_tanh},
+        {rafko_net::transfer_function_elu},
+        {rafko_net::transfer_function_selu},
+        {rafko_net::transfer_function_relu},
+      }
+    ).dense_layers({2,2,2,2,2,feature_size});
+  std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
+  CHECK_NOTHROW(
+    context = (
+      rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
+        .select_platform().select_device()
+        .build()
+    )
+  );
+  rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
+
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+    settings, rafko_gym::cost_function_cross_entropy
+  );
+  reference_context.set_objective(objective);
+  context->set_objective(objective);
+
+  for(uint32 variant = 0u; variant < 10u; ++variant){
+    number_of_sequences = rand()%10 + 1;
+    sequence_size = rand()%10 + 1;
+    (void)context->expose_settings().set_memory_truncation(sequence_size);
+    (void)reference_context.expose_settings().set_memory_truncation(sequence_size);
+    std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+      2/* input size */, feature_size,
+      number_of_sequences, sequence_size, 2/*prefill_size*/,
+      rand()%100/*expected_label*/, double_literal(1.0)
+    ) );
+    std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
+
+    context->set_environment(environment);
+    reference_context.set_environment(environment);
+
+    for(uint32 steps = 0; steps < 5; ++steps){
+      REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
+
+      /* modify single weight */
+      uint32 weight_index = rand()%(network->weight_table_size());
+      sdouble32 weight_value = static_cast<sdouble32>(rand()%20) / double_literal(15.0);
+      context->set_network_weight(weight_index, weight_value);
+      reference_context.set_network_weight(weight_index, weight_value);
+    }/*for(5 consecutive steps)*/
+  }/*for(10 variants)*/
+}
+
+TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weights][bulk]"){
+  google::protobuf::Arena arena;
+  uint32 sequence_size = rand()%3 + 1;
+  uint32 number_of_sequences = rand()%10 + 2;
+  uint32 feature_size = rand()%5 + 1;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+    .input_size(2).expected_input_range(double_literal(1.0))
+    .set_recurrence_to_layer()
+    .allowed_transfer_functions_by_layer(
+      {
+        {rafko_net::transfer_function_identity},
+        {rafko_net::transfer_function_sigmoid},
+        {rafko_net::transfer_function_tanh},
+        {rafko_net::transfer_function_elu},
+        {rafko_net::transfer_function_selu},
+        {rafko_net::transfer_function_relu},
+      }
+    ).dense_layers({2,2,2,2,2,feature_size});
+  std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
+  CHECK_NOTHROW(
+    context = (
+      rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
+        .select_platform().select_device()
+        .build()
+    )
+  );
+  rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
+
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+    settings, rafko_gym::cost_function_cross_entropy
+  );
+  reference_context.set_objective(objective);
+  context->set_objective(objective);
+
+  for(uint32 variant = 0u; variant < 10u; ++variant){
+    number_of_sequences = rand()%10 + 1;
+    sequence_size = rand()%10 + 1;
+    (void)context->expose_settings().set_memory_truncation(sequence_size);
+    (void)reference_context.expose_settings().set_memory_truncation(sequence_size);
+    std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+      2/* input size */, feature_size,
+      number_of_sequences, sequence_size, 2/*prefill_size*/,
+      rand()%100/*expected_label*/, double_literal(1.0)
+    ) );
+    std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
+
+    context->set_environment(environment);
+    reference_context.set_environment(environment);
+
+    for(uint32 steps = 0; steps < 5; ++steps){
+      REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
+
+      std::vector<sdouble32> weight_deltas(network->weight_table_size());
+      std::generate(weight_deltas.begin(), weight_deltas.end(), [](){
+        return static_cast<sdouble32>(rand()%100) / double_literal(100.0);
+      });
+      context->set_network_weights(weight_deltas);
+      reference_context.set_network_weights(weight_deltas);
+    }/*for(5 consecutive steps)*/
+
+    for(uint32 steps = 0; steps < 5; ++steps){
+      REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
+
+      std::vector<sdouble32> weight_deltas(network->weight_table_size());
+      std::generate(weight_deltas.begin(), weight_deltas.end(), [](){
+        return static_cast<sdouble32>(rand()%100) / double_literal(100.0);
+      });
+      context->apply_weight_update(weight_deltas);
+      reference_context.apply_weight_update(weight_deltas);
+    }/*for(5 consecutive steps)*/
+  }/*for(10 variants)*/
 }
 
 /* TODO: test features as well */
