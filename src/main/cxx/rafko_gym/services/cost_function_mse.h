@@ -47,7 +47,7 @@ protected:
     return "pow((" + label_value + " - " + feature_value + "),2.0)";
   }
   std::string get_post_process_kernel_source(std::string error_value) const{
-    return "((" + error_value + ") / (double(sample_number) * 2.0) )";
+    return "((" + error_value + ") / ((double)(sample_number) * 2.0) )";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 

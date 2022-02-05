@@ -38,10 +38,8 @@ protected:
     parameter_not_used(sample_number);
     return error_value / double_literal(2.0);
   }
-  mutable std::mutex cout_mutex;
+
   sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
-    // std::lock_guard<std::mutex> lock(cout_mutex);
-    // std::cout << "{" << label_value << "<>" << feature_value << "-->\t\t\t" << pow((label_value - feature_value),2)/2.0<< "}\n";
     return pow((label_value - feature_value),2);
   }
 

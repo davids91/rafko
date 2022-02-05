@@ -113,12 +113,15 @@ cl::Program::Sources CostFunction::get_step_sources()const {
     #pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable
 
     /* https://suhorukov.blogspot.com/2011/12/opencl-11-atomic-operations-on-floating.html */
+    /* https://streamhpc.com/blog/2016-02-09/atomic-operations-for-floats-in-opencl-improved */
     inline void AtomicAdd(volatile __global double *source, const double operand) {
-      union { unsigned long intVal; double floatVal; } prevVal, newVal;
+      union { unsigned long intVal; double floatVal; } next, expected, current;
+      current.floatVal = *source;
       do {
-        prevVal.floatVal = *source;
-        newVal.floatVal = prevVal.floatVal + operand;
-      } while( atom_cmpxchg((volatile __global unsigned long *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal );
+        expected.floatVal = current.floatVal;
+        next.floatVal = expected.floatVal + operand;
+        current.intVal = atom_cmpxchg((volatile __global unsigned long *)source, expected.intVal, next.intVal);
+      } while( current.intVal != expected.intVal );
     }
 
     void kernel cost_function(
@@ -128,6 +131,7 @@ cl::Program::Sources CostFunction::get_step_sources()const {
       int error_index = get_global_id(0);
       if( (2 == input_sizes_size)&&(input_sizes[0] == input_sizes[1])&&(1 == output_sizes[0]) ){
         const int feature_size = $$feature_size$$;
+        const int sample_number = $$sample_number$$;
 
         if(0 == error_index){ outputs[0] = 0.0; }
         barrier(CLK_GLOBAL_MEM_FENCE);
@@ -137,9 +141,12 @@ cl::Program::Sources CostFunction::get_step_sources()const {
           int index = (error_index * feature_size) + feature_iterator;
           thread_error += $$operation_source$$;
         }
-        thread_error = $$post_process_source$$;
-
         AtomicAdd(&outputs[0], thread_error);
+
+        barrier(CLK_GLOBAL_MEM_FENCE);
+        if(0 == error_index)
+          outputs[0] = $$post_process_source$$;
+
       }/*if(IO sizes are correctly set)*/
     }/*kernel*/
   )";
@@ -150,9 +157,10 @@ cl::Program::Sources CostFunction::get_step_sources()const {
   );
   source_base = std::regex_replace(
     source_base, std::regex("\\$\\$post_process_source\\$\\$"),
-    get_post_process_kernel_source("thread_error")
+    get_post_process_kernel_source("outputs[0]")
   );
   source_base = std::regex_replace(source_base, std::regex("\\$\\$feature_size\\$\\$"), std::to_string(feature_size));
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$sample_number\\$\\$"), std::to_string(pairs_to_evaluate));
   return{source_base};
 }
 #endif/*(RAFKO_USES_OPENCL)*/

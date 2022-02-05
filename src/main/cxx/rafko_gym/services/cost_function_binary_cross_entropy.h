@@ -56,7 +56,7 @@ protected:
     );
   }
   std::string get_post_process_kernel_source(std::string error_value) const{
-    return "((" + error_value + ") / double(sample_number) )";
+    return "((" + error_value + ") / (double)(sample_number) )";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
