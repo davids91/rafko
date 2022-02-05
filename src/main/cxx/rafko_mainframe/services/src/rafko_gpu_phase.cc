@@ -101,7 +101,9 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, const std::vector<sdouble32
 
   cl::Buffer input_buf_cl( opencl_context, CL_MEM_READ_ONLY, input_shape.get_byte_size<sdouble32>() );
   cl_int return_value = opencl_device_queue.enqueueWriteBuffer( /* upload input to device memory */
-    input_buf_cl, CL_TRUE, 0, input_shape.get_byte_size<sdouble32>(), input.data()
+    input_buf_cl, CL_TRUE/*blocking*/,
+    0/*offset*/, input_shape.get_byte_size<sdouble32>()/*size*/,
+    input.data()
   );
   assert( return_value == CL_SUCCESS );
 
@@ -111,6 +113,20 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, const std::vector<sdouble32
 void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, cl::Buffer& input){
   steps[0](enq,
     input, std::get<1>(kernel_args[0]), std::get<2>(kernel_args[0]),
+    std::get<0>(kernel_args[1]), std::get<1>(kernel_args[1]), std::get<2>(kernel_args[1])
+  ).wait();
+  for(uint32 step_index = 1; step_index < steps.size(); ++step_index){
+    steps[step_index](enq,
+      std::get<0>(kernel_args[step_index - 1]), std::get<1>(kernel_args[step_index - 1]), std::get<2>(kernel_args[step_index - 1]),
+      std::get<0>(kernel_args[step_index]), std::get<1>(kernel_args[step_index]), std::get<2>(kernel_args[step_index])
+    ).wait();
+    ++step_index;
+  }
+}
+
+void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq){
+  steps[0](enq,
+    std::get<0>(kernel_args[0]), std::get<1>(kernel_args[0]), std::get<2>(kernel_args[0]),
     std::get<0>(kernel_args[1]), std::get<1>(kernel_args[1]), std::get<2>(kernel_args[1])
   ).wait();
   for(uint32 step_index = 1; step_index < steps.size(); ++step_index){
@@ -138,7 +154,9 @@ void RafkoGPUPhase::load_output(sdouble32* target, std::size_t size, std::size_t
 
   cl::Buffer& output_buffer_cl = std::get<0>(kernel_args.back());
   cl_int return_value = opencl_device_queue.enqueueReadBuffer(
-    output_buffer_cl, CL_TRUE, (sizeof(sdouble32) * offset), (sizeof(sdouble32) * size), target
+    output_buffer_cl, CL_TRUE/*blocking*/,
+    (sizeof(sdouble32) * offset), (sizeof(sdouble32) * size),
+    target
   );
   assert( return_value == CL_SUCCESS );
 }

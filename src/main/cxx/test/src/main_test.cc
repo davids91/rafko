@@ -457,19 +457,27 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size
   return builder.dense_layers(net_structure);
 }
 
-std::unique_ptr<rafko_gym::DataSet> create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, uint32 prefill_size, sdouble32 expected_label){
+std::unique_ptr<rafko_gym::DataSet> create_dataset(
+  uint32 input_size, uint32 feature_size,
+  uint32 sample_number, uint32 sequence_size, uint32 prefill_size,
+  sdouble32 expected_label, sdouble32 label_delta_per_feature
+){
   std::unique_ptr<rafko_gym::DataSet> dataset = std::make_unique<rafko_gym::DataSet>();
   dataset->set_input_size(input_size);
   dataset->set_feature_size(feature_size);
   dataset->set_sequence_size(sequence_size);
   /*!Note: Input values should be irrelevant in test sets like this */
+  sdouble32 label_value = expected_label;
   for(uint32 sequence_index = 0; sequence_index < (sample_number); ++sequence_index){
     for(uint32 prefill_index = 0; prefill_index < prefill_size; ++prefill_index){
       for(uint32 input_index = 0; input_index < input_size; ++input_index) dataset->add_inputs(5 - prefill_index);
     }
     for(uint32 raw_label_index = 0; raw_label_index < sequence_size; ++raw_label_index){
       for(uint32 input_index = 0; input_index < input_size; ++input_index) dataset->add_inputs(sequence_index + input_index);
-      for(uint32 feature_index = 0; feature_index < feature_size; ++feature_index) dataset->add_labels(expected_label);
+      for(uint32 feature_index = 0; feature_index < feature_size; ++feature_index){
+        dataset->add_labels(label_value);
+        label_value += label_delta_per_feature;
+      }
     }
   }/*for(every sequence)*/
   return dataset;

@@ -111,7 +111,6 @@ public:
   }
 
 private:
-  google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings;
   rafko_net::RafkoNet network;
   std::unique_ptr<rafko_net::Solution> network_solution;

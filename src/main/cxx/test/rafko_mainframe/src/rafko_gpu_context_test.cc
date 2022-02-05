@@ -386,7 +386,265 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
   }/*for(10 variant)*/
 }
 
-/* TODO: try to test stochastic evaluation.. */
+void preapare_eval_buffers_for_seed(
+  uint32 seed,
+  std::vector<std::vector<sdouble32>>& reference_inputs,
+  std::vector<std::vector<sdouble32>>& reference_features,
+  std::vector<std::vector<sdouble32>>& reference_labels,
+  std::vector<uint32>& reference_sequence_index_values,
+  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment,
+  rafko_mainframe::RafkoSettings& settings,
+  rafko_net::SolutionSolver& reference_agent,
+  uint32& used_minibatch_size,
+  uint32& start_index_in_sequence,
+  uint32& used_sequence_truncation
+){
+  used_minibatch_size = std::min(settings.get_minibatch_size(), environment->get_number_of_sequences());
+  reference_inputs.resize(
+    used_minibatch_size * (environment->get_sequence_size() + environment->get_prefill_inputs_number())
+  );
+  reference_features.resize(
+    used_minibatch_size * environment->get_sequence_size()
+  );
+  reference_labels.resize(
+    used_minibatch_size * environment->get_sequence_size()
+  );
+  reference_sequence_index_values.resize(used_minibatch_size);
+
+  srand(seed);
+  uint32 uploaded_sequences = 0u;
+  const uint32 inputs_in_a_sequence = environment->get_sequence_size() + environment->get_prefill_inputs_number();
+  const uint32 labels_in_a_sequence = environment->get_sequence_size();
+  used_sequence_truncation = std::min(
+    settings.get_memory_truncation(), environment->get_sequence_size()
+  );
+  start_index_in_sequence = (rand()%(
+    environment->get_sequence_size() - used_sequence_truncation + 1
+  ));
+  std::cout << "CPU uploading initial sequences:";
+  while(uploaded_sequences < used_minibatch_size){ /* TODO: Watch out if minibatch is more, than the set*/
+    uint32 sequences_to_upload = rand()%(used_minibatch_size - uploaded_sequences + 1u);
+    uint32 sequence_start_index = rand()%(environment->get_number_of_sequences() - sequences_to_upload + 1u);
+    std::cout << sequence_start_index << "-+->" << sequences_to_upload <<";";
+
+    for(uint32 s = 0; s < sequences_to_upload; ++s){
+      reference_sequence_index_values[uploaded_sequences + s] = sequence_start_index + s;
+    }
+    // std::cout << "===" << std::endl;
+    // std::cout << "uploaded_sequences: " << uploaded_sequences << "/" << used_minibatch_size << std::endl;
+    // std::cout << "used_minibatch_size: " << used_minibatch_size << std::endl;
+    // std::cout << "sequences_to_upload: " << sequences_to_upload << std::endl;
+    // std::cout << "sequence_start_index: " << sequence_start_index << std::endl;
+
+    /* copy inputs */
+    uint32 raw_input_start = (sequence_start_index * inputs_in_a_sequence);
+    uint32 raw_input_num = (sequences_to_upload * inputs_in_a_sequence);
+    uint32 reference_offset = (uploaded_sequences * inputs_in_a_sequence);
+    for(uint32 raw_input_index = raw_input_start; raw_input_index < (raw_input_start + raw_input_num); ++raw_input_index){
+      reference_inputs[reference_offset] = environment->get_input_sample(raw_input_index);
+      ++reference_offset;
+    }
+
+    /* copy labels */
+    uint32 raw_label_start = (sequence_start_index * labels_in_a_sequence);
+    uint32 raw_label_num = (sequences_to_upload * labels_in_a_sequence);
+    reference_offset = (uploaded_sequences * labels_in_a_sequence);
+    // std::cout << "reference_offset: " << reference_offset << std::endl;
+    // std::cout << "raw_label_start: " << raw_label_start << std::endl;
+    // std::cout << "raw_label_num: " << raw_label_num << std::endl;
+
+    for(uint32 raw_label_index = raw_label_start; raw_label_index < (raw_label_start + raw_label_num); ++raw_label_index){
+      // std::cout << "Reference_offset: " << reference_offset;
+      reference_labels[reference_offset] = environment->get_label_sample(raw_label_index);
+      ++reference_offset;
+    }
+    // std::cout << "===" << std::endl;
+    uploaded_sequences += sequences_to_upload;
+  }/*while(minibatch is filled with random data)*/
+  std::cout << std::endl;
+  /* generate features */
+  uint32 sequences_done = 0u;
+  uint32 reference_offset = 0u;
+  while(sequences_done < used_minibatch_size){
+    // std::cout << ".";
+    uint32 raw_inputs_index = ( reference_sequence_index_values[sequences_done] * inputs_in_a_sequence );
+    for(uint32 prefill_iterator = 0; prefill_iterator < environment->get_prefill_inputs_number(); ++prefill_iterator){
+      (void)reference_agent.solve(
+        environment->get_input_sample(raw_inputs_index),
+        (0 == prefill_iterator)/*reset_neuron_data*/
+      );
+      ++raw_inputs_index;
+      // std::cout << ",";
+    }
+    for(uint32 sequence_iterator = 0; sequence_iterator < environment->get_sequence_size(); ++sequence_iterator){
+      rafko_utilities::ConstVectorSubrange<> neuron_output = reference_agent.solve(
+        environment->get_input_sample(raw_inputs_index),
+        ( (0u == environment->get_prefill_inputs_number())&&(0u == sequence_iterator) )/*reset_neuron_data*/
+      );
+      reference_features[reference_offset] = std::vector<sdouble32>{ neuron_output.begin(), neuron_output.end() };
+      ++reference_offset;
+      // for(const sdouble32& w : reference_features[reference_offset]) std::cout << "<"  << w << ">";
+      ++raw_inputs_index;
+      // std::cout << "-";
+    }
+    ++sequences_done;
+    // std::cout << "sequences_done: " << sequences_done << "/" << used_minibatch_size << std::endl;
+  }
+
+  std::cout << "Reference data:" << std::endl;
+  uint32 raw_feature_index = 0u;
+  for(uint32 sequence_index = 0; sequence_index < used_minibatch_size; ++sequence_index){
+    std::cout << "s(" << sequence_index << ")\n";
+    for(uint32 input_index = 0; input_index < inputs_in_a_sequence; ++input_index){
+      for(const sdouble32& input : reference_inputs[input_index]) std::cout << "[" << input << "]";
+      if(input_index < environment->get_prefill_inputs_number()) std::cout << "\t x \t x";
+      else{
+        std::cout << "\t";
+        for(const sdouble32& feature : reference_features[raw_feature_index]) std::cout << "[" << feature << "]";
+        std::cout << "\t <>";
+        for(const sdouble32& label : reference_labels[raw_feature_index]) std::cout << "[" << label << "]";
+        ++raw_feature_index;
+      }
+      std::cout << std::endl;
+    }
+  }
+}
+
+TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][context][GPU][evaluate][multi-label][sequence][prefill]"){
+  google::protobuf::Arena arena;
+  uint32 sequence_size = 1u;
+  uint32 number_of_sequences = 1;
+  uint32 feature_size = 2;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+    .input_size(2).expected_input_range(double_literal(1.0))
+    .set_recurrence_to_layer()
+    .allowed_transfer_functions_by_layer(
+      {
+        {rafko_net::transfer_function_identity},
+        {rafko_net::transfer_function_sigmoid},
+        {rafko_net::transfer_function_tanh},
+        {rafko_net::transfer_function_elu},
+        {rafko_net::transfer_function_selu},
+        {rafko_net::transfer_function_relu},
+      }
+    ).dense_layers({2,2,2,2,2,feature_size});
+  std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
+  rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(*network);
+  CHECK_NOTHROW(
+    context = (
+      rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
+        .select_platform().select_device()
+        .build()
+    )
+  );
+
+  /* Create reference for GPU */
+  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(network_copy);
+  std::unique_ptr<rafko_net::SolutionSolver> reference_agent(rafko_net::SolutionSolver::Builder(*solution, settings).build());
+  for(uint32 variant = 0u; variant < 10u; ++variant){
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+      settings, rafko_gym::cost_function_squared_error
+    );
+    std::unique_ptr<rafko_gym::CostFunction> cost_sqr_error = rafko_gym::FunctionFactory::build_cost_function(
+      rafko_gym::cost_function_squared_error, settings
+    );
+
+    context->set_objective(objective);
+
+    for(uint32 steps = 0; steps < 5; ++steps){
+      number_of_sequences = rand()%2 + 2;
+      sequence_size = rand()%2 + 2;
+      settings = context->expose_settings().set_memory_truncation(sequence_size);
+      std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+        2/* input size */, feature_size,
+        number_of_sequences, sequence_size, 2/*prefill_size*/,
+        rand()%100/*expected_label*/, double_literal(1.0)
+      ) );
+      std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
+      std::vector<std::vector<sdouble32>> reference_inputs;
+      std::vector<std::vector<sdouble32>> reference_features;
+      std::vector<std::vector<sdouble32>> reference_labels;
+      std::vector<uint32> reference_sequence_index_values;
+
+      // std::cout << "Reference sizes:"
+      // << reference_inputs.size() << ";"
+      // << reference_features.size() << ";"
+      // << reference_labels.size() << ";"
+      // << std::endl;
+      uint32 used_minibatch_size;
+      uint32 start_index_in_sequence;
+      uint32 used_sequence_truncation;
+      context->set_environment(environment);
+      /* upload random labels and inputs */
+      uint32 seed = rand();
+      preapare_eval_buffers_for_seed(
+        seed, reference_inputs, reference_features, reference_labels, reference_sequence_index_values,
+        environment, settings, *reference_agent, used_minibatch_size, start_index_in_sequence, used_sequence_truncation
+      );
+
+      /* get_error */
+      sdouble32 minibatch_error = 0u;
+      // std::cout << "test reference error for sequences ";
+      // for(const uint32& s : reference_sequence_index_values) std::cout << s <<";";
+      // std::cout << std::endl;
+      std::cout << "testing sequences:" << std::endl;
+      for(uint32 minibatch_index = 0; minibatch_index < used_minibatch_size; ++minibatch_index){
+        std::cout << "(--> "<< reference_sequence_index_values[minibatch_index] << ")";
+        sdouble32 partial_sum = objective->set_features_for_sequences(
+          *environment, reference_features, (minibatch_index * environment->get_sequence_size())/* neuron_buffer_index */,
+          reference_sequence_index_values[minibatch_index]/*sequence_start_index*/, 1u/* sequences_to_evaluate */,
+          start_index_in_sequence, used_sequence_truncation
+        );
+        // std::cout << partial_sum << "+";
+        minibatch_error += partial_sum;
+      }
+      std::cout << std::endl;
+      // for(uint32 random_label_index = 0; random_label_index < (used_minibatch_size * labels_in_a_sequence); ++random_label_index){
+      //   sdouble32 partial_sum = cost_sqr_error->get_feature_error(
+      //     reference_labels[random_label_index], reference_features[random_label_index],
+      //     1/*max_threads*/, 0/*outer_thread_index*/, (used_minibatch_size * labels_in_a_sequence)/*sample_number*/
+      //   );
+      //   minibatch_error += partial_sum;
+      // }
+      // std::cout << "0; \n";
+      std::cout << "reference_sum: " << minibatch_error << std::endl;
+      minibatch_error /= static_cast<sdouble32>(used_minibatch_size * environment->get_sequence_size());
+      REQUIRE( Catch::Approx(-minibatch_error).epsilon(0.00000000000001) == context->stochastic_evaluation(true, seed) );
+      // REQUIRE( Catch::Approx(-minibatch_error).epsilon(0.00000000000001) == context->full_evaluation() );
+
+      for(uint32 i = 0; i < 5; ++i){
+
+        minibatch_error = 0u;
+        for(uint32 minibatch_index = 0; minibatch_index < used_minibatch_size; ++minibatch_index){
+          std::cout << "(--> "<< reference_sequence_index_values[minibatch_index] << ")";
+          sdouble32 partial_sum = objective->set_features_for_sequences(
+            *environment, reference_features, (minibatch_index * environment->get_sequence_size())/* neuron_buffer_index */,
+            reference_sequence_index_values[minibatch_index]/*sequence_start_index*/, 1u/* sequences_to_evaluate */,
+            start_index_in_sequence, used_sequence_truncation
+          );
+          minibatch_error += partial_sum;
+        }
+        minibatch_error /= static_cast<sdouble32>(used_minibatch_size * environment->get_sequence_size());
+
+        REQUIRE( Catch::Approx(-minibatch_error).epsilon(0.00000000000001) == context->stochastic_evaluation(true, seed) );
+
+        seed = rand();
+        settings = context->expose_settings().set_memory_truncation(rand()%sequence_size + 1);
+        settings = context->expose_settings().set_minibatch_size(rand()%environment->get_number_of_sequences() + 1);
+        preapare_eval_buffers_for_seed(
+          seed, reference_inputs, reference_features, reference_labels, reference_sequence_index_values,
+          environment, settings, *reference_agent, used_minibatch_size, start_index_in_sequence, used_sequence_truncation
+        );
+      }/*for(5 inner consecutive steps)*/
+      std::cout << "=====" << std::endl;
+    }/*for(5 consecutive steps)*/
+  }/*for(10 variant)*/
+}
+
 /* TODO: test features as well */
 /* TODO: change cost functions in tests*/
 

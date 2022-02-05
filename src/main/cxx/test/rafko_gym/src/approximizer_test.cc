@@ -29,6 +29,9 @@
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_gym/services/rafko_net_approximizer.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
+#if(RAFKO_USES_OPENCL)
+#include "rafko_mainframe/services/rafko_gpu_context.h"
+#endif/*(RAFKO_USES_OPENCL)*/
 
 #include "test/test_utility.h"
 
@@ -138,24 +141,32 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = (
     rafko_test::create_sequenced_addition_dataset(number_of_samples, 4)
   );
+  #if(RAFKO_USES_OPENCL)
+  std::unique_ptr<rafko_mainframe::RafkoGPUContext> context(
+    rafko_mainframe::RafkoGPUContext::Builder(*nets[0], settings)
+      .select_platform().select_device()
+      .build()
+  );
+  #else
+  std::unique_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*nets[0], settings);
+  #endif/*(RAFKO_USES_OPENCL)*/
 
-  rafko_mainframe::RafkoCPUContext context(*nets[0], settings);
   rafko_mainframe::RafkoCPUContext test_context(*nets[0], settings);
-  rafko_gym::RafkoNetApproximizer approximizer(context);
+  rafko_gym::RafkoNetApproximizer approximizer(*context);
 
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
     std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
     /* Sequence size */4
   );
-  context.set_environment(environment);
-  context.set_weight_updater(rafko_gym::weight_updater_amsgrad);
+  context->set_environment(environment);
+  context->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   test_context.set_environment(environment);
 
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
     settings, rafko_gym::cost_function_squared_error
   );
-  context.set_objective(objective);
+  context->set_objective(objective);
   test_context.set_objective(objective);
 
   tmp1 = rafko_test::create_sequenced_addition_dataset(number_of_samples * 2, 4);
@@ -197,7 +208,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
     average_duration += current_duration;
     ++number_of_steps;
-    train_error = -context.full_evaluation();
+    train_error = -context->full_evaluation();
     test_error = -test_context.full_evaluation();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
     std::cout << "\tError:" << std::setprecision(9)

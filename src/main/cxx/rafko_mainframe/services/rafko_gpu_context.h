@@ -46,6 +46,7 @@ public:
   void apply_weight_update(const std::vector<sdouble32>& weight_delta);
   sdouble32 full_evaluation();
   sdouble32 stochastic_evaluation(bool to_seed = false, uint32 seed_value = 0u);
+
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<sdouble32>& input,
     bool reset_neuron_data = false, uint32 thread_index = 0
@@ -60,6 +61,7 @@ public:
   }
 
   rafko_mainframe::RafkoSettings& expose_settings(){
+    last_ran_evaluation = not_eval_run; /* in case some training parameters changed buffers might need to be refreshed */
     return settings;
   }
 
@@ -71,14 +73,14 @@ public:
 
   class Builder{
   public:
-    Builder(rafko_net::RafkoNet neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
+    Builder(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
     Builder& select_platform(uint32 platform_index = 0u);
     Builder& select_device(cl_device_type type = CL_DEVICE_TYPE_GPU, uint32 device_index = 0u);
     std::unique_ptr<RafkoGPUContext> build();
 
   private:
     rafko_mainframe::RafkoSettings settings;
-    rafko_net::RafkoNet network;
+    rafko_net::RafkoNet& network;
     std::vector<cl::Platform> platforms;
     std::vector<cl::Device> devices;
     uint32 selected_platform = 0u;
@@ -88,12 +90,11 @@ private:
 
   RafkoGPUContext(
     cl::Context& context_, cl::Device& device_,
-    rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet&& neural_network_
+    rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet& neural_network_
   );
 
-  google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings;
-  rafko_net::RafkoNet network;
+  rafko_net::RafkoNet& network;
   std::unique_ptr<rafko_net::Solution> network_solution;
   std::shared_ptr<rafko_net::SolutionSolver> agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> environment;
@@ -114,19 +115,25 @@ private:
     not_eval_run, full_eval_run, random_eval_run
   }last_ran_evaluation = not_eval_run;
 
-  uint32 used_sequence_truncation;
-  uint32 used_minibatch_size;
-
   void upload_weight_table_to_device();
   void refresh_objective();
+  bool last_random_eval_was_seeded = false;
+  uint32 last_used_seed;
+  /* Somebody tell me what is the least propable value of a random seed one can use,
+   * so I could initialize this poor fella with it?!
+   */
+
   std::vector<cl::Event> upload_agent_inputs(
     uint32 sequence_start_index, uint32 buffer_sequence_start_index, uint32 sequences_to_upload
   );
   std::vector<cl::Event> upload_labels(
     uint32 sequence_start_index, uint32 buffer_sequence_start_index,
-    uint32 sequences_to_upload, uint32 buffer_start_byte_offset
+    uint32 sequences_to_upload, uint32 buffer_start_byte_offset,
+    uint32 start_index_inside_sequence, uint32 sequence_truncation
   );
-  std::vector<cl::Event> upload_agent_output(uint32 sequences_to_upload);
+  std::vector<cl::Event> upload_agent_output(
+    uint32 sequences_to_upload, uint32 start_index_inside_sequence, uint32 sequence_truncation
+  );
 };
 
 } /* namespace rafko_mainframe */

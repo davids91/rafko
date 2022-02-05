@@ -71,10 +71,7 @@ public:
    *
    * @param[in]  enq      the OpenCL enqeue arguments provided by the caller
    */
-  void operator()(cl::EnqueueArgs& enq){
-    (*this)(enq, get_input_buffer());
-  }
-
+  void operator()(cl::EnqueueArgs& enq);
 
   /**
    * @brief      Constructs a buffer containing the output data of the implemented strategy phase

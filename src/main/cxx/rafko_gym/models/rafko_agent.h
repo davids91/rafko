@@ -31,10 +31,9 @@
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/models/data_pool.h"
 #include "rafko_utilities/models/const_vector_subrange.h"
-
+#include "rafko_mainframe/models/rafko_settings.h"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_net/services/solution_builder.h"
-
 #include "rafko_mainframe/models/rafko_nbuf_shape.h"
 #include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
 #endif/*(RAFKO_USES_OPENCL)*/

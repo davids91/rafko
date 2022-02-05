@@ -30,7 +30,7 @@
 namespace rafko_mainframe{
 
 RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet neural_network_, rafko_mainframe::RafkoSettings settings_)
-: settings(settings_.set_arena_ptr(&arena))
+: settings(settings_)
 , network(neural_network_)
 , network_solution(rafko_net::SolutionBuilder(settings).build(network))
 , agent(rafko_net::SolutionSolver::Builder(*network_solution, settings).build())
@@ -68,7 +68,7 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
   assert(environment->get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
 
   sdouble32 error_sum = double_literal(0.0);
-  std::cout << "CPU run: \n";
+  // std::cout << "CPU run: \n";
   for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += settings.get_max_processing_threads()){
     execution_threads.start_and_block([this, sequence_index](uint32 thread_index){
       if(environment->get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */
@@ -77,23 +77,23 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
          * */
         /* Solve the sequence under sequence_index + thread_index */
         uint32 raw_inputs_index = (sequence_index + thread_index) * (environment->get_sequence_size() + environment->get_prefill_inputs_number());
-        std::lock_guard<std::mutex> lock(cout_mutex);
+        // std::lock_guard<std::mutex> lock(cout_mutex);
 
         /* Evaluate the current sequence step by step */
         for(uint32 prefill_iterator = 0; prefill_iterator < environment->get_prefill_inputs_number(); ++prefill_iterator){
           rafko_utilities::ConstVectorSubrange<> neuron_output = agent->solve(environment->get_input_sample(raw_inputs_index), (0 == prefill_iterator), thread_index);
           for(const sdouble32& n : neuron_output)std::cout << "[" << n <<"]";
-          std::cout << std::endl;
+          // std::cout << std::endl;
           ++raw_inputs_index;
         } /* The first few labels are there to set an initial state to the network */
-        std::cout << " -/- \n";
+        // std::cout << " -/- \n";
         /* Solve the data and store the result after the inital "prefill" */
         for(uint32 sequence_iterator = 0; sequence_iterator < environment->get_sequence_size(); ++sequence_iterator){
           rafko_utilities::ConstVectorSubrange<> neuron_output = agent->solve(
             environment->get_input_sample(raw_inputs_index), ( (0u == environment->get_prefill_inputs_number())&&(0u == sequence_iterator) ), thread_index
           );
           for(const sdouble32& n : neuron_output)std::cout << "[" << n <<"]";
-          std::cout << std::endl;
+          // std::cout << std::endl;
           std::copy( /* copy the result to the eval array */
             neuron_output.begin(), neuron_output.end(),
             neuron_outputs_to_evaluate[(thread_index * environment->get_sequence_size()) + sequence_iterator].begin()
@@ -138,11 +138,11 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
       )/* sequences_to_evaluate */,
       start_index_in_sequence, sequence_truncation, neuron_outputs_to_evaluate.back()
     );
-    std::cout << "error_part: " << error_part << std::endl;
-    std::cout << "============" << std::endl;
+    // std::cout << "error_part: " << error_part << std::endl;
+    // std::cout << "============" << std::endl;
     error_sum += error_part;
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
-  std::cout << "========================" << std::endl;
+  // std::cout << "========================" << std::endl;
   return -( error_sum / static_cast<sdouble32>(sequences_to_evaluate * environment->get_sequence_size()) );
 }
 

@@ -111,6 +111,7 @@ std::vector<std::string> CostFunction::get_step_names()const  {
 cl::Program::Sources CostFunction::get_step_sources()const {
   std::string source_base = R"(
     #pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable
+
     /* https://suhorukov.blogspot.com/2011/12/opencl-11-atomic-operations-on-floating.html */
     inline void AtomicAdd(volatile __global double *source, const double operand) {
       union { unsigned long intVal; double floatVal; } prevVal, newVal;
@@ -145,7 +146,7 @@ cl::Program::Sources CostFunction::get_step_sources()const {
 
   source_base = std::regex_replace(
     source_base, std::regex("\\$\\$operation_source\\$\\$"),
-    get_operation_kernel_source("inputs[index]","inputs[input_sizes[0] + index]")
+    get_operation_kernel_source("inputs[input_sizes[0] + index]","inputs[index]")
   );
   source_base = std::regex_replace(
     source_base, std::regex("\\$\\$post_process_source\\$\\$"),
