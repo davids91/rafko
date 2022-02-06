@@ -142,28 +142,6 @@ message SlotInfo{
   repeated double info_package = 11;
 }
 
-/**
- * @brief      Service hyperparameters describe the context in which deep learning services
- *             operate. It contains all the neccessary set of variables to function in the
- *             context of deep learning. System relevant parameters like the number of working threads
- *             are decided from the server configuration.
- */
-message ServiceHyperparameters{
-  double learning_rate = 10;
-  uint32 minibatch_size = 11;
-  uint32 memory_truncation = 12;
-  rafko_gym.Training_strategy training_strategies = 13;
-
-  double alpha = 20;
-  double beta = 21;
-  double gamma = 22;
-  double delta = 23;
-  double epsilon = 24; /* very small positive value almost greater, than zero */
-  double zetta = 25; /* Commonly used for oscillation dampening purposes */
-  double lambda = 31;
-  double beta_2 = 45; /* a second alphabet shall be started for algorithms requiring two variants of parameters */
-};
-
 /** @brief      The structure of a service slot encapsulating a channel in which deep learning related requests
  *              can be run.
  */
@@ -172,7 +150,7 @@ message ServiceSlot{
   uint32 state = 2; /* A bitfield storing 0 or 1 at the positions given in enum @Slot_state_values, except when everything is fine, then the value @serv_slot_ok is used */
   Slot_type type = 10; /* Must be set on client side */
 
-  ServiceHyperparameters hypers = 21;
+  rafko_gym.TrainingHyperparameters hypers = 21;
   rafko_net.RafkoNet network = 22;
   rafko_gym.DataSet test_set = 23;
   rafko_gym.DataSet training_set = 24;

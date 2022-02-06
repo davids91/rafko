@@ -25,7 +25,6 @@
 #include <utility>
 
 #include "rafko_protocol/training.pb.h"
-#include "rafko_protocol/deep_learning_service.pb.h"
 
 namespace rafko_mainframe{
 
@@ -216,7 +215,7 @@ public:
     return *this;
   }
 
-  RafkoSettings& set_hypers(rafko_mainframe::ServiceHyperparameters hypers_){
+  RafkoSettings& set_hypers(rafko_gym::TrainingHyperparameters hypers_){
     hypers.CopyFrom(hypers_);
     return *this;
   }
@@ -265,7 +264,7 @@ private:
   sdouble32 sqrt_epsilon = std::sqrt(double_literal(1e-15));
   sdouble32 device_max_megabytes = double_literal(2048);
   google::protobuf::Arena* arena_ptr = nullptr;
-  rafko_mainframe::ServiceHyperparameters hypers = rafko_mainframe::ServiceHyperparameters();
+  rafko_gym::TrainingHyperparameters hypers = rafko_gym::TrainingHyperparameters();
   mutable uint32 learning_rate_decay_iteration_cache = 0u;
   mutable uint32 learning_rate_decay_index_cache = 0u;
   std::vector<std::pair<uint32, sdouble32>> learning_rate_with_decay;
