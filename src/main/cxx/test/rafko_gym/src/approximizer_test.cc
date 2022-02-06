@@ -25,7 +25,7 @@
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_gym/services/function_factory.h"
-#include "rafko_gym/models/rafko_dataset_cost.h"
+#include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_gym/services/rafko_net_approximizer.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
@@ -184,7 +184,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     /* Sequence size */4
   ));
 
-  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     settings, rafko_gym::cost_function_squared_error
   );
   context->set_objective(objective);

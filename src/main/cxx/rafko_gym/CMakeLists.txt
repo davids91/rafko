@@ -16,7 +16,7 @@ set(GYM_HEADER_MODELS
   models/rafko_environment.h
   models/rafko_objective.h
   models/rafko_dataset_wrapper.h
-  models/rafko_dataset_cost.h
+  models/rafko_cost.h
 )
 set(GYM_HEADER_SERVICES
   services/cost_function.h
@@ -31,7 +31,7 @@ target_sources(rafko_gym
   INTERFACE ${GYM_INTERFACE_SERVICES}
   PUBLIC ${GYM_HEADERS}
   PRIVATE
-  models/src/rafko_dataset_cost.cc
+  models/src/rafko_cost.cc
   models/src/rafko_dataset_wrapper.cc
   services/src/backpropagation_queue_wrapper.cc
   services/src/cost_function.cc

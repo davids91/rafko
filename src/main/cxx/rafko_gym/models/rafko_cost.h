@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef RAFKO_DATASET_COST_H
-#define RAFKO_DATASET_COST_H
+#ifndef RAFKO_COST_H
+#define RAFKO_COST_H
 
 #include "rafko_global.h"
 
@@ -42,16 +42,16 @@ namespace rafko_gym{
 /**
  * @brief      Error Statistics for a @RafkoDatasetWrapper
  */
-class RAFKO_FULL_EXPORT RafkoDatasetCost : public RafkoObjective
+class RAFKO_FULL_EXPORT RafkoCost : public RafkoObjective
 {
 public:
-  RafkoDatasetCost(rafko_mainframe::RafkoSettings& settings_, std::shared_ptr<rafko_gym::CostFunction> cost_function_)
+  RafkoCost(rafko_mainframe::RafkoSettings& settings_, std::shared_ptr<rafko_gym::CostFunction> cost_function_)
   : settings(settings_)
   , cost_function(cost_function_)
   , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   { }
 
-  RafkoDatasetCost(rafko_mainframe::RafkoSettings& settings_, rafko_gym::Cost_functions the_function)
+  RafkoCost(rafko_mainframe::RafkoSettings& settings_, rafko_gym::Cost_functions the_function)
   : settings(settings_)
   , cost_function(rafko_gym::FunctionFactory::build_cost_function(the_function, settings_))
   , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
@@ -110,7 +110,7 @@ public:
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes()const  {
     return cost_function->get_output_shapes();
   }
-  
+
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space()  {
     return cost_function->get_solution_space();
   }
@@ -143,4 +143,4 @@ private:
 
 } /* namespace rafko_gym */
 
-#endif /* RAFKO_DATASET_COST_H */
+#endif /* RAFKO_COST_H */

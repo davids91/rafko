@@ -23,7 +23,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_gym/models/rafko_dataset_cost.h"
+#include "rafko_gym/models/rafko_cost.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_utilities/models/const_vector_subrange.h"
 #include "rafko_mainframe/models/rafko_settings.h"

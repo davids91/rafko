@@ -24,7 +24,7 @@
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
-#include "rafko_gym/models/rafko_dataset_cost.h"
+#include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_mainframe/services/rafko_gpu_context.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
@@ -208,7 +208,7 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
     rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
-    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       settings, rafko_gym::cost_function_squared_error
     );
 
@@ -270,7 +270,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
     rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
-    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       settings, rafko_gym::cost_function_mse
     );
 
@@ -335,7 +335,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
     rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
-    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       settings, rafko_gym::cost_function_cross_entropy
     );
 
@@ -401,7 +401,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
     rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
 
-    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       settings, rafko_gym::cost_function_binary_cross_entropy
     );
 
@@ -562,7 +562,7 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
   std::unique_ptr<rafko_net::SolutionSolver> reference_agent(rafko_net::SolutionSolver::Builder(*solution, settings).build());
 
   for(uint32 variant = 0u; variant < 10u; ++variant){
-    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       settings, rafko_gym::cost_function_squared_error
     );
     std::unique_ptr<rafko_gym::CostFunction> cost_sqr_error = rafko_gym::FunctionFactory::build_cost_function(
@@ -673,7 +673,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weights]
   );
   rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
 
-  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     settings, rafko_gym::cost_function_cross_entropy
   );
   reference_context.set_objective(objective);
@@ -738,7 +738,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weights]
   );
   rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
 
-  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoDatasetCost>(
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     settings, rafko_gym::cost_function_cross_entropy
   );
   reference_context.set_objective(objective);

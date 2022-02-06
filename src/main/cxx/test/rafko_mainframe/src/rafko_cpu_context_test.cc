@@ -28,7 +28,7 @@
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
 #include "rafko_gym/services/cost_function_mse.h"
-#include "rafko_gym/models/rafko_dataset_cost.h"
+#include "rafko_gym/models/rafko_cost.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
 
@@ -49,9 +49,9 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
-  rafko_gym::RafkoDatasetCost reference_cost(settings, cost);
+  rafko_gym::RafkoCost reference_cost(settings, cost);
   rafko_mainframe::RafkoCPUContext context(*network, settings);
-  context.set_objective(std::make_unique<rafko_gym::RafkoDatasetCost>(settings, cost));
+  context.set_objective(std::make_unique<rafko_gym::RafkoCost>(settings, cost));
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
@@ -95,13 +95,13 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
-  rafko_gym::RafkoDatasetCost reference_cost(settings, cost);
+  rafko_gym::RafkoCost reference_cost(settings, cost);
   rafko_mainframe::RafkoCPUContext context(*network, settings);
 
   (void)context.expose_settings().set_memory_truncation(dataset_wrap.get_sequence_size() / 2); /*!Note: So overall error value can just be halved because of this */
   settings = context.expose_settings();
 
-  context.set_objective(std::make_unique<rafko_gym::RafkoDatasetCost>(settings, cost));
+  context.set_objective(std::make_unique<rafko_gym::RafkoCost>(settings, cost));
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   sdouble32 environment_error = context.stochastic_evaluation(true, seed);

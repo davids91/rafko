@@ -14,7 +14,7 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/models/rafko_dataset_cost.h"
+#include "rafko_gym/models/rafko_cost.h"
 
 #include <math.h>
 #include <mutex>
@@ -23,9 +23,9 @@
 
 namespace rafko_gym{
 
-rafko_utilities::DataPool<sdouble32> RafkoDatasetCost::common_datapool(1,1);
+rafko_utilities::DataPool<sdouble32> RafkoCost::common_datapool(1,1);
 
-sdouble32 RafkoDatasetCost::set_feature_for_label(const rafko_gym::RafkoEnvironment& environment, uint32 sample_index, const std::vector<sdouble32>& neuron_data){
+sdouble32 RafkoCost::set_feature_for_label(const rafko_gym::RafkoEnvironment& environment, uint32 sample_index, const std::vector<sdouble32>& neuron_data){
   assert(environment.get_number_of_label_samples() > sample_index);
   return cost_function->get_feature_error(
     environment.get_label_sample(sample_index), neuron_data,
@@ -33,7 +33,7 @@ sdouble32 RafkoDatasetCost::set_feature_for_label(const rafko_gym::RafkoEnvironm
   );
 }
 
-sdouble32 RafkoDatasetCost::set_features_for_labels(
+sdouble32 RafkoCost::set_features_for_labels(
   const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
   uint32 neuron_buffer_start_index, uint32 raw_start_index, uint32 labels_to_evaluate
 ){
@@ -49,7 +49,7 @@ sdouble32 RafkoDatasetCost::set_features_for_labels(
 
   sdouble32 error_sum = double_literal(0.0);
   std::mutex sum_mutex;
-  error_calculation_threads.start_and_block( std::bind( &RafkoDatasetCost::accumulate_error_sum, this,
+  error_calculation_threads.start_and_block( std::bind( &RafkoCost::accumulate_error_sum, this,
     std::ref(error_labels), std::ref(error_sum), labels_to_evaluate,
     std::ref(sum_mutex), std::placeholders::_1
   ) );
@@ -57,7 +57,7 @@ sdouble32 RafkoDatasetCost::set_features_for_labels(
   return error_sum;
 }
 
-sdouble32 RafkoDatasetCost::set_features_for_sequences(
+sdouble32 RafkoCost::set_features_for_sequences(
   const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
   uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation
@@ -72,7 +72,7 @@ sdouble32 RafkoDatasetCost::set_features_for_sequences(
   return error_sum;
 }
 
-sdouble32 RafkoDatasetCost::set_features_for_sequences(
+sdouble32 RafkoCost::set_features_for_sequences(
   const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
   uint32 neuron_buffer_start_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
   uint32 start_index_in_sequence, uint32 sequence_truncation, std::vector<sdouble32>& tmp_data
@@ -106,7 +106,7 @@ sdouble32 RafkoDatasetCost::set_features_for_sequences(
 
   sdouble32 error_sum = double_literal(0.0);
   std::mutex sum_mutex;
-  error_calculation_threads.start_and_block( std::bind( &RafkoDatasetCost::accumulate_error_sum, this,
+  error_calculation_threads.start_and_block( std::bind( &RafkoCost::accumulate_error_sum, this,
     std::ref(error_labels), std::ref(error_sum), labels_to_evaluate,
     std::ref(sum_mutex), std::placeholders::_1
   ) );
@@ -114,7 +114,7 @@ sdouble32 RafkoDatasetCost::set_features_for_sequences(
   return error_sum;
 }
 
-void RafkoDatasetCost::accumulate_error_sum(std::vector<sdouble32>& source, sdouble32& target, uint32 length, std::mutex& error_mutex, uint32 thread_index){
+void RafkoCost::accumulate_error_sum(std::vector<sdouble32>& source, sdouble32& target, uint32 length, std::mutex& error_mutex, uint32 thread_index){
   sdouble32 local_error = double_literal(0.0);
   uint32 errors_to_sum_in_one_thread = (length / settings.get_sqrt_of_solve_threads()) + 1;
   uint32 error_start = errors_to_sum_in_one_thread * thread_index;

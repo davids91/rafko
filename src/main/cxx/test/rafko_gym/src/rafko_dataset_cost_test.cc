@@ -22,7 +22,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_gym/models/rafko_dataset_cost.h"
+#include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/services/cost_function_mse.h"
 
 #include "test/test_utility.h"
@@ -43,9 +43,9 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
 
   std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */,1/* feature size */,number_of_sequences, sequence_size, 0/*prefill_size*/, expected_label));
 
-  /* Create @RafkoDatasetCost from @DataSet */
+  /* Create @RafkoCost from @DataSet */
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
-  rafko_gym::RafkoDatasetCost data_objective(settings, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
+  rafko_gym::RafkoCost data_objective(settings, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
   REQUIRE( 0 == dataset_wrap.get_prefill_inputs_number() );
   REQUIRE( number_of_sequences == dataset_wrap.get_number_of_sequences() );
 

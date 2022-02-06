@@ -28,7 +28,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
-#include "rafko_gym/models/rafko_dataset_cost.h"
+#include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/models/rafko_agent.h"
