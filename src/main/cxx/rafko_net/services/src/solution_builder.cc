@@ -34,6 +34,7 @@
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/neuron_router.h"
 #include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/services/rafko_net_feature_executor.h"
 
 #include "rafko_net/services/partial_solution_builder.h"
 
@@ -178,7 +179,6 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
       }/*if(input sizes match)*/
     }/* kernel */
   )";
-  /* TODO: Implement features */
   source_base = std::regex_replace(source_base, std::regex("\\$\\$output_start\\$\\$"), std::to_string(
     (solution.network_memory_length()-1) * solution.neuron_number()
   ));
@@ -194,6 +194,7 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
   std::function<std::string(uint32, std::string)> past_reach_guard = [](uint32 past_reach, std::string content){
     return "( (min(current_max_backreach,max_backreach) < " + std::to_string(past_reach) + " )?(0.0):( " + content + ") )";
   };
+  bool feature_locals_declared = false;
   for(const PartialSolution& partial : solution.partial_solutions()){
     SynapseIterator<InputSynapseInterval> partial_input_synapses(partial.input_data());
     uint32 input_synapse_index = 0u;
@@ -289,11 +290,18 @@ std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, s
       inner_neuron_operation += "\n";
       neuron_operations += inner_neuron_operation;
     }/*for(each inner neuron)*/
+
+    if(0 < partial.solved_features_size()){ /* if the partial solves any feature */
+      for(const FeatureGroup& feature : partial.solved_features()){
+        RafkoNetFeatureExecutor::add_kernel_code_to(neuron_operations, feature, "output_start", !feature_locals_declared);
+        feature_locals_declared = true;
+      }
+    }
+
     weight_table_offset += partial.weight_table_size();
     /*!Note: Because each partial has a different weight table, an offset is required to keep track in case there are multiple partial solutions
      * inside the solution.
      */
-    /* TODO: Accomodate softmax here for the relevant partial */
   }/*for(every partial in the solution)*/
   source_base = std::regex_replace(source_base, std::regex("\\$\\$name\\$\\$"), name);
   source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_array_size\\$\\$"), std::to_string(solution.neuron_number()));

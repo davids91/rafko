@@ -19,7 +19,10 @@
 #include <limits>
 #include <math.h>
 #include <mutex>
-
+#if(RAFKO_USES_OPENCL)
+#include <string>
+#include <regex>
+#endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_net/services/synapse_iterator.h"
 
 namespace rafko_net {
@@ -71,5 +74,55 @@ void RafkoSoftmaxFeature::calculate(std::vector<sdouble32>& neuron_data, const g
     }
   });
 }
+
+#if(RAFKO_USES_OPENCL)
+void RafkoSoftmaxFeature::add_kernel_code_to(std::string& operations, const FeatureGroup& feature, std::string output_start_index, bool declare_locals){
+  SynapseIterator<> synapse_iterator(feature.relevant_neurons());
+  std::regex index_regex("\\$\\$index\\$\\$");
+
+  std::function<std::string(uint32)> index_string = [output_start_index](uint32 index){
+    return (output_start_index + " + " + std::to_string(index));
+  }; /*!Note: merges the provided output start index and the neuron index and provides an addition */
+
+  std::function<std::string(std::string,uint32)> process_index_values = [output_start_index, index_string, index_regex](std::string input_text, uint32 index){
+    uint32 matches_count = 1u; /* to start the iteration */
+    std::string text = input_text;
+    while(0u < matches_count){
+      text = std::regex_replace(text, index_regex, index_string(index));
+      matches_count = std::distance( /* https://stackoverflow.com/questions/8283735/count-number-of-matches */
+        std::sregex_iterator(text.begin(), text.end(), index_regex),
+        std::sregex_iterator()
+      );
+    }
+    return text;
+  }; /*!Note: replaces index regex until there are no more matches */
+
+  /* Add the declaration into the  kernel */
+  if(declare_locals){
+    operations += R"( double max_val = DBL_MIN;
+      double exp_sum = 0.0;
+    )";
+  }else{
+    operations += R"( max_val = DBL_MIN;
+      exp_sum = 0.0;
+    )";
+  }
+
+  /* find max and expsum */
+  synapse_iterator.iterate([&operations, process_index_values](uint32 neuron_index){
+    operations += process_index_values(R"(max_val = max(max_val, outputs[$$index$$]);
+       exp_sum += exp(outputs[$$index$$]);
+     )", neuron_index);
+  });
+
+  /* apply softmax */
+  synapse_iterator.iterate([&operations, process_index_values](uint32 neuron_index){
+    operations += process_index_values("outputs[$$index$$] = exp(outputs[$$index$$] - max_val) / (exp_sum / exp(max_val));\n\n", neuron_index);
+  });
+
+  operations += "\n\n";
+}
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
 } /* namespace rafko_net */

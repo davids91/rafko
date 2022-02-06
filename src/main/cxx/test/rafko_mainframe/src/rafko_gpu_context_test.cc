@@ -19,6 +19,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
+#include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
@@ -44,7 +45,7 @@ TEST_CASE("Testing if GPU Context is able to build a valid openCL environment", 
   );
 }
 
-TEST_CASE("Testing if a standalone solution is working as intended with the GPU context","[context][GPU][solve]"){
+TEST_CASE("Testing if standalone solution is working as intended with the GPU context","[context][GPU][solve]"){
   google::protobuf::Arena arena;
   uint32 sequence_size = 6u;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
@@ -79,7 +80,51 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
 
-    (void)rafko_net::SolutionBuilder::get_kernel_for_solution(*reference_solution, "aw_yiss", sequence_size, 0, settings);
+    for(uint32 result_index = 0; result_index < reference_result.size(); ++result_index){
+      CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
+    }
+  }/*for(50 variants)*/
+}
+
+TEST_CASE("Testing if standalone solution is working as intended with the GPU context even with softmax features","[context][GPU][features]"){
+  google::protobuf::Arena arena;
+  uint32 sequence_size = 6u;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  for(uint32 variant = 0u; variant < 50u; ++variant){
+    rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+      .input_size(2).expected_input_range(double_literal(1.0))
+      .allowed_transfer_functions_by_layer(
+        {
+          {rafko_net::transfer_function_identity},
+          {rafko_net::transfer_function_sigmoid},
+          {rafko_net::transfer_function_tanh},
+          {rafko_net::transfer_function_elu},
+          {rafko_net::transfer_function_selu},
+          {rafko_net::transfer_function_relu},
+        }
+      )
+      .add_feature_to_layer(2, rafko_net::neuron_group_feature_softmax)
+      .add_feature_to_layer(3, rafko_net::neuron_group_feature_softmax)
+      .add_feature_to_layer(4, rafko_net::neuron_group_feature_softmax)
+      .dense_layers({2,2,2,2,2,2});
+    std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
+    CHECK_NOTHROW(
+      context = (
+        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
+          .select_platform().select_device()
+          .build()
+      )
+    );
+
+    std::unique_ptr<rafko_net::Solution> reference_solution = rafko_net::SolutionBuilder(settings).build(*network);
+    std::unique_ptr<rafko_net::SolutionSolver> reference_agent = rafko_net::SolutionSolver::Builder(*reference_solution, settings).build();
+    std::vector<sdouble32> network_input(network->input_data_size(), (rand()%10));
+    rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
+    rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
+
     for(uint32 result_index = 0; result_index < reference_result.size(); ++result_index){
       CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
     }
@@ -737,7 +782,5 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weights]
     }/*for(5 consecutive steps)*/
   }/*for(10 variants)*/
 }
-
-/* TODO: test features as well */
 
 } /* namespace rako_gym_test */
