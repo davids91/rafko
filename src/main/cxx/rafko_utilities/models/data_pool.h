@@ -26,12 +26,12 @@
 #include <algorithm>
 
 namespace rafko_utilities{
-  
+
 /**
  * @brief      This data container allocates buffers on-demand and handles
  *              data acess. The container is thread-safe.
  */
-template<class T>
+template<class T = sdouble32>
 class RAFKO_FULL_EXPORT DataPool{
 public:
   DataPool(uint32 pool_size, uint32 expected_buffer_size)

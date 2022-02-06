@@ -25,7 +25,7 @@
 
 namespace rafko_net{
 
-SolutionSolver::Builder::Builder(const Solution& to_solve, rafko_mainframe::RafkoSettings& settings)
+SolutionSolver::Builder::Builder(const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings)
 :  solution(to_solve)
 ,  settings(settings)
 {
@@ -46,7 +46,8 @@ SolutionSolver::Builder::Builder(const Solution& to_solve, rafko_mainframe::Rafk
 }
 
 SolutionSolver::SolutionSolver(
-  const Solution& to_solve, rafko_mainframe::RafkoSettings& settings_, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
+  const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings_,
+  std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
   uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
 ): rafko_gym::RafkoAgent(to_solve, settings_, max_tmp_data_needed, max_tmp_data_needed_per_thread, settings_.get_max_processing_threads())
 ,  settings(settings_)

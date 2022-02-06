@@ -51,7 +51,7 @@ class RAFKO_FULL_EXPORT RafkoAgent
 {
 public:
   RafkoAgent(
-    const rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_,
+    const rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_,
     uint32 required_temp_data_size_, uint32 required_temp_data_number_per_thread_,
     uint32 max_threads_ = 1u
   ):settings(settings_)
@@ -193,7 +193,7 @@ public:
 #endif/*(RAFKO_USES_OPENCL)*/
 
 protected:
-  rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& settings;
   const rafko_net::Solution& solution;
   uint32 required_temp_data_number_per_thread;
   uint32 required_temp_data_size;

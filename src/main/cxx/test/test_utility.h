@@ -72,28 +72,31 @@ extern void manaual_fully_connected_network_result(
  * @brief      Checks if the inputs are pointing to the same data and weight values are matching in the given
  *             @RafkoNet and @Solution
  *
- * @param      net       The net
+ * @param[in]  net       The net
  * @param      solution  The solution
  */
-extern void check_if_the_same(rafko_net::RafkoNet& net, rafko_net::Solution& solution);
+extern void check_if_the_same(const rafko_net::RafkoNet& net, const rafko_net::Solution& solution);
 
 /**
  * @brief      Prints weights for the given arguments
  *
- * @param      net       The net
+ * @param[in]  net       The net
  * @param      solution  The solution
  */
-extern void print_weights(rafko_net::RafkoNet& net, rafko_net::Solution& solution);
+extern void print_weights(const rafko_net::RafkoNet& net, const rafko_net::Solution& solution);
 
 /**
  * @brief      Prints a training sample of the given data set, under the given index. Expects 2 inputs and one output!
  *
  * @param[in]  sample_sequence_index  The sample sequence index
  * @param      data_set               The data set
- * @param      net                    The net
- * @param      settings               The service settings
+ * @param[in]  net                    The net
+ * @param[in]  settings               The service settings
  */
-extern void print_training_sample(uint32 sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set, rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings);
+extern void print_training_sample(
+  uint32 sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
+  const rafko_net::RafkoNet& net, const rafko_mainframe::RafkoSettings& settings
+);
 
 /**
  * @brief      Creates a normalized dataset for addition: basically adding two numbers together.

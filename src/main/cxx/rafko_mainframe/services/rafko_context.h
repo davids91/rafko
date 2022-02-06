@@ -132,7 +132,7 @@ public:
    *
    * @return      a reference of the referenced network
    */
-  virtual rafko_net::RafkoNet& expose_network() = 0;
+  virtual const rafko_net::RafkoNet& expose_network() = 0;
 };
 
 } /* namespace rafko_mainframe */

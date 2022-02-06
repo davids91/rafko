@@ -35,7 +35,7 @@ namespace rafko_net {
 class PartialSolutionSolver{
 
 public:
-  PartialSolutionSolver(const PartialSolution& partial_solution, rafko_mainframe::RafkoSettings& settings)
+  PartialSolutionSolver(const PartialSolution& partial_solution, const rafko_mainframe::RafkoSettings& settings)
   :  detail(partial_solution)
   ,  internal_weight_iterator(detail.weight_indices())
   ,  input_iterator(detail.input_data())

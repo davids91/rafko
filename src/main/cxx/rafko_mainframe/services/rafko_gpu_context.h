@@ -65,7 +65,7 @@ public:
     return settings;
   }
 
-  rafko_net::RafkoNet& expose_network(){
+  const rafko_net::RafkoNet& expose_network(){
     return network;
   }
 

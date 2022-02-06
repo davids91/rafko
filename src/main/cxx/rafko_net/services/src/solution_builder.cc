@@ -126,7 +126,10 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
 }
 
 #if(RAFKO_USES_OPENCL)
-std::string SolutionBuilder::get_kernel_for_solution(const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_input_num, rafko_mainframe::RafkoSettings& settings){
+std::string SolutionBuilder::get_kernel_for_solution(
+  const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_input_num,
+  const rafko_mainframe::RafkoSettings& settings
+){
   /*!Note: Network solve starts from the first memory/sequence slot of the outputs buffer
    * which is calculated from get_global_id(0) and the size of the max(sequence, neuron_memory);
    * UNLESS mode variable input is non-zero.

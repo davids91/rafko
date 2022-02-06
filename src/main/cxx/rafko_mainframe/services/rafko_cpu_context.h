@@ -35,7 +35,7 @@ namespace rafko_mainframe {
 class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
 public:
 
-  RafkoCPUContext(rafko_net::RafkoNet neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
+  RafkoCPUContext(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
   ~RafkoCPUContext() = default;
 
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
@@ -106,13 +106,13 @@ public:
     return settings;
   }
 
-  rafko_net::RafkoNet& expose_network(){
+  const rafko_net::RafkoNet& expose_network(){
     return network;
   }
 
 private:
   rafko_mainframe::RafkoSettings settings;
-  rafko_net::RafkoNet network;
+  rafko_net::RafkoNet& network;
   std::unique_ptr<rafko_net::Solution> network_solution;
   std::unique_ptr<rafko_net::SolutionSolver> agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> environment;

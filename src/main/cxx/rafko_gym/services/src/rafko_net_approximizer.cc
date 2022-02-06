@@ -26,7 +26,7 @@ namespace rafko_gym{
 void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
   sdouble32 gradient_overview = get_gradient_for_all_weights() * context.expose_settings().get_learning_rate(iteration);
   sdouble32 greatest_weight_value = double_literal(0.0);
-
+  std::vector<sdouble32>& tmp_weight_gradients = tmp_data_pool.reserve_buffer(context.expose_network().weight_table_size());
   for(uint32 weight_index = 0; weight_index < tmp_weight_gradients.size(); ++weight_index){
     tmp_weight_gradients[weight_index] = get_single_weight_gradient(weight_index);
     if(greatest_weight_value < std::abs(tmp_weight_gradients[weight_index]))
@@ -42,6 +42,7 @@ void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
   }
 
   convert_direction_to_gradient(tmp_weight_gradients,true);
+  tmp_data_pool.release_buffer(tmp_weight_gradients);
   ++iteration;
 }
 
@@ -49,6 +50,7 @@ void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<sdouble32>&
   if(context.expose_network().weight_table_size() == static_cast<sint32>(direction.size())){
     sdouble32 error_negative_direction;
     sdouble32 error_positive_direction;
+    std::vector<sdouble32>& tmp_weight_table = tmp_data_pool.reserve_buffer(context.expose_network().weight_table_size());
 
     for(uint32 weight_index = 0; weight_index < tmp_weight_table.size(); ++weight_index){
       tmp_weight_table[weight_index] = context.expose_network().weight_table(weight_index) - direction[weight_index];
@@ -77,13 +79,15 @@ void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<sdouble32>&
      * the gradient seems to be flat enough to slow training down, so
      * weight epsilon will be increased during approximation to help explore surrounding settings more.
      */
-
+    std::vector<sdouble32>& tmp_weight_gradients = tmp_data_pool.reserve_buffer(context.expose_network().weight_table_size());
     for(uint32 weight_index = 0; weight_index < tmp_weight_table.size(); ++weight_index){
       tmp_weight_gradients[weight_index] = ( ( error_positive_direction - error_negative_direction ) / (max_error) );
        if(save_to_fragment)add_to_fragment( weight_index, (tmp_weight_gradients[weight_index] * direction[weight_index]) );
       tmp_weight_table[weight_index] -= direction[weight_index];
     }
     context.set_network_weights(tmp_weight_table);
+    tmp_data_pool.release_buffer(tmp_weight_gradients);
+    tmp_data_pool.release_buffer(tmp_weight_table);
   }else throw std::runtime_error("Incompatible direction given to approximate for!");
 }
 
@@ -106,6 +110,8 @@ sdouble32 RafkoNetApproximizer::get_single_weight_gradient(uint32 weight_index){
   context.pop_state();
 
   /* Calculate the gradient and revert weight modification and the error state with it */
+  // if(0 < std::abs((gradient - new_error_state)))
+  //   std::cout << "w[" << weight_index << "]: " << std::abs(gradient - new_error_state) << ";";
   gradient = -(gradient - new_error_state) * (current_epsilon_double);
   context.set_network_weight( weight_index, (context.expose_network().weight_table(weight_index) + current_epsilon) );
 
@@ -118,6 +124,7 @@ sdouble32 RafkoNetApproximizer::get_gradient_for_all_weights(){
   sdouble32 error_positive_direction;
   const sdouble32 current_epsilon = context.expose_settings().get_sqrt_epsilon();
   const sdouble32 current_epsilon_double = current_epsilon * double_literal(2.0);
+  std::vector<sdouble32>& tmp_weight_table = tmp_data_pool.reserve_buffer(context.expose_network().weight_table_size());
 
   for(uint32 weight_index = 0; weight_index < tmp_weight_table.size(); ++weight_index){
     tmp_weight_table[weight_index] = context.expose_network().weight_table(weight_index) + current_epsilon;
@@ -141,6 +148,7 @@ sdouble32 RafkoNetApproximizer::get_gradient_for_all_weights(){
     tmp_weight_table[weight_index] += current_epsilon;
   } /* Revert weight modifications and the error state with it */
   context.set_network_weights(tmp_weight_table);
+  tmp_data_pool.release_buffer(tmp_weight_table);
   return (gradient);
 }
 
@@ -205,6 +213,7 @@ void RafkoNetApproximizer::add_to_fragment(uint32 weight_index, sdouble32 gradie
 
 void RafkoNetApproximizer::apply_fragment(){
   uint32 fragment_value_index = 0;
+  std::vector<sdouble32>& tmp_weight_table = tmp_data_pool.reserve_buffer(context.expose_network().weight_table_size());
   std::fill(tmp_weight_table.begin(),tmp_weight_table.end(), double_literal(0.0));
 
   if(1 == gradient_fragment.weight_synapses_size()){
@@ -221,8 +230,8 @@ void RafkoNetApproximizer::apply_fragment(){
   }
 
   context.apply_weight_update(tmp_weight_table);
+  tmp_data_pool.release_buffer(tmp_weight_table);
   gradient_fragment = GradientFragment();
-  context.full_evaluation();
 }
 
 } /* namespace rafko_gym */

@@ -189,7 +189,7 @@ void manaual_fully_connected_network_result(
   } /* For every Neuron */
 }
 
-void check_if_the_same(rafko_net::RafkoNet& net, rafko_net::Solution& solution){
+void check_if_the_same(const rafko_net::RafkoNet& net, const rafko_net::Solution& solution){
   uint32 input_synapse_offset;
   uint32 weight_synapse_offset;
   uint32 neuron_synapse_element_iterator;
@@ -275,7 +275,7 @@ void check_if_the_same(rafko_net::RafkoNet& net, rafko_net::Solution& solution){
   } /*(uint32 neuron_iterator = 0; neuron_iterator < net.neuron_array_size(); ++neuron_iterator)*/
 }
 
-void print_weights(rafko_net::RafkoNet& net, rafko_net::Solution& solution){
+void print_weights(const rafko_net::RafkoNet& net, const rafko_net::Solution& solution){
   std::cout << "net("<< net.weight_table_size() << " weights):";
   for(sint32 weight_index = 0; weight_index < net.weight_table_size(); ++weight_index){
     std::cout << "["<< net.weight_table(weight_index) <<"]";
@@ -291,7 +291,7 @@ void print_weights(rafko_net::RafkoNet& net, rafko_net::Solution& solution){
 
 void print_training_sample(
   uint32 sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
-  rafko_net::RafkoNet& net, rafko_mainframe::RafkoSettings& settings
+  const rafko_net::RafkoNet& net, const rafko_mainframe::RafkoSettings& settings
 ){
   std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(net);
   std::unique_ptr<rafko_net::SolutionSolver> sample_solver(

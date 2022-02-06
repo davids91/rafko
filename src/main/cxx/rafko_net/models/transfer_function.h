@@ -35,7 +35,7 @@ namespace rafko_net{
  */
 class TransferFunction{
 public:
-  TransferFunction(rafko_mainframe::RafkoSettings& settings)
+  TransferFunction(const rafko_mainframe::RafkoSettings& settings)
   : settings(settings)
   { }
 
@@ -89,7 +89,7 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
-  rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& settings;
 };
 
 } /* namespace rafko_net */

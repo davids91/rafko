@@ -53,8 +53,7 @@ public:
   RafkoNetApproximizer(rafko_mainframe::RafkoContext& context_, uint32 stochastic_evaluation_loops_ = 1u)
   : context(context_)
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
-  , tmp_weight_table(context.expose_network().weight_table_size())
-  , tmp_weight_gradients(context.expose_network().weight_table_size())
+  , tmp_data_pool(2u, context.expose_network().weight_table_size())
   { }
 
   RafkoNetApproximizer(const RafkoNetApproximizer& other) = delete;/* Copy constructor */
@@ -140,6 +139,11 @@ public:
       min_test_error = fitness;
       min_test_error_was_at_iteration = iteration;
     }
+    error_estimation = -fitness;
+  }
+
+  sdouble32 get_error_estimation(){
+    return error_estimation;
   }
 
   /**
@@ -168,10 +172,10 @@ private:
   uint32 stochastic_evaluation_loops;
 
   uint32 iteration = 1u;
-  std::vector<sdouble32> tmp_weight_table;
-  std::vector<sdouble32> tmp_weight_gradients;
+  rafko_utilities::DataPool<> tmp_data_pool;
   sdouble32 epsilon_addition = double_literal(0.0);
   sdouble32 min_test_error = std::numeric_limits<sdouble32>::max();
+  sdouble32 error_estimation = double_literal(1.0);
   uint32 min_test_error_was_at_iteration = 0u;
 
   /**
@@ -183,7 +187,9 @@ private:
     sdouble32 fitness = double_literal(0.0);
     for(uint32 i = 0; i < stochastic_evaluation_loops; ++i)
       fitness += context.stochastic_evaluation(iteration);
-    return fitness / static_cast<sdouble32>(stochastic_evaluation_loops);
+    sdouble32 result_fitness = fitness / static_cast<sdouble32>(stochastic_evaluation_loops);
+    error_estimation = (error_estimation + -result_fitness)/double_literal(2.0);
+    return result_fitness;
   }
 
   /**

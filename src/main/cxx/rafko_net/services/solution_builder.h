@@ -55,7 +55,7 @@ public:
    *
    * @param[in]  settings  The Service settings
    */
-  SolutionBuilder(rafko_mainframe::RafkoSettings& settings_)
+  SolutionBuilder(const rafko_mainframe::RafkoSettings& settings_)
   :  settings(settings_)
   { }
 
@@ -71,12 +71,13 @@ public:
 
   #if(RAFKO_USES_OPENCL)
   static std::string get_kernel_for_solution(
-    const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_input_num, rafko_mainframe::RafkoSettings& settings
+    const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_input_num,
+    const rafko_mainframe::RafkoSettings& settings
   );
   #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
-  rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& settings;
 
   static sdouble32 get_size_in_mb(const PartialSolution& partial){
     return partial.SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */;

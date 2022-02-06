@@ -29,7 +29,7 @@
 
 namespace rafko_mainframe{
 
-RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet neural_network_, rafko_mainframe::RafkoSettings settings_)
+RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_)
 : settings(settings_)
 , network(neural_network_)
 , network_solution(rafko_net::SolutionBuilder(settings).build(network))

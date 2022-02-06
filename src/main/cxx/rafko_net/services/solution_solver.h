@@ -62,11 +62,12 @@ public:
 
 private:
   SolutionSolver(
-    const Solution& to_solve, rafko_mainframe::RafkoSettings& settings, std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
+    const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings,
+    std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
     uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
   );
 
-  rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& settings;
   std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> execution_threads;
   RafkoNetFeatureExecutor feature_executor;
@@ -74,13 +75,13 @@ private:
 public:
   class Builder{
   public:
-    Builder(const Solution& to_solve, rafko_mainframe::RafkoSettings& settings);
+    Builder(const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings);
     std::unique_ptr<rafko_net::SolutionSolver> build(){
       return std::unique_ptr<rafko_net::SolutionSolver>( new SolutionSolver(solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread) );
     }
   private:
     const Solution& solution;
-    rafko_mainframe::RafkoSettings& settings;
+    const rafko_mainframe::RafkoSettings& settings;
     std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
     uint32 max_tmp_size_needed = 0u;
     uint32 max_tmp_data_needed_per_thread = 0u;
