@@ -4,7 +4,14 @@ target_include_directories(rafko_protocol
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gen
 )
 find_package(Protobuf CONFIG REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
+include(FetchContent)
+FetchContent_Declare(
+  gRPC
+  GIT_REPOSITORY https://github.com/grpc/grpc
+  GIT_TAG        v1.43.2
+)
+set(FETCHCONTENT_QUIET OFF)
+FetchContent_MakeAvailable(gRPC)
 set(PROTO_SOURCES
   logger.proto
   solution.proto
@@ -15,10 +22,9 @@ set(PROTO_SOURCES
 target_link_libraries(rafko_protocol
   PUBLIC
     ${Protobuf_LIBRARIES}
-    gRPC::grpc
-    gRPC::grpc++
+    grpc
+    grpc++
 )
-get_target_property(grpc_cpp_plugin_location gRPC::grpc_cpp_plugin LOCATION)
 protobuf_generate(
   TARGET
     rafko_protocol
