@@ -96,7 +96,7 @@ private:
   mutable std::atomic<state_t> state = {Idle};
   mutable std::mutex state_mutex;
   mutable std::condition_variable synchroniser;
-  std::vector<std::thread> threads; //--> do pointers
+  std::vector<std::thread> threads;
 
   void worker(uint32 thread_index){
     while(End != state.load()){ /* Until the pool is stopped */

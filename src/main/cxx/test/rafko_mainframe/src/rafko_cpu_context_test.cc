@@ -36,7 +36,7 @@
 
 namespace rafko_gym_test {
 
-TEST_CASE("Testing if CPU context produces correct error values upon full evaluation", "[context]"){
+TEST_CASE("Testing if CPU context produces correct error values upon full evaluation", "[context][CPU][evaluation]"){
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
   google::protobuf::Arena arena;
@@ -46,7 +46,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, expected_label));
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoDatasetCost reference_cost(settings, cost);
@@ -81,7 +81,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   CHECK( Catch::Approx(environment_error).margin(0.00000000000001) == -(error_sum / (sample_number * sequence_size)) );
 }
 
-TEST_CASE("Testing if CPU context produces correct error values upon stochastic evaluation", "[context]"){
+TEST_CASE("Testing if CPU context produces correct error values upon stochastic evaluation", "[context][CPU][evaluation]"){
   uint32 seed = rand() + 1;
   uint32 sample_number = 50;
   uint32 sequence_size = 6;
@@ -92,7 +92,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
     .set_minibatch_size(10);
   sdouble32 expected_label = double_literal(50.0);
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, expected_label));
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoDatasetCost reference_cost(settings, cost);
@@ -117,7 +117,6 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
   uint32 raw_inputs_index = 0;
   uint32 raw_label_index = 0;
-  std::cout << "\nReference erors:";
   for(uint32 sequence_index = sequence_start_index; sequence_index < (sequence_start_index + settings.get_minibatch_size()); ++sequence_index){
     bool reset = true;
     for(uint32 prefill_index = 0; prefill_index < dataset_wrap.get_prefill_inputs_number(); ++prefill_index){
@@ -133,16 +132,12 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
         &&(label_inside_sequence < (start_index_inside_sequence + settings.get_memory_truncation()))
       ){
         error_sum += err;
-        std::cout << "["<< err << "]";
-      }else std::cout << "[x]";
+      }
       if(reset)reset = false;
       ++raw_inputs_index;
       ++raw_label_index;
     }
   }
-  std::cout << std::endl;
-  std::cout << "(-)Sequence params: " << start_index_inside_sequence << "--> " << settings.get_memory_truncation() << std::endl;
-  std::cout << "(-)sequence_start_index: " << sequence_start_index << std::endl;
   CHECK( Catch::Approx(environment_error).margin(0.00000000000001)
     == -( error_sum / static_cast<sdouble32>(settings.get_minibatch_size() * sequence_size) )
   );

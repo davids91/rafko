@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <string>
 
 #include "rafko_net/models/dense_net_weight_initializer.h"
 
@@ -33,6 +34,16 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
   uint32 numNeurons = 0;
   InputSynapseInterval temp_input_interval;
   IndexSynapseInterval weight_synapse;
+
+  if(
+    (is_allowed_transfer_functions_by_layer_set)
+    &&(layer_sizes.size() != arg_allowed_transfer_functions_by_layer.size())
+  )throw std::runtime_error(
+    "Allowed transfer functions need to be set for each layer explicitly; sizes don't match: "
+    + std::string("layers: ") + std::to_string(layer_sizes.size())
+    + std::string(" vs ") + std::to_string(arg_allowed_transfer_functions_by_layer.size())
+  );
+
   /* Calculate number of weights needed overall
    * - Input Layer shall have a weight for every input for every neuron
    * - Input Layer shall have a weight for every bias and memory_filter for every neuron

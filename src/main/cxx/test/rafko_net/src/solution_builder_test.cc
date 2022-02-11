@@ -89,7 +89,6 @@ std::unique_ptr<rafko_net::Solution> test_solution_builder_manually(google::prot
     delete net;
   }
 
-  /* TODO: Test if all of the neuron is present in all of the partial solutions outputs */
   return solution;
 }
 

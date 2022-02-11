@@ -83,7 +83,6 @@ TEST_CASE("Testing if ThreadGroups can be combined", "[thread-group][multi-threa
       });
       sdouble32 tmp = std::accumulate(vec.begin(),vec.end(), 0.0);
       check += tmp;
-      // std::cout << "Partial result: " << tmp << std::endl;
     });
 
     result = double_literal(0.0);

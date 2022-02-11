@@ -21,6 +21,10 @@
 #include "rafko_global.h"
 
 #include <vector>
+#if(RAFKO_USES_OPENCL)
+#include <string>
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
 namespace rafko_net{
 
@@ -51,6 +55,14 @@ public:
     parameter_not_used(parameter);
     return (previous_value - transfer_function_output);
   }
+
+  #if(RAFKO_USES_OPENCL)
+  static std::string get_cl_function_for(std::string parameter, std::string new_data, std::string previous_data){
+    return "(((" + previous_data + ") * " + parameter + ") + ((" + new_data +") * (1.0 - " + parameter + ")))";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
+
+
 };
 } /* namespace rafko_net */
 #endif /* SPIKE_FUNCTION_H */

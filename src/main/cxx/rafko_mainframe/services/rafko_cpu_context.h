@@ -35,7 +35,7 @@ namespace rafko_mainframe {
 class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
 public:
 
-  RafkoCPUContext(rafko_net::RafkoNet neural_network, rafko_mainframe::RafkoSettings settings_);
+  RafkoCPUContext(rafko_net::RafkoNet neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
   ~RafkoCPUContext() = default;
 
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
@@ -89,7 +89,7 @@ public:
 
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<sdouble32>& input,
-    bool reset_neuron_data = true, uint32 thread_index = 0
+    bool reset_neuron_data = false, uint32 thread_index = 0
   ){
     return agent->solve(input, reset_neuron_data, thread_index);
   }
@@ -111,7 +111,6 @@ public:
   }
 
 private:
-  google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings;
   rafko_net::RafkoNet network;
   std::unique_ptr<rafko_net::Solution> network_solution;

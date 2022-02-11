@@ -23,6 +23,9 @@
 #include <assert.h>
 #include <vector>
 #include <memory>
+#if(RAFKO_USES_OPENCL)
+#include <string>
+#endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/models/rafko_softmax_feature.h"
@@ -42,9 +45,21 @@ public:
     assert(thread_index < execution_threads.size());
     switch(feature.feature()){
       case neuron_group_feature_softmax: RafkoSoftmaxFeature::calculate(neuron_data, feature.relevant_neurons(), *execution_threads[thread_index]);
+        break;
       default: break;
     }
   }
+
+  #if(RAFKO_USES_OPENCL)
+  static void add_kernel_code_to(std::string& operations, const FeatureGroup& feature, std::string output_start_index, bool declare_locals = true){
+    switch(feature.feature()){
+      case neuron_group_feature_softmax:
+        RafkoSoftmaxFeature::add_kernel_code_to(operations, feature, output_start_index, declare_locals);
+        break;
+      default: break;
+    }
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;

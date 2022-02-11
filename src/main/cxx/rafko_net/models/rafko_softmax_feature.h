@@ -45,6 +45,10 @@ public:
    */
   static void calculate(std::vector<sdouble32>& neuron_data, const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons, rafko_utilities::ThreadGroup& execution_threads);
 
+  #if(RAFKO_USES_OPENCL)
+  static void add_kernel_code_to( std::string& operations, const FeatureGroup& feature, std::string output_start_index, bool declare_locals = true );
+  #endif/*(RAFKO_USES_OPENCL)*/
+
 private:
 
   /**

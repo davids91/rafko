@@ -10,6 +10,14 @@ if(MAKE_TESTS)
   include(Catch)
   catch_discover_tests(rafko_test)
 
+  if(USE_OPENCL)
+    set(GPU_TEST_SOURCES
+      rafko_mainframe/src/rafko_gpu_context_test.cc
+    )
+  else()
+    set(GPU_TEST_SOURCES)
+  endif()
+
   if(TEST_CONVERGENCE)
     target_sources(rafko_test
       PRIVATE
@@ -20,6 +28,7 @@ if(MAKE_TESTS)
     target_sources(rafko_test
       PRIVATE
       src/main_test.cc
+      ${GPU_TEST_SOURCES}
       rafko_gym/src/rafko_dataset_cost_test.cc
       rafko_gym/src/rafko_dataset_wrapper_test.cc
       rafko_gym/src/backprop_queue_wrapper_test.cc

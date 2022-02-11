@@ -16,7 +16,7 @@ set(NET_HEADER_SERVICES
 set(NET_HEADER_MODELS
   models/dense_net_weight_initializer.h
   models/neuron_info.h
-  models/spike_function.h #TODO: Generalize and move specialized source to interfaces
+  models/spike_function.h
   models/transfer_function.h
   models/weight_initializer.h
   models/rafko_softmax_feature.h

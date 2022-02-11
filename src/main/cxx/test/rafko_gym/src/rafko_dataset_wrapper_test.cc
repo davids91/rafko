@@ -38,7 +38,7 @@ TEST_CASE("Testing Dataset wrapper creation", "[environment][data-handling]" ) {
     uint32 sequence_size = (rand()%2) + 1;
     uint32 feature_size = (rand()%5) + 1;
     sdouble32 expected_label = static_cast<sdouble32>(rand()%10) * double_literal(100.0);
-    std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */, feature_size, sample_number, sequence_size, expected_label));
+    std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */, feature_size, sample_number, sequence_size, 0/*prefill_size*/, expected_label));
     rafko_gym::RafkoDatasetWrapper data_wrap(*dataset);
     REQUIRE( 0 == data_wrap.get_prefill_inputs_number() );
     REQUIRE( sample_number == data_wrap.get_number_of_sequences() );

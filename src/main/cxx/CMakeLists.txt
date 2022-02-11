@@ -16,16 +16,22 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
   set(ENABLE_EXPORTS ON)
 
+  option(USE_OPENCL
+    "Enables OpenCL specific functionalities"
+    ON
+  )
+
+  option(BUILD_MAINFRAME
+    "Enables build for the included grpc based deep learning service"
+    OFF
+  )
+
   option(MAKE_TESTS
     "Enables test build"
     ON
   )
   option(TEST_CONVERGENCE
     "Makes the test builds examines convergence, instead of acceptance tests"
-    OFF
-  )
-  option(BUILD_MAINFRAME
-    "Enables build for the included grpc based deep learning service"
     OFF
   )
   option(STATIC_ANALYZERS
@@ -38,6 +44,12 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   )
 
   add_compile_options(-Wall -Wextra -Wpedantic)
+  if(USE_OPENCL)
+    set(OPENCL_TARGET 120)
+    add_compile_definitions(CL_HPP_MINIMUM_OPENCL_VERSION=120)
+    add_compile_definitions(CL_HPP_TARGET_OPENCL_VERSION=${OPENCL_TARGET})
+    add_compile_definitions(RAFKO_USES_OPENCL=1)
+  endif()
   if(SANITIZE)
     set(ENV{ASAN_OPTIONS} detect_leaks=0) #All allocated memory on the Arena is detected as leaks, so leak check needs to be disabled
     add_compile_options(-fsanitize=address -fno-omit-frame-pointer)

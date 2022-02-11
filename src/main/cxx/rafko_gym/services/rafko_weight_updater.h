@@ -119,6 +119,27 @@ public:
     return current_velocity;
   }
 
+  /**
+   * @brief      Provides a list of partials and weight indices inside them for every given network weight_index
+   *             Each weight might be present inside multiple partials, but shall not be repeated multiple times
+   *             inside each partial.
+   *
+   * @param[in]  network_weight_index   The Weight index inside the @RafkoNet
+   *
+   * @return     A vector of the following structure: {{partial index,weight_index},...,{...}}
+   *             The elements of the vector are in ascending order by partial index.
+   */
+  const std::vector<std::pair<uint32,uint32>>& get_relevant_partial_weight_indices_for(uint32 network_weight_index) const;
+
+  /**
+   * @brief      Provides the partial index the given neuron_index belongs to
+   *
+   * @param[in]  neuron_index   The Neuron index inside the @RafkoNet
+   *
+   * @return     The index of the partial solution the Neuron belongs to
+   */
+  uint32 get_relevant_partial_index_for(uint32 neuron_index) const;
+
   virtual ~RafkoWeightUpdater() = default;
 
 protected:
@@ -193,26 +214,6 @@ private:
    * @param[in]  weight_number  The weight number
    */
   void update_weight_with_velocity(uint32 weight_index, uint32 weight_number);
-
-  /**
-   * @brief      Provides a list of partials and weight indices inside them for every given network weight_index
-   *             Each weight might be present inside multiple partials, but shall not be repeated multiple times
-   *             inside each partial.
-   *
-   * @param[in]  network_weight_index   The Weight index inside the @RafkoNet
-   *
-   * @return     A vector of the following structure: {{partial index,weight_index},...,{...}}
-   */
-  std::vector<std::pair<uint32,uint32>>& get_relevant_partial_weight_indices_for(uint32 network_weight_index) const;
-
-  /**
-   * @brief      Provides the partial index the given neuron_index belongs to
-   *
-   * @param[in]  neuron_index   The Neuron index inside the @RafkoNet
-   *
-   * @return     The index of the partial solution the Neuron belongs to
-   */
-  uint32 get_relevant_partial_index_for(uint32 neuron_index) const;
 
   /**
    * @brief      Copies the weights of a Neuron from the referenced @RafkoNet

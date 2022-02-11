@@ -43,7 +43,7 @@ extern void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial
 /** @brief Calculates the result of the partial partial_solution manually based on the structure provided by @manual_2_neuron_partial_solution
  *         In case there are more than 2 inputs, all of them shall be processed with the same weight
  *         The end result shall be calculated as follows:
- *         - result1 = f[0]((input1 * weight1 + input2 * weight2) + bias1) //weighted inputs + biaf, given to the transfer function
+ *         - result1 = f[0]((input1 * weight1 + input2 * weight2) + bias1) //weighted inputs + bias, given to the transfer function
  *         - result1 = (prev_result1 * memory_filter1) + (result1 * (double_literal(1.0)-memory_rato1) //apply memory filter
  *         - result2 = f[1]((result1 * weight3) + bias2)
  *         - end_result = (prev_result2 * memory_filter2) + (result2 * (double_literal(1.0)-memory_rato2)
@@ -136,7 +136,7 @@ extern void check_data_match(std::vector<sdouble32>& sample_data, std::vector<sd
 extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoSettings& settings);
 
 /**
- * @brief      Creates a random dataset based on the given parameter
+ * @brief      Creates a random dataset based on the given parameters
  *
  * @param[in]  input_size         The number of expected inputs are stored for the @DataSet
  * @param[in]  feature_size       The number of features and labels to be stored inside the @DataSet
@@ -146,7 +146,11 @@ extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 inp
  *
  * @return     The created dataset
  */
-extern std::unique_ptr<rafko_gym::DataSet> create_dataset(uint32 input_size, uint32 feature_size, uint32 sample_number, uint32 sequence_size, sdouble32 expected_label = double_literal(0.0));
+extern std::unique_ptr<rafko_gym::DataSet> create_dataset(
+  uint32 input_size, uint32 feature_size,
+  uint32 sample_number, uint32 sequence_size, uint32 prefill_size = 0u,
+  sdouble32 expected_label = double_literal(0.0), sdouble32 label_delta_per_feature = double_literal(0.0)
+);
 
 } /* namespace rafko_test */
 

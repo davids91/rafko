@@ -78,7 +78,7 @@ uint32 RafkoWeightUpdater::get_relevant_partial_index_for(uint32 neuron_index) c
   return static_cast<uint32>(-1); /* not found! */
 }
 
-std::vector<std::pair<uint32,uint32>>& RafkoWeightUpdater::get_relevant_partial_weight_indices_for(uint32 network_weight_index) const{
+const std::vector<std::pair<uint32,uint32>>& RafkoWeightUpdater::get_relevant_partial_weight_indices_for(uint32 network_weight_index) const{
   if(0 < weights_in_partials.count(network_weight_index))
     return weights_in_partials.find(network_weight_index)->second;
 
@@ -132,6 +132,9 @@ std::vector<std::pair<uint32,uint32>>& RafkoWeightUpdater::get_relevant_partial_
   }/*for(all relevant neurons)*/
 
   /* Insert the result into the map and return */
+  std::sort(relevant_partials.begin(),relevant_partials.end(),[](std::pair<uint32,uint32>& a, std::pair<uint32,uint32>& b){
+    return (std::get<0>(a) > std::get<0>(b));
+  });
   weights_in_partials.insert({network_weight_index, std::move(relevant_partials)});
   return weights_in_partials.find(network_weight_index)->second;
 }
@@ -139,8 +142,8 @@ std::vector<std::pair<uint32,uint32>>& RafkoWeightUpdater::get_relevant_partial_
 void RafkoWeightUpdater::update_solution_with_weight(uint32 weight_index) const{
   std::lock_guard<std::mutex> my_lock(reference_mutex);
   assert(static_cast<sint32>(weight_index) < net.weight_table_size());
-  std::vector<std::pair<uint32, uint32>>& relevant_partial_weights = get_relevant_partial_weight_indices_for(weight_index);
-  for(std::pair<uint32,uint32>& relevant_partial_weight : relevant_partial_weights){
+  const std::vector<std::pair<uint32, uint32>>& relevant_partial_weights = get_relevant_partial_weight_indices_for(weight_index);
+  for(const std::pair<uint32,uint32>& relevant_partial_weight : relevant_partial_weights){
     solution.mutable_partial_solutions(std::get<0>(relevant_partial_weight))->set_weight_table(
       std::get<1>(relevant_partial_weight), net.weight_table(weight_index)
     );

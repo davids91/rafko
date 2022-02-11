@@ -29,9 +29,9 @@
 
 namespace rafko_mainframe{
 
-RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet neural_network, rafko_mainframe::RafkoSettings settings_)
-: settings(settings_.set_arena_ptr(&arena))
-, network(neural_network)
+RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet neural_network_, rafko_mainframe::RafkoSettings settings_)
+: settings(settings_)
+, network(neural_network_)
 , network_solution(rafko_net::SolutionBuilder(settings).build(network))
 , agent(rafko_net::SolutionSolver::Builder(*network_solution, settings).build())
 , environment(std::make_unique<RafkoDummyEnvironment>(network.input_data_size(), network.output_neuron_number()))
@@ -74,9 +74,7 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
          * Which is mainly because of division remainder between number fo threads and the number of sequences
          * */
         /* Solve the sequence under sequence_index + thread_index */
-        uint32 raw_label_index = sequence_index + thread_index;
-        uint32 raw_inputs_index = raw_label_index * (environment->get_sequence_size() + environment->get_prefill_inputs_number());
-        raw_label_index *= environment->get_sequence_size();
+        uint32 raw_inputs_index = (sequence_index + thread_index) * (environment->get_sequence_size() + environment->get_prefill_inputs_number());
 
         /* Evaluate the current sequence step by step */
         for(uint32 prefill_iterator = 0; prefill_iterator < environment->get_prefill_inputs_number(); ++prefill_iterator){
@@ -93,22 +91,25 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
             neuron_output.begin(), neuron_output.end(),
             neuron_outputs_to_evaluate[(thread_index * environment->get_sequence_size()) + sequence_iterator].begin()
           );
-          ++raw_label_index;
           ++raw_inputs_index;
         }
       }
     });
-    error_sum += objective->set_features_for_sequences( /* Upload results to the data set */
+
+    sdouble32 error_part = objective->set_features_for_sequences( /* Upload results to the data set */
       *environment, neuron_outputs_to_evaluate,
       0u/* neuron_buffer_index */, sequence_index, std::min(
         ((sequence_start + sequences_to_evaluate) - (sequence_index)),
         static_cast<uint32>(settings.get_max_processing_threads())
-      ),
+      )/* sequences_to_evaluate */,
       start_index_in_sequence, sequence_truncation, neuron_outputs_to_evaluate.back()
     );
+    error_sum += error_part;
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
 
-  return -( error_sum / std::ceil( static_cast<sdouble32>(sequences_to_evaluate) / static_cast<sdouble32>(settings.get_max_processing_threads()) ) );
+  return -(
+    error_sum / static_cast<sdouble32>(sequences_to_evaluate * environment->get_sequence_size())
+  );
 }
 
 } /* namespace rafko_mainframe */

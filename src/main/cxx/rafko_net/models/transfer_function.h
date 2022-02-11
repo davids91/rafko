@@ -21,6 +21,10 @@
 #include "rafko_global.h"
 
 #include <vector>
+#if(RAFKO_USES_OPENCL)
+#include <string>
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
 #include "rafko_mainframe/models/rafko_settings.h"
 
@@ -79,6 +83,11 @@ public:
    * @return     The derivative from data.
    */
   sdouble32 get_derivative(Transfer_functions function, sdouble32 data) const;
+
+  #if(RAFKO_USES_OPENCL)
+  std::string get_cl_function_for(Transfer_functions function, std::string x);
+  #endif/*(RAFKO_USES_OPENCL)*/
+
 private:
   rafko_mainframe::RafkoSettings& settings;
 };
