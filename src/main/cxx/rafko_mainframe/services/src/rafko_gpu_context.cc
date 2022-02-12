@@ -110,7 +110,6 @@ void RafkoGPUContext::upload_weight_to_device(uint32 weight_index){
   }
 }
 
-
 void RafkoGPUContext::set_network_weight(uint32 weight_index, sdouble32 weight_value){
   assert( static_cast<sint32>(weight_index) < network.weight_table_size() );
   network.set_weight_table(weight_index, weight_value);

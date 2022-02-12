@@ -44,7 +44,7 @@ public:
    *
    * @return     The weight updater; Owner is arena, if settings has a pointer set, otherwise ownership is transferred to the caller of the function.
    */
-  static std::unique_ptr<RafkoWeightUpdater> build_weight_updater(rafko_net::RafkoNet& net, rafko_net::Solution& solution, Weight_updaters weight_updater, rafko_mainframe::RafkoSettings& settings){
+  static std::unique_ptr<RafkoWeightUpdater> build_weight_updater(rafko_net::RafkoNet& net, rafko_net::Solution& solution, Weight_updaters weight_updater, const rafko_mainframe::RafkoSettings& settings){
     switch(weight_updater){
       case weight_updater_momentum:   return std::make_unique<RafkoWeightUpdaterMomentum>(net, solution, settings);
       case weight_updater_nesterovs:  return std::make_unique<RafkoWeightUpdaterNesterovs>(net, solution, settings);

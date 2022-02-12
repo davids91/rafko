@@ -24,7 +24,7 @@ namespace rafko_gym{
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterNesterovs : public RafkoWeightUpdater{
 public:
-  RafkoWeightUpdaterNesterovs(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_)
+  RafkoWeightUpdaterNesterovs(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_)
   :  RafkoWeightUpdater(rafko_net, solution_, settings_, 2u)
   { }
 

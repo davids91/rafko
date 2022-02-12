@@ -59,6 +59,13 @@ public:
   virtual void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_) = 0;
 
   /**
+   * @brief          Accepts a weight updater type to make handle the weight updates
+   *
+   * @param[in]      objective    An objective function ready to be moved inside the context
+   */
+  virtual void set_weight_updater(rafko_gym::Weight_updaters updater) = 0;
+
+  /**
    * @brief          Modifies a weight of the stored Netowrk
    *
    * @param[in]      weight_index     The index inside the networks weight table to be modified
