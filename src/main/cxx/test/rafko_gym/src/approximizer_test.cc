@@ -129,6 +129,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero,true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping,false)
+    .set_learning_rate_decay({{500u,0.2}})
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
   #if (RAFKO_USES_OPENCL)
   uint32 number_of_samples = 1024;
@@ -144,8 +145,8 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     .allowed_transfer_functions_by_layer({
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu},
-      {rafko_net::transfer_function_selu},
-    }).dense_layers({2,2,1})
+      {rafko_net::transfer_function_tanh},
+    }).dense_layers({2,5,1})
   );
 
   /* Create dataset, test set and optimizers; optimize nets */

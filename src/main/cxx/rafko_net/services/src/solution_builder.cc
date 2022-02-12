@@ -34,7 +34,7 @@
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/neuron_router.h"
 #include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/rafko_net_feature_executor.h"
+#include "rafko_net/services/rafko_network_feature.h"
 
 #include "rafko_net/services/partial_solution_builder.h"
 
@@ -95,7 +95,10 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
           if(reach_index_max < std::get<1>(neuron_input_params))
             reach_index_max = std::get<1>(neuron_input_params);
           std::vector<std::reference_wrapper<const FeatureGroup>> features_solved_by_neuron = neuron_router.confirm_first_subset_element_processed(current_neuron_index);
-          for(const FeatureGroup& feature : features_solved_by_neuron){ *this_partial.add_solved_features() = feature; }
+          for(const FeatureGroup& feature : features_solved_by_neuron){
+            /*TODO: Make sure that there are no overlapping synapses */
+             *this_partial.add_solved_features() = feature;
+          }
           has_neuron = neuron_router.get_first_neuron_index_from_subset(current_neuron_index);
         }/* while(able to put Neurons into the current subset) */
         if(0u == this_partial.output_data().interval_size()){
@@ -296,7 +299,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
 
     if(0 < partial.solved_features_size()){ /* if the partial solves any feature */
       for(const FeatureGroup& feature : partial.solved_features()){
-        RafkoNetFeatureExecutor::add_kernel_code_to(neuron_operations, feature, "output_start", !feature_locals_declared);
+        RafkoNetworkFeature::add_kernel_code_to(neuron_operations, feature, "output_start", !feature_locals_declared);
         feature_locals_declared = true;
       }
     }

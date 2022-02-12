@@ -86,7 +86,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
   }/*for(50 variants)*/
 }
 
-TEST_CASE("Testing if standalone solution is working as intended with the GPU context even with softmax features","[context][GPU][features]"){
+TEST_CASE("Testing if standalone solution is working as intended with the GPU context even with softmax features","[context][GPU][features][softmax]"){
   google::protobuf::Arena arena;
   uint32 sequence_size = 6u;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()

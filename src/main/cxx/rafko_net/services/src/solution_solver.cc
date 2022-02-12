@@ -21,7 +21,7 @@
 #include <mutex>
 
 #include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/rafko_net_feature_executor.h"
+#include "rafko_net/services/rafko_network_feature.h"
 
 namespace rafko_net{
 

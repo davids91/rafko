@@ -53,6 +53,8 @@ enum Neuron_group_features{
   neuron_group_feature_softmax = 1;
   neuron_group_feature_disentanglement = 2;
   neuron_group_feature_dropout_regularization = 3;
+  neuron_group_feature_l1_regularization = 4;
+  neuron_group_feature_l2_regularization = 5;
 }
 
 /**

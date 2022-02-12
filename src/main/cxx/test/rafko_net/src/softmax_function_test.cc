@@ -24,7 +24,7 @@
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_net/models/rafko_softmax_feature.h"
+#include "rafko_net/services/rafko_network_feature.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
@@ -52,6 +52,7 @@ static void check_softmax_values(std::vector<sdouble32>& neuron_data, rafko_net:
   iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
     manual_sum += neuron_data_copy[index];
   }); /* collecting resulting sum */
+  manual_sum = std::max(manual_sum, std::numeric_limits<double>::epsilon());
   iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
     neuron_data_copy[index] /= manual_sum;
   }); /* normalizing e_x --> e_x/sum(e_x) */
@@ -63,7 +64,10 @@ static void check_softmax_values(std::vector<sdouble32>& neuron_data, rafko_net:
   REQUIRE( Catch::Approx(manual_sum).epsilon(double_literal(0.00000000000001)) == double_literal(1.0) );
 
   /* Calculate through the network */
-  rafko_net::RafkoSoftmaxFeature::calculate(neuron_data, mockup.relevant_neurons(), threads);
+  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> exec_threads;
+  exec_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(threads.get_number_of_threads()));
+  rafko_net::RafkoNetworkFeature features(exec_threads);
+  features.execute(mockup, neuron_data);
 
   /* Check if sum equals to 1 */
   sdouble32 sum = double_literal(0);
