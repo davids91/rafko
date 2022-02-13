@@ -701,7 +701,7 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
 }
 
 
-TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weights]"){
+TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-update]"){
   google::protobuf::Arena arena;
   uint32 sequence_size = rand()%3 + 1;
   uint32 number_of_sequences = rand()%10 + 2;
@@ -766,13 +766,14 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weights]
   }/*for(10 variants)*/
 }
 
-TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weights][bulk]"){
+TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-update][bulk]"){
   google::protobuf::Arena arena;
   uint32 sequence_size = rand()%3 + 1;
   uint32 number_of_sequences = rand()%10 + 2;
   uint32 feature_size = rand()%5 + 1;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_learning_rate(double_literal(0.1))
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
@@ -834,10 +835,16 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weights]
     for(uint32 steps = 0; steps < 5; ++steps){
       REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
 
+      REQUIRE( context->expose_network().weight_table_size() == reference_context.expose_network().weight_table_size() );
+      for(sint32 weight_index = 0; weight_index < context->expose_network().weight_table_size(); ++weight_index){
+        REQUIRE( context->expose_network().weight_table(weight_index) == reference_context.expose_network().weight_table(weight_index) );
+      }
+
       std::vector<sdouble32> weight_deltas(network->weight_table_size());
       std::generate(weight_deltas.begin(), weight_deltas.end(), [](){
         return static_cast<sdouble32>(rand()%100) / double_literal(100.0);
       });
+
       context->apply_weight_update(weight_deltas);
       reference_context.apply_weight_update(weight_deltas);
     }/*for(5 consecutive steps)*/

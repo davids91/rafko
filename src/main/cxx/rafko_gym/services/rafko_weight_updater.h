@@ -37,7 +37,7 @@ namespace rafko_gym {
  */
 class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
-  RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, rafko_mainframe::RafkoSettings& settings_, uint32 required_iterations_for_step_ = 1)
+  RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_, uint32 required_iterations_for_step_ = 1u)
   : net(rafko_net)
   , solution(solution_)
   , settings(settings_)
@@ -193,7 +193,7 @@ public:
 protected:
   rafko_net::RafkoNet& net;
   rafko_net::Solution& solution;
-  rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& settings;
   const uint32 required_iterations_for_step;
   const uint32 weights_to_do_in_one_thread;
   uint32 iteration = 0u;
@@ -201,16 +201,14 @@ protected:
   std::vector<sdouble32> current_velocity;
 
   /**
-   * @brief      Gets the new value for one weight based on the gradients.
-   *             More complex weight updaters should overwirte this function,
-   *             as it is the basis of updating weights.
+   * @brief      Gets the new value for one weight based on the velocity.
    *
    * @param[in]  weight_index        The weight index
    *
    * @return     The new weight.
    */
   sdouble32 get_new_weight(uint32 weight_index) const{
-    return(net.weight_table(weight_index) - get_current_velocity(weight_index));
+    return(net.weight_table(weight_index) + get_current_velocity(weight_index));
   }
 
   /**
@@ -222,7 +220,7 @@ protected:
    * @return     The new velocity.
    */
   sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients) const{
-    return (gradients[weight_index] * settings.get_learning_rate());
+    return (-gradients[weight_index] * settings.get_learning_rate());
   }
 
 private:
@@ -245,14 +243,6 @@ private:
    *             to be updated in each thread.
    */
   void update_weights_with_velocity();
-
-  /**
-   * @brief      A thread to update the weights of the @SpraseNet, called by @update_weights_with_velocity
-   *
-   * @param[in]  weight_index        The weight index
-   * @param[in]  weight_number       The weight number
-   */
-  void calculate_velocity_thread(const std::vector<sdouble32>& gradients, uint32 weight_index, uint32 weight_number);
 
   /**
    * @brief      A thread to calculate the latest velocity based on the gradients
