@@ -147,13 +147,7 @@ void RafkoGPUContext::upload_weight_table_to_device(){
 
   assert( device_weight_table.size() == overall_number_of_weights );
   device_weight_table_size = device_weight_table.size();
-  sdouble32 l1_error = 0.0;
-  std::cout << "Device weights: \n ";
-  for(const sdouble32& w : device_weight_table){
-    std::cout << "{" << w << "}";
-    l1_error += std::abs(w);
-  }
-  std::cout << " -- sum: " << l1_error << std::endl;
+
   cl_int return_value = opencl_queue.enqueueWriteBuffer(
     solution_phase.get_input_buffer(), CL_TRUE/*blocking*/, sizeof(sdouble32)/*offset*/,
     (sizeof(sdouble32) * device_weight_table.size())/*size*/,
@@ -323,9 +317,6 @@ sdouble32 RafkoGPUContext::error_post_process(sdouble32 raw_error, uint32 labels
   sdouble32 performance_error = solution_phase.acquire_output(
     1u, agent->get_output_shapes()[0][0] /* first output, after the size of the first output */
   )[0];
-
-  std::cout << "performance error: " << performance_error << std::endl;
-  std::cout << "number of sequences(sol_space): " << environment->get_number_of_sequences() << std::endl;
 
   return ( (error_value + performance_error) / divisor );
 }

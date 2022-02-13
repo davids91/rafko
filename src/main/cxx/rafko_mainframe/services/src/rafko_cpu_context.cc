@@ -99,7 +99,9 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
         /* Solve the data and store the result after the inital "prefill" */
         for(uint32 sequence_iterator = 0; sequence_iterator < environment->get_sequence_size(); ++sequence_iterator){
           rafko_utilities::ConstVectorSubrange<> neuron_output = agent->solve(
-            environment->get_input_sample(raw_inputs_index), ( (0u == environment->get_prefill_inputs_number())&&(0u == sequence_iterator) ), thread_index
+            environment->get_input_sample(raw_inputs_index),
+            ( (0u == environment->get_prefill_inputs_number())&&(0u == sequence_iterator) ),
+            thread_index
           );
           std::copy( /* copy the result to the eval array */
             neuron_output.begin(), neuron_output.end(),

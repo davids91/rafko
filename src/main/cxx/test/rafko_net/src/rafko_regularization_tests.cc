@@ -259,7 +259,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
 
     REQUIRE(
       Catch::Approx(regulated_context.full_evaluation()).epsilon(double_literal(0.00000000000001))
-      == (unregulated_context.full_evaluation() - error_difference)
+      == (unregulated_context.full_evaluation() - (error_difference / static_cast<sdouble32>(environment->get_number_of_label_samples())))
     );
   }/*for(10 variants)*/
 }
@@ -268,8 +268,8 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
 TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU context", "[GPU][context][regularization][features]"){
   google::protobuf::Arena arena;
   uint32 feature_size = 2u;
-  uint32 sequence_size = 6u;
-  uint32 number_of_sequences = rand()%10 + 1;
+  uint32 sequence_size = 3u;
+  uint32 number_of_sequences = 2;//rand()%10 + 1;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
@@ -280,9 +280,9 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
 
     std::vector<uint32> layer_sizes = {
       static_cast<uint32>(rand()%3) + 1u,
-      // static_cast<uint32>(rand()%3) + 1u,
-      // static_cast<uint32>(rand()%3) + 1u,
-      // static_cast<uint32>(rand()%3) + 1u,
+      static_cast<uint32>(rand()%3) + 1u,
+      static_cast<uint32>(rand()%3) + 1u,
+      static_cast<uint32>(rand()%3) + 1u,
       static_cast<uint32>(rand()%3) + 1u,
       feature_size
     };

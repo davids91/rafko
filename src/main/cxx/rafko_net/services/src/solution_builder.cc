@@ -207,6 +207,14 @@ std::string SolutionBuilder::get_kernel_for_solution(
   std::function<std::string(uint32, std::string)> past_reach_guard = [](uint32 past_reach, std::string content){
     return "( (min(current_max_backreach,max_backreach) < " + std::to_string(past_reach) + " )?(0.0):( " + content + ") )";
   };
+  std::function<std::string(std::string)> label_reach_guard = [](std::string content){
+    return "(  ( ((sequence_start - label_index) == 0)&&(evaluate_network) )?(0.0):( " + content + ")  )";
+  };
+  /*!Note: When the network has no memory, backreach counters can not be used to reach the previous value of the Neuron
+   * so it would be best to use the currently evaluated label for it (every label except the first reaches the Neurons previous value)
+   * EXCEPT it renders single runs incorrect, so it can only be used if the network is under evaluation; since single runs already have
+   * the adequate memory allocated, and require no restrictions
+   */
   bool feature_locals_declared = false;
   std::vector<std::reference_wrapper<const FeatureGroup>> performance_feature_list;
   for(const PartialSolution& partial : solution.partial_solutions()){
@@ -291,8 +299,8 @@ std::string SolutionBuilder::get_kernel_for_solution(
         + SpikeFunction::get_cl_function_for(
           "inputs[" + std::to_string(weight_table_offset + spike_weight_index)+ "]"/*parameter*/,
           "neuron_partial_result"/* new_data */,
-          past_reach_guard(
-            1u, std::string("(")
+          label_reach_guard(
+            std::string("(")
             + "outputs[output_start + " + std::to_string(partial.output_data().starts() + inner_neuron_index) + " - neuron_array_size]"
             + ")"
           )/* previous_data */
