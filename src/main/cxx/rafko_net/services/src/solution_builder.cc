@@ -23,10 +23,12 @@
 #include <utility>
 
 #if(RAFKO_USES_OPENCL)
+#include <map>
 #include <regex>
+#include <functional>
 
+#include "rafko_utilities/models/rafko_gpu_kernel_library.h"
 #include "rafko_mainframe/models/rafko_settings.h"
-
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/models/spike_function.h"
 #endif/*(RAFKO_USES_OPENCL)*/
@@ -97,7 +99,7 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
           std::vector<std::reference_wrapper<const FeatureGroup>> features_solved_by_neuron = neuron_router.confirm_first_subset_element_processed(current_neuron_index);
           for(const FeatureGroup& feature : features_solved_by_neuron){
             /*TODO: Make sure that there are no overlapping synapses */
-             *this_partial.add_solved_features() = feature;
+            *this_partial.add_solved_features() = feature;
           }
           has_neuron = neuron_router.get_first_neuron_index_from_subset(current_neuron_index);
         }/* while(able to put Neurons into the current subset) */
@@ -140,12 +142,12 @@ std::string SolutionBuilder::get_kernel_for_solution(
    * last output slice ( the last neuron value array the kernel is supposed to be updating )
    * and every other output slice before that is considered outputs from the past
    */
-  std::string source_base = R"(
+  std::string source_base = rafko_utilities::atomic_double_add_function + R"(
     void kernel $$name$$(
        __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
        __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){
-      if( (input_sizes_size == 3) && (output_sizes_size == 1) ){
+      if( (input_sizes_size == 3) && (output_sizes_size == 2) ){
         const int sequence_index = get_global_id(0);
         const int neuron_array_size = $$neuron_array_size$$;
         const int max_backreach = $$neuron_memory_size$$ - 1;
@@ -158,7 +160,8 @@ std::string SolutionBuilder::get_kernel_for_solution(
         int label_index = 0; /* index inside the current inside sequence */
         int sequence_start;
         int sequence_max_index;
-        if(inputs[0] == 0){ /* normal evaluation */
+        bool evaluate_network = (inputs[0] == 0);
+        if(evaluate_network){ /* normal evaluation */
           current_max_backreach = 0;
           input_start = $$weight_table_offset$$ + (sequence_index * (sequence_size + prefill_input_num) * network_input_size);
           output_start = sequence_index * (sequence_size + prefill_input_num) * neuron_array_size;
@@ -182,6 +185,10 @@ std::string SolutionBuilder::get_kernel_for_solution(
           if(current_max_backreach < max_backreach)
             ++current_max_backreach;
         }
+
+        outputs[output_sizes[0]] = 0.0; /* zero out performance error */
+        $$performance_operations$$
+
       }/*if(input sizes match)*/
     }/* kernel */
   )";
@@ -201,6 +208,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     return "( (min(current_max_backreach,max_backreach) < " + std::to_string(past_reach) + " )?(0.0):( " + content + ") )";
   };
   bool feature_locals_declared = false;
+  std::vector<std::reference_wrapper<const FeatureGroup>> performance_feature_list;
   for(const PartialSolution& partial : solution.partial_solutions()){
     SynapseIterator<InputSynapseInterval> partial_input_synapses(partial.input_data());
     uint32 input_synapse_index = 0u;
@@ -299,8 +307,14 @@ std::string SolutionBuilder::get_kernel_for_solution(
 
     if(0 < partial.solved_features_size()){ /* if the partial solves any feature */
       for(const FeatureGroup& feature : partial.solved_features()){
-        RafkoNetworkFeature::add_kernel_code_to(neuron_operations, feature, "output_start", !feature_locals_declared);
-        feature_locals_declared = true;
+        if(NeuronInfo::is_feature_relevant_to_solution(feature.feature())){
+          RafkoNetworkFeature::add_kernel_code_to(
+            neuron_operations, feature, solution, "", "output_start", !feature_locals_declared
+          );
+          feature_locals_declared = true;
+        }else if(NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
+          performance_feature_list.push_back(feature);
+        }
       }
     }
 
@@ -309,6 +323,21 @@ std::string SolutionBuilder::get_kernel_for_solution(
      * inside the solution.
      */
   }/*for(every partial in the solution)*/
+  std::string performance_operations;
+  std::set<Neuron_group_features> already_declared_locals;
+  for(const FeatureGroup& feature : performance_feature_list){
+    bool declare_locals = ( /* if the locals have not been declared yet */
+      already_declared_locals.end() == already_declared_locals.find(feature.feature())
+    );
+    RafkoNetworkFeature::add_kernel_code_to(
+      performance_operations, feature, solution,
+      "1u"/*input_start_index:weight table start*/, "output_sizes[0]"/*output_start_index: last output*/,
+      declare_locals
+    );
+
+    if(declare_locals)
+     already_declared_locals.insert(feature.feature());
+  }
   source_base = std::regex_replace(source_base, std::regex("\\$\\$name\\$\\$"), name);
   source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_array_size\\$\\$"), std::to_string(solution.neuron_number()));
   source_base = std::regex_replace(source_base, std::regex("\\$\\$weight_table_offset\\$\\$"), std::to_string(weight_table_offset));
@@ -317,6 +346,8 @@ std::string SolutionBuilder::get_kernel_for_solution(
   source_base = std::regex_replace(source_base, std::regex("\\$\\$neuron_operations\\$\\$"), neuron_operations);
   source_base = std::regex_replace(source_base, std::regex("\\$\\$prefill_input_num\\$\\$"), std::to_string(prefill_input_num));
   source_base = std::regex_replace(source_base, std::regex("\\$\\$network_input_size\\$\\$"), std::to_string(solution.network_input_size()));
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$performance_operations\\$\\$"), performance_operations);
+
   return source_base;
 }
 #endif/*(RAFKO_USES_OPENCL)*/

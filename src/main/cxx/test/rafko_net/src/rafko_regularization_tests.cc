@@ -30,6 +30,10 @@
 #include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
+#if(RAFKO_USES_OPENCL)
+#include "rafko_mainframe/services/rafko_gpu_context.h"
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
 #include "test/test_utility.h"
 
@@ -230,7 +234,9 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
       }
     }
 
-    /* Create CPU contexts */
+    /* Create CPU contexts and an environment */
+    rafko_mainframe::RafkoCPUContext regulated_context(*network, settings);
+    rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, settings);
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       settings, rafko_gym::cost_function_squared_error
     );
@@ -240,8 +246,6 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
       rand()%100/*expected_label*/, double_literal(1.0)
     ) );
     std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
-    rafko_mainframe::RafkoCPUContext regulated_context(*network, settings);
-    rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, settings);
 
     REQUIRE( /* because the evaluation provides fittness value, the error difference needs to be substracted..*/
       Catch::Approx(regulated_context.full_evaluation()).epsilon(double_literal(0.00000000000001))
@@ -257,9 +261,77 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
       Catch::Approx(regulated_context.full_evaluation()).epsilon(double_literal(0.00000000000001))
       == (unregulated_context.full_evaluation() - error_difference)
     );
-
   }/*for(10 variants)*/
 }
 
+#if(RAFKO_USES_OPENCL)
+TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU context", "[GPU][context][regularization][features]"){
+  google::protobuf::Arena arena;
+  uint32 feature_size = 2u;
+  uint32 sequence_size = 6u;
+  uint32 number_of_sequences = rand()%10 + 1;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  for(uint32 variant = 0u; variant < 10u; ++variant){
+    rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
+      .input_size(2).expected_input_range(double_literal(1.0));
+
+    std::vector<uint32> layer_sizes = {
+      static_cast<uint32>(rand()%3) + 1u,
+      // static_cast<uint32>(rand()%3) + 1u,
+      // static_cast<uint32>(rand()%3) + 1u,
+      // static_cast<uint32>(rand()%3) + 1u,
+      static_cast<uint32>(rand()%3) + 1u,
+      feature_size
+    };
+    for(uint32 try_add = 0; try_add < 10; ++try_add){
+      builder.add_feature_to_layer( (rand()%layer_sizes.size()), rafko_net::neuron_group_feature_l1_regularization );
+      /*TODO: Add L2 regularization as well */
+    }
+
+    rafko_net::RafkoNet* network = builder.dense_layers(layer_sizes);
+    rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(*network);
+
+    /* Create environments */
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+      settings, rafko_gym::cost_function_squared_error
+    );
+    std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+      2/* input size */, feature_size,
+      number_of_sequences, sequence_size, 2/*prefill_size*/,
+      rand()%100/*expected_label*/, double_literal(1.0)/*label_delta_per_feature*/
+    ) );
+    std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
+
+    /* create GPU and CPU contexts */
+    rafko_mainframe::RafkoCPUContext cpu_context(network_copy, settings);
+    std::unique_ptr<rafko_mainframe::RafkoGPUContext> gpu_context;
+    REQUIRE_NOTHROW(
+      gpu_context = (
+        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
+          .select_platform().select_device()
+          .build()
+      )
+    );
+
+    REQUIRE(
+      Catch::Approx(cpu_context.full_evaluation()).epsilon(double_literal(0.00000000000001))
+      == gpu_context->full_evaluation()
+    );
+
+    cpu_context.set_environment(environment);
+    gpu_context->set_environment(environment);
+    cpu_context.set_objective(objective);
+    gpu_context->set_objective(objective);
+
+    REQUIRE(
+      Catch::Approx(cpu_context.full_evaluation()).epsilon(double_literal(0.00000000000001))
+      == gpu_context->full_evaluation()
+    );
+  }/*for(10 variants)*/
+}
+#endif/*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_net_test */

@@ -25,6 +25,10 @@
 #include <functional>
 #if(RAFKO_USES_OPENCL)
 #include <string>
+#include <mutex>
+#include <regex>
+
+#include "rafko_protocol/solution.pb.h"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_protocol/rafko_net.pb.h"
@@ -61,20 +65,36 @@ public:
    * @param[in]  thread_index   The index of the thread the feature is to be executed
    */
   sdouble32 calculate_performance_relevant(
-    const FeatureGroup& feature, const RafkoNet network,
+    const FeatureGroup& feature, const RafkoNet& network,
     uint32 thread_index = 0
   ) const;
 
 
   #if(RAFKO_USES_OPENCL)
+  /**
+   * @brief      Provide the calculations of the given feature group as GPU kernel code
+   *
+   * @param      operations           The string to append the relevant operations into
+   * @param[in]  feature              The Neuron group feature to generate the kernel code for
+   * @param[in]  solution             The feature group relevant solution
+   * @param[in]  input_start_index    Variable to help with indexing
+   * @param[in]  output_start_index   Variable to help with indexing
+   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
+   */
   static void add_kernel_code_to(
-    std::string& operations, const FeatureGroup& feature,
-    std::string output_start_index, bool declare_locals = true
+    std::string& operations, const FeatureGroup& feature, const Solution& solution,
+    std::string input_start_index = "", std::string output_start_index = "",
+    bool declare_locals = true
   );
   #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
+  #if(RAFKO_USES_OPENCL)
+  static std::mutex feature_cache_mutex;
+  static uint32 l1_feature_called;
+  static uint32 l2_feature_called;
+  #endif/*(RAFKO_USES_OPENCL)*/
 
   /**
    * @brief     Execute the provided function for every relevant Neuron in a multi-threaded environment
@@ -127,17 +147,37 @@ private:
   ) const;
 
   #if(RAFKO_USES_OPENCL)
+
   /**
    * @brief      Provide the softmax function GPU Kernel.
    *
-   * @param      operations           The string to append the relevant perations into
-   * @param[in]  feature              The feature containing the is and the relevant neurons
+   * @param      operations           The string to append the relevant operations into
+   * @param[in]  feature              The Neuron group feature to generate the kernel code for
+   * @param[in]  solution             The feature group relevant solution
+   * @param[in]  input_start_index    Variable to help with indexing
    * @param[in]  output_start_index   Variable to help with indexing
    * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
    */
-  static void add_softmax_code_to(
-    std::string& operations, const FeatureGroup& feature,
-    std::string output_start_index, bool declare_locals = true
+  static void add_softmax_kernel_to(
+    std::string& operations, const FeatureGroup& feature, const Solution& solution,
+    std::string input_start_index = "", std::string output_start_index = "",
+    bool declare_locals = true
+  );
+
+  /**
+   * @brief      Provide the l1 weight regularization GPU Kernel parts into the provided operations argument.
+   *
+   * @param      operations           The string to append the relevant operations into
+   * @param[in]  feature              The Neuron group feature to generate the kernel code for
+   * @param[in]  solution             The feature group relevant solution
+   * @param[in]  input_start_index    Variable to help with indexing
+   * @param[in]  output_start_index   Variable to help with indexing
+   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
+   */
+  static void add_l1_kernel_to(
+    std::string& operations, const FeatureGroup& feature, const Solution& solution,
+    std::string input_start_index = "", std::string output_start_index = "",
+    bool declare_locals = true
   );
   #endif/*(RAFKO_USES_OPENCL)*/
 

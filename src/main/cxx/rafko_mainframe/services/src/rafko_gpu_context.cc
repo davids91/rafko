@@ -147,7 +147,13 @@ void RafkoGPUContext::upload_weight_table_to_device(){
 
   assert( device_weight_table.size() == overall_number_of_weights );
   device_weight_table_size = device_weight_table.size();
-
+  sdouble32 l1_error = 0.0;
+  std::cout << "Device weights: \n ";
+  for(const sdouble32& w : device_weight_table){
+    std::cout << "{" << w << "}";
+    l1_error += std::abs(w);
+  }
+  std::cout << " -- sum: " << l1_error << std::endl;
   cl_int return_value = opencl_queue.enqueueWriteBuffer(
     solution_phase.get_input_buffer(), CL_TRUE/*blocking*/, sizeof(sdouble32)/*offset*/,
     (sizeof(sdouble32) * device_weight_table.size())/*size*/,
@@ -311,6 +317,19 @@ std::vector<cl::Event> RafkoGPUContext::upload_agent_output(
   return events;
 }
 
+sdouble32 RafkoGPUContext::error_post_process(sdouble32 raw_error, uint32 labels_evaluated){
+  sdouble32 error_value = raw_error;
+  sdouble32 divisor = std::max(labels_evaluated, 1u);
+  sdouble32 performance_error = solution_phase.acquire_output(
+    1u, agent->get_output_shapes()[0][0] /* first output, after the size of the first output */
+  )[0];
+
+  std::cout << "performance error: " << performance_error << std::endl;
+  std::cout << "number of sequences(sol_space): " << environment->get_number_of_sequences() << std::endl;
+
+  return ( (error_value + performance_error) / divisor );
+}
+
 sdouble32 RafkoGPUContext::full_evaluation(){
   cl_int return_value;
   std::vector<cl::Event> label_events;
@@ -374,7 +393,7 @@ sdouble32 RafkoGPUContext::full_evaluation(){
   error_phase( error_enque_arguments );
 
   last_ran_evaluation = full_eval_run;
-  return -(error_phase.acquire_output(1u)[0] / environment->get_number_of_label_samples());
+  return -error_post_process(error_phase.acquire_output(1u)[0], environment->get_number_of_label_samples());
 }
 
 sdouble32 RafkoGPUContext::stochastic_evaluation(bool to_seed, uint32 seed_value){
@@ -485,8 +504,8 @@ sdouble32 RafkoGPUContext::stochastic_evaluation(bool to_seed, uint32 seed_value
   error_phase( error_enque_arguments );
 
   last_ran_evaluation = random_eval_run;
-  return -(
-    error_phase.acquire_output(1u)[0] / static_cast<sdouble32>(used_minibatch_size * environment->get_sequence_size())
+  return -error_post_process(
+    error_phase.acquire_output(1u)[0], (used_minibatch_size * environment->get_sequence_size())
   );
 }
 

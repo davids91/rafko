@@ -20,11 +20,15 @@
 #include <limits>
 #include <math.h>
 #if(RAFKO_USES_OPENCL)
-#include <string>
-#include <regex>
+#include <unordered_map>
 #endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_net/services/synapse_iterator.h"
+#if(RAFKO_USES_OPENCL)
+#include "rafko_utilities/services/rafko_string_utils.h"
+#include "rafko_gym/services/rafko_weight_updater.h"
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
 namespace rafko_net {
 
@@ -57,7 +61,7 @@ void RafkoNetworkFeature::execute_solution_relevant(
 }
 
 sdouble32 RafkoNetworkFeature::calculate_performance_relevant(
-  const FeatureGroup& feature, const RafkoNet network,
+  const FeatureGroup& feature, const RafkoNet& network,
   uint32 thread_index
 ) const{
   assert(thread_index < execution_threads.size());
@@ -137,37 +141,37 @@ sdouble32 RafkoNetworkFeature::calculate_l2_regularization(
 
 #if(RAFKO_USES_OPENCL)
 void RafkoNetworkFeature::add_kernel_code_to(
-  std::string& operations, const FeatureGroup& feature,
-  std::string output_start_index, bool declare_locals
+  std::string& operations, const FeatureGroup& feature, const Solution& solution,
+  std::string input_start_index, std::string output_start_index,
+  bool declare_locals
 ){
   switch(feature.feature()){
     case neuron_group_feature_softmax:
-      add_softmax_code_to(operations, feature, output_start_index, declare_locals);
+      add_softmax_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
       break;
+    case rafko_net::neuron_group_feature_l1_regularization:
+      add_l1_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
+      break;
+    // case rafko_net::neuron_group_feature_l2_regularization:
+    //   add_l2_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
+    //   break;
     default: break;
   }
 }
 
-void RafkoNetworkFeature::add_softmax_code_to(std::string& operations, const FeatureGroup& feature, std::string output_start_index, bool declare_locals){
+void RafkoNetworkFeature::add_softmax_kernel_to(
+  std::string& operations, const FeatureGroup& feature, const Solution& solution,
+  std::string input_start_index, std::string output_start_index,
+  bool declare_locals
+){
+  parameter_not_used(input_start_index);
+  parameter_not_used(solution);
   SynapseIterator<> synapse_iterator(feature.relevant_neurons());
   std::regex index_regex("\\$\\$index\\$\\$");
 
   std::function<std::string(uint32)> index_string = [output_start_index](uint32 index){
     return (output_start_index + " + " + std::to_string(index));
   }; /*!Note: merges the provided output start index and the neuron index and provides an addition */
-
-  std::function<std::string(std::string,uint32)> process_index_values = [output_start_index, index_string, index_regex](std::string input_text, uint32 index){
-    uint32 matches_count = 1u; /* to start the iteration */
-    std::string text = input_text;
-    while(0u < matches_count){
-      text = std::regex_replace(text, index_regex, index_string(index));
-      matches_count = std::distance( /* https://stackoverflow.com/questions/8283735/count-number-of-matches */
-        std::sregex_iterator(text.begin(), text.end(), index_regex),
-        std::sregex_iterator()
-      );
-    }
-    return text;
-  }; /*!Note: replaces index regex until there are no more matches */
 
   /* Add the declaration into the  kernel */
   if(declare_locals){
@@ -181,22 +185,121 @@ void RafkoNetworkFeature::add_softmax_code_to(std::string& operations, const Fea
   }
 
   /* find max and expsum */
-  synapse_iterator.iterate([&operations, process_index_values](uint32 neuron_index){
-    operations += process_index_values(R"(max_val = max(max_val, outputs[$$index$$]);
+  synapse_iterator.iterate([&operations, &index_string, index_regex](uint32 neuron_index){
+    operations += rafko_utilities::replace_all_in_string(R"(max_val = max(max_val, outputs[$$index$$]);
        exp_sum += exp(outputs[$$index$$]);
-     )", neuron_index);
+     )", index_regex, index_string(neuron_index));
   });
 
   /* epsilon guard */
   operations += "exp_sum = max(exp_sum, DBL_EPSILON);\n";
 
   /* apply softmax */
-  synapse_iterator.iterate([&operations, process_index_values](uint32 neuron_index){
-    operations += process_index_values("outputs[$$index$$] = exp(outputs[$$index$$] - max_val) / (exp_sum / exp(max_val));\n\n", neuron_index);
+  synapse_iterator.iterate([&operations, &index_string, index_regex](uint32 neuron_index){
+    operations += rafko_utilities::replace_all_in_string(
+      "outputs[$$index$$] = exp(outputs[$$index$$] - max_val) / (exp_sum / exp(max_val));\n\n",
+      index_regex, index_string(neuron_index)
+    );
   });
 
   operations += "\n\n";
 }
+
+std::mutex RafkoNetworkFeature::feature_cache_mutex;
+uint32 RafkoNetworkFeature::l1_feature_called = 0u;
+void RafkoNetworkFeature::add_l1_kernel_to(
+  std::string& operations, const FeatureGroup& feature, const Solution& solution,
+  std::string input_start_index, std::string output_start_index,
+  bool declare_locals
+){
+  {
+    std::lock_guard<std::mutex> my_lock(feature_cache_mutex);
+    ++l1_feature_called;
+    /*!Note: if the function were to be called after the start of the function, the index 0
+     * would not be wasted, but this way the function is also thread-safe
+     */
+  }
+
+  std::string feature_helpers;
+  if(declare_locals){
+    feature_helpers = R"(
+      double l1_error = 0.0;
+    )";
+  }
+
+  parameter_not_used(declare_locals);
+  feature_helpers += R"(
+    const int $$index_var_name$$[$$feature_weight_number$$] = {
+      $$index_values$$
+    };
+  )";
+  uint32 relevant_weight_count = 0u;
+  std::string index_list;
+  std::unordered_map<uint32, uint32> map_neurons_to_partials;
+  std::unordered_map<uint32, uint32> map_weight_starts_to_partials;
+  std::unordered_map<uint32, uint32> map_weight_sypase_start_to_neurons;
+  SynapseIterator<>::iterate(feature.relevant_neurons(),
+  [&](uint32 neuron_index){
+    /* find neuron inside the partial solutions */
+    uint32 partial_index = rafko_gym::RafkoWeightUpdater::get_relevant_partial_index_for(
+      neuron_index, solution, map_neurons_to_partials
+    );
+    const PartialSolution& partial = solution.partial_solutions(partial_index);
+    uint32 weight_start_in_partial = rafko_gym::RafkoWeightUpdater::get_device_weight_table_start_for(
+      partial_index, solution, map_weight_starts_to_partials
+    );
+    uint32 inner_neuron_index = (neuron_index - solution.partial_solutions(partial_index).output_data().starts());
+    uint32 weight_start_synapse = rafko_gym::RafkoWeightUpdater::get_weight_synapse_start_index_in_partial(
+      neuron_index, partial, map_weight_sypase_start_to_neurons
+    );
+    SynapseIterator<>::iterate(partial.weight_indices(),
+    [&relevant_weight_count](IndexSynapseInterval weight_interval){
+      relevant_weight_count += weight_interval.interval_size();
+    },
+    [&index_list, input_start_index, weight_start_in_partial
+      ,&solution, partial_index
+    ](uint32 weight_index){
+      index_list += "/* " + std::to_string(solution.partial_solutions(partial_index).weight_table(weight_index)) + "*/";
+      index_list += "(" + input_start_index + "+" + std::to_string(weight_start_in_partial + weight_index) + "),";
+    }, weight_start_synapse, partial.weight_synapse_number(inner_neuron_index));
+  });
+  index_list.pop_back();
+  std::string index_size_variable = "feature_l1_" + std::to_string(l1_feature_called) + "_index_values";
+  std::string index_variable = "feature_l1_" + std::to_string(l1_feature_called) + "_index_values";
+
+  /* add feature calculations */
+  std::string feature_calculations = feature_helpers + R"(
+    if(evaluate_network && (get_global_id(0) <= $$feature_weight_number$$)){
+      const int weights_in_thread = max( 1, ($$feature_weight_number$$/(int)(get_global_size(0))) );
+      const int execution_start_index = weights_in_thread * get_global_id(0);
+
+      l1_error = 0.0;
+      for(int w_i = 0;w_i < weights_in_thread; ++w_i){
+        l1_error += fabs(inputs[$$index_var_name$$[execution_start_index + w_i]]);
+      }
+
+      AtomicAdd(&outputs[$$output_start_index$$], l1_error);
+    }/*if(evaluating network)*/
+  )";
+
+  /* Replace helper variables */
+  feature_calculations = rafko_utilities::replace_all_in_string(
+    feature_calculations, std::regex("\\$\\$index_values\\$\\$"), index_list
+  );
+  feature_calculations = rafko_utilities::replace_all_in_string(
+    feature_calculations, std::regex("\\$\\$index_var_name\\$\\$"), index_variable
+  );
+  feature_calculations = rafko_utilities::replace_all_in_string(
+    feature_calculations, std::regex("\\$\\$feature_weight_number\\$\\$"),
+    std::to_string(relevant_weight_count)
+  );
+  feature_calculations = rafko_utilities::replace_all_in_string(
+    feature_calculations, std::regex("\\$\\$output_start_index\\$\\$"),
+    output_start_index
+  );
+  operations += feature_calculations;
+}
+
 #endif/*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_net */

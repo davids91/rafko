@@ -184,7 +184,7 @@ public:
       solution.neuron_number() * std::max(
         (sequences_evaluating * (sequence_size + prefill_inputs_per_sequence) ),
         (solution.network_memory_length() + prefill_inputs_per_sequence)
-      )
+      ), 1u /* .. + global, performance based error summary */
     } };
   }
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space(){

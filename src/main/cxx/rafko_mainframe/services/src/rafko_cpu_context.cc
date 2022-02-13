@@ -64,8 +64,9 @@ void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
   used_minibatch_size = std::min(settings.get_minibatch_size(), environment->get_number_of_sequences());
 }
 
-sdouble32 RafkoCPUContext::post_process(sdouble32 raw_error){
+sdouble32 RafkoCPUContext::error_post_process(sdouble32 raw_error, uint32 labels_evaluated){
   sdouble32 result_error = raw_error;
+  sdouble32 divisor = std::max(1u, labels_evaluated);
 
   for(const rafko_net::FeatureGroup& feature : network.neuron_group_features()){
     if(rafko_net::NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
@@ -73,7 +74,7 @@ sdouble32 RafkoCPUContext::post_process(sdouble32 raw_error){
     }
   }
 
-  return result_error;
+  return result_error / divisor;
 }
 
 sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_truncation){
@@ -120,9 +121,7 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
     error_sum += error_part;
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
 
-  return -post_process(
-    error_sum / static_cast<sdouble32>(sequences_to_evaluate * environment->get_sequence_size())
-  );
+  return -error_post_process( error_sum, (sequences_to_evaluate * environment->get_sequence_size()) );
 }
 
 } /* namespace rafko_mainframe */

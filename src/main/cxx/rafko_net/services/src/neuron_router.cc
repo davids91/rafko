@@ -43,13 +43,11 @@ NeuronRouter::NeuronRouter(const RafkoNet& rafko_net)
   for(sint32 feature_index = 0; feature_index < rafko_net.neuron_group_features_size(); feature_index++){
     /* For each relevant feature group */
     const FeatureGroup& feature_group = rafko_net.neuron_group_features(feature_index);
-    if( true ==  NeuronInfo::is_feature_relevant_to_solution(feature_group.feature()) ){
-      tracked_features.push_back( FeatureGroupCache(feature_group) );
-      SynapseIterator<>::iterate(feature_group.relevant_neurons(),[&](sint32 neuron_index){
-        features_assigned_to_neurons[neuron_index].push_back(tracked_features.size() - 1u);
-      });
-      /*!Note: tracked_features should be unchanged after constructor.. */
-    }/* if(feature group is relevant) */
+    tracked_features.push_back( FeatureGroupCache(feature_group) );
+    SynapseIterator<>::iterate(feature_group.relevant_neurons(),[&](sint32 neuron_index){
+      features_assigned_to_neurons[neuron_index].push_back(tracked_features.size() - 1u);
+    });
+    /*!Note: tracked_features should be unchanged after constructor as it is used by index in the construction logic */
   }/* for(each feature group in the network) */
 }
 

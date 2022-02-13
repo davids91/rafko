@@ -136,8 +136,8 @@ private:
    */
   sdouble32 evaluate(uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion);
 
-  sdouble32 post_process(sdouble32 raw_error);
 
+  sdouble32 error_post_process(sdouble32 raw_error, uint32 labels_evaluated);
 };
 
 } /* namespace rafko_mainframe */
