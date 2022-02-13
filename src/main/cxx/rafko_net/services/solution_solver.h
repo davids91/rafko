@@ -48,6 +48,15 @@ public:
   SolutionSolver& operator=(SolutionSolver&& other) = delete; /* Move assignment */
   ~SolutionSolver() = default;
 
+  /**
+   * @brief     Exposes the feature executor used to run features on the network
+   *
+   * @return    A const reference of the exposed feature executor
+   */
+  const RafkoNetworkFeature& expose_executor(){
+    return feature_executor;
+  }
+
   /* +++ Methods taken from @RafkoAgent +++ */
   void solve(
     const std::vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,

@@ -29,6 +29,22 @@
 
 namespace rafko_net {
 
+RafkoNetBuilder& RafkoNetBuilder::add_feature_to_layer(uint32 layer_index, Neuron_group_features feature){
+  std::vector<std::pair<uint32,Neuron_group_features>>::iterator it = std::find_if(
+    layer_features.begin(), layer_features.end(),
+    [layer_index, feature](const std::pair<uint32,Neuron_group_features>& element){
+      return( /* only add feature if it's not already inside the network */
+        (layer_index == std::get<0>(element))
+        &&(feature == std::get<1>(element))
+      );
+    }
+  );
+  if(it == layer_features.end()) /* only append feature group if layer is not al */
+    layer_features.push_back(std::make_pair(layer_index, feature));
+  return *this;
+}
+
+
 RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
   uint32 previous_size = 0;
   uint32 numNeurons = 0;

@@ -28,8 +28,9 @@
 
 namespace rafko_net {
 
-void RafkoNetworkFeature::execute_for_relevant_neurons(
-  const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons, std::function<void(uint32)> fun
+void RafkoNetworkFeature::execute_in_paralell_for(
+  const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
+  std::function<void(uint32)>&& fun
 ) const{
   execution_threads[0]->start_and_block([this, &relevant_neurons, &fun](uint32 thread_index){
     SynapseIterator<> relevant_neuron_iterator(relevant_neurons);
@@ -42,7 +43,10 @@ void RafkoNetworkFeature::execute_for_relevant_neurons(
   });
 }
 
-void RafkoNetworkFeature::execute(const FeatureGroup& feature, std::vector<sdouble32>& neuron_data, uint32 thread_index) const{
+void RafkoNetworkFeature::execute_solution_relevant(
+  const FeatureGroup& feature, std::vector<sdouble32>& neuron_data,
+  uint32 thread_index
+) const{
   assert(thread_index < execution_threads.size());
 
   switch(feature.feature()){
@@ -52,6 +56,20 @@ void RafkoNetworkFeature::execute(const FeatureGroup& feature, std::vector<sdoub
   }
 }
 
+sdouble32 RafkoNetworkFeature::calculate_performance_relevant(
+  const FeatureGroup& feature, const RafkoNet network,
+  uint32 thread_index
+) const{
+  assert(thread_index < execution_threads.size());
+
+  switch(feature.feature()){
+    case neuron_group_feature_l1_regularization: return calculate_l1_regularization(network, feature.relevant_neurons());
+    case neuron_group_feature_l2_regularization: return calculate_l2_regularization(network, feature.relevant_neurons());
+    default: return double_literal(0.0);
+  }
+}
+
+
 void RafkoNetworkFeature::calculate_softmax(
   std::vector<sdouble32>& neuron_data,
   const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons
@@ -59,7 +77,7 @@ void RafkoNetworkFeature::calculate_softmax(
   std::atomic<sdouble32> max_value{-std::numeric_limits<double>::max()};
   std::atomic<sdouble32> expsum{double_literal(0)};
 
-  execute_for_relevant_neurons(relevant_neurons, [&max_value, &expsum, &neuron_data](uint32 neuron_index){
+  execute_in_paralell_for(relevant_neurons, [&max_value, &expsum, &neuron_data](uint32 neuron_index){
     sdouble32 current = max_value.load();
     while(
       (neuron_data[neuron_index] > current)
@@ -67,9 +85,8 @@ void RafkoNetworkFeature::calculate_softmax(
     )current = max_value;
 
     current = expsum;
-    while(
-      !expsum.compare_exchange_weak(current, (current + std::exp(neuron_data[neuron_index])))
-    ) current = expsum;
+    while(!expsum.compare_exchange_weak(current, (current + std::exp(neuron_data[neuron_index]))))
+      current = expsum;
   });
 
   sdouble32 used_max_value = max_value;
@@ -80,11 +97,43 @@ void RafkoNetworkFeature::calculate_softmax(
    */
   used_expsum = std::max(used_expsum, std::numeric_limits<double>::epsilon());
   /*!Note: Since no Neuron will be involved in the execution twice, no need for a mutual exclusive lock or atomics */
-  execute_for_relevant_neurons(relevant_neurons,[&neuron_data, &used_max_value, &used_expsum](uint32 neuron_index){
+  execute_in_paralell_for(relevant_neurons,[&neuron_data, &used_max_value, &used_expsum](uint32 neuron_index){
     neuron_data[neuron_index] = std::exp(neuron_data[neuron_index] - used_max_value) / used_expsum;
   });
 }
 
+sdouble32 RafkoNetworkFeature::calculate_l1_regularization(
+  const rafko_net::RafkoNet& network,
+  const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons
+) const{
+  std::atomic<sdouble32> error_value = double_literal(0.0);
+  execute_in_paralell_for(relevant_neurons,[&error_value, &network](uint32 neuron_index){
+    SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
+    [&error_value, &network](uint32 weight_index){
+      sdouble32 current = error_value;
+      while(!error_value.compare_exchange_weak(current, (error_value + std::abs(network.weight_table(weight_index)))))
+        current = error_value;
+    });
+  });
+  return static_cast<sdouble32>(error_value);
+}
+
+sdouble32 RafkoNetworkFeature::calculate_l2_regularization(
+  const rafko_net::RafkoNet& network,
+  const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons
+) const{
+  std::atomic<sdouble32> error_value = double_literal(0.0);
+  execute_in_paralell_for(relevant_neurons,[&error_value, &network](uint32 neuron_index){
+    SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
+    [&error_value, &network](uint32 weight_index){
+      sdouble32 current = error_value;
+      while(!error_value.compare_exchange_weak(
+        current, ( error_value + std::pow(network.weight_table(weight_index), double_literal(2.0)) )
+      ))current = error_value;
+    });
+  });
+  return static_cast<sdouble32>(error_value);
+}
 
 #if(RAFKO_USES_OPENCL)
 void RafkoNetworkFeature::add_kernel_code_to(

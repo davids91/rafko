@@ -21,6 +21,7 @@
 
 #include "rafko_protocol/training.pb.h"
 #include "rafko_utilities/models/data_ringbuffer.h"
+#include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_gym/services/updater_factory.h"
@@ -61,6 +62,18 @@ void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
   neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples());
   used_sequence_truncation = std::min(settings.get_memory_truncation(), environment->get_sequence_size());
   used_minibatch_size = std::min(settings.get_minibatch_size(), environment->get_number_of_sequences());
+}
+
+sdouble32 RafkoCPUContext::post_process(sdouble32 raw_error){
+  sdouble32 result_error = raw_error;
+
+  for(const rafko_net::FeatureGroup& feature : network.neuron_group_features()){
+    if(rafko_net::NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
+      result_error += agent->expose_executor().calculate_performance_relevant(feature, network);
+    }
+  }
+
+  return result_error;
 }
 
 sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_truncation){
@@ -107,7 +120,7 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
     error_sum += error_part;
   } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
 
-  return -(
+  return -post_process(
     error_sum / static_cast<sdouble32>(sequences_to_evaluate * environment->get_sequence_size())
   );
 }

@@ -135,6 +135,9 @@ private:
    * @return     The resulting fitness
    */
   sdouble32 evaluate(uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion);
+
+  sdouble32 post_process(sdouble32 raw_error);
+
 };
 
 } /* namespace rafko_mainframe */

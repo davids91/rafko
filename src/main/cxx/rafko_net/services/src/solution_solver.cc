@@ -116,7 +116,10 @@ void SolutionSolver::solve(
        * and each column may contain feature relevant to any @Neuron inside the the current row.
        */
       for(uint32 feature_index = 0; feature_index < solved_features.size(); feature_index++){
-        feature_executor.execute(solved_features[feature_index], output.get_element(0u), thread_index);
+        feature_executor.execute_solution_relevant(
+          solved_features[feature_index], output.get_element(0u),
+          thread_index
+        );
       }
       solved_features.clear();
     } /* for(every row in the @Solution) */

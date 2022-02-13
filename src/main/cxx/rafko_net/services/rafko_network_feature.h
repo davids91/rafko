@@ -41,11 +41,31 @@ public:
   : execution_threads(execution_threads_)
   { }
 
-  void execute_for_relevant_neurons(
-    const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons, std::function<void(uint32)> fun
+  /**
+   * @brief     Execute the given @FeatureGroup(supposedly solution relevant) on the provided neuron data buffer
+   *
+   * @param[in]  feature        The feature containing the is and the relevant neurons
+   * @param      neuron_data    The array containing the neuron data to update
+   * @param[in]  thread_index   The index of the thread the feature is to be executed
+   */
+  void execute_solution_relevant(
+    const FeatureGroup& feature, std::vector<sdouble32>& neuron_data,
+    uint32 thread_index = 0
   ) const;
 
-  void execute(const FeatureGroup& feature, std::vector<sdouble32>& neuron_data, uint32 thread_index = 0) const;
+  /**
+   * @brief     Execute the given @FeatureGroup(supposedly performance relevant) on the provided neuron data buffer
+   *
+   * @param[in]  feature        The feature containing the is and the relevant neurons
+   * @param[in]  network        The network to calculate the values from
+   * @param[in]  thread_index   The index of the thread the feature is to be executed
+   */
+  sdouble32 calculate_performance_relevant(
+    const FeatureGroup& feature, const RafkoNet network,
+    uint32 thread_index = 0
+  ) const;
+
+
   #if(RAFKO_USES_OPENCL)
   static void add_kernel_code_to(
     std::string& operations, const FeatureGroup& feature,
@@ -57,15 +77,52 @@ private:
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
 
   /**
+   * @brief     Execute the provided function for every relevant Neuron in a multi-threaded environment
+   *
+   * @param[in]  relevant_neurons   The index values of the relevant neurons to apply the function on
+   * @param[in]  fun                The function to call with the index value of every relevant Neuron
+   */
+  void execute_in_paralell_for(
+    const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
+    std::function<void(uint32)>&& fun
+  ) const;
+
+
+  /**
    * @brief      Calculate the softmax function by setting the data values provided in the arguments
    *             to be of sum of one.
    *
    * @param      neuron_data        The array containing the neuron data to update
    * @param[in]  relevant_neurons   The index values of the relevant neurons to apply the function on
-   * @param[in]  execution_threads  Used execution threads
    */
   void calculate_softmax(
     std::vector<sdouble32>& neuron_data,
+    const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons
+  ) const;
+
+  /**
+   * @brief      Calculate the error value coming from L1 weight regularization
+   *
+   * @param      neuron_data        The array containing the neuron data to update
+   * @param[in]  relevant_neurons   The index values of the relevant neurons to apply the function on
+   *
+   * @return the resulting error value
+   */
+  sdouble32 calculate_l1_regularization(
+    const rafko_net::RafkoNet& network,
+    const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons
+  ) const;
+
+  /**
+   * @brief      Calculate the error value coming from L2 weight regularization
+   *
+   * @param      neuron_data        The array containing the neuron data to update
+   * @param[in]  relevant_neurons   The index values of the relevant neurons to apply the function on
+   *
+   * @return the resulting error value
+   */
+  sdouble32 calculate_l2_regularization(
+    const rafko_net::RafkoNet& network,
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons
   ) const;
 
