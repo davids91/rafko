@@ -184,6 +184,41 @@ private:
     std::string input_start_index = "", std::string output_start_index = "",
     bool declare_locals = true
   );
+
+  /**
+   * @brief      Provide the l2 weight regularization GPU Kernel parts into the provided operations argument.
+   *
+   * @param      operations           The string to append the relevant operations into
+   * @param[in]  feature              The Neuron group feature to generate the kernel code for
+   * @param[in]  solution             The feature group relevant solution
+   * @param[in]  input_start_index    Variable to help with indexing
+   * @param[in]  output_start_index   Variable to help with indexing
+   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
+   */
+  static void add_l2_kernel_to(
+    std::string& operations, const FeatureGroup& feature, const Solution& solution,
+    std::string input_start_index = "", std::string output_start_index = "",
+    bool declare_locals = true
+  );
+
+  /**
+   * @brief      The common part of L1 and L2 weight regularization
+   *
+   * @param      operations           The string to append the relevant operations into
+   * @param[in]  lx                   The operation to use on each weight
+   * @param[in]  local_name           Name of the local variable to be used in the feature
+   * @param[in]  feature              The Neuron group feature to generate the kernel code for
+   * @param[in]  solution             The feature group relevant solution
+   * @param[in]  input_start_index    Variable to help with indexing
+   * @param[in]  output_start_index   Variable to help with indexing
+   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
+   */
+  static void add_lx_kernel_to(
+    std::string& operations, std::function<std::string(std::string)>&& lx, std::string local_name,
+    const FeatureGroup& feature, const Solution& solution,
+    std::string input_start_index = "", std::string output_start_index = "",
+    bool declare_locals = true
+  );
   #endif/*(RAFKO_USES_OPENCL)*/
 
 };

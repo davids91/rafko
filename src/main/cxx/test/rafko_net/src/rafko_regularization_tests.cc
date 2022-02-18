@@ -269,7 +269,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
   google::protobuf::Arena arena;
   uint32 feature_size = 2u;
   uint32 sequence_size = 3u;
-  uint32 number_of_sequences = 2;//rand()%10 + 1;
+  uint32 number_of_sequences = rand()%10 + 1;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
@@ -279,16 +279,16 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
       .input_size(2).expected_input_range(double_literal(1.0));
 
     std::vector<uint32> layer_sizes = {
-      static_cast<uint32>(rand()%3) + 1u,
-      static_cast<uint32>(rand()%3) + 1u,
-      static_cast<uint32>(rand()%3) + 1u,
-      static_cast<uint32>(rand()%3) + 1u,
-      static_cast<uint32>(rand()%3) + 1u,
+      static_cast<uint32>(rand()%5) + 1u,
+      static_cast<uint32>(rand()%5) + 1u,
+      static_cast<uint32>(rand()%5) + 1u,
+      static_cast<uint32>(rand()%5) + 1u,
+      static_cast<uint32>(rand()%5) + 1u,
       feature_size
     };
-    for(uint32 try_add = 0; try_add < 10; ++try_add){
+    for(uint32 try_add = 0; try_add < (layer_sizes.size() / 2); ++try_add){
       builder.add_feature_to_layer( (rand()%layer_sizes.size()), rafko_net::neuron_group_feature_l1_regularization );
-      /*TODO: Add L2 regularization as well */
+      builder.add_feature_to_layer( (rand()%layer_sizes.size()), rafko_net::neuron_group_feature_l2_regularization );
     }
 
     rafko_net::RafkoNet* network = builder.dense_layers(layer_sizes);

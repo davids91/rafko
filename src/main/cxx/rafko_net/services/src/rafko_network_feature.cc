@@ -153,9 +153,9 @@ void RafkoNetworkFeature::add_kernel_code_to(
     case rafko_net::neuron_group_feature_l1_regularization:
       add_l1_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
       break;
-    // case rafko_net::neuron_group_feature_l2_regularization:
-    //   add_l2_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
-    //   break;
+    case rafko_net::neuron_group_feature_l2_regularization:
+      add_l2_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
+      break;
     default: break;
   }
 }
@@ -168,7 +168,7 @@ void RafkoNetworkFeature::add_softmax_kernel_to(
   parameter_not_used(input_start_index);
   parameter_not_used(solution);
   SynapseIterator<> synapse_iterator(feature.relevant_neurons());
-  std::regex index_regex("\\$\\$index\\$\\$");
+  std::regex index_regex("==index==");
 
   std::function<std::string(uint32)> index_string = [output_start_index](uint32 index){
     return (output_start_index + " + " + std::to_string(index));
@@ -187,8 +187,8 @@ void RafkoNetworkFeature::add_softmax_kernel_to(
 
   /* find max and expsum */
   synapse_iterator.iterate([&operations, &index_string, index_regex](uint32 neuron_index){
-    operations += rafko_utilities::replace_all_in_string(R"(max_val = max(max_val, outputs[$$index$$]);
-       exp_sum += exp(outputs[$$index$$]);
+    operations += rafko_utilities::replace_all_in_string(R"(max_val = max(max_val, outputs[==index==]);
+       exp_sum += exp(outputs[==index==]);
      )", index_regex, index_string(neuron_index));
   });
 
@@ -198,7 +198,7 @@ void RafkoNetworkFeature::add_softmax_kernel_to(
   /* apply softmax */
   synapse_iterator.iterate([&operations, &index_string, index_regex](uint32 neuron_index){
     operations += rafko_utilities::replace_all_in_string(
-      "outputs[$$index$$] = exp(outputs[$$index$$] - max_val) / (exp_sum / exp(max_val));\n\n",
+      "outputs[==index==] = exp(outputs[==index==] - max_val) / (exp_sum / exp(max_val));\n\n",
       index_regex, index_string(neuron_index)
     );
   });
@@ -206,10 +206,31 @@ void RafkoNetworkFeature::add_softmax_kernel_to(
   operations += "\n\n";
 }
 
-std::mutex RafkoNetworkFeature::feature_cache_mutex;
-uint32 RafkoNetworkFeature::l1_feature_called = 0u;
 void RafkoNetworkFeature::add_l1_kernel_to(
   std::string& operations, const FeatureGroup& feature, const Solution& solution,
+  std::string input_start_index, std::string output_start_index,
+  bool declare_locals
+){
+  add_lx_kernel_to(operations, [](std::string input){
+    return "fabs(" + input + ")";
+  }, "l1_error",feature, solution, input_start_index, output_start_index, declare_locals);
+}
+
+void RafkoNetworkFeature::add_l2_kernel_to(
+  std::string& operations, const FeatureGroup& feature, const Solution& solution,
+  std::string input_start_index, std::string output_start_index,
+  bool declare_locals
+){
+  add_lx_kernel_to(operations, [](std::string input){
+    return "pow(" + input + ", 2.0)";
+  }, "l2_error", feature, solution, input_start_index, output_start_index, declare_locals);
+}
+
+std::mutex RafkoNetworkFeature::feature_cache_mutex;
+uint32 RafkoNetworkFeature::l1_feature_called = 0u;
+void RafkoNetworkFeature::add_lx_kernel_to(
+  std::string& operations, std::function<std::string(std::string)>&& lx, std::string local_name,
+  const FeatureGroup& feature, const Solution& solution,
   std::string input_start_index, std::string output_start_index,
   bool declare_locals
 ){
@@ -224,14 +245,14 @@ void RafkoNetworkFeature::add_l1_kernel_to(
   std::string feature_helpers;
   if(declare_locals){
     feature_helpers = R"(
-      double l1_error = 0.0;
+      double ==local_name== = 0.0;
     )";
   }
 
   parameter_not_used(declare_locals);
   feature_helpers += R"(
-    const int $$index_var_name$$[$$feature_weight_number$$] = {
-      $$index_values$$
+    const int ==index_var_name==[==feature_weight_number==] = {
+      ==index_values==
     };
   )";
   uint32 relevant_weight_count = 0u;
@@ -262,38 +283,53 @@ void RafkoNetworkFeature::add_l1_kernel_to(
     }, weight_start_synapse, partial.weight_synapse_number(inner_neuron_index));
   });
   index_list.pop_back();
-  std::string index_size_variable = "feature_l1_" + std::to_string(l1_feature_called) + "_index_values";
-  std::string index_variable = "feature_l1_" + std::to_string(l1_feature_called) + "_index_values";
+  std::string index_size_variable = "feature_lx_" + std::to_string(l1_feature_called) + "_index_values";
+  std::string index_variable = "feature_lx_" + std::to_string(l1_feature_called) + "_index_values";
 
   /* add feature calculations */
   std::string feature_calculations = feature_helpers + R"(
-    if(evaluate_network && (get_global_id(0) <= $$feature_weight_number$$)){
-      const int weights_in_thread = max( 1, ($$feature_weight_number$$/(int)(get_global_size(0))) );
+    if(evaluate_network && (get_global_id(0) <= ==feature_weight_number==)){
+      const int weights_in_thread = ( ==feature_weight_number==/(int)(get_global_size(0)) ) + 1;
       const int execution_start_index = weights_in_thread * get_global_id(0);
 
-      l1_error = 0.0;
-      for(int w_i = 0;w_i < weights_in_thread; ++w_i){
-        l1_error += fabs(inputs[$$index_var_name$$[execution_start_index + w_i]]);
+      ==local_name== = 0.0;
+      for(
+        int w_i = 0;
+        (
+          (w_i < weights_in_thread)
+          &&((execution_start_index + w_i) < ==feature_weight_number==)
+        );
+        ++w_i
+      ){
+        ==local_name== += ==lx==;
       }
 
-      AtomicAdd(&outputs[$$output_start_index$$], l1_error);
+      AtomicAdd(&outputs[==output_start_index==], ==local_name==);
     }/*if(evaluating network)*/
   )";
 
   /* Replace helper variables */
   feature_calculations = rafko_utilities::replace_all_in_string(
-    feature_calculations, std::regex("\\$\\$index_values\\$\\$"), index_list
+    feature_calculations, std::regex("==lx=="),
+    lx("inputs[==index_var_name==[execution_start_index + w_i]]")
   );
   feature_calculations = rafko_utilities::replace_all_in_string(
-    feature_calculations, std::regex("\\$\\$index_var_name\\$\\$"), index_variable
+    feature_calculations, std::regex("==index_values=="), index_list
   );
   feature_calculations = rafko_utilities::replace_all_in_string(
-    feature_calculations, std::regex("\\$\\$feature_weight_number\\$\\$"),
+    feature_calculations, std::regex("==index_var_name=="), index_variable
+  );
+  feature_calculations = rafko_utilities::replace_all_in_string(
+    feature_calculations, std::regex("==feature_weight_number=="),
     std::to_string(relevant_weight_count)
   );
   feature_calculations = rafko_utilities::replace_all_in_string(
-    feature_calculations, std::regex("\\$\\$output_start_index\\$\\$"),
+    feature_calculations, std::regex("==output_start_index=="),
     output_start_index
+  );
+  feature_calculations = rafko_utilities::replace_all_in_string(
+    feature_calculations, std::regex("==local_name=="),
+    local_name
   );
   operations += feature_calculations;
 }
