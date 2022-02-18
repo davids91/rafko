@@ -41,10 +41,12 @@ public:
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
+    objective.reset();
     objective = objective_;
   }
 
   void set_weight_updater(rafko_gym::Weight_updaters updater){
+    weight_updater.reset();
     weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, updater, settings);
   }
 

@@ -164,12 +164,14 @@ void RafkoGPUContext::refresh_objective(){
 }
 
 void RafkoGPUContext::set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
+  objective.reset();
   objective = objective_;
   refresh_objective();
   last_ran_evaluation = not_eval_run;
 }
 
 void RafkoGPUContext::set_weight_updater(rafko_gym::Weight_updaters updater){
+  weight_updater.reset();
   weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, updater, settings);
 }
 

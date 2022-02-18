@@ -51,7 +51,8 @@ public:
      state.store(End);
     }
     synchroniser.notify_all();
-    for(std::thread& thread : threads) thread.join();
+    while(0 < threads.size())
+      if(threads.back().joinable()) threads.back().join();
   }
 
   void start_and_block(const std::function<void(uint32)>& function) const{

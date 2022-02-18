@@ -141,7 +141,13 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   std::vector<rafko_net::RafkoNet*> nets = std::vector<rafko_net::RafkoNet*>();
   nets.push_back(rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range(double_literal(1.0))
-    .set_recurrence_to_self()
+    .set_recurrence_to_layer()
+    .add_feature_to_layer(0, rafko_net::neuron_group_feature_l1_regularization)
+    .add_feature_to_layer(0, rafko_net::neuron_group_feature_l2_regularization)
+    .add_feature_to_layer(1, rafko_net::neuron_group_feature_l1_regularization)
+    .add_feature_to_layer(1, rafko_net::neuron_group_feature_l2_regularization)
+    .add_feature_to_layer(2, rafko_net::neuron_group_feature_l1_regularization)
+    .add_feature_to_layer(2, rafko_net::neuron_group_feature_l2_regularization)
     .allowed_transfer_functions_by_layer({
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu},
