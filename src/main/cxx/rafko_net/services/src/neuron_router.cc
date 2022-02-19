@@ -376,7 +376,10 @@ bool NeuronRouter::are_neuron_feature_groups_finished_for(uint32 neuron_index){
   assert(neuron_index < features_assigned_to_neurons.size());
   for(uint32 feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
     FeatureGroupCache& feature = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
-    if(!feature.solved()) return false;
+    if(
+      ( NeuronInfo::is_feature_relevant_to_solution(feature.get_host().feature()) )
+      &&(!feature.solved())
+    )return false;
   }
   return true;
 }

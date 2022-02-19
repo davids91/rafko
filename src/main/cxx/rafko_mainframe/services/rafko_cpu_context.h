@@ -38,6 +38,11 @@ public:
   RafkoCPUContext(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
   ~RafkoCPUContext() = default;
 
+  void fix_dirty(){ /*!Note: When another contex updates the weights this hack takes over the changes */
+    weight_updater->update_solution_with_weights();
+  }
+
+  /* +++ Methods taken from @RafkoContext +++ */
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
@@ -111,6 +116,7 @@ public:
   const rafko_net::RafkoNet& expose_network(){
     return network;
   }
+  /* --- Methods taken from @RafkoContext --- */
 
 private:
   rafko_mainframe::RafkoSettings settings;

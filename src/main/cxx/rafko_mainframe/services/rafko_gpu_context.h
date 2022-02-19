@@ -38,6 +38,13 @@ namespace rafko_mainframe {
 
 class RAFKO_FULL_EXPORT RafkoGPUContext : public RafkoContext{
 public:
+
+  void fix_dirty(){ /*!Note: When another contex updates the weights this hack takes over the changes */
+    weight_updater->update_solution_with_weights();
+    upload_weight_table_to_device();
+  }
+
+  /* +++ Methods taken from @RafkoContext +++ */
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_);
   void set_weight_updater(rafko_gym::Weight_updaters updater);
@@ -68,6 +75,7 @@ public:
   const rafko_net::RafkoNet& expose_network(){
     return network;
   }
+  /* --- Methods taken from @RafkoContext --- */
 
   ~RafkoGPUContext() = default;
 
