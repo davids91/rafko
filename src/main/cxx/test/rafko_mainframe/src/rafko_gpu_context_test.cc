@@ -300,7 +300,6 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 }
 
 TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[context][GPU][evaluate][multi-label]"){
-  /*!TODO: srand(2043747162); /* this makes this fail.. */
   google::protobuf::Arena arena;
   uint32 sequence_size = rand()%3 + 1;
   uint32 number_of_sequences = rand()%10 + 2;

@@ -42,17 +42,11 @@ const std::string atomic_double_add_function = R"(
 
 const std::string random_function = R"(
   /* https://en.wikipedia.org/wiki/Xorshift */
-  __global uint global_random_state;
-
-  void set_random_seed(uint seed){
-    global_random_state = seed;
-  }
-
-  uint get_random_number(uint range){
-    uint seed = global_random_state + get_global_id(0);
+  uint get_random_number(uint range, uint* state){
+    uint seed = *state + get_global_id(0);
     uint t = seed ^ (seed << 11);
     uint result = seed ^ (seed >> 19) ^ (t ^ (t >> 8));
-    global_random_state = result; /* race condition? */
+    *state = result; /* race condition? */
     return result % range;
   }
 )";

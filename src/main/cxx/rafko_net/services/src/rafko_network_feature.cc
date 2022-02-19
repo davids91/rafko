@@ -168,7 +168,7 @@ void RafkoNetworkFeature::add_kernel_code_to(
 ){
   switch(feature.feature()){
     case neuron_group_feature_dropout_regularization:
-      add_dropout_kernel_to(operations, settings, feature, output_start_index);
+      add_dropout_kernel_to(operations, settings, feature, output_start_index, declare_locals);
       break;
     case neuron_group_feature_softmax:
       add_softmax_kernel_to(operations, feature, output_start_index, declare_locals);
@@ -228,14 +228,22 @@ void RafkoNetworkFeature::add_softmax_kernel_to(
 
 void RafkoNetworkFeature::add_dropout_kernel_to(
   std::string& operations, const rafko_mainframe::RafkoSettings& settings,
-  const FeatureGroup& feature, std::string output_start_index
+  const FeatureGroup& feature, std::string output_start_index,
+  bool declare_locals
 ){
   std::string dropout_operations = "";
+  std::string locals = "";
+  if(declare_locals){
+    locals += R"(
+      uint dropout_seed = 0;
+      dropout_seed = outputs[get_random_number(==range==, &dropout_seed)];
+    )";
+  }
   uint32 number_of_neurons = 0u;
   SynapseIterator<>::iterate(feature.relevant_neurons(),
   [&dropout_operations, output_start_index, &settings, &number_of_neurons](uint32 neuron_index){
      std::string this_op = R"(
-      if((==param== * 100.0) >= (get_random_number(100) + 1)){
+      if((==param== * 100.0) >= (get_random_number(100, &dropout_seed) + 1)){
         outputs[==output_start== + ==index==] = 0.0;
       }
     )";
@@ -245,9 +253,8 @@ void RafkoNetworkFeature::add_dropout_kernel_to(
     dropout_operations += this_op;
     ++number_of_neurons;
   });
-  dropout_operations = std::regex_replace(R"(
+  dropout_operations = locals + std::regex_replace(R"(
     if(evaluate_network){
-      set_random_seed(outputs[get_random_number(==range==)]);
       ==dropout_operations==
     }
   )",std::regex("==dropout_operations=="), dropout_operations);

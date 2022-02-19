@@ -194,10 +194,12 @@ private:
    * @param[in]  settings             The settings object containing the required hyperparameters for the features
    * @param[in]  feature              The Neuron group feature to generate the kernel code for
    * @param[in]  output_start_index   Variable to help with indexing
+   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
    */
   static void add_dropout_kernel_to(
     std::string& operations, const rafko_mainframe::RafkoSettings& settings,
-    const FeatureGroup& feature, std::string output_start_index = ""
+    const FeatureGroup& feature, std::string output_start_index = "",
+    bool declare_locals = true
   );
 
   /**
