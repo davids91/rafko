@@ -61,6 +61,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   sdouble32 error_sum = double_literal(0.0);
   uint32 raw_inputs_index = 0;
   uint32 raw_label_index = 0;
+  reference_solver->set_eval_mode(true);
   for(uint32 sequence_index = 0; sequence_index < dataset_wrap.get_number_of_sequences(); ++sequence_index){
     bool reset = true;
     for(uint32 prefill_index = 0; prefill_index < dataset_wrap.get_prefill_inputs_number(); ++prefill_index){
@@ -117,6 +118,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
   uint32 raw_inputs_index = 0;
   uint32 raw_label_index = 0;
+  reference_solver->set_eval_mode(true);
   for(uint32 sequence_index = sequence_start_index; sequence_index < (sequence_start_index + settings.get_minibatch_size()); ++sequence_index){
     bool reset = true;
     for(uint32 prefill_index = 0; prefill_index < dataset_wrap.get_prefill_inputs_number(); ++prefill_index){

@@ -24,7 +24,8 @@
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_net/models/rafko_softmax_feature.h"
+#include "rafko_mainframe/models/rafko_settings.h"
+#include "rafko_net/services/rafko_network_feature.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
@@ -34,52 +35,62 @@
 
 namespace rafko_net_test {
 
-static void check_softmax_values(std::vector<sdouble32>& neuron_data, rafko_net::FeatureGroup& mockup, rafko_utilities::ThreadGroup& threads){
+namespace{
+  void check_softmax_values(
+    std::vector<sdouble32>& neuron_data, const rafko_mainframe::RafkoSettings& settings,
+    rafko_net::FeatureGroup& mockup, rafko_utilities::ThreadGroup& threads
+  ){
 
-  /* calculate manually */
-  rafko_net::SynapseIterator<> iter(mockup.relevant_neurons());
-  std::vector<sdouble32> neuron_data_copy = std::vector(neuron_data);
-  sdouble32 max_value = -std::numeric_limits<double>::max();
-  iter.iterate([&max_value, &neuron_data_copy](sint32 index){
-    if(neuron_data_copy[index] > max_value)
-      max_value = neuron_data_copy[index];
-  }); /* finding maximum value */
-  iter.iterate([&max_value, &neuron_data_copy](sint32 index){
-    neuron_data_copy[index] = std::exp(neuron_data_copy[index] - max_value);
-  }); /* transforming x --> exp(x - max(x)) */
+    /* calculate manually */
+    rafko_net::SynapseIterator<> iter(mockup.relevant_neurons());
+    std::vector<sdouble32> neuron_data_copy = std::vector(neuron_data);
+    sdouble32 max_value = -std::numeric_limits<double>::max();
+    iter.iterate([&max_value, &neuron_data_copy](sint32 index){
+      if(neuron_data_copy[index] > max_value)
+        max_value = neuron_data_copy[index];
+    }); /* finding maximum value */
+    iter.iterate([&max_value, &neuron_data_copy](sint32 index){
+      neuron_data_copy[index] = std::exp(neuron_data_copy[index] - max_value);
+    }); /* transforming x --> exp(x - max(x)) */
 
-  sdouble32 manual_sum = double_literal(0);
-  iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
-    manual_sum += neuron_data_copy[index];
-  }); /* collecting resulting sum */
-  iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
-    neuron_data_copy[index] /= manual_sum;
-  }); /* normalizing e_x --> e_x/sum(e_x) */
+    sdouble32 manual_sum = double_literal(0);
+    iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
+      manual_sum += neuron_data_copy[index];
+    }); /* collecting resulting sum */
+    manual_sum = std::max(manual_sum, std::numeric_limits<double>::epsilon());
+    iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
+      neuron_data_copy[index] /= manual_sum;
+    }); /* normalizing e_x --> e_x/sum(e_x) */
 
-  manual_sum = double_literal(0);
-  iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
-    manual_sum += neuron_data_copy[index];
-  }); /* collecting softmax end result sum */
-  REQUIRE( Catch::Approx(manual_sum).epsilon(double_literal(0.00000000000001)) == double_literal(1.0) );
+    manual_sum = double_literal(0);
+    iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
+      manual_sum += neuron_data_copy[index];
+    }); /* collecting softmax end result sum */
+    REQUIRE( Catch::Approx(manual_sum).epsilon(double_literal(0.00000000000001)) == double_literal(1.0) );
 
-  /* Calculate through the network */
-  rafko_net::RafkoSoftmaxFeature::calculate(neuron_data, mockup.relevant_neurons(), threads);
+    /* Calculate through the network */
+    std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> exec_threads;
+    exec_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(threads.get_number_of_threads()));
+    rafko_net::RafkoNetworkFeature features(exec_threads);
+    features.execute_solution_relevant(mockup, settings, neuron_data);
 
-  /* Check if sum equals to 1 */
-  sdouble32 sum = double_literal(0);
-  iter.iterate([&sum, &neuron_data_copy](sint32 index){
-    sum += neuron_data_copy[index];
-  }); /* collecting softmax end result sum */
-  CHECK( Catch::Approx(sum).epsilon(double_literal(0.00000000000001)) == double_literal(1.0) );
+    /* Check if sum equals to 1 */
+    sdouble32 sum = double_literal(0);
+    iter.iterate([&sum, &neuron_data_copy](sint32 index){
+      sum += neuron_data_copy[index];
+    }); /* collecting softmax end result sum */
+    CHECK( Catch::Approx(sum).epsilon(double_literal(0.00000000000001)) == double_literal(1.0) );
 
-  /* check if each element equal ( exp(x) / sum(exp(x)) ) */
-  for(uint32 i = 0; i < neuron_data.size(); i++){
-    REQUIRE( Catch::Approx(neuron_data[i]).epsilon(double_literal(0.00000000000001)) == neuron_data_copy[i] );
+    /* check if each element equal ( exp(x) / sum(exp(x)) ) */
+    for(uint32 i = 0; i < neuron_data.size(); i++){
+      REQUIRE( Catch::Approx(neuron_data[i]).epsilon(double_literal(0.00000000000001)) == neuron_data_copy[i] );
+    }
+
   }
-
-}
+} /* namespace */
 
 TEST_CASE( "Checkig whether the softmax function is calculating correctly with whole arrays", "[features][softmax]" ){
+  rafko_mainframe::RafkoSettings settings;
   std::vector<sdouble32> neuron_data{double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0)};
   rafko_net::FeatureGroup mockup;
   rafko_utilities::ThreadGroup threads(4);
@@ -87,11 +98,11 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly with w
 
   mockup.set_feature(rafko_net::neuron_group_feature_softmax);
   mockup.add_relevant_neurons()->set_interval_size(neuron_data.size());
-  check_softmax_values(neuron_data, mockup, threads);
+  check_softmax_values(neuron_data, settings, mockup, threads);
 
   neuron_data = {double_literal(1.0)};
   mockup.mutable_relevant_neurons(0)->set_interval_size(neuron_data.size());
-  check_softmax_values(neuron_data, mockup, threads);
+  check_softmax_values(neuron_data, settings, mockup, threads);
 
   for(uint32 variant = 0; variant < 10u; ++variant){
     neuron_data.clear(); /* set data to exaimne */
@@ -102,11 +113,12 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly with w
     mockup.mutable_relevant_neurons(0)->set_interval_size(neuron_data.size()); /* one synapse for the whole array */
 
     rafko_utilities::ThreadGroup loop_threads((rand()%16) + 1u);
-    check_softmax_values(neuron_data, mockup, loop_threads);
+    check_softmax_values(neuron_data, settings, mockup, loop_threads);
   }
 }
 
 TEST_CASE( "Checkig whether the softmax function is calculating correctly with multiple random synapses inside an array", "[features][softmax]" ){
+  rafko_mainframe::RafkoSettings settings;
   std::vector<sdouble32> neuron_data{double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0)};
   rafko_net::FeatureGroup mockup;
   rafko_utilities::ThreadGroup threads(4);
@@ -135,7 +147,7 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly with m
     }
 
     rafko_utilities::ThreadGroup loop_threads((rand()%16) + 1u);
-    check_softmax_values(neuron_data, mockup, loop_threads);
+    check_softmax_values(neuron_data, settings, mockup, loop_threads);
   }
 }
 

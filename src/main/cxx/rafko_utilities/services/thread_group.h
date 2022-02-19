@@ -50,8 +50,13 @@ public:
      std::lock_guard<std::mutex> my_lock(state_mutex);
      state.store(End);
     }
-    synchroniser.notify_all();
-    for(std::thread& thread : threads) thread.join();
+    while(0 < threads.size()){
+      synchroniser.notify_all();
+      if(threads.back().joinable()){
+        threads.back().join();
+        threads.pop_back();
+      }
+    }
   }
 
   void start_and_block(const std::function<void(uint32)>& function) const{

@@ -11,7 +11,7 @@ set(NET_HEADER_SERVICES
   services/solution_builder.h
   services/solution_solver.h
   services/rafko_net_builder.h
-  services/rafko_net_feature_executor.h
+  services/rafko_network_feature.h
 )
 set(NET_HEADER_MODELS
   models/dense_net_weight_initializer.h
@@ -19,7 +19,6 @@ set(NET_HEADER_MODELS
   models/spike_function.h
   models/transfer_function.h
   models/weight_initializer.h
-  models/rafko_softmax_feature.h
 )
 target_sources(rafko_net
   INTERFACE ${NET_INTERFACE_SERVICES}
@@ -28,7 +27,6 @@ target_sources(rafko_net
   models/src/dense_net_weight_initializer.cc
   models/src/neuron_info.cc
   models/src/transfer_function.cc
-  models/src/rafko_softmax_feature.cc
   services/src/feature_group_cache.cc
   services/src/neuron_router.cc
   services/src/partial_solution_builder.cc
@@ -36,6 +34,7 @@ target_sources(rafko_net
   services/src/solution_builder.cc
   services/src/rafko_net_builder.cc
   services/src/solution_solver.cc
+  services/src/rafko_network_feature.cc
 )
 
 install(

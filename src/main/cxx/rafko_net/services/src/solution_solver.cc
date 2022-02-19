@@ -20,8 +20,9 @@
 #include <stdexcept>
 #include <mutex>
 
+#include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/rafko_net_feature_executor.h"
+#include "rafko_net/services/rafko_network_feature.h"
 
 namespace rafko_net{
 
@@ -116,7 +117,16 @@ void SolutionSolver::solve(
        * and each column may contain feature relevant to any @Neuron inside the the current row.
        */
       for(uint32 feature_index = 0; feature_index < solved_features.size(); feature_index++){
-        feature_executor.execute(solved_features[feature_index], output.get_element(0u), thread_index);
+        if(
+          (evaluating)
+          || NeuronInfo::is_feature_relevant_to_training( solved_features[feature_index].get().feature() )
+        ){
+          /*!Note: training relevant features only need to be run during evaluation */
+          feature_executor.execute_solution_relevant(
+            solved_features[feature_index], settings, output.get_element(0u),
+            thread_index
+          );
+        }
       }
       solved_features.clear();
     } /* for(every row in the @Solution) */

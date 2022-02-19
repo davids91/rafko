@@ -164,12 +164,14 @@ void RafkoGPUContext::refresh_objective(){
 }
 
 void RafkoGPUContext::set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
+  objective.reset();
   objective = objective_;
   refresh_objective();
   last_ran_evaluation = not_eval_run;
 }
 
 void RafkoGPUContext::set_weight_updater(rafko_gym::Weight_updaters updater){
+  weight_updater.reset();
   weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, updater, settings);
 }
 
@@ -310,6 +312,16 @@ std::vector<cl::Event> RafkoGPUContext::upload_agent_output(
   return events;
 }
 
+sdouble32 RafkoGPUContext::error_post_process(sdouble32 raw_error, uint32 labels_evaluated){
+  sdouble32 error_value = raw_error;
+  sdouble32 divisor = std::max(labels_evaluated, 1u);
+  sdouble32 performance_error = solution_phase.acquire_output(
+    1u, agent->get_output_shapes()[0][0] /* first output, after the size of the first output */
+  )[0];
+
+  return ( (error_value + performance_error) / divisor );
+}
+
 sdouble32 RafkoGPUContext::full_evaluation(){
   cl_int return_value;
   std::vector<cl::Event> label_events;
@@ -373,7 +385,7 @@ sdouble32 RafkoGPUContext::full_evaluation(){
   error_phase( error_enque_arguments );
 
   last_ran_evaluation = full_eval_run;
-  return -(error_phase.acquire_output(1u)[0] / environment->get_number_of_label_samples());
+  return -error_post_process(error_phase.acquire_output(1u)[0], environment->get_number_of_label_samples());
 }
 
 sdouble32 RafkoGPUContext::stochastic_evaluation(bool to_seed, uint32 seed_value){
@@ -484,8 +496,8 @@ sdouble32 RafkoGPUContext::stochastic_evaluation(bool to_seed, uint32 seed_value
   error_phase( error_enque_arguments );
 
   last_ran_evaluation = random_eval_run;
-  return -(
-    error_phase.acquire_output(1u)[0] / static_cast<sdouble32>(used_minibatch_size * environment->get_sequence_size())
+  return -error_post_process(
+    error_phase.acquire_output(1u)[0], (used_minibatch_size * environment->get_sequence_size())
   );
 }
 

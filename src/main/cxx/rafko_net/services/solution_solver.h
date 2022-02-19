@@ -32,7 +32,7 @@
 #include "rafko_utilities/services/thread_group.h"
 
 #include "rafko_net/services/partial_solution_solver.h"
-#include "rafko_net/services/rafko_net_feature_executor.h"
+#include "rafko_net/services/rafko_network_feature.h"
 
 namespace rafko_net{
 
@@ -48,6 +48,15 @@ public:
   SolutionSolver& operator=(SolutionSolver&& other) = delete; /* Move assignment */
   ~SolutionSolver() = default;
 
+  /**
+   * @brief     Exposes the feature executor used to run features on the network
+   *
+   * @return    A const reference of the exposed feature executor
+   */
+  const RafkoNetworkFeature& expose_executor(){
+    return feature_executor;
+  }
+
   /* +++ Methods taken from @RafkoAgent +++ */
   void solve(
     const std::vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,
@@ -56,6 +65,9 @@ public:
   ) const;
   uint32 get_output_data_size() const{
     return solution.output_neuron_number();
+  }
+  void set_eval_mode(bool evaluation){
+    evaluating = evaluation;
   }
   using rafko_gym::RafkoAgent::solve;
   /* --- Methods taken from @RafkoAgent --- */
@@ -67,10 +79,11 @@ private:
     uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
   );
 
+  bool evaluating = true;
   const rafko_mainframe::RafkoSettings& settings;
   std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> execution_threads;
-  RafkoNetFeatureExecutor feature_executor;
+  RafkoNetworkFeature feature_executor;
 
 public:
   class Builder{

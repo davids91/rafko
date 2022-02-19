@@ -138,7 +138,55 @@ public:
    *
    * @return     The index of the partial solution the Neuron belongs to
    */
-  uint32 get_relevant_partial_index_for(uint32 neuron_index) const;
+  uint32 get_relevant_partial_index_for(uint32 neuron_index) const{
+    return get_relevant_partial_index_for(neuron_index, solution, neurons_in_partials);
+  }
+
+  /**
+   * @brief      Provides the partial index the given neuron_index belongs to
+   *
+   * @param[in]  neuron_index         The Neuron index inside the @RafkoNet
+   * @param[in]  solution             The solution in which to search
+   * @param      neurons_in_partials  The unordered map of the cache data
+   *
+   * @return     The index of the partial solution the Neuron belongs to
+   */
+  static uint32 get_relevant_partial_index_for(
+    uint32 neuron_index, const rafko_net::Solution& solution,
+    std::unordered_map<uint32, uint32>& neurons_in_partials
+  );
+
+  /**
+   * @brief      Provides the first weight synapse index of the neuron inside the @PartialSolution
+   *
+   * @param[in]  neuron_index                       The Neuron index inside the @RafkoNet
+   * @param[in]  partial                            The solution in which to search
+   * @param      weight_synapse_starts_in_partial   The unordered map of the cache data
+   *
+   * @return     The index of the first weight synapse belonging to the given neuron
+   */
+  static uint32 get_weight_synapse_start_index_in_partial(
+    uint32 neuron_index, const rafko_net::PartialSolution& partial,
+    std::unordered_map<uint32, uint32>& weight_synapse_starts_in_partial
+  );
+
+#if(RAFKO_USES_OPENCL)
+  /**
+   * @brief      Provides the start index of the weight table for the given partial
+   *             inside a weight common global weight table
+   *
+   * @param[in]  partial_index                The index of the Partial inside the solution
+   * @param[in]  solution                     The solution in which to search
+   * @param      weight_starts_in_partials    The unordered map of the cache data
+   *
+   * @return     The index of the first weight belonging to the partial solution inside the GPU device weight table
+   */
+  static uint32 get_device_weight_table_start_for(
+    uint32 partial_index, const rafko_net::Solution& solution,
+    std::unordered_map<uint32, uint32>& weight_starts_in_partials
+  );
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
   virtual ~RafkoWeightUpdater() = default;
 

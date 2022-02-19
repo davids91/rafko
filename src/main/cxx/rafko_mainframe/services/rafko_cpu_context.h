@@ -38,13 +38,20 @@ public:
   RafkoCPUContext(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
   ~RafkoCPUContext() = default;
 
+  void fix_dirty(){ /*!Note: When another contex updates the weights this hack takes over the changes */
+    weight_updater->update_solution_with_weights();
+  }
+
+  /* +++ Methods taken from @RafkoContext +++ */
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
+    objective.reset();
     objective = objective_;
   }
 
   void set_weight_updater(rafko_gym::Weight_updaters updater){
+    weight_updater.reset();
     weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, updater, settings);
   }
 
@@ -109,6 +116,7 @@ public:
   const rafko_net::RafkoNet& expose_network(){
     return network;
   }
+  /* --- Methods taken from @RafkoContext --- */
 
 private:
   rafko_mainframe::RafkoSettings settings;
@@ -135,6 +143,9 @@ private:
    * @return     The resulting fitness
    */
   sdouble32 evaluate(uint32 sequence_start, uint32 sequences_to_evaluate, uint32 start_index_in_sequence, uint32 sequence_tructaion);
+
+
+  sdouble32 error_post_process(sdouble32 raw_error, uint32 labels_evaluated);
 };
 
 } /* namespace rafko_mainframe */

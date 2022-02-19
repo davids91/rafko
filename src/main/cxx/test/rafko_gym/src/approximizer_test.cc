@@ -127,8 +127,10 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
+    .set_droput_probability(0.2)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero,true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping,false)
+    .set_learning_rate_decay({{1500u,0.8}})
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
   #if (RAFKO_USES_OPENCL)
   uint32 number_of_samples = 1024;
@@ -140,7 +142,15 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   std::vector<rafko_net::RafkoNet*> nets = std::vector<rafko_net::RafkoNet*>();
   nets.push_back(rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range(double_literal(1.0))
+    // .set_recurrence_to_layer()
     .set_recurrence_to_self()
+    // .add_feature_to_layer(0, rafko_net::neuron_group_feature_l1_regularization)
+    .add_feature_to_layer(0, rafko_net::neuron_group_feature_l2_regularization)
+    // // .add_feature_to_layer(1, rafko_net::neuron_group_feature_l1_regularization)
+    .add_feature_to_layer(1, rafko_net::neuron_group_feature_l2_regularization)
+    // // .add_feature_to_layer(2, rafko_net::neuron_group_feature_l1_regularization)
+    .add_feature_to_layer(2, rafko_net::neuron_group_feature_l2_regularization)
+    // .add_feature_to_layer(1, rafko_net::neuron_group_feature_dropout_regularization)
     .allowed_transfer_functions_by_layer({
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu},
@@ -230,6 +240,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     average_duration += current_duration;
     ++number_of_steps;
     train_error = approximizer.get_error_estimation();
+    test_context->fix_dirty();
     test_error = -test_context->full_evaluation();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
     std::cout << "\tError:" << std::setprecision(9)
@@ -241,6 +252,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     << "Duration: ["<< current_duration <<"ms];   "
     << std::endl;
     if(0 == (iteration % 100)){
+      srand(iteration);
       approximizer.full_evaluation();
       rafko_test::print_training_sample((rand()%number_of_samples), *after_test_set, *nets[0], settings);
     }

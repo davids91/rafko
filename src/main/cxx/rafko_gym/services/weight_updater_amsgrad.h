@@ -30,6 +30,8 @@ public:
   ,  raw_moment_max(rafko_net.weight_table_size(),double_literal(0.0))
   { }
 
+  ~RafkoWeightUpdaterAMSGrad() = default;
+
   void iterate(const std::vector<sdouble32>& gradients){
     sdouble32 raw_moment;
     for(uint32 weight_index = 0; weight_index < moment.size(); ++weight_index){

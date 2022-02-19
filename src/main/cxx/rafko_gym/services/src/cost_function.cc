@@ -19,6 +19,10 @@
 #include <math.h>
 #include <utility>
 
+#if(RAFKO_USES_OPENCL)
+#include "rafko_utilities/models/rafko_gpu_kernel_library.h"
+#endif/*(RAFKO_USES_OPENCL)*/
+
 namespace rafko_gym {
 
 void CostFunction::get_feature_errors(
@@ -109,20 +113,7 @@ std::vector<std::string> CostFunction::get_step_names()const  {
 }
 
 cl::Program::Sources CostFunction::get_step_sources()const {
-  std::string source_base = R"(
-    #pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable
-
-    /* https://suhorukov.blogspot.com/2011/12/opencl-11-atomic-operations-on-floating.html */
-    /* https://streamhpc.com/blog/2016-02-09/atomic-operations-for-floats-in-opencl-improved */
-    inline void AtomicAdd(volatile __global double *source, const double operand) {
-      union { unsigned long intVal; double floatVal; } next, expected, current;
-      current.floatVal = *source;
-      do {
-        expected.floatVal = current.floatVal;
-        next.floatVal = expected.floatVal + operand;
-        current.intVal = atom_cmpxchg((volatile __global unsigned long *)source, expected.intVal, next.intVal);
-      } while( current.intVal != expected.intVal );
-    }
+  std::string source_base = rafko_utilities::atomic_double_add_function + R"(
 
     void kernel cost_function(
       __constant double* inputs, __constant int* input_sizes, int input_sizes_size,

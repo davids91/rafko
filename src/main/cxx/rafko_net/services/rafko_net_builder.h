@@ -170,14 +170,13 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& add_feature_to_layer(uint32 layer_index, Neuron_group_features feature){
-    layer_features.push_back(std::make_pair(layer_index, feature));
-    return *this;
-  }
+  RafkoNetBuilder& add_feature_to_layer(uint32 layer_index, Neuron_group_features feature);
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
-   *             and function arguments
+   *             and function arguments. The structure is according to the provided layer sizes
+   *             argument, where the neurons of a layer is after in the previous layers, and before
+   *             the succeeding layer Neurons.
    *
    * @param[in]  layerSizes         how many layers will there be in the result
    *                    and how big are those layers going to be
