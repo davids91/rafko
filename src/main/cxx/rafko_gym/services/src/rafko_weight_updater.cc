@@ -32,7 +32,10 @@ void RafkoWeightUpdater::update_weight_with_velocity(uint32 weight_index, uint32
 void RafkoWeightUpdater::calculate_velocity(const std::vector<sdouble32>& gradients){
   execution_threads.start_and_block([this, &gradients](uint32 thread_index){
     const uint32 weight_index_start = weights_to_do_in_one_thread * thread_index;
-    const uint32 weights_to_do_in_this_thread = std::min(weights_to_do_in_one_thread, (net.weight_table_size() - weight_index_start));
+    const uint32 weights_to_do_in_this_thread = std::min(
+      weights_to_do_in_one_thread,
+      static_cast<uint32>(net.weight_table_size() - std::min(net.weight_table_size(), static_cast<sint32>(weight_index_start)))
+    );
     for(uint32 weight_iterator = 0; weight_iterator < weights_to_do_in_this_thread; ++weight_iterator){
       current_velocity[weight_index_start + weight_iterator] = get_new_velocity(weight_index_start + weight_iterator, gradients);
     }
