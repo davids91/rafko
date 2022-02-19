@@ -136,7 +136,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& allowed_transfer_functions_by_layer(std::vector<std::vector<Transfer_functions> > filter){
+  RafkoNetBuilder& allowed_transfer_functions_by_layer(std::vector<std::set<Transfer_functions> > filter){
     arg_allowed_transfer_functions_by_layer = filter;
     is_allowed_transfer_functions_by_layer_set = true;
     return *this;
@@ -184,7 +184,7 @@ public:
    *
    * @return   the built neural network
    */
-  RafkoNet* dense_layers(std::vector<uint32> layer_sizes, std::vector<std::vector<Transfer_functions>> transfer_function_filter){
+  RafkoNet* dense_layers(std::vector<uint32> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter){
     (void)allowed_transfer_functions_by_layer(transfer_function_filter);
     return dense_layers(layer_sizes);
   }
@@ -256,8 +256,8 @@ private:
    */
   uint32 arg_output_neuron_number = 0;
 
-  std::vector<std::vector<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
-  std::vector<std::pair<uint32,Neuron_group_features>> layer_features;
+  std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
+  std::vector< std::pair<uint32,Neuron_group_features> > layer_features;
 
   /**
    * @brief RafkoNetBuilder::set_neuron_array: moves the neuron_array argument into the RafkoNet

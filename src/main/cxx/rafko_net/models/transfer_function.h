@@ -20,7 +20,7 @@
 
 #include "rafko_global.h"
 
-#include <vector>
+#include <set>
 #if(RAFKO_USES_OPENCL)
 #include <string>
 #endif/*(RAFKO_USES_OPENCL)*/
@@ -53,7 +53,7 @@ public:
    *
    * @return     A random Transfer function according to the given range
    */
-  static Transfer_functions next(std::vector<Transfer_functions> range);
+  static Transfer_functions next(std::set<Transfer_functions> range);
 
   /**
    * @brief      Provides the average range of the given Transfer functions output

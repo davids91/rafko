@@ -41,6 +41,7 @@ if(MAKE_TESTS)
       rafko_utilities/src/thread_group_test.cc
       rafko_utilities/src/const_vector_subrange_test.cc
       rafko_net/src/neuron_info_test.cc
+      rafko_net/src/transfer_functions_test.cc
       rafko_net/src/neuron_router_test.cc
       rafko_net/src/partial_solution_solver_test.cc
       rafko_net/src/solution_builder_test.cc

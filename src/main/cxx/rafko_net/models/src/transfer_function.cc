@@ -32,7 +32,7 @@ Transfer_functions TransferFunction::next(){
   });
 }
 
-Transfer_functions TransferFunction::next(std::vector<Transfer_functions> range){
+Transfer_functions TransferFunction::next(std::set<Transfer_functions> range){
   Transfer_functions candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
   while(find(range.begin(), range.end(), candidate) == range.end())
     candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
@@ -56,7 +56,7 @@ sdouble32 TransferFunction::get_average_output_range(Transfer_functions function
 sdouble32 TransferFunction::get_value(Transfer_functions function, sdouble32 data) const{
   switch(function){
     case transfer_function_identity: return data; /* Identity means f(x) = x */
-    case transfer_function_sigmoid: return double_literal(1.0)/(double_literal(1.0)+exp(-data));
+    case transfer_function_sigmoid: return double_literal(1.0)/(double_literal(1.0)+std::exp(-data));
     case transfer_function_tanh: return std::tanh(data);
     case transfer_function_elu:
       if(0 >= data) return settings.get_alpha() * (std::exp(data) - 1);
