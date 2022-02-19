@@ -33,6 +33,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_utilities/services/thread_group.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 namespace rafko_net{
 
@@ -49,22 +50,26 @@ public:
    * @brief     Execute the given @FeatureGroup(supposedly solution relevant) on the provided neuron data buffer
    *
    * @param[in]  feature        The feature containing the is and the relevant neurons
+   * @param[in]  settings       The settings object containing the required hyperparameters for the features
    * @param      neuron_data    The array containing the neuron data to update
    * @param[in]  thread_index   The index of the thread the feature is to be executed
    */
   void execute_solution_relevant(
-    const FeatureGroup& feature, std::vector<sdouble32>& neuron_data, uint32 thread_index = 0
+    const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
+    std::vector<sdouble32>& neuron_data, uint32 thread_index = 0
   ) const;
 
   /**
    * @brief     Execute the given @FeatureGroup(supposedly performance relevant) on the provided neuron data buffer
    *
    * @param[in]  feature        The feature containing the is and the relevant neurons
+   * @param[in]  settings       The settings object containing the required hyperparameters for the features
    * @param[in]  network        The network to calculate the values from
    * @param[in]  thread_index   The index of the thread the feature is to be executed
    */
   sdouble32 calculate_performance_relevant(
-    const FeatureGroup& feature, const RafkoNet& network, uint32 thread_index = 0
+    const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
+    const RafkoNet& network, uint32 thread_index = 0
   ) const;
 
 
@@ -74,13 +79,15 @@ public:
    *
    * @param      operations           The string to append the relevant operations into
    * @param[in]  feature              The Neuron group feature to generate the kernel code for
+   * @param[in]  settings             The settings object containing the required hyperparameters for the features
    * @param[in]  solution             The feature group relevant solution
    * @param[in]  input_start_index    Variable to help with indexing
    * @param[in]  output_start_index   Variable to help with indexing
    * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
    */
   static void add_kernel_code_to(
-    std::string& operations, const FeatureGroup& feature, const Solution& solution,
+    std::string& operations, const FeatureGroup& feature,
+    const rafko_mainframe::RafkoSettings& settings, const Solution& solution,
     std::string input_start_index = "", std::string output_start_index = "",
     bool declare_locals = true
   );
@@ -115,11 +122,26 @@ private:
    * @param[in]  relevant_neurons   The index values of the relevant neurons to apply the function on
    * @param[in]  thread_index       The index of the thread the feature is to be executed
    */
-  void calculate_softmax(
+  void execute_softmax(
     std::vector<sdouble32>& neuron_data,
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
     uint32 thread_index = 0u
   ) const;
+
+  /**
+   * @brief      Calculate the dropout function for the given group of Neurons which randomly sets neuron activation values to zero.
+   *
+   * @param      neuron_data        The array containing the neuron data to update
+   * @param[in]  settings           The settings object containing the required hyperparameters for the features
+   * @param[in]  relevant_neurons   The index values of the relevant neurons to apply the function on
+   * @param[in]  thread_index       The index of the thread the feature is to be executed
+   */
+  void execute_dropout(
+    std::vector<sdouble32>& neuron_data, const rafko_mainframe::RafkoSettings& settings,
+    const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
+    uint32 thread_index = 0u
+  ) const;
+
 
   /**
    * @brief      Calculate the error value coming from L1 weight regularization
@@ -152,21 +174,30 @@ private:
   ) const;
 
   #if(RAFKO_USES_OPENCL)
-
   /**
    * @brief      Provide the softmax function GPU Kernel.
    *
    * @param      operations           The string to append the relevant operations into
    * @param[in]  feature              The Neuron group feature to generate the kernel code for
-   * @param[in]  solution             The feature group relevant solution
-   * @param[in]  input_start_index    Variable to help with indexing
    * @param[in]  output_start_index   Variable to help with indexing
    * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
    */
   static void add_softmax_kernel_to(
-    std::string& operations, const FeatureGroup& feature, const Solution& solution,
-    std::string input_start_index = "", std::string output_start_index = "",
-    bool declare_locals = true
+    std::string& operations, const FeatureGroup& feature,
+    std::string output_start_index = "", bool declare_locals = true
+  );
+
+  /**
+   * @brief      Provide the dropout function GPU Kernel.
+   *
+   * @param      operations           The string to append the relevant operations into
+   * @param[in]  settings             The settings object containing the required hyperparameters for the features
+   * @param[in]  feature              The Neuron group feature to generate the kernel code for
+   * @param[in]  output_start_index   Variable to help with indexing
+   */
+  static void add_dropout_kernel_to(
+    std::string& operations, const rafko_mainframe::RafkoSettings& settings,
+    const FeatureGroup& feature, std::string output_start_index = ""
   );
 
   /**

@@ -80,6 +80,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
 
+    reference_agent->set_eval_mode(false);
     for(uint32 result_index = 0; result_index < reference_result.size(); ++result_index){
       CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
     }
@@ -125,6 +126,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
 
+    reference_agent->set_eval_mode(false);
     for(uint32 result_index = 0; result_index < reference_result.size(); ++result_index){
       CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
     }
@@ -164,6 +166,8 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
     std::unique_ptr<rafko_net::Solution> reference_solution = rafko_net::SolutionBuilder(settings).build(*network);
     std::unique_ptr<rafko_net::SolutionSolver> reference_agent = rafko_net::SolutionSolver::Builder(*reference_solution, settings).build();
     std::vector<sdouble32> network_input(network->input_data_size(), (rand()%10));
+
+    reference_agent->set_eval_mode(false);
     for(uint32 steps = 0; steps < 5; ++steps){
       rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
       rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
@@ -296,6 +300,7 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 }
 
 TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[context][GPU][evaluate][multi-label]"){
+  /*!TODO: srand(2043747162); /* this makes this fail.. */
   google::protobuf::Arena arena;
   uint32 sequence_size = rand()%3 + 1;
   uint32 number_of_sequences = rand()%10 + 2;
@@ -336,6 +341,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
 
     reference_context.set_objective(objective);
     context->set_objective(objective);
+    Catch::StringMaker<double>::precision = 20;
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
     for(uint32 steps = 0; steps < 5; ++steps){

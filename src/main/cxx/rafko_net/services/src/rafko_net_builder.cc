@@ -39,8 +39,9 @@ RafkoNetBuilder& RafkoNetBuilder::add_feature_to_layer(uint32 layer_index, Neuro
       );
     }
   );
-  if(it == layer_features.end()) /* only append feature group if layer is not al */
+  if(it == layer_features.end()){ /* only append feature group if layer is not al */
     layer_features.push_back(std::make_pair(layer_index, feature));
+  }
   return *this;
 }
 
@@ -118,7 +119,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
       );
 
       /* Store the features for this layer */
-      if( (0u < layer_features.size()) && (std::get<0>(layer_features.front()) == layerIt) && (0 < layer_sizes[layerIt]) ){
+      while( (0u < layer_features.size()) && (std::get<0>(layer_features.front()) == layerIt) && (0 < layer_sizes[layerIt]) ){
         FeatureGroup feature_to_add;
         feature_to_add.set_feature(std::get<1>(layer_features.front()));
         feature_to_add.add_relevant_neurons()->set_interval_size(layer_sizes[layerIt]);

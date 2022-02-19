@@ -74,6 +74,8 @@ public:
       used_data_buffers.push_back(common_data_pool.reserve_buffer(required_temp_data_size));
   }
 
+  virtual void set_eval_mode(bool evaluation) = 0;
+
   /**
    * @brief      For the provided input, return the result of the neural network
    *

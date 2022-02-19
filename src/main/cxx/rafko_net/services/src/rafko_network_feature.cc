@@ -48,20 +48,25 @@ void RafkoNetworkFeature::execute_in_paralell_for(
 }
 
 void RafkoNetworkFeature::execute_solution_relevant(
-  const FeatureGroup& feature, std::vector<sdouble32>& neuron_data, uint32 thread_index
+  const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
+  std::vector<sdouble32>& neuron_data, uint32 thread_index
 ) const{
   assert(thread_index < execution_threads.size());
 
   switch(feature.feature()){
-    case neuron_group_feature_softmax: calculate_softmax(neuron_data, feature.relevant_neurons(), thread_index);
+    case neuron_group_feature_softmax: execute_softmax(neuron_data, feature.relevant_neurons(), thread_index);
+      break;
+    case neuron_group_feature_dropout_regularization: execute_dropout(neuron_data, settings, feature.relevant_neurons(), thread_index);
       break;
     default: break;
   }
 }
 
 sdouble32 RafkoNetworkFeature::calculate_performance_relevant(
-  const FeatureGroup& feature, const RafkoNet& network, uint32 thread_index
+  const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
+  const RafkoNet& network, uint32 thread_index
 ) const{
+  parameter_not_used(settings);
   assert(thread_index < execution_threads.size());
 
   switch(feature.feature()){
@@ -72,7 +77,7 @@ sdouble32 RafkoNetworkFeature::calculate_performance_relevant(
 }
 
 
-void RafkoNetworkFeature::calculate_softmax(
+void RafkoNetworkFeature::execute_softmax(
   std::vector<sdouble32>& neuron_data,
   const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
   uint32 thread_index
@@ -104,6 +109,20 @@ void RafkoNetworkFeature::calculate_softmax(
     neuron_data[neuron_index] = std::exp(neuron_data[neuron_index] - used_max_value) / used_expsum;
   }, thread_index);
 }
+
+void RafkoNetworkFeature::execute_dropout(
+  std::vector<sdouble32>& neuron_data, const rafko_mainframe::RafkoSettings& settings,
+  const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
+  uint32 thread_index
+) const{
+  /*!Note: Since no Neuron will be involved in the execution twice, no need for a mutual exclusive lock or atomics */
+  execute_in_paralell_for(relevant_neurons,[&neuron_data, &settings](uint32 neuron_index){
+    if((settings.get_dropout_probability()*double_literal(100.0)) >= static_cast<sdouble32>(rand()%100 + 1u)){
+      neuron_data[neuron_index] = double_literal(0.0);
+    }
+  }, thread_index);
+}
+
 
 sdouble32 RafkoNetworkFeature::calculate_l1_regularization(
   const rafko_net::RafkoNet& network,
@@ -142,13 +161,17 @@ sdouble32 RafkoNetworkFeature::calculate_l2_regularization(
 
 #if(RAFKO_USES_OPENCL)
 void RafkoNetworkFeature::add_kernel_code_to(
-  std::string& operations, const FeatureGroup& feature, const Solution& solution,
+  std::string& operations, const FeatureGroup& feature,
+  const rafko_mainframe::RafkoSettings& settings, const Solution& solution,
   std::string input_start_index, std::string output_start_index,
   bool declare_locals
 ){
   switch(feature.feature()){
+    case neuron_group_feature_dropout_regularization:
+      add_dropout_kernel_to(operations, settings, feature, output_start_index);
+      break;
     case neuron_group_feature_softmax:
-      add_softmax_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
+      add_softmax_kernel_to(operations, feature, output_start_index, declare_locals);
       break;
     case rafko_net::neuron_group_feature_l1_regularization:
       add_l1_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
@@ -161,12 +184,9 @@ void RafkoNetworkFeature::add_kernel_code_to(
 }
 
 void RafkoNetworkFeature::add_softmax_kernel_to(
-  std::string& operations, const FeatureGroup& feature, const Solution& solution,
-  std::string input_start_index, std::string output_start_index,
-  bool declare_locals
+  std::string& operations, const FeatureGroup& feature,
+  std::string output_start_index, bool declare_locals
 ){
-  parameter_not_used(input_start_index);
-  parameter_not_used(solution);
   SynapseIterator<> synapse_iterator(feature.relevant_neurons());
   std::regex index_regex("==index==");
 
@@ -204,6 +224,35 @@ void RafkoNetworkFeature::add_softmax_kernel_to(
   });
 
   operations += "\n\n";
+}
+
+void RafkoNetworkFeature::add_dropout_kernel_to(
+  std::string& operations, const rafko_mainframe::RafkoSettings& settings,
+  const FeatureGroup& feature, std::string output_start_index
+){
+  std::string dropout_operations = "";
+  uint32 number_of_neurons = 0u;
+  SynapseIterator<>::iterate(feature.relevant_neurons(),
+  [&dropout_operations, output_start_index, &settings, &number_of_neurons](uint32 neuron_index){
+     std::string this_op = R"(
+      if((==param== * 100.0) >= (get_random_number(100) + 1)){
+        outputs[==output_start== + ==index==] = 0.0;
+      }
+    )";
+    this_op = std::regex_replace(this_op, std::regex("==param=="), std::to_string(settings.get_dropout_probability()));
+    this_op = std::regex_replace(this_op, std::regex("==output_start=="), output_start_index);
+    this_op = std::regex_replace(this_op, std::regex("==index=="), std::to_string(neuron_index));
+    dropout_operations += this_op;
+    ++number_of_neurons;
+  });
+  dropout_operations = std::regex_replace(R"(
+    if(evaluate_network){
+      set_random_seed(outputs[get_random_number(==range==)]);
+      ==dropout_operations==
+    }
+  )",std::regex("==dropout_operations=="), dropout_operations);
+  dropout_operations = std::regex_replace(dropout_operations, std::regex("==range=="), std::to_string(number_of_neurons));
+  operations += dropout_operations;
 }
 
 void RafkoNetworkFeature::add_l1_kernel_to(
@@ -249,7 +298,6 @@ void RafkoNetworkFeature::add_lx_kernel_to(
     )";
   }
 
-  parameter_not_used(declare_locals);
   feature_helpers += R"(
     const int ==index_var_name==[==feature_weight_number==] = {
       ==index_values==

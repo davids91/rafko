@@ -66,6 +66,9 @@ public:
   uint32 get_output_data_size() const{
     return solution.output_neuron_number();
   }
+  void set_eval_mode(bool evaluation){
+    evaluating = evaluation;
+  }
   using rafko_gym::RafkoAgent::solve;
   /* --- Methods taken from @RafkoAgent --- */
 
@@ -76,6 +79,7 @@ private:
     uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
   );
 
+  bool evaluating = true;
   const rafko_mainframe::RafkoSettings& settings;
   std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> execution_threads;

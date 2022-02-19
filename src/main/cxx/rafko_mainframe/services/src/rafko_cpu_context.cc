@@ -70,7 +70,9 @@ sdouble32 RafkoCPUContext::error_post_process(sdouble32 raw_error, uint32 labels
 
   for(const rafko_net::FeatureGroup& feature : network.neuron_group_features()){
     if(rafko_net::NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
-      result_error += agent->expose_executor().calculate_performance_relevant(feature, network);
+      result_error += agent->expose_executor().calculate_performance_relevant(
+        feature, settings, network
+      );
     }
   }
 
@@ -81,6 +83,7 @@ sdouble32 RafkoCPUContext::evaluate(uint32 sequence_start, uint32 sequences_to_e
   assert(environment->get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
 
   sdouble32 error_sum = double_literal(0.0);
+  agent->set_eval_mode(true);
   for(uint32 sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += settings.get_max_processing_threads()){
     execution_threads.start_and_block([this, sequence_index](uint32 thread_index){
       if(environment->get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */

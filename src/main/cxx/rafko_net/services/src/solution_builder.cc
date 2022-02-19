@@ -81,26 +81,32 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
             ||(current_neuron_index == (get_last_neuron_index_of_partial(this_partial) + 1u))
           )
         ){
-          if(!has_neuron){ /* A new Neuron index was acquired from the router, refresh size info */
+          if(!has_neuron) /* A new Neuron index was acquired from the router, refresh size info */
             current_neuron_megabyte_size = NeuronInfo::get_neuron_estimated_size_megabytes(net.neuron_array(current_neuron_index));
-          }
-          if(current_neuron_megabyte_size >= remaining_megabytes_in_partial){
+
+          if(current_neuron_megabyte_size >= remaining_megabytes_in_partial)
             break;
-          }
+
           if(0u == this_partial.output_data().interval_size()) /* The first Neuron inside the partial solution shall determine its start */
             this_partial.mutable_output_data()->set_starts(current_neuron_index);
-          std::pair<uint32,uint32> neuron_input_params = PartialSolutionBuilder::add_neuron_to_partial_solution(net, current_neuron_index, this_partial);
+
+          std::pair<uint32,uint32> neuron_input_params = PartialSolutionBuilder::add_neuron_to_partial_solution(
+            net, current_neuron_index, this_partial
+          );
           remaining_megabytes_in_row -= current_neuron_megabyte_size;
           remaining_megabytes_in_partial -= current_neuron_megabyte_size;
+
           if(reach_back_max < std::get<0>(neuron_input_params))
             reach_back_max = std::get<0>(neuron_input_params);
+
           if(reach_index_max < std::get<1>(neuron_input_params))
             reach_index_max = std::get<1>(neuron_input_params);
+
           std::vector<std::reference_wrapper<const FeatureGroup>> features_solved_by_neuron = neuron_router.confirm_first_subset_element_processed(current_neuron_index);
           for(const FeatureGroup& feature : features_solved_by_neuron){
-            /*TODO: Make sure that there are no overlapping synapses */
             *this_partial.add_solved_features() = feature;
           }
+
           has_neuron = neuron_router.get_first_neuron_index_from_subset(current_neuron_index);
         }/* while(able to put Neurons into the current subset) */
         if(0u == this_partial.output_data().interval_size()){
@@ -120,6 +126,13 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
       neuron_router.reset_remaining_subset(); /* Whichever Neuron coudn't fit into the partial shall have its state reset */
     } /* if(0u < neuron_router.get_subset_size()) */
   } /* while(!neuron_router.finished()) */
+
+  for(PartialSolution& partial : *solution->mutable_partial_solutions()){
+    std::sort(partial.mutable_solved_features()->begin(),partial.mutable_solved_features()->end(),
+    [](const FeatureGroup& a, const FeatureGroup& b){
+      return a.feature() < b.feature();
+    }); /*!Note: Sorting out FeatureGroups to enforce dependencies, where the larger enum values must be executed later */
+  }
 
   solution->set_output_neuron_number(net.output_neuron_number());
   solution->set_neuron_number(net.neuron_array_size());
@@ -142,7 +155,8 @@ std::string SolutionBuilder::get_kernel_for_solution(
    * last output slice ( the last neuron value array the kernel is supposed to be updating )
    * and every other output slice before that is considered outputs from the past
    */
-  std::string source_base = rafko_utilities::atomic_double_add_function + R"(
+  std::string source_base = rafko_utilities::random_function + rafko_utilities::atomic_double_add_function
+   + R"(
     void kernel ==name==(
        __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
        __global double* outputs, __constant int* output_sizes, int output_sizes_size
@@ -317,7 +331,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
       for(const FeatureGroup& feature : partial.solved_features()){
         if(NeuronInfo::is_feature_relevant_to_solution(feature.feature())){
           RafkoNetworkFeature::add_kernel_code_to(
-            neuron_operations, feature, solution, "", "output_start", !feature_locals_declared
+            neuron_operations, feature, settings, solution, "", "output_start", !feature_locals_declared
           );
           feature_locals_declared = true;
         }else if(NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
@@ -338,7 +352,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
       already_declared_locals.end() == already_declared_locals.find(feature.feature())
     );
     RafkoNetworkFeature::add_kernel_code_to(
-      performance_operations, feature, solution,
+      performance_operations, feature, settings, solution,
       "1u"/*input_start_index:weight table start*/, "output_sizes[0]"/*output_start_index: last output*/,
       declare_locals
     );
@@ -355,7 +369,6 @@ std::string SolutionBuilder::get_kernel_for_solution(
   source_base = std::regex_replace(source_base, std::regex("==prefill_input_num=="), std::to_string(prefill_input_num));
   source_base = std::regex_replace(source_base, std::regex("==network_input_size=="), std::to_string(solution.network_input_size()));
   source_base = std::regex_replace(source_base, std::regex("==performance_operations=="), performance_operations);
-
   return source_base;
 }
 #endif/*(RAFKO_USES_OPENCL)*/

@@ -80,6 +80,10 @@ public:
     return std::get<sdouble32>(learning_rate_with_decay[decay_index]);
   }
 
+  sdouble32 get_dropout_probability() const{
+    return droput_probability;
+  }
+
   uint32 get_minibatch_size() const{
     return hypers.minibatch_size();
   }
@@ -239,6 +243,11 @@ public:
     return *this;
   }
 
+  RafkoSettings& set_droput_probability(sdouble32 droput_probability_){
+    droput_probability = droput_probability_;
+    return *this;
+  }
+
   RafkoSettings(){
     hypers.set_learning_rate(double_literal(1e-6));
     hypers.set_minibatch_size(64);
@@ -269,7 +278,7 @@ private:
   mutable uint32 learning_rate_decay_index_cache = 0u;
   std::vector<std::pair<uint32, sdouble32>> learning_rate_with_decay;
   std::vector<std::pair<uint32, sdouble32>> learning_rate_decay;
-
+  sdouble32 droput_probability = double_literal(0.2);
 
   /**
    * @brief      Calculates the learning rates for different iteration indices

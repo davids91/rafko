@@ -105,11 +105,11 @@ TEST_CASE("Test if L1 regularization calculates the expected error", "[L1][regul
         sdouble32 reference_error = layer_errors[layer_index_values[group.relevant_neurons(0).starts()]];
         CHECK(
           Catch::Approx(reference_error).epsilon(double_literal(0.00000000000001))
-          == features.calculate_performance_relevant(group, *network)
+          == features.calculate_performance_relevant(group, settings, *network)
         );
       }/*if(feature is l1 regularization)*/
     }/*for(all feature groups in network)*/
-  }/*for(50 variants)*/
+  }/*for(10 variants)*/
 }
 
 TEST_CASE("Test if L2 regularization calculates the expected error", "[L2][regularization][features]"){
@@ -178,7 +178,7 @@ TEST_CASE("Test if L2 regularization calculates the expected error", "[L2][regul
         sdouble32 reference_error = layer_errors[layer_index_values[group.relevant_neurons(0).starts()]];
         CHECK(
           Catch::Approx(reference_error).epsilon(double_literal(0.00000000000001))
-          == features.calculate_performance_relevant(group, *network)
+          == features.calculate_performance_relevant(group, settings, *network)
         );
       }/*if(feature is l1 regularization)*/
     }/*for(all feature groups in network)*/
@@ -230,7 +230,9 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
       ){
         *unregulated_network.add_neuron_group_features() = feature;
       }else{
-        error_difference += features.calculate_performance_relevant(feature, unregulated_network);
+        error_difference += features.calculate_performance_relevant(
+          feature, settings, unregulated_network
+        );
       }
     }
 
@@ -262,6 +264,71 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
       == (unregulated_context.full_evaluation() - (error_difference / static_cast<sdouble32>(environment->get_number_of_label_samples())))
     );
   }/*for(10 variants)*/
+}
+
+TEST_CASE("Testing if droput is working as intended with the Solution Solver","[regularzitaion][dropout][solve]"){
+  google::protobuf::Arena arena;
+  uint32 feature_size = 2u;
+  uint32 sequence_size = 3u;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_droput_probability(double_literal(0.5))
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  std::vector<uint32> layer_sizes = {
+    static_cast<uint32>(rand()%5) + 1u,
+    static_cast<uint32>(rand()%5) + 1u,
+    feature_size
+  };
+  rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+    .input_size(2).expected_input_range(double_literal(1.0))
+    .add_feature_to_layer( (layer_sizes.size() - 2u), rafko_net::neuron_group_feature_dropout_regularization )
+    .dense_layers(layer_sizes); /* Building a network with dropout as the output_feature */
+  rafko_net::RafkoNet unregulated_network = rafko_net::RafkoNet(*network);
+  unregulated_network.mutable_neuron_group_features()->Clear(); /* remove droput regularaziation from network */
+
+  std::unique_ptr<rafko_net::Solution> regulated_solution = rafko_net::SolutionBuilder(settings).build(*network);
+  std::unique_ptr<rafko_net::SolutionSolver> regulated_agent = rafko_net::SolutionSolver::Builder(*regulated_solution, settings).build();
+
+  std::unique_ptr<rafko_net::Solution> unregulated_solution = rafko_net::SolutionBuilder(settings).build(unregulated_network);
+  std::unique_ptr<rafko_net::SolutionSolver> unregulated_agent = rafko_net::SolutionSolver::Builder(*unregulated_solution, settings).build();
+
+  std::vector<sdouble32> network_input(network->input_data_size(), (rand()%10));
+  (void)regulated_agent->solve(network_input);
+  (void)unregulated_agent->solve(network_input);
+  const std::vector<sdouble32>& regulated_neuron_data = regulated_agent->get_memory().get_const_element(0);
+  const std::vector<sdouble32>& unregulated_neuron_data = unregulated_agent->get_memory().get_const_element(0);
+
+  /* Each data is either zero or matches the reference */
+  uint32 layer_start = std::accumulate(layer_sizes.begin(), layer_sizes.end() - 2u, double_literal(0.0) );
+  for(uint32 result_index = 0; result_index < layer_sizes[layer_sizes.size() - 2u]; ++result_index){
+    CHECK((
+      (Catch::Approx(regulated_neuron_data[layer_start + result_index]).epsilon(0.0000000001) == unregulated_neuron_data[layer_start + result_index])
+      ||(Catch::Approx(regulated_neuron_data[layer_start + result_index]).epsilon(0.0000000001) == double_literal(0.0))
+    ));
+  }
+
+  (void)settings.set_droput_probability(double_literal(1.0));
+  (void)regulated_agent->solve(network_input);
+  const std::vector<sdouble32>& regulated_neuron_data_2 = regulated_agent->get_memory().get_const_element(0);
+
+  for(uint32 result_index = 0; result_index < layer_sizes[layer_sizes.size() - 2u]; ++result_index){
+    REQUIRE( Catch::Approx(regulated_neuron_data_2[layer_start + result_index]).epsilon(0.0000000001) == double_literal(0.0) );
+  }
+
+  (void)settings.set_droput_probability(double_literal(0.0));
+  (void)unregulated_agent->solve(network_input, true);
+  (void)regulated_agent->solve(network_input, true);
+  const std::vector<sdouble32>& regulated_neuron_data_3 = regulated_agent->get_memory().get_const_element(0);
+  const std::vector<sdouble32>& unregulated_neuron_data_3 = unregulated_agent->get_memory().get_const_element(0);
+
+  for(uint32 result_index = 0; result_index < layer_sizes[layer_sizes.size() - 2u]; ++result_index){
+    REQUIRE(
+      Catch::Approx(regulated_neuron_data_3[layer_start + result_index]).epsilon(0.0000000001)
+      == unregulated_neuron_data_3[layer_start + result_index]
+   );
+  }
+
 }
 
 #if(RAFKO_USES_OPENCL)

@@ -69,12 +69,17 @@ bool NeuronInfo::is_feature_relevant_to_performance(Neuron_group_features featur
     case neuron_group_feature_l2_regularization: return true;
     default: return false;
   }
-
 }
 
 bool NeuronInfo::is_feature_relevant_to_training(Neuron_group_features feature){
-  parameter_not_used(feature);
-  return false; /* no relevant feature is implemented yet...*/
+  switch(feature){
+    case neuron_group_feature_softmax: return false;
+    case neuron_group_feature_disentanglement: return false;
+    case neuron_group_feature_dropout_regularization: return true;
+    case neuron_group_feature_l1_regularization: return true;
+    case neuron_group_feature_l2_regularization: return true;
+    default: return false;
+  }
 }
 
 } /* namespace rafko_net */
