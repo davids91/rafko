@@ -24,7 +24,7 @@
 #include <string>
 
 #include "rafko_net/models/dense_net_weight_initializer.h"
-
+#include "rafko_net/models/input_function.h"
 #include "rafko_net/services/synapse_iterator.h"
 
 namespace rafko_net {
@@ -131,17 +131,18 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
       /* Add the Neurons */
       expPrevLayerOutput = 0;
       for(uint32 layerNeurIt = 0; layerNeurIt < layer_sizes[layerIt]; layerNeurIt++){
+        arg_neuron_array[neurIt].set_input_function(InputFunction::next());
         if(is_allowed_transfer_functions_by_layer_set){
-          arg_neuron_array[neurIt].set_transfer_function_idx(
+          arg_neuron_array[neurIt].set_transfer_function(
             TransferFunction::next(arg_allowed_transfer_functions_by_layer[layerIt])
           );
         }else{
-          arg_neuron_array[neurIt].set_transfer_function_idx(TransferFunction::next());
+          arg_neuron_array[neurIt].set_transfer_function(TransferFunction::next());
         }
 
         /* Storing the expected output of this Net */
         if(0 < layerIt)expPrevLayerOutput += TransferFunction::get_average_output_range(
-          arg_neuron_array[neurIt].transfer_function_idx()
+          arg_neuron_array[neurIt].transfer_function()
         );
 
         /* Add the weights for the previous layer to the built net */
@@ -164,7 +165,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
         /* Add the input weights for the previous layer */
         for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < previous_size; neuron_weight_iterator++){
           arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
-            arg_neuron_array[neurIt].transfer_function_idx()
+            arg_neuron_array[neurIt].transfer_function()
           );
           weightIt++;
         }
@@ -175,7 +176,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
 
           /* Add the weight */
           arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
-            arg_neuron_array[neurIt].transfer_function_idx()
+            arg_neuron_array[neurIt].transfer_function()
           );
           weightIt++;
 
@@ -190,7 +191,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
           /* Add the weights */
           for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < layer_sizes[layerIt]; neuron_weight_iterator++){
             arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
-              arg_neuron_array[neurIt].transfer_function_idx()
+              arg_neuron_array[neurIt].transfer_function()
             );
             weightIt++;
           }

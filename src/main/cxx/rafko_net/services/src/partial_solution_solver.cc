@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <math.h>
 
+#include "rafko_net/models/input_function.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/models/spike_function.h"
 
@@ -29,15 +30,11 @@ namespace rafko_net {
 rafko_utilities::DataPool<sdouble32> PartialSolutionSolver::common_data_pool;
 
 void PartialSolutionSolver::solve_internal(const std::vector<sdouble32>& input_data, rafko_utilities::DataRingbuffer& output_neuron_data,  std::vector<sdouble32>& temp_data) const{
-  sdouble32 new_neuron_data = double_literal(0.0);
-  sdouble32 new_neuron_input;
-  sdouble32 spike_function_weight;
   uint32 weight_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   uint32 input_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   uint32 input_synapse_index = 0; /* Which synapse is being processed inside the Neuron */
   uint32 input_index_offset = 0;
   sint32 input_index;
-  bool first_weight_in_synapse;
 
   /* Collect the input data to solve the partial solution */
   input_iterator.skim([&](InputSynapseInterval input_synapse){
@@ -60,14 +57,16 @@ void PartialSolutionSolver::solve_internal(const std::vector<sdouble32>& input_d
   /* Solve the Partial Solution based on the collected input data and stored operations */
   input_index_offset = 0;
   for(uint16 neuron_iterator = 0; neuron_iterator < detail.output_data().interval_size(); ++neuron_iterator){
-    new_neuron_data = 0;
-    first_weight_in_synapse = true;
-    spike_function_weight = double_literal(0.0);
+    sdouble32 new_neuron_data;
+    sdouble32 spike_function_weight = double_literal(0.0);
+    bool first_weight_in_neuron = true;
+    bool first_input_in_neuron = true;
     internal_weight_iterator.iterate([&](sint32 weight_index){
-      if(true == first_weight_in_synapse){ /* as per structure, the first weight is for the spike function */
-        first_weight_in_synapse = false;
+      if(true == first_weight_in_neuron){ /* as per structure, the first weight is for the spike function */
+        first_weight_in_neuron = false;
         spike_function_weight = detail.weight_table(weight_index);
       }else{ /* the next weights are for inputs and biases */
+        sdouble32 new_neuron_input;
         if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
           input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
           if(SynapseIterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
@@ -86,7 +85,15 @@ void PartialSolutionSolver::solve_internal(const std::vector<sdouble32>& input_d
           new_neuron_input = double_literal(1.0);
 
         /* The weighted input shall be added to the calculated value */
-        new_neuron_data += new_neuron_input * detail.weight_table(weight_index);
+        if(true == first_input_in_neuron){
+          new_neuron_data = new_neuron_input * detail.weight_table(weight_index);
+          first_input_in_neuron = false;
+        }else{
+          new_neuron_data = InputFunction::collect(
+            detail.neuron_input_functions(neuron_iterator),
+            new_neuron_data, (new_neuron_input * detail.weight_table(weight_index))
+          );
+        }
       }
     },weight_synapse_iterator_start, detail.weight_synapse_number(neuron_iterator));
     weight_synapse_iterator_start += detail.weight_synapse_number(neuron_iterator);

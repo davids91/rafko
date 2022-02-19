@@ -165,12 +165,25 @@ public:
   }
 
   /**
-   * @brief      If supported, produced network will also contain for every layer
-   *             the activation of the layer from the previous run
+   * @brief      Add a feature to the layer of the network to be built
+   *
+   * @param[in]   layer_index   The index of the Layer to set the features on
+   * @param[in]   feature       The feature to set to the layer
    *
    * @return     builder reference for chaining
    */
   RafkoNetBuilder& add_feature_to_layer(uint32 layer_index, Neuron_group_features feature);
+
+  /**
+   * @brief      Set the input function of a Neuron other, than the default "+"
+   *
+   * @param[in]   layer_index     The index of the Layer to set the features on
+   * @param[in]   neuron_index    The relative index of the neuron inside the layer
+   * @param[in]   feature         The feature to set to the layer
+   *
+   * @return     builder reference for chaining
+   */
+  RafkoNetBuilder& set_neuron_input_function(uint32 layer_index, uint32 neuron_index, Input_functions function);
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
@@ -178,9 +191,8 @@ public:
    *             argument, where the neurons of a layer is after in the previous layers, and before
    *             the succeeding layer Neurons.
    *
-   * @param[in]  layerSizes         how many layers will there be in the result
-   *                    and how big are those layers going to be
-   * @param[in]  transfer_function_filter  The allowed transfer functions per layer
+   * @param[in]  layerSizes                 how many layers will there be in the result and how big are those layers going to be
+   * @param[in]  transfer_function_filter   The allowed transfer functions per layer
    *
    * @return   the built neural network
    */

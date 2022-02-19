@@ -181,7 +181,7 @@ void manaual_fully_connected_network_result(
       }
     }); /* For every weight in the Neuron sum the weigthed input*/
     /* apply transfer function */
-    new_neuron_data = trasfer_function.get_value(neuron.transfer_function_idx(),new_neuron_data);
+    new_neuron_data = trasfer_function.get_value(neuron.transfer_function(),new_neuron_data);
     neuron_data[neuron_iterator] = ( /* Apply memory filter and save output to Neuron data */
       (neuron_data[neuron_iterator] * spike_function_weight)
       + new_neuron_data * (double_literal(1.0) - spike_function_weight)

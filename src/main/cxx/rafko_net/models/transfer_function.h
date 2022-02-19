@@ -85,6 +85,14 @@ public:
   sdouble32 get_derivative(Transfer_functions function, sdouble32 data) const;
 
   #if(RAFKO_USES_OPENCL)
+  /**
+   * @brief     Generates GPU kernel function code for the provided parameters
+   *
+   * @param[in]   function    The Transfer function to base the generated kernel code on
+   * @param[in]   x           The value on which the transfer function is called upon
+   *
+   * @return    The generated Kernel code calling the asked transfer function on the parameter
+   */
   std::string get_cl_function_for(Transfer_functions function, std::string x);
   #endif/*(RAFKO_USES_OPENCL)*/
 

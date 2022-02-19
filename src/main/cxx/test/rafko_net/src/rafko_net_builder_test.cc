@@ -53,7 +53,7 @@ rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   std::vector<rafko_net::Neuron> neuron_table(3);
 
   /* Neuron 0 Has an input of 1 */
-  neuron_table[0].set_transfer_function_idx(used_transfer_function);
+  neuron_table[0].set_transfer_function(used_transfer_function);
   temp_input_interval.set_starts(0); /* Input Starting from 0 */
   temp_input_interval.set_interval_size(1); /* 1 Input */
   *neuron_table[0].add_input_indices() = temp_input_interval;
@@ -63,7 +63,7 @@ rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   REQUIRE( true == rafko_net::NeuronInfo::is_neuron_valid( neuron_table[0]) );
 
   /* Neuron 1 Has Neuron 0 as input */
-  neuron_table[1].set_transfer_function_idx(used_transfer_function);
+  neuron_table[1].set_transfer_function(used_transfer_function);
   temp_input_interval.set_starts(0);
   temp_input_interval.set_interval_size(1);
   *neuron_table[1].add_input_indices() = temp_input_interval;
@@ -73,7 +73,7 @@ rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   REQUIRE( true == rafko_net::NeuronInfo::is_neuron_valid( neuron_table[1]) );
 
   /* Neuron 2 Also has Neuron 0 as input */
-  neuron_table[2].set_transfer_function_idx(used_transfer_function);
+  neuron_table[2].set_transfer_function(used_transfer_function);
   temp_input_interval.set_starts(0);
   temp_input_interval.set_interval_size(1);
   *neuron_table[2].add_input_indices() = temp_input_interval;
@@ -114,7 +114,7 @@ rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
     );
     CHECK(
       used_transfer_function
-      == net->neuron_array(0).transfer_function_idx()
+      == net->neuron_array(0).transfer_function()
     );
 
     REQUIRE( true == rafko_net::NeuronInfo::is_neuron_valid(net->neuron_array(1)) );
@@ -132,7 +132,7 @@ rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
     );
     CHECK(
       used_transfer_function
-      == net->neuron_array(1).transfer_function_idx()
+      == net->neuron_array(1).transfer_function()
     );
 
     REQUIRE( true == rafko_net::NeuronInfo::is_neuron_valid(net->neuron_array(2)) );
@@ -149,7 +149,7 @@ rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
     );
     CHECK(
       used_transfer_function
-      == net->neuron_array(2).transfer_function_idx()
+      == net->neuron_array(2).transfer_function()
     );
     return net;
   }catch(const char* e){
@@ -259,8 +259,8 @@ rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* a
   CHECK( rafko_net::SynapseIterator<>::synapse_index_from_input_index(0) == net->neuron_array(1).input_indices(0).starts() );
 
   /* The input Layer should have Identity transfer function according to configuration */
-  CHECK( rafko_net::transfer_function_identity == net->neuron_array(0).transfer_function_idx() );
-  CHECK( rafko_net::transfer_function_identity == net->neuron_array(1).transfer_function_idx() );
+  CHECK( rafko_net::transfer_function_identity == net->neuron_array(0).transfer_function() );
+  CHECK( rafko_net::transfer_function_identity == net->neuron_array(1).transfer_function() );
 
   /* Check Hidden Neurons */
   /* Hidden Neurons should have 1 weight Synapse for the inputs and bias */
@@ -275,18 +275,18 @@ rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* a
 
   /* The Hidden Layer should have either transfer_function_relu or transfer_function_selu according to the configuration */
   CHECK((
-    (rafko_net::transfer_function_relu == net->neuron_array(2).transfer_function_idx())
-    ||(rafko_net::transfer_function_selu == net->neuron_array(2).transfer_function_idx())
+    (rafko_net::transfer_function_relu == net->neuron_array(2).transfer_function())
+    ||(rafko_net::transfer_function_selu == net->neuron_array(2).transfer_function())
   ));
 
   CHECK((
-    (rafko_net::transfer_function_relu == net->neuron_array(3).transfer_function_idx())
-    ||(rafko_net::transfer_function_selu == net->neuron_array(3).transfer_function_idx())
+    (rafko_net::transfer_function_relu == net->neuron_array(3).transfer_function())
+    ||(rafko_net::transfer_function_selu == net->neuron_array(3).transfer_function())
   ));
 
   CHECK((
-    (rafko_net::transfer_function_relu == net->neuron_array(4).transfer_function_idx())
-    ||(rafko_net::transfer_function_selu == net->neuron_array(4).transfer_function_idx())
+    (rafko_net::transfer_function_relu == net->neuron_array(4).transfer_function())
+    ||(rafko_net::transfer_function_selu == net->neuron_array(4).transfer_function())
   ));
 
   /* Check Output Neurons */
@@ -300,13 +300,13 @@ rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* a
 
   /* The Output Layer should have either transfer_function_sigmoid or transfer_function_tanh according to the configuration */
   CHECK((
-    (rafko_net::transfer_function_sigmoid == net->neuron_array(5).transfer_function_idx())
-    ||(rafko_net::transfer_function_tanh == net->neuron_array(5).transfer_function_idx())
+    (rafko_net::transfer_function_sigmoid == net->neuron_array(5).transfer_function())
+    ||(rafko_net::transfer_function_tanh == net->neuron_array(5).transfer_function())
   ));
 
   CHECK((
-    (rafko_net::transfer_function_sigmoid == net->neuron_array(6).transfer_function_idx())
-    ||(rafko_net::transfer_function_tanh == net->neuron_array(6).transfer_function_idx())
+    (rafko_net::transfer_function_sigmoid == net->neuron_array(6).transfer_function())
+    ||(rafko_net::transfer_function_tanh == net->neuron_array(6).transfer_function())
   ));
   return net;
 }

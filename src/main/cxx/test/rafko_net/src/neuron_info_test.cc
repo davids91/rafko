@@ -41,7 +41,7 @@ TEST_CASE( "Testing Neuron validation", "[Neuron][manual]" ) {
   /* Unfortunately checking against the weight table is not possible without Net context */
   CHECK( false == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
-  neuron.set_transfer_function_idx(rafko_net::transfer_function_identity);
+  neuron.set_transfer_function(rafko_net::transfer_function_identity);
   CHECK( true == rafko_net::NeuronInfo::is_neuron_valid(neuron) );
 
   /* Setting indexing information */
