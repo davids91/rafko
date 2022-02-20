@@ -50,12 +50,11 @@ public:
    * @brief     Generates GPU kernel function code for the provided parameters
    *
    * @param[in]   function    The Input function to base the generated kernel code on
-   * @param[in]   a           A value to be merged through the input function
-   * @param[in]   b           The value to be merged with the other through the input function
+   * @param[in]   element     A value to be merged through the input function
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  static std::string get_kernel_function_for(Input_functions function, std::string a, std::string b);
+  static std::string get_kernel_function_for(Input_functions function, std::string element);
   #endif/*(RAFKO_USES_OPENCL)*/
 };
 

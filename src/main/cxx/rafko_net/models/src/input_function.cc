@@ -40,10 +40,10 @@ sdouble32 InputFunction::collect(Input_functions function, sdouble32 a, sdouble3
   };
 }
 
-std::string InputFunction::get_kernel_function_for(Input_functions function, std::string a, std::string b){
+std::string InputFunction::get_kernel_function_for(Input_functions function, std::string element){
   switch(function){
-    case input_function_add: return "(" + a + "+" + b + ")";
-    case input_function_multiply: return  "(" + a + "*" + b + ")";
+    case input_function_add: return "+ (" + element + ")";
+    case input_function_multiply: return  "* (" + element + ")";
     default: throw std::runtime_error("Unidentified Input function called!");
   };
 }

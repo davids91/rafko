@@ -67,6 +67,7 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
   /**###################################################################################################
    * The first neuron shall have the inputs
    */
+  partial_solution.add_neuron_input_functions(rafko_net::input_function_add);
   partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
 
   /* inputs go to neuron1 */
@@ -83,6 +84,7 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
   /**###################################################################################################
    * The second Neuron shall only have the first neuron as input
    */
+  partial_solution.add_neuron_input_functions(rafko_net::input_function_add);
   partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
   /* neuron1 goes to neuron2;  that is the output which isn't in the inside indexes */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights*/

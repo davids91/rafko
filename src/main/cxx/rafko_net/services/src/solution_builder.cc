@@ -32,7 +32,7 @@
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/models/spike_function.h"
 #endif/*(RAFKO_USES_OPENCL)*/
-
+#include "rafko_net/models/input_function.h"
 #include "rafko_net/models/neuron_info.h"
 #include "rafko_net/services/neuron_router.h"
 #include "rafko_net/services/synapse_iterator.h"
@@ -239,13 +239,23 @@ std::string SolutionBuilder::get_kernel_for_solution(
     uint32 weight_synapse_start = 0u;
 
     for(uint32 inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
-      bool first_weight_in_synapse = true;
+      bool first_weight_in_neuron = true;
+      bool first_input_in_neuron = true;
+      std::function<std::string(std::string,bool)> input_function_lambda = [&inner_neuron_index, &partial](std::string input, bool first){
+        if(first){
+          return input;
+        }else{
+          return InputFunction::get_kernel_function_for(
+            partial.neuron_input_functions(inner_neuron_index), input
+          );
+        }
+      };
       uint32 spike_weight_index;
       std::string inner_neuron_operation = "neuron_partial_result = (";
       std::string inner_neuron_input_weight_pairs = "";
       SynapseIterator<>::iterate(partial.weight_indices(),[&](sint32 weight_index){
-        if(first_weight_in_synapse){
-          first_weight_in_synapse = false;
+        if(first_weight_in_neuron){
+          first_weight_in_neuron = false;
           spike_weight_index = weight_index;
         }else{
           inner_neuron_input_weight_pairs += std::string("\n");
@@ -259,35 +269,35 @@ std::string SolutionBuilder::get_kernel_for_solution(
               if(SynapseIterator<>::is_index_input(input_index)){
                 input_index = SynapseIterator<>::input_index_from_synapse_index(input_index);
                 assert( 0 == input_past_reach );
-                inner_neuron_input_weight_pairs += std::string("(")
+                inner_neuron_input_weight_pairs += input_function_lambda( std::string("(")
                 /* input */+ " inputs[input_start + " + std::to_string(input_index) + "]"
                 /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                + ") + ";
+                + std::string(")"), first_input_in_neuron);
               }else{
                 if(0 != input_past_reach){
-                  inner_neuron_input_weight_pairs += past_reach_guard(input_past_reach, std::string("(")
+                  inner_neuron_input_weight_pairs += input_function_lambda( past_reach_guard(input_past_reach, std::string("(")
                   /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<sint32>(input_past_reach * solution.neuron_number())) + "]"
                   /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                  + ")") + std::string(" + ");
+                  + std::string(")")), first_input_in_neuron );
                 }else{ /* input doesn't reach to the past */
-                  inner_neuron_input_weight_pairs += std::string("(")
+                  inner_neuron_input_weight_pairs += input_function_lambda( std::string("(")
                   /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
                   /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                  + ") + ";
+                  + std::string(")"), first_input_in_neuron);
                 }
               }
             }else{
               input_index = input_index + input_start_offset;
               if(0 != input_past_reach){
-                inner_neuron_input_weight_pairs += past_reach_guard(input_past_reach, std::string("(")
+                inner_neuron_input_weight_pairs += input_function_lambda( past_reach_guard(input_past_reach, std::string("(")
                 /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<sint32>(input_past_reach * solution.neuron_number())) + "]"
                 /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                + ")") + std::string(" + ");
+                + std::string(" ")), first_input_in_neuron);
               }else{ /* input doesn't reach to the past */
-                inner_neuron_input_weight_pairs += std::string("(")
+                inner_neuron_input_weight_pairs += input_function_lambda( std::string("(")
                 /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
                 /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                + ") + ";
+                + std::string(")"), first_input_in_neuron);
               }
             }
             ++input_start_offset;
@@ -296,13 +306,14 @@ std::string SolutionBuilder::get_kernel_for_solution(
               ++input_synapse_index_offset;
             }
           }else{ /* ... bias ... */
-            inner_neuron_input_weight_pairs += std::string("(")
+            inner_neuron_input_weight_pairs += input_function_lambda( std::string("(")
             /* bias weight */+ "inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-            + ") + ";
+            + std::string(")"), first_input_in_neuron);
           }
+          first_input_in_neuron = false;
         }
       }, weight_synapse_start, partial.weight_synapse_number(inner_neuron_index));
-      inner_neuron_input_weight_pairs += "0.0 \n);\n";
+      inner_neuron_input_weight_pairs += "\n);\n";
       inner_neuron_operation += inner_neuron_input_weight_pairs;
       inner_neuron_operation += "neuron_partial_result = " + transfer_function.get_cl_function_for(
         partial.neuron_transfer_functions(inner_neuron_index),
@@ -369,6 +380,9 @@ std::string SolutionBuilder::get_kernel_for_solution(
   source_base = std::regex_replace(source_base, std::regex("==prefill_input_num=="), std::to_string(prefill_input_num));
   source_base = std::regex_replace(source_base, std::regex("==network_input_size=="), std::to_string(solution.network_input_size()));
   source_base = std::regex_replace(source_base, std::regex("==performance_operations=="), performance_operations);
+
+  // std::cout << "Agent source: " << source_base << std::endl; exit(0);
+
   return source_base;
 }
 #endif/*(RAFKO_USES_OPENCL)*/
