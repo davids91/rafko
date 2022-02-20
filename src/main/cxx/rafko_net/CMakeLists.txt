@@ -18,6 +18,7 @@ set(NET_HEADER_MODELS
   models/neuron_info.h
   models/spike_function.h
   models/transfer_function.h
+  models/input_function.h
   models/weight_initializer.h
 )
 target_sources(rafko_net
@@ -27,6 +28,7 @@ target_sources(rafko_net
   models/src/dense_net_weight_initializer.cc
   models/src/neuron_info.cc
   models/src/transfer_function.cc
+  models/src/input_function.cc
   services/src/feature_group_cache.cc
   services/src/neuron_router.cc
   services/src/partial_solution_builder.cc

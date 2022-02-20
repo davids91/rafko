@@ -24,6 +24,7 @@
 #include <memory>
 #include <stdexcept>
 #include <utility>
+#include <tuple>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/models/transfer_function.h"
@@ -165,12 +166,25 @@ public:
   }
 
   /**
-   * @brief      If supported, produced network will also contain for every layer
-   *             the activation of the layer from the previous run
+   * @brief      Add a feature to the layer of the network to be built
+   *
+   * @param[in]   layer_index   The index of the Layer to set the features on
+   * @param[in]   feature       The feature to set to the layer
    *
    * @return     builder reference for chaining
    */
   RafkoNetBuilder& add_feature_to_layer(uint32 layer_index, Neuron_group_features feature);
+
+  /**
+   * @brief      Set the input function of a Neuron other, than the default "+"
+   *
+   * @param[in]   layer_index     The index of the Layer to set the features on
+   * @param[in]   neuron_index    The relative index of the neuron inside the layer
+   * @param[in]   feature         The feature to set to the layer
+   *
+   * @return     builder reference for chaining
+   */
+  RafkoNetBuilder& set_neuron_input_function(uint32 layer_index, uint32 layer_neuron_index, Input_functions function);
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
@@ -178,9 +192,8 @@ public:
    *             argument, where the neurons of a layer is after in the previous layers, and before
    *             the succeeding layer Neurons.
    *
-   * @param[in]  layerSizes         how many layers will there be in the result
-   *                    and how big are those layers going to be
-   * @param[in]  transfer_function_filter  The allowed transfer functions per layer
+   * @param[in]  layerSizes                 how many layers will there be in the result and how big are those layers going to be
+   * @param[in]  transfer_function_filter   The allowed transfer functions per layer
    *
    * @return   the built neural network
    */
@@ -215,7 +228,7 @@ private:
   rafko_mainframe::RafkoSettings& settings;
 
   /**
-   * Helper variables to see if different required arguments are set inside the builder
+   * @brief   Helper variables to see if different required arguments are set inside the builder
    */
   bool is_input_size_set = false;
   bool is_output_neuron_number_set = false;
@@ -224,7 +237,14 @@ private:
   bool is_weight_initializer_set = false;
   bool is_neuron_array_set = false;
   bool is_allowed_transfer_functions_by_layer_set = false;
+
+  /**
+   * @brief   Helper variables for features and optional Neuron parameters
+   */
   uint32 recurrence = network_recurrence_unknown;
+  std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
+  std::vector< std::pair<uint32,Neuron_group_features> > layer_features;
+  std::vector< std::tuple<uint32,uint32,Input_functions> > arg_neuron_index_input_functions;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
@@ -255,9 +275,6 @@ private:
    * Number of Neurons the net-to-be-built shall have as output
    */
   uint32 arg_output_neuron_number = 0;
-
-  std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
-  std::vector< std::pair<uint32,Neuron_group_features> > layer_features;
 
   /**
    * @brief RafkoNetBuilder::set_neuron_array: moves the neuron_array argument into the RafkoNet

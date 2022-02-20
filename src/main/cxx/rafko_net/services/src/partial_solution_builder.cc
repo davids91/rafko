@@ -19,6 +19,8 @@
 
 #include <stdexcept>
 
+#include "rafko_net/models/input_function.h"
+
 namespace rafko_net{
 
 uint32 PartialSolutionBuilder::neuron_synapse_count = 0;
@@ -42,7 +44,8 @@ std::pair<uint32,uint32> PartialSolutionBuilder::add_neuron_to_partial_solution(
     partial.mutable_output_data()->set_interval_size(partial.output_data().interval_size() + 1u);
 
     /* Copy in Neuron parameters and weights from the net */
-    partial.add_neuron_transfer_functions(net.neuron_array(neuron_index).transfer_function_idx());
+    partial.add_neuron_input_functions(net.neuron_array(neuron_index).input_function());
+    partial.add_neuron_transfer_functions(net.neuron_array(neuron_index).transfer_function());
     partial.add_weight_synapse_number(net.neuron_array(neuron_index).input_weights_size());
     weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
       temp_synapse_interval.set_starts(partial.weight_table_size());

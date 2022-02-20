@@ -67,6 +67,7 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
   /**###################################################################################################
    * The first neuron shall have the inputs
    */
+  partial_solution.add_neuron_input_functions(rafko_net::input_function_add);
   partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
 
   /* inputs go to neuron1 */
@@ -83,6 +84,7 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
   /**###################################################################################################
    * The second Neuron shall only have the first neuron as input
    */
+  partial_solution.add_neuron_input_functions(rafko_net::input_function_add);
   partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
   /* neuron1 goes to neuron2;  that is the output which isn't in the inside indexes */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights*/
@@ -181,7 +183,7 @@ void manaual_fully_connected_network_result(
       }
     }); /* For every weight in the Neuron sum the weigthed input*/
     /* apply transfer function */
-    new_neuron_data = trasfer_function.get_value(neuron.transfer_function_idx(),new_neuron_data);
+    new_neuron_data = trasfer_function.get_value(neuron.transfer_function(),new_neuron_data);
     neuron_data[neuron_iterator] = ( /* Apply memory filter and save output to Neuron data */
       (neuron_data[neuron_iterator] * spike_function_weight)
       + new_neuron_data * (double_literal(1.0) - spike_function_weight)

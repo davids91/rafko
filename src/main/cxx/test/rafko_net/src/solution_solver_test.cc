@@ -400,7 +400,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
         });
         if(solved_inputs_in_neuron == overall_inputs_in_neuron){
           neuron_data = transfer_function.get_value(
-            net->neuron_array(neuron_iterator).transfer_function_idx(),
+            net->neuron_array(neuron_iterator).transfer_function(),
             neuron_data
           );
           manual_neuron_values[neuron_iterator] = rafko_net::SpikeFunction::get_value(

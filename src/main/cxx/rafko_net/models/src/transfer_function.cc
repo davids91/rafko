@@ -18,6 +18,7 @@
 #include "rafko_net/models/transfer_function.h"
 
 #include <math.h>
+#include <stdexcept>
 
 namespace rafko_net {
 
@@ -33,9 +34,13 @@ Transfer_functions TransferFunction::next(){
 }
 
 Transfer_functions TransferFunction::next(std::set<Transfer_functions> range){
+  assert( 0u < range.size() );
+  if(1u == range.size()) return *range.begin();
+
   Transfer_functions candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
   while(find(range.begin(), range.end(), candidate) == range.end())
     candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
+
   return candidate;
 }
 

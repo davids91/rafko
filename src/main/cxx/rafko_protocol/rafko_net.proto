@@ -35,6 +35,28 @@ enum Transfer_functions{
   transfer_function_end = 512;
 }
 
+/** @brief      Indexes of input functions a neuron uses
+ *              to collect its input synapses
+ */
+enum Input_functions{
+  input_function_unknown = 0;
+  input_function_add = 1;
+  input_function_multiply = 2;
+  input_function_end = 512;
+}
+
+/** @brief      Indexes of spike functions a neuron uses
+ *              to determine its next state based on its previous
+ *              state and current activation, determined by a weight
+ */
+enum Spike_functions{
+  spike_function_unknown = 0;
+  spike_function_remember = 1; /* default; 1.0: previous neuron value only, 0.0: current neuron value only */
+  spike_function_jump_to = 3; /* 1.0: jump to the direction of the current neuron value; 0.0: previous neuron value only */
+  spike_function_pid = 4; /* that's a challenge; because it requires not only multiple parameters, but multiple term memory buffers */
+  spike_function_end= 512;
+}
+
 /** @brief      Network basically describes the connections a recurrent network has
  *              with the past runs. This enumeration is for a utility which is for
  *              testing purposes only. Recurrences described here affect
@@ -100,8 +122,8 @@ message IndexSynapseInterval{
  *              the weighted sums with a bias, transfer function and a memory filter.
  */
 message Neuron{
-  /* index of the weight for the memory filter. 1.0: keep its previous value instead of the newly calculated one */
-  Transfer_functions transfer_function_idx = 3; /* index of the transfer function this Neuron uses, empty is invalid */
+  Input_functions input_function = 3; /* index of the input function the Neuron uses to collect its inputs */
+  Transfer_functions transfer_function = 4; /* index of the transfer function this Neuron uses, empty is invalid */
 
   /**
    * Input weights shall only contain positive intervals,
