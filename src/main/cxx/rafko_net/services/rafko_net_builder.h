@@ -24,6 +24,7 @@
 #include <memory>
 #include <stdexcept>
 #include <utility>
+#include <tuple>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/models/transfer_function.h"
@@ -183,7 +184,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& set_neuron_input_function(uint32 layer_index, uint32 neuron_index, Input_functions function);
+  RafkoNetBuilder& set_neuron_input_function(uint32 layer_index, uint32 layer_neuron_index, Input_functions function);
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
@@ -227,7 +228,7 @@ private:
   rafko_mainframe::RafkoSettings& settings;
 
   /**
-   * Helper variables to see if different required arguments are set inside the builder
+   * @brief   Helper variables to see if different required arguments are set inside the builder
    */
   bool is_input_size_set = false;
   bool is_output_neuron_number_set = false;
@@ -236,7 +237,14 @@ private:
   bool is_weight_initializer_set = false;
   bool is_neuron_array_set = false;
   bool is_allowed_transfer_functions_by_layer_set = false;
+
+  /**
+   * @brief   Helper variables for features and optional Neuron parameters
+   */
   uint32 recurrence = network_recurrence_unknown;
+  std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
+  std::vector< std::pair<uint32,Neuron_group_features> > layer_features;
+  std::vector< std::tuple<uint32,uint32,Input_functions> > arg_neuron_index_input_functions;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
@@ -267,9 +275,6 @@ private:
    * Number of Neurons the net-to-be-built shall have as output
    */
   uint32 arg_output_neuron_number = 0;
-
-  std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
-  std::vector< std::pair<uint32,Neuron_group_features> > layer_features;
 
   /**
    * @brief RafkoNetBuilder::set_neuron_array: moves the neuron_array argument into the RafkoNet
