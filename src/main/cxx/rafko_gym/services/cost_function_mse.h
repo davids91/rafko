@@ -29,16 +29,16 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT CostFunctionMSE : public CostFunction{
 public:
-  CostFunctionMSE(rafko_mainframe::RafkoSettings& settings)
+  CostFunctionMSE(const rafko_mainframe::RafkoSettings& settings)
   : CostFunction(cost_function_mse, settings)
   { };
 
 protected:
-  sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const{
+  constexpr sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const{
     return error_value / static_cast<sdouble32>(sample_number*double_literal(2.0));
   }
 
-  sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
+  constexpr sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
     return pow((label_value - feature_value),2);
   }
 
@@ -50,11 +50,6 @@ protected:
     return "((" + error_value + ") / ((double)(sample_number) * 2.0) )";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
-
-  sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const{
-    return -(label_value - feature_value) / static_cast<sdouble32>(sample_number);
-  }
-
 };
 
 } /* namespace rafko_gym */

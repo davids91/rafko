@@ -28,7 +28,7 @@ namespace rafko_gym {
 void CostFunction::get_feature_errors(
   const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
   uint32 label_start, uint32 error_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
-){
+) const{
   if((label_start + labels_to_evaluate) > labels.size())
     throw std::runtime_error("Label index out of bounds with Neuron data!");
 
@@ -47,7 +47,7 @@ void CostFunction::feature_errors_thread(
   const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
   uint32 label_start, uint32 error_start, uint32 neuron_data_start_index,
   uint32 labels_to_evaluate_in_one_thread, uint32 labels_evaluating_overall, uint32 sample_number, uint32 thread_index
-){
+) const{
   uint32 neuron_data_start_index_in_thread = neuron_data_start_index + (thread_index * labels_to_evaluate_in_one_thread);
   uint32 label_start_in_thread = label_start + (thread_index * labels_to_evaluate_in_one_thread);
   uint32 error_start_in_thread = error_start + (thread_index * labels_to_evaluate_in_one_thread);
@@ -72,7 +72,7 @@ void CostFunction::feature_errors_thread(
 sdouble32 CostFunction::get_feature_error(
   const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data,
   uint32 max_threads, uint32 outer_thread_index, uint32 sample_number
-){
+) const{
   assert( label.size() == neuron_data.size() );
 
   sdouble32 error_value = 0;
@@ -100,7 +100,7 @@ sdouble32 CostFunction::get_feature_error(
 sdouble32 CostFunction::summarize_errors(
   const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data,
   uint32 feature_start_index, uint32 number_to_eval
-){
+) const{
   sdouble32 local_error = 0;
   for(uint32 feature_iterator = 0; feature_iterator < number_to_eval; ++feature_iterator)
     local_error += get_cell_error(label[feature_start_index + feature_iterator], neuron_data[feature_start_index + feature_iterator]);

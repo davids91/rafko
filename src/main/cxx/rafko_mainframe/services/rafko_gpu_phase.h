@@ -33,15 +33,17 @@ namespace rafko_mainframe{
 /**
  * @brief      A phase of the Deep learning GPU pipeline consisting of several ordered GPU Kernels.
  */
-class RafkoGPUPhase{
+class RAFKO_FULL_EXPORT RafkoGPUPhase{
 public:
   RafkoGPUPhase(
-    cl::Context& context_, cl::Device& device_, cl::CommandQueue& queue_,
+    const cl::Context& context_, const cl::Device& device_, const cl::CommandQueue& queue_,
     std::shared_ptr<RafkoGPUStrategyPhase> strategy_
   ):opencl_context(context_)
   , opencl_device(device_)
   , opencl_device_queue(queue_)
-  { set_strategy(strategy_); }
+  {
+    set_strategy(strategy_);
+  }
 
   /**
    * @brief      Implements a GPU Strategy phase provided in the argument
@@ -113,9 +115,9 @@ public:
   }
 
 private:
-  cl::Context& opencl_context;
-  cl::Device& opencl_device;
-  cl::CommandQueue& opencl_device_queue;
+  const cl::Context& opencl_context;
+  const cl::Device& opencl_device;
+  const cl::CommandQueue& opencl_device_queue;
   std::shared_ptr<RafkoGPUStrategyPhase> strategy;
   std::vector<std::tuple<cl::Buffer, cl::Buffer, int>> kernel_args;
   std::vector<cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>> steps;

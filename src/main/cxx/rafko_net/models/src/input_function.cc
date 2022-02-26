@@ -32,21 +32,4 @@ Input_functions InputFunction::next(std::set<Input_functions> range){
   return candidate;
 }
 
-sdouble32 InputFunction::collect(Input_functions function, sdouble32 a, sdouble32 b){
-  switch(function){
-    case input_function_add: return a + b;
-    case input_function_multiply: return a * b;
-    default: throw std::runtime_error("Unidentified Input function called!");
-  };
-}
-
-std::string InputFunction::get_kernel_function_for(Input_functions function, std::string element){
-  switch(function){
-    case input_function_add: return "+ (" + element + ")";
-    case input_function_multiply: return  "* (" + element + ")";
-    default: throw std::runtime_error("Unidentified Input function called!");
-  };
-}
-
-
 } /* namespace rafko_net */

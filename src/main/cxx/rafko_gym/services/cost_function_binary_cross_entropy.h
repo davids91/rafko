@@ -30,16 +30,16 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT CostFunctionBinaryCrossEntropy : public CostFunction{
 public:
-  CostFunctionBinaryCrossEntropy(rafko_mainframe::RafkoSettings& settings)
+  CostFunctionBinaryCrossEntropy(const rafko_mainframe::RafkoSettings& settings)
   : CostFunction(cost_function_binary_cross_entropy, settings)
   { };
 
 protected:
-  sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const{
+  constexpr sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const{
     return ( error_value / static_cast<sdouble32>(sample_number) );
   }
 
-  sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
+  constexpr sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
     return (
       label_value * std::log(std::max(double_literal(0.0000000000000001), feature_value))
       +( (double_literal(1.0) - label_value) * std::log(double_literal(1.0) - std::min(double_literal(0.9999999999999999), feature_value)) )
@@ -59,12 +59,6 @@ protected:
     return "((" + error_value + ") / (double)(sample_number) )";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
-
-  sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const{
-    parameter_not_used(label_value);
-    parameter_not_used(sample_number);
-    return -( std::log(feature_value) + std::log((double_literal(1.0) - feature_value)) );
-  }
 };
 
 } /* namespace rafko_gym */

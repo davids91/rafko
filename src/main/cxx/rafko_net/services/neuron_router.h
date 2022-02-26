@@ -26,7 +26,6 @@
 #include <atomic>
 #include <functional>
 #include <stdexcept>
-#include <utility>
 #include <assert.h>
 
 #include "rafko_protocol/rafko_net.pb.h"
@@ -46,7 +45,7 @@ namespace rafko_net {
  *             After an iteration the state update from the subset needs to be handled by whoever has access to
  *             the Neuron indexes inside.
  */
-class NeuronRouter{
+class RAFKO_FULL_EXPORT NeuronRouter{
 public:
   NeuronRouter(const RafkoNet& rafko_net);
 
@@ -183,7 +182,7 @@ public:
    *
    * @return     The subset.
    */
-  const std::deque<uint32>& get_subset() const{
+  constexpr const std::deque<uint32>& get_subset() const{
     return net_subset;
   }
 
@@ -328,7 +327,7 @@ private:
    *
    * @return     A list of the neuron indices inside the subset depending on this one.
    */
-  std::vector<uint32> get_dependents_in_subset_of(uint32 neuron_index);
+  std::vector<uint32> get_dependents_in_subset_of(uint32 neuron_index) const;
 
   /**
    * @brief      Decides the next Neuron to iterate to and increases the output layer iterator if needed
@@ -399,7 +398,7 @@ private:
    *
    * @return     all solution relevant feature groups assigned for the Neuron is now finished
    */
-  bool are_neuron_feature_groups_finished_for(uint32 neuron_index);
+  bool are_neuron_feature_groups_finished_for(uint32 neuron_index) const;
 };
 
 } /* namespace rafko_net */

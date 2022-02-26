@@ -55,7 +55,7 @@ public:
    *
    * @param[in]  settings  The Service settings
    */
-  SolutionBuilder(const rafko_mainframe::RafkoSettings& settings_)
+  constexpr SolutionBuilder(const rafko_mainframe::RafkoSettings& settings_)
   :  settings(settings_)
   { }
 
@@ -78,10 +78,6 @@ public:
 
 private:
   const rafko_mainframe::RafkoSettings& settings;
-
-  static sdouble32 get_size_in_mb(const PartialSolution& partial){
-    return partial.SpaceUsedLong() /* Bytes */ / double_literal(1024.0) /* KB */ / double_literal(1024.0) /* MB */;
-  }
 
   static uint32 get_last_neuron_index_of_partial(const PartialSolution& partial){
     return (partial.output_data().starts() + partial.output_data().interval_size() - 1u);

@@ -66,21 +66,48 @@ public:
    *
    * @param[in]  feature  The feature to be considered
    */
-  static bool is_feature_relevant_to_solution(Neuron_group_features feature);
+  static constexpr bool is_feature_relevant_to_solution(Neuron_group_features feature){
+    switch(feature){
+      case neuron_group_feature_softmax: return true;
+      case neuron_group_feature_disentanglement: return false;
+      case neuron_group_feature_dropout_regularization: return true;
+      case neuron_group_feature_l1_regularization: return false;
+      case neuron_group_feature_l2_regularization: return false;
+      default: return false;
+    }
+  }
 
   /**
    * @brief      Determines whether the given feature is relevant to the error / fitness value of the neural network
    *
    * @param[in]  feature  The feature to be considered
    */
-  static bool is_feature_relevant_to_performance(Neuron_group_features feature); /* as in fitness / error */
+  static constexpr bool is_feature_relevant_to_performance(Neuron_group_features feature){
+    switch(feature){
+      case neuron_group_feature_softmax: return false;
+      case neuron_group_feature_disentanglement: return true;
+      case neuron_group_feature_dropout_regularization: return false;
+      case neuron_group_feature_l1_regularization: return true;
+      case neuron_group_feature_l2_regularization: return true;
+      default: return false;
+    }
+  }
 
   /**
    * @brief      Determines whether the given feature is relevant to the training of the neural network
    *
    * @param[in]  feature  The feature to be considered
    */
-  static bool is_feature_relevant_to_training(Neuron_group_features feature);
+  static constexpr bool is_feature_relevant_to_training(Neuron_group_features feature){
+    switch(feature){
+      case neuron_group_feature_softmax: return false;
+      case neuron_group_feature_disentanglement: return false;
+      case neuron_group_feature_dropout_regularization: return true;
+      case neuron_group_feature_l1_regularization: return true;
+      case neuron_group_feature_l2_regularization: return true;
+      default: return false;
+    }
+  }
 };
 
 } /* namespace rafko_net */

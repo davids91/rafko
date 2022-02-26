@@ -17,8 +17,6 @@
 
 #include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
 
-#include  <iostream>
-
 namespace rafko_mainframe{
 
 bool RafkoGPUStrategyPhase::isValid(){

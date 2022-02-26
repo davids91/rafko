@@ -36,8 +36,8 @@ namespace rafko_mainframe{
 class TrainingLogger{
 public:
   TrainingLogger(std::string id_, RafkoSettings& settings)
-  :  id(id_)
-  ,  settings(settings)
+  : id(id_)
+  , settings(settings)
   { }
 
   void log(uint32 iteration, const std::vector<uint32>& coordinates, const std::vector<std::string>& tags, const std::vector<sdouble32>& data);

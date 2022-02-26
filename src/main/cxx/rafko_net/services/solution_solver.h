@@ -53,7 +53,7 @@ public:
    *
    * @return    A const reference of the exposed feature executor
    */
-  const RafkoNetworkFeature& expose_executor(){
+  constexpr const RafkoNetworkFeature& expose_executor(){
     return feature_executor;
   }
 

@@ -32,7 +32,7 @@
 
 namespace rafko_net {
 
-class PartialSolutionSolver{
+class RAFKO_FULL_EXPORT PartialSolutionSolver{
 
 public:
   PartialSolutionSolver(const PartialSolution& partial_solution, const rafko_mainframe::RafkoSettings& settings)
@@ -106,7 +106,7 @@ public:
    *
    * @return     const reference to the encapsulated @PartialSolution
    */
-  const PartialSolution& get_partial() const{
+  constexpr const PartialSolution& get_partial() const{
     return detail;
   }
 

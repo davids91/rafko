@@ -21,21 +21,21 @@
 #include "rafko_global.h"
 
 #include <vector>
-#include <cassert>
+#include <assert.h>
 
 namespace rafko_utilities{
 
 template <typename Iterator = std::vector<sdouble32>::const_iterator>
-class ConstVectorSubrange{
+class RAFKO_FULL_EXPORT ConstVectorSubrange{
 public:
   using T = typename Iterator::value_type;
 
-  ConstVectorSubrange(Iterator start_, std::size_t size_)
+  constexpr ConstVectorSubrange(Iterator start_, std::size_t size_)
   : start(start_)
   , range_size(size_)
   { }
 
-  ConstVectorSubrange(Iterator begin_, Iterator end_)
+  constexpr ConstVectorSubrange(Iterator begin_, Iterator end_)
   : start(begin_)
   , range_size(std::distance(start, end_))
   { }
@@ -44,19 +44,19 @@ public:
     assert(index < range_size);
     return *std::next(start, index);
   }
-  const T& front() const{
+  constexpr const T& front() const{
     return *begin();
   }
-  const T& back() const{
+  constexpr const T& back() const{
     return *std::next(end(), -1);
   }
-  std::size_t size() const{
+  constexpr std::size_t size() const{
     return range_size;
   }
-  Iterator begin() const{
+  constexpr Iterator begin() const{
     return start;
   }
-  Iterator end() const{
+  constexpr Iterator end() const{
     return std::next(start, range_size);
   }
 

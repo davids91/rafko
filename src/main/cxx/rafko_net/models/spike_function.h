@@ -31,7 +31,7 @@ namespace rafko_net{
 /**
  * @brief      Spike function handling and utilities
  */
-class SpikeFunction{
+class RAFKO_FULL_EXPORT SpikeFunction{
 public:
   /**
    * @brief      Apply the given spike function to a neurons activation data
@@ -39,7 +39,7 @@ public:
    * @param[in]  parameter The parameter supplied by a Neuron
    * @param[in]  data      The data to apply it to
    */
-  static sdouble32 get_value(sdouble32 parameter, sdouble32 new_data, sdouble32 previous_data){
+  static constexpr sdouble32 get_value(sdouble32 parameter, sdouble32 new_data, sdouble32 previous_data){
     return (previous_data * parameter) + (new_data * (double_literal(1.0)-parameter));
   }
 
@@ -51,7 +51,7 @@ public:
    *
    * @return     The derivative from data.
    */
-  static sdouble32 get_derivative(sdouble32 parameter, sdouble32 transfer_function_output, sdouble32 previous_value){
+  static constexpr sdouble32 get_derivative(sdouble32 parameter, sdouble32 transfer_function_output, sdouble32 previous_value){
     parameter_not_used(parameter);
     return (previous_value - transfer_function_output);
   }
@@ -61,7 +61,6 @@ public:
     return "(((" + previous_data + ") * " + parameter + ") + ((" + new_data +") * (1.0 - " + parameter + ")))";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
-
 
 };
 } /* namespace rafko_net */

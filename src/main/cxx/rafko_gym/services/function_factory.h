@@ -32,7 +32,7 @@
 
 namespace rafko_gym{
 
-class FunctionFactory{
+class RAFKO_FULL_EXPORT FunctionFactory{
 public:
 
   /**
@@ -44,16 +44,12 @@ public:
    *
    * @return     The cost function.
    */
-  static std::unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, rafko_mainframe::RafkoSettings& settings){
+  static std::unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, const rafko_mainframe::RafkoSettings& settings){
     switch(the_function){
-      case cost_function_mse:
-        return std::make_unique<CostFunctionMSE>(settings);
-        case cost_function_squared_error:
-          return std::make_unique<CostFunctionSquaredError>(settings);
-        case cost_function_cross_entropy:
-          return std::make_unique<CostFunctionCrossEntropy>(settings);
-        case cost_function_binary_cross_entropy:
-          return std::make_unique<CostFunctionBinaryCrossEntropy>(settings);
+      case cost_function_mse:                     return std::make_unique<CostFunctionMSE>(settings);
+        case cost_function_squared_error:         return std::make_unique<CostFunctionSquaredError>(settings);
+        case cost_function_cross_entropy:         return std::make_unique<CostFunctionCrossEntropy>(settings);
+        case cost_function_binary_cross_entropy:  return std::make_unique<CostFunctionBinaryCrossEntropy>(settings);
       default: throw std::runtime_error("Unknown cost function requested from builder!");
     }
   }

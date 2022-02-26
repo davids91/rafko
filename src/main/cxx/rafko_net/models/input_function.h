@@ -46,18 +46,30 @@ public:
    *
    * @return     The result of data.
    */
-  static sdouble32 collect(Input_functions function, sdouble32 a, sdouble32 b);
+  static constexpr sdouble32 collect(Input_functions function, sdouble32 a, sdouble32 b){
+    switch(function){
+      case input_function_add: return a + b;
+      case input_function_multiply: return a * b;
+      default: throw std::runtime_error("Unidentified Input function called!");
+    };
+  }
 
   #if(RAFKO_USES_OPENCL)
   /**
    * @brief     Generates GPU kernel function code for the provided parameters
    *
    * @param[in]   function    The Input function to base the generated kernel code on
-   * @param[in]   element     A value to be merged through the input function
+   * @param[in]   input       A value to be merged through the input function
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  static std::string get_kernel_function_for(Input_functions function, std::string element);
+  static std::string get_kernel_function_for(Input_functions function, std::string input){
+    switch(function){
+      case input_function_add: return "+ (" + input + ")";
+      case input_function_multiply: return  "* (" + input + ")";
+      default: throw std::runtime_error("Unidentified Input function called!");
+    };
+  }
   #endif/*(RAFKO_USES_OPENCL)*/
 };
 

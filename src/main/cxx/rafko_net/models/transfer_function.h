@@ -35,7 +35,7 @@ namespace rafko_net{
  */
 class TransferFunction{
 public:
-  TransferFunction(const rafko_mainframe::RafkoSettings& settings)
+  constexpr TransferFunction(const rafko_mainframe::RafkoSettings& settings)
   : settings(settings)
   { }
 
@@ -44,7 +44,16 @@ public:
    *
    * @return     A random Transfer Function
    */
-  static Transfer_functions next();
+  static Transfer_functions next(){
+    return next({
+      transfer_function_identity,
+      transfer_function_sigmoid,
+      transfer_function_tanh,
+      transfer_function_elu,
+      transfer_function_selu,
+      transfer_function_relu
+    });
+  }
 
   /**
    * @brief      Provides a random Transfer function out of the ones in the argument
@@ -62,7 +71,19 @@ public:
    *
    * @return     The average output range.
    */
-  static sdouble32 get_average_output_range(Transfer_functions function);
+  static constexpr sdouble32 get_average_output_range(Transfer_functions function){
+    switch(function){
+    case transfer_function_sigmoid:
+    case transfer_function_tanh:
+      return double_literal(1.0);
+    case transfer_function_elu:
+    case transfer_function_relu:
+    case transfer_function_selu:
+    case transfer_function_identity:
+    default:
+      return double_literal(50.0); /* The averagest number there is */
+    }
+  }
 
   /**
    * @brief      Apply the given transfer function to the given data

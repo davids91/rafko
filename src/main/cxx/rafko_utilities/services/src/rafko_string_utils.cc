@@ -19,9 +19,7 @@
 
 namespace rafko_utilities {
 
-std::string replace_all_in_string(
-  std::string input_text, std::regex regex_to_replace, std::string substitute
-){
+std::string replace_all_in_string(std::string input_text, std::regex regex_to_replace, std::string substitute){
   uint32 matches_count = 1u; /* to start the iteration */
   std::string text = input_text;
   while(0u < matches_count){

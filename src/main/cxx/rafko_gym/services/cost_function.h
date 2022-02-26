@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef COST_FUNCTION_H
-#define COST_FUNCTION_H
+#ifndef RAFKO_COST_FUNCTION_H
+#define RAFKO_COST_FUNCTION_H
 
 #include "rafko_global.h"
 
@@ -49,7 +49,7 @@ class RAFKO_FULL_EXPORT CostFunction
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
-  CostFunction(Cost_functions the_function_, rafko_mainframe::RafkoSettings& settings)
+  CostFunction(Cost_functions the_function_, const rafko_mainframe::RafkoSettings& settings)
   : settings(settings)
   , the_function(the_function_)
   , execution_threads(settings.get_sqrt_of_solve_threads())
@@ -70,7 +70,10 @@ public:
    *
    * @return     The feature error.
    */
-  sdouble32 get_feature_error(const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data, uint32 sample_number){
+  sdouble32 get_feature_error(
+    const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data,
+    uint32 sample_number
+  ) const{
     return get_feature_error(label, neuron_data, settings.get_sqrt_of_solve_threads(), 0, sample_number);
   }
 
@@ -85,7 +88,10 @@ public:
    *
    * @return     The overall error produced by the given label-data pair.
    */
-  sdouble32 get_feature_error(const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data, uint32 max_threads, uint32 outer_thread_index, uint32 sample_number);
+  sdouble32 get_feature_error(
+    const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data,
+    uint32 max_threads, uint32 outer_thread_index, uint32 sample_number
+  ) const;
 
   /**
    * @brief      Gets the error produced by the sequences of the given label-data pair
@@ -102,29 +108,14 @@ public:
   void get_feature_errors(
     const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
     uint32 label_start, uint32 error_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
-  );
-
-  /**
-   * @brief      Gets the the Cost function function derivative for a feature compared to a selected label set
-   *
-   * @param      feature_index  feature to examine
-   * @param[in]  label_value    The value of the datapoint to compare
-   * @param[in]  feature_value  The value to compare to label_value
-   *
-   * @return     The gradient of the cost function in regards to its input
-   */
-  sdouble32 get_d_cost_over_d_feature(uint32 feature_index, const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data, uint32 sample_number) const{
-    return error_post_process(get_d_cost_over_d_feature(
-      label[feature_index], neuron_data[feature_index], sample_number
-    ), sample_number);
-  }
+  ) const;
 
   /**
    * @brief      Gets the type of the implemented cost function.
    *
    * @return     The type.
    */
-  Cost_functions get_type(){
+  constexpr Cost_functions get_type() const{
     return the_function;
   }
 
@@ -132,38 +123,32 @@ public:
 
   #if(RAFKO_USES_OPENCL)
 
-  void set_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_){
+  constexpr void set_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_){
     pairs_to_evaluate = pairs_to_evaluate_;
     feature_size = feature_size_;
   }
 
+  /**
+   * @brief   Provides the GPU kernel sources that implement the cost function
+   *
+   * @return    A vector of sources implementing the cost function in the GPU as Kernels
+   */
   virtual std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const = 0;
   virtual std::string get_post_process_kernel_source(std::string error_value) const = 0;
 
-  cl::Program::Sources get_step_sources()const;
-  std::vector<std::string> get_step_names()const;
-
-  /**
-   * @brief      Provides the input dimension of the cost function: a configured number of feature-label pairs to evaluate
-   *
-   * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
-   */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes()const  {
+  /* +++ FUnctions taken from */
+  cl::Program::Sources get_step_sources() const;
+  std::vector<std::string> get_step_names() const;
+  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
     return { rafko_mainframe::RafkoNBufShape{ /* inputs and labels */
       pairs_to_evaluate * feature_size,
       pairs_to_evaluate * feature_size
     } };
   }
-
-  /**
-   * @brief      Provides the output dimension of the cost function: one error value for every number of pairs to evaluate
-   *
-   * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
-   */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes()const  {
+  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
     return { rafko_mainframe::RafkoNBufShape{ 1u } };
   }
-  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space()  {
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
     return std::make_tuple(cl::NullRange,cl::NDRange(pairs_to_evaluate),cl::NullRange);
   }
 
@@ -171,9 +156,9 @@ public:
 
 
 protected:
-  rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& settings;
   std::vector<std::thread> process_threads;
-  std::vector<std::vector<std::future<sdouble32>>> thread_results;
+  mutable std::vector<std::vector<std::future<sdouble32>>> thread_results;
 
   /**
    * @brief      The post-processing function to be provided by the implementer
@@ -196,17 +181,6 @@ protected:
   virtual sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
 
   /**
-   * @brief      The derivative function to be provided by the implementer
-   *
-   * @param[in]  label_value    The label value
-   * @param[in]  feature_value  The data to comapre to the label value
-   * @param[in]  sample_number  The number of overall samples to be used in the relevant dataset
-   *
-   * @return     The derivative of the elements of the label-data pair
-   */
-  virtual sdouble32 get_d_cost_over_d_feature(sdouble32 label_value, sdouble32 feature_value, uint32 sample_number) const = 0;
-
-  /**
    * @brief      Summarizes the errors given back by @get_cell_error for all of the features. It's called
    *             by @get_feature_error, which divides the features to almost equal parts,
    *             and calls this function on them.
@@ -221,7 +195,7 @@ protected:
   sdouble32 summarize_errors(
     const std::vector<sdouble32>& labels, const std::vector<sdouble32>& neuron_data,
     uint32 feature_start_index, uint32 number_to_eval
-  );
+  ) const;
 private:
   Cost_functions the_function; /* cost function type */
   rafko_utilities::ThreadGroup execution_threads;
@@ -249,8 +223,8 @@ private:
     const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
     uint32 label_start, uint32 error_start, uint32 neuron_data_start_index,
     uint32 labels_to_evaluate_in_one_thread, uint32 labels_evaluating_overall, uint32 sample_number, uint32 thread_index
-  );
+  ) const;
 };
 
 } /* namespace rafko_gym */
-#endif /* COST_FUNCTION_H */
+#endif /* RAFKO_COST_FUNCTION_H */

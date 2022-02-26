@@ -31,8 +31,6 @@ if(MAKE_TESTS)
       ${GPU_TEST_SOURCES}
       rafko_gym/src/rafko_dataset_cost_test.cc
       rafko_gym/src/rafko_dataset_wrapper_test.cc
-      rafko_gym/src/backprop_queue_wrapper_test.cc
-      rafko_gym/src/weight_experience_space_test.cc
       rafko_gym/src/cost_function_mse_test.cc
       rafko_gym/src/cost_function_cross_entropy_test.cc
       rafko_gym/src/cost_function_binary_cross_entropy_test.cc

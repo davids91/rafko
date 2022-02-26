@@ -18,7 +18,15 @@
 #ifndef DENSE_NET_WEIGHT_INITIALIZER_H
 #define DENSE_NET_WEIGHT_INITIALIZER_H
 
+#include <time.h>
+
+#include <math.h>
+#include <cstdlib>
+#include <algorithm>
+
 #include "rafko_net/models/weight_initializer.h"
+#include "rafko_net/models/transfer_function.h"
+
 
 namespace rafko_net {
 
@@ -35,31 +43,50 @@ public:
    *             To srand with time(nullptr), the constructor needs to be called with
    *             a true boolean argument or given a seed value.
    */
-  DenseNetWeightInitializer(bool seed, rafko_mainframe::RafkoSettings& settings)
+  constexpr DenseNetWeightInitializer(bool to_seed, const rafko_mainframe::RafkoSettings& settings)
   :  WeightInitializer(settings)
-  { if(seed)srand(static_cast<uint32>(time(nullptr))); }
+  {
+    if(to_seed)srand(static_cast<uint32>(time(nullptr)));
+  }
 
-  DenseNetWeightInitializer(
-    rafko_mainframe::RafkoSettings& settings, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
+  constexpr  DenseNetWeightInitializer(
+    const rafko_mainframe::RafkoSettings& settings, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
   ): WeightInitializer(settings)
   {
     memMin = std::max(double_literal(0.0), std::min(double_literal(1.0), memRatioMin));
     memMax = std::min(double_literal(1.0), std::max(memMin,memRatioMax));
   }
 
-  DenseNetWeightInitializer(
-    uint32 seed, rafko_mainframe::RafkoSettings& settings,
+  constexpr DenseNetWeightInitializer(
+    uint32 seed, const rafko_mainframe::RafkoSettings& settings,
     sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0)
   ): DenseNetWeightInitializer(settings, memRatioMin, memRatioMax)
-  { srand(seed); }
+  {
+    srand(seed);
+  }
 
   /**
    * @brief      Configuration functions
    */
-  void set(uint32 expected_input_number, sdouble32 expected_input_maximum_value_);
-  sdouble32 next_weight_for(Transfer_functions used_transfer_function) const;
-  sdouble32 next_memory_filter() const;
-  sdouble32 next_bias() const;
+  constexpr void set(uint32 expected_input_number, sdouble32 expected_input_maximum_value_);
+  sdouble32 next_weight_for(Transfer_functions used_transfer_function) const{
+    return ((rand()%2 == 0)?-double_literal(1.0):double_literal(1.0)) * limit_weight(
+      (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
+    );
+  }
+
+  constexpr sdouble32 next_memory_filter() const{
+    if(memMin <  memMax){
+      sdouble32 diff = memMax - memMin;
+      return (double_literal(0.0) == diff)?0:(
+         memMin + (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/diff)))
+      );
+    } else return memMin;
+  }
+
+  constexpr sdouble32 next_bias() const{
+    return double_literal(0.0);
+  }
 
 private:
   sdouble32 memMin = double_literal(0.0);
@@ -74,8 +101,20 @@ private:
    *
    * @return     Expected weight amplitude
    */
-  sdouble32 get_weight_amplitude(Transfer_functions used_transfer_function) const;
-
+  sdouble32 get_weight_amplitude(Transfer_functions used_transfer_function) const{
+    sdouble32 amplitude;
+    switch(used_transfer_function){
+    case transfer_function_elu:
+    case transfer_function_relu:
+    case transfer_function_selu:
+      amplitude = (sqrt(2 / (expected_input_number))); /* Kaiming initialization */
+      break;
+    default:
+      amplitude = (sqrt(2 / (expected_input_number * expected_input_maximum_value)));
+      break;
+    }
+    return std::max(settings.get_epsilon(),amplitude);
+  }
 };
 
 } /* namespace rafko_net */

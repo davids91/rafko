@@ -24,8 +24,6 @@ set(GYM_HEADER_SERVICES
   services/rafko_net_approximizer.h
   services/updater_factory.h
   services/rafko_weight_updater.h
-  services/backpropagation_queue_wrapper.h
-  services/weight_experience_space.h
 )
 target_sources(rafko_gym
   INTERFACE ${GYM_INTERFACE_SERVICES}
@@ -33,11 +31,11 @@ target_sources(rafko_gym
   PRIVATE
   models/src/rafko_cost.cc
   models/src/rafko_dataset_wrapper.cc
-  services/src/backpropagation_queue_wrapper.cc
   services/src/cost_function.cc
   services/src/rafko_net_approximizer.cc
   services/src/rafko_weight_updater.cc
-  services/src/weight_experience_space.cc
+  services/src/weight_updater_adam.cc
+  services/src/weight_updater_amsgrad.cc
 )
 
 install(

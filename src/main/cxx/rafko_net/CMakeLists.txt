@@ -25,7 +25,6 @@ target_sources(rafko_net
   INTERFACE ${NET_INTERFACE_SERVICES}
   PUBLIC ${NET_HEADER_SERVICES} ${NET_HEADER_MODELS}
   PRIVATE
-  models/src/dense_net_weight_initializer.cc
   models/src/neuron_info.cc
   models/src/transfer_function.cc
   models/src/input_function.cc

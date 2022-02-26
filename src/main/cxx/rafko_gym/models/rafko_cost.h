@@ -57,33 +57,36 @@ public:
   , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   { }
 
-  sdouble32 set_feature_for_label(const rafko_gym::RafkoEnvironment& environment, uint32 sample_index, const std::vector<sdouble32>& neuron_data);
+  sdouble32 set_feature_for_label(
+    const rafko_gym::RafkoEnvironment& environment, uint32 sample_index,
+    const std::vector<sdouble32>& neuron_data
+  ) const;
 
   sdouble32 set_features_for_labels(
     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
-  );
+  ) const;
 
   sdouble32 set_features_for_sequences(
     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
-  );
+  ) const;
   sdouble32 set_features_for_sequences(
     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation, std::vector<sdouble32>& tmp_data
-  );
+  ) const;
 
   #if(RAFKO_USES_OPENCL)
   void set_gpu_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_){
     cost_function->set_parameters(pairs_to_evaluate_, feature_size_);
     pairs_to_evaluate = pairs_to_evaluate_;
   }
-  cl::Program::Sources get_step_sources()const {
+  cl::Program::Sources get_step_sources() const{
     return cost_function->get_step_sources();
   }
-  std::vector<std::string> get_step_names()const {
+  std::vector<std::string> get_step_names() const{
     return cost_function->get_step_names();
   }
 
@@ -95,7 +98,7 @@ public:
    *
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes()const {
+  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
     return cost_function->get_input_shapes();
   }
 
@@ -107,11 +110,11 @@ public:
    *
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes()const  {
+  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
     return cost_function->get_output_shapes();
   }
 
-  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space()  {
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
     return cost_function->get_solution_space();
   }
   #endif/*(RAFKO_USES_OPENCL)*/
@@ -137,7 +140,7 @@ private:
    * @param          error_mutex    The mutex guarding the update of @target
    * @param[in]      thread_index   The index of the thread the function is called from
    */
-  void accumulate_error_sum(std::vector<sdouble32>& source, sdouble32& target, uint32 length, std::mutex& error_mutex, uint32 thread_index);
+  void accumulate_error_sum(std::vector<sdouble32>& source, sdouble32& target, uint32 length, std::mutex& error_mutex, uint32 thread_index) const;
 
 };
 

@@ -25,6 +25,7 @@
 #include <stdexcept>
 #include <utility>
 #include <tuple>
+#include <set>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/models/transfer_function.h"
@@ -41,7 +42,7 @@ namespace rafko_net {
  */
 class RAFKO_FULL_EXPORT RafkoNetBuilder{
 public:
-  RafkoNetBuilder(rafko_mainframe::RafkoSettings& settings_)
+  RafkoNetBuilder(const rafko_mainframe::RafkoSettings& settings_)
   :  settings(settings_)
   { }
 
@@ -52,7 +53,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& input_size(uint32 size){
+  constexpr RafkoNetBuilder& input_size(uint32 size){
     arg_input_size = size;
     is_input_size_set = true;
     return *this;
@@ -65,7 +66,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& output_neuron_number(uint32 size){
+  constexpr RafkoNetBuilder& output_neuron_number(uint32 size){
     arg_output_neuron_number = size;
     is_output_neuron_number_set = true;
     return *this;
@@ -78,7 +79,7 @@ public:
    *
    * @return
    */
-  RafkoNetBuilder& expected_input_range(sdouble32 range){
+  constexpr RafkoNetBuilder& expected_input_range(sdouble32 range){
     arg_expected_input_range = range;
     is_expected_input_range_set = true;
     return *this;
@@ -149,7 +150,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& set_recurrence_to_self(){
+  constexpr RafkoNetBuilder& set_recurrence_to_self(){
     recurrence = network_recurrence_to_self;
     return *this;
   }
@@ -160,7 +161,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& set_recurrence_to_layer(){
+  constexpr RafkoNetBuilder& set_recurrence_to_layer(){
     recurrence = network_recurrence_to_layer;
     return *this;
   }
@@ -225,7 +226,7 @@ public:
   RafkoNet* build();
 
 private:
-  rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& settings;
 
   /**
    * @brief   Helper variables to see if different required arguments are set inside the builder

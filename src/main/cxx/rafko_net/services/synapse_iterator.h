@@ -53,28 +53,28 @@ namespace rafko_net{
  *             syn_iter.iterate([&](int synapse_start){},[&](int index){});
  */
 template<typename Interval_type = IndexSynapseInterval>
-class SynapseIterator{
+class RAFKO_FULL_EXPORT SynapseIterator{
 public:
-   SynapseIterator(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval)
+   constexpr SynapseIterator(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval)
   :  synapse_interval(arg_synapse_interval)
   { };
 
-  void iterate(std::function< void(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void iterate(std::function< void(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
     iterate(synapse_interval, do_for_each_index, interval_start, interval_size_);
   }
-  void iterate(std::function< void(Interval_type) > do_for_each_synapse, std::function< void(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void iterate(std::function< void(Interval_type) > do_for_each_synapse, std::function< void(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
     iterate(synapse_interval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
   }
-  void iterate_terminatable(std::function< bool(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void iterate_terminatable(std::function< bool(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
     iterate_terminatable(synapse_interval, do_for_each_index, interval_start, interval_size_);
   }
-  void iterate_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, std::function< bool(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void iterate_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, std::function< bool(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
     iterate_terminatable(synapse_interval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
   }
-  void skim(std::function< void(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void skim(std::function< void(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
     skim(synapse_interval, do_for_each_synapse, interval_start, interval_size_);
   }
-  void skim_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void skim_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
     skim_terminatable(synapse_interval, do_for_each_synapse, interval_start, interval_size_);
   }
 
@@ -380,7 +380,7 @@ public:
    *
    * @return     True if the specified index is index input, False otherwise.
    */
-  static bool is_index_input(sint32 index){
+  static constexpr bool is_index_input(sint32 index){
     return(0 > index);
   }
 
@@ -392,7 +392,7 @@ public:
    *
    * @return     True if the specified interval is pointing to network input, False otherwise.
    */
-  static bool is_synapse_input(const Interval_type& interval){
+  static constexpr bool is_synapse_input(const Interval_type& interval){
     return(is_index_input(interval.starts()));
   }
 
@@ -403,7 +403,7 @@ public:
    *
    * @return     Index in the input array based on the synapse input index
    */
-  static sint32 synapse_index_from_input_index(uint32 index){
+  static constexpr sint32 synapse_index_from_input_index(uint32 index){
     return (static_cast<sint32>(index) * (-1) - 1);
   }
 
@@ -414,7 +414,7 @@ public:
    *
    * @return     Synapse index
    */
-  static uint32 input_index_from_synapse_index(sint32 index){
+  static constexpr uint32 input_index_from_synapse_index(sint32 index){
     if(0 > index) return (static_cast<uint32>(index) * (-1) - 1);
       else throw std::runtime_error("Synapse index is not negative, as it should be, when queried for input index! ");
   }
@@ -435,7 +435,7 @@ private:
    * @param[in]  interval_size_        The interval size
    *
    */
-  static uint32 get_number_of_synapses_to_iterate(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval, uint32 interval_start, uint32 interval_size_){
+  static constexpr uint32 get_number_of_synapses_to_iterate(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval, uint32 interval_start, uint32 interval_size_){
     if(0 == arg_synapse_interval.size())
       return 0;
     else if( (0 == interval_size_)&&(arg_synapse_interval.size() > static_cast<sint32>(interval_start)) )

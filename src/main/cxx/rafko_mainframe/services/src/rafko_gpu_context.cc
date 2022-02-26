@@ -25,38 +25,8 @@
 
 namespace rafko_mainframe{
 
-RafkoGPUContext::Builder::Builder(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_)
-: settings(settings_)
-, network(neural_network_)
-{
-  cl::Platform::get(&platforms);
-  assert( 0 < platforms.size() );
-}
-
-RafkoGPUContext::Builder& RafkoGPUContext::Builder::select_platform(uint32 platform_index){
-  assert( platform_index < platforms.size() );
-  selected_platform = platform_index;
-  return *this;
-}
-
-RafkoGPUContext::Builder& RafkoGPUContext::Builder::select_device(cl_device_type type, uint32 device_index){
-  platforms[selected_platform].getDevices(type, &devices);
-  assert( device_index < devices.size() );
-  selected_device = device_index;
-  return *this;
-}
-
-std::unique_ptr<RafkoGPUContext> RafkoGPUContext::Builder::build(){
-  assert( 0 < platforms.size() );
-  assert( 0 < devices.size() );
-  cl::Context context({devices[selected_device]});
-  return std::unique_ptr<RafkoGPUContext>( new RafkoGPUContext(
-    context, devices[selected_device], std::move(settings), network
-  ) );
-}
-
 RafkoGPUContext::RafkoGPUContext(
-  cl::Context& context_, cl::Device& device_,
+  cl::Context&& context_, cl::Device&& device_,
   rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet& neural_network_
 ):settings(settings_)
 , network(neural_network_)

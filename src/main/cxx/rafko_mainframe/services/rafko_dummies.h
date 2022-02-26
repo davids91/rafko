@@ -39,7 +39,10 @@ namespace rafko_mainframe{
 class RafkoDummyObjective : public rafko_gym::RafkoObjective{
 public:
   ~RafkoDummyObjective() = default;
-  sdouble32 set_feature_for_label(const rafko_gym::RafkoEnvironment& dataset, uint32 sample_index, const std::vector<sdouble32>& neuron_data){
+  sdouble32 set_feature_for_label(
+    const rafko_gym::RafkoEnvironment& dataset, uint32 sample_index,
+    const std::vector<sdouble32>& neuron_data
+  ) const{
     parameter_not_used(dataset);
     parameter_not_used(sample_index);
     parameter_not_used(neuron_data);
@@ -48,7 +51,7 @@ public:
   sdouble32 set_features_for_labels(
      const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
-  ){
+  ) const{
     parameter_not_used(dataset);
     parameter_not_used(neuron_data);
     parameter_not_used(neuron_buffer_index);
@@ -61,7 +64,7 @@ public:
     const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
-  ){
+  ) const{
     parameter_not_used(dataset);
     parameter_not_used(neuron_data);
     parameter_not_used(neuron_buffer_index);
@@ -76,7 +79,7 @@ public:
     uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation,
     std::vector<sdouble32>& tmp_data
-  ){
+  ) const{
     parameter_not_used(dataset);
     parameter_not_used(neuron_data);
     parameter_not_used(neuron_buffer_index);
@@ -113,7 +116,7 @@ public:
   std::vector<RafkoNBufShape> get_output_shapes() const{
     return {RafkoNBufShape{1}};
   }
-  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space(){
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
     return std::make_tuple(cl::NullRange,cl::NullRange,cl::NullRange);
   }
   #endif/*(RAFKO_USES_OPENCL)*/
@@ -184,7 +187,7 @@ public:
   std::vector<RafkoNBufShape> get_output_shapes() const{
     return {output_shape};
   }
-  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space(){
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
     return std::make_tuple(cl::NullRange,cl::NullRange,cl::NullRange);
   }
   ~RafkoDummyGPUStrategyPhase() = default;

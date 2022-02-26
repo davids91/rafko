@@ -30,57 +30,37 @@ namespace rafko_mainframe{
 
 class RAFKO_FULL_EXPORT RafkoSettings{
 public:
-  uint16 get_max_solve_threads() const{
+  constexpr uint16 get_max_solve_threads() const{
     return max_solve_threads;
   }
 
-  uint16 get_sqrt_of_solve_threads() const{
+  constexpr uint16 get_sqrt_of_solve_threads() const{
     return sqrt_of_solve_threads;
   }
 
-  uint16 get_max_processing_threads() const{
+  constexpr uint16 get_max_processing_threads() const{
     return max_processing_threads;
   }
 
-  uint16 get_sqrt_of_process_threads() const{
+  constexpr uint16 get_sqrt_of_process_threads() const{
     return sqrt_of_process_threads;
   }
 
-  uint32 get_tolerance_loop_value() const{
+  constexpr uint32 get_tolerance_loop_value() const{
     return tolerance_loop_value;
   }
 
-  sdouble32 get_device_max_megabytes() const{
+  constexpr sdouble32 get_device_max_megabytes() const{
     return device_max_megabytes;
   }
 
-  google::protobuf::Arena* get_arena_ptr() const{
+  constexpr google::protobuf::Arena* get_arena_ptr() const{
     return arena_ptr;
   }
 
-  sdouble32 get_learning_rate(uint32 iteration = 0) const{
-    if((0 == learning_rate_with_decay.size())||(iteration < std::get<uint32>(learning_rate_with_decay[0])))
-      return hypers.learning_rate();
-    if(iteration >= std::get<uint32>(learning_rate_with_decay.back()))
-      return std::get<sdouble32>(learning_rate_with_decay.back());
-    uint32 decay_index = 0;
-    if(iteration >= learning_rate_decay_iteration_cache)
-      decay_index = learning_rate_decay_index_cache;
+  sdouble32 get_learning_rate(uint32 iteration = 0) const;
 
-    while(
-      (decay_index < (learning_rate_with_decay.size()-1u))
-      &&(iteration >= std::get<uint32>(learning_rate_with_decay[decay_index]))
-    )++decay_index;
-
-    --decay_index;
-
-    learning_rate_decay_iteration_cache = iteration;
-    learning_rate_decay_index_cache = decay_index;
-
-    return std::get<sdouble32>(learning_rate_with_decay[decay_index]);
-  }
-
-  sdouble32 get_dropout_probability() const{
+  constexpr sdouble32 get_dropout_probability() const{
     return droput_probability;
   }
 
@@ -120,7 +100,7 @@ public:
     return hypers.epsilon();
   }
 
-  sdouble32 get_sqrt_epsilon() const{
+  constexpr sdouble32 get_sqrt_epsilon() const{
     return sqrt_epsilon;
   }
 
@@ -159,16 +139,16 @@ public:
     return *this;
   }
 
-  void set_tolerance_loop_value(uint32 tolerance_loop_value_){
+  constexpr void set_tolerance_loop_value(uint32 tolerance_loop_value_){
     tolerance_loop_value = tolerance_loop_value_;
   }
 
-  RafkoSettings& set_device_max_megabytes(sdouble32 device_max_megabytes_){
+  constexpr RafkoSettings& set_device_max_megabytes(sdouble32 device_max_megabytes_){
     device_max_megabytes = device_max_megabytes_;
     return *this;
   }
 
-  RafkoSettings& set_arena_ptr(google::protobuf::Arena* arena_ptr_){
+  constexpr RafkoSettings& set_arena_ptr(google::protobuf::Arena* arena_ptr_){
     arena_ptr = arena_ptr_;
     return *this;
   }
@@ -243,7 +223,7 @@ public:
     return *this;
   }
 
-  RafkoSettings& set_droput_probability(sdouble32 droput_probability_){
+  constexpr RafkoSettings& set_droput_probability(sdouble32 droput_probability_){
     droput_probability = droput_probability_;
     return *this;
   }

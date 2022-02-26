@@ -44,9 +44,9 @@ public:
    * @return     the bytesize of a buffer of this shape with the given type T
    */
   template<typename T>
-  std::size_t get_byte_size(){
+  std::size_t get_byte_size() const{
     std::size_t byte_size = 0u;
-    for(std::size_t& dim : *this)
+    for(const std::size_t& dim : *this)
       byte_size += (sizeof(T) * dim);
     return byte_size;
   }
@@ -56,9 +56,9 @@ public:
    *
    * @return     the number of elements stored in a buffer of this shape
    */
-  std::size_t get_number_of_elements(){
+  std::size_t get_number_of_elements() const{
     std::size_t number = 0u;
-    for(std::size_t& dim : *this) number += dim;
+    for(const std::size_t& dim : *this) number += dim;
     return number;
   }
 
@@ -67,7 +67,7 @@ public:
    *
    * @return     the number of bytes required to store this shape
    */
-  std::size_t get_shape_buffer_byte_size(){
+  std::size_t get_shape_buffer_byte_size() const{
     return sizeof(cl_int) * size();
   }
 
@@ -76,7 +76,7 @@ public:
    *
    * @return     Allocated bytes representing the shape of the RafkoNDArray object
    */
-  std::unique_ptr<cl_int[]> acquire_shape_buffer(){
+  std::unique_ptr<cl_int[]> acquire_shape_buffer() const{
     std::unique_ptr<cl_int[]> shape_buffer(new cl_int[size()]);
     std::copy(begin(), end(), shape_buffer.get());
     return shape_buffer;

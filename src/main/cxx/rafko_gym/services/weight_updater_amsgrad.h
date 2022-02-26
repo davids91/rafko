@@ -32,26 +32,7 @@ public:
 
   ~RafkoWeightUpdaterAMSGrad() = default;
 
-  void iterate(const std::vector<sdouble32>& gradients){
-    sdouble32 raw_moment;
-    for(uint32 weight_index = 0; weight_index < moment.size(); ++weight_index){
-      moment[weight_index] = (
-        (settings.get_beta() * moment[weight_index])
-        + ( ((double_literal(1.0) - settings.get_beta()) * gradients[weight_index]) )
-      );
-      raw_moment = (
-        (settings.get_beta_2() * raw_moment_max[weight_index])
-        + (
-          ((double_literal(1.0) - settings.get_beta_2())
-          * std::pow(gradients[weight_index], double_literal(2.0)))
-        )
-      );
-      if(raw_moment > raw_moment_max[weight_index])
-        raw_moment_max[weight_index] = raw_moment;
-    }
-    RafkoWeightUpdater::iterate(gradients);
-    ++iteration_count;
-  }
+  void iterate(const std::vector<sdouble32>& gradients);
 
 private:
 
@@ -60,7 +41,11 @@ private:
    */
   sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients){
     parameter_not_used(gradients); /* the variable moment contains the processed value of the gradients, so no need to use it here again. */
-    return ( settings.get_learning_rate() * moment[weight_index] / ( std::sqrt(raw_moment_max[weight_index]) + settings.get_epsilon() ) );
+    return (
+      settings.get_learning_rate() * moment[weight_index] / (
+        std::sqrt(raw_moment_max[weight_index]) + settings.get_epsilon()
+      )
+    );
   }
 
   uint32 iteration_count = 0u;

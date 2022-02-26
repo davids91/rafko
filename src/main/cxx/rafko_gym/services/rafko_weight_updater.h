@@ -53,7 +53,7 @@ public:
   /**
    * @brief      The function to signal the weight updater that an iteration have started
    */
-  void start(){
+  constexpr void start(){
     iteration = 0;
     finished = false;
   }
@@ -70,7 +70,7 @@ public:
     update_weights_with_velocity();
     update_solution_with_weights();
     iteration = (iteration + 1) % required_iterations_for_step;
-    finished = (0 == iteration);
+    finished = (0u == iteration);
   }
 
   /**
@@ -95,7 +95,7 @@ public:
    *
    * @return     True if finished, False otherwise.
    */
-  bool is_finished() const{
+  constexpr bool is_finished() const{
     return finished;
   }
 

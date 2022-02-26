@@ -40,7 +40,7 @@ namespace rafko_net{
 /**
  * @brief      A base class for all RafkoNeuralNetwork related features
  */
-class RafkoNetworkFeature{
+class RAFKO_FULL_EXPORT RafkoNetworkFeature{
 public:
   RafkoNetworkFeature(std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_)
   : execution_threads(execution_threads_)

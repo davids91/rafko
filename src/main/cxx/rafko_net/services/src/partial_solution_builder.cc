@@ -118,6 +118,33 @@ std::pair<uint32,uint32> PartialSolutionBuilder::add_neuron_to_partial_solution(
   }else throw std::runtime_error("Neuron index is out of bounds from net neuron array!");
 }
 
+void PartialSolutionBuilder::add_to_synapse(sint32 index, uint32 reach_back, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals){
+  if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
+    ++current_synapse_count;
+    synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
+  }else{ /* Opening up a totally new Neuron Synapse */
+    InputSynapseInterval new_interval;
+    new_interval.set_starts(index);
+    new_interval.set_interval_size(1);
+    new_interval.set_reach_past_loops(reach_back);
+    *synapse_intervals->Add() = new_interval;
+    current_synapse_count = 1;
+  }
+}
+
+void PartialSolutionBuilder::add_to_synapse(sint32 index, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<IndexSynapseInterval>* synapse_intervals){
+  if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
+    ++current_synapse_count;
+    synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
+  }else{ /* Opening up a totally new Neuron Synapse */
+    IndexSynapseInterval new_interval;
+    new_interval.set_starts(index);
+    new_interval.set_interval_size(1);
+    *synapse_intervals->Add() = new_interval;
+    current_synapse_count = 1;
+  }
+}
+
 bool PartialSolutionBuilder::look_for_neuron_input(
   sint32 neuron_input_index, uint32 input_reach_back,
   SynapseIterator<InputSynapseInterval>& input_synapse, PartialSolution& partial

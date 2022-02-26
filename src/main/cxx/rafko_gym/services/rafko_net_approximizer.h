@@ -20,28 +20,19 @@
 
 #include "rafko_global.h"
 
-#include <math.h>
 #include <vector>
 #include <limits>
 
-#include "rafko_protocol/rafko_net.pb.h"
-
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_mainframe/services/rafko_context.h"
-#include "rafko_net/services/solution_builder.h"
-#include "rafko_net/services/solution_solver.h"
 
-#include "rafko_gym/services/updater_factory.h"
-#include "rafko_gym/services/rafko_weight_updater.h"
-#include "rafko_gym/models/rafko_agent.h"
-
-namespace RAFKO_FULL_EXPORT rafko_gym{
+namespace rafko_gym{
 
 /**
  * @brief      This class approximates gradients for a @Dataset and @RafkoNet.
  *             The approximated gradients are collected into one gradient fragment.
  */
-class RafkoNetApproximizer{
+class RAFKO_FULL_EXPORT RafkoNetApproximizer{
 public:
 
   /**
@@ -126,7 +117,7 @@ public:
    *
    * @return     Constant reference to the current weight gradients array
    */
-  const GradientFragment& get_weight_gradient() const{
+  constexpr const GradientFragment& get_weight_gradient() const{
     return gradient_fragment;
   }
 
@@ -142,7 +133,7 @@ public:
     error_estimation = -fitness;
   }
 
-  sdouble32 get_error_estimation(){
+  constexpr sdouble32 get_error_estimation() const{
     return error_estimation;
   }
 

@@ -29,10 +29,11 @@ namespace rafko_net{
  * @brief A container to keep track of different feature descriptors that need to be considered by the @NeuronRouter
  * to provide this information to whoever is using the collected subsets ( e.g.: @RafkoSolutionBuilder )
  */
-class FeatureGroupCache{
+class RAFKO_FULL_EXPORT FeatureGroupCache{
 private:
   const FeatureGroup& feature_in_network;
   const uint32 num_of_neurons_needed;
+  uint32 num_of_neurons_solved = 0u;
 public:
   const uint32 checksum;
 
@@ -42,13 +43,18 @@ public:
   , checksum(construct(host))
   { }
 
-  void neuron_triggered(){ ++num_of_neurons_solved; }
+  void constexpr neuron_triggered(){
+    ++num_of_neurons_solved;
+  }
 
-  bool solved() const{ return (num_of_neurons_needed <= num_of_neurons_solved); }
+  bool constexpr solved() const{
+     return (num_of_neurons_needed <= num_of_neurons_solved);
+  }
 
-  const FeatureGroup& get_host(){ return feature_in_network; }
+  constexpr const FeatureGroup& get_host() const{
+    return feature_in_network;
+  }
 private:
-  uint32 num_of_neurons_solved = 0u;
 
   /**
    * @brief      Calculate the checksum for the object and apply itself to every relevant neuron inside the cache

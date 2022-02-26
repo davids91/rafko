@@ -23,6 +23,7 @@ set(UTIL_INTERFACE_SERVICES
 target_sources(rafko_utilities
   PRIVATE
   services/src/rafko_string_utils.cc
+  services/src/thread_group.cc
 )
 
 install(

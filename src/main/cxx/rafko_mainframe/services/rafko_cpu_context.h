@@ -109,11 +109,11 @@ public:
     environment->pop_state();
   }
 
-  rafko_mainframe::RafkoSettings& expose_settings(){
+  constexpr rafko_mainframe::RafkoSettings& expose_settings(){
     return settings;
   }
 
-  const rafko_net::RafkoNet& expose_network(){
+  constexpr const rafko_net::RafkoNet& expose_network(){
     return network;
   }
   /* --- Methods taken from @RafkoContext --- */

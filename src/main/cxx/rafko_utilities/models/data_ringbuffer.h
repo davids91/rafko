@@ -23,8 +23,6 @@
 #include <vector>
 #include <stdexcept>
 
-#include "rafko_protocol/rafko_net.pb.h"
-
 namespace rafko_utilities{
 
 /**
@@ -92,7 +90,7 @@ public:
    *
    * @return     The non-modifyable raw buffer data
    */
-  const std::vector<std::vector<sdouble32>>& get_whole_buffer() const{
+  constexpr const std::vector<std::vector<sdouble32>>& get_whole_buffer() const{
     return data;
   }
 

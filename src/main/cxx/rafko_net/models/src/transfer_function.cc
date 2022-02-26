@@ -22,17 +22,6 @@
 
 namespace rafko_net {
 
-Transfer_functions TransferFunction::next(){
-  return next({
-    transfer_function_identity,
-    transfer_function_sigmoid,
-    transfer_function_tanh,
-    transfer_function_elu,
-    transfer_function_selu,
-    transfer_function_relu
-  });
-}
-
 Transfer_functions TransferFunction::next(std::set<Transfer_functions> range){
   assert( 0u < range.size() );
   if(1u == range.size()) return *range.begin();
@@ -42,20 +31,6 @@ Transfer_functions TransferFunction::next(std::set<Transfer_functions> range){
     candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
 
   return candidate;
-}
-
-sdouble32 TransferFunction::get_average_output_range(Transfer_functions function){
-  switch(function){
-  case transfer_function_sigmoid:
-  case transfer_function_tanh:
-    return double_literal(1.0);
-  case transfer_function_elu:
-  case transfer_function_relu:
-  case transfer_function_selu:
-  case transfer_function_identity:
-  default:
-    return double_literal(50.0); /* The averagest number there is */
-  }
 }
 
 sdouble32 TransferFunction::get_value(Transfer_functions function, sdouble32 data) const{

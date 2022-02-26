@@ -48,7 +48,10 @@ public:
    * @param[in]  neuron_data              The neuron data to evaluate
    * @return     The resulting error
    */
-  virtual sdouble32 set_feature_for_label(const rafko_gym::RafkoEnvironment& environment, uint32 sample_index, const std::vector<sdouble32>& neuron_data) = 0;
+  virtual sdouble32 set_feature_for_label(
+    const rafko_gym::RafkoEnvironment& environment, uint32 sample_index,
+    const std::vector<sdouble32>& neuron_data
+  ) const = 0;
 
   /**
    * @brief      Same as @set_feature_for_label but in bulk
@@ -63,7 +66,7 @@ public:
   virtual sdouble32 set_features_for_labels(
      const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
-  ) = 0;
+  )const = 0;
 
   /**
    * @brief      Provides the fitness value
@@ -81,7 +84,7 @@ public:
     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation
-  ) = 0;
+  )const = 0;
 
   /**
    * @brief      Same as @set_feature_for_label but in bulk
@@ -99,9 +102,14 @@ public:
     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
     uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
     uint32 start_index_in_sequence, uint32 sequence_truncation, std::vector<sdouble32>& tmp_data
-  ) = 0;
+  )const = 0;
 
   #if(RAFKO_USES_OPENCL)
+  /**
+   * @brief   Updates GPU relevant parameters deciding the size of the buffer and the global dimensions to solve the objective in
+   *
+   * @param[in]   pairs_to_evaluate_
+   */
   virtual void set_gpu_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_) = 0;
   #endif/*(RAFKO_USES_OPENCL)*/
 

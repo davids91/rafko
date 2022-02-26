@@ -28,7 +28,7 @@ namespace RAFKO_FULL_EXPORT rafko_gym{
  * @brief      A class representing an environment, producing fitness/error value. Error values are negative, while fittness
  *             values are positive
  */
-class RafkoEnvironment{
+class RAFKO_FULL_EXPORT RafkoEnvironment{
 public:
 
   /**
@@ -48,14 +48,14 @@ public:
    *
    * @return     The input sample.
    */
-  virtual const std::vector<sdouble32>& get_input_sample(uint32 raw_input_index)const = 0;
+  virtual const std::vector<sdouble32>& get_input_sample(uint32 raw_input_index) const = 0;
 
   /**
    * @brief      Gets an input sample from the set
    *
    * @return     A const reference of the input sample.
    */
-  virtual const std::vector<std::vector<sdouble32>>& get_input_samples()const = 0;
+  virtual const std::vector<std::vector<sdouble32>>& get_input_samples() const = 0;
 
   /**
    * @brief      Gets a label sample from the set
@@ -64,42 +64,42 @@ public:
    *
    * @return     The label sample.
    */
-  virtual const std::vector<sdouble32>& get_label_sample(uint32 raw_label_index)const = 0;
+  virtual const std::vector<sdouble32>& get_label_sample(uint32 raw_label_index) const = 0;
 
   /**
    * @brief      Gets a label sample from the set
    *
    * @return     A const reference of the label samples array
    */
-  virtual const std::vector<std::vector<sdouble32>>& get_label_samples()const = 0;
+  virtual const std::vector<std::vector<sdouble32>>& get_label_samples() const = 0;
 
   /**
    * @brief      Gets the number of floating point values the evaluation accepts to produce the label values
    *
    * @return     The feature size.
    */
-  virtual uint32 get_input_size()const = 0;
+  virtual uint32 get_input_size() const = 0;
 
   /**
    * @brief      Gets the number of values present in the output
    *
    * @return     The feature size.
    */
-  virtual uint32 get_feature_size()const = 0;
+  virtual uint32 get_feature_size() const = 0;
 
   /**
    * @brief      Gets the number of raw input arrays stored in the pbject
    *
    * @return     The number of input samples.
    */
-  virtual uint32 get_number_of_input_samples()const = 0;
+  virtual uint32 get_number_of_input_samples() const = 0;
 
   /**
    * @brief      The number of raw label arrays stored in the object
    *
    * @return     The number of labels.
    */
-  virtual uint32 get_number_of_label_samples()const = 0;
+  virtual uint32 get_number_of_label_samples() const = 0;
 
   /**
    * @brief      Gets the number of sequences stored in the object. One sequence contains
@@ -108,21 +108,21 @@ public:
    *
    * @return     The number of sequences.
    */
-  virtual uint32 get_number_of_sequences()const = 0;
+  virtual uint32 get_number_of_sequences() const = 0;
 
   /**
    * @brief      Gets the size of one sequence
    *
    * @return     Number of consecutive datapoints that count as one sample.
    */
-  virtual uint32 get_sequence_size()const = 0;
+  virtual uint32 get_sequence_size() const = 0;
 
   /**
    * @brief      Gets the number of inputs to be used as initializing the network during a training run
    *
    * @return     The number of inputs to be used for network initialization during training
    */
-  virtual uint32 get_prefill_inputs_number()const = 0;
+  virtual uint32 get_prefill_inputs_number() const = 0;
 
   virtual ~RafkoEnvironment() = default;
 };

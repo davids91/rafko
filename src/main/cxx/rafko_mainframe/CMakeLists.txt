@@ -29,6 +29,7 @@ set( MAINFRAME_HEADERS
 )
 set( MAINFRAME_SOURCES
   ${CONTEXT_SOURCES_OCL}
+  models/src/rafko_settings.cc
   services/src/rafko_cpu_context.cc
   services/src/training_logger.cc
 )

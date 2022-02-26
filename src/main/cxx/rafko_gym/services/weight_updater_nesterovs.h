@@ -20,6 +20,8 @@
 
 #include "rafko_gym/services/rafko_weight_updater.h"
 
+#include <vector>
+
 namespace rafko_gym{
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterNesterovs : public RafkoWeightUpdater{

@@ -32,7 +32,7 @@ public:
   /**
    * @brief      Constructs the object.
    */
-  WeightInitializer(rafko_mainframe::RafkoSettings& settings) noexcept
+  constexpr WeightInitializer(const rafko_mainframe::RafkoSettings& settings) noexcept
   : settings(settings)
   { };
 
@@ -92,7 +92,15 @@ public:
   virtual ~WeightInitializer() = default;
 
 protected:
-  rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& settings;
+  /**
+   * Number of estimated @Neuron inputs expected
+   */
+  uint32 expected_input_number = 0;
+  /**
+   * Estimated Maximum value of one @Neuron input
+   */
+  sdouble32 expected_input_maximum_value = std::numeric_limits<sdouble32>::epsilon();
 
   /**
    * @brief      Limits the given weight into the limits used in the Neural Network
@@ -101,19 +109,9 @@ protected:
    *
    * @return     Limited value
    */
-  sdouble32 limit_weight(sdouble32 weight) const{
+  constexpr sdouble32 limit_weight(sdouble32 weight) const{
     return std::min(double_literal(1.0),std::max(-double_literal(1.0),weight));
   }
-
-  /**
-   * Number of estimated @Neuron inputs expected
-   */
-  uint32 expected_input_number = 0;
-
-  /**
-   * Estimated Maximum value of one @Neuron input
-   */
-  sdouble32 expected_input_maximum_value = std::numeric_limits<sdouble32>::epsilon();
 };
 
 } /* namespace rafko_net */

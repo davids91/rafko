@@ -90,7 +90,7 @@ public:
     return input_samples[raw_input_index];
   }
 
-  const std::vector<std::vector<sdouble32>>& get_input_samples() const{
+  constexpr const std::vector<std::vector<sdouble32>>& get_input_samples() const{
     return input_samples;
   }
 
@@ -123,17 +123,17 @@ public:
     return (get_number_of_label_samples() / sequence_size);
   }
 
-  uint32 get_sequence_size() const{
+  constexpr uint32 get_sequence_size() const{
     return sequence_size;
   }
 
-  uint32 get_prefill_inputs_number() const{
+  constexpr uint32 get_prefill_inputs_number() const{
     return prefill_sequences;
   }
 
   /*!Note: There's no state to talk about with this specialization */
-  void push_state(){ }
-  void pop_state(){ }
+  constexpr void push_state(){ }
+  constexpr void pop_state(){ }
 
 private:
   const uint32 sequence_size;

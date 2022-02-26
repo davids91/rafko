@@ -56,7 +56,7 @@ public:
   	return buffer_pool.back();
   }
 
-  void release_buffer(std::vector<T>& buffer){
+  constexpr void release_buffer(std::vector<T>& buffer){
   	buffer.resize(0);
   }
 

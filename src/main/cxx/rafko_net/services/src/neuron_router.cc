@@ -275,7 +275,7 @@ bool NeuronRouter::is_neuron_without_dependency(uint32 neuron_index){
   }return true; /* Neuron is already processed, theoritically it shouldn't have any pending dependecies.. */
 }
 
-std::vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_index){
+std::vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_index) const{
   std::vector<uint32> result;
   if(0 < net_subset.size()){
     /* Find Neuron in subset */
@@ -372,10 +372,10 @@ bool NeuronRouter::is_neuron_subset_candidate(uint32 neuron_index, uint16 iterat
   );
 }
 
-bool NeuronRouter::are_neuron_feature_groups_finished_for(uint32 neuron_index){
+bool NeuronRouter::are_neuron_feature_groups_finished_for(uint32 neuron_index) const{
   assert(neuron_index < features_assigned_to_neurons.size());
   for(uint32 feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
-    FeatureGroupCache& feature = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
+    const FeatureGroupCache& feature = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
     if(
       ( NeuronInfo::is_feature_relevant_to_solution(feature.get_host().feature()) )
       &&(!feature.solved())

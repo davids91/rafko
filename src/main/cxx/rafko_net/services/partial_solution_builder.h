@@ -21,7 +21,6 @@
 #include "rafko_global.h"
 
 #include <utility>
-#include <functional>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
@@ -34,7 +33,7 @@ namespace rafko_net{
  * @brief      Front-end to create partial solution objects by adding Neurons into them.
  *             Weights of a Neuron consists of: {memory_ratio, w1..wn, bias1..biasn}
  */
-class PartialSolutionBuilder{
+class RAFKO_FULL_EXPORT PartialSolutionBuilder{
 public:
   /**
    * @brief      Looks for the given Neuron index in the @PartialSolution input,
@@ -57,19 +56,7 @@ private:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  static void add_to_synapse(sint32 index, uint32 reach_back, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals){
-    if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
-      ++current_synapse_count;
-      synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
-    }else{ /* Opening up a totally new Neuron Synapse */
-      InputSynapseInterval new_interval;
-      new_interval.set_starts(index);
-      new_interval.set_interval_size(1);
-      new_interval.set_reach_past_loops(reach_back);
-      *synapse_intervals->Add() = new_interval;
-      current_synapse_count = 1;
-    }
-  }
+  static void add_to_synapse(sint32 index, uint32 reach_back, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals);
 
   /**
    * @brief      Adds the given index to the given synapse
@@ -78,18 +65,7 @@ private:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  static void add_to_synapse(sint32 index, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<IndexSynapseInterval>* synapse_intervals){
-    if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
-      ++current_synapse_count;
-      synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
-    }else{ /* Opening up a totally new Neuron Synapse */
-      IndexSynapseInterval new_interval;
-      new_interval.set_starts(index);
-      new_interval.set_interval_size(1);
-      *synapse_intervals->Add() = new_interval;
-      current_synapse_count = 1;
-    }
-  }
+  static void add_to_synapse(sint32 index, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<IndexSynapseInterval>* synapse_intervals);
 
   /**
    * @brief      Looks for the given Neuron index in the @PartialSolution input,
