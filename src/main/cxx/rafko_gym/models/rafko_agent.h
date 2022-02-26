@@ -185,14 +185,17 @@ public:
    *             1 buffer: Neuron outputs for each evaluated sequence or network memory
    *
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
+   *             Agent output structure: {{ used bytes for execution, used bytes for performance feature error summary }}
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
-    return{ rafko_mainframe::RafkoNBufShape{
-      solution.neuron_number() * std::max(
-        (sequences_evaluating * (sequence_size + prefill_inputs_per_sequence) ),
-        (solution.network_memory_length() + prefill_inputs_per_sequence)
-      ), 1u /* .. + global, performance based error summary */
-    } };
+    const std::size_t bytes_used = (
+      std::max(sequences_evaluating, 1u) /* number of sequences to evaluate */
+      * std::max(2u, std::max( /* number of labels per sequence */
+        solution.network_memory_length(), (sequence_size + prefill_inputs_per_sequence)
+      ) )
+      * solution.neuron_number() /* number of numbers per label */
+    );
+    return{ rafko_mainframe::RafkoNBufShape{bytes_used, 1u} };
   }
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
     return std::make_tuple( cl::NullRange/*offset*/, cl::NDRange(sequences_evaluating)/*global*/, cl::NullRange/*local*/ );

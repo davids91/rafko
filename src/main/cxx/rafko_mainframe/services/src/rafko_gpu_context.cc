@@ -480,11 +480,13 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
 
   cl_int return_value;
   cl::Event fill_event;
+  const std::uint32_t network_memory_slots = std::max(2u, (network_solution->network_memory_length() - 1u));
+  const std::size_t network_used_bytes = sizeof(double) * network_memory_slots * network_solution->neuron_number();
 
-  if(reset_neuron_data){
+  if(reset_neuron_data || (last_ran_evaluation != not_eval_run) ){
     return_value = opencl_queue.enqueueFillBuffer<double>(
       solution_phase.get_output_buffer(), (0.0)/* the data(pattern) value */,
-      0u/*offset*/, agent->get_output_shapes()[0][0]/*size == number of double*/,
+      0u/*offset*/, network_used_bytes/*size*/,
       NULL/*events to wait for*/, &fill_event
     );
     assert( return_value == CL_SUCCESS );
@@ -492,7 +494,7 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
     return_value = fill_event.wait();
     assert( return_value == CL_SUCCESS );
   }else{ /* Neuron memory not resetted, keep network memory consistent */
-    for(std::uint32_t memory_slot = 0; memory_slot < (network_solution->network_memory_length() - 1u); ++memory_slot){
+    for(std::uint32_t memory_slot = 0; memory_slot < (network_memory_slots-1u); ++memory_slot){
       std::uint32_t network_memory_span_bytes = network_solution->neuron_number() * sizeof(double);
       return_value = opencl_queue.enqueueCopyBuffer(
         solution_phase.get_output_buffer()/*src*/, solution_phase.get_output_buffer() /*dst*/,
@@ -531,7 +533,7 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
   solution_phase( enq );
 
   std::uint32_t output_array_start = ( /* the end of the last memory slot contains the network data */
-    (network_solution->network_memory_length() * network.neuron_array_size()) - network.output_neuron_number()
+    (std::max(2u, network_solution->network_memory_length()) * network.neuron_array_size()) - network.output_neuron_number()
   );
   if(static_cast<std::int32_t>(standalone_solution_result.size()) == network.neuron_array_size()){
     solution_phase.load_output(standalone_solution_result.data(), network.output_neuron_number(), output_array_start);

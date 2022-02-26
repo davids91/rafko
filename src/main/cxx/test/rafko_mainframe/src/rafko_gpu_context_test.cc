@@ -180,8 +180,8 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
 
 TEST_CASE("Testing full evaluation with the GPU context with single sample of sequence size one","[context][GPU][evaluate]"){
   google::protobuf::Arena arena;
-  std::uint32_t sequence_size = rand()%3 + 1;
-  std::uint32_t number_of_sequences = rand()%10 + 2;
+  std::uint32_t sequence_size = 1;
+  std::uint32_t number_of_sequences = 1;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)

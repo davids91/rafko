@@ -164,7 +164,8 @@ std::string SolutionBuilder::get_kernel_for_solution(
       if( (input_sizes_size == 3) && (output_sizes_size == 2) ){
         const int sequence_index = get_global_id(0);
         const int neuron_array_size = ==neuron_array_size==;
-        const int max_backreach = ==neuron_memory_size== - 1;
+        const int neuron_memory_slots = max(2, ==neuron_memory_size==);
+        const int max_backreach = (neuron_memory_slots - 1);
         const int sequence_size = ==sequence_size==;
         const int prefill_input_num = ==prefill_input_num==;
         const int network_input_size = ==network_input_size==;
@@ -185,7 +186,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
           current_max_backreach = max_backreach;
           input_start = ==weight_table_offset==;
           output_start = (max_backreach * neuron_array_size); /*==output_start==*/
-          sequence_start = max(( sequence_size + prefill_input_num ), 1) - 1;
+          sequence_start = max(max(max_backreach,( sequence_size + prefill_input_num )), 1) - 1;
           sequence_max_index = sequence_start;
         }
         for(int label_index = sequence_start; label_index <= sequence_max_index; ++label_index){
