@@ -46,9 +46,9 @@ rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
   /* Create the single Weight Table */
   rafko_net::IndexSynapseInterval temp_index_interval;
   rafko_net::InputSynapseInterval temp_input_interval;
-  sdouble32 used_weight = double_literal(0.5);
+  double used_weight = (0.5);
   rafko_net::Transfer_functions used_transfer_function = rafko_net::transfer_function_sigmoid;
-  std::vector<sdouble32> weight_table {double_literal(0.0),double_literal(0.0),double_literal(0.0)};
+  std::vector<double> weight_table {(0.0),(0.0),(0.0)};
   weight_table[0] = used_weight;
   REQUIRE( nullptr != &(weight_table[0]) );
   REQUIRE( weight_table[0] == used_weight);
@@ -88,7 +88,7 @@ rafko_net::RafkoNet* test_net_builder_manually(google::protobuf::Arena* arena){
 
   /* Pass the net into the builder */
   std::shared_ptr<rafko_net::RafkoNetBuilder> builder(std::make_shared<rafko_net::RafkoNetBuilder>(settings));
-  builder->input_size(1).expected_input_range(double_literal(1.0)).output_neuron_number(2)
+  builder->input_size(1).expected_input_range((1.0)).output_neuron_number(2)
     .neuron_array(neuron_table).weight_table(weight_table);
 
   try{
@@ -187,7 +187,7 @@ rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* a
   std::unique_ptr<rafko_net::RafkoNetBuilder> builder = std::make_unique<rafko_net::RafkoNetBuilder>(settings);
   builder->input_size(5)
     .output_neuron_number(2)
-    .expected_input_range(double_literal(5.0));
+    .expected_input_range((5.0));
 
   rafko_net::RafkoNet* network(builder->dense_layers(
     {2,3,2},{
@@ -205,8 +205,8 @@ rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* a
   CHECK( 2 == network->output_neuron_number() );
 
   /* Check Neuron validity in general */
-  uint32 number_of_input_indexes;
-  uint32 number_of_input_weights;
+  std::uint32_t number_of_input_indexes;
+  std::uint32_t number_of_input_weights;
   for(int i = 0; i < 7; ++i){
     REQUIRE( true == rafko_net::NeuronInfo::is_neuron_valid(network->neuron_array(i)) );
 
@@ -214,10 +214,10 @@ rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* a
     REQUIRE( 0 < network->neuron_array(i).input_indices_size() );
     CHECK( 1 == network->neuron_array(i).input_indices_size() ); /* One synapse ==> the previous layer */
     number_of_input_indexes = 0;
-    for(sint32 index_syn_iter = 0; index_syn_iter < network->neuron_array(i).input_indices_size(); ++index_syn_iter){
+    for(std::int32_t index_syn_iter = 0; index_syn_iter < network->neuron_array(i).input_indices_size(); ++index_syn_iter){
       REQUIRE( /* Every index synapse element has to point inside the neuron array */
         network->neuron_array_size() >
-        static_cast<sint32>( network->neuron_array(i).input_indices(index_syn_iter).starts()
+        static_cast<std::int32_t>( network->neuron_array(i).input_indices(index_syn_iter).starts()
           + network->neuron_array(i).input_indices(index_syn_iter).interval_size() )
       );
       number_of_input_indexes += network->neuron_array(i).input_indices(index_syn_iter).interval_size();
@@ -227,21 +227,21 @@ rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* a
     /* Check Weight indexes */
     number_of_input_weights = 0;
     REQUIRE( 0 < network->neuron_array(i).input_weights_size() );
-    for(sint32 weight_syn_iterator = 0; weight_syn_iterator < network->neuron_array(i).input_weights_size(); ++weight_syn_iterator){
+    for(std::int32_t weight_syn_iterator = 0; weight_syn_iterator < network->neuron_array(i).input_weights_size(); ++weight_syn_iterator){
       /* Weights */
       REQUIRE( /* Every weight synapse element has to point inside the weight table array */
         network->weight_table_size() >= /* Equality is permitted here, because the interval iterates from (start) to (start + size - 1) */
-        static_cast<sint32>( network->neuron_array(i).input_weights(weight_syn_iterator).starts()
+        static_cast<std::int32_t>( network->neuron_array(i).input_weights(weight_syn_iterator).starts()
           + network->neuron_array(i).input_weights(weight_syn_iterator).interval_size() )
       );
-      for(uint32 weight_iterator = 0; weight_iterator < network->neuron_array(i).input_weights(weight_syn_iterator).interval_size(); ++weight_iterator){
+      for(std::uint32_t weight_iterator = 0; weight_iterator < network->neuron_array(i).input_weights(weight_syn_iterator).interval_size(); ++weight_iterator){
         CHECK( /* The weights of the Neuron has to be inbetween (-1;1) */
-          -double_literal(1.0) <= network->weight_table(
+          -(1.0) <= network->weight_table(
             network->neuron_array(i).input_weights(weight_syn_iterator).starts() + weight_iterator
           )
         );
         CHECK(
-          double_literal(1.0) >= network->weight_table(
+          (1.0) >= network->weight_table(
             network->neuron_array(i).input_weights(weight_syn_iterator).starts() + weight_iterator
           )
         );
@@ -331,29 +331,29 @@ TEST_CASE( "Builder to construct Fully Connected Net correctly through the inter
 TEST_CASE( "Testing builder for setting Neuron input functions manually", "[build][input-function]" ) {
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(&arena);
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNetBuilder builder(settings);
 
-    std::vector<uint32> net_structure;
+    std::vector<std::uint32_t> net_structure;
     while((rand()%10 < 9)||(4 > net_structure.size()))
-      net_structure.push_back(static_cast<uint32>(rand()%5) + 1u);
+      net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
 
     builder.input_size(2)
       .output_neuron_number(net_structure.back())
-      .expected_input_range(double_literal(5.0));
+      .expected_input_range((5.0));
 
-    std::vector<std::tuple<uint32,uint32,rafko_net::Input_functions>> set_neuron_input_functions;
-    for(uint32 layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
-      for(uint32 tries = 0; tries < 5u; ++tries){
-        uint32 layer_neuron_index = rand()%(net_structure[layer_index]);
-        std::tuple<uint32,uint32,rafko_net::Input_functions> new_item = std::make_tuple(
+    std::vector<std::tuple<std::uint32_t,std::uint32_t,rafko_net::Input_functions>> set_neuron_input_functions;
+    for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+      for(std::uint32_t tries = 0; tries < 5u; ++tries){
+        std::uint32_t layer_neuron_index = rand()%(net_structure[layer_index]);
+        std::tuple<std::uint32_t,std::uint32_t,rafko_net::Input_functions> new_item = std::make_tuple(
           layer_index, layer_neuron_index,
           rafko_net::InputFunction::next(rafko_net::InputFunction::all_input_functions)
         );
         if( /* only add the try to the reference vector if its not present yet in the same layer_index/neuron_index */
           std::find_if(
             set_neuron_input_functions.begin(),set_neuron_input_functions.end(),
-            [&new_item](const std::tuple<uint32,uint32,rafko_net::Input_functions>& current_item){
+            [&new_item](const std::tuple<std::uint32_t,std::uint32_t,rafko_net::Input_functions>& current_item){
               return ( (std::get<0>(new_item) == std::get<0>(current_item))&&(std::get<1>(new_item) == std::get<1>(current_item)) );
             }
           ) == set_neuron_input_functions.end()
@@ -365,16 +365,16 @@ TEST_CASE( "Testing builder for setting Neuron input functions manually", "[buil
     }
 
     rafko_net::RafkoNet* network(builder.dense_layers(net_structure));
-    std::vector<uint32> layer_starts(net_structure.size());
-    uint32 layer_start_iterator = 0u;
-    for(uint32 layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+    std::vector<std::uint32_t> layer_starts(net_structure.size());
+    std::uint32_t layer_start_iterator = 0u;
+    for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
       layer_starts[layer_index] = layer_start_iterator;
       layer_start_iterator += net_structure[layer_index];
     }
-    for(const std::tuple<uint32,uint32,rafko_net::Input_functions>& element : set_neuron_input_functions){
+    for(const std::tuple<std::uint32_t,std::uint32_t,rafko_net::Input_functions>& element : set_neuron_input_functions){
       REQUIRE( std::get<0>(element) < layer_starts.size() );
       REQUIRE( std::get<1>(element) < net_structure[std::get<0>(element)] );
-      uint32 neuron_index = layer_starts[std::get<0>(element)] + std::get<1>(element);
+      std::uint32_t neuron_index = layer_starts[std::get<0>(element)] + std::get<1>(element);
 
       REQUIRE( network->neuron_array(neuron_index).input_function() == std::get<2>(element) );
     }

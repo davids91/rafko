@@ -29,13 +29,13 @@
 
 namespace rafko_net {
 
-RafkoNetBuilder& RafkoNetBuilder::set_neuron_input_function(uint32 layer_index, uint32 layer_neuron_index, Input_functions function){
-  std::tuple<uint32,uint32,Input_functions> new_element = std::make_tuple(
+RafkoNetBuilder& RafkoNetBuilder::set_neuron_input_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Input_functions function){
+  std::tuple<std::uint32_t,std::uint32_t,Input_functions> new_element = std::make_tuple(
     layer_index,layer_neuron_index,function
   );
-  std::vector<std::tuple<uint32,uint32,Input_functions>>::iterator found_element = std::find_if(
+  std::vector<std::tuple<std::uint32_t,std::uint32_t,Input_functions>>::iterator found_element = std::find_if(
     arg_neuron_index_input_functions.begin(), arg_neuron_index_input_functions.end(),
-    [&new_element](const std::tuple<uint32,uint32,rafko_net::Input_functions>& current_element){
+    [&new_element](const std::tuple<std::uint32_t,std::uint32_t,rafko_net::Input_functions>& current_element){
       return ( (std::get<0>(new_element) == std::get<0>(current_element))&&(std::get<1>(new_element) == std::get<1>(current_element)) );
     }
   );
@@ -47,10 +47,10 @@ RafkoNetBuilder& RafkoNetBuilder::set_neuron_input_function(uint32 layer_index, 
   return *this;
 }
 
-RafkoNetBuilder& RafkoNetBuilder::add_feature_to_layer(uint32 layer_index, Neuron_group_features feature){
-  std::vector<std::pair<uint32,Neuron_group_features>>::iterator it = std::find_if(
+RafkoNetBuilder& RafkoNetBuilder::add_feature_to_layer(std::uint32_t layer_index, Neuron_group_features feature){
+  std::vector<std::pair<std::uint32_t,Neuron_group_features>>::iterator it = std::find_if(
     layer_features.begin(), layer_features.end(),
-    [layer_index, feature](const std::pair<uint32,Neuron_group_features>& element){
+    [layer_index, feature](const std::pair<std::uint32_t,Neuron_group_features>& element){
       return( /* only add feature if it's not already inside the network */
         (layer_index == std::get<0>(element))
         &&(feature == std::get<1>(element))
@@ -63,14 +63,14 @@ RafkoNetBuilder& RafkoNetBuilder::add_feature_to_layer(uint32 layer_index, Neuro
   return *this;
 }
 
-RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
-  uint32 previous_size = 0;
-  uint32 numNeurons = 0;
+RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
+  std::uint32_t previous_size = 0;
+  std::uint32_t numNeurons = 0;
   InputSynapseInterval temp_input_interval;
   IndexSynapseInterval weight_synapse;
 
   std::sort(arg_neuron_index_input_functions.begin(),arg_neuron_index_input_functions.end(),
-  [](const std::tuple<uint32,uint32,Input_functions>& a, std::tuple<uint32,uint32,Input_functions>& b){
+  [](const std::tuple<std::uint32_t,std::uint32_t,Input_functions>& a, std::tuple<std::uint32_t,std::uint32_t,Input_functions>& b){
     return std::get<0>(a) < std::get<0>(b);
   });
 
@@ -87,8 +87,8 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
    * - Input Layer shall have a weight for every input for every neuron
    * - Input Layer shall have a weight for every bias and memory_filter for every neuron
    */
-  uint64 numWeights = (layer_sizes[0] * arg_input_size) + (2 * layer_sizes[0]); /* The first layer only takes input from the @RafkoNet input data */
-  for(uint32 layerSize : layer_sizes){
+  std::uint64_t numWeights = (layer_sizes[0] * arg_input_size) + (2 * layer_sizes[0]); /* The first layer only takes input from the @RafkoNet input data */
+  for(std::uint32_t layerSize : layer_sizes){
     if(0 != numNeurons){ /* The first layer is already included in numWeights */
       numWeights += previous_size * layerSize; /* Calculate the number of weights needed */
       numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_filter amongst the weights */
@@ -107,14 +107,14 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
     )
   ){
     RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(settings.get_arena_ptr());
-    uint32 layer_input_starts_at = 0;
-    uint64 weightIt = 0;
-    uint64 neurIt = 0;
-    sdouble32 expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);
+    std::uint32_t layer_input_starts_at = 0;
+    std::uint64_t weightIt = 0;
+    std::uint64_t neurIt = 0;
+    double expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);
 
     /* sort the requested features by layer */
     std::sort(layer_features.begin(),layer_features.end(),
-    [](const std::pair<uint32,Neuron_group_features>& a, const std::pair<uint32,Neuron_group_features>& b){
+    [](const std::pair<std::uint32_t,Neuron_group_features>& a, const std::pair<std::uint32_t,Neuron_group_features>& b){
       return /* a less, than b */(std::get<0>(a) < std::get<0>(b));
     });
 
@@ -127,11 +127,11 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
       weight_initializer(std::make_shared<DenseNetWeightInitializer>(settings));
     }
 
-    arg_weight_table = std::vector<sdouble32>(numWeights);
+    arg_weight_table = std::vector<double>(numWeights);
     arg_neuron_array = std::vector<Neuron>(numNeurons);
 
     previous_size = arg_input_size;
-    for(uint32 layer_index = 0; layer_index < layer_sizes.size(); layer_index++)
+    for(std::uint32_t layer_index = 0; layer_index < layer_sizes.size(); layer_index++)
     { /* Create the Dense Layers */
       while( /* erase all the deprecated input function settings for Neurons based on the layer index */
         ( 0u < arg_neuron_index_input_functions.size() )
@@ -160,7 +160,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
       std::sort( /* starting from the beginning of the array.. */
         arg_neuron_index_input_functions.begin(), /* ..because builder continually removes the irrelevant front parts.. */
         std::find_if(arg_neuron_index_input_functions.begin(),arg_neuron_index_input_functions.end(),
-          [layer_index](const std::tuple<uint32,uint32,Input_functions>& element){
+          [layer_index](const std::tuple<std::uint32_t,std::uint32_t,Input_functions>& element){
             return std::get<0>(element) == (layer_index + 1u); /* ..until the part of the array which starts at the next layer. */
           }
           /*!Note: this works because the vector is already sorted based on layer index,
@@ -168,14 +168,14 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
            * or the start of the next layer relevant part of it
            */
         ),
-        [](const std::tuple<uint32,uint32,Input_functions>& a, std::tuple<uint32,uint32,Input_functions>& b){
+        [](const std::tuple<std::uint32_t,std::uint32_t,Input_functions>& a, std::tuple<std::uint32_t,std::uint32_t,Input_functions>& b){
           return std::get<1>(a) < std::get<1>(b); /* the relevant(to the layer_index)y part of the vector is sorted based on Neuron index */
         }
       );
 
       /* Add the Neurons */
       expPrevLayerOutput = 0;
-      for(uint32 layer_neuron_index = 0; layer_neuron_index < layer_sizes[layer_index]; layer_neuron_index++){
+      for(std::uint32_t layer_neuron_index = 0; layer_neuron_index < layer_sizes[layer_index]; layer_neuron_index++){
 
         if(
           ( 0u < arg_neuron_index_input_functions.size() )
@@ -225,7 +225,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
         *arg_neuron_array[neurIt].add_input_indices() = temp_input_interval;
 
         /* Add the input weights for the previous layer */
-        for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < previous_size; neuron_weight_iterator++){
+        for(std::uint32_t neuron_weight_iterator = 0; neuron_weight_iterator < previous_size; neuron_weight_iterator++){
           arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
             arg_neuron_array[neurIt].transfer_function()
           );
@@ -251,7 +251,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
           weight_synapse.set_interval_size(weight_synapse.interval_size() + layer_sizes[layer_index] + 1); /* Update the weight synapse size: Current layer + a bias */
 
           /* Add the weights */
-          for(uint32 neuron_weight_iterator = 0; neuron_weight_iterator < layer_sizes[layer_index]; neuron_weight_iterator++){
+          for(std::uint32_t neuron_weight_iterator = 0; neuron_weight_iterator < layer_sizes[layer_index]; neuron_weight_iterator++){
             arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
               arg_neuron_array[neurIt].transfer_function()
             );
@@ -278,7 +278,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<uint32> layer_sizes){
         expPrevLayerOutput = arg_expected_input_range;
         layer_input_starts_at = 0;
       }else{
-        expPrevLayerOutput /= static_cast<sdouble32>(layer_sizes[layer_index]);
+        expPrevLayerOutput /= static_cast<double>(layer_sizes[layer_index]);
         layer_input_starts_at += previous_size;
       }
       previous_size = layer_sizes[layer_index];

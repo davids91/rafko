@@ -26,20 +26,20 @@ class RAFKO_FULL_EXPORT RafkoWeightUpdaterAMSGrad : public RafkoWeightUpdater{
 public:
   RafkoWeightUpdaterAMSGrad(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_)
   :  RafkoWeightUpdater(rafko_net, solution_, settings_)
-  ,  moment(rafko_net.weight_table_size(),double_literal(0.0))
-  ,  raw_moment_max(rafko_net.weight_table_size(),double_literal(0.0))
+  ,  moment(rafko_net.weight_table_size(),(0.0))
+  ,  raw_moment_max(rafko_net.weight_table_size(),(0.0))
   { }
 
   ~RafkoWeightUpdaterAMSGrad() = default;
 
-  void iterate(const std::vector<sdouble32>& gradients);
+  void iterate(const std::vector<double>& gradients);
 
 private:
 
   /**
    * @brief      Overridden member function from @RafkoWeightUpdater
    */
-  sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients){
+  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients){
     parameter_not_used(gradients); /* the variable moment contains the processed value of the gradients, so no need to use it here again. */
     return (
       settings.get_learning_rate() * moment[weight_index] / (
@@ -48,9 +48,9 @@ private:
     );
   }
 
-  uint32 iteration_count = 0u;
-  std::vector<sdouble32> moment;
-  std::vector<sdouble32> raw_moment_max;
+  std::uint32_t iteration_count = 0u;
+  std::vector<double> moment;
+  std::vector<double> raw_moment_max;
 };
 
 } /* namespace rafko_gym */

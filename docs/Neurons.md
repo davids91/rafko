@@ -8,7 +8,7 @@ While the weights might be taken from all over the networks weight table in an u
 | Neuron structure: | ws | w1 | .. | wn | bias1 | .. | biasm |
 |------------------|----|----|----|----|-------|----|-------|
 
-Inside the &Neuron structure only weight index values (`uint32`) are stored, which points to elements inside the networks weight table. The first weight is the weight of the @Neurons spike function, the following `n` weights represent one weight for every input. The remaining weights are all used as bias values.
+Inside the &Neuron structure only weight index values (`std::uint32_t`) are stored, which points to elements inside the networks weight table. The first weight is the weight of the @Neurons spike function, the following `n` weights represent one weight for every input. The remaining weights are all used as bias values.
 
 An example of what that might look like:
 

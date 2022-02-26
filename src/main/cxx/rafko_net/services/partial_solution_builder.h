@@ -45,7 +45,7 @@ public:
    *
    * @return     returns the input parameters of the Neurons: {maximum reach back in Neural memory, maximum input index reached}
    */
-  static std::pair<uint32,uint32> add_neuron_to_partial_solution(const RafkoNet& net, uint32 neuron_index, PartialSolution& partial);
+  static std::pair<std::uint32_t,std::uint32_t> add_neuron_to_partial_solution(const RafkoNet& net, std::uint32_t neuron_index, PartialSolution& partial);
 
 private:
   /**
@@ -56,7 +56,7 @@ private:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  static void add_to_synapse(sint32 index, uint32 reach_back, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals);
+  static void add_to_synapse(std::int32_t index, std::uint32_t reach_back, std::uint32_t& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals);
 
   /**
    * @brief      Adds the given index to the given synapse
@@ -65,7 +65,7 @@ private:
    * @param      current_synapse_count  The number of elements currently present in the synapse
    * @param      synapse_intervals      The array of synapses to add the index to
    */
-  static void add_to_synapse(sint32 index, uint32& current_synapse_count, google::protobuf::RepeatedPtrField<IndexSynapseInterval>* synapse_intervals);
+  static void add_to_synapse(std::int32_t index, std::uint32_t& current_synapse_count, google::protobuf::RepeatedPtrField<IndexSynapseInterval>* synapse_intervals);
 
   /**
    * @brief      Looks for the given Neuron index in the @PartialSolution input,
@@ -77,7 +77,7 @@ private:
    * @return     returns true if the neuron index was found in the @PartialSolution input
    */
   static bool look_for_neuron_input(
-    sint32 neuron_input_index, uint32 input_reach_back,
+    std::int32_t neuron_input_index, std::uint32_t input_reach_back,
     SynapseIterator<InputSynapseInterval>& input_synapse, PartialSolution& partial
   );
 
@@ -89,23 +89,23 @@ private:
    *
    * @return     returns true if the neuron index was found in the @PartialSolution Inner Neurons
    */
-  static bool look_for_neuron_input_internally(uint32 neuron_input_index, PartialSolution& partial);
+  static bool look_for_neuron_input_internally(std::uint32_t neuron_input_index, PartialSolution& partial);
 
   /**
    * Temporary helper variables used only during Neuron mapping which is started by @add_neuron_to_partial_solution
    * but used additionally in @look_for_neuron_input_internally and @look_for_neuron_input
    */
-  static uint32 neuron_synapse_count;
-  static uint32 partial_input_synapse_count;
-  static sint32 previous_neuron_input_index;
-  static uint8 previous_neuron_input_source;
+  static std::uint32_t neuron_synapse_count;
+  static std::uint32_t partial_input_synapse_count;
+  static std::int32_t previous_neuron_input_index;
+  static std::uint8_t previous_neuron_input_source;
 
   /**
    *  definitions to assign a source of a neurons input upon building up the partial solution
    */
-  static const uint8 neuron_input_none = 0u;
-  static const uint8 neuron_input_internal = 1u;
-  static const uint8 neuron_input_external = 2u;
+  static const std::uint8_t neuron_input_none = 0u;
+  static const std::uint8_t neuron_input_internal = 1u;
+  static const std::uint8_t neuron_input_external = 2u;
 };
 
 } /* namespace rafko_net */

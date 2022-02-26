@@ -41,7 +41,7 @@ public:
    * @param      context_                      The service context containing the network to enchance
    * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
-  RafkoNetApproximizer(rafko_mainframe::RafkoContext& context_, uint32 stochastic_evaluation_loops_ = 1u)
+  RafkoNetApproximizer(rafko_mainframe::RafkoContext& context_, std::uint32_t stochastic_evaluation_loops_ = 1u)
   : context(context_)
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
   , tmp_data_pool(2u, context.expose_network().weight_table_size())
@@ -65,7 +65,7 @@ public:
    * @param      direction         The direction
    * @param[in]  save_to_fragment  Decides wether or not to add the results into the collected gradient fragments
    */
-  void convert_direction_to_gradient(std::vector<sdouble32>& direction, bool save_to_fragment);
+  void convert_direction_to_gradient(std::vector<double>& direction, bool save_to_fragment);
 
   /**
    * @brief      Collects the approximate gradient of a single weight
@@ -74,14 +74,14 @@ public:
    *
    * @return     The gradient approximation for the configured dataset
    */
-  sdouble32 get_single_weight_gradient(uint32 weight_index);
+  double get_single_weight_gradient(std::uint32_t weight_index);
 
   /**
    * @brief      APproximates gradient information for all weights.
    *
    * @return     The gradient for all weights.
    */
-  sdouble32 get_gradient_for_all_weights();
+  double get_gradient_for_all_weights();
 
   /**
    * @brief      Applies the colleted gradient fragment to the configured network
@@ -101,7 +101,7 @@ public:
    * @param[in]  weight_index             The weight index to give the value to
    * @param[in]  gradient_fragment_value  The value to give to the fragment
    */
-  void add_to_fragment(uint32 weight_index, sdouble32 gradient_fragment_value);
+  void add_to_fragment(std::uint32_t weight_index, double gradient_fragment_value);
 
   /**
    * @brief      Gets the previously collected gradient fragment.
@@ -125,7 +125,7 @@ public:
    * @brief      Evaluates the network in the given environment fully
    */
   void full_evaluation(){
-    sdouble32 fitness = context.full_evaluation();
+    double fitness = context.full_evaluation();
     if(min_test_error > fitness){
       min_test_error = fitness;
       min_test_error_was_at_iteration = iteration;
@@ -133,7 +133,7 @@ public:
     error_estimation = -fitness;
   }
 
-  constexpr sdouble32 get_error_estimation() const{
+  constexpr double get_error_estimation() const{
     return error_estimation;
   }
 
@@ -151,7 +151,7 @@ public:
           &&(context.expose_settings().get_learning_rate() >= -min_test_error)
         )||(
           context.expose_settings().get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
-          &&(double_literal(0.0) ==  -min_test_error)
+          &&((0.0) ==  -min_test_error)
         )
       ))
     );
@@ -160,26 +160,26 @@ public:
 private:
   rafko_mainframe::RafkoContext& context;
   GradientFragment gradient_fragment;
-  uint32 stochastic_evaluation_loops;
+  std::uint32_t stochastic_evaluation_loops;
 
-  uint32 iteration = 1u;
+  std::uint32_t iteration = 1u;
   rafko_utilities::DataPool<> tmp_data_pool;
-  sdouble32 epsilon_addition = double_literal(0.0);
-  sdouble32 min_test_error = std::numeric_limits<sdouble32>::max();
-  sdouble32 error_estimation = double_literal(1.0);
-  uint32 min_test_error_was_at_iteration = 0u;
+  double epsilon_addition = (0.0);
+  double min_test_error = std::numeric_limits<double>::max();
+  double error_estimation = (1.0);
+  std::uint32_t min_test_error_was_at_iteration = 0u;
 
   /**
    * @brief      Evaluates the network in a stochastic manner the number of configured times and return with the fittness/error value
    *
    * @return         The average of the resulting fitness values of the evaluations
    */
-  sdouble32 stochastic_evaluation(){
-    sdouble32 fitness = double_literal(0.0);
-    for(uint32 i = 0; i < stochastic_evaluation_loops; ++i)
+  double stochastic_evaluation(){
+    double fitness = (0.0);
+    for(std::uint32_t i = 0; i < stochastic_evaluation_loops; ++i)
       fitness += context.stochastic_evaluation(iteration);
-    sdouble32 result_fitness = fitness / static_cast<sdouble32>(stochastic_evaluation_loops);
-    error_estimation = (error_estimation + -result_fitness)/double_literal(2.0);
+    double result_fitness = fitness / static_cast<double>(stochastic_evaluation_loops);
+    error_estimation = (error_estimation + -result_fitness)/(2.0);
     return result_fitness;
   }
 
@@ -192,9 +192,9 @@ private:
    * @param[in]  value          The value
    * @param[in]  position       The position
    */
-  static void insert_element_at_position(google::protobuf::RepeatedField<sdouble32>& message_field, sdouble32 value, uint32 position){
+  static void insert_element_at_position(google::protobuf::RepeatedField<double>& message_field, double value, std::uint32_t position){
     *message_field.Add() = value;
-    for(sint32 i(message_field.size() - 1); i > static_cast<sint32>(position); --i)
+    for(std::int32_t i(message_field.size() - 1); i > static_cast<std::int32_t>(position); --i)
       message_field.SwapElements(i, i - 1);
   }
 };

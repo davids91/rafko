@@ -56,7 +56,7 @@ public:
    */
   void execute_solution_relevant(
     const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
-    std::vector<sdouble32>& neuron_data, uint32 thread_index = 0
+    std::vector<double>& neuron_data, std::uint32_t thread_index = 0
   ) const;
 
   /**
@@ -67,9 +67,9 @@ public:
    * @param[in]  network        The network to calculate the values from
    * @param[in]  thread_index   The index of the thread the feature is to be executed
    */
-  sdouble32 calculate_performance_relevant(
+  double calculate_performance_relevant(
     const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
-    const RafkoNet& network, uint32 thread_index = 0
+    const RafkoNet& network, std::uint32_t thread_index = 0
   ) const;
 
 
@@ -97,8 +97,8 @@ private:
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
   #if(RAFKO_USES_OPENCL)
   static std::mutex feature_cache_mutex;
-  static uint32 l1_feature_called;
-  static uint32 l2_feature_called;
+  static std::uint32_t l1_feature_called;
+  static std::uint32_t l2_feature_called;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   /**
@@ -110,7 +110,7 @@ private:
    */
   void execute_in_paralell_for(
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
-    std::function<void(uint32)>&& fun, uint32 thread_index = 0u
+    std::function<void(std::uint32_t)>&& fun, std::uint32_t thread_index = 0u
   ) const;
 
 
@@ -123,9 +123,9 @@ private:
    * @param[in]  thread_index       The index of the thread the feature is to be executed
    */
   void execute_softmax(
-    std::vector<sdouble32>& neuron_data,
+    std::vector<double>& neuron_data,
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
-    uint32 thread_index = 0u
+    std::uint32_t thread_index = 0u
   ) const;
 
   /**
@@ -137,9 +137,9 @@ private:
    * @param[in]  thread_index       The index of the thread the feature is to be executed
    */
   void execute_dropout(
-    std::vector<sdouble32>& neuron_data, const rafko_mainframe::RafkoSettings& settings,
+    std::vector<double>& neuron_data, const rafko_mainframe::RafkoSettings& settings,
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
-    uint32 thread_index = 0u
+    std::uint32_t thread_index = 0u
   ) const;
 
 
@@ -152,10 +152,10 @@ private:
    *
    * @return the resulting error value
    */
-  sdouble32 calculate_l1_regularization(
+  double calculate_l1_regularization(
     const rafko_net::RafkoNet& network,
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
-    uint32 thread_index = 0u
+    std::uint32_t thread_index = 0u
   ) const;
 
   /**
@@ -167,10 +167,10 @@ private:
    *
    * @return the resulting error value
    */
-  sdouble32 calculate_l2_regularization(
+  double calculate_l2_regularization(
     const rafko_net::RafkoNet& network,
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
-    uint32 thread_index = 0u
+    std::uint32_t thread_index = 0u
   ) const;
 
   #if(RAFKO_USES_OPENCL)

@@ -22,12 +22,12 @@
 
 namespace rafko_mainframe{
 
-void TrainingLogger::log(uint32 iteration, const std::vector<uint32>& coordinates, const std::vector<std::string>& tags, const std::vector<sdouble32>& data){
+void TrainingLogger::log(std::uint32_t iteration, const std::vector<std::uint32_t>& coordinates, const std::vector<std::string>& tags, const std::vector<double>& data){
   DataPackage measured;
   measured.set_iteration(iteration);
-  for(const uint32& coordinate : coordinates) measured.add_coordinates(coordinate);
+  for(const std::uint32_t& coordinate : coordinates) measured.add_coordinates(coordinate);
   for(const std::string& tag : tags) measured.add_tags(tag);
-  for(const sdouble32& data_element : data) measured.add_data(data_element);
+  for(const double& data_element : data) measured.add_data(data_element);
   *measurement.add_packs() = measured;
   ++changes_since;
   if(settings.get_tolerance_loop_value() < changes_since)

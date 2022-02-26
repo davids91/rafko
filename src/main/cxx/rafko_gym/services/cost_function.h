@@ -55,8 +55,8 @@ public:
   , execution_threads(settings.get_sqrt_of_solve_threads())
   {
     process_threads.reserve(settings.get_sqrt_of_solve_threads());
-    for(uint32 thread_index = 0; thread_index < settings.get_max_solve_threads(); ++thread_index){
-      thread_results.push_back(std::vector<std::future<sdouble32>>());
+    for(std::uint32_t thread_index = 0; thread_index < settings.get_max_solve_threads(); ++thread_index){
+      thread_results.push_back(std::vector<std::future<double>>());
       thread_results.back().reserve(settings.get_sqrt_of_solve_threads());
     }
   };
@@ -70,9 +70,9 @@ public:
    *
    * @return     The feature error.
    */
-  sdouble32 get_feature_error(
-    const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data,
-    uint32 sample_number
+  double get_feature_error(
+    const std::vector<double>& label, const std::vector<double>& neuron_data,
+    std::uint32_t sample_number
   ) const{
     return get_feature_error(label, neuron_data, settings.get_sqrt_of_solve_threads(), 0, sample_number);
   }
@@ -88,9 +88,9 @@ public:
    *
    * @return     The overall error produced by the given label-data pair.
    */
-  sdouble32 get_feature_error(
-    const std::vector<sdouble32>& label, const std::vector<sdouble32>& neuron_data,
-    uint32 max_threads, uint32 outer_thread_index, uint32 sample_number
+  double get_feature_error(
+    const std::vector<double>& label, const std::vector<double>& neuron_data,
+    std::uint32_t max_threads, std::uint32_t outer_thread_index, std::uint32_t sample_number
   ) const;
 
   /**
@@ -106,8 +106,8 @@ public:
    * @param[in]  sample_number       The number of overall samples, required for post-processing
    */
   void get_feature_errors(
-    const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
-    uint32 label_start, uint32 error_start, uint32 labels_to_evaluate, uint32 neuron_start, uint32 sample_number
+    const std::vector<std::vector<double>>& labels, const std::vector<std::vector<double>>& neuron_data, std::vector<double>& errors_for_labels,
+    std::uint32_t label_start, std::uint32_t error_start, std::uint32_t labels_to_evaluate, std::uint32_t neuron_start, std::uint32_t sample_number
   ) const;
 
   /**
@@ -123,7 +123,7 @@ public:
 
   #if(RAFKO_USES_OPENCL)
 
-  constexpr void set_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_){
+  constexpr void set_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_){
     pairs_to_evaluate = pairs_to_evaluate_;
     feature_size = feature_size_;
   }
@@ -158,7 +158,7 @@ public:
 protected:
   const rafko_mainframe::RafkoSettings& settings;
   std::vector<std::thread> process_threads;
-  mutable std::vector<std::vector<std::future<sdouble32>>> thread_results;
+  mutable std::vector<std::vector<std::future<double>>> thread_results;
 
   /**
    * @brief      The post-processing function to be provided by the implementer
@@ -168,7 +168,7 @@ protected:
    *
    * @return     the final error value
    */
-  virtual sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const = 0;
+  virtual double error_post_process(double error_value, std::uint32_t sample_number) const = 0;
 
   /**
    * @brief      Calculates the error for one number-pair inside the label-data pair
@@ -178,7 +178,7 @@ protected:
    *
    * @return     The distance between the two given arguments
    */
-  virtual sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const = 0;
+  virtual double get_cell_error(double label_value, double feature_value) const = 0;
 
   /**
    * @brief      Summarizes the errors given back by @get_cell_error for all of the features. It's called
@@ -192,16 +192,16 @@ protected:
    *
    * @return     returns with the error summary under the range {start_index;(start_index + number_to_add)}
    */
-  sdouble32 summarize_errors(
-    const std::vector<sdouble32>& labels, const std::vector<sdouble32>& neuron_data,
-    uint32 feature_start_index, uint32 number_to_eval
+  double summarize_errors(
+    const std::vector<double>& labels, const std::vector<double>& neuron_data,
+    std::uint32_t feature_start_index, std::uint32_t number_to_eval
   ) const;
 private:
   Cost_functions the_function; /* cost function type */
   rafko_utilities::ThreadGroup execution_threads;
   #if(RAFKO_USES_OPENCL)
-  uint32 pairs_to_evaluate = 1u;
-  uint32 feature_size = 1u;
+  std::uint32_t pairs_to_evaluate = 1u;
+  std::uint32_t feature_size = 1u;
   #endif/*(RAFKO_USES_OPENCL)*/
 
 
@@ -220,9 +220,9 @@ private:
    * @param[in]  thread_index                           The index of the thread the errors are accumulated in
    */
   void feature_errors_thread(
-    const std::vector<std::vector<sdouble32>>& labels, const std::vector<std::vector<sdouble32>>& neuron_data, std::vector<sdouble32>& errors_for_labels,
-    uint32 label_start, uint32 error_start, uint32 neuron_data_start_index,
-    uint32 labels_to_evaluate_in_one_thread, uint32 labels_evaluating_overall, uint32 sample_number, uint32 thread_index
+    const std::vector<std::vector<double>>& labels, const std::vector<std::vector<double>>& neuron_data, std::vector<double>& errors_for_labels,
+    std::uint32_t label_start, std::uint32_t error_start, std::uint32_t neuron_data_start_index,
+    std::uint32_t labels_to_evaluate_in_one_thread, std::uint32_t labels_evaluating_overall, std::uint32_t sample_number, std::uint32_t thread_index
   ) const;
 };
 

@@ -34,11 +34,11 @@ public:
   { };
 
 protected:
-  constexpr sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const{
-    return error_value / static_cast<sdouble32>(sample_number*double_literal(2.0));
+  constexpr double error_post_process(double error_value, std::uint32_t sample_number) const{
+    return error_value / static_cast<double>(sample_number*(2.0));
   }
 
-  constexpr sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
+  constexpr double get_cell_error(double label_value, double feature_value) const{
     return pow((label_value - feature_value),2);
   }
 

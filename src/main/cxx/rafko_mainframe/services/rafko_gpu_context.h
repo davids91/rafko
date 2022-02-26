@@ -48,15 +48,15 @@ public:
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_);
   void set_weight_updater(rafko_gym::Weight_updaters updater);
-  void set_network_weight(uint32 weight_index, sdouble32 weight_value);
-  void set_network_weights(const std::vector<sdouble32>& weights);
-  void apply_weight_update(const std::vector<sdouble32>& weight_delta);
-  sdouble32 full_evaluation();
-  sdouble32 stochastic_evaluation(bool to_seed = false, uint32 seed_value = 0u);
+  void set_network_weight(std::uint32_t weight_index, double weight_value);
+  void set_network_weights(const std::vector<double>& weights);
+  void apply_weight_update(const std::vector<double>& weight_delta);
+  double full_evaluation();
+  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u);
 
   rafko_utilities::ConstVectorSubrange<> solve(
-    const std::vector<sdouble32>& input,
-    bool reset_neuron_data = false, uint32 thread_index = 0
+    const std::vector<double>& input,
+    bool reset_neuron_data = false, std::uint32_t thread_index = 0
   );
 
   void push_state(){
@@ -89,13 +89,13 @@ public:
       assert( 0 < platforms.size() );
     }
 
-    Builder& select_platform(uint32 platform_index = 0u){
+    Builder& select_platform(std::uint32_t platform_index = 0u){
       assert( platform_index < platforms.size() );
       selected_platform = platform_index;
       return *this;
     }
 
-    Builder& select_device(cl_device_type type = CL_DEVICE_TYPE_GPU, uint32 device_index = 0u){
+    Builder& select_device(cl_device_type type = CL_DEVICE_TYPE_GPU, std::uint32_t device_index = 0u){
       platforms[selected_platform].getDevices(type, &devices);
       assert( device_index < devices.size() );
       selected_device = device_index;
@@ -116,8 +116,8 @@ public:
     rafko_net::RafkoNet& network;
     std::vector<cl::Platform> platforms;
     std::vector<cl::Device> devices;
-    uint32 selected_platform = 0u;
-    uint32 selected_device = 0u;
+    std::uint32_t selected_platform = 0u;
+    std::uint32_t selected_device = 0u;
   };
 private:
 
@@ -133,15 +133,15 @@ private:
   std::shared_ptr<rafko_gym::RafkoEnvironment> environment;
   std::shared_ptr<rafko_gym::RafkoObjective> objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> weight_updater;
-  std::vector<std::vector<sdouble32>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
+  std::vector<std::vector<double>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   rafko_utilities::ThreadGroup execution_threads;
 
   cl::Context opencl_context;
   cl::Device opencl_device;
   cl::CommandQueue opencl_queue;
-  uint32 device_weight_table_size;
+  std::uint32_t device_weight_table_size;
   RafkoGPUPhase solution_phase;
-  std::vector<sdouble32> standalone_solution_result;
+  std::vector<double> standalone_solution_result;
   RafkoGPUPhase error_phase;
 
   enum{
@@ -149,10 +149,10 @@ private:
   }last_ran_evaluation = not_eval_run;
 
   void upload_weight_table_to_device();
-  void upload_weight_to_device(uint32 weight_index);
+  void upload_weight_to_device(std::uint32_t weight_index);
   void refresh_objective();
   bool last_random_eval_was_seeded = false;
-  uint32 last_used_seed;
+  std::uint32_t last_used_seed;
   /* Somebody tell me what is the least propable value of a random seed one can use,
    * so I could initialize this poor fella with it?!
    */
@@ -167,7 +167,7 @@ private:
    * @return      A vector of events to wait for, signaling operation completion
    */
   std::vector<cl::Event> upload_agent_inputs(
-    uint32 sequence_start_index, uint32 buffer_sequence_start_index, uint32 sequences_to_upload
+    std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index, std::uint32_t sequences_to_upload
   );
 
   /**
@@ -183,9 +183,9 @@ private:
    * @return      A vector of events to wait for, signaling operation completion
    */
   std::vector<cl::Event> upload_labels(
-    uint32 sequence_start_index, uint32 buffer_sequence_start_index,
-    uint32 sequences_to_upload, uint32 buffer_start_byte_offset,
-    uint32 start_index_inside_sequence, uint32 sequence_truncation
+    std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
+    std::uint32_t sequences_to_upload, std::uint32_t buffer_start_byte_offset,
+    std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
   );
 
   /**
@@ -198,7 +198,7 @@ private:
    * @return      A vector of events to wait for, signaling operation completion
    */
   std::vector<cl::Event> upload_agent_output(
-    uint32 sequences_to_upload, uint32 start_index_inside_sequence, uint32 sequence_truncation
+    std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
   );
 
   /**
@@ -210,7 +210,7 @@ private:
    *
    * @return    The processed error
    */
-  sdouble32 error_post_process(sdouble32 raw_error, uint32 labels_evaluated);
+  double error_post_process(double raw_error, std::uint32_t labels_evaluated);
 };
 
 } /* namespace rafko_mainframe */

@@ -35,12 +35,12 @@ bool NeuronInfo::is_neuron_valid(const Neuron& neuron)
       * if the first is non-zero then essentially there are more, than 0 inputs.
       */
 
-    uint32 number_of_input_indexes = 0;
+    std::uint32_t number_of_input_indexes = 0;
     for(int i = 0; i<neuron.input_indices_size(); ++i){
       number_of_input_indexes += neuron.input_indices(i).interval_size();
     }
 
-    uint32 number_of_input_weights = 0;
+    std::uint32_t number_of_input_weights = 0;
     for(int i = 0; i<neuron.input_weights_size(); ++i){
       number_of_input_weights += neuron.input_weights(i).interval_size();
     }

@@ -39,18 +39,18 @@ namespace rafko_mainframe{
 class RafkoDummyObjective : public rafko_gym::RafkoObjective{
 public:
   ~RafkoDummyObjective() = default;
-  sdouble32 set_feature_for_label(
-    const rafko_gym::RafkoEnvironment& dataset, uint32 sample_index,
-    const std::vector<sdouble32>& neuron_data
+  double set_feature_for_label(
+    const rafko_gym::RafkoEnvironment& dataset, std::uint32_t sample_index,
+    const std::vector<double>& neuron_data
   ) const{
     parameter_not_used(dataset);
     parameter_not_used(sample_index);
     parameter_not_used(neuron_data);
-    return double_literal(0.0);
+    return (0.0);
   }
-  sdouble32 set_features_for_labels(
-     const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
+  double set_features_for_labels(
+     const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<double>>& neuron_data,
+    std::uint32_t neuron_buffer_index, std::uint32_t raw_start_index, std::uint32_t labels_to_evaluate
   ) const{
     parameter_not_used(dataset);
     parameter_not_used(neuron_data);
@@ -58,12 +58,12 @@ public:
     parameter_not_used(neuron_buffer_index);
     parameter_not_used(raw_start_index);
     parameter_not_used(labels_to_evaluate);
-    return double_literal(0.0);
+    return (0.0);
   }
-  sdouble32 set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
-    uint32 start_index_in_sequence, uint32 sequence_truncation
+  double set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<double>>& neuron_data,
+    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
+    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation
   ) const{
     parameter_not_used(dataset);
     parameter_not_used(neuron_data);
@@ -72,13 +72,13 @@ public:
     parameter_not_used(sequences_to_evaluate);
     parameter_not_used(start_index_in_sequence);
     parameter_not_used(sequence_truncation);
-    return double_literal(0.0);
+    return (0.0);
   }
-  sdouble32 set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
-    uint32 start_index_in_sequence, uint32 sequence_truncation,
-    std::vector<sdouble32>& tmp_data
+  double set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<double>>& neuron_data,
+    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
+    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation,
+    std::vector<double>& tmp_data
   ) const{
     parameter_not_used(dataset);
     parameter_not_used(neuron_data);
@@ -88,11 +88,11 @@ public:
     parameter_not_used(start_index_in_sequence);
     parameter_not_used(sequence_truncation);
     parameter_not_used(tmp_data);
-    return double_literal(0.0);
+    return (0.0);
   }
 
   #if(RAFKO_USES_OPENCL)
-  void set_gpu_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_){
+  void set_gpu_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_){
     pairs_to_evaluate = pairs_to_evaluate_;
     feature_size = feature_size_;
   }
@@ -122,9 +122,9 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
-  std::vector<sdouble32> dummy;
-  uint32 pairs_to_evaluate = 1u;
-  uint32 feature_size = 1u;
+  std::vector<double> dummy;
+  std::uint32_t pairs_to_evaluate = 1u;
+  std::uint32_t feature_size = 1u;
 };
 
 /**
@@ -132,34 +132,34 @@ private:
  */
  class RafkoDummyEnvironment : public rafko_gym::RafkoEnvironment{
  public:
-   RafkoDummyEnvironment(uint32 input_size_ = 1u, uint32 feature_size_ = 1u)
-   : dummy_inputs(1, std::vector<sdouble32>(input_size_))
-   , dummy_labels(1, std::vector<sdouble32>(feature_size_))
+   RafkoDummyEnvironment(std::uint32_t input_size_ = 1u, std::uint32_t feature_size_ = 1u)
+   : dummy_inputs(1, std::vector<double>(input_size_))
+   , dummy_labels(1, std::vector<double>(feature_size_))
    { }
 
    void push_state() { }
    void pop_state() { }
-   const std::vector<sdouble32>& get_input_sample(uint32 raw_input_index)const {
+   const std::vector<double>& get_input_sample(std::uint32_t raw_input_index)const {
      parameter_not_used(raw_input_index);
      return dummy_inputs[0];
    }
-   const std::vector<std::vector<sdouble32>>& get_input_samples()const { return dummy_inputs; }
-   const std::vector<sdouble32>& get_label_sample(uint32 raw_label_index)const {
+   const std::vector<std::vector<double>>& get_input_samples()const { return dummy_inputs; }
+   const std::vector<double>& get_label_sample(std::uint32_t raw_label_index)const {
      parameter_not_used(raw_label_index);
      return dummy_labels[0];
    }
-   const std::vector<std::vector<sdouble32>>& get_label_samples()const { return dummy_labels; }
-   uint32 get_feature_size()const { return dummy_labels[0].size(); }
-   uint32 get_input_size()const { return dummy_labels[0].size(); }
-   uint32 get_number_of_input_samples()const { return 1; }
-   uint32 get_number_of_label_samples()const { return 1; }
-   uint32 get_number_of_sequences()const { return 1; }
-   uint32 get_sequence_size()const { return 1; }
-   uint32 get_prefill_inputs_number()const { return 0; }
+   const std::vector<std::vector<double>>& get_label_samples()const { return dummy_labels; }
+   std::uint32_t get_feature_size()const { return dummy_labels[0].size(); }
+   std::uint32_t get_input_size()const { return dummy_labels[0].size(); }
+   std::uint32_t get_number_of_input_samples()const { return 1; }
+   std::uint32_t get_number_of_label_samples()const { return 1; }
+   std::uint32_t get_number_of_sequences()const { return 1; }
+   std::uint32_t get_sequence_size()const { return 1; }
+   std::uint32_t get_prefill_inputs_number()const { return 0; }
    ~RafkoDummyEnvironment() = default;
  private:
-   std::vector<std::vector<sdouble32>> dummy_inputs;
-   std::vector<std::vector<sdouble32>> dummy_labels;
+   std::vector<std::vector<double>> dummy_inputs;
+   std::vector<std::vector<double>> dummy_labels;
  };
 
 #if(RAFKO_USES_OPENCL)

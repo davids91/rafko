@@ -33,18 +33,18 @@ Transfer_functions TransferFunction::next(std::set<Transfer_functions> range){
   return candidate;
 }
 
-sdouble32 TransferFunction::get_value(Transfer_functions function, sdouble32 data) const{
+double TransferFunction::get_value(Transfer_functions function, double data) const{
   switch(function){
     case transfer_function_identity: return data; /* Identity means f(x) = x */
-    case transfer_function_sigmoid: return double_literal(1.0)/(double_literal(1.0)+std::exp(-data));
+    case transfer_function_sigmoid: return (1.0)/((1.0)+std::exp(-data));
     case transfer_function_tanh: return std::tanh(data);
     case transfer_function_elu:
       if(0 >= data) return settings.get_alpha() * (std::exp(data) - 1);
       else return data;
     case transfer_function_selu:
-      if(0 >= data) return settings.get_lambda() * settings.get_alpha() * (std::exp(data) - double_literal(1.0));
+      if(0 >= data) return settings.get_lambda() * settings.get_alpha() * (std::exp(data) - (1.0));
       else return settings.get_lambda() * data;
-    case transfer_function_relu: return std::max(double_literal(0.0),data);
+    case transfer_function_relu: return std::max((0.0),data);
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
@@ -72,9 +72,9 @@ std::string TransferFunction::get_cl_function_for(Transfer_functions function, s
 }
 #endif/*(RAFKO_USES_OPENCL)*/
 
-sdouble32 TransferFunction::get_derivative(Transfer_functions function, sdouble32 data) const{
+double TransferFunction::get_derivative(Transfer_functions function, double data) const{
   switch(function){
-    case transfer_function_identity: return double_literal(1.0); /* Identity means f(x) = x */
+    case transfer_function_identity: return (1.0); /* Identity means f(x) = x */
     case transfer_function_sigmoid: return std::exp(data)/std::pow((std::exp(data) + 1),2);
     case transfer_function_tanh: return std::tanh(data);
     case transfer_function_elu:

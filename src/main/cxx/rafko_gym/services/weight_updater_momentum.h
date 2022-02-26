@@ -28,23 +28,23 @@ class RAFKO_FULL_EXPORT RafkoWeightUpdaterMomentum : public RafkoWeightUpdater{
 public:
   RafkoWeightUpdaterMomentum(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_)
   :  RafkoWeightUpdater(rafko_net, solution_, settings_)
-  ,  previous_velocity(rafko_net.weight_table_size(),double_literal(0.0))
+  ,  previous_velocity(rafko_net.weight_table_size(),(0.0))
   { }
 
-  void iterate(const std::vector<sdouble32>& gradients){
+  void iterate(const std::vector<double>& gradients){
     RafkoWeightUpdater::iterate(gradients);
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
 
 private:
-  sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients){
+  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients){
     return (
       (previous_velocity[weight_index] * settings.get_gamma())
       + (gradients[weight_index] * settings.get_learning_rate())
     );
   }
 
-  std::vector<sdouble32> previous_velocity;
+  std::vector<double> previous_velocity;
 };
 
 } /* namespace rafko_gym */

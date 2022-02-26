@@ -45,12 +45,12 @@ namespace rafko_net{
 std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
   NeuronRouter neuron_router(net);
   std::unique_ptr<Solution> solution = std::make_unique<Solution>();
-  uint32 overall_partial_solution_count = 0u;
-  sdouble32 remaining_megabytes_in_row = 0;
-  sdouble32 current_neuron_megabyte_size;
-  uint32 reach_back_max = 0u;
-  uint32 reach_index_max = 0u;
-  uint32 current_neuron_index;
+  std::uint32_t overall_partial_solution_count = 0u;
+  double remaining_megabytes_in_row = 0;
+  double current_neuron_megabyte_size;
+  std::uint32_t reach_back_max = 0u;
+  std::uint32_t reach_index_max = 0u;
+  std::uint32_t current_neuron_index;
   bool has_neuron = false;
 
   if(0 == net.output_neuron_number()) throw std::runtime_error("Can't build a solution with 0 output Neurons!");
@@ -60,17 +60,17 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
     else neuron_router.collect_subset(settings.get_max_solve_threads(),settings.get_device_max_megabytes(), true);
 
     remaining_megabytes_in_row = settings.get_device_max_megabytes();
-    const sdouble32 max_megabytes_in_one_partial = ( remaining_megabytes_in_row / static_cast<sdouble32>(settings.get_max_solve_threads()) );
+    const double max_megabytes_in_one_partial = ( remaining_megabytes_in_row / static_cast<double>(settings.get_max_solve_threads()) );
     overall_partial_solution_count = solution->partial_solutions_size();
 
     if(0u < neuron_router.get_subset_size()){
-      for(uint32 partial_index_in_row = 0; partial_index_in_row < settings.get_max_solve_threads(); ++partial_index_in_row){
+      for(std::uint32_t partial_index_in_row = 0; partial_index_in_row < settings.get_max_solve_threads(); ++partial_index_in_row){
         if(nullptr == settings.get_arena_ptr() ) *solution->add_partial_solutions() = PartialSolution();
         else *solution->add_partial_solutions() = *google::protobuf::Arena::CreateMessage<PartialSolution>(settings.get_arena_ptr());
 
         /* fill up the partial with Neurons */
         PartialSolution& this_partial = *solution->mutable_partial_solutions(solution->partial_solutions_size()-1);
-        sdouble32 remaining_megabytes_in_partial = max_megabytes_in_one_partial;
+        double remaining_megabytes_in_partial = max_megabytes_in_one_partial;
         has_neuron = neuron_router.get_first_neuron_index_from_subset(current_neuron_index);
         if(has_neuron) current_neuron_megabyte_size = NeuronInfo::get_neuron_estimated_size_megabytes(net.neuron_array(current_neuron_index));
           else break;
@@ -90,7 +90,7 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
           if(0u == this_partial.output_data().interval_size()) /* The first Neuron inside the partial solution shall determine its start */
             this_partial.mutable_output_data()->set_starts(current_neuron_index);
 
-          std::pair<uint32,uint32> neuron_input_params = PartialSolutionBuilder::add_neuron_to_partial_solution(
+          std::pair<std::uint32_t,std::uint32_t> neuron_input_params = PartialSolutionBuilder::add_neuron_to_partial_solution(
             net, current_neuron_index, this_partial
           );
           remaining_megabytes_in_row -= current_neuron_megabyte_size;
@@ -121,7 +121,7 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
          */
       }
 
-      if(solution->partial_solutions_size() > static_cast<sint32>(overall_partial_solution_count))
+      if(solution->partial_solutions_size() > static_cast<std::int32_t>(overall_partial_solution_count))
         solution->add_cols(solution->partial_solutions_size() - overall_partial_solution_count);
       neuron_router.reset_remaining_subset(); /* Whichever Neuron coudn't fit into the partial shall have its state reset */
     } /* if(0u < neuron_router.get_subset_size()) */
@@ -145,7 +145,7 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
 
 #if(RAFKO_USES_OPENCL)
 std::string SolutionBuilder::get_kernel_for_solution(
-  const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_input_num,
+  const Solution& solution, std::string name, std::uint32_t sequence_size, std::uint32_t prefill_input_num,
   const rafko_mainframe::RafkoSettings& settings
 ){
   /*!Note: Network solve starts from the first memory/sequence slot of the outputs buffer
@@ -210,7 +210,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     (solution.network_memory_length()-1) * solution.neuron_number()
   ));
   TransferFunction transfer_function(settings);
-  uint32 weight_table_offset = 1u; /* the first input number is the mode of the solution, so weight table starts after that */
+  std::uint32_t weight_table_offset = 1u; /* the first input number is the mode of the solution, so weight table starts after that */
   /*!Note: Weight table is supposed to consist of the weight tables of the partial solutions
    * in the order they are inside the @Solution. Inside the kernel this order is used
    * to query the wieghts by position in the device weight table.
@@ -218,7 +218,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
    * are to re-think this logic.
    */
   std::string neuron_operations;
-  std::function<std::string(uint32, std::string)> past_reach_guard = [](uint32 past_reach, std::string content){
+  std::function<std::string(std::uint32_t, std::string)> past_reach_guard = [](std::uint32_t past_reach, std::string content){
     return "( (min(current_max_backreach,max_backreach) < " + std::to_string(past_reach) + " )?(0.0):( " + content + ") )";
   };
   std::function<std::string(std::string)> label_reach_guard = [](std::string content){
@@ -233,12 +233,12 @@ std::string SolutionBuilder::get_kernel_for_solution(
   std::vector<std::reference_wrapper<const FeatureGroup>> performance_feature_list;
   for(const PartialSolution& partial : solution.partial_solutions()){
     SynapseIterator<InputSynapseInterval> partial_input_synapses(partial.input_data());
-    uint32 input_synapse_index = 0u;
-    uint32 input_synapse_index_offset = 0u;
-    uint32 input_start_offset = 0u;
-    uint32 weight_synapse_start = 0u;
+    std::uint32_t input_synapse_index = 0u;
+    std::uint32_t input_synapse_index_offset = 0u;
+    std::uint32_t input_start_offset = 0u;
+    std::uint32_t weight_synapse_start = 0u;
 
-    for(uint32 inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
+    for(std::uint32_t inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
       bool first_weight_in_neuron = true;
       bool first_input_in_neuron = true;
       std::function<std::string(std::string,bool)> input_function_lambda = [&inner_neuron_index, &partial](std::string input, bool first){
@@ -250,18 +250,18 @@ std::string SolutionBuilder::get_kernel_for_solution(
           );
         }
       };
-      uint32 spike_weight_index;
+      std::uint32_t spike_weight_index;
       std::string inner_neuron_operation = "neuron_partial_result = (";
       std::string inner_neuron_input_weight_pairs = "";
-      SynapseIterator<>::iterate(partial.weight_indices(),[&](sint32 weight_index){
+      SynapseIterator<>::iterate(partial.weight_indices(),[&](std::int32_t weight_index){
         if(first_weight_in_neuron){
           first_weight_in_neuron = false;
           spike_weight_index = weight_index;
         }else{
           inner_neuron_input_weight_pairs += std::string("\n");
           if(input_synapse_index_offset < partial.index_synapse_number(inner_neuron_index)){ /* ... input ... */
-            sint32 input_past_reach = partial.inside_indices(input_synapse_index + input_synapse_index_offset).reach_past_loops();
-            sint32 input_index = partial.inside_indices(input_synapse_index + input_synapse_index_offset).starts();
+            std::int32_t input_past_reach = partial.inside_indices(input_synapse_index + input_synapse_index_offset).reach_past_loops();
+            std::int32_t input_index = partial.inside_indices(input_synapse_index + input_synapse_index_offset).starts();
             if(SynapseIterator<>::is_index_input(input_index)){
               input_index = SynapseIterator<>::input_index_from_synapse_index(input_index - input_start_offset);
               input_past_reach = partial_input_synapses.reach_past_loops<InputSynapseInterval>(input_index);
@@ -276,7 +276,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
               }else{
                 if(0 != input_past_reach){
                   inner_neuron_input_weight_pairs += input_function_lambda( past_reach_guard(input_past_reach, std::string("(")
-                  /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<sint32>(input_past_reach * solution.neuron_number())) + "]"
+                  /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + "]"
                   /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
                   + std::string(")")), first_input_in_neuron );
                 }else{ /* input doesn't reach to the past */
@@ -290,7 +290,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
               input_index = input_index + input_start_offset;
               if(0 != input_past_reach){
                 inner_neuron_input_weight_pairs += input_function_lambda( past_reach_guard(input_past_reach, std::string("(")
-                /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<sint32>(input_past_reach * solution.neuron_number())) + "]"
+                /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + "]"
                 /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
                 + std::string(" ")), first_input_in_neuron);
               }else{ /* input doesn't reach to the past */

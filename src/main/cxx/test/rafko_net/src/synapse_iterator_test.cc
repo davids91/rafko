@@ -32,23 +32,23 @@ namespace rafko_net_test {
 TEST_CASE("Synapse Iteration","[synapse-iteration]"){
   rafko_net::Neuron neuron = rafko_net::Neuron();
   rafko_net::InputSynapseInterval temp_synapse_interval;
-  std::vector<std::vector<uint32>> synapse_indexes = {
+  std::vector<std::vector<std::uint32_t>> synapse_indexes = {
     {50,10},{60,30},{20,70}
   }; /* {{range},{start,length},{range}..} */
 
-  for(uint32 i = 0; i < synapse_indexes.size(); ++i){
+  for(std::uint32_t i = 0; i < synapse_indexes.size(); ++i){
     temp_synapse_interval.set_starts(synapse_indexes[i][0]);
     temp_synapse_interval.set_interval_size(synapse_indexes[i][1]);
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  uint32 range_iter = 0;
-  sint32 manual_index = synapse_indexes[0][0];
+  std::uint32_t range_iter = 0;
+  std::int32_t manual_index = synapse_indexes[0][0];
   rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
-  iter.iterate([&](sint32 index){
+  iter.iterate([&](std::int32_t index){
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     ++manual_index;
@@ -70,23 +70,23 @@ TEST_CASE("Synapse Iteration","[synapse-iteration]"){
 TEST_CASE("Synapse iteration on a range","[synapse-iteration]"){
   rafko_net::Neuron neuron = rafko_net::Neuron();
   rafko_net::InputSynapseInterval temp_synapse_interval;
-  std::vector<std::vector<uint32>> synapse_indexes = {
+  std::vector<std::vector<std::uint32_t>> synapse_indexes = {
     {50,10},{60,30},{20,70}
   }; /* {{range},{start,length},{range}..} */
 
-  for(uint32 i = 0; i < synapse_indexes.size(); ++i){
+  for(std::uint32_t i = 0; i < synapse_indexes.size(); ++i){
     temp_synapse_interval.set_starts(synapse_indexes[i][0]);
     temp_synapse_interval.set_interval_size(synapse_indexes[i][1]);
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  uint32 range_iter = 1;
-  sint32 manual_index = synapse_indexes[1][0];
+  std::uint32_t range_iter = 1;
+  std::int32_t manual_index = synapse_indexes[1][0];
   rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
-  iter.iterate([&](sint32 index){
+  iter.iterate([&](std::int32_t index){
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     ++manual_index;
@@ -108,23 +108,23 @@ TEST_CASE("Synapse iteration on a range","[synapse-iteration]"){
 TEST_CASE("Synapse iteration including negative numbers","[synapse-iteration]"){
   rafko_net::Neuron neuron = rafko_net::Neuron();
   rafko_net::InputSynapseInterval temp_synapse_interval;
-  std::vector<std::vector<sint32>> synapse_indexes = {
+  std::vector<std::vector<std::int32_t>> synapse_indexes = {
     {-50,10},{-60,30},{-20,70}
   }; /* {{range},{start,length},{range}..} */
 
-  for(uint32 i = 0; i < synapse_indexes.size(); ++i){
+  for(std::uint32_t i = 0; i < synapse_indexes.size(); ++i){
     temp_synapse_interval.set_starts(synapse_indexes[i][0]);
     temp_synapse_interval.set_interval_size(synapse_indexes[i][1]);
     *neuron.add_input_indices() = temp_synapse_interval;
   }
 
-  uint32 range_iter = 0;
-  sint32 manual_index = synapse_indexes[0][0];
+  std::uint32_t range_iter = 0;
+  std::int32_t manual_index = synapse_indexes[0][0];
   rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> iter(neuron.input_indices());
 
   REQUIRE( 110 == iter.size() );
 
-  iter.iterate([&](sint32 index){
+  iter.iterate([&](std::int32_t index){
     REQUIRE( synapse_indexes.size() > range_iter );
     CHECK( index == manual_index );
     --manual_index;
@@ -146,11 +146,11 @@ TEST_CASE("Synapse iteration including negative numbers","[synapse-iteration]"){
 TEST_CASE("Synapse Iterator direct access","[synapse-iteration]"){
   rafko_net::Neuron neuron = rafko_net::Neuron();
   rafko_net::InputSynapseInterval temp_synapse_interval;
-  std::vector<std::vector<sint32>> synapse_indexes = {
+  std::vector<std::vector<std::int32_t>> synapse_indexes = {
     {-50,10},{70,30},{-20,70}
   }; /* {{range},{start,length},{range}..} */
 
-  for(uint32 i = 0; i < synapse_indexes.size(); ++i){
+  for(std::uint32_t i = 0; i < synapse_indexes.size(); ++i){
     temp_synapse_interval.set_starts(synapse_indexes[i][0]);
     temp_synapse_interval.set_interval_size(synapse_indexes[i][1]);
     *neuron.add_input_indices() = temp_synapse_interval;
@@ -176,11 +176,11 @@ TEST_CASE("Synapse Iterator direct access","[synapse-iteration]"){
 TEST_CASE("Synapse Iterator Skimming","[synapse-iteration]"){
   rafko_net::Neuron neuron = rafko_net::Neuron();
   rafko_net::InputSynapseInterval temp_synapse_interval;
-  std::vector<std::vector<sint32>> synapse_indexes = {
+  std::vector<std::vector<std::int32_t>> synapse_indexes = {
     {-50,10},{70,30},{-20,70}
   }; /* {{range},{start,length},{range}..} */
 
-  for(uint32 i = 0; i < synapse_indexes.size(); ++i){
+  for(std::uint32_t i = 0; i < synapse_indexes.size(); ++i){
     temp_synapse_interval.set_starts(synapse_indexes[i][0]);
     temp_synapse_interval.set_interval_size(synapse_indexes[i][1]);
     *neuron.add_input_indices() = temp_synapse_interval;
@@ -188,10 +188,10 @@ TEST_CASE("Synapse Iterator Skimming","[synapse-iteration]"){
 
   rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> iter(neuron.input_indices());
 
-  sint32 manual_index = 0;
+  std::int32_t manual_index = 0;
   iter.skim([&](rafko_net::InputSynapseInterval input_synapse){
     CHECK( input_synapse.starts() == synapse_indexes[manual_index][0] );
-    CHECK( static_cast<sint32>(input_synapse.interval_size()) == synapse_indexes[manual_index][1] );
+    CHECK( static_cast<std::int32_t>(input_synapse.interval_size()) == synapse_indexes[manual_index][1] );
     ++manual_index;
   });
 }
@@ -203,11 +203,11 @@ TEST_CASE("Synapse Iterator Skimming","[synapse-iteration]"){
 TEST_CASE("Synapse Iterator Utility functions","[synapse-iteration]"){
   rafko_net::Neuron neuron = rafko_net::Neuron();
   rafko_net::InputSynapseInterval temp_synapse_interval;
-  std::vector<std::vector<sint32>> synapse_indexes = {
+  std::vector<std::vector<std::int32_t>> synapse_indexes = {
     {-50,10},{70,30},{-20,70}
   }; /* {{range},{start,length},{range}..} */
 
-  for(uint32 i = 0; i < synapse_indexes.size(); ++i){
+  for(std::uint32_t i = 0; i < synapse_indexes.size(); ++i){
     temp_synapse_interval.set_starts(synapse_indexes[i][0]);
     temp_synapse_interval.set_interval_size(synapse_indexes[i][1]);
     *neuron.add_input_indices() = temp_synapse_interval;
@@ -226,26 +226,26 @@ TEST_CASE("Synapse Iterator Utility functions","[synapse-iteration]"){
 TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
   rafko_net::Neuron neuron = rafko_net::Neuron();
   rafko_net::IndexSynapseInterval temp_synapse_interval;
-  std::vector<std::vector<sint32>> synapse_indexes = {
+  std::vector<std::vector<std::int32_t>> synapse_indexes = {
     {50,3},{70,3},{20,2},{30,2}
   }; /* {{range},{start,length},{range}..} */
 
-  for(uint32 i = 0; i < synapse_indexes.size(); ++i){
+  for(std::uint32_t i = 0; i < synapse_indexes.size(); ++i){
     temp_synapse_interval.set_starts(synapse_indexes[i][0]);
     temp_synapse_interval.set_interval_size(synapse_indexes[i][1]);
     *neuron.add_input_weights() = temp_synapse_interval;
   }
 
   rafko_net::SynapseIterator<> iter(neuron.input_weights());
-  uint32 iterate_range_number;
-  sint32 iteration_count;
-  uint32 current_synapse;
-  sint32 element_index;
+  std::uint32_t iterate_range_number;
+  std::int32_t iteration_count;
+  std::uint32_t current_synapse;
+  std::int32_t element_index;
 
-  for(uint32 i = 0; i < synapse_indexes.size(); ++i){ /* go through each synapse interval */
+  for(std::uint32_t i = 0; i < synapse_indexes.size(); ++i){ /* go through each synapse interval */
     element_index = synapse_indexes[i][0]; /* the start of the synapse currently being iterated over */
     iteration_count = 0;
-    iter.iterate([&](sint32 synapse_index){
+    iter.iterate([&](std::int32_t synapse_index){
       CHECK( element_index == synapse_index );
       ++element_index;
       ++iteration_count;
@@ -254,14 +254,14 @@ TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
     CHECK(iteration_count == synapse_indexes[i][1]);
   }
 
-  sint32 iteration_in_this_synapse;
-  for(uint32 i = 0; i < synapse_indexes.size(); ++i){ /* go through each synapse interval */
+  std::int32_t iteration_in_this_synapse;
+  for(std::uint32_t i = 0; i < synapse_indexes.size(); ++i){ /* go through each synapse interval */
     current_synapse = i;
-    iterate_range_number = std::min(2u,static_cast<uint32>(synapse_indexes.size()-i));
+    iterate_range_number = std::min(2u,static_cast<std::uint32_t>(synapse_indexes.size()-i));
     element_index = synapse_indexes[i][0]; /* the start of the synapse currently being iterated over */
     iteration_count = 0;
     iteration_in_this_synapse = 0;
-    iter.iterate([&](sint32 synapse_index){
+    iter.iterate([&](std::int32_t synapse_index){
       if(iteration_in_this_synapse >= synapse_indexes[current_synapse][1]){
         ++current_synapse;
         iteration_in_this_synapse = 0;
@@ -275,7 +275,7 @@ TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
       ++iteration_count;
     },i,iterate_range_number);
 
-    for(uint32 j = 0; j < iterate_range_number; ++j){
+    for(std::uint32_t j = 0; j < iterate_range_number; ++j){
       iteration_count -= synapse_indexes[i+j][1];
     }
 
@@ -290,8 +290,8 @@ TEST_CASE("Synapseiterator equaly","[synapse-iteration]"){
   rafko_net::Neuron neuron1 = rafko_net::Neuron();
   rafko_net::Neuron neuron2 = rafko_net::Neuron();
   rafko_net::Neuron neuron3 = rafko_net::Neuron();
-  uint32 num_synapses = (rand()%50) + 1;
-  for(uint32 synapse_index = 0; synapse_index < num_synapses; ++synapse_index){
+  std::uint32_t num_synapses = (rand()%50) + 1;
+  for(std::uint32_t synapse_index = 0; synapse_index < num_synapses; ++synapse_index){
     rafko_net::IndexSynapseInterval temp_interval;
     temp_interval.set_starts(rand()%435);
     temp_interval.set_interval_size(rand()%435);
@@ -307,7 +307,7 @@ TEST_CASE("Synapseiterator equaly","[synapse-iteration]"){
   CHECK( rafko_net::SynapseIterator<>(neuron2.input_weights()) != rafko_net::SynapseIterator<>(neuron3.input_weights()) );
 
   num_synapses = (rand()%50) + 1;
-  for(uint32 synapse_index = 0; synapse_index < num_synapses; ++synapse_index){
+  for(std::uint32_t synapse_index = 0; synapse_index < num_synapses; ++synapse_index){
     rafko_net::IndexSynapseInterval temp_interval;
     temp_interval.set_starts(rand()%435);
     temp_interval.set_interval_size(rand()%435);

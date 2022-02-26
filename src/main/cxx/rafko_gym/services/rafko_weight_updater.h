@@ -37,13 +37,13 @@ namespace rafko_gym {
  */
 class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
-  RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_, uint32 required_iterations_for_step_ = 1u)
+  RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_, std::uint32_t required_iterations_for_step_ = 1u)
   : net(rafko_net)
   , solution(solution_)
   , settings(settings_)
   , required_iterations_for_step(required_iterations_for_step_)
-  , weights_to_do_in_one_thread(1u + static_cast<uint32>(net.weight_table_size()/settings.get_max_solve_threads()))
-  , current_velocity(rafko_net.weight_table_size(),double_literal(0.0))
+  , weights_to_do_in_one_thread(1u + static_cast<std::uint32_t>(net.weight_table_size()/settings.get_max_solve_threads()))
+  , current_velocity(rafko_net.weight_table_size(),(0.0))
   , execution_threads(settings.get_max_solve_threads())
   , weights_in_partials(rafko_net.weight_table_size())
   , neurons_in_partials(solution.partial_solutions_size())
@@ -65,7 +65,7 @@ public:
    * @param      gradients           The gradients
    * @param      solution            The solution
    */
-  void iterate(const std::vector<sdouble32>& gradients){
+  void iterate(const std::vector<double>& gradients){
     calculate_velocity(gradients);
     update_weights_with_velocity();
     update_solution_with_weights();
@@ -87,7 +87,7 @@ public:
    *
    * @param[in]  weight_index   The index of the weight to take over fro the @RafkoNet
    */
-  void update_solution_with_weight(uint32 weight_index) const;
+  void update_solution_with_weight(std::uint32_t weight_index) const;
 
   /**
    * @brief      Tells if an iteration is at its valid state or not based on
@@ -106,7 +106,7 @@ public:
    *
    * @return     The current velocity.
    */
-  sdouble32 get_current_velocity(uint32 weight_index) const{
+  double get_current_velocity(std::uint32_t weight_index) const{
     return current_velocity[weight_index];
   }
 
@@ -115,7 +115,7 @@ public:
    *
    * @return     The current velocity.
    */
-  const std::vector<sdouble32>& get_current_velocity() const{
+  const std::vector<double>& get_current_velocity() const{
     return current_velocity;
   }
 
@@ -129,7 +129,7 @@ public:
    * @return     A vector of the following structure: {{partial index,weight_index},...,{...}}
    *             The elements of the vector are in ascending order by partial index.
    */
-  const std::vector<std::pair<uint32,uint32>>& get_relevant_partial_weight_indices_for(uint32 network_weight_index) const;
+  const std::vector<std::pair<std::uint32_t,std::uint32_t>>& get_relevant_partial_weight_indices_for(std::uint32_t network_weight_index) const;
 
   /**
    * @brief      Provides the partial index the given neuron_index belongs to
@@ -138,7 +138,7 @@ public:
    *
    * @return     The index of the partial solution the Neuron belongs to
    */
-  uint32 get_relevant_partial_index_for(uint32 neuron_index) const{
+  std::uint32_t get_relevant_partial_index_for(std::uint32_t neuron_index) const{
     return get_relevant_partial_index_for(neuron_index, solution, neurons_in_partials);
   }
 
@@ -151,9 +151,9 @@ public:
    *
    * @return     The index of the partial solution the Neuron belongs to
    */
-  static uint32 get_relevant_partial_index_for(
-    uint32 neuron_index, const rafko_net::Solution& solution,
-    std::unordered_map<uint32, uint32>& neurons_in_partials
+  static std::uint32_t get_relevant_partial_index_for(
+    std::uint32_t neuron_index, const rafko_net::Solution& solution,
+    std::unordered_map<std::uint32_t, std::uint32_t>& neurons_in_partials
   );
 
   /**
@@ -165,9 +165,9 @@ public:
    *
    * @return     The index of the first weight synapse belonging to the given neuron
    */
-  static uint32 get_weight_synapse_start_index_in_partial(
-    uint32 neuron_index, const rafko_net::PartialSolution& partial,
-    std::unordered_map<uint32, uint32>& weight_synapse_starts_in_partial
+  static std::uint32_t get_weight_synapse_start_index_in_partial(
+    std::uint32_t neuron_index, const rafko_net::PartialSolution& partial,
+    std::unordered_map<std::uint32_t, std::uint32_t>& weight_synapse_starts_in_partial
   );
 
 #if(RAFKO_USES_OPENCL)
@@ -181,9 +181,9 @@ public:
    *
    * @return     The index of the first weight belonging to the partial solution inside the GPU device weight table
    */
-  static uint32 get_device_weight_table_start_for(
-    uint32 partial_index, const rafko_net::Solution& solution,
-    std::unordered_map<uint32, uint32>& weight_starts_in_partials
+  static std::uint32_t get_device_weight_table_start_for(
+    std::uint32_t partial_index, const rafko_net::Solution& solution,
+    std::unordered_map<std::uint32_t, std::uint32_t>& weight_starts_in_partials
   );
 #endif/*(RAFKO_USES_OPENCL)*/
 
@@ -194,11 +194,11 @@ protected:
   rafko_net::RafkoNet& net;
   rafko_net::Solution& solution;
   const rafko_mainframe::RafkoSettings& settings;
-  const uint32 required_iterations_for_step;
-  const uint32 weights_to_do_in_one_thread;
-  uint32 iteration = 0u;
+  const std::uint32_t required_iterations_for_step;
+  const std::uint32_t weights_to_do_in_one_thread;
+  std::uint32_t iteration = 0u;
   bool finished = false;
-  std::vector<sdouble32> current_velocity;
+  std::vector<double> current_velocity;
 
   /**
    * @brief      Gets the new value for one weight based on the velocity.
@@ -207,7 +207,7 @@ protected:
    *
    * @return     The new weight.
    */
-  sdouble32 get_new_weight(uint32 weight_index) const{
+  double get_new_weight(std::uint32_t weight_index) const{
     return(net.weight_table(weight_index) + get_current_velocity(weight_index));
   }
 
@@ -219,14 +219,14 @@ protected:
    *
    * @return     The new velocity.
    */
-  sdouble32 get_new_velocity(uint32 weight_index, const std::vector<sdouble32>& gradients) const{
+  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const{
     return (-gradients[weight_index] * settings.get_learning_rate());
   }
 
 private:
   rafko_utilities::ThreadGroup execution_threads;
-  mutable std::unordered_map<uint32,std::vector<std::pair<uint32,uint32>>> weights_in_partials; /* key: Weight index; {{partial_index, weight_index},...{..}} */
-  mutable std::unordered_map<uint32, uint32> neurons_in_partials; /* key: Neuron index; value :Partial index */
+  mutable std::unordered_map<std::uint32_t,std::vector<std::pair<std::uint32_t,std::uint32_t>>> weights_in_partials; /* key: Weight index; {{partial_index, weight_index},...{..}} */
+  mutable std::unordered_map<std::uint32_t, std::uint32_t> neurons_in_partials; /* key: Neuron index; value :Partial index */
   mutable std::mutex reference_mutex;
 
   /**
@@ -234,7 +234,7 @@ private:
    *
    * @param[in]  gradients  The gradients array of size equal to the weights of the configured net
    */
-  void calculate_velocity(const std::vector<sdouble32>& gradients);
+  void calculate_velocity(const std::vector<double>& gradients);
 
   /**
    * @brief      The function to update every weight of the referenced @RafkoNet
@@ -251,7 +251,7 @@ private:
    * @param[in]  weight_index   The weight index
    * @param[in]  weight_number  The weight number
    */
-  void update_weight_with_velocity(uint32 weight_index, uint32 weight_number);
+  void update_weight_with_velocity(std::uint32_t weight_index, std::uint32_t weight_number);
 
   /**
    * @brief      Copies the weights of a Neuron from the referenced @RafkoNet
@@ -263,7 +263,7 @@ private:
    * @param[in]  inner_neuron_weight_index_starts  The index in the weight table (of the @PartialSolution) where the inner neuron weights start
    */
   void copy_weights_of_neuron_to_partial_solution(
-    uint32 neuron_index, rafko_net::PartialSolution& partial, uint32 inner_neuron_weight_index_starts
+    std::uint32_t neuron_index, rafko_net::PartialSolution& partial, std::uint32_t inner_neuron_weight_index_starts
   ) const;
 };
 

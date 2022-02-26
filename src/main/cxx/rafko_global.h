@@ -20,20 +20,6 @@
 
 #include "rafko_export.h"
 
-/**
- * GLOBAL TYPES
- */
-typedef unsigned long uint64;
-typedef unsigned int uint32;
-typedef unsigned short uint16;
-typedef unsigned char uint8;
-typedef signed long sint64;
-typedef signed int sint32;
-typedef signed short sint16;
-typedef signed char sint8;
-typedef double sdouble32;
-
-#define double_literal(number) (number) /* floating point number literals should have these wrappers to make transition to float, or long literals easier */
 #define parameter_not_used(param) ((void)param)
 
 #endif /* defined RAFKO_GLOBAL_H */

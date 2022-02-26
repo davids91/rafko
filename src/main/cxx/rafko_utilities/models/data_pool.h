@@ -31,10 +31,10 @@ namespace rafko_utilities{
  * @brief      This data container allocates buffers on-demand and handles
  *              data acess. The container is thread-safe.
  */
-template<class T = sdouble32>
+template<class T = double>
 class RAFKO_FULL_EXPORT DataPool{
 public:
-  DataPool(uint32 pool_size, uint32 expected_buffer_size)
+  DataPool(std::uint32_t pool_size, std::uint32_t expected_buffer_size)
   : buffer_pool(pool_size, std::vector<T>())
   {
     std::for_each(buffer_pool.begin(),buffer_pool.end(),[=](std::vector<T>& buf){
@@ -44,9 +44,9 @@ public:
 
   DataPool() = default;
 
-  std::vector<T>& reserve_buffer(uint32 number_of_elements){
+  std::vector<T>& reserve_buffer(std::uint32_t number_of_elements){
     std::lock_guard<std::mutex> my_lock(buffers_mutex);
-  	for(uint32 buffer_index = 0; buffer_index < buffer_pool.size();++buffer_index){
+  	for(std::uint32_t buffer_index = 0; buffer_index < buffer_pool.size();++buffer_index){
   		if(0u == buffer_pool[buffer_index].size()){ /* if the vector[buffer_index] has 0 elements --> the vector is free */
   			buffer_pool[buffer_index].resize(number_of_elements); /* reserve the vector */
   			return buffer_pool[buffer_index]; /* and make it available */

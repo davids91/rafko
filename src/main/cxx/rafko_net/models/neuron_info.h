@@ -33,7 +33,7 @@ public:
    *
    * @return     The neuron estimated size in bytes.
    */
-  static uint32 get_neuron_estimated_size_bytes(const Neuron& neuron){
+  static std::uint32_t get_neuron_estimated_size_bytes(const Neuron& neuron){
     return (
       neuron.input_weights_size()  * 2/* Byte */ * 2/* fields( interval_size and starts) */
       + neuron.input_indices_size() * 2/* Byte */ * 2/* fields( interval_size and starts) */
@@ -47,9 +47,9 @@ public:
    *
    * @return     The neuron estimated size in megabytes.
    */
-  static sdouble32 get_neuron_estimated_size_megabytes(const Neuron& neuron){
+  static double get_neuron_estimated_size_megabytes(const Neuron& neuron){
     return (
-      static_cast<sdouble32>(get_neuron_estimated_size_bytes(neuron)) / (double_literal(1024.0) * double_literal(1024.0))
+      static_cast<double>(get_neuron_estimated_size_bytes(neuron)) / ((1024.0) * (1024.0))
     );
   }
 

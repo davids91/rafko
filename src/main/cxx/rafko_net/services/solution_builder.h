@@ -71,7 +71,7 @@ public:
 
   #if(RAFKO_USES_OPENCL)
   static std::string get_kernel_for_solution(
-    const Solution& solution, std::string name, uint32 sequence_size, uint32 prefill_input_num,
+    const Solution& solution, std::string name, std::uint32_t sequence_size, std::uint32_t prefill_input_num,
     const rafko_mainframe::RafkoSettings& settings
   );
   #endif/*(RAFKO_USES_OPENCL)*/
@@ -79,7 +79,7 @@ public:
 private:
   const rafko_mainframe::RafkoSettings& settings;
 
-  static uint32 get_last_neuron_index_of_partial(const PartialSolution& partial){
+  static std::uint32_t get_last_neuron_index_of_partial(const PartialSolution& partial){
     return (partial.output_data().starts() + partial.output_data().interval_size() - 1u);
   }
 

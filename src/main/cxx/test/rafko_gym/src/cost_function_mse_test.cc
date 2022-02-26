@@ -36,39 +36,39 @@ TEST_CASE( "Error function mean squared error test", "[training][error-function]
   rafko_mainframe::RafkoSettings settings;
 
   /* create fake data and fake features with a given distance */
-  uint16 dataset_size = 500;
-  uint32 feature_size = 20;
-  sdouble32 distance = double_literal(10.0);
+  std::uint16_t dataset_size = 500;
+  std::uint32_t feature_size = 20;
+  double distance = (10.0);
 
-  std::vector<std::vector<sdouble32>> dataset = std::vector<std::vector<sdouble32>>(dataset_size,std::vector<sdouble32>(feature_size));
-  std::vector<std::vector<sdouble32>> featureset = std::vector<std::vector<sdouble32>>(dataset_size,std::vector<sdouble32>(feature_size));
-  for(uint16 sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
-      for(uint16 feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){
-        dataset[sample_iterator][feature_iterator] = static_cast<sdouble32>(rand()%dataset_size);
+  std::vector<std::vector<double>> dataset = std::vector<std::vector<double>>(dataset_size,std::vector<double>(feature_size));
+  std::vector<std::vector<double>> featureset = std::vector<std::vector<double>>(dataset_size,std::vector<double>(feature_size));
+  for(std::uint16_t sample_iterator=0; sample_iterator< dataset_size; ++sample_iterator){
+      for(std::uint16_t feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){
+        dataset[sample_iterator][feature_iterator] = static_cast<double>(rand()%dataset_size);
         if(0 == (rand()%2)) /* For every data feature and every sample, the distance should be equal to the correspoding datapoints */
           featureset[sample_iterator][feature_iterator] = dataset[sample_iterator][feature_iterator] + distance;
         else featureset[sample_iterator][feature_iterator] = dataset[sample_iterator][feature_iterator] - distance;
       }
   }
 
-  /* one feature distance should be (double_literal(0.5) * (distance)^2 ) */
+  /* one feature distance should be ((0.5) * (distance)^2 ) */
   rafko_gym::CostFunctionMSE cost(settings);
-  for(uint16 sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
+  for(std::uint16_t sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
     REQUIRE(
       Catch::Approx(
         cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator], dataset_size)
-      ).epsilon(double_literal(0.00000000000001))
-      == (double_literal(0.5) * feature_size * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
+      ).epsilon((0.00000000000001))
+      == ((0.5) * feature_size * pow(distance,2)) / static_cast<double>(dataset_size)
     );
   }
 
   /* Test if the whole dataset can be processed in one function call */
-  std::vector<sdouble32> label_errors(dataset_size,0);
+  std::vector<double> label_errors(dataset_size,0);
   cost.get_feature_errors(dataset, featureset, label_errors, 0, 0, label_errors.size(), 0, dataset_size);
-  for(const sdouble32 label_error : label_errors){
+  for(const double label_error : label_errors){
     CHECK(
-      Catch::Approx(label_error).epsilon(double_literal(0.00000000000001))
-      == (double_literal(0.5) * feature_size * pow(distance,2)) / static_cast<sdouble32>(dataset_size)
+      Catch::Approx(label_error).epsilon((0.00000000000001))
+      == ((0.5) * feature_size * pow(distance,2)) / static_cast<double>(dataset_size)
     );
   }
 

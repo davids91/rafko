@@ -71,17 +71,17 @@ public:
    *
    * @return     The average output range.
    */
-  static constexpr sdouble32 get_average_output_range(Transfer_functions function){
+  static constexpr double get_average_output_range(Transfer_functions function){
     switch(function){
     case transfer_function_sigmoid:
     case transfer_function_tanh:
-      return double_literal(1.0);
+      return (1.0);
     case transfer_function_elu:
     case transfer_function_relu:
     case transfer_function_selu:
     case transfer_function_identity:
     default:
-      return double_literal(50.0); /* The averagest number there is */
+      return (50.0); /* The averagest number there is */
     }
   }
 
@@ -93,7 +93,7 @@ public:
    *
    * @return     The result of data.
    */
-  sdouble32 get_value(Transfer_functions function, sdouble32 data) const;
+  double get_value(Transfer_functions function, double data) const;
 
   /**
    * @brief      Gets a functions derivative calculated form the given data
@@ -103,7 +103,7 @@ public:
    *
    * @return     The derivative from data.
    */
-  sdouble32 get_derivative(Transfer_functions function, sdouble32 data) const;
+  double get_derivative(Transfer_functions function, double data) const;
 
   #if(RAFKO_USES_OPENCL)
   /**

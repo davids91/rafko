@@ -71,28 +71,28 @@ public:
    * @param[in]      weight_index     The index inside the networks weight table to be modified
    * @param[in]      weight_value     The value to set the new weight to
    */
-  virtual void set_network_weight(uint32 weight_index, sdouble32 weight_value) = 0;
+  virtual void set_network_weight(std::uint32_t weight_index, double weight_value) = 0;
 
   /**
    * @brief          Sets every weight of the stored Network directly
    *
    * @param[in]      weights     The values of the weights to be set
    */
-  virtual void set_network_weights(const std::vector<sdouble32>& weights) = 0;
+  virtual void set_network_weights(const std::vector<double>& weights) = 0;
 
   /**
    * @brief          Applies a weight change based on the provided weights vector
    *
    * @param[in]      weight_delta     The values to update the weights with
    */
-  virtual void apply_weight_update(const std::vector<sdouble32>& weight_delta) = 0;
+  virtual void apply_weight_update(const std::vector<double>& weight_delta) = 0;
 
   /**
    * @brief      Evaluates installed agents and returns with its error/fittness value
    *
    * @return     The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 full_evaluation() = 0;
+  virtual double full_evaluation() = 0;
 
   /**
    * @brief          Evaluates installed agents in a stochastic manner and returns with its error/fittness value
@@ -101,7 +101,7 @@ public:
    * @param[in]      seed_value     A helper value to make Stochastic evaluation deterministicly reproducible
    * @return         The resulting error/fitness value summary of the evaluation
    */
-  virtual sdouble32 stochastic_evaluation(bool to_seed = false, uint32 seed_value = 0u) = 0;
+  virtual double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) = 0;
 
   /**
    * @brief      For the provided input, return the result of the neural network
@@ -113,8 +113,8 @@ public:
    * @return         The output values of the network result
    */
   virtual rafko_utilities::ConstVectorSubrange<> solve(
-    const std::vector<sdouble32>& input,
-    bool reset_neuron_data = true, uint32 thread_index = 0
+    const std::vector<double>& input,
+    bool reset_neuron_data = true, std::uint32_t thread_index = 0
   ) = 0;
 
   /**

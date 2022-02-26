@@ -38,21 +38,21 @@ namespace rafko_test {
  * @param      partial_solution  The partial solution
  * @param[in]  number_of_inputs  The number of inputs to the network
  */
-extern void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_solution, uint32 number_of_inputs, uint32 neuron_offset = 0);
+extern void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_solution, std::uint32_t number_of_inputs, std::uint32_t neuron_offset = 0);
 
 /** @brief Calculates the result of the partial partial_solution manually based on the structure provided by @manual_2_neuron_partial_solution
  *         In case there are more than 2 inputs, all of them shall be processed with the same weight
  *         The end result shall be calculated as follows:
  *         - result1 = f[0]((input1 * weight1 + input2 * weight2) + bias1) //weighted inputs + bias, given to the transfer function
- *         - result1 = (prev_result1 * memory_filter1) + (result1 * (double_literal(1.0)-memory_rato1) //apply memory filter
+ *         - result1 = (prev_result1 * memory_filter1) + (result1 * ((1.0)-memory_rato1) //apply memory filter
  *         - result2 = f[1]((result1 * weight3) + bias2)
- *         - end_result = (prev_result2 * memory_filter2) + (result2 * (double_literal(1.0)-memory_rato2)
+ *         - end_result = (prev_result2 * memory_filter2) + (result2 * ((1.0)-memory_rato2)
  * @param[in]  partial_inputs      The collected inputs of the @PartialSolution
  * @param      prev_neuron_output  The previous neuron data
  * @param[in]  partial_solution    The partial solution containing the weights andmisc parameters of the calculation
  * @param[in]  neuron_offset       THe neuron offset in which the partial solution is present in the whole network
  */
-extern void manual_2_neuron_result(const std::vector<sdouble32>& partial_inputs, std::vector<sdouble32>& prev_neuron_output, const rafko_net::PartialSolution& partial_solution, uint32 neuron_offset = 0);
+extern void manual_2_neuron_result(const std::vector<double>& partial_inputs, std::vector<double>& prev_neuron_output, const rafko_net::PartialSolution& partial_solution, std::uint32_t neuron_offset = 0);
 
 /**
  * @brief      Calculates the result of a fully connected Network for the given inputs
@@ -64,8 +64,8 @@ extern void manual_2_neuron_result(const std::vector<sdouble32>& partial_inputs,
  * @param[in]  network          The network
  */
 extern void manaual_fully_connected_network_result(
-  std::vector<sdouble32>& inputs, std::vector<sdouble32> previous_data, std::vector<sdouble32>& neuron_data,
-  std::vector<uint32> layer_structure, rafko_net::RafkoNet network
+  std::vector<double>& inputs, std::vector<double> previous_data, std::vector<double>& neuron_data,
+  std::vector<std::uint32_t> layer_structure, rafko_net::RafkoNet network
 );
 
 /**
@@ -94,7 +94,7 @@ extern void print_weights(const rafko_net::RafkoNet& net, const rafko_net::Solut
  * @param[in]  settings               The service settings
  */
 extern void print_training_sample(
-  uint32 sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
+  std::uint32_t sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
   const rafko_net::RafkoNet& net, const rafko_mainframe::RafkoSettings& settings
 );
 
@@ -106,7 +106,7 @@ extern void print_training_sample(
  *
  * @return     The addition dataset. For each sample: Inputs: [a][b]; Outputs: [a+b]
  */
-extern std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> create_addition_dataset(uint32 number_of_samples);
+extern std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> create_addition_dataset(std::uint32_t number_of_samples);
 
 /**
  * @brief      Creates a normalized dataset for adding binary numbers: each number is stored
@@ -118,7 +118,7 @@ extern std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdo
  *
  * @return     The addition dataset. For each sample: Inputs: [[a0][...][an]][[b0][...][bn]]; Labels: [[result0][...][resultn]]
  */
-extern std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> create_sequenced_addition_dataset(uint32 number_of_samples, uint32 sequence_size);
+extern std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> create_sequenced_addition_dataset(std::uint32_t number_of_samples, std::uint32_t sequence_size);
 
 /**
  * @brief      Checks if the two arguments match or not
@@ -126,7 +126,7 @@ extern std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdo
  * @param      sample_data      The sample data
  * @param      ringbuffer_data  The ringbuffer data
  */
-extern void check_data_match(std::vector<sdouble32>& sample_data, std::vector<sdouble32>& ringbuffer_data);
+extern void check_data_match(std::vector<double>& sample_data, std::vector<double>& ringbuffer_data);
 
 /**
  * @brief      Generates a random Fully connected Dense network with some Layers set to have the softmax feature
@@ -136,7 +136,7 @@ extern void check_data_match(std::vector<sdouble32>& sample_data, std::vector<sd
  *
  * @return     the generated network to be owned by the caller
  */
-extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 input_size, rafko_mainframe::RafkoSettings& settings);
+extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings);
 
 /**
  * @brief      Creates a random dataset based on the given parameters
@@ -150,9 +150,9 @@ extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(uint32 inp
  * @return     The created dataset
  */
 extern std::unique_ptr<rafko_gym::DataSet> create_dataset(
-  uint32 input_size, uint32 feature_size,
-  uint32 sample_number, uint32 sequence_size, uint32 prefill_size = 0u,
-  sdouble32 expected_label = double_literal(0.0), sdouble32 label_delta_per_feature = double_literal(0.0)
+  std::uint32_t input_size, std::uint32_t feature_size,
+  std::uint32_t sample_number, std::uint32_t sequence_size, std::uint32_t prefill_size = 0u,
+  double expected_label = (0.0), double label_delta_per_feature = (0.0)
 );
 
 } /* namespace rafko_test */

@@ -47,14 +47,14 @@ TEST_CASE("Testing if GPU Context is able to build a valid openCL environment", 
 
 TEST_CASE("Testing if standalone solution is working as intended with the GPU context","[context][GPU][solve]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = 6u;
+  std::uint32_t sequence_size = 6u;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  for(uint32 variant = 0u; variant < 50u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 50u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range(double_literal(1.0))
+      .input_size(2).expected_input_range((1.0))
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -76,12 +76,12 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
 
     std::unique_ptr<rafko_net::Solution> reference_solution = rafko_net::SolutionBuilder(settings).build(*network);
     std::unique_ptr<rafko_net::SolutionSolver> reference_agent = rafko_net::SolutionSolver::Builder(*reference_solution, settings).build();
-    std::vector<sdouble32> network_input(network->input_data_size(), (rand()%10));
+    std::vector<double> network_input(network->input_data_size(), (rand()%10));
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
 
     reference_agent->set_eval_mode(false);
-    for(uint32 result_index = 0; result_index < reference_result.size(); ++result_index){
+    for(std::uint32_t result_index = 0; result_index < reference_result.size(); ++result_index){
       CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
     }
   }/*for(50 variants)*/
@@ -89,14 +89,14 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
 
 TEST_CASE("Testing if standalone solution is working as intended with the GPU context even with softmax features","[context][GPU][features][softmax]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = 6u;
+  std::uint32_t sequence_size = 6u;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  for(uint32 variant = 0u; variant < 50u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 50u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range(double_literal(1.0))
+      .input_size(2).expected_input_range((1.0))
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -122,12 +122,12 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
 
     std::unique_ptr<rafko_net::Solution> reference_solution = rafko_net::SolutionBuilder(settings).build(*network);
     std::unique_ptr<rafko_net::SolutionSolver> reference_agent = rafko_net::SolutionSolver::Builder(*reference_solution, settings).build();
-    std::vector<sdouble32> network_input(network->input_data_size(), (rand()%10));
+    std::vector<double> network_input(network->input_data_size(), (rand()%10));
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
 
     reference_agent->set_eval_mode(false);
-    for(uint32 result_index = 0; result_index < reference_result.size(); ++result_index){
+    for(std::uint32_t result_index = 0; result_index < reference_result.size(); ++result_index){
       CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
     }
   }/*for(50 variants)*/
@@ -135,14 +135,14 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
 
 TEST_CASE("Testing if a standalone solution is working as intended with the GPU context even with inputs from the past","[context][GPU][solve][memory]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = 6u;
+  std::uint32_t sequence_size = 6u;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range(double_literal(1.0))
+      .input_size(2).expected_input_range((1.0))
       .set_recurrence_to_layer()
       .allowed_transfer_functions_by_layer(
         {
@@ -165,13 +165,13 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
 
     std::unique_ptr<rafko_net::Solution> reference_solution = rafko_net::SolutionBuilder(settings).build(*network);
     std::unique_ptr<rafko_net::SolutionSolver> reference_agent = rafko_net::SolutionSolver::Builder(*reference_solution, settings).build();
-    std::vector<sdouble32> network_input(network->input_data_size(), (rand()%10));
+    std::vector<double> network_input(network->input_data_size(), (rand()%10));
 
     reference_agent->set_eval_mode(false);
-    for(uint32 steps = 0; steps < 5; ++steps){
+    for(std::uint32_t steps = 0; steps < 5; ++steps){
       rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
       rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
-      for(uint32 result_index = 0; result_index < reference_result.size(); ++result_index){
+      for(std::uint32_t result_index = 0; result_index < reference_result.size(); ++result_index){
         CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
       }
     }/*for(5 consecutive steps)*/
@@ -180,15 +180,15 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
 
 TEST_CASE("Testing full evaluation with the GPU context with single sample of sequence size one","[context][GPU][evaluate]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = rand()%3 + 1;
-  uint32 number_of_sequences = rand()%10 + 2;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t number_of_sequences = rand()%10 + 2;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range(double_literal(1.0))
+      .input_size(2).expected_input_range((1.0))
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -219,20 +219,20 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
     context->set_objective(objective);
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
-    for(uint32 steps = 0; steps < 1; ++steps){
-      std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = (
+    for(std::uint32_t steps = 0; steps < 1; ++steps){
+      std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
         rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size)
       );
       std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-        std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
-        std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
+        std::vector<std::vector<double>>(std::get<0>(tmp1)),
+        std::vector<std::vector<double>>(std::get<1>(tmp1)),
         sequence_size
       );
 
       context->set_environment(environment);
       reference_context.set_environment(environment);
 
-      for(uint32 i = 0; i < 3; ++i)
+      for(std::uint32_t i = 0; i < 3; ++i)
         REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
     }/*for(5 consecutive steps)*/
   }/*for(10 variant)*/
@@ -240,15 +240,15 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 
 TEST_CASE("Testing full evaluation with the GPU context with single sample of sequence size one with recurrence in the network","[context][GPU][evaluate]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = rand()%3 + 1;
-  uint32 number_of_sequences = rand()%10 + 2;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t number_of_sequences = rand()%10 + 2;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range(double_literal(1.0))
+      .input_size(2).expected_input_range((1.0))
       .set_recurrence_to_layer()
       .allowed_transfer_functions_by_layer(
         {
@@ -280,20 +280,20 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
     context->set_objective(objective);
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
-    for(uint32 steps = 0; steps < 1; ++steps){
-      std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = (
+    for(std::uint32_t steps = 0; steps < 1; ++steps){
+      std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
         rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size)
       );
       std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-        std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
-        std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
+        std::vector<std::vector<double>>(std::get<0>(tmp1)),
+        std::vector<std::vector<double>>(std::get<1>(tmp1)),
         sequence_size
       );
 
       context->set_environment(environment);
       reference_context.set_environment(environment);
 
-      for(uint32 i = 0; i < 3; ++i)
+      for(std::uint32_t i = 0; i < 3; ++i)
         REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
     }/*for(5 consecutive steps)*/
   }/*for(10 variant)*/
@@ -301,16 +301,16 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 
 TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[context][GPU][evaluate][multi-label]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = rand()%3 + 1;
-  uint32 number_of_sequences = rand()%10 + 2;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t number_of_sequences = rand()%10 + 2;
 
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range(double_literal(1.0))
+      .input_size(2).expected_input_range((1.0))
       .set_recurrence_to_layer()
       .allowed_transfer_functions_by_layer(
         {
@@ -343,23 +343,23 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
     Catch::StringMaker<double>::precision = 20;
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
-    for(uint32 steps = 0; steps < 5; ++steps){
+    for(std::uint32_t steps = 0; steps < 5; ++steps){
       number_of_sequences = rand()%10 + 1;
       (void)context->expose_settings().set_memory_truncation(sequence_size);
       (void)reference_context.expose_settings().set_memory_truncation(sequence_size);
-      std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = (
+      std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
         rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size)
       );
       std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-        std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
-        std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
+        std::vector<std::vector<double>>(std::get<0>(tmp1)),
+        std::vector<std::vector<double>>(std::get<1>(tmp1)),
         sequence_size
       );
 
       context->set_environment(environment);
       reference_context.set_environment(environment);
 
-      for(uint32 i = 0; i < 3; ++i)
+      for(std::uint32_t i = 0; i < 3; ++i)
         REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
     }/*for(5 consecutive steps)*/
   }/*for(10 variant)*/
@@ -367,16 +367,16 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
 
 TEST_CASE("Testing full evaluation with the GPU context with multiple labels and sequential data","[context][GPU][evaluate][multi-label][sequence]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = rand()%3 + 1;
-  uint32 number_of_sequences = rand()%10 + 2;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t number_of_sequences = rand()%10 + 2;
 
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range(double_literal(1.0))
+      .input_size(2).expected_input_range((1.0))
       .set_recurrence_to_layer()
       .allowed_transfer_functions_by_layer(
         {
@@ -408,24 +408,24 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
     context->set_objective(objective);
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
-    for(uint32 steps = 0; steps < 5; ++steps){
+    for(std::uint32_t steps = 0; steps < 5; ++steps){
       number_of_sequences = rand()%10 + 1;
       sequence_size = rand()%10 + 1;
       (void)context->expose_settings().set_memory_truncation(sequence_size);
       (void)reference_context.expose_settings().set_memory_truncation(sequence_size);
-      std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = (
+      std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
         rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size)
       );
       std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-        std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
-        std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
+        std::vector<std::vector<double>>(std::get<0>(tmp1)),
+        std::vector<std::vector<double>>(std::get<1>(tmp1)),
         sequence_size
       );
 
       context->set_environment(environment);
       reference_context.set_environment(environment);
 
-      for(uint32 i = 0; i < 3; ++i)
+      for(std::uint32_t i = 0; i < 3; ++i)
         REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
     }/*for(5 consecutive steps)*/
   }/*for(10 variant)*/
@@ -433,16 +433,16 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
 
 TEST_CASE("Testing full evaluation with the GPU context with multiple labels and sequential data and prefill","[context][GPU][evaluate][multi-label][sequence][prefill]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = rand()%3 + 1;
-  uint32 number_of_sequences = rand()%10 + 2;
-  uint32 feature_size = rand()%5 + 1;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t number_of_sequences = rand()%10 + 2;
+  std::uint32_t feature_size = rand()%5 + 1;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range(double_literal(1.0))
+      .input_size(2).expected_input_range((1.0))
       .set_recurrence_to_layer()
       .allowed_transfer_functions_by_layer(
         {
@@ -475,7 +475,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
     /*!Note: if 15 digits are used for comparison instead of 10 sometimes there's a mismatch */
 
-    for(uint32 steps = 0; steps < 5; ++steps){
+    for(std::uint32_t steps = 0; steps < 5; ++steps){
       number_of_sequences = rand()%10 + 1;
       sequence_size = rand()%10 + 1;
       (void)context->expose_settings().set_memory_truncation(sequence_size);
@@ -492,7 +492,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
       context->set_environment(environment);
       reference_context.set_environment(environment);
 
-      for(uint32 i = 0; i < 3; ++i){
+      for(std::uint32_t i = 0; i < 3; ++i){
         (void)context->stochastic_evaluation(); /* to fill up buffers with something */
         REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
       }
@@ -501,17 +501,17 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
 }
 
 void preapare_eval_buffers_for_seed(
-  uint32 seed,
-  std::vector<std::vector<sdouble32>>& reference_inputs,
-  std::vector<std::vector<sdouble32>>& reference_features,
-  std::vector<std::vector<sdouble32>>& reference_labels,
-  std::vector<uint32>& reference_sequence_index_values,
+  std::uint32_t seed,
+  std::vector<std::vector<double>>& reference_inputs,
+  std::vector<std::vector<double>>& reference_features,
+  std::vector<std::vector<double>>& reference_labels,
+  std::vector<std::uint32_t>& reference_sequence_index_values,
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment,
   rafko_mainframe::RafkoSettings& settings,
   rafko_net::SolutionSolver& reference_agent,
-  uint32& used_minibatch_size,
-  uint32& start_index_in_sequence,
-  uint32& used_sequence_truncation
+  std::uint32_t& used_minibatch_size,
+  std::uint32_t& start_index_in_sequence,
+  std::uint32_t& used_sequence_truncation
 ){
   used_minibatch_size = std::min(settings.get_minibatch_size(), environment->get_number_of_sequences());
   reference_inputs.resize(
@@ -526,9 +526,9 @@ void preapare_eval_buffers_for_seed(
   reference_sequence_index_values.resize(used_minibatch_size);
 
   srand(seed);
-  uint32 uploaded_sequences = 0u;
-  const uint32 inputs_in_a_sequence = environment->get_sequence_size() + environment->get_prefill_inputs_number();
-  const uint32 labels_in_a_sequence = environment->get_sequence_size();
+  std::uint32_t uploaded_sequences = 0u;
+  const std::uint32_t inputs_in_a_sequence = environment->get_sequence_size() + environment->get_prefill_inputs_number();
+  const std::uint32_t labels_in_a_sequence = environment->get_sequence_size();
   used_sequence_truncation = std::min(
     settings.get_memory_truncation(), environment->get_sequence_size()
   );
@@ -536,28 +536,28 @@ void preapare_eval_buffers_for_seed(
     environment->get_sequence_size() - used_sequence_truncation + 1
   ));
   while(uploaded_sequences < used_minibatch_size){
-    uint32 sequences_to_upload = rand()%(used_minibatch_size - uploaded_sequences + 1u);
-    uint32 sequence_start_index = rand()%(environment->get_number_of_sequences() - sequences_to_upload + 1u);
+    std::uint32_t sequences_to_upload = rand()%(used_minibatch_size - uploaded_sequences + 1u);
+    std::uint32_t sequence_start_index = rand()%(environment->get_number_of_sequences() - sequences_to_upload + 1u);
 
-    for(uint32 s = 0; s < sequences_to_upload; ++s){
+    for(std::uint32_t s = 0; s < sequences_to_upload; ++s){
       reference_sequence_index_values[uploaded_sequences + s] = sequence_start_index + s;
     }
 
     /* copy inputs */
-    uint32 raw_input_start = (sequence_start_index * inputs_in_a_sequence);
-    uint32 raw_input_num = (sequences_to_upload * inputs_in_a_sequence);
-    uint32 reference_offset = (uploaded_sequences * inputs_in_a_sequence);
-    for(uint32 raw_input_index = raw_input_start; raw_input_index < (raw_input_start + raw_input_num); ++raw_input_index){
+    std::uint32_t raw_input_start = (sequence_start_index * inputs_in_a_sequence);
+    std::uint32_t raw_input_num = (sequences_to_upload * inputs_in_a_sequence);
+    std::uint32_t reference_offset = (uploaded_sequences * inputs_in_a_sequence);
+    for(std::uint32_t raw_input_index = raw_input_start; raw_input_index < (raw_input_start + raw_input_num); ++raw_input_index){
       reference_inputs[reference_offset] = environment->get_input_sample(raw_input_index);
       ++reference_offset;
     }
 
     /* copy labels */
-    uint32 raw_label_start = (sequence_start_index * labels_in_a_sequence);
-    uint32 raw_label_num = (sequences_to_upload * labels_in_a_sequence);
+    std::uint32_t raw_label_start = (sequence_start_index * labels_in_a_sequence);
+    std::uint32_t raw_label_num = (sequences_to_upload * labels_in_a_sequence);
     reference_offset = (uploaded_sequences * labels_in_a_sequence);
 
-    for(uint32 raw_label_index = raw_label_start; raw_label_index < (raw_label_start + raw_label_num); ++raw_label_index){
+    for(std::uint32_t raw_label_index = raw_label_start; raw_label_index < (raw_label_start + raw_label_num); ++raw_label_index){
       reference_labels[reference_offset] = environment->get_label_sample(raw_label_index);
       ++reference_offset;
     }
@@ -566,12 +566,12 @@ void preapare_eval_buffers_for_seed(
   }/*while(minibatch is filled with random data)*/
 
   /* generate features */
-  uint32 sequences_done = 0u;
-  uint32 reference_offset = 0u;
+  std::uint32_t sequences_done = 0u;
+  std::uint32_t reference_offset = 0u;
   while(sequences_done < used_minibatch_size){
-    uint32 raw_inputs_index = ( reference_sequence_index_values[sequences_done] * inputs_in_a_sequence );
+    std::uint32_t raw_inputs_index = ( reference_sequence_index_values[sequences_done] * inputs_in_a_sequence );
 
-    for(uint32 prefill_iterator = 0; prefill_iterator < environment->get_prefill_inputs_number(); ++prefill_iterator){
+    for(std::uint32_t prefill_iterator = 0; prefill_iterator < environment->get_prefill_inputs_number(); ++prefill_iterator){
       (void)reference_agent.solve(
         environment->get_input_sample(raw_inputs_index),
         (0 == prefill_iterator)/*reset_neuron_data*/
@@ -579,12 +579,12 @@ void preapare_eval_buffers_for_seed(
       ++raw_inputs_index;
     }
 
-    for(uint32 sequence_iterator = 0; sequence_iterator < environment->get_sequence_size(); ++sequence_iterator){
+    for(std::uint32_t sequence_iterator = 0; sequence_iterator < environment->get_sequence_size(); ++sequence_iterator){
       rafko_utilities::ConstVectorSubrange<> neuron_output = reference_agent.solve(
         environment->get_input_sample(raw_inputs_index),
         ( (0u == environment->get_prefill_inputs_number())&&(0u == sequence_iterator) )/*reset_neuron_data*/
       );
-      reference_features[reference_offset] = std::vector<sdouble32>{ neuron_output.begin(), neuron_output.end() };
+      reference_features[reference_offset] = std::vector<double>{ neuron_output.begin(), neuron_output.end() };
       ++reference_offset;
       ++raw_inputs_index;
     }
@@ -594,15 +594,15 @@ void preapare_eval_buffers_for_seed(
 
 TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][context][GPU][evaluate][multi-label][sequence][prefill]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = rand()%3 + 1;
-  uint32 number_of_sequences = rand()%10 + 2;
-  uint32 feature_size = rand()%5 + 1;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t number_of_sequences = rand()%10 + 2;
+  std::uint32_t feature_size = rand()%5 + 1;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-    .input_size(2).expected_input_range(double_literal(1.0))
+    .input_size(2).expected_input_range((1.0))
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
       {
@@ -626,7 +626,7 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
   std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(network_copy);
   std::unique_ptr<rafko_net::SolutionSolver> reference_agent(rafko_net::SolutionSolver::Builder(*solution, settings).build());
 
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       settings, rafko_gym::cost_function_squared_error
     );
@@ -636,35 +636,35 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
 
     context->set_objective(objective);
 
-    for(uint32 steps = 0; steps < 5; ++steps){
+    for(std::uint32_t steps = 0; steps < 5; ++steps){
       number_of_sequences = rand()%10 + 2;
       sequence_size = rand()%10 + 2;
       settings = context->expose_settings().set_memory_truncation(sequence_size);
       std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
         2/* input size */, feature_size,
         number_of_sequences, sequence_size, 2/*prefill_size*/,
-        rand()%100/*expected_label*/, double_literal(1.0)
+        rand()%100/*expected_label*/, (1.0)
       ) );
       std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
-      std::vector<std::vector<sdouble32>> reference_inputs;
-      std::vector<std::vector<sdouble32>> reference_features;
-      std::vector<std::vector<sdouble32>> reference_labels;
-      std::vector<uint32> reference_sequence_index_values;
+      std::vector<std::vector<double>> reference_inputs;
+      std::vector<std::vector<double>> reference_features;
+      std::vector<std::vector<double>> reference_labels;
+      std::vector<std::uint32_t> reference_sequence_index_values;
 
-      uint32 used_minibatch_size;
-      uint32 start_index_in_sequence;
-      uint32 used_sequence_truncation;
+      std::uint32_t used_minibatch_size;
+      std::uint32_t start_index_in_sequence;
+      std::uint32_t used_sequence_truncation;
       context->set_environment(environment);
       /* upload random labels and inputs */
-      uint32 seed = rand();
+      std::uint32_t seed = rand();
       preapare_eval_buffers_for_seed(
         seed, reference_inputs, reference_features, reference_labels, reference_sequence_index_values,
         environment, settings, *reference_agent, used_minibatch_size, start_index_in_sequence, used_sequence_truncation
       );
 
-      sdouble32 minibatch_error = 0u;
-      for(uint32 minibatch_index = 0; minibatch_index < used_minibatch_size; ++minibatch_index){
-        sdouble32 partial_sum = objective->set_features_for_sequences(
+      double minibatch_error = 0u;
+      for(std::uint32_t minibatch_index = 0; minibatch_index < used_minibatch_size; ++minibatch_index){
+        double partial_sum = objective->set_features_for_sequences(
           *environment, reference_features, (minibatch_index * environment->get_sequence_size())/* neuron_buffer_index */,
           reference_sequence_index_values[minibatch_index]/*sequence_start_index*/, 1u/* sequences_to_evaluate */,
           start_index_in_sequence, used_sequence_truncation
@@ -672,21 +672,21 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
         minibatch_error += partial_sum;
       }
 
-      minibatch_error /= static_cast<sdouble32>(used_minibatch_size * environment->get_sequence_size());
+      minibatch_error /= static_cast<double>(used_minibatch_size * environment->get_sequence_size());
       REQUIRE( Catch::Approx(-minibatch_error).epsilon(0.00000000000001) == context->stochastic_evaluation(true, seed) );
 
-      for(uint32 i = 0; i < 5; ++i){
+      for(std::uint32_t i = 0; i < 5; ++i){
 
         minibatch_error = 0u;
-        for(uint32 minibatch_index = 0; minibatch_index < used_minibatch_size; ++minibatch_index){
-          sdouble32 partial_sum = objective->set_features_for_sequences(
+        for(std::uint32_t minibatch_index = 0; minibatch_index < used_minibatch_size; ++minibatch_index){
+          double partial_sum = objective->set_features_for_sequences(
             *environment, reference_features, (minibatch_index * environment->get_sequence_size())/* neuron_buffer_index */,
             reference_sequence_index_values[minibatch_index]/*sequence_start_index*/, 1u/* sequences_to_evaluate */,
             start_index_in_sequence, used_sequence_truncation
           );
           minibatch_error += partial_sum;
         }
-        minibatch_error /= static_cast<sdouble32>(used_minibatch_size * environment->get_sequence_size());
+        minibatch_error /= static_cast<double>(used_minibatch_size * environment->get_sequence_size());
 
         (void)context->full_evaluation(); /* to fill up buffers with something else */
         REQUIRE( Catch::Approx(context->stochastic_evaluation(true, seed)).epsilon(0.00000000000001) == context->stochastic_evaluation(true, seed) );
@@ -708,15 +708,15 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
 
 TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-update]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = rand()%3 + 1;
-  uint32 number_of_sequences = rand()%10 + 2;
-  uint32 feature_size = rand()%5 + 1;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t number_of_sequences = rand()%10 + 2;
+  std::uint32_t feature_size = rand()%5 + 1;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-    .input_size(2).expected_input_range(double_literal(1.0))
+    .input_size(2).expected_input_range((1.0))
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
       {
@@ -744,7 +744,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
   reference_context.set_objective(objective);
   context->set_objective(objective);
 
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     number_of_sequences = rand()%10 + 1;
     sequence_size = rand()%10 + 1;
     (void)context->expose_settings().set_memory_truncation(sequence_size);
@@ -752,19 +752,19 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
       number_of_sequences, sequence_size, 2/*prefill_size*/,
-      rand()%100/*expected_label*/, double_literal(1.0)
+      rand()%100/*expected_label*/, (1.0)
     ) );
     std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
 
     context->set_environment(environment);
     reference_context.set_environment(environment);
 
-    for(uint32 steps = 0; steps < 5; ++steps){
+    for(std::uint32_t steps = 0; steps < 5; ++steps){
       REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
 
       /* modify single weight */
-      uint32 weight_index = rand()%(network->weight_table_size());
-      sdouble32 weight_value = static_cast<sdouble32>(rand()%20) / double_literal(15.0);
+      std::uint32_t weight_index = rand()%(network->weight_table_size());
+      double weight_value = static_cast<double>(rand()%20) / (15.0);
       context->set_network_weight(weight_index, weight_value);
       reference_context.set_network_weight(weight_index, weight_value);
     }/*for(5 consecutive steps)*/
@@ -773,16 +773,16 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
 
 TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-update][bulk]"){
   google::protobuf::Arena arena;
-  uint32 sequence_size = rand()%3 + 1;
-  uint32 number_of_sequences = rand()%10 + 2;
-  uint32 feature_size = rand()%5 + 1;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t number_of_sequences = rand()%10 + 2;
+  std::uint32_t feature_size = rand()%5 + 1;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
-    .set_learning_rate(double_literal(0.1))
+    .set_learning_rate((0.1))
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
-    .input_size(2).expected_input_range(double_literal(1.0))
+    .input_size(2).expected_input_range((1.0))
     .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
       {
@@ -811,7 +811,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
   reference_context.set_objective(objective);
   context->set_objective(objective);
 
-  for(uint32 variant = 0u; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     number_of_sequences = rand()%10 + 1;
     sequence_size = rand()%10 + 1;
     (void)context->expose_settings().set_memory_truncation(sequence_size);
@@ -819,35 +819,35 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
       number_of_sequences, sequence_size, 2/*prefill_size*/,
-      rand()%100/*expected_label*/, double_literal(1.0)
+      rand()%100/*expected_label*/, (1.0)
     ) );
     std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
 
     context->set_environment(environment);
     reference_context.set_environment(environment);
 
-    for(uint32 steps = 0; steps < 5; ++steps){
+    for(std::uint32_t steps = 0; steps < 5; ++steps){
       REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
 
-      std::vector<sdouble32> weight_deltas(network->weight_table_size());
+      std::vector<double> weight_deltas(network->weight_table_size());
       std::generate(weight_deltas.begin(), weight_deltas.end(), [](){
-        return static_cast<sdouble32>(rand()%100) / double_literal(100.0);
+        return static_cast<double>(rand()%100) / (100.0);
       });
       context->set_network_weights(weight_deltas);
       reference_context.set_network_weights(weight_deltas);
     }/*for(5 consecutive steps)*/
 
-    for(uint32 steps = 0; steps < 5; ++steps){
+    for(std::uint32_t steps = 0; steps < 5; ++steps){
       REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
 
       REQUIRE( context->expose_network().weight_table_size() == reference_context.expose_network().weight_table_size() );
-      for(sint32 weight_index = 0; weight_index < context->expose_network().weight_table_size(); ++weight_index){
+      for(std::int32_t weight_index = 0; weight_index < context->expose_network().weight_table_size(); ++weight_index){
         REQUIRE( context->expose_network().weight_table(weight_index) == reference_context.expose_network().weight_table(weight_index) );
       }
 
-      std::vector<sdouble32> weight_deltas(network->weight_table_size());
+      std::vector<double> weight_deltas(network->weight_table_size());
       std::generate(weight_deltas.begin(), weight_deltas.end(), [](){
-        return static_cast<sdouble32>(rand()%100) / double_literal(100.0);
+        return static_cast<double>(rand()%100) / (100.0);
       });
 
       context->apply_weight_update(weight_deltas);

@@ -37,24 +37,24 @@ NeuronRouter::NeuronRouter(const RafkoNet& rafko_net)
         synapse_iterator < net.neuron_array(neuron_iterator).input_indices_size();
         ++synapse_iterator
       ) neuron_number_of_inputs[neuron_iterator] += net.neuron_array(neuron_iterator).input_indices(synapse_iterator).interval_size();
-      neuron_states.push_back(std::make_unique<std::atomic<uint32>>());
+      neuron_states.push_back(std::make_unique<std::atomic<std::uint32_t>>());
   } /* Calculating how many children one Neuron has */
 
-  for(sint32 feature_index = 0; feature_index < rafko_net.neuron_group_features_size(); feature_index++){
+  for(std::int32_t feature_index = 0; feature_index < rafko_net.neuron_group_features_size(); feature_index++){
     /* For each relevant feature group */
     const FeatureGroup& feature_group = rafko_net.neuron_group_features(feature_index);
     tracked_features.push_back( FeatureGroupCache(feature_group) );
-    SynapseIterator<>::iterate(feature_group.relevant_neurons(),[&](sint32 neuron_index){
+    SynapseIterator<>::iterate(feature_group.relevant_neurons(),[&](std::int32_t neuron_index){
       features_assigned_to_neurons[neuron_index].push_back(tracked_features.size() - 1u);
     });
     /*!Note: tracked_features should be unchanged after constructor as it is used by index in the construction logic */
   }/* for(each feature group in the network) */
 }
 
-void NeuronRouter::collect_subset(uint8 arg_max_solve_threads, sdouble32 arg_device_max_megabytes, bool strict){
+void NeuronRouter::collect_subset(std::uint8_t arg_max_solve_threads, double arg_device_max_megabytes, bool strict){
   collection_running = true;
   std::vector<std::thread> processing_threads;
-  for(uint8 thread_iterator = 0; thread_iterator < arg_max_solve_threads; thread_iterator++){
+  for(std::uint8_t thread_iterator = 0; thread_iterator < arg_max_solve_threads; thread_iterator++){
     processing_threads.push_back(
       std::thread(
         &NeuronRouter::collect_subset_thread,
@@ -72,19 +72,19 @@ void NeuronRouter::collect_subset(uint8 arg_max_solve_threads, sdouble32 arg_dev
   ++iteration;
 }
 
-void NeuronRouter::collect_subset_thread(uint8 arg_max_solve_threads, sdouble32 arg_device_max_megabytes, uint8 thread_index, bool strict){
+void NeuronRouter::collect_subset_thread(std::uint8_t arg_max_solve_threads, double arg_device_max_megabytes, std::uint8_t thread_index, bool strict){
   /** @brief visiting:
    * In order of the iteration, the visited neuron indexes. The First Index is always one of the Output Layer Neurons
    */
-  std::vector<uint32> visiting(1,
+  std::vector<std::uint32_t> visiting(1,
     (output_layer_iterator + ((net.neuron_array_size()-1-output_layer_iterator)/arg_max_solve_threads)*thread_index)
   ); /* The first Neuron to be visited is decided based on the number of threads, to make sure the threads are as independent as possible */
-  uint32 visiting_next = visiting.back();
+  std::uint32_t visiting_next = visiting.back();
 
   while( /* Iterate the Net until every possible Neuron is collected into an independent subset of it */
     (net.neuron_array_size() > static_cast<int>(visiting.back())) /* The currently visiting Neuron is inside bounds of the net */
     &&(static_cast<int>(output_layer_iterator) < net.neuron_array_size()) /* Until the whole output layer is processed */
-    &&(net_subset_size_bytes/* Bytes *// double_literal(1024.0) /* KB *// double_literal(1024.0) /* MB */ < arg_device_max_megabytes) /* Or there is enough collected Neurons for a Partial solution */
+    &&(net_subset_size_bytes/* Bytes *// (1024.0) /* KB *// (1024.0) /* MB */ < arg_device_max_megabytes) /* Or there is enough collected Neurons for a Partial solution */
   ){
     visiting_next = get_next_neuron(visiting, strict);
     if(visiting.back() == visiting_next)
@@ -93,12 +93,12 @@ void NeuronRouter::collect_subset_thread(uint8 arg_max_solve_threads, sdouble32 
   }
 }
 
-uint32 NeuronRouter::get_next_neuron(std::vector<uint32>& visiting, bool strict){
-  uint32 visiting_next = 0;
-  uint32 start_input_index_from = 0;
-  uint32 number_of_processed_inputs = 0;
-  uint32 start_synapse_iteration_from = 0;
-  uint32 expected_neuron_state = 0;
+std::uint32_t NeuronRouter::get_next_neuron(std::vector<std::uint32_t>& visiting, bool strict){
+  std::uint32_t visiting_next = 0;
+  std::uint32_t start_input_index_from = 0;
+  std::uint32_t number_of_processed_inputs = 0;
+  std::uint32_t start_synapse_iteration_from = 0;
+  std::uint32_t expected_neuron_state = 0;
 
   visiting_next = visiting.back();
   while(/* Checking current Neuron and its inputs */
@@ -110,7 +110,7 @@ uint32 NeuronRouter::get_next_neuron(std::vector<uint32>& visiting, bool strict)
     expected_neuron_state = *neuron_states[visiting.back()];
     if(is_neuron_in_progress(visiting.back())){ /* If the Neuron is in progess still */
       number_of_processed_inputs = std::min(
-        static_cast<uint32>(*neuron_states[visiting.back()]),
+        static_cast<std::uint32_t>(*neuron_states[visiting.back()]),
         neuron_number_of_inputs[visiting.back()]
       );
       iter.skim_terminatable([&](InputSynapseInterval input_synapse){
@@ -122,15 +122,15 @@ uint32 NeuronRouter::get_next_neuron(std::vector<uint32>& visiting, bool strict)
       }); /* Skim through its input synapses */
     }
     number_of_processed_inputs = start_input_index_from;
-    uint32 current_backreach;
+    std::uint32_t current_backreach;
     iter.iterate_terminatable([&](InputSynapseInterval input_synapse){
       current_backreach = input_synapse.reach_past_loops();
       return true;
-    },[&](sint32 synapse_input_index){
+    },[&](std::int32_t synapse_input_index){
       if(
         ( /* check if the input is the Neuron is itself, because then it automatically counts as finished */
           (!SynapseIterator<>::is_index_input(synapse_input_index))
-          &&(static_cast<sint32>(visiting.back()) == synapse_input_index)
+          &&(static_cast<std::int32_t>(visiting.back()) == synapse_input_index)
         )||(( /* check for each input of the neuron if they are finished */
           (SynapseIterator<>::is_index_input(synapse_input_index))
           ||(0 < current_backreach) /* Inputs from the past count as already processed */
@@ -173,35 +173,35 @@ uint32 NeuronRouter::get_next_neuron(std::vector<uint32>& visiting, bool strict)
   return visiting_next;
 }
 
-void NeuronRouter::add_neuron_into_subset(uint32 neuron_index){
-  uint32 tmp_number = neuron_number_of_inputs[neuron_index];
-  sdouble32 tmp_size = 0;
+void NeuronRouter::add_neuron_into_subset(std::uint32_t neuron_index){
+  std::uint32_t tmp_number = neuron_number_of_inputs[neuron_index];
+  double tmp_size = 0;
   std::lock_guard<std::mutex> lock(net_subset_mutex);
   if(
     /* (0 == (rand()%50))&& Uncomment this to test the roboustness of the network creation */
     is_neuron_solvable(neuron_index) /* If Neuron is solvable, and lock is successful */
     &&((neuron_states[neuron_index])->compare_exchange_strong(tmp_number,neuron_state_reserved_value(neuron_index)))
   ){ /* Push it into the Neuron subset */
-    for(uint32 subset_neuron_index : net_subset){
+    for(std::uint32_t subset_neuron_index : net_subset){
       if(subset_neuron_index == neuron_index){
         return;
       }/* If it's already in there, exit this function. */
     } /* Check if the subset already contains @neuron_index */
 
     net_subset.push_back(neuron_index);
-    net_subset_index.push_back(std::numeric_limits<uint32>::max());
+    net_subset_index.push_back(std::numeric_limits<std::uint32_t>::max());
 
     /* Collect estimated size of Neuron in the @PartialSolution */
     tmp_number = NeuronInfo::get_neuron_estimated_size_bytes(net.neuron_array(neuron_index));
     tmp_size = net_subset_size_bytes; /* Add estimated Neuron Size */
     while(!net_subset_size_bytes.compare_exchange_weak(
-      tmp_size,tmp_size + static_cast<sdouble32>(tmp_number)/(double_literal(1024.0) * double_literal(1024.0))
+      tmp_size,tmp_size + static_cast<double>(tmp_number)/((1024.0) * (1024.0))
     ))tmp_size = net_subset_size_bytes;
   }
 }
 
-void NeuronRouter::step(std::vector<uint32>& visiting, uint32 visiting_next){
-  uint32 tmp_index = 0;
+void NeuronRouter::step(std::vector<std::uint32_t>& visiting, std::uint32_t visiting_next){
+  std::uint32_t tmp_index = 0;
   if(visiting_next != visiting.back()){ /* found another Neuron to iterate to because the index values differ (because visiting_next is updated!) */
     visiting.push_back(visiting_next);
   }else if(1 < visiting.size()){ /* haven't found another Neuron to iterate to, try with parent Neuron, if there is any.. */
@@ -222,18 +222,18 @@ void NeuronRouter::step(std::vector<uint32>& visiting, uint32 visiting_next){
   } /* (1 == visiting.size()) */
 }
 
-std::vector<std::reference_wrapper<const FeatureGroup>> NeuronRouter::confirm_first_subset_element_processed(uint32 neuron_index){
+std::vector<std::reference_wrapper<const FeatureGroup>> NeuronRouter::confirm_first_subset_element_processed(std::uint32_t neuron_index){
   assert(!collection_running);
   assert(0 < net_subset.size());
   assert(neuron_index == net_subset.front());
-  std::vector<uint32> solved_features; /* of index values pointing to tracked_features */
+  std::vector<std::uint32_t> solved_features; /* of index values pointing to tracked_features */
   std::vector<std::reference_wrapper<const FeatureGroup>> retval;
 
   (neuron_states[neuron_index])->store(neuron_state_processed_value(neuron_index));
   net_subset.pop_front();
 
   /* Look for the solved features */
-  for(uint32 feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
+  for(std::uint32_t feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
     FeatureGroupCache& feature = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
     feature.neuron_triggered();
     if(feature.solved()){
@@ -242,28 +242,28 @@ std::vector<std::reference_wrapper<const FeatureGroup>> NeuronRouter::confirm_fi
     }
   }
 
-  for(uint32 feature_index : solved_features){ /* Removed already solved features from Neuron feature vector cache */
-      SynapseIterator<>::iterate(tracked_features[feature_index].get_host().relevant_neurons(), [&](sint32 neuron_index){
+  for(std::uint32_t feature_index : solved_features){ /* Removed already solved features from Neuron feature vector cache */
+      SynapseIterator<>::iterate(tracked_features[feature_index].get_host().relevant_neurons(), [&](std::int32_t neuron_index){
         /* find feature in Neuron assigned features */
-        std::vector<uint32>& neuron_features_vecor = features_assigned_to_neurons[neuron_index];
-        std::vector<uint32>::iterator it = std::find(neuron_features_vecor.begin(), neuron_features_vecor.end(), feature_index);
+        std::vector<std::uint32_t>& neuron_features_vecor = features_assigned_to_neurons[neuron_index];
+        std::vector<std::uint32_t>::iterator it = std::find(neuron_features_vecor.begin(), neuron_features_vecor.end(), feature_index);
         if(it != neuron_features_vecor.end()){ neuron_features_vecor.erase(it); }
       });
   }
   return retval;
 }
 
-bool NeuronRouter::is_neuron_without_dependency(uint32 neuron_index){
+bool NeuronRouter::is_neuron_without_dependency(std::uint32_t neuron_index){
   bool ret = true;
   if(!is_neuron_processed(neuron_index)){
-    std::deque<uint32>::iterator neuron_in_subset = std::find(net_subset.begin(), net_subset.end(), neuron_index);
+    std::deque<std::uint32_t>::iterator neuron_in_subset = std::find(net_subset.begin(), net_subset.end(), neuron_index);
     if(net_subset.end() != neuron_in_subset){ /* The Neuron must be included in the subset if it's not processed already to not have any dependencies */
       /* The Neuron is not processed, but included in the subset. Check its inputs! */
-      SynapseIterator<InputSynapseInterval>::iterate_terminatable(net.neuron_array(neuron_index).input_indices(),[&](sint32 synapse_input_index){
+      SynapseIterator<InputSynapseInterval>::iterate_terminatable(net.neuron_array(neuron_index).input_indices(),[&](std::int32_t synapse_input_index){
         if(!is_neuron_processed(synapse_input_index)){ /* If Neuron input is not processed */
           /* then the input must be in front of the Neuron inside the subset */
-          for(std::deque<uint32>::iterator iter = net_subset.begin(); iter != neuron_in_subset; ++iter){
-            if(static_cast<sint32>(*iter) == synapse_input_index)
+          for(std::deque<std::uint32_t>::iterator iter = net_subset.begin(); iter != neuron_in_subset; ++iter){
+            if(static_cast<std::int32_t>(*iter) == synapse_input_index)
               return true; /* Found the Neuron input before its parent! Input OK, but continue searching. */
           }
           ret = false; /* Could not find Neuron input before the Neuron in the subset */
@@ -275,12 +275,12 @@ bool NeuronRouter::is_neuron_without_dependency(uint32 neuron_index){
   }return true; /* Neuron is already processed, theoritically it shouldn't have any pending dependecies.. */
 }
 
-std::vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_index) const{
-  std::vector<uint32> result;
+std::vector<std::uint32_t> NeuronRouter::get_dependents_in_subset_of(std::uint32_t neuron_index) const{
+  std::vector<std::uint32_t> result;
   if(0 < net_subset.size()){
     /* Find Neuron in subset */
-    uint32 subset_index = net_subset.size();
-    for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
+    std::uint32_t subset_index = net_subset.size();
+    for(std::uint32_t subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
       if(neuron_index == net_subset[subset_iterator]){
         subset_index = subset_iterator;
         result.push_back(neuron_index);
@@ -288,12 +288,12 @@ std::vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_inde
       }
     }
     if(subset_index < net_subset.size()){ /* Neuron was found in subset! */
-      for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
+      for(std::uint32_t subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
         /* go through the subset and omit the Neurons who have this one as a dependency */
         SynapseIterator<InputSynapseInterval>::iterate(
           net.neuron_array(net_subset[subset_iterator]).input_indices(),
-          [&](sint32 synapse_index){
-            if(synapse_index == static_cast<sint32>(neuron_index)){
+          [&](std::int32_t synapse_index){
+            if(synapse_index == static_cast<std::int32_t>(neuron_index)){
               result.push_back(net_subset[subset_iterator]);
             }
           }
@@ -304,12 +304,12 @@ std::vector<uint32> NeuronRouter::get_dependents_in_subset_of(uint32 neuron_inde
   return result;
 }
 
-void NeuronRouter::omit_from_subset(uint32 neuron_index){
+void NeuronRouter::omit_from_subset(std::uint32_t neuron_index){
   if(collection_running)throw std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
-  std::vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
-  for(uint32 neuron : to_remove){
+  std::vector<std::uint32_t> to_remove = get_dependents_in_subset_of(neuron_index);
+  for(std::uint32_t neuron : to_remove){
     (neuron_states[neuron])->store(0); /* set its state back to 0 */
-    for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
+    for(std::uint32_t subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
       if(net_subset[subset_iterator] == neuron){ /* And then erase it from the subset finally */
         net_subset_size_bytes.store(net_subset_size_bytes.load() - NeuronInfo::get_neuron_estimated_size_bytes(net.neuron_array(neuron)));
         net_subset.erase(net_subset.begin() + subset_iterator);
@@ -317,18 +317,18 @@ void NeuronRouter::omit_from_subset(uint32 neuron_index){
       }
     }
   }
-  for(uint32 neuron : to_remove){
+  for(std::uint32_t neuron : to_remove){
     omit_from_subset(neuron);
   }
 }
 
-void NeuronRouter::omit_from_subset(uint32 neuron_index, std::deque<uint32>& paired_array){
+void NeuronRouter::omit_from_subset(std::uint32_t neuron_index, std::deque<std::uint32_t>& paired_array){
   if(collection_running)throw std::runtime_error("Unable to omit Neuron because subset colleciton is still ongoing!");
   if(get_subset_size() != paired_array.size()) throw std::runtime_error("Subset size doesn't match with the paired array!");
-  std::vector<uint32> to_remove = get_dependents_in_subset_of(neuron_index);
-  for(uint32 neuron : to_remove){
+  std::vector<std::uint32_t> to_remove = get_dependents_in_subset_of(neuron_index);
+  for(std::uint32_t neuron : to_remove){
     (neuron_states[neuron])->store(0); /* set its state back to 0 */
-    for(uint32 subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
+    for(std::uint32_t subset_iterator = 0; subset_iterator < net_subset.size(); ++subset_iterator){
       if(net_subset[subset_iterator] == neuron){ /* And then erase it from the subset finally */
         net_subset_size_bytes.store(net_subset_size_bytes.load() - NeuronInfo::get_neuron_estimated_size_bytes(net.neuron_array(neuron)));
         net_subset.erase(net_subset.begin() + subset_iterator);
@@ -337,34 +337,34 @@ void NeuronRouter::omit_from_subset(uint32 neuron_index, std::deque<uint32>& pai
       }
     }
   }
-  for(uint32 neuron : to_remove){
+  for(std::uint32_t neuron : to_remove){
     omit_from_subset(neuron, paired_array);
   }
 }
 
-uint32 NeuronRouter::neuron_state_reserved_value(uint32 neuron_index) const{
+std::uint32_t NeuronRouter::neuron_state_reserved_value(std::uint32_t neuron_index) const{
   assert(neuron_index < neuron_number_of_inputs.size());
   return neuron_number_of_inputs[neuron_index] + 1u;
 }
 
-uint32 NeuronRouter::neuron_state_processed_value(uint32 neuron_index) const{
+std::uint32_t NeuronRouter::neuron_state_processed_value(std::uint32_t neuron_index) const{
   assert(neuron_index < neuron_number_of_inputs.size());
   return neuron_number_of_inputs[neuron_index] + 2u;
 }
 
-sint32 NeuronRouter::neuron_state_iteration_value(uint32 neuron_index) const{
+std::int32_t NeuronRouter::neuron_state_iteration_value(std::uint32_t neuron_index) const{
   return (*neuron_states[neuron_index] - neuron_state_processed_value(neuron_index));
 }
 
-uint32 NeuronRouter::neuron_iteration_relevance(uint32 neuron_index) const{
-  return static_cast<uint32>(std::max( 0, neuron_state_iteration_value(neuron_index) ));
+std::uint32_t NeuronRouter::neuron_iteration_relevance(std::uint32_t neuron_index) const{
+  return static_cast<std::uint32_t>(std::max( 0, neuron_state_iteration_value(neuron_index) ));
 }
 
-sint32 NeuronRouter::neuron_state_next_iteration_value(uint32 neuron_index, uint16 iteration) const{
+std::int32_t NeuronRouter::neuron_state_next_iteration_value(std::uint32_t neuron_index, std::uint16_t iteration) const{
   return (neuron_state_processed_value(neuron_index) + iteration + 1u);
 }
 
-bool NeuronRouter::is_neuron_subset_candidate(uint32 neuron_index, uint16 iteration) const{
+bool NeuronRouter::is_neuron_subset_candidate(std::uint32_t neuron_index, std::uint16_t iteration) const{
   return(
     (neuron_iteration_relevance(neuron_index) <= iteration)
     &&(!is_neuron_processed(neuron_index))
@@ -372,9 +372,9 @@ bool NeuronRouter::is_neuron_subset_candidate(uint32 neuron_index, uint16 iterat
   );
 }
 
-bool NeuronRouter::are_neuron_feature_groups_finished_for(uint32 neuron_index) const{
+bool NeuronRouter::are_neuron_feature_groups_finished_for(std::uint32_t neuron_index) const{
   assert(neuron_index < features_assigned_to_neurons.size());
-  for(uint32 feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
+  for(std::uint32_t feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
     const FeatureGroupCache& feature = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
     if(
       ( NeuronInfo::is_feature_relevant_to_solution(feature.get_host().feature()) )

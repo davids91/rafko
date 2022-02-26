@@ -18,18 +18,18 @@
 
 namespace rafko_gym{
 
-void RafkoWeightUpdaterAMSGrad::iterate(const std::vector<sdouble32>& gradients){
-  sdouble32 raw_moment;
-  for(uint32 weight_index = 0; weight_index < moment.size(); ++weight_index){
+void RafkoWeightUpdaterAMSGrad::iterate(const std::vector<double>& gradients){
+  double raw_moment;
+  for(std::uint32_t weight_index = 0; weight_index < moment.size(); ++weight_index){
     moment[weight_index] = (
       (settings.get_beta() * moment[weight_index])
-      + ( ((double_literal(1.0) - settings.get_beta()) * gradients[weight_index]) )
+      + ( (((1.0) - settings.get_beta()) * gradients[weight_index]) )
     );
     raw_moment = (
       (settings.get_beta_2() * raw_moment_max[weight_index])
       + (
-        ((double_literal(1.0) - settings.get_beta_2())
-        * std::pow(gradients[weight_index], double_literal(2.0)))
+        (((1.0) - settings.get_beta_2())
+        * std::pow(gradients[weight_index], (2.0)))
       )
     );
     if(raw_moment > raw_moment_max[weight_index])

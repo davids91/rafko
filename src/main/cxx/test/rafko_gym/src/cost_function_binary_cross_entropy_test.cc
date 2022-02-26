@@ -37,44 +37,44 @@ TEST_CASE( "Error function binary cross entropy test", "[training][error-functio
   rafko_mainframe::RafkoSettings settings;
 
   /* create fake data and fake features with a given distance */
-  uint16 dataset_size = 500;
-  uint32 feature_size = 20;
+  std::uint16_t dataset_size = 500;
+  std::uint32_t feature_size = 20;
 
-  std::vector<std::vector<sdouble32>> dataset = std::vector<std::vector<sdouble32>>(dataset_size,std::vector<sdouble32>(feature_size));
-  std::vector<std::vector<sdouble32>> featureset = std::vector<std::vector<sdouble32>>(dataset_size,std::vector<sdouble32>(feature_size));
-  for(uint16 sample_iterator = 0u; sample_iterator< dataset_size; ++sample_iterator){
-      for(uint16 feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){
+  std::vector<std::vector<double>> dataset = std::vector<std::vector<double>>(dataset_size,std::vector<double>(feature_size));
+  std::vector<std::vector<double>> featureset = std::vector<std::vector<double>>(dataset_size,std::vector<double>(feature_size));
+  for(std::uint16_t sample_iterator = 0u; sample_iterator< dataset_size; ++sample_iterator){
+      for(std::uint16_t feature_iterator=0; feature_iterator< feature_size; ++feature_iterator){
         if(0 == (rand()%2)) /* Create random classification vectors */
-          dataset[sample_iterator][feature_iterator] = double_literal(0.9999999999999999);
-        else dataset[sample_iterator][feature_iterator] = double_literal(0.0000000000000001);
+          dataset[sample_iterator][feature_iterator] = (0.9999999999999999);
+        else dataset[sample_iterator][feature_iterator] = (0.0000000000000001);
         if(0 == (rand()%2)) /* Create random classification vectors */
-          featureset[sample_iterator][feature_iterator] = double_literal(0.9999999999999999); /* don't use one, because log(1.0 - x) = -infinity! when x = 1.0 */
-        else featureset[sample_iterator][feature_iterator] = double_literal(0.0000000000000001); /* don't use zero, because log(0) = -infinity! */
+          featureset[sample_iterator][feature_iterator] = (0.9999999999999999); /* don't use one, because log(1.0 - x) = -infinity! when x = 1.0 */
+        else featureset[sample_iterator][feature_iterator] = (0.0000000000000001); /* don't use zero, because log(0) = -infinity! */
       }
   }
 
   rafko_gym::CostFunctionBinaryCrossEntropy cost(settings);
-  std::vector<sdouble32> calculated_errors;
-  for(uint16 sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
-    calculated_errors.push_back(double_literal(0.0));
-    for(uint32 i = 0u; i < dataset[sample_iterator].size(); ++i){
+  std::vector<double> calculated_errors;
+  for(std::uint16_t sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
+    calculated_errors.push_back((0.0));
+    for(std::uint32_t i = 0u; i < dataset[sample_iterator].size(); ++i){
       calculated_errors[sample_iterator] += (
         (dataset[sample_iterator][i] * std::log(featureset[sample_iterator][i]))
-        + ( (double_literal(1.0) - dataset[sample_iterator][i]) * std::log((double_literal(1.0) - featureset[sample_iterator][i])) )
+        + ( ((1.0) - dataset[sample_iterator][i]) * std::log(((1.0) - featureset[sample_iterator][i])) )
       );
     }
-    calculated_errors[sample_iterator] /= static_cast<sdouble32>(dataset_size);
+    calculated_errors[sample_iterator] /= static_cast<double>(dataset_size);
     REQUIRE(
       Catch::Approx(
         cost.get_feature_error(dataset[sample_iterator], featureset[sample_iterator], dataset_size)
-      ).epsilon(double_literal(0.00000000000001)) == calculated_errors[sample_iterator]
+      ).epsilon((0.00000000000001)) == calculated_errors[sample_iterator]
     );
   }
 
-  std::vector<sdouble32> label_errors(dataset_size,0);
+  std::vector<double> label_errors(dataset_size,0);
   cost.get_feature_errors(dataset, featureset, label_errors, 0, 0, label_errors.size(), 0, dataset_size);
-  for(uint16 sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
-    CHECK( Catch::Approx(label_errors[sample_iterator]).epsilon(double_literal(0.00000000000001)) == calculated_errors[sample_iterator] );
+  for(std::uint16_t sample_iterator = 0; sample_iterator < dataset_size; ++sample_iterator){
+    CHECK( Catch::Approx(label_errors[sample_iterator]).epsilon((0.00000000000001)) == calculated_errors[sample_iterator] );
   }
 }
 

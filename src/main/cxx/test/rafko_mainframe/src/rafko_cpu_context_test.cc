@@ -37,14 +37,14 @@
 namespace rafko_gym_test {
 
 TEST_CASE("Testing if CPU context produces correct error values upon full evaluation", "[context][CPU][evaluation]"){
-  uint32 sample_number = 50;
-  uint32 sequence_size = 6;
+  std::uint32_t sample_number = 50;
+  std::uint32_t sequence_size = 6;
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  sdouble32 expected_label = double_literal(50.0);
+  double expected_label = (50.0);
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
   std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
@@ -58,40 +58,40 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
   std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(*solution, settings).build());
 
-  sdouble32 error_sum = double_literal(0.0);
-  uint32 raw_inputs_index = 0;
-  uint32 raw_label_index = 0;
+  double error_sum = (0.0);
+  std::uint32_t raw_inputs_index = 0;
+  std::uint32_t raw_label_index = 0;
   reference_solver->set_eval_mode(true);
-  for(uint32 sequence_index = 0; sequence_index < dataset_wrap.get_number_of_sequences(); ++sequence_index){
+  for(std::uint32_t sequence_index = 0; sequence_index < dataset_wrap.get_number_of_sequences(); ++sequence_index){
     bool reset = true;
-    for(uint32 prefill_index = 0; prefill_index < dataset_wrap.get_prefill_inputs_number(); ++prefill_index){
+    for(std::uint32_t prefill_index = 0; prefill_index < dataset_wrap.get_prefill_inputs_number(); ++prefill_index){
       (void)reference_solver->solve(dataset_wrap.get_input_sample(raw_inputs_index), reset);
       if(reset)reset = false;
       ++raw_inputs_index;
     }
-    for(uint32 label_inside_sequence = 0; label_inside_sequence < dataset_wrap.get_sequence_size(); ++label_inside_sequence){
+    for(std::uint32_t label_inside_sequence = 0; label_inside_sequence < dataset_wrap.get_sequence_size(); ++label_inside_sequence){
       rafko_utilities::ConstVectorSubrange<> neuron_output = reference_solver->solve(dataset_wrap.get_input_sample(raw_inputs_index), reset);
-      sdouble32 err = reference_cost.set_feature_for_label( dataset_wrap, raw_label_index, {neuron_output.begin(),neuron_output.end()} );
+      double err = reference_cost.set_feature_for_label( dataset_wrap, raw_label_index, {neuron_output.begin(),neuron_output.end()} );
       error_sum += err;
       if(reset)reset = false;
       ++raw_inputs_index;
       ++raw_label_index;
     }
   }
-  sdouble32 environment_error = context.full_evaluation();
+  double environment_error = context.full_evaluation();
   CHECK( Catch::Approx(environment_error).margin(0.00000000000001) == -(error_sum / (sample_number * sequence_size)) );
 }
 
 TEST_CASE("Testing if CPU context produces correct error values upon stochastic evaluation", "[context][CPU][evaluation]"){
-  uint32 seed = rand() + 1;
-  uint32 sample_number = 50;
-  uint32 sequence_size = 6;
+  std::uint32_t seed = rand() + 1;
+  std::uint32_t sample_number = 50;
+  std::uint32_t sequence_size = 6;
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  sdouble32 expected_label = double_literal(50.0);
+  double expected_label = (50.0);
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
   std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
@@ -105,30 +105,30 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   context.set_objective(std::make_unique<rafko_gym::RafkoCost>(settings, cost));
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
-  sdouble32 environment_error = context.stochastic_evaluation(true, seed);
+  double environment_error = context.stochastic_evaluation(true, seed);
 
   std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
   std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(*solution, settings).build());
 
   srand(seed);
-  sdouble32 error_sum = double_literal(0.0);
-  uint32 sequence_start_index = (rand()%(dataset_wrap.get_number_of_sequences() - settings.get_minibatch_size() + 1));
-  uint32 start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
+  double error_sum = (0.0);
+  std::uint32_t sequence_start_index = (rand()%(dataset_wrap.get_number_of_sequences() - settings.get_minibatch_size() + 1));
+  std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
     dataset_wrap.get_sequence_size() - settings.get_memory_truncation() + 1 /* ..not all result output values are evaluated.. */
   )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
-  uint32 raw_inputs_index = 0;
-  uint32 raw_label_index = 0;
+  std::uint32_t raw_inputs_index = 0;
+  std::uint32_t raw_label_index = 0;
   reference_solver->set_eval_mode(true);
-  for(uint32 sequence_index = sequence_start_index; sequence_index < (sequence_start_index + settings.get_minibatch_size()); ++sequence_index){
+  for(std::uint32_t sequence_index = sequence_start_index; sequence_index < (sequence_start_index + settings.get_minibatch_size()); ++sequence_index){
     bool reset = true;
-    for(uint32 prefill_index = 0; prefill_index < dataset_wrap.get_prefill_inputs_number(); ++prefill_index){
+    for(std::uint32_t prefill_index = 0; prefill_index < dataset_wrap.get_prefill_inputs_number(); ++prefill_index){
       (void)reference_solver->solve(dataset_wrap.get_input_sample(raw_inputs_index), reset);
       if(reset)reset = false;
       ++raw_inputs_index;
     }
-    for(uint32 label_inside_sequence = 0; label_inside_sequence < dataset_wrap.get_sequence_size(); ++label_inside_sequence){
+    for(std::uint32_t label_inside_sequence = 0; label_inside_sequence < dataset_wrap.get_sequence_size(); ++label_inside_sequence){
       rafko_utilities::ConstVectorSubrange<> neuron_output = reference_solver->solve(dataset_wrap.get_input_sample(raw_inputs_index), reset);
-      sdouble32 err = reference_cost.set_feature_for_label( dataset_wrap, raw_label_index, {neuron_output.begin(),neuron_output.end()} );
+      double err = reference_cost.set_feature_for_label( dataset_wrap, raw_label_index, {neuron_output.begin(),neuron_output.end()} );
       if(
         (label_inside_sequence >= start_index_inside_sequence)
         &&(label_inside_sequence < (start_index_inside_sequence + settings.get_memory_truncation()))
@@ -141,7 +141,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
     }
   }
   CHECK( Catch::Approx(environment_error).margin(0.00000000000001)
-    == -( error_sum / static_cast<sdouble32>(settings.get_minibatch_size() * sequence_size) )
+    == -( error_sum / static_cast<double>(settings.get_minibatch_size() * sequence_size) )
   );
 }
 

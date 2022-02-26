@@ -35,12 +35,12 @@ public:
   { };
 
 protected:
-  constexpr sdouble32 error_post_process(sdouble32 error_value, uint32 sample_number) const{
-    return ( error_value / static_cast<sdouble32>( sample_number) );
+  constexpr double error_post_process(double error_value, std::uint32_t sample_number) const{
+    return ( error_value / static_cast<double>( sample_number) );
   }
 
-  constexpr sdouble32 get_cell_error(sdouble32 label_value, sdouble32 feature_value) const{
-    return ( label_value * std::log(std::max(double_literal(0.0000000000000001), feature_value)) );
+  constexpr double get_cell_error(double label_value, double feature_value) const{
+    return ( label_value * std::log(std::max((0.0000000000000001), feature_value)) );
   }
 
   #if(RAFKO_USES_OPENCL)

@@ -14,6 +14,8 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
+#include <iostream>
+#include <iomanip>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
@@ -52,7 +54,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
     * The builder automatically uses the arena pointer provided in the settings.
     */
   nets.push_back(rafko_net::RafkoNetBuilder(settings)
-    .input_size(2).expected_input_range(double_literal(1.0))
+    .input_size(2).expected_input_range((1.0))
     .allowed_transfer_functions_by_layer(
       {
         {rafko_net::transfer_function_selu}
@@ -64,10 +66,10 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
   rafko_gym::RafkoNetApproximizer approximizer(context);
 
   /* adding a simple-weight-gradient fragment */
-  uint32 weight_index = rand()%(nets[0]->weight_table_size());
-  uint32 gradient_value_index;
-  sdouble32 weight_gradient = double_literal(0.5);
-  sdouble32 weight_old_value = nets[0]->weight_table(weight_index);
+  std::uint32_t weight_index = rand()%(nets[0]->weight_table_size());
+  std::uint32_t gradient_value_index;
+  double weight_gradient = (0.5);
+  double weight_old_value = nets[0]->weight_table(weight_index);
 
   REQUIRE( nets[0]->weight_table(weight_index) == weight_old_value );
 
@@ -76,7 +78,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
   CHECK( 1 == approximizer.get_fragment().weight_synapses_size() );
   CHECK( weight_gradient == approximizer.get_fragment().values(0) );
   gradient_value_index = approximizer.get_fragment().weight_synapses(0).starts();
-  REQUIRE( static_cast<sint32>(gradient_value_index) < nets[0]->weight_table_size() );
+  REQUIRE( static_cast<std::int32_t>(gradient_value_index) < nets[0]->weight_table_size() );
 
   approximizer.apply_fragment(); /* Add the negative gradient */
   REQUIRE(
@@ -90,21 +92,21 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
   );
 
   /* Continously adding gradients into a single fragment, while redundantly collecting them to see that the effect is the same */
-  std::vector<sdouble32> correct_weight_delta(nets[0]->weight_table_size(), double_literal(0.0));
-  std::vector<sdouble32> initial_weights = {nets[0]->weight_table().begin(),nets[0]->weight_table().end()};
-  for(uint32 variant = 0; variant < 10; ++variant){
+  std::vector<double> correct_weight_delta(nets[0]->weight_table_size(), (0.0));
+  std::vector<double> initial_weights = {nets[0]->weight_table().begin(),nets[0]->weight_table().end()};
+  for(std::uint32_t variant = 0; variant < 10; ++variant){
     weight_index = rand()%(nets[0]->weight_table_size());
-    weight_gradient = double_literal(10.0)/static_cast<sdouble32>(rand()%10 + 1);
+    weight_gradient = (10.0)/static_cast<double>(rand()%10 + 1);
     correct_weight_delta[weight_index] += weight_gradient;
     approximizer.add_to_fragment(weight_index, weight_gradient);
   }
-  for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
+  for(weight_index = 0;static_cast<std::int32_t>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
     REQUIRE(
       nets[0]->weight_table(weight_index) == Catch::Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
     );
   }
   approximizer.apply_fragment();
-  for(weight_index = 0;static_cast<sint32>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
+  for(weight_index = 0;static_cast<std::int32_t>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
     CHECK(
       Catch::Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
       == (initial_weights[weight_index] - (correct_weight_delta[weight_index] * settings.get_learning_rate()))
@@ -133,15 +135,15 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     .set_learning_rate_decay({{1500u,0.8}})
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
   #if (RAFKO_USES_OPENCL)
-  uint32 number_of_samples = 1024;
+  std::uint32_t number_of_samples = 1024;
   #else
-  uint32 number_of_samples = 128;
+  std::uint32_t number_of_samples = 128;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   /* Create nets */
   std::vector<rafko_net::RafkoNet*> nets = std::vector<rafko_net::RafkoNet*>();
   nets.push_back(rafko_net::RafkoNetBuilder(settings)
-    .input_size(2).expected_input_range(double_literal(1.0))
+    .input_size(2).expected_input_range((1.0))
     // .set_recurrence_to_layer()
     .set_recurrence_to_self()
     // .add_feature_to_layer(0, rafko_net::neuron_group_feature_l1_regularization)
@@ -159,7 +161,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   );
 
   /* Create dataset, test set and optimizers; optimize nets */
-  std::pair<std::vector<std::vector<sdouble32>>,std::vector<std::vector<sdouble32>>> tmp1 = (
+  std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
     rafko_test::create_sequenced_addition_dataset(number_of_samples, 4)
   );
   #if (RAFKO_USES_OPENCL)
@@ -181,16 +183,16 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   rafko_gym::RafkoNetApproximizer approximizer(*context);
 
   context->set_environment(std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-    std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
-    std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
+    std::vector<std::vector<double>>(std::get<0>(tmp1)),
+    std::vector<std::vector<double>>(std::get<1>(tmp1)),
     /* Sequence size */4
   ));
   context->set_weight_updater(rafko_gym::weight_updater_amsgrad);
 
   tmp1 = ( rafko_test::create_sequenced_addition_dataset(number_of_samples, 4) );
   test_context->set_environment(std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-    std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
-    std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
+    std::vector<std::vector<double>>(std::get<0>(tmp1)),
+    std::vector<std::vector<double>>(std::get<1>(tmp1)),
     /* Sequence size */4
   ));
 
@@ -203,26 +205,26 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   tmp1 = rafko_test::create_sequenced_addition_dataset(number_of_samples * 2, 4);
   rafko_gym::RafkoDatasetWrapper* after_test_set =  google::protobuf::Arena::Create<rafko_gym::RafkoDatasetWrapper>(
     settings.get_arena_ptr(),
-    std::vector<std::vector<sdouble32>>(std::get<0>(tmp1)),
-    std::vector<std::vector<sdouble32>>(std::get<1>(tmp1)),
+    std::vector<std::vector<double>>(std::get<0>(tmp1)),
+    std::vector<std::vector<double>>(std::get<1>(tmp1)),
     /* Sequence size */4
   );
 
-  sdouble32 train_error = 1.0;
-  sdouble32 test_error = 1.0;
-  sdouble32 minimum_error;
-  uint32 number_of_steps;
-  uint32 iteration;
+  double train_error = 1.0;
+  double test_error = 1.0;
+  double minimum_error;
+  std::uint32_t number_of_steps;
+  std::uint32_t iteration;
   std::chrono::steady_clock::time_point start;
-  uint32 average_duration;
-  sdouble32 avg_gradient;
+  std::uint32_t average_duration;
+  double avg_gradient;
 
   train_error = 1.0;
   test_error = 1.0;
   number_of_steps = 0;
   average_duration = 0;
   iteration = 0;
-  minimum_error = std::numeric_limits<sdouble32>::max();
+  minimum_error = std::numeric_limits<double>::max();
 
   std::cout << "Approximizing net.." << std::endl;
   std::cout.precision(15);
@@ -230,10 +232,10 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     start = std::chrono::steady_clock::now();
     approximizer.collect_approximates_from_weight_gradients();
     avg_gradient = 0;
-    for(sint32 frag_index = 0; frag_index < approximizer.get_weight_gradient().values_size(); ++frag_index){
+    for(std::int32_t frag_index = 0; frag_index < approximizer.get_weight_gradient().values_size(); ++frag_index){
       avg_gradient += approximizer.get_weight_gradient().values(frag_index);
     }
-    avg_gradient /= static_cast<sdouble32>(approximizer.get_weight_gradient().values_size());
+    avg_gradient /= static_cast<double>(approximizer.get_weight_gradient().values_size());
 
     approximizer.apply_fragment();
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
@@ -262,9 +264,9 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   std::cout << std::endl << "Optimum reached in " << number_of_steps
   << " steps!(average runtime: "<< average_duration << " ms)" << std::endl;
 
-  sdouble32 error_summary[3] = {0,0,0};
+  double error_summary[3] = {0,0,0};
   rafko_gym::CostFunctionMSE after_cost(settings);
-  for(uint32 i = 0; i < number_of_samples; ++i){
+  for(std::uint32_t i = 0; i < number_of_samples; ++i){
     bool reset = 0 == (i%(after_test_set->get_sequence_size()));
     rafko_utilities::ConstVectorSubrange<> neuron_data = test_context->solve(after_test_set->get_input_sample(i), reset);
     error_summary[0] += after_cost.get_feature_error({neuron_data.begin(),neuron_data.end()}, after_test_set->get_label_sample(i), number_of_samples);

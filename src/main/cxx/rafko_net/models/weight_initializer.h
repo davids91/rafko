@@ -44,21 +44,21 @@ public:
    *
    * @return     The Calculated weight
    */
-  virtual sdouble32 next_weight_for(Transfer_functions used_transfer_function) const = 0;
+  virtual double next_weight_for(Transfer_functions used_transfer_function) const = 0;
 
   /**
    * @brief      Calculate a number which fits the Neuron the most based on the configuration parameters
    *
    * @return     The Calculated Memory ratio
    */
-  virtual sdouble32 next_memory_filter() const = 0;
+  virtual double next_memory_filter() const = 0;
 
   /**
    * @brief      Calculate a bias which fits the Neuron the most based on the configuration parameters
    *
    * @return     The Calculated Bias value
    */
-  virtual sdouble32 next_bias() const = 0;
+  virtual double next_bias() const = 0;
 
   /**
    * @brief      Sets the functions expected parameters
@@ -66,16 +66,16 @@ public:
    * @param[in]  expected_input_number             The exponent input number
    * @param[in]  expected_input_maximum_value_     The exponent input maximum
    */
-  void set(uint32 expected_input_number_, sdouble32 expected_input_maximum_value_){
+  void set(std::uint32_t expected_input_number_, double expected_input_maximum_value_){
     expected_input_number = std::max(1u,expected_input_number_);
     if( /* Primitive check if the given number causes overflow or not */
-      (std::numeric_limits<sdouble32>::max() > (expected_input_number_ * std::abs(expected_input_maximum_value_)))
+      (std::numeric_limits<double>::max() > (expected_input_number_ * std::abs(expected_input_maximum_value_)))
     ){
       expected_input_maximum_value = expected_input_maximum_value_;
-    }else if(double_literal(0.0) == expected_input_maximum_value_){
-      expected_input_maximum_value = std::numeric_limits<sdouble32>::epsilon();
+    }else if((0.0) == expected_input_maximum_value_){
+      expected_input_maximum_value = std::numeric_limits<double>::epsilon();
     }else{ /* Overflow! Use maximum value */
-      expected_input_maximum_value = std::numeric_limits<sdouble32>::max() / expected_input_number_;
+      expected_input_maximum_value = std::numeric_limits<double>::max() / expected_input_number_;
     }
   }
 
@@ -85,7 +85,7 @@ public:
    *
    * @return     The Calculated Weight value
    */
-  sdouble32 next_weight() const{
+  double next_weight() const{
     return next_weight_for(transfer_function_identity);
   }
 
@@ -96,11 +96,11 @@ protected:
   /**
    * Number of estimated @Neuron inputs expected
    */
-  uint32 expected_input_number = 0;
+  std::uint32_t expected_input_number = 0;
   /**
    * Estimated Maximum value of one @Neuron input
    */
-  sdouble32 expected_input_maximum_value = std::numeric_limits<sdouble32>::epsilon();
+  double expected_input_maximum_value = std::numeric_limits<double>::epsilon();
 
   /**
    * @brief      Limits the given weight into the limits used in the Neural Network
@@ -109,8 +109,8 @@ protected:
    *
    * @return     Limited value
    */
-  constexpr sdouble32 limit_weight(sdouble32 weight) const{
-    return std::min(double_literal(1.0),std::max(-double_literal(1.0),weight));
+  constexpr double limit_weight(double weight) const{
+    return std::min((1.0),std::max(-(1.0),weight));
   }
 };
 

@@ -59,52 +59,52 @@ public:
   :  synapse_interval(arg_synapse_interval)
   { };
 
-  constexpr void iterate(std::function< void(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void iterate(std::function< void(std::int32_t) > do_for_each_index, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
     iterate(synapse_interval, do_for_each_index, interval_start, interval_size_);
   }
-  constexpr void iterate(std::function< void(Interval_type) > do_for_each_synapse, std::function< void(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void iterate(std::function< void(Interval_type) > do_for_each_synapse, std::function< void(std::int32_t) > do_for_each_index, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
     iterate(synapse_interval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
   }
-  constexpr void iterate_terminatable(std::function< bool(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void iterate_terminatable(std::function< bool(std::int32_t) > do_for_each_index, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
     iterate_terminatable(synapse_interval, do_for_each_index, interval_start, interval_size_);
   }
-  constexpr void iterate_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, std::function< bool(sint32) > do_for_each_index, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void iterate_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, std::function< bool(std::int32_t) > do_for_each_index, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
     iterate_terminatable(synapse_interval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
   }
-  constexpr void skim(std::function< void(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void skim(std::function< void(Interval_type) > do_for_each_synapse, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
     skim(synapse_interval, do_for_each_synapse, interval_start, interval_size_);
   }
-  constexpr void skim_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, uint32 interval_start = 0, uint32 interval_size_ = 0) const{
+  constexpr void skim_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
     skim_terminatable(synapse_interval, do_for_each_synapse, interval_start, interval_size_);
   }
 
   static void skim(
     const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval,
     std::function< void(Interval_type) > do_for_each_synapse,
-    uint32 interval_start = 0, uint32 interval_size_ = 0
+    std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0
   ){
-    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
-    for(uint32 syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
+    std::uint32_t interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
+    for(std::uint32_t syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
       do_for_each_synapse(arg_synapse_interval[syn_iter]);
     }
   }
 
   static void iterate(
     const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval,
-    std::function< void(sint32) > do_for_each_index,
-    uint32 interval_start = 0, uint32 interval_size_ = 0
+    std::function< void(std::int32_t) > do_for_each_index,
+    std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0
   ){
-    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
-    for(uint32 syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
-      uint32 this_interval_size = arg_synapse_interval[syn_iter].interval_size();
-      uint32 this_interval_start = arg_synapse_interval[syn_iter].starts();
+    std::uint32_t interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
+    for(std::uint32_t syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
+      std::uint32_t this_interval_size = arg_synapse_interval[syn_iter].interval_size();
+      std::uint32_t this_interval_start = arg_synapse_interval[syn_iter].starts();
       if(!is_index_input(this_interval_start)){
-        for(uint32 input_iterator = 0; input_iterator < this_interval_size ;++input_iterator){
+        for(std::uint32_t input_iterator = 0; input_iterator < this_interval_size ;++input_iterator){
           do_for_each_index(this_interval_start + input_iterator);
         }
       }
       else /* current @starts. element is from the input, iterate in a negative way */
-        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator){
+        for(std::uint32_t input_iterator = 0; input_iterator < this_interval_size;++input_iterator){
           do_for_each_index(this_interval_start - input_iterator);
         }
     } /* For every synapse */
@@ -113,20 +113,20 @@ public:
   static void iterate(
     const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval,
     std::function< void(Interval_type) > do_for_each_synapse,
-    std::function< void(sint32) > do_for_each_index,
-    uint32 interval_start = 0, uint32 interval_size_ = 0
+    std::function< void(std::int32_t) > do_for_each_index,
+    std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0
   ){
-    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
-    for(uint32 syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
+    std::uint32_t interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
+    for(std::uint32_t syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
       do_for_each_synapse(arg_synapse_interval[syn_iter]);
-      uint32 this_interval_size = arg_synapse_interval[syn_iter].interval_size();
-      uint32 this_interval_start = arg_synapse_interval[syn_iter].starts();
+      std::uint32_t this_interval_size = arg_synapse_interval[syn_iter].interval_size();
+      std::uint32_t this_interval_start = arg_synapse_interval[syn_iter].starts();
       if(!is_index_input(this_interval_start)){
-        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator){
+        for(std::uint32_t input_iterator = 0; input_iterator < this_interval_size;++input_iterator){
           do_for_each_index(this_interval_start + input_iterator);
         }
       }else{ /* current @starts. element is from the input, iterate in a negative way */
-        for(sint32 input_iterator = 0; static_cast<uint32>(input_iterator) < this_interval_size;++input_iterator){
+        for(std::int32_t input_iterator = 0; static_cast<std::uint32_t>(input_iterator) < this_interval_size;++input_iterator){
           do_for_each_index(this_interval_start - input_iterator);
         }
       }
@@ -136,29 +136,29 @@ public:
   static void skim_terminatable(
     const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval,
     std::function< bool(Interval_type) > do_for_each_synapse,
-    uint32 interval_start = 0, uint32 interval_size_ = 0
+    std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0
   ){
-    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
-    for(uint32 syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter)
+    std::uint32_t interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
+    for(std::uint32_t syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter)
       if(!do_for_each_synapse(arg_synapse_interval[syn_iter]))
         return;
   }
 
   static void iterate_terminatable(
     const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval,
-    std::function< bool(sint32) > do_for_each_index,
-    uint32 interval_start = 0, uint32 interval_size_ = 0
+    std::function< bool(std::int32_t) > do_for_each_index,
+    std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0
   ){
-    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
-    for(uint32 syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
-      uint32 this_interval_size = arg_synapse_interval[syn_iter].interval_size();
-      uint32 this_interval_start = arg_synapse_interval[syn_iter].starts();
+    std::uint32_t interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
+    for(std::uint32_t syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
+      std::uint32_t this_interval_size = arg_synapse_interval[syn_iter].interval_size();
+      std::uint32_t this_interval_start = arg_synapse_interval[syn_iter].starts();
       if(!is_index_input(this_interval_start)){
-        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
+        for(std::uint32_t input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
           if(!do_for_each_index(this_interval_start + input_iterator))
             return;
       }else{ /* current @starts. element is from the input, iterate in a negative way */
-        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
+        for(std::uint32_t input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
           if(!do_for_each_index(this_interval_start - input_iterator))
             return;
       }
@@ -168,21 +168,21 @@ public:
   static void iterate_terminatable(
     const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval,
     std::function< bool(Interval_type) > do_for_each_synapse,
-    std::function< bool(sint32) > do_for_each_index,
-    uint32 interval_start = 0, uint32 interval_size_ = 0
+    std::function< bool(std::int32_t) > do_for_each_index,
+    std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0
   ){
-    uint32 interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
-    for(uint32 syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
+    std::uint32_t interval_size = get_number_of_synapses_to_iterate(arg_synapse_interval, interval_start, interval_size_);
+    for(std::uint32_t syn_iter = interval_start; syn_iter < (interval_start + interval_size); ++syn_iter){
       if(!do_for_each_synapse(arg_synapse_interval[syn_iter]))
         return;
-      uint32 this_interval_size = arg_synapse_interval[syn_iter].interval_size();
-      uint32 this_interval_start = arg_synapse_interval[syn_iter].starts();
+      std::uint32_t this_interval_size = arg_synapse_interval[syn_iter].interval_size();
+      std::uint32_t this_interval_start = arg_synapse_interval[syn_iter].starts();
       if(!is_index_input(this_interval_start)){
-        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
+        for(std::uint32_t input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
           if(!do_for_each_index(this_interval_start + input_iterator))
             return;
       }else{ /* current @starts. element is from the input, iterate in a negative way */
-        for(uint32 input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
+        for(std::uint32_t input_iterator = 0; input_iterator < this_interval_size;++input_iterator)
           if(!do_for_each_index(this_interval_start - input_iterator))
             return;
       }
@@ -198,12 +198,12 @@ public:
    */
   int operator[](int index) const{
     assert(0u < size());
-    sint32 result_index;
-    uint32 previous_last_reached_index = 0;
-    sint32 iteration_helper = 0;
-    uint32 synapse_start = 0;
+    std::int32_t result_index;
+    std::uint32_t previous_last_reached_index = 0;
+    std::int32_t iteration_helper = 0;
+    std::uint32_t synapse_start = 0;
 
-    if(static_cast<sint32>(last_reached_index) <= index){
+    if(static_cast<std::int32_t>(last_reached_index) <= index){
       synapse_start = last_reached_synapse;
       iteration_helper = last_reached_index;
     }else last_reached_synapse = 0;
@@ -214,7 +214,7 @@ public:
       last_reached_index = iteration_helper;
       previous_last_reached_index = last_reached_index;
       return true;
-    },[&](sint32 synapse_index){
+    },[&](std::int32_t synapse_index){
       if(iteration_helper < index){
         ++iteration_helper;
         return true;
@@ -232,24 +232,24 @@ public:
   template<typename InputSynapseInterval>
   int reach_past_loops(int index){
     assert(0u < size());
-    sint32 result_reach;
-    uint32 previous_last_reached_index = 0;
-    sint32 iteration_helper = 0;
-    uint32 synapse_start = 0;
+    std::int32_t result_reach;
+    std::uint32_t previous_last_reached_index = 0;
+    std::int32_t iteration_helper = 0;
+    std::uint32_t synapse_start = 0;
 
-    if(static_cast<sint32>(last_reached_index) <= index){
+    if(static_cast<std::int32_t>(last_reached_index) <= index){
       synapse_start = last_reached_synapse;
       iteration_helper = last_reached_index;
     }else last_reached_synapse = 0;
 
-    sint32 synapse_reach;
+    std::int32_t synapse_reach;
     iterate_terminatable([&](InputSynapseInterval interval_synapse){
       ++last_reached_synapse;
       last_reached_index = iteration_helper;
       previous_last_reached_index = last_reached_index;
       synapse_reach = interval_synapse.reach_past_loops();
       return true;
-    },[&](sint32 synapse_index){
+    },[&](std::int32_t synapse_index){
       parameter_not_used(synapse_index);
       if(iteration_helper < index){
         ++iteration_helper;
@@ -273,9 +273,9 @@ public:
    * @return     true if the two SynapseIterators match
    */
   bool operator==(const SynapseIterator<Interval_type>& other) const{
-    uint32 synapse_index = 0u;
-    uint32 match = true;
-    iterate_terminatable([other, &synapse_index, &match](sint32 index){
+    std::uint32_t synapse_index = 0u;
+    std::uint32_t match = true;
+    iterate_terminatable([other, &synapse_index, &match](std::int32_t index){
       if(index != other[synapse_index]){
         match = false;
         return false;
@@ -306,15 +306,15 @@ public:
    *
    * @return     The interval synapse
    */
-  Interval_type synapse_under(sint32 index){
+  Interval_type synapse_under(std::int32_t index){
     if(0 == size())throw "Empty synapse iterator reached for query!";
-    sint32 iteration_helper = 0;
+    std::int32_t iteration_helper = 0;
     Interval_type result;
 
     iterate_terminatable([&](Interval_type interval_synapse){
       result = interval_synapse;
       return true;
-    },[&](sint32 synapse_index){
+    },[&](std::int32_t synapse_index){
       parameter_not_used(synapse_index);
       if(iteration_helper < index){
         ++iteration_helper;
@@ -331,8 +331,8 @@ public:
    *
    * @return     Returns the overall number of inputs
    */
-  uint32 size() const{
-    uint32 number_of_inputs = 0;
+  std::uint32_t size() const{
+    std::uint32_t number_of_inputs = 0;
     skim([&](Interval_type interval){
       number_of_inputs += interval.interval_size();
     });
@@ -344,7 +344,7 @@ public:
    *
    * @return     Size of the Repeatedfiled for the  synapse_intervals
    */
-  uint32 number_of_synapses() const{
+  std::uint32_t number_of_synapses() const{
     return synapse_interval.size();
   }
 
@@ -353,9 +353,9 @@ public:
    *
    * @return     the last index of the synapse
    */
-  sint32 back() const{
+  std::int32_t back() const{
     if(0 < synapse_interval.size()){
-      sint32 last_index = synapse_interval[synapse_interval.size()-1].starts();
+      std::int32_t last_index = synapse_interval[synapse_interval.size()-1].starts();
       if(is_index_input(last_index)) last_index -= synapse_interval[synapse_interval.size()-1].interval_size() - 1;
         else last_index += synapse_interval[synapse_interval.size()-1].interval_size() - 1;
       return last_index;
@@ -380,7 +380,7 @@ public:
    *
    * @return     True if the specified index is index input, False otherwise.
    */
-  static constexpr bool is_index_input(sint32 index){
+  static constexpr bool is_index_input(std::int32_t index){
     return(0 > index);
   }
 
@@ -403,8 +403,8 @@ public:
    *
    * @return     Index in the input array based on the synapse input index
    */
-  static constexpr sint32 synapse_index_from_input_index(uint32 index){
-    return (static_cast<sint32>(index) * (-1) - 1);
+  static constexpr std::int32_t synapse_index_from_input_index(std::uint32_t index){
+    return (static_cast<std::int32_t>(index) * (-1) - 1);
   }
 
   /**
@@ -414,16 +414,16 @@ public:
    *
    * @return     Synapse index
    */
-  static constexpr uint32 input_index_from_synapse_index(sint32 index){
-    if(0 > index) return (static_cast<uint32>(index) * (-1) - 1);
+  static constexpr std::uint32_t input_index_from_synapse_index(std::int32_t index){
+    if(0 > index) return (static_cast<std::uint32_t>(index) * (-1) - 1);
       else throw std::runtime_error("Synapse index is not negative, as it should be, when queried for input index! ");
   }
 
 private:
   const google::protobuf::RepeatedPtrField<Interval_type>& synapse_interval;
-  mutable uint32 last_reached_synapse = 0u;
-  mutable uint32 last_reached_index = 0u;
-  static uint32 interval_size; /* temporary variable */
+  mutable std::uint32_t last_reached_synapse = 0u;
+  mutable std::uint32_t last_reached_index = 0u;
+  static std::uint32_t interval_size; /* temporary variable */
 
   /**
    * @brief      Gets the number of synapses to iterate based on the provided start and size values.
@@ -435,10 +435,10 @@ private:
    * @param[in]  interval_size_        The interval size
    *
    */
-  static constexpr uint32 get_number_of_synapses_to_iterate(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval, uint32 interval_start, uint32 interval_size_){
+  static constexpr std::uint32_t get_number_of_synapses_to_iterate(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval, std::uint32_t interval_start, std::uint32_t interval_size_){
     if(0 == arg_synapse_interval.size())
       return 0;
-    else if( (0 == interval_size_)&&(arg_synapse_interval.size() > static_cast<sint32>(interval_start)) )
+    else if( (0 == interval_size_)&&(arg_synapse_interval.size() > static_cast<std::int32_t>(interval_start)) )
       return (arg_synapse_interval.size() - interval_start);
     else if(0 == interval_size_)
       throw std::runtime_error("Incorrect synapse range start!");

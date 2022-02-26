@@ -38,11 +38,11 @@ namespace rafko_utilities{
  */
 class RAFKO_FULL_EXPORT DataRingbuffer{
 public:
-  DataRingbuffer(uint32 buffer_number, uint32 buffer_size)
+  DataRingbuffer(std::uint32_t buffer_number, std::uint32_t buffer_size)
   :  data(buffer_number)
   {
-    for(std::vector<sdouble32>& buffer : data)
-      buffer = std::vector<sdouble32>(buffer_size, double_literal(0.0));
+    for(std::vector<double>& buffer : data)
+      buffer = std::vector<double>(buffer_size, (0.0));
   }
 
   /**
@@ -59,8 +59,8 @@ public:
    */
   void reset(){
     current_index = (data.size()-1); /* Set the current index into the last index, so at the next @ */
-    for(std::vector<sdouble32>& vector : data)
-      for(sdouble32& element : vector) element = double_literal(0.0);
+    for(std::vector<double>& vector : data)
+      for(double& element : vector) element = (0.0);
   }
 
   /**
@@ -69,7 +69,7 @@ public:
    *             current index one step back into the past.
    */
   void pop_front(){
-    std::fill(get_element(0).begin(),get_element(0).end(),double_literal(0.0));
+    std::fill(get_element(0).begin(),get_element(0).end(),(0.0));
     current_index = get_buffer_index(1);
   }
 
@@ -90,7 +90,7 @@ public:
    *
    * @return     The non-modifyable raw buffer data
    */
-  constexpr const std::vector<std::vector<sdouble32>>& get_whole_buffer() const{
+  constexpr const std::vector<std::vector<double>>& get_whole_buffer() const{
     return data;
   }
 
@@ -102,7 +102,7 @@ public:
    *
    * @return     The value of the data in the   given index parameters
    */
-  sdouble32 get_element(uint32 past_index, uint32 data_index) const{
+  double get_element(std::uint32_t past_index, std::uint32_t data_index) const{
     if((data.size() > past_index)&&(data[0].size() > data_index))
       return get_const_element(past_index)[data_index];
       else throw std::runtime_error("Ringbuffer data index out of bounds!");
@@ -115,7 +115,7 @@ public:
    * @param[in]  data_index  The index of the data inside the buffer
    * @param[in]  value       The value to overwrite the data with
    */
-  void set_element(uint32 past_index, uint32 data_index, sdouble32 value){
+  void set_element(std::uint32_t past_index, std::uint32_t data_index, double value){
     if((data.size() > past_index)&&(data[0].size() > data_index))
       get_element(past_index)[data_index] = value;
       else throw std::runtime_error("Ringbuffer data index out of bounds!");
@@ -128,7 +128,7 @@ public:
    *
    * @return     The reference pointing to a data
    */
-  std::vector<sdouble32>& get_element(uint32 past_index){
+  std::vector<double>& get_element(std::uint32_t past_index){
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
     }else throw std::runtime_error("Ringbuffer index out of bounds!");
@@ -141,7 +141,7 @@ public:
    *
    * @return     The reference pointing to a data
    */
-  const std::vector<sdouble32>& get_const_element(uint32 past_index) const{
+  const std::vector<double>& get_const_element(std::uint32_t past_index) const{
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
     }else throw std::runtime_error("Ringbuffer index out of bounds!");
@@ -152,7 +152,7 @@ public:
    *
    * @return     The sequence size.
    */
-  uint32 get_sequence_size() const{
+  std::uint32_t get_sequence_size() const{
     return data.size();
   }
 
@@ -165,7 +165,7 @@ public:
    *
    * @return     The buffer index.
    */
-  sint32 get_sequence_index(uint32 sequence_index, uint32 reach_past_loops) const{
+  std::int32_t get_sequence_index(std::uint32_t sequence_index, std::uint32_t reach_past_loops) const{
     return (get_sequence_size() - sequence_index - 1) + reach_past_loops;
   }
 
@@ -174,7 +174,7 @@ public:
    *
    * @return     Number of elements
    */
-  uint32 buffer_size() const{
+  std::uint32_t buffer_size() const{
     return data[0].size();
   }
 
@@ -183,13 +183,13 @@ public:
    *
    * @return     number of buffers available
    */
-  uint32 buffer_number() const{
+  std::uint32_t buffer_number() const{
     return data.size();
   }
 
 private:
-  uint32 current_index = 0u;
-  std::vector<std::vector<sdouble32>> data;
+  std::uint32_t current_index = 0u;
+  std::vector<std::vector<double>> data;
 
   /**
    * @brief      Gets the buffer index for the given past index
@@ -198,7 +198,7 @@ private:
    *
    * @return     The buffer index.
    */
-  uint32 get_buffer_index(uint32 past_index) const{
+  std::uint32_t get_buffer_index(std::uint32_t past_index) const{
     if(data.size() <= past_index) throw std::runtime_error("Older data queried, than memory capacity.");
     if(past_index > current_index) return (data.size() + current_index - past_index);
       else return(current_index - past_index);

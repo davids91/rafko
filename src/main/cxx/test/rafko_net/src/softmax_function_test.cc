@@ -37,36 +37,36 @@ namespace rafko_net_test {
 
 namespace{
   void check_softmax_values(
-    std::vector<sdouble32>& neuron_data, const rafko_mainframe::RafkoSettings& settings,
+    std::vector<double>& neuron_data, const rafko_mainframe::RafkoSettings& settings,
     rafko_net::FeatureGroup& mockup, rafko_utilities::ThreadGroup& threads
   ){
 
     /* calculate manually */
     rafko_net::SynapseIterator<> iter(mockup.relevant_neurons());
-    std::vector<sdouble32> neuron_data_copy = std::vector(neuron_data);
-    sdouble32 max_value = -std::numeric_limits<double>::max();
-    iter.iterate([&max_value, &neuron_data_copy](sint32 index){
+    std::vector<double> neuron_data_copy = std::vector(neuron_data);
+    double max_value = -std::numeric_limits<double>::max();
+    iter.iterate([&max_value, &neuron_data_copy](std::int32_t index){
       if(neuron_data_copy[index] > max_value)
         max_value = neuron_data_copy[index];
     }); /* finding maximum value */
-    iter.iterate([&max_value, &neuron_data_copy](sint32 index){
+    iter.iterate([&max_value, &neuron_data_copy](std::int32_t index){
       neuron_data_copy[index] = std::exp(neuron_data_copy[index] - max_value);
     }); /* transforming x --> exp(x - max(x)) */
 
-    sdouble32 manual_sum = double_literal(0);
-    iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
+    double manual_sum = (0);
+    iter.iterate([&manual_sum, &neuron_data_copy](std::int32_t index){
       manual_sum += neuron_data_copy[index];
     }); /* collecting resulting sum */
     manual_sum = std::max(manual_sum, std::numeric_limits<double>::epsilon());
-    iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
+    iter.iterate([&manual_sum, &neuron_data_copy](std::int32_t index){
       neuron_data_copy[index] /= manual_sum;
     }); /* normalizing e_x --> e_x/sum(e_x) */
 
-    manual_sum = double_literal(0);
-    iter.iterate([&manual_sum, &neuron_data_copy](sint32 index){
+    manual_sum = (0);
+    iter.iterate([&manual_sum, &neuron_data_copy](std::int32_t index){
       manual_sum += neuron_data_copy[index];
     }); /* collecting softmax end result sum */
-    REQUIRE( Catch::Approx(manual_sum).epsilon(double_literal(0.00000000000001)) == double_literal(1.0) );
+    REQUIRE( Catch::Approx(manual_sum).epsilon((0.00000000000001)) == (1.0) );
 
     /* Calculate through the network */
     std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> exec_threads;
@@ -75,15 +75,15 @@ namespace{
     features.execute_solution_relevant(mockup, settings, neuron_data);
 
     /* Check if sum equals to 1 */
-    sdouble32 sum = double_literal(0);
-    iter.iterate([&sum, &neuron_data_copy](sint32 index){
+    double sum = (0);
+    iter.iterate([&sum, &neuron_data_copy](std::int32_t index){
       sum += neuron_data_copy[index];
     }); /* collecting softmax end result sum */
-    CHECK( Catch::Approx(sum).epsilon(double_literal(0.00000000000001)) == double_literal(1.0) );
+    CHECK( Catch::Approx(sum).epsilon((0.00000000000001)) == (1.0) );
 
     /* check if each element equal ( exp(x) / sum(exp(x)) ) */
-    for(uint32 i = 0; i < neuron_data.size(); i++){
-      REQUIRE( Catch::Approx(neuron_data[i]).epsilon(double_literal(0.00000000000001)) == neuron_data_copy[i] );
+    for(std::uint32_t i = 0; i < neuron_data.size(); i++){
+      REQUIRE( Catch::Approx(neuron_data[i]).epsilon((0.00000000000001)) == neuron_data_copy[i] );
     }
 
   }
@@ -91,7 +91,7 @@ namespace{
 
 TEST_CASE( "Checkig whether the softmax function is calculating correctly with whole arrays", "[features][softmax]" ){
   rafko_mainframe::RafkoSettings settings;
-  std::vector<sdouble32> neuron_data{double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0)};
+  std::vector<double> neuron_data{(0),(0),(0),(0),(0),(0)};
   rafko_net::FeatureGroup mockup;
   rafko_utilities::ThreadGroup threads(4);
   rafko_net::IndexSynapseInterval tmp_interval;
@@ -100,14 +100,14 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly with w
   mockup.add_relevant_neurons()->set_interval_size(neuron_data.size());
   check_softmax_values(neuron_data, settings, mockup, threads);
 
-  neuron_data = {double_literal(1.0)};
+  neuron_data = {(1.0)};
   mockup.mutable_relevant_neurons(0)->set_interval_size(neuron_data.size());
   check_softmax_values(neuron_data, settings, mockup, threads);
 
-  for(uint32 variant = 0; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0; variant < 10u; ++variant){
     neuron_data.clear(); /* set data to exaimne */
-    for(sint32 i = 0; (i < rand()%100)||(0 == neuron_data.size()); ++i){
-      neuron_data.push_back( static_cast<sdouble32>(rand()%10)/10 );
+    for(std::int32_t i = 0; (i < rand()%100)||(0 == neuron_data.size()); ++i){
+      neuron_data.push_back( static_cast<double>(rand()%10)/10 );
     }
 
     mockup.mutable_relevant_neurons(0)->set_interval_size(neuron_data.size()); /* one synapse for the whole array */
@@ -119,23 +119,23 @@ TEST_CASE( "Checkig whether the softmax function is calculating correctly with w
 
 TEST_CASE( "Checkig whether the softmax function is calculating correctly with multiple random synapses inside an array", "[features][softmax]" ){
   rafko_mainframe::RafkoSettings settings;
-  std::vector<sdouble32> neuron_data{double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0),double_literal(0)};
+  std::vector<double> neuron_data{(0),(0),(0),(0),(0),(0)};
   rafko_net::FeatureGroup mockup;
   rafko_utilities::ThreadGroup threads(4);
   rafko_net::IndexSynapseInterval tmp_interval;
   mockup.set_feature(rafko_net::neuron_group_feature_softmax);
-  for(uint32 variant = 0; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0; variant < 10u; ++variant){
     neuron_data.clear(); /* set data to examine */
-    for(sint32 i = 0; ((i < rand()%200)||(0u == neuron_data.size())); ++i){
-      neuron_data.push_back( static_cast<sdouble32>(rand()%10)/10 );
+    for(std::int32_t i = 0; ((i < rand()%200)||(0u == neuron_data.size())); ++i){
+      neuron_data.push_back( static_cast<double>(rand()%10)/10 );
     }
 
     mockup.mutable_relevant_neurons()->Clear(); /* adding random synapses */
-    uint16 number_of_synapses = std::max(static_cast<uint16>(1u), static_cast<uint16>(rand()%(neuron_data.size())));
-    uint16 start_index = 0; /* starting from the beginning of the array */
-    for(uint16 synapse_iterator = 0; synapse_iterator < number_of_synapses; ++synapse_iterator){
-      uint16 synapse_size = rand()%(neuron_data.size() - start_index)/2; /* decide the size of the current synapse */
-      synapse_size = std::max(static_cast<uint16>(1u), synapse_size);
+    std::uint16_t number_of_synapses = std::max(static_cast<std::uint16_t>(1u), static_cast<std::uint16_t>(rand()%(neuron_data.size())));
+    std::uint16_t start_index = 0; /* starting from the beginning of the array */
+    for(std::uint16_t synapse_iterator = 0; synapse_iterator < number_of_synapses; ++synapse_iterator){
+      std::uint16_t synapse_size = rand()%(neuron_data.size() - start_index)/2; /* decide the size of the current synapse */
+      synapse_size = std::max(static_cast<std::uint16_t>(1u), synapse_size);
       if((start_index + synapse_size) > neuron_data.size())break; /* do not reach beyond the available array */
       tmp_interval.set_starts(start_index);
       tmp_interval.set_interval_size(synapse_size);
@@ -155,7 +155,7 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
   rafko_mainframe::RafkoSettings settings;
   std::unique_ptr<rafko_net::RafkoNet> net = std::unique_ptr<rafko_net::RafkoNet>(
     rafko_net::RafkoNetBuilder(settings).input_size(5)
-      .expected_input_range(double_literal(5.0))
+      .expected_input_range((5.0))
       .add_feature_to_layer(0, rafko_net::neuron_group_feature_softmax)
       .add_feature_to_layer(2, rafko_net::neuron_group_feature_softmax)
       .dense_layers({20,40,30,10,20})
@@ -177,25 +177,25 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
 TEST_CASE("Checking if the network builder is correctly placing the softmax feature into the built network", "[features][build]"){
   rafko_mainframe::RafkoSettings settings;
   std::unique_ptr<rafko_net::RafkoNet> net;
-  for(uint32 variant = 0; variant < 10u; ++variant){
-    std::vector<uint32> net_structure;
+  for(std::uint32_t variant = 0; variant < 10u; ++variant){
+    std::vector<std::uint32_t> net_structure;
     while((rand()%10 < 9)||(4 > net_structure.size()))
-      net_structure.push_back(static_cast<uint32>(rand()%30) + 1u);
+      net_structure.push_back(static_cast<std::uint32_t>(rand()%30) + 1u);
 
-    uint8 num_of_features = rand()%(net_structure.size()/2) + 1u;
+    std::uint8_t num_of_features = rand()%(net_structure.size()/2) + 1u;
     rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
       .input_size(5)
-      .expected_input_range(double_literal(5.0));
+      .expected_input_range((5.0));
 
-    uint8 layer_of_feature_index = 0;
-    std::vector<uint32> feature_neuron_start_index;
-    std::vector<uint32> feature_layer;
-    uint32 layer_start_index = 0;
-    uint8 feature_index;
+    std::uint8_t layer_of_feature_index = 0;
+    std::vector<std::uint32_t> feature_neuron_start_index;
+    std::vector<std::uint32_t> feature_layer;
+    std::uint32_t layer_start_index = 0;
+    std::uint8_t feature_index;
     for(feature_index = 0u; feature_index < num_of_features; feature_index++){
       if(layer_of_feature_index >= net_structure.size())break;
-      uint8 layer_diff = 1u + ((rand()%(net_structure.size() - layer_of_feature_index)) / 2);
-      for(uint8 i = 0; i < layer_diff; ++i){
+      std::uint8_t layer_diff = 1u + ((rand()%(net_structure.size() - layer_of_feature_index)) / 2);
+      for(std::uint8_t i = 0; i < layer_diff; ++i){
         layer_start_index += net_structure[layer_of_feature_index + i];
       }
       layer_of_feature_index += layer_diff;
@@ -206,7 +206,7 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
     net = std::unique_ptr<rafko_net::RafkoNet>(builder.dense_layers(net_structure));
     for(const rafko_net::FeatureGroup& feature : net->neuron_group_features()){ /* check if all the features point to the correct neuron indices */
       REQUIRE( 1u == feature.relevant_neurons_size() );
-      REQUIRE( feature.relevant_neurons(0u).starts() == static_cast<sint32>(feature_neuron_start_index.front()) );
+      REQUIRE( feature.relevant_neurons(0u).starts() == static_cast<std::int32_t>(feature_neuron_start_index.front()) );
       REQUIRE( feature.relevant_neurons(0u).interval_size() == net_structure[feature_layer.front()] );
       feature_neuron_start_index.erase(feature_neuron_start_index.begin());
       feature_layer.erase(feature_layer.begin());
@@ -220,7 +220,7 @@ TEST_CASE("Checking if the Solution Builder is correctly producing the softmax f
   std::unique_ptr<rafko_net::RafkoNet> net;
   std::unique_ptr<rafko_net::Solution> solution;
 
-  for(uint32 variant = 0; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0; variant < 10u; ++variant){
     net = std::unique_ptr<rafko_net::RafkoNet>(rafko_test::generate_random_net_with_softmax_features(3, settings));
     solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(settings).build(*net));
 
@@ -250,19 +250,19 @@ TEST_CASE("Checking if the network solver is correctly producing the softmax fea
   std::unique_ptr<rafko_net::RafkoNet> net;
   std::unique_ptr<rafko_net::Solution> solution;
   std::unique_ptr<rafko_net::SolutionSolver> solver;
-  for(uint32 variant = 0; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0; variant < 10u; ++variant){
     net = std::unique_ptr<rafko_net::RafkoNet>(rafko_test::generate_random_net_with_softmax_features(3, settings));
     solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(settings).build(*net));
     solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(*solution, settings).build());
 
-    (void)solver->solve({double_literal(0),double_literal(6),double_literal(5)});
+    (void)solver->solve({(0),(6),(5)});
     rafko_utilities::DataRingbuffer neuron_data = solver->get_memory();
     for(const rafko_net::FeatureGroup& feature : net->neuron_group_features()){ /* check if all the features point to the correct neuron indices */
-      sdouble32 sum = double_literal(0.0);
-      rafko_net::SynapseIterator<>::iterate(feature.relevant_neurons(),[&sum, neuron_data](sint32 neuron_index){
+      double sum = (0.0);
+      rafko_net::SynapseIterator<>::iterate(feature.relevant_neurons(),[&sum, neuron_data](std::int32_t neuron_index){
         sum += neuron_data.get_element(0u, neuron_index);
       });
-      REQUIRE( Catch::Approx(sum).epsilon(double_literal(0.00000000000001)) == double_literal(1.0) );
+      REQUIRE( Catch::Approx(sum).epsilon((0.00000000000001)) == (1.0) );
     }
     net.reset();
   }

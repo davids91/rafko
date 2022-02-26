@@ -35,38 +35,38 @@ namespace rafko_net_test {
 TEST_CASE( "Testing Transfer function outputs", "[neuron][transfer-function]" ) {
   rafko_mainframe::RafkoSettings settings;
   rafko_net::TransferFunction tfun(settings);
-  sdouble32 data;
-  for(uint32 variant = 0; variant < 10u; ++variant){
-    data = static_cast<sdouble32>(rand()%100);
+  double data;
+  for(std::uint32_t variant = 0; variant < 10u; ++variant){
+    data = static_cast<double>(rand()%100);
     REQUIRE(
       tfun.get_value(rafko_net::transfer_function_identity, data)
       == Catch::Approx(data).epsilon(0.0000000001)
     );
     REQUIRE(
       tfun.get_value(rafko_net::transfer_function_sigmoid, data)
-      == Catch::Approx(double_literal(1.0)/(double_literal(1.0)+exp(-data))).epsilon(0.0000000001)
+      == Catch::Approx((1.0)/((1.0)+exp(-data))).epsilon(0.0000000001)
     );
     REQUIRE(
       tfun.get_value(rafko_net::transfer_function_elu, data)
       == Catch::Approx(
-        std::max(double_literal(0.0), data)
-        + std::min(double_literal(0.0), data) * settings.get_alpha() * (std::exp(data) - 1)
+        std::max((0.0), data)
+        + std::min((0.0), data) * settings.get_alpha() * (std::exp(data) - 1)
       ).epsilon(0.0000000001)
     );
     REQUIRE(
       tfun.get_value(rafko_net::transfer_function_selu, data)
       == Catch::Approx(
-        ( settings.get_lambda() * std::max(double_literal(0.0), data) )
+        ( settings.get_lambda() * std::max((0.0), data) )
         +(
-          std::min(double_literal(0.0), data)
+          std::min((0.0), data)
           * settings.get_lambda() * settings.get_alpha()
-          * (std::exp(data) - double_literal(1.0))
+          * (std::exp(data) - (1.0))
         )
       ).epsilon(0.0000000001)
     );
     REQUIRE(
       tfun.get_value(rafko_net::transfer_function_relu, data)
-      == Catch::Approx(std::max(double_literal(0.0),data)).epsilon(0.0000000001)
+      == Catch::Approx(std::max((0.0),data)).epsilon(0.0000000001)
     );
   }
 }
@@ -74,17 +74,17 @@ TEST_CASE( "Testing Transfer function outputs", "[neuron][transfer-function]" ) 
 TEST_CASE( "Testing transfer function generators", "[neuron][transfer-function]"){
   rafko_mainframe::RafkoSettings settings;
   rafko_net::TransferFunction tfun(settings);
-  for(uint32 variant = 0; variant < 10u; ++variant){
+  for(std::uint32_t variant = 0; variant < 10u; ++variant){
     std::set<rafko_net::Transfer_functions> used_functions;
     while(used_functions.size() < 3){
-      uint32 candidate = rand()%rafko_net::transfer_function_end;
+      std::uint32_t candidate = rand()%rafko_net::transfer_function_end;
       if(rafko_net::Transfer_functions_IsValid(candidate)){
         used_functions.insert(static_cast<rafko_net::Transfer_functions>(candidate));
       }
     }/* while(a test set is filled) */
 
     std::vector<rafko_net::Transfer_functions> generated;
-    for(uint32 sequence = 0; sequence < 10; ++sequence){
+    for(std::uint32_t sequence = 0; sequence < 10; ++sequence){
       generated.push_back(tfun.next(used_functions));
     }
 

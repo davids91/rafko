@@ -47,12 +47,12 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   rafko_mainframe::RafkoSettings settings;
   rafko_utilities::DataRingbuffer neuron_data(1,2);
   rafko_net::PartialSolution partial_solution;
-  std::vector<uint32> helper_vector_uint;
-  std::vector<sdouble32> expected_neuron_output;
+  std::vector<std::uint32_t> helper_vector_uint;
+  std::vector<double> expected_neuron_output;
   rafko_net::InputSynapseInterval temp_synapse_interval;
 
   /* Define the input and structure of the network */
-  std::vector<sdouble32> network_inputs = {double_literal(10.0),double_literal(5.0)};
+  std::vector<double> network_inputs = {(10.0),(5.0)};
   rafko_test::manual_2_neuron_partial_solution(partial_solution, network_inputs.size());
 
   /* Add relevant Partial solution input (the input of the first @Neuron) */
@@ -65,18 +65,18 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
 
   /* The result should be according to the calculations */
   solver.solve(network_inputs, neuron_data);
-  expected_neuron_output = std::vector<sdouble32>(2);
+  expected_neuron_output = std::vector<double>(2);
   rafko_test::manual_2_neuron_result(network_inputs, expected_neuron_output, partial_solution);
   CHECK( Catch::Approx(neuron_data.get_element(0,1)).epsilon(0.00000000000001) == expected_neuron_output[1] );
 
   /* The result should change in accordance with the parameters */
   srand (time(nullptr));
-  for(uint8 variant_iterator = 0; variant_iterator < 100u; variant_iterator++){
-    rafko_net::SynapseIterator<>::iterate(partial_solution.weight_indices(),[&](sint32 neuron_weight_index){
-      partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+  for(std::uint8_t variant_iterator = 0; variant_iterator < 100u; variant_iterator++){
+    rafko_net::SynapseIterator<>::iterate(partial_solution.weight_indices(),[&](std::int32_t neuron_weight_index){
+      partial_solution.set_weight_table(neuron_weight_index,static_cast<double>(rand()%11) / (10.0));
     },0u,1u); /* Mess with the weights of the first Neuron */
-    rafko_net::SynapseIterator<>::iterate(partial_solution.weight_indices(),[&](sint32 neuron_weight_index){
-      partial_solution.set_weight_table(neuron_weight_index,static_cast<sdouble32>(rand()%11) / double_literal(10.0));
+    rafko_net::SynapseIterator<>::iterate(partial_solution.weight_indices(),[&](std::int32_t neuron_weight_index){
+      partial_solution.set_weight_table(neuron_weight_index,static_cast<double>(rand()%11) / (10.0));
     },1u,1u); /* Mess with the weights of the second Neuron */
 
     solver.solve(network_inputs, neuron_data);
@@ -104,7 +104,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
 TEST_CASE("Test Partial solution input collection","[solve][partial-solution][input_collection]"){
   rafko_mainframe::RafkoSettings settings;
   rafko_net::PartialSolution partial_solution;
-  std::vector<sdouble32> network_inputs = {double_literal(1.9),double_literal(2.8),double_literal(3.7),double_literal(4.6),double_literal(5.5),double_literal(6.4),double_literal(7.3),double_literal(8.2),double_literal(9.1),double_literal(10.0)};
+  std::vector<double> network_inputs = {(1.9),(2.8),(3.7),(4.6),(5.5),(6.4),(7.3),(8.2),(9.1),(10.0)};
   rafko_net::IndexSynapseInterval temp_index_interval;
   rafko_net::InputSynapseInterval temp_input_interval;
   rafko_utilities::DataRingbuffer neuron_data(1, network_inputs.size());
@@ -112,9 +112,9 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(network_inputs.size());
   *partial_solution.mutable_output_data() = temp_index_interval;
-  partial_solution.add_weight_table(double_literal(0.0));  /* A weight for the spike function */
-  for(uint32 i = 0; i < network_inputs.size(); ++i){
-    partial_solution.add_weight_table(double_literal(1.0));
+  partial_solution.add_weight_table((0.0));  /* A weight for the spike function */
+  for(std::uint32_t i = 0; i < network_inputs.size(); ++i){
+    partial_solution.add_weight_table((1.0));
     partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
 
     partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights */
@@ -155,7 +155,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   rafko_net::PartialSolutionSolver solver(partial_solution, settings);
 
   solver.solve(network_inputs, neuron_data); /* Since the network just spits the inputs back out so the input collection is testable through it*/
-  for(uint32 i = 0; i < network_inputs.size(); ++i){
+  for(std::uint32_t i = 0; i < network_inputs.size(); ++i){
     REQUIRE( Catch::Approx(network_inputs[i]).epsilon(0.00000000000001) == neuron_data.get_element(0,i));
   }
 }

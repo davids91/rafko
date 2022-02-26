@@ -48,9 +48,9 @@ public:
    * @param[in]  neuron_data              The neuron data to evaluate
    * @return     The resulting error
    */
-  virtual sdouble32 set_feature_for_label(
-    const rafko_gym::RafkoEnvironment& environment, uint32 sample_index,
-    const std::vector<sdouble32>& neuron_data
+  virtual double set_feature_for_label(
+    const rafko_gym::RafkoEnvironment& environment, std::uint32_t sample_index,
+    const std::vector<double>& neuron_data
   ) const = 0;
 
   /**
@@ -63,9 +63,9 @@ public:
    * @param[in]  labels_to_evaluate       The labels to evaluate
    * @return     The resulting error
    */
-  virtual sdouble32 set_features_for_labels(
-     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
+  virtual double set_features_for_labels(
+     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+    std::uint32_t neuron_buffer_index, std::uint32_t raw_start_index, std::uint32_t labels_to_evaluate
   )const = 0;
 
   /**
@@ -80,10 +80,10 @@ public:
    * @param[in]  sequence_truncation      The sequence truncation
    * @return     The resulting error
    */
-  virtual sdouble32 set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
-    uint32 start_index_in_sequence, uint32 sequence_truncation
+  virtual double set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
+    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation
   )const = 0;
 
   /**
@@ -98,10 +98,10 @@ public:
    * @param[in]  sequence_truncation      The sequence truncation
    * @return     The resulting error
    */
-  virtual sdouble32 set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
-    uint32 start_index_in_sequence, uint32 sequence_truncation, std::vector<sdouble32>& tmp_data
+  virtual double set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
+    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation, std::vector<double>& tmp_data
   )const = 0;
 
   #if(RAFKO_USES_OPENCL)
@@ -110,7 +110,7 @@ public:
    *
    * @param[in]   pairs_to_evaluate_
    */
-  virtual void set_gpu_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_) = 0;
+  virtual void set_gpu_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_) = 0;
   #endif/*(RAFKO_USES_OPENCL)*/
 
 

@@ -20,18 +20,18 @@
 
 namespace rafko_mainframe{
 
-sdouble32 RafkoSettings::get_learning_rate(uint32 iteration) const{
-  if((0 == learning_rate_with_decay.size())||(iteration < std::get<uint32>(learning_rate_with_decay[0])))
+double RafkoSettings::get_learning_rate(std::uint32_t iteration) const{
+  if((0 == learning_rate_with_decay.size())||(iteration < std::get<std::uint32_t>(learning_rate_with_decay[0])))
     return hypers.learning_rate();
-  if(iteration >= std::get<uint32>(learning_rate_with_decay.back()))
-    return std::get<sdouble32>(learning_rate_with_decay.back());
-  uint32 decay_index = 0;
+  if(iteration >= std::get<std::uint32_t>(learning_rate_with_decay.back()))
+    return std::get<double>(learning_rate_with_decay.back());
+  std::uint32_t decay_index = 0;
   if(iteration >= learning_rate_decay_iteration_cache)
     decay_index = learning_rate_decay_index_cache;
 
   while(
     (decay_index < (learning_rate_with_decay.size()-1u))
-    &&(iteration >= std::get<uint32>(learning_rate_with_decay[decay_index]))
+    &&(iteration >= std::get<std::uint32_t>(learning_rate_with_decay[decay_index]))
   )++decay_index;
 
   --decay_index;
@@ -39,7 +39,7 @@ sdouble32 RafkoSettings::get_learning_rate(uint32 iteration) const{
   learning_rate_decay_iteration_cache = iteration;
   learning_rate_decay_index_cache = decay_index;
 
-  return std::get<sdouble32>(learning_rate_with_decay[decay_index]);
+  return std::get<double>(learning_rate_with_decay[decay_index]);
 }
 
 } /* rafko_mainframe */

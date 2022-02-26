@@ -46,20 +46,20 @@ public:
   constexpr DenseNetWeightInitializer(bool to_seed, const rafko_mainframe::RafkoSettings& settings)
   :  WeightInitializer(settings)
   {
-    if(to_seed)srand(static_cast<uint32>(time(nullptr)));
+    if(to_seed)srand(static_cast<std::uint32_t>(time(nullptr)));
   }
 
   constexpr  DenseNetWeightInitializer(
-    const rafko_mainframe::RafkoSettings& settings, sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(1.0)
+    const rafko_mainframe::RafkoSettings& settings, double memRatioMin = (0.0), double memRatioMax = (1.0)
   ): WeightInitializer(settings)
   {
-    memMin = std::max(double_literal(0.0), std::min(double_literal(1.0), memRatioMin));
-    memMax = std::min(double_literal(1.0), std::max(memMin,memRatioMax));
+    memMin = std::max((0.0), std::min((1.0), memRatioMin));
+    memMax = std::min((1.0), std::max(memMin,memRatioMax));
   }
 
   constexpr DenseNetWeightInitializer(
-    uint32 seed, const rafko_mainframe::RafkoSettings& settings,
-    sdouble32 memRatioMin = double_literal(0.0), sdouble32 memRatioMax = double_literal(0.0)
+    std::uint32_t seed, const rafko_mainframe::RafkoSettings& settings,
+    double memRatioMin = (0.0), double memRatioMax = (0.0)
   ): DenseNetWeightInitializer(settings, memRatioMin, memRatioMax)
   {
     srand(seed);
@@ -68,29 +68,29 @@ public:
   /**
    * @brief      Configuration functions
    */
-  constexpr void set(uint32 expected_input_number, sdouble32 expected_input_maximum_value_);
-  sdouble32 next_weight_for(Transfer_functions used_transfer_function) const{
-    return ((rand()%2 == 0)?-double_literal(1.0):double_literal(1.0)) * limit_weight(
-      (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
+  constexpr void set(std::uint32_t expected_input_number, double expected_input_maximum_value_);
+  double next_weight_for(Transfer_functions used_transfer_function) const{
+    return ((rand()%2 == 0)?-(1.0):(1.0)) * limit_weight(
+      (static_cast<double>(rand())/(static_cast<double>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
     );
   }
 
-  constexpr sdouble32 next_memory_filter() const{
+  constexpr double next_memory_filter() const{
     if(memMin <  memMax){
-      sdouble32 diff = memMax - memMin;
-      return (double_literal(0.0) == diff)?0:(
-         memMin + (static_cast<sdouble32>(rand())/(static_cast<sdouble32>(RAND_MAX/diff)))
+      double diff = memMax - memMin;
+      return ((0.0) == diff)?0:(
+         memMin + (static_cast<double>(rand())/(static_cast<double>(RAND_MAX/diff)))
       );
     } else return memMin;
   }
 
-  constexpr sdouble32 next_bias() const{
-    return double_literal(0.0);
+  constexpr double next_bias() const{
+    return (0.0);
   }
 
 private:
-  sdouble32 memMin = double_literal(0.0);
-  sdouble32 memMax = double_literal(1.0);
+  double memMin = (0.0);
+  double memMax = (1.0);
 
   /**
    * @brief      Gets the expected amplitude for a weight with the given transfer function
@@ -101,8 +101,8 @@ private:
    *
    * @return     Expected weight amplitude
    */
-  sdouble32 get_weight_amplitude(Transfer_functions used_transfer_function) const{
-    sdouble32 amplitude;
+  double get_weight_amplitude(Transfer_functions used_transfer_function) const{
+    double amplitude;
     switch(used_transfer_function){
     case transfer_function_elu:
     case transfer_function_relu:

@@ -33,18 +33,18 @@ namespace rafko_gym_test {
 TEST_CASE("Testing Dataset wrapper creation", "[environment][data-handling]" ) {
   rafko_mainframe::RafkoSettings settings;
   srand(2511793749);
-  for(uint32 variant = 0; variant < 10; ++variant){
-    uint32 sample_number = (rand()%5) + 1;
-    uint32 sequence_size = (rand()%2) + 1;
-    uint32 feature_size = (rand()%5) + 1;
-    sdouble32 expected_label = static_cast<sdouble32>(rand()%10) * double_literal(100.0);
+  for(std::uint32_t variant = 0; variant < 10; ++variant){
+    std::uint32_t sample_number = (rand()%5) + 1;
+    std::uint32_t sequence_size = (rand()%2) + 1;
+    std::uint32_t feature_size = (rand()%5) + 1;
+    double expected_label = static_cast<double>(rand()%10) * (100.0);
     std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */, feature_size, sample_number, sequence_size, 0/*prefill_size*/, expected_label));
     rafko_gym::RafkoDatasetWrapper data_wrap(*dataset);
     REQUIRE( 0 == data_wrap.get_prefill_inputs_number() );
     REQUIRE( sample_number == data_wrap.get_number_of_sequences() );
-    for(uint32 sequence_index = 0; sequence_index < sample_number; ++sequence_index){
-      for(uint32 label_index = 0; label_index < sequence_size; ++label_index){
-        for(uint32 feature_index = 0; feature_index < feature_size; ++feature_index){
+    for(std::uint32_t sequence_index = 0; sequence_index < sample_number; ++sequence_index){
+      for(std::uint32_t label_index = 0; label_index < sequence_size; ++label_index){
+        for(std::uint32_t feature_index = 0; feature_index < feature_size; ++feature_index){
           REQUIRE(
             dataset->labels((sequence_index * sequence_size) + (label_index * feature_size) + feature_index)
             == data_wrap.get_label_sample((sequence_index * sequence_size) + label_index)[feature_index]

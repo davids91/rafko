@@ -39,8 +39,8 @@ public:
    * @param[in]  parameter The parameter supplied by a Neuron
    * @param[in]  data      The data to apply it to
    */
-  static constexpr sdouble32 get_value(sdouble32 parameter, sdouble32 new_data, sdouble32 previous_data){
-    return (previous_data * parameter) + (new_data * (double_literal(1.0)-parameter));
+  static constexpr double get_value(double parameter, double new_data, double previous_data){
+    return (previous_data * parameter) + (new_data * ((1.0)-parameter));
   }
 
   /**
@@ -51,7 +51,7 @@ public:
    *
    * @return     The derivative from data.
    */
-  static constexpr sdouble32 get_derivative(sdouble32 parameter, sdouble32 transfer_function_output, sdouble32 previous_value){
+  static constexpr double get_derivative(double parameter, double transfer_function_output, double previous_value){
     parameter_not_used(parameter);
     return (previous_value - transfer_function_output);
   }

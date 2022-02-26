@@ -63,7 +63,7 @@ public:
   : sequence_size(std::max(1u,samples_.sequence_size()))
   , input_samples(samples_.inputs_size() / samples_.input_size())
   , label_samples(samples_.labels_size() / samples_.feature_size())
-  , prefill_sequences( static_cast<uint32>((input_samples.size() - label_samples.size())) / (label_samples.size() / sequence_size) )
+  , prefill_sequences( static_cast<std::uint32_t>((input_samples.size() - label_samples.size())) / (label_samples.size() / sequence_size) )
   {
     assert(0 == (label_samples.size()%sequence_size));
     assert(0 < samples_.input_size());
@@ -74,60 +74,60 @@ public:
     fill(samples_);
   }
 
-  RafkoDatasetWrapper(std::vector<std::vector<sdouble32>>&& input_samples_, std::vector<std::vector<sdouble32>>&& label_samples_, uint32 sequence_size_ = 1u)
+  RafkoDatasetWrapper(std::vector<std::vector<double>>&& input_samples_, std::vector<std::vector<double>>&& label_samples_, std::uint32_t sequence_size_ = 1u)
   : sequence_size(std::max(1u,sequence_size_))
   , input_samples(std::move(input_samples_))
   , label_samples(std::move(label_samples_))
-  , prefill_sequences(static_cast<uint32>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
+  , prefill_sequences(static_cast<std::uint32_t>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
   {
     assert(0 == (label_samples.size()%sequence_size));
     assert(0 < input_samples.size());
     assert(input_samples.size() == label_samples.size());
   }
 
-  const std::vector<sdouble32>& get_input_sample(uint32 raw_input_index) const{
+  const std::vector<double>& get_input_sample(std::uint32_t raw_input_index) const{
     assert(input_samples.size() > raw_input_index);
     return input_samples[raw_input_index];
   }
 
-  constexpr const std::vector<std::vector<sdouble32>>& get_input_samples() const{
+  constexpr const std::vector<std::vector<double>>& get_input_samples() const{
     return input_samples;
   }
 
-  const std::vector<sdouble32>& get_label_sample(uint32 raw_label_index) const{
+  const std::vector<double>& get_label_sample(std::uint32_t raw_label_index) const{
     assert(label_samples.size() > raw_label_index);
     return label_samples[raw_label_index];
   }
 
-  const std::vector<std::vector<sdouble32>>& get_label_samples() const{
+  const std::vector<std::vector<double>>& get_label_samples() const{
     return label_samples;
   }
 
-  uint32 get_feature_size() const{
+  std::uint32_t get_feature_size() const{
     return label_samples[0].size();
   }
 
-  uint32 get_input_size() const{
+  std::uint32_t get_input_size() const{
     return input_samples[0].size();
   }
 
-  uint32 get_number_of_input_samples() const{
+  std::uint32_t get_number_of_input_samples() const{
     return input_samples.size();
   }
 
-  uint32 get_number_of_label_samples() const{
+  std::uint32_t get_number_of_label_samples() const{
     return label_samples.size();
   }
 
-  uint32 get_number_of_sequences() const{
+  std::uint32_t get_number_of_sequences() const{
     return (get_number_of_label_samples() / sequence_size);
   }
 
-  constexpr uint32 get_sequence_size() const{
+  constexpr std::uint32_t get_sequence_size() const{
     return sequence_size;
   }
 
-  constexpr uint32 get_prefill_inputs_number() const{
+  constexpr std::uint32_t get_prefill_inputs_number() const{
     return prefill_sequences;
   }
 
@@ -136,10 +136,10 @@ public:
   constexpr void pop_state(){ }
 
 private:
-  const uint32 sequence_size;
-  std::vector<std::vector<sdouble32>> input_samples;
-  std::vector<std::vector<sdouble32>> label_samples;
-  const uint32 prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
+  const std::uint32_t sequence_size;
+  std::vector<std::vector<double>> input_samples;
+  std::vector<std::vector<double>> label_samples;
+  const std::uint32_t prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
 
   /**
    * @brief      Converting the @rafko_gym::DataSet message to vectors

@@ -40,14 +40,14 @@ public:
   , settings(settings)
   { }
 
-  void log(uint32 iteration, const std::vector<uint32>& coordinates, const std::vector<std::string>& tags, const std::vector<sdouble32>& data);
+  void log(std::uint32_t iteration, const std::vector<std::uint32_t>& coordinates, const std::vector<std::string>& tags, const std::vector<double>& data);
   void flush();
 
 private:
   std::string id;
   RafkoSettings& settings;
   Measurement measurement;
-  uint32 changes_since = 0u;
+  std::uint32_t changes_since = 0u;
 };
 
 } /* namespace rafko_mainframe */

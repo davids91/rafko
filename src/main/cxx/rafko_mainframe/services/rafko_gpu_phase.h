@@ -58,7 +58,7 @@ public:
    * @param[in]  enq      the OpenCL enqeue arguments provided by the caller
    * @param[in]  input    the input array to upload to device memory
    */
-  void operator()(cl::EnqueueArgs& enq, const std::vector<sdouble32>& input);
+  void operator()(cl::EnqueueArgs& enq, const std::vector<double>& input);
 
   /**
    * @brief      Executes the implemented strategy phase
@@ -83,7 +83,7 @@ public:
    *
    * @return     The output data with ownership transferred to the caller
    */
-  std::unique_ptr<sdouble32[]> acquire_output(std::size_t size, std::size_t offset = 0u);
+  std::unique_ptr<double[]> acquire_output(std::size_t size, std::size_t offset = 0u);
 
   /**
    * @brief      Loads the output of the Phase into the supported pointer
@@ -92,7 +92,7 @@ public:
    * @param[in]  size     The number of elements to take from the output
    * @param[in]  offset   An offset inside the output buffer to get
    */
-  void load_output(sdouble32* target, std::size_t size, std::size_t offset = 0u);
+  void load_output(double* target, std::size_t size, std::size_t offset = 0u);
 
   /**
    * @brief      Provides the buffer containing the input data of the implemented

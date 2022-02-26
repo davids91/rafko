@@ -19,7 +19,7 @@
 
 namespace rafko_utilities {
 
-void ThreadGroup::start_and_block(const std::function<void(uint32)>& function) const{
+void ThreadGroup::start_and_block(const std::function<void(std::uint32_t)>& function) const{
   { /* initialize, start.. */
     std::unique_lock<std::mutex> my_lock(state_mutex);
     worker_function = &function;
@@ -47,7 +47,7 @@ void ThreadGroup::start_and_block(const std::function<void(uint32)>& function) c
   }
 }
 
-void ThreadGroup::worker(uint32 thread_index){
+void ThreadGroup::worker(std::uint32_t thread_index){
   while(End != state.load()){ /* Until the pool is stopped */
     { /* Wait until main thread triggers a task */
       std::unique_lock<std::mutex> my_lock(state_mutex);

@@ -59,11 +59,11 @@ public:
 
   /* +++ Methods taken from @RafkoAgent +++ */
   void solve(
-    const std::vector<sdouble32>& input, rafko_utilities::DataRingbuffer& output,
-    const std::vector<std::reference_wrapper<std::vector<sdouble32>>>& tmp_data_pool,
-    uint32 used_data_pool_start = 0, uint32 thread_index = 0
+    const std::vector<double>& input, rafko_utilities::DataRingbuffer& output,
+    const std::vector<std::reference_wrapper<std::vector<double>>>& tmp_data_pool,
+    std::uint32_t used_data_pool_start = 0, std::uint32_t thread_index = 0
   ) const;
-  uint32 get_output_data_size() const{
+  std::uint32_t get_output_data_size() const{
     return solution.output_neuron_number();
   }
   void set_eval_mode(bool evaluation){
@@ -76,7 +76,7 @@ private:
   SolutionSolver(
     const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings,
     std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
-    uint32 max_tmp_data_needed, uint32 max_tmp_data_needed_per_thread
+    std::uint32_t max_tmp_data_needed, std::uint32_t max_tmp_data_needed_per_thread
   );
 
   bool evaluating = true;
@@ -96,8 +96,8 @@ public:
     const Solution& solution;
     const rafko_mainframe::RafkoSettings& settings;
     std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
-    uint32 max_tmp_size_needed = 0u;
-    uint32 max_tmp_data_needed_per_thread = 0u;
+    std::uint32_t max_tmp_size_needed = 0u;
+    std::uint32_t max_tmp_data_needed_per_thread = 0u;
   };
 };
 

@@ -37,9 +37,9 @@ namespace rafko_utilities{
  */
 class RAFKO_FULL_EXPORT ThreadGroup{
 public:
-  ThreadGroup(uint32 number_of_threads){
+  ThreadGroup(std::uint32_t number_of_threads){
     assert(0u < number_of_threads);
-    for(uint32 i = 0; i < number_of_threads; ++i)
+    for(std::uint32_t i = 0; i < number_of_threads; ++i)
      threads.emplace_back(std::thread(&ThreadGroup::worker, this, i));
   }
 
@@ -57,25 +57,25 @@ public:
     }
   }
 
-  void start_and_block(const std::function<void(uint32)>& function) const;
+  void start_and_block(const std::function<void(std::uint32_t)>& function) const;
 
   /**
    * @brief     Returns the number of worker threads handled in this group
    */
-  uint32 get_number_of_threads() const{
+  std::uint32_t get_number_of_threads() const{
     return threads.size();
   }
 
 private:
   enum state_t{Idle, Start, End};
-  mutable const std::function<void(uint32)>* worker_function; /* gets the thread index it is inside */
+  mutable const std::function<void(std::uint32_t)>* worker_function; /* gets the thread index it is inside */
   mutable std::size_t threads_ready = 0;
   mutable std::atomic<state_t> state = {Idle};
   mutable std::mutex state_mutex;
   mutable std::condition_variable synchroniser;
   std::vector<std::thread> threads;
 
-  void worker(uint32 thread_index);
+  void worker(std::uint32_t thread_index);
 };
 
 } /* namespace rafko_utilities */

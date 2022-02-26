@@ -57,29 +57,29 @@ public:
   , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   { }
 
-  sdouble32 set_feature_for_label(
-    const rafko_gym::RafkoEnvironment& environment, uint32 sample_index,
-    const std::vector<sdouble32>& neuron_data
+  double set_feature_for_label(
+    const rafko_gym::RafkoEnvironment& environment, std::uint32_t sample_index,
+    const std::vector<double>& neuron_data
   ) const;
 
-  sdouble32 set_features_for_labels(
-    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 raw_start_index, uint32 labels_to_evaluate
+  double set_features_for_labels(
+    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+    std::uint32_t neuron_buffer_index, std::uint32_t raw_start_index, std::uint32_t labels_to_evaluate
   ) const;
 
-  sdouble32 set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
-    uint32 start_index_in_sequence, uint32 sequence_truncation
+  double set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
+    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation
   ) const;
-  sdouble32 set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<sdouble32>>& neuron_data,
-    uint32 neuron_buffer_index, uint32 sequence_start_index, uint32 sequences_to_evaluate,
-    uint32 start_index_in_sequence, uint32 sequence_truncation, std::vector<sdouble32>& tmp_data
+  double set_features_for_sequences(
+    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
+    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation, std::vector<double>& tmp_data
   ) const;
 
   #if(RAFKO_USES_OPENCL)
-  void set_gpu_parameters(uint32 pairs_to_evaluate_, uint32 feature_size_){
+  void set_gpu_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_){
     cost_function->set_parameters(pairs_to_evaluate_, feature_size_);
     pairs_to_evaluate = pairs_to_evaluate_;
   }
@@ -121,13 +121,13 @@ public:
 
 
 private:
-  static rafko_utilities::DataPool<sdouble32> common_datapool;
+  static rafko_utilities::DataPool<double> common_datapool;
 
   rafko_mainframe::RafkoSettings& settings;
   std::shared_ptr<rafko_gym::CostFunction> cost_function;
   rafko_utilities::ThreadGroup error_calculation_threads;
   #if(RAFKO_USES_OPENCL)
-  uint32 pairs_to_evaluate = 1u;
+  std::uint32_t pairs_to_evaluate = 1u;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   /**
@@ -140,7 +140,7 @@ private:
    * @param          error_mutex    The mutex guarding the update of @target
    * @param[in]      thread_index   The index of the thread the function is called from
    */
-  void accumulate_error_sum(std::vector<sdouble32>& source, sdouble32& target, uint32 length, std::mutex& error_mutex, uint32 thread_index) const;
+  void accumulate_error_sum(std::vector<double>& source, double& target, std::uint32_t length, std::mutex& error_mutex, std::uint32_t thread_index) const;
 
 };
 

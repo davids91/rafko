@@ -46,7 +46,7 @@ public:
    *
    * @return     The result of data.
    */
-  static constexpr sdouble32 collect(Input_functions function, sdouble32 a, sdouble32 b){
+  static constexpr double collect(Input_functions function, double a, double b){
     switch(function){
       case input_function_add: return a + b;
       case input_function_multiply: return a * b;

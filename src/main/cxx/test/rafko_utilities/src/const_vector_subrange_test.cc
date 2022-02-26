@@ -29,7 +29,7 @@ namespace rafko_utilities_test {
  * Testing if Subvector range works as expected
  * */
 TEST_CASE("Vector subrange", "[data-handling][sub-range]"){
-  std::vector<sdouble32> big_vec = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+  std::vector<double> big_vec = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
   rafko_utilities::ConstVectorSubrange<> my_range{ big_vec.begin(), big_vec.end() };
 
   REQUIRE( big_vec.size() == my_range.size() );
@@ -37,13 +37,13 @@ TEST_CASE("Vector subrange", "[data-handling][sub-range]"){
   CHECK( big_vec.back() == my_range.back() );
   CHECK( big_vec.front() == my_range.front() );
 
-  for(uint32 i = 0; i < big_vec.size(); i++){
+  for(std::uint32_t i = 0; i < big_vec.size(); i++){
     REQUIRE( big_vec[i] == my_range[i] );
   }
 
-  for(uint32 variant = 0; variant < 10u; variant++){
-    uint16 start = rand()%big_vec.size();
-    uint16 num = rand()%(big_vec.size() - start);
+  for(std::uint32_t variant = 0; variant < 10u; variant++){
+    std::uint16_t start = rand()%big_vec.size();
+    std::uint16_t num = rand()%(big_vec.size() - start);
 
     rafko_utilities::ConstVectorSubrange<> range = rafko_utilities::ConstVectorSubrange<>( big_vec.begin() + start, num );
 

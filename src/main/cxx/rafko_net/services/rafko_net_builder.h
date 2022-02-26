@@ -53,7 +53,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  constexpr RafkoNetBuilder& input_size(uint32 size){
+  constexpr RafkoNetBuilder& input_size(std::uint32_t size){
     arg_input_size = size;
     is_input_size_set = true;
     return *this;
@@ -66,7 +66,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  constexpr RafkoNetBuilder& output_neuron_number(uint32 size){
+  constexpr RafkoNetBuilder& output_neuron_number(std::uint32_t size){
     arg_output_neuron_number = size;
     is_output_neuron_number_set = true;
     return *this;
@@ -79,7 +79,7 @@ public:
    *
    * @return
    */
-  constexpr RafkoNetBuilder& expected_input_range(sdouble32 range){
+  constexpr RafkoNetBuilder& expected_input_range(double range){
     arg_expected_input_range = range;
     is_expected_input_range_set = true;
     return *this;
@@ -123,7 +123,7 @@ public:
    *
    * @return     reference for chaining
    */
-  RafkoNetBuilder& weight_table(std::vector<sdouble32> table){
+  RafkoNetBuilder& weight_table(std::vector<double> table){
     if(0 < table.size()){
       arg_weight_table = table;
       is_weight_table_set = true;
@@ -174,7 +174,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& add_feature_to_layer(uint32 layer_index, Neuron_group_features feature);
+  RafkoNetBuilder& add_feature_to_layer(std::uint32_t layer_index, Neuron_group_features feature);
 
   /**
    * @brief      Set the input function of a Neuron other, than the default "+"
@@ -185,7 +185,7 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& set_neuron_input_function(uint32 layer_index, uint32 layer_neuron_index, Input_functions function);
+  RafkoNetBuilder& set_neuron_input_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Input_functions function);
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
@@ -198,7 +198,7 @@ public:
    *
    * @return   the built neural network
    */
-  RafkoNet* dense_layers(std::vector<uint32> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter){
+  RafkoNet* dense_layers(std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter){
     (void)allowed_transfer_functions_by_layer(transfer_function_filter);
     return dense_layers(layer_sizes);
   }
@@ -210,7 +210,7 @@ public:
    *
    * @return     the built neural network
    */
-  RafkoNet* dense_layers(std::vector<uint32> layer_sizes);
+  RafkoNet* dense_layers(std::vector<std::uint32_t> layer_sizes);
 
   /**
    * @brief    creates a Neural network from the given Arguments. Requires the following
@@ -242,15 +242,15 @@ private:
   /**
    * @brief   Helper variables for features and optional Neuron parameters
    */
-  uint32 recurrence = network_recurrence_unknown;
+  std::uint32_t recurrence = network_recurrence_unknown;
   std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
-  std::vector< std::pair<uint32,Neuron_group_features> > layer_features;
-  std::vector< std::tuple<uint32,uint32,Input_functions> > arg_neuron_index_input_functions;
+  std::vector< std::pair<std::uint32_t,Neuron_group_features> > layer_features;
+  std::vector< std::tuple<std::uint32_t,std::uint32_t,Input_functions> > arg_neuron_index_input_functions;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
    */
-  sdouble32 arg_expected_input_range = TransferFunction::get_average_output_range(transfer_function_identity);
+  double arg_expected_input_range = TransferFunction::get_average_output_range(transfer_function_identity);
 
   /**
    * The array containing the neurons while RafkoNetBuilder::build is used
@@ -260,7 +260,7 @@ private:
   /**
    * The array containing the used weights in the network while RafkoNetBuilder::build is used
    */
-  std::vector<sdouble32> arg_weight_table;
+  std::vector<double> arg_weight_table;
 
   /**
    * Weight Initializer argument, which guides the initial net Weights
@@ -270,12 +270,12 @@ private:
   /**
    * Number of inputs the net-to-be-built shall accept
    */
-  uint32 arg_input_size = 0;
+  std::uint32_t arg_input_size = 0;
 
   /**
    * Number of Neurons the net-to-be-built shall have as output
    */
-  uint32 arg_output_neuron_number = 0;
+  std::uint32_t arg_output_neuron_number = 0;
 
   /**
    * @brief RafkoNetBuilder::set_neuron_array: moves the neuron_array argument into the RafkoNet

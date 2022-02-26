@@ -32,10 +32,10 @@ namespace rafko_net{
 class RAFKO_FULL_EXPORT FeatureGroupCache{
 private:
   const FeatureGroup& feature_in_network;
-  const uint32 num_of_neurons_needed;
-  uint32 num_of_neurons_solved = 0u;
+  const std::uint32_t num_of_neurons_needed;
+  std::uint32_t num_of_neurons_solved = 0u;
 public:
-  const uint32 checksum;
+  const std::uint32_t checksum;
 
   FeatureGroupCache(const FeatureGroup& host)
   : feature_in_network(host)
@@ -63,7 +63,7 @@ private:
    *
    * @return     The calculated checksum for the object
    */
-  uint32 construct(const FeatureGroup& host);
+  std::uint32_t construct(const FeatureGroup& host);
 };
 
 inline bool operator==(const FeatureGroupCache& a, const FeatureGroupCache& b){ return a.checksum == b.checksum; }
