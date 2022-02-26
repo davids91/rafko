@@ -242,24 +242,20 @@ std::string SolutionBuilder::get_kernel_for_solution(
     for(std::uint32_t inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
       bool first_weight_in_neuron = true;
       bool first_input_in_neuron = true;
-      std::function<std::string(std::string,bool)> input_function_lambda = [&inner_neuron_index, &partial](std::string input, bool first){
-        if(first){
-          return input;
-        }else{
-          return InputFunction::get_kernel_function_for(
-            partial.neuron_input_functions(inner_neuron_index), input
-          );
-        }
+      std::function<std::string(std::string,std::string,bool)> input_function_lambda =
+      [&inner_neuron_index, &partial](std::string sum, std::string b, bool first)->std::string{
+        if(first)return sum + " = " + b + ";"; /* The first operation shall set the value, not update it */
+        else return(
+          sum + "=" + InputFunction::get_kernel_function_for(partial.neuron_input_functions(inner_neuron_index), sum, b) + ";\n"
+        );
       };
       std::uint32_t spike_weight_index;
-      std::string inner_neuron_operation = "neuron_partial_result = (";
-      std::string inner_neuron_input_weight_pairs = "";
+      std::string inner_neuron_operation = "";
       SynapseIterator<>::iterate(partial.weight_indices(),[&](std::int32_t weight_index){
         if(first_weight_in_neuron){
           first_weight_in_neuron = false;
           spike_weight_index = weight_index;
         }else{
-          inner_neuron_input_weight_pairs += std::string("\n");
           if(input_synapse_index_offset < partial.index_synapse_number(inner_neuron_index)){ /* ... input ... */
             std::int32_t input_past_reach = partial.inside_indices(input_synapse_index + input_synapse_index_offset).reach_past_loops();
             std::int32_t input_index = partial.inside_indices(input_synapse_index + input_synapse_index_offset).starts();
@@ -270,18 +266,18 @@ std::string SolutionBuilder::get_kernel_for_solution(
               if(SynapseIterator<>::is_index_input(input_index)){
                 input_index = SynapseIterator<>::input_index_from_synapse_index(input_index);
                 assert( 0 == input_past_reach );
-                inner_neuron_input_weight_pairs += input_function_lambda( std::string("(")
+                inner_neuron_operation += input_function_lambda("neuron_partial_result", std::string("(")
                 /* input */+ " inputs[input_start + " + std::to_string(input_index) + "]"
                 /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
                 + std::string(")"), first_input_in_neuron);
               }else{
                 if(0 != input_past_reach){
-                  inner_neuron_input_weight_pairs += input_function_lambda( past_reach_guard(input_past_reach, std::string("(")
+                  inner_neuron_operation += input_function_lambda("neuron_partial_result", past_reach_guard(input_past_reach, std::string("(")
                   /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + "]"
                   /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
                   + std::string(")")), first_input_in_neuron );
                 }else{ /* input doesn't reach to the past */
-                  inner_neuron_input_weight_pairs += input_function_lambda( std::string("(")
+                  inner_neuron_operation += input_function_lambda("neuron_partial_result", std::string("(")
                   /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
                   /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
                   + std::string(")"), first_input_in_neuron);
@@ -290,12 +286,12 @@ std::string SolutionBuilder::get_kernel_for_solution(
             }else{
               input_index = input_index + input_start_offset;
               if(0 != input_past_reach){
-                inner_neuron_input_weight_pairs += input_function_lambda( past_reach_guard(input_past_reach, std::string("(")
+                inner_neuron_operation += input_function_lambda("neuron_partial_result", past_reach_guard(input_past_reach, std::string("(")
                 /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + "]"
                 /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
                 + std::string(" ")), first_input_in_neuron);
               }else{ /* input doesn't reach to the past */
-                inner_neuron_input_weight_pairs += input_function_lambda( std::string("(")
+                inner_neuron_operation += input_function_lambda("neuron_partial_result", std::string("(")
                 /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
                 /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
                 + std::string(")"), first_input_in_neuron);
@@ -307,15 +303,13 @@ std::string SolutionBuilder::get_kernel_for_solution(
               ++input_synapse_index_offset;
             }
           }else{ /* ... bias ... */
-            inner_neuron_input_weight_pairs += input_function_lambda( std::string("(")
+            inner_neuron_operation += input_function_lambda("neuron_partial_result", std::string("(")
             /* bias weight */+ "inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
             + std::string(")"), first_input_in_neuron);
           }
           first_input_in_neuron = false;
         }
       }, weight_synapse_start, partial.weight_synapse_number(inner_neuron_index));
-      inner_neuron_input_weight_pairs += "\n);\n";
-      inner_neuron_operation += inner_neuron_input_weight_pairs;
       inner_neuron_operation += "neuron_partial_result = " + transfer_function.get_cl_function_for(
         partial.neuron_transfer_functions(inner_neuron_index),
         "neuron_partial_result"
@@ -381,7 +375,6 @@ std::string SolutionBuilder::get_kernel_for_solution(
   source_base = std::regex_replace(source_base, std::regex("==prefill_input_num=="), std::to_string(prefill_input_num));
   source_base = std::regex_replace(source_base, std::regex("==network_input_size=="), std::to_string(solution.network_input_size()));
   source_base = std::regex_replace(source_base, std::regex("==performance_operations=="), performance_operations);
-
   return source_base;
 }
 #endif/*(RAFKO_USES_OPENCL)*/

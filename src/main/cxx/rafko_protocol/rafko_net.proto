@@ -42,6 +42,7 @@ enum Input_functions{
   input_function_unknown = 0;
   input_function_add = 1;
   input_function_multiply = 2;
+  input_function_analog_xor = 3;
   input_function_end = 512;
 }
 

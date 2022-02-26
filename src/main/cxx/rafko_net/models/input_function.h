@@ -50,6 +50,8 @@ public:
     switch(function){
       case input_function_add: return a + b;
       case input_function_multiply: return a * b;
+      case input_function_analog_xor: return std::abs(a - b) * (a + b);
+      /*!Note: This solution for a number sequence of indefinite size might leave some mathematicians very furious, and rightly so.. '^^ */
       default: throw std::runtime_error("Unidentified Input function called!");
     };
   }
@@ -59,14 +61,16 @@ public:
    * @brief     Generates GPU kernel function code for the provided parameters
    *
    * @param[in]   function    The Input function to base the generated kernel code on
-   * @param[in]   input       A value to be merged through the input function
+   * @param[in]   a           A value to be merged through the input function
+   * @param[in]   b           Another value to be merged through the input function
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  static std::string get_kernel_function_for(Input_functions function, std::string input){
+  static std::string get_kernel_function_for(Input_functions function, std::string a, std::string b){
     switch(function){
-      case input_function_add: return "+ (" + input + ")";
-      case input_function_multiply: return  "* (" + input + ")";
+      case input_function_add: return "( " + a + " + " + b + ")";
+      case input_function_multiply: return  "( " + a + " * " + b + ")";
+      case input_function_analog_xor: return "(abs(" + a + "-" + b +")" + " * (" + a + " + " + b + "))";
       default: throw std::runtime_error("Unidentified Input function called!");
     };
   }
