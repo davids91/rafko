@@ -132,7 +132,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     .set_droput_probability(0.2)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero,true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping,false)
-    .set_learning_rate_decay({{1500u,0.8}})
+    .set_learning_rate_decay({{1000u,0.8}})
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
   #if (RAFKO_USES_OPENCL)
   std::uint32_t number_of_samples = 1024;

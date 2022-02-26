@@ -43,23 +43,28 @@ public:
    *             To srand with time(nullptr), the constructor needs to be called with
    *             a true boolean argument or given a seed value.
    */
-  constexpr DenseNetWeightInitializer(bool to_seed, const rafko_mainframe::RafkoSettings& settings)
-  :  WeightInitializer(settings)
+  constexpr DenseNetWeightInitializer(
+    bool to_seed, const rafko_mainframe::RafkoSettings& settings,
+    double memRatioMin = 0.0, double memRatioMax = 1.0
+  )
+  : DenseNetWeightInitializer(settings, memRatioMin, memRatioMax)
   {
     if(to_seed)srand(static_cast<std::uint32_t>(time(nullptr)));
   }
 
-  constexpr  DenseNetWeightInitializer(
-    const rafko_mainframe::RafkoSettings& settings, double memRatioMin = (0.0), double memRatioMax = (1.0)
+  constexpr DenseNetWeightInitializer(
+    const rafko_mainframe::RafkoSettings& settings,
+    double memRatioMin = 0.0, double memRatioMax = 1.0
   ): WeightInitializer(settings)
+  , memMin(memRatioMin)
+  , memMax(std::max(memMin,memRatioMax))
   {
-    memMin = std::max((0.0), std::min((1.0), memRatioMin));
-    memMax = std::min((1.0), std::max(memMin,memRatioMax));
+
   }
 
   constexpr DenseNetWeightInitializer(
     std::uint32_t seed, const rafko_mainframe::RafkoSettings& settings,
-    double memRatioMin = (0.0), double memRatioMax = (0.0)
+    double memRatioMin = 0.0, double memRatioMax = 1.0
   ): DenseNetWeightInitializer(settings, memRatioMin, memRatioMax)
   {
     srand(seed);
@@ -84,13 +89,14 @@ public:
     } else return memMin;
   }
 
-  constexpr double next_bias() const{
-    return (0.0);
+  double next_bias() const{
+    double amplitude = settings.get_zetta(); /* non-zero value to make ReLU and friends fire right away in training */
+    return ( (amplitude / -2.0) + (static_cast<double>(rand()%101)/100.0) * amplitude );
   }
 
 private:
-  double memMin = (0.0);
-  double memMax = (1.0);
+  double memMin;
+  double memMax;
 
   /**
    * @brief      Gets the expected amplitude for a weight with the given transfer function
