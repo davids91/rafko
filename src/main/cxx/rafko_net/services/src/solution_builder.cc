@@ -166,10 +166,15 @@ std::string SolutionBuilder::get_kernel_for_solution(
   std::string source_base = rafko_utilities::random_function + rafko_utilities::atomic_double_add_function
    + R"(
     typedef enum rafko_neuron_action_e{
-      neuron_action_set = 0,
-      neuron_action_input_function,
+      neuron_action_set_by_input = 0,
+      neuron_action_set_by_neuron,
+      neuron_action_set_by_past,
+      neuron_action_input_function_by_input,
+      neuron_action_input_function_by_neuron,
+      neuron_action_input_function_by_past,
+      neuron_action_input_function_bias,
       neuron_action_transfer_function,
-      neuron_action_spike_function,
+      neuron_action_spike_function
     }rafko_neuron_action_t __attribute__ ((aligned));
 
     ==input_function_enums==
@@ -177,17 +182,39 @@ std::string SolutionBuilder::get_kernel_for_solution(
     ==spike_function_enums==
 
     typedef struct rafko_neuron_operation_s{
-      __global double* global_buffer[2];
-      unsigned char behavior_index;
+      int global_buffer_index[2]; /* Index values pointing to elements in the global input/output array */
       rafko_neuron_action_t action;
+      unsigned char behavior_index;
     } rafko_neuron_operation_t __attribute__ ((aligned));
 
-    void neuron_operation(rafko_neuron_operation_t* operation, __private double* local_buffer){
-      switch(operation->action){
-        case neuron_action_set:
-          *local_buffer = (*operation->global_buffer[0] * *operation->global_buffer[1]);
+    void neuron_operation(
+      rafko_neuron_action_t action, unsigned char behavior_index,
+      __constant double* weight, __constant double* input_data, __global double* neuron_data, __private double* local_buffer
+    ){
+      const double weight_value = (NULL!=weight)?(*weight):(0.0); /* in case the weight is not set, it is to be taken as 0.0 */
+      /*!Note: weight should only be NULL in case of a transfer function, where no weight is used */
+      double input_value;
+      if(NULL != input_data)input_value = *input_data;
+        else if(NULL != neuron_data)input_value = *neuron_data;
+        else if(action == neuron_action_input_function_bias) input_value = 1.0;
+        else input_value = 0.0;
+      /*!Note: in case the input data is not set, and the neuron data is also not set input value shall be 0.0,
+       * it happens, when:
+       * - the bias operation is requested: the weight value needs to be multiplied by 1.0 to keep its value
+       * - neuron input function is called on an input which is in an unreachable past; value should be 0.0
+       * - neuron spike function is called during the first run of the network; the value to be used should be 0.0
+       */
+
+      switch(action){
+        case neuron_action_set_by_input:
+        case neuron_action_set_by_neuron:
+        case neuron_action_set_by_past:
+          *local_buffer = (weight_value * input_value);
           break;
-        case neuron_action_input_function:
+        case neuron_action_input_function_by_input:
+        case neuron_action_input_function_by_neuron:
+        case neuron_action_input_function_bias:
+        case neuron_action_input_function_by_past:
           ==input_functions_kernel==
           break;
         case neuron_action_transfer_function:
@@ -205,15 +232,17 @@ std::string SolutionBuilder::get_kernel_for_solution(
        __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){
       double locvar;
+      unsigned char behavior_index;
+      __constant double* input_weight;
+      __constant double* input_from_inputs;
+      __global double* input_from_neurons;
       rafko_neuron_operation_t arr[] = {
         {
-          {&outputs[0],&outputs[1]} /*global_buffer*/,
-          neuron_spike_function_p /*behavior_index*/,
-          neuron_action_spike_function/*action*/
+          {0,1} /*global_buffer*/,
+          neuron_action_spike_function/*action*/,
+          neuron_spike_function_p /*behavior_index*/
         }
       };
-      neuron_operation(&arr[0], &locvar);
-
       if( (input_sizes_size == 3) && (output_sizes_size == 2) ){
         const int sequence_index = get_global_id(0);
         const int neuron_array_size = ==neuron_array_size==;
@@ -245,7 +274,40 @@ std::string SolutionBuilder::get_kernel_for_solution(
         for(int label_index = sequence_start; label_index <= sequence_max_index; ++label_index){
           double neuron_partial_result;
           /* +++ GENERATED_NEURON_CODE +++ */
-          ==neuron_operations==
+          if(arr[0].action == neuron_action_transfer_function){
+            input_weight = NULL;
+          }else{
+            input_weight = &inputs[arr[0].global_buffer_index[0]];
+          }
+          input_from_neurons = NULL;
+          input_from_inputs = NULL;
+          switch(arr[0].action){
+            case neuron_action_set_by_input:
+            case neuron_action_input_function_by_input:
+              input_from_inputs = &inputs[arr[0].global_buffer_index[1]];
+              break;
+            case neuron_action_set_by_neuron:
+            case neuron_action_input_function_by_neuron:
+              input_from_neurons = &outputs[output_start + arr[0].global_buffer_index[1]];
+              break;
+            case neuron_action_set_by_past:
+            case neuron_action_input_function_by_past:{
+              if( ((arr[0].behavior_index & 0xF0u) >> 8u)/*past_index*/ < current_max_backreach )
+                input_from_neurons = &outputs[output_start + arr[0].global_buffer_index[1]]; /* Neuron index correction to take the past value is hardwired into the command array */
+            }break;
+            case neuron_action_transfer_function:
+              input_from_neurons = &outputs[output_start + arr[0].global_buffer_index[1]];
+              break;
+            case neuron_action_spike_function:
+              /* When the first run is in progress, the spike function should not know about the previous value, otherwise the value is set by the command array */
+              if( ((sequence_start - label_index) > 0)||(!evaluate_network) )
+                input_from_neurons = &outputs[output_start + arr[0].global_buffer_index[1]];
+              break;
+            case neuron_action_input_function_bias:
+            default: break;
+          }
+          neuron_operation(arr[0].action, (arr[0].behavior_index & 0xFu), input_weight, input_from_inputs, input_from_neurons, &locvar);
+          //=/=neuron_operations==
           /* --- GENERATED_NEURON_CODE --- */
 
           input_start += network_input_size;
@@ -435,16 +497,15 @@ std::string SolutionBuilder::get_kernel_for_solution(
 
   source_base = std::regex_replace(
     source_base, std::regex("==input_functions_kernel=="),
-    InputFunction::get_kernel_function_for(
-      "operation->behavior_index","*local_buffer","(*operation->global_buffer[0] * *operation->global_buffer[1])")
+    InputFunction::get_kernel_function_for("behavior_index","*local_buffer","(weight_value * input_value)")
   );
   source_base = std::regex_replace(
     source_base, std::regex("==transfer_functions_kernel=="),
-    transfer_function.get_kernel_function_for("operation->behavior_index","*local_buffer","*local_buffer")
+    transfer_function.get_kernel_function_for("behavior_index","*local_buffer","*local_buffer")
   );
   source_base = std::regex_replace(
     source_base, std::regex("==spike_functions_kernel=="),
-    SpikeFunction::get_kernel_function_for("operation->behavior_index","*operation->global_buffer[0]","*operation->global_buffer[1]","*local_buffer")
+    SpikeFunction::get_kernel_function_for("behavior_index","weight_value","*neuron_data","*local_buffer")
   );
   // std::cout << "Agent code: " << source_base << std::endl; exit(1);
 
