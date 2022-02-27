@@ -45,7 +45,7 @@ TEST_CASE("Testing if GPU Context is able to build a valid openCL environment", 
   );
 }
 
-TEST_CASE("Testing if standalone solution is working as intended with the GPU context","[context][GPU][solve]"){
+TEST_CASE("Testing if standalone solution is working as intended with the GPU context","[context][GPU][solve][standalone]"){
   google::protobuf::Arena arena;
   std::uint32_t sequence_size = 6u;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()

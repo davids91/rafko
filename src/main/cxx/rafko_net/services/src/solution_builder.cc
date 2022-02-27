@@ -228,6 +228,12 @@ std::string SolutionBuilder::get_kernel_for_solution(
       }
     }
 
+    __constant const rafko_neuron_operation_t arr[] = {
+      /* +++ GENERATED_NEURON_CODE +++ */
+      ==neuron_operations==
+      /* --- GENERATED_NEURON_CODE --- */
+    };
+
     void kernel ==name==(
        __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
        __global double* outputs, __constant int* output_sizes, int output_sizes_size
@@ -237,11 +243,6 @@ std::string SolutionBuilder::get_kernel_for_solution(
       __constant double* input_weight;
       __constant double* input_from_inputs;
       __global double* input_from_neurons;
-      rafko_neuron_operation_t arr[] = {
-        /* +++ GENERATED_NEURON_CODE +++ */
-        ==neuron_operations==
-        /* --- GENERATED_NEURON_CODE --- */
-      };
       if( (input_sizes_size == 3) && (output_sizes_size == 2) ){
         const int sequence_index = get_global_id(0);
         const int neuron_array_size = ==neuron_array_size==;
@@ -374,7 +375,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
                 assert( 0 == input_past_reach );
                 std::string input_operation = "neuron_action_input_function_by_input";
                 if(first_input_in_neuron) input_operation = "neuron_action_set_by_input";
-                neuron_operations += std::string("{ ")
+                neuron_operations += std::string("\t{ ")
                 + "{"
                   + std::to_string(weight_table_offset + weight_index) + ","
                   + std::to_string(input_index)
@@ -384,10 +385,10 @@ std::string SolutionBuilder::get_kernel_for_solution(
                 + std::string("}, \n");
               }else{ /* Partial input points to a Neuron */
                 if(0 != input_past_reach){
-                  std::string input_operation = "neuron_action_set_by_past";
-                  if(first_input_in_neuron) input_operation = "neuron_action_input_function_by_past";
+                  std::string input_operation = "neuron_action_input_function_by_past";
+                  if(first_input_in_neuron) input_operation = "neuron_action_set_by_past";
                   std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
-                  neuron_operations += std::string("{ ")
+                  neuron_operations += std::string("\t{ ")
                   + "{"
                     + std::to_string(weight_table_offset + weight_index) + ","
                     + "(" + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + ")"
@@ -396,10 +397,10 @@ std::string SolutionBuilder::get_kernel_for_solution(
                   + "( ((" +std::to_string(input_past_reach)+ "&0xFu) << 8u)|(" + operation_action + "))/*past_index + input function index*/"
                   + std::string("}, \n");
                 }else{ /* input doesn't reach to the past */
-                  std::string input_operation = "neuron_action_set_by_neuron";
-                  if(first_input_in_neuron) input_operation = "neuron_action_input_function_by_neuron";
+                  std::string input_operation = "neuron_action_input_function_by_neuron";
+                  if(first_input_in_neuron) input_operation = "neuron_action_set_by_neuron";
                   std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
-                  neuron_operations += std::string("{ ")
+                  neuron_operations += std::string("\t{ ")
                   + "{"
                     + std::to_string(weight_table_offset + weight_index) + ","
                     + "(" + std::to_string(input_index) + ")"
@@ -412,10 +413,10 @@ std::string SolutionBuilder::get_kernel_for_solution(
             }else{ /* Neuron input index does not point to the partial input; it's definitely points inside the network */
               input_index = input_index + input_start_offset;
               if(0 != input_past_reach){
-                std::string input_operation = "neuron_action_set_by_past";
-                if(first_input_in_neuron) input_operation = "neuron_action_input_function_by_past";
+                std::string input_operation = "neuron_action_input_function_by_past";
+                if(first_input_in_neuron) input_operation = "neuron_action_set_by_past";
                 std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
-                neuron_operations += std::string("{ ")
+                neuron_operations += std::string("\t{ ")
                 + "{"
                   + std::to_string(weight_table_offset + weight_index) + ","
                   + "(" + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + ")"
@@ -424,10 +425,10 @@ std::string SolutionBuilder::get_kernel_for_solution(
                 + "( ((" +std::to_string(input_past_reach)+ "&0xFu) << 8u)|(" + operation_action + "))/*past_index + input function index*/"
                 + std::string("}, \n");
               }else{ /* input doesn't reach to the past */
-                std::string input_operation = "neuron_action_set_by_neuron";
-                if(first_input_in_neuron) input_operation = "neuron_action_input_function_by_neuron";
+                std::string input_operation = "neuron_action_input_function_by_neuron";
+                if(first_input_in_neuron) input_operation = "neuron_action_set_by_neuron";
                 std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
-                neuron_operations += std::string("{ ")
+                neuron_operations += std::string("\t{ ")
                 + "{"
                   + std::to_string(weight_table_offset + weight_index) + ","
                   + "(" + std::to_string(input_index) + ")"
@@ -444,7 +445,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
             }
           }else{ /* ... bias ... */
             std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
-            neuron_operations += std::string("{ ")
+            neuron_operations += std::string("\t{ ")
             + "{"
               + std::to_string(weight_table_offset + weight_index) + ",0/* second input doesn't matter with bias*/"
             + "} /*global_buffer:bias_index,-*/, "
@@ -457,7 +458,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
         ++neuron_operation_number;
       }, weight_synapse_start, partial.weight_synapse_number(inner_neuron_index));
       neuron_operations += std::string("{ ")
-      + "{"
+      + "\t{"
         + "0,0 /* none of these matter with the transfer function, as it uses local buffer only */"
       + "} /*global_buffer:-,-*/, "
       + std::string("neuron_action_transfer_function /*action*/, ")
@@ -466,7 +467,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
       ++neuron_operation_number;
 
       neuron_operations += std::string("{ ")
-      + "{"
+      + "\t{"
         + std::to_string(weight_table_offset + spike_weight_index) + ","
         + "(" + std::to_string(partial.output_data().starts() + inner_neuron_index) + ")"
       + "} /*global_buffer:weight_index,target neuron_index*/, "
@@ -539,10 +540,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     source_base, std::regex("==spike_functions_kernel=="),
     SpikeFunction::get_kernel_function_for("behavior_index","weight_value","*neuron_data","*local_buffer")
   );
-
   std::cout << "Agent code: " << source_base << std::endl;
-  //exit(1);
-
   return source_base;
 }
 #endif/*(RAFKO_USES_OPENCL)*/

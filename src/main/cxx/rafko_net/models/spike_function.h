@@ -78,13 +78,13 @@ public:
    *
    * @param[in]   operation_index   The variable containing a value from @get_kernel_enums
    * @param[in]   parameter         The value of the input weight for the spike function
-   * @param[in]   new_data          The value of the newly calculated neuron data
    * @param[in]   previous_data     The value of the previously present neuron data in which the result is stored,
    *                                So the variable needs to hold a reference in the kernel code
+   * @param[in]   new_data          The value of the newly calculated neuron data
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  static std::string get_kernel_function_for(std::string operation_index, std::string parameter, std::string new_data, std::string previous_data){
+  static std::string get_kernel_function_for(std::string operation_index, std::string parameter, std::string previous_data, std::string new_data){
     std::string code = R"(
       switch(==op==){
         case neuron_spike_function_none:

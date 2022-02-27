@@ -91,22 +91,12 @@ std::string TransferFunction::get_kernel_function_for(std::string operation_inde
         break;
       case neuron_transfer_function_elu:
         ==a== = (
-          fmax(0.0, ==b==)
-          + (
-            fmin(0.0, ==b==)
-            * ==alpha==
-            * (exp(==b==) - 1.0)
-          )
+          max(0.0, ==b==) + ( ==alpha== * (exp(min(0.0, ==b==)) - 1.0) )
         );
         break;
       case neuron_transfer_function_selu:
         ==a== = ==lambda== * (
-          fmax(0.0, ==b==)
-          + (
-            fmin(0.0, ==b==)
-            * ==alpha==
-            * (exp(==b==) - 1.0)
-          )
+          max(0.0, ==b==) + ( ==alpha== * (exp(min(0.0, ==b==)) - 1.0) )
         );
         break;
       case neuron_transfer_function_relu:
