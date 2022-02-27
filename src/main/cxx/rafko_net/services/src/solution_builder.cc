@@ -148,6 +148,14 @@ std::string SolutionBuilder::get_kernel_for_solution(
   const Solution& solution, std::string name, std::uint32_t sequence_size, std::uint32_t prefill_input_num,
   const rafko_mainframe::RafkoSettings& settings
 ){
+  std::string input_functions_kernel = R"(
+    switch(operation->behavior_index){
+      case neuron_input_function_add
+    }
+  )";
+  std::string transfer_functions_kernel;
+  std::string spike_functions_kernel;
+
   /*!Note: Network solve starts from the first memory/sequence slot of the outputs buffer
    * which is calculated from get_global_id(0) and the size of the max(sequence, neuron_memory);
    * UNLESS mode variable input is non-zero.
@@ -157,10 +165,55 @@ std::string SolutionBuilder::get_kernel_for_solution(
    */
   std::string source_base = rafko_utilities::random_function + rafko_utilities::atomic_double_add_function
    + R"(
+    typedef enum rafko_neuron_action_e{
+      neuron_action_set = 0,
+      neuron_action_input_function,
+      neuron_action_transfer_function,
+      neuron_action_spike_function,
+    }rafko_neuron_action_t __attribute__ ((aligned));
+
+    ==input_function_enums==
+    ==transfer_function_enums==
+    ==spike_function_enums==
+
+    typedef struct rafko_neuron_operation_s{
+      __global double* global_buffer[2];
+      unsigned char behavior_index;
+      rafko_neuron_action_t action;
+    } rafko_neuron_operation_t __attribute__ ((aligned));
+
+    void neuron_operation(rafko_neuron_operation_t* operation, __private double* local_buffer){
+      switch(operation->action){
+        case neuron_action_set:
+          *local_buffer = (*operation->global_buffer[0] * *operation->global_buffer[1]);
+          break;
+        case neuron_action_input_function:
+          ==input_functions_kernel==
+          break;
+        case neuron_action_transfer_function:
+          ==transfer_functions_kernel==
+          break;
+        case neuron_action_spike_function:
+          ==spike_functions_kernel==
+          break;
+        default: break;
+      }
+    }
+
     void kernel ==name==(
        __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
        __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){
+      double locvar;
+      rafko_neuron_operation_t arr[] = {
+        {
+          {&outputs[0],&outputs[1]} /*global_buffer*/,
+          neuron_spike_function_p /*behavior_index*/,
+          neuron_action_spike_function/*action*/
+        }
+      };
+      neuron_operation(&arr[0], &locvar);
+
       if( (input_sizes_size == 3) && (output_sizes_size == 2) ){
         const int sequence_index = get_global_id(0);
         const int neuron_array_size = ==neuron_array_size==;
@@ -375,6 +428,26 @@ std::string SolutionBuilder::get_kernel_for_solution(
   source_base = std::regex_replace(source_base, std::regex("==prefill_input_num=="), std::to_string(prefill_input_num));
   source_base = std::regex_replace(source_base, std::regex("==network_input_size=="), std::to_string(solution.network_input_size()));
   source_base = std::regex_replace(source_base, std::regex("==performance_operations=="), performance_operations);
+
+  source_base = std::regex_replace(source_base, std::regex("==input_function_enums=="), InputFunction::get_kernel_enums());
+  source_base = std::regex_replace(source_base, std::regex("==transfer_function_enums=="), TransferFunction::get_kernel_enums());
+  source_base = std::regex_replace(source_base, std::regex("==spike_function_enums=="), SpikeFunction::get_kernel_enums());
+
+  source_base = std::regex_replace(
+    source_base, std::regex("==input_functions_kernel=="),
+    InputFunction::get_kernel_function_for(
+      "operation->behavior_index","*local_buffer","(*operation->global_buffer[0] * *operation->global_buffer[1])")
+  );
+  source_base = std::regex_replace(
+    source_base, std::regex("==transfer_functions_kernel=="),
+    transfer_function.get_kernel_function_for("operation->behavior_index","*local_buffer","*local_buffer")
+  );
+  source_base = std::regex_replace(
+    source_base, std::regex("==spike_functions_kernel=="),
+    SpikeFunction::get_kernel_function_for("operation->behavior_index","*operation->global_buffer[0]","*operation->global_buffer[1]","*local_buffer")
+  );
+  // std::cout << "Agent code: " << source_base << std::endl; exit(1);
+
   return source_base;
 }
 #endif/*(RAFKO_USES_OPENCL)*/

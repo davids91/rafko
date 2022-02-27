@@ -19,6 +19,12 @@
 
 #include <math.h>
 #include <stdexcept>
+#if(RAFKO_USES_OPENCL)
+#include <regex>
+
+#include "rafko_utilities/services/rafko_string_utils.h"
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
 namespace rafko_net {
 
@@ -36,7 +42,7 @@ Transfer_functions TransferFunction::next(std::set<Transfer_functions> range){
 double TransferFunction::get_value(Transfer_functions function, double data) const{
   switch(function){
     case transfer_function_identity: return data; /* Identity means f(x) = x */
-    case transfer_function_sigmoid: return (1.0)/((1.0)+std::exp(-data));
+    case transfer_function_sigmoid: return 1.0/(1.0+std::exp(-data));
     case transfer_function_tanh: return std::tanh(data);
     case transfer_function_elu:
       if(0 >= data) return settings.get_alpha() * (std::exp(data) - 1);
@@ -70,6 +76,52 @@ std::string TransferFunction::get_cl_function_for(Transfer_functions function, s
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
+
+std::string TransferFunction::get_kernel_function_for(std::string operation_index, std::string a, std::string b){
+  std::string code = R"(
+    switch(==op==){
+      case neuron_transfer_function_identity:
+        ==a== = ==b==;
+        break;
+      case neuron_transfer_function_sigmoid:
+        ==a== = 1.0/(1.0+exp(-==b==));
+        break;
+      case neuron_transfer_function_tanh:
+        ==a== = tanh(==b==);
+        break;
+      case neuron_transfer_function_elu:
+        ==a== = (
+          fmax(0.0, ==b==)
+          + (
+            fmin(0.0, ==b==)
+            * ==alpha==
+            * (exp(==b==) - 1.0)
+          )
+        );
+        break;
+      case neuron_transfer_function_selu:
+        ==a== = ==lambda== * (
+          fmax(0.0, ==b==)
+          + (
+            fmin(0.0, ==b==)
+            * ==alpha==
+            * (exp(==b==) - 1.0)
+          )
+        );
+        break;
+      case neuron_transfer_function_relu:
+        ==a== = fmax(0.0, ==b==);
+        break;
+    }
+  )";
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==a=="), a);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==b=="), b);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==alpha=="), std::to_string(settings.get_alpha()));
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==lambda=="), std::to_string(settings.get_lambda()));
+  return code;
+}
+
 #endif/*(RAFKO_USES_OPENCL)*/
 
 double TransferFunction::get_derivative(Transfer_functions function, double data) const{

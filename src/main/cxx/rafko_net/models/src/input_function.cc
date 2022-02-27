@@ -19,6 +19,10 @@
 
 #include <stdexcept>
 
+#if(RAFKO_USES_OPENCL)
+#include "rafko_utilities/services/rafko_string_utils.h"
+#endif/*(RAFKO_USES_OPENCL)*/
+
 namespace rafko_net {
 
 Input_functions InputFunction::next(std::set<Input_functions> range){
@@ -31,5 +35,23 @@ Input_functions InputFunction::next(std::set<Input_functions> range){
 
   return candidate;
 }
+
+#if(RAFKO_USES_OPENCL)
+std::string InputFunction::get_kernel_function_for(std::string operation_index, std::string a, std::string b){
+  std::string code = R"(
+    switch(==op==){
+      case neuron_input_function_add: ==a== = (==a== + ==b==); break;
+      case neuron_input_function_multiply: ==a== = (==a== * ==b==); break;
+      case neuron_input_function_analog_xor:
+        ==a== = fabs(==a== - ==b==) * (==a== + ==b==);
+        break;
+    }
+  )";
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==a=="), a);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==b=="), b);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
+  return code;
+}
+#endif/*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_net */

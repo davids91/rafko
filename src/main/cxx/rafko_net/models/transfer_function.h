@@ -115,6 +115,35 @@ public:
    * @return    The generated Kernel code calling the asked transfer function on the parameter
    */
   std::string get_cl_function_for(Transfer_functions function, std::string x);
+
+  /**
+   * @brief     Generates GPU kernel function code for the provided parameters
+   *
+   * @param[in]   operation_index   The variable containing a value from @get_kernel_enums
+   * @param[in]   a                 The value on which the transfer function result is stored in
+   * @param[in]   b                 The value on which the transfer function is called upon
+   *
+   * @return    The generated Kernel code merging the parameters through the given input function
+   */
+  std::string get_kernel_function_for(std::string operation_index, std::string a, std::string b);
+
+  /**
+   * @brief     Generates GPU kernel enumerations
+   *
+   * @return    AN enumerator to be ised in the GPU kernel
+   */
+  static std::string get_kernel_enums(){
+    return R"(
+      typedef enum rafko_transfer_function_e{
+        neuron_transfer_function_identity = 0,
+        neuron_transfer_function_sigmoid,
+        neuron_transfer_function_tanh,
+        neuron_transfer_function_elu,
+        neuron_transfer_function_selu,
+        neuron_transfer_function_relu
+      }rafko_transfer_function_t __attribute__ ((aligned));
+    )";
+  }
   #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
