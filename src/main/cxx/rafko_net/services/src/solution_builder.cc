@@ -168,7 +168,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     typedef enum rafko_neuron_action_e{
       neuron_action_set_by_input = 0,
       neuron_action_set_by_neuron,
-      neuron_action_set_by_past,
+      neuron_action_set_by_past, /* ...by_past implicitly suggests that it's coming from a past run of a neuron*/
       neuron_action_input_function_by_input,
       neuron_action_input_function_by_neuron,
       neuron_action_input_function_by_past,
@@ -222,6 +222,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
           break;
         case neuron_action_spike_function:
           ==spike_functions_kernel==
+          *local_buffer = 0.0; /* zero out local_buffer for the next Neuron */
           break;
         default: break;
       }
@@ -231,17 +232,15 @@ std::string SolutionBuilder::get_kernel_for_solution(
        __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
        __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){
-      double locvar;
+      double local_buffer = 0.0;
       unsigned char behavior_index;
       __constant double* input_weight;
       __constant double* input_from_inputs;
       __global double* input_from_neurons;
       rafko_neuron_operation_t arr[] = {
-        {
-          {0,1} /*global_buffer*/,
-          neuron_action_spike_function/*action*/,
-          neuron_spike_function_p /*behavior_index*/
-        }
+        /* +++ GENERATED_NEURON_CODE +++ */
+        ==neuron_operations==
+        /* --- GENERATED_NEURON_CODE --- */
       };
       if( (input_sizes_size == 3) && (output_sizes_size == 2) ){
         const int sequence_index = get_global_id(0);
@@ -267,54 +266,56 @@ std::string SolutionBuilder::get_kernel_for_solution(
         }else{ /* run-once with memory */
           current_max_backreach = max_backreach;
           input_start = ==weight_table_offset==;
-          output_start = (max_backreach * neuron_array_size); /*==output_start==*/
+          output_start = (max_backreach * neuron_array_size);
           sequence_start = max(max(max_backreach,( sequence_size + prefill_input_num )), 1) - 1;
           sequence_max_index = sequence_start;
         }
         for(int label_index = sequence_start; label_index <= sequence_max_index; ++label_index){
           double neuron_partial_result;
-          /* +++ GENERATED_NEURON_CODE +++ */
-          if(arr[0].action == neuron_action_transfer_function){
-            input_weight = NULL;
-          }else{
-            input_weight = &inputs[arr[0].global_buffer_index[0]];
-          }
-          input_from_neurons = NULL;
-          input_from_inputs = NULL;
-          switch(arr[0].action){
-            case neuron_action_set_by_input:
-            case neuron_action_input_function_by_input:
-              input_from_inputs = &inputs[arr[0].global_buffer_index[1]];
-              break;
-            case neuron_action_set_by_neuron:
-            case neuron_action_input_function_by_neuron:
-              input_from_neurons = &outputs[output_start + arr[0].global_buffer_index[1]];
-              break;
-            case neuron_action_set_by_past:
-            case neuron_action_input_function_by_past:{
-              if( ((arr[0].behavior_index & 0xF0u) >> 8u)/*past_index*/ < current_max_backreach )
-                input_from_neurons = &outputs[output_start + arr[0].global_buffer_index[1]]; /* Neuron index correction to take the past value is hardwired into the command array */
-            }break;
-            case neuron_action_transfer_function:
-              input_from_neurons = &outputs[output_start + arr[0].global_buffer_index[1]];
-              break;
-            case neuron_action_spike_function:
-              /* When the first run is in progress, the spike function should not know about the previous value, otherwise the value is set by the command array */
-              if( ((sequence_start - label_index) > 0)||(!evaluate_network) )
-                input_from_neurons = &outputs[output_start + arr[0].global_buffer_index[1]];
-              break;
-            case neuron_action_input_function_bias:
-            default: break;
-          }
-          neuron_operation(arr[0].action, (arr[0].behavior_index & 0xFu), input_weight, input_from_inputs, input_from_neurons, &locvar);
-          //=/=neuron_operations==
-          /* --- GENERATED_NEURON_CODE --- */
-
+          int neuron_operation_index = 0;
+          while(neuron_operation_index < ==neuron_operation_number==){
+            if(arr[neuron_operation_index].action == neuron_action_transfer_function){
+              input_weight = NULL;
+            }else{
+              input_weight = &inputs[arr[neuron_operation_index].global_buffer_index[0]];
+            }
+            input_from_neurons = NULL;
+            input_from_inputs = NULL;
+            switch(arr[neuron_operation_index].action){
+              case neuron_action_set_by_input:
+              case neuron_action_input_function_by_input:
+                input_from_inputs = &inputs[input_start + arr[neuron_operation_index].global_buffer_index[1]];
+                break;
+              case neuron_action_set_by_neuron:
+              case neuron_action_input_function_by_neuron:
+                input_from_neurons = &outputs[output_start + arr[neuron_operation_index].global_buffer_index[1]];
+                break;
+              case neuron_action_set_by_past:
+              case neuron_action_input_function_by_past:{
+                if( ((arr[neuron_operation_index].behavior_index & 0xF0u) >> 8u)/*past_index*/ < current_max_backreach )
+                  input_from_neurons = &outputs[output_start + arr[neuron_operation_index].global_buffer_index[1]]; /* Neuron index correction to take the past value is hardwired into the command array */
+              }break;
+              case neuron_action_spike_function:
+                /* When the first run is in progress, the spike function should not know about the previous value, otherwise the value is set by the command array */
+                if( ((sequence_start - label_index) > 0)||(!evaluate_network) )
+                  input_from_neurons = &outputs[output_start + arr[neuron_operation_index].global_buffer_index[1]];
+                break;
+              case neuron_action_transfer_function: /* transfer function uses local buffer only */
+              case neuron_action_input_function_bias: /* bias doesn't use the input_from_neurons or input_from_inputs, only weight */
+              default: break;
+            }
+            neuron_operation(
+              arr[neuron_operation_index].action, (arr[neuron_operation_index].behavior_index & 0xFu),
+              input_weight, input_from_inputs, input_from_neurons, &local_buffer
+            );
+            //=/=neuron_group_features== //TODO: check features not in every loop, maybe just after every row
+            ++neuron_operation_index;
+          }/*for(neuron operations)*/
           input_start += network_input_size;
           output_start += neuron_array_size;
           if(current_max_backreach < max_backreach)
             ++current_max_backreach;
-        }
+        }/*for(every relevant label)*/
 
         outputs[output_sizes[0]] = 0.0; /* zero out performance error */
         ==performance_operations==
@@ -322,9 +323,6 @@ std::string SolutionBuilder::get_kernel_for_solution(
       }/*if(input sizes match)*/
     }/* kernel */
   )";
-  source_base = std::regex_replace(source_base, std::regex("==output_start=="), std::to_string(
-    (solution.network_memory_length()-1) * solution.neuron_number()
-  ));
   TransferFunction transfer_function(settings);
   std::uint32_t weight_table_offset = 1u; /* the first input number is the mode of the solution, so weight table starts after that */
   /*!Note: Weight table is supposed to consist of the weight tables of the partial solutions
@@ -347,6 +345,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
    */
   bool feature_locals_declared = false;
   std::vector<std::reference_wrapper<const FeatureGroup>> performance_feature_list;
+  std::uint32_t neuron_operation_number = 0u;
   for(const PartialSolution& partial : solution.partial_solutions()){
     SynapseIterator<InputSynapseInterval> partial_input_synapses(partial.input_data());
     std::uint32_t input_synapse_index = 0u;
@@ -357,15 +356,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     for(std::uint32_t inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
       bool first_weight_in_neuron = true;
       bool first_input_in_neuron = true;
-      std::function<std::string(std::string,std::string,bool)> input_function_lambda =
-      [&inner_neuron_index, &partial](std::string sum, std::string b, bool first)->std::string{
-        if(first)return sum + " = " + b + ";"; /* The first operation shall set the value, not update it */
-        else return(
-          sum + "=" + InputFunction::get_kernel_function_for(partial.neuron_input_functions(inner_neuron_index), sum, b) + ";\n"
-        );
-      };
       std::uint32_t spike_weight_index;
-      std::string inner_neuron_operation = "";
       SynapseIterator<>::iterate(partial.weight_indices(),[&](std::int32_t weight_index){
         if(first_weight_in_neuron){
           first_weight_in_neuron = false;
@@ -374,42 +365,76 @@ std::string SolutionBuilder::get_kernel_for_solution(
           if(input_synapse_index_offset < partial.index_synapse_number(inner_neuron_index)){ /* ... input ... */
             std::int32_t input_past_reach = partial.inside_indices(input_synapse_index + input_synapse_index_offset).reach_past_loops();
             std::int32_t input_index = partial.inside_indices(input_synapse_index + input_synapse_index_offset).starts();
-            if(SynapseIterator<>::is_index_input(input_index)){
+            if(SynapseIterator<>::is_index_input(input_index)){ /* Neuron input points to partial input */
               input_index = SynapseIterator<>::input_index_from_synapse_index(input_index - input_start_offset);
               input_past_reach = partial_input_synapses.reach_past_loops<InputSynapseInterval>(input_index);
               input_index = partial_input_synapses[input_index];
-              if(SynapseIterator<>::is_index_input(input_index)){
+              if(SynapseIterator<>::is_index_input(input_index)){ /* Partial input points to Network input */
                 input_index = SynapseIterator<>::input_index_from_synapse_index(input_index);
                 assert( 0 == input_past_reach );
-                inner_neuron_operation += input_function_lambda("neuron_partial_result", std::string("(")
-                /* input */+ " inputs[input_start + " + std::to_string(input_index) + "]"
-                /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                + std::string(")"), first_input_in_neuron);
-              }else{
+                std::string input_operation = "neuron_action_input_function_by_input";
+                if(first_input_in_neuron) input_operation = "neuron_action_set_by_input";
+                neuron_operations += std::string("{ ")
+                + "{"
+                  + std::to_string(weight_table_offset + weight_index) + ","
+                  + std::to_string(input_index)
+                + "} /*global_buffer:weight_index,input_index*/, "
+                + input_operation + std::string("/*action*/, ")
+                + "0 /*past_index(which is irrelevant in this operation)*/ "
+                + std::string("}, \n");
+              }else{ /* Partial input points to a Neuron */
                 if(0 != input_past_reach){
-                  inner_neuron_operation += input_function_lambda("neuron_partial_result", past_reach_guard(input_past_reach, std::string("(")
-                  /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + "]"
-                  /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                  + std::string(")")), first_input_in_neuron );
+                  std::string input_operation = "neuron_action_set_by_past";
+                  if(first_input_in_neuron) input_operation = "neuron_action_input_function_by_past";
+                  std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
+                  neuron_operations += std::string("{ ")
+                  + "{"
+                    + std::to_string(weight_table_offset + weight_index) + ","
+                    + "(" + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + ")"
+                  + "} /*global_buffer:weight_index,neuron_index*/, "
+                  + input_operation + std::string("/*action*/, ")
+                  + "( ((" +std::to_string(input_past_reach)+ "&0xFu) << 8u)|(" + operation_action + "))/*past_index + input function index*/"
+                  + std::string("}, \n");
                 }else{ /* input doesn't reach to the past */
-                  inner_neuron_operation += input_function_lambda("neuron_partial_result", std::string("(")
-                  /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
-                  /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                  + std::string(")"), first_input_in_neuron);
+                  std::string input_operation = "neuron_action_set_by_neuron";
+                  if(first_input_in_neuron) input_operation = "neuron_action_input_function_by_neuron";
+                  std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
+                  neuron_operations += std::string("{ ")
+                  + "{"
+                    + std::to_string(weight_table_offset + weight_index) + ","
+                    + "(" + std::to_string(input_index) + ")"
+                  + "} /*global_buffer:weight_index,neuron_index*/, "
+                  + input_operation + std::string("/*action*/, ")
+                  + operation_action + "/*input_function*/ "
+                  + std::string("}, \n");
                 }
               }
-            }else{
+            }else{ /* Neuron input index does not point to the partial input; it's definitely points inside the network */
               input_index = input_index + input_start_offset;
               if(0 != input_past_reach){
-                inner_neuron_operation += input_function_lambda("neuron_partial_result", past_reach_guard(input_past_reach, std::string("(")
-                /* input */+ " outputs[output_start + " + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + "]"
-                /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                + std::string(" ")), first_input_in_neuron);
+                std::string input_operation = "neuron_action_set_by_past";
+                if(first_input_in_neuron) input_operation = "neuron_action_input_function_by_past";
+                std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
+                neuron_operations += std::string("{ ")
+                + "{"
+                  + std::to_string(weight_table_offset + weight_index) + ","
+                  + "(" + std::to_string(input_index - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + ")"
+                + "} /*global_buffer:weight_index,neuron_index*/, "
+                + input_operation + std::string("/*action*/, ")
+                + "( ((" +std::to_string(input_past_reach)+ "&0xFu) << 8u)|(" + operation_action + "))/*past_index + input function index*/"
+                + std::string("}, \n");
               }else{ /* input doesn't reach to the past */
-                inner_neuron_operation += input_function_lambda("neuron_partial_result", std::string("(")
-                /* input */+ " outputs[output_start + " + std::to_string(input_index) + "]"
-                /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-                + std::string(")"), first_input_in_neuron);
+                std::string input_operation = "neuron_action_set_by_neuron";
+                if(first_input_in_neuron) input_operation = "neuron_action_input_function_by_neuron";
+                std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
+                neuron_operations += std::string("{ ")
+                + "{"
+                  + std::to_string(weight_table_offset + weight_index) + ","
+                  + "(" + std::to_string(input_index) + ")"
+                + "} /*global_buffer:weight_index,neuron_index*/, "
+                + input_operation + std::string("/*action*/, ")
+                + operation_action + "/*input_function*/ "
+                + std::string("}, \n");
               }
             }
             ++input_start_offset;
@@ -418,48 +443,54 @@ std::string SolutionBuilder::get_kernel_for_solution(
               ++input_synapse_index_offset;
             }
           }else{ /* ... bias ... */
-            inner_neuron_operation += input_function_lambda("neuron_partial_result", std::string("(")
-            /* bias weight */+ "inputs[" + std::to_string(weight_table_offset + weight_index) + "]"
-            + std::string(")"), first_input_in_neuron);
+            std::string operation_action = InputFunction::get_kernel_enum_for(partial.neuron_input_functions(inner_neuron_index));
+            neuron_operations += std::string("{ ")
+            + "{"
+              + std::to_string(weight_table_offset + weight_index) + ",0/* second input doesn't matter with bias*/"
+            + "} /*global_buffer:bias_index,-*/, "
+            + std::string("neuron_action_input_function_bias /*action*/, ")
+            + operation_action + "/*input_function*/ "
+            + std::string("}, \n");
           }
           first_input_in_neuron = false;
         }
+        ++neuron_operation_number;
       }, weight_synapse_start, partial.weight_synapse_number(inner_neuron_index));
-      inner_neuron_operation += "neuron_partial_result = " + transfer_function.get_cl_function_for(
-        partial.neuron_transfer_functions(inner_neuron_index),
-        "neuron_partial_result"
-      )+";\n";
-      inner_neuron_operation += (
-        "outputs[output_start + " + std::to_string(partial.output_data().starts() + inner_neuron_index) + "] = (\n"
-        + SpikeFunction::get_cl_function_for(
-          "inputs[" + std::to_string(weight_table_offset + spike_weight_index)+ "]"/*parameter*/,
-          "neuron_partial_result"/* new_data */,
-          label_reach_guard(
-            std::string("(")
-            + "outputs[output_start + " + std::to_string(partial.output_data().starts() + inner_neuron_index) + " - neuron_array_size]"
-            + ")"
-          )/* previous_data */
-        )+"\n);\n"
-      );
+      neuron_operations += std::string("{ ")
+      + "{"
+        + "0,0 /* none of these matter with the transfer function, as it uses local buffer only */"
+      + "} /*global_buffer:-,-*/, "
+      + std::string("neuron_action_transfer_function /*action*/, ")
+      + transfer_function.get_kernel_enum_for(partial.neuron_transfer_functions(inner_neuron_index)) + "/*transfer_function index*/ "
+      + std::string("}, \n");
+      ++neuron_operation_number;
+
+      neuron_operations += std::string("{ ")
+      + "{"
+        + std::to_string(weight_table_offset + spike_weight_index) + ","
+        + "(" + std::to_string(partial.output_data().starts() + inner_neuron_index) + ")"
+      + "} /*global_buffer:weight_index,target neuron_index*/, "
+      + std::string("neuron_action_spike_function/*action*/, ")
+      + SpikeFunction::get_kernel_enum_for(spike_function_memory) + "/*spike_function index*/ "
+      + std::string("}, \n");
+      ++neuron_operation_number;
       weight_synapse_start += partial.weight_synapse_number(inner_neuron_index);
       input_synapse_index += input_synapse_index_offset;
       input_synapse_index_offset = 0u;
-      inner_neuron_operation += "\n";
-      neuron_operations += inner_neuron_operation;
     }/*for(each inner neuron)*/
 
-    if(0 < partial.solved_features_size()){ /* if the partial solves any feature */
-      for(const FeatureGroup& feature : partial.solved_features()){
-        if(NeuronInfo::is_feature_relevant_to_solution(feature.feature())){
-          RafkoNetworkFeature::add_kernel_code_to(
-            neuron_operations, feature, settings, solution, "", "output_start", !feature_locals_declared
-          );
-          feature_locals_declared = true;
-        }else if(NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
-          performance_feature_list.push_back(feature);
-        }
-      }
-    }
+    //TODO: Re-add features if(0 < partial.solved_features_size()){ /* if the partial solves any feature */
+    //   for(const FeatureGroup& feature : partial.solved_features()){
+    //     if(NeuronInfo::is_feature_relevant_to_solution(feature.feature())){
+    //       RafkoNetworkFeature::add_kernel_code_to(
+    //         neuron_operations, feature, settings, solution, "", "output_start", !feature_locals_declared
+    //       );
+    //       feature_locals_declared = true;
+    //     }else if(NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
+    //       performance_feature_list.push_back(feature);
+    //     }
+    //   }
+    // }
 
     weight_table_offset += partial.weight_table_size();
     /*!Note: Because each partial has a different weight table, an offset is required to keep track in case there are multiple partial solutions
@@ -491,6 +522,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
   source_base = std::regex_replace(source_base, std::regex("==network_input_size=="), std::to_string(solution.network_input_size()));
   source_base = std::regex_replace(source_base, std::regex("==performance_operations=="), performance_operations);
 
+  source_base = std::regex_replace(source_base, std::regex("==neuron_operation_number=="), std::to_string(neuron_operation_number));
   source_base = std::regex_replace(source_base, std::regex("==input_function_enums=="), InputFunction::get_kernel_enums());
   source_base = std::regex_replace(source_base, std::regex("==transfer_function_enums=="), TransferFunction::get_kernel_enums());
   source_base = std::regex_replace(source_base, std::regex("==spike_function_enums=="), SpikeFunction::get_kernel_enums());
@@ -507,7 +539,9 @@ std::string SolutionBuilder::get_kernel_for_solution(
     source_base, std::regex("==spike_functions_kernel=="),
     SpikeFunction::get_kernel_function_for("behavior_index","weight_value","*neuron_data","*local_buffer")
   );
-  // std::cout << "Agent code: " << source_base << std::endl; exit(1);
+
+  std::cout << "Agent code: " << source_base << std::endl;
+  //exit(1);
 
   return source_base;
 }

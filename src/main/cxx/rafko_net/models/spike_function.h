@@ -106,6 +106,22 @@ public:
   }
 
   /**
+   * @brief     Gives back the identifier for the given function in the kernel
+   *
+   * @param[in]   function   The function to get the identifier to
+   *
+   * @return    The enumeration name for the given function
+   */
+  static std::string get_kernel_enum_for(Spike_functions function){
+    switch(function){
+      case spike_function_none: return "neuron_spike_function_none";
+      case spike_function_memory: return "neuron_spike_function_memory";
+      case spike_function_p: return "neuron_spike_function_p";
+      default: throw std::runtime_error("Unidentified spike function queried for information!");
+    }
+  }
+
+  /**
    * @brief     Generates GPU kernel enumerations
    *
    * @return    AN enumerator to be ised in the GPU kernel

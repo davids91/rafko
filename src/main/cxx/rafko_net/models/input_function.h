@@ -87,6 +87,22 @@ public:
   static std::string get_kernel_function_for(std::string operation_index, std::string a, std::string b);
 
   /**
+   * @brief     Gives back the identifier for the given function in the kernel
+   *
+   * @param[in]   function   The function to get the identifier to
+   *
+   * @return    The enumeration name for the given function
+   */
+  static std::string get_kernel_enum_for(Input_functions function){
+    switch(function){
+      case input_function_add: return "neuron_input_function_add";
+      case input_function_multiply: return "neuron_input_function_multiply";
+      case input_function_analog_xor: return "neuron_input_function_analog_xor";
+      default: throw std::runtime_error("Unidentified input function queried for information!");
+    }
+  }
+
+  /**
    * @brief     Generates GPU kernel enumerations
    *
    * @return    AN enumerator to be ised in the GPU kernel
