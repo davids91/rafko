@@ -105,6 +105,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   context.set_objective(std::make_unique<rafko_gym::RafkoCost>(settings, cost));
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
+  std::cout << "Stichastic evaluation:" << std::endl;
   double environment_error = context.stochastic_evaluation(true, seed);
 
   std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
@@ -116,8 +117,8 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
     dataset_wrap.get_sequence_size() - settings.get_memory_truncation() + 1 /* ..not all result output values are evaluated.. */
   )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
-  std::uint32_t raw_inputs_index = 0;
-  std::uint32_t raw_label_index = 0;
+  std::uint32_t raw_inputs_index = sequence_start_index * (dataset_wrap.get_prefill_inputs_number() + dataset_wrap.get_sequence_size());
+  std::uint32_t raw_label_index = sequence_start_index * (dataset_wrap.get_sequence_size());
   reference_solver->set_eval_mode(true);
   for(std::uint32_t sequence_index = sequence_start_index; sequence_index < (sequence_start_index + settings.get_minibatch_size()); ++sequence_index){
     bool reset = true;
