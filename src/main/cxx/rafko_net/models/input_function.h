@@ -74,6 +74,48 @@ public:
       default: throw std::runtime_error("Unidentified Input function called!");
     };
   }
+
+  /**
+   * @brief     Generates GPU kernel function code for the provided parameters
+   *
+   * @param[in]   operation_index   The variable containing a value from @get_kernel_enums
+   * @param[in]   a                 A value to be merged through the input function
+   * @param[in]   b                 Another value to be merged through the input function
+   *
+   * @return    The generated Kernel code merging the parameters through the given input function
+   */
+  static std::string get_kernel_function_for(std::string operation_index, std::string a, std::string b);
+
+  /**
+   * @brief     Gives back the identifier for the given function in the kernel
+   *
+   * @param[in]   function   The function to get the identifier to
+   *
+   * @return    The enumeration name for the given function
+   */
+  static std::string get_kernel_enum_for(Input_functions function){
+    switch(function){
+      case input_function_add: return "neuron_input_function_add";
+      case input_function_multiply: return "neuron_input_function_multiply";
+      case input_function_analog_xor: return "neuron_input_function_analog_xor";
+      default: throw std::runtime_error("Unidentified input function queried for information!");
+    }
+  }
+
+  /**
+   * @brief     Generates GPU kernel enumerations
+   *
+   * @return    AN enumerator to be ised in the GPU kernel
+   */
+  static std::string get_kernel_enums(){
+    return R"(
+      typedef enum rafko_input_function_e{
+        neuron_input_function_add = 0,
+        neuron_input_function_multiply,
+        neuron_input_function_analog_xor
+      }rafko_input_function_t __attribute__ ((aligned));
+    )";
+  }
   #endif/*(RAFKO_USES_OPENCL)*/
 };
 

@@ -50,17 +50,16 @@ TEST_CASE( "Testing Transfer function outputs", "[neuron][transfer-function]" ) 
       tfun.get_value(rafko_net::transfer_function_elu, data)
       == Catch::Approx(
         std::max((0.0), data)
-        + std::min((0.0), data) * settings.get_alpha() * (std::exp(data) - 1)
+        + std::min((0.0), data) * settings.get_alpha() * (std::exp(data) - 1.0)
       ).epsilon(0.0000000001)
     );
     REQUIRE(
       tfun.get_value(rafko_net::transfer_function_selu, data)
       == Catch::Approx(
-        ( settings.get_lambda() * std::max((0.0), data) )
+        ( settings.get_lambda() * std::max(0.0, data) )
         +(
           std::min((0.0), data)
-          * settings.get_lambda() * settings.get_alpha()
-          * (std::exp(data) - (1.0))
+          * settings.get_lambda() * settings.get_alpha() * (std::exp(data) - 1.0)
         )
       ).epsilon(0.0000000001)
     );

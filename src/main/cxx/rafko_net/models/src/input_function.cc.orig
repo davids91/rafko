@@ -30,12 +30,25 @@ Input_functions InputFunction::next(std::set<Input_functions> range){
   if(1u == range.size()) return *range.begin();
 
   Input_functions candidate = static_cast<Input_functions>(rand()%Input_functions_ARRAYSIZE);
-  while(find(range.begin(), range.end(), candidate) == range.end())
+  while(!Input_functions_IsValid(candidate)||find(range.begin(), range.end(), candidate) == range.end())
     candidate = static_cast<Input_functions>(rand()%Input_functions_ARRAYSIZE);
 
   return candidate;
 }
 
+<<<<<<< HEAD
+double InputFunction::collect(Input_functions function, double a, double b){
+  switch(function){
+    case input_function_add: return a + b;
+    case input_function_multiply: return a * b;
+    case input_function_analog_xor: return std::abs(a - b) * (a + b);
+    /*!Note: This solution for a number sequence of indefinite size might leave some mathematicians very furious, and rightly so.. '^^ */
+    default: throw std::runtime_error("Unidentified Input function called!");
+  };
+}
+
+=======
+>>>>>>> b729346 (Kept extended GPU interfaces from rework attempt.)
 #if(RAFKO_USES_OPENCL)
 std::string InputFunction::get_kernel_function_for(std::string operation_index, std::string a, std::string b){
   std::string code = R"(

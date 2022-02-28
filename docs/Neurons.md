@@ -1,5 +1,5 @@
-Neuron Structure
-===
+# Neuron Structure
+
 
 Each Neuron has a standard structure.
 
@@ -19,4 +19,20 @@ This way weights are re-usable by structure and there is a possibility for every
 
 A @Solution and multiple @PartialSolution objects are Based on this structure. Each @PartialSolution however has a different weight table exclusive to the neurons inside.
 
-The Structure of a @Neuron inside a @PartialSolution is the same, despite multiple neuron input and weight information being stored in a single array.  
+The Structure of a @Neuron inside a @PartialSolution is the same, despite multiple neuron input and weight information being stored in a single array.
+
+# Neuron behavior
+
+Neurons in a GPU Kernel behave based on the below script:
+
+<table><thead><tr><th colspan="2">Step Description</th><th colspan="2">Input global buffer</th><th>Behavior index</th><th>Action</th></tr></thead><tbody><tr><td>1.</td><td>Collect first input from global data, multiply it by the assigned weight and store it inside the local buffer</td><td>Weight</td><td>Input/neuron_data</td><td>past_index</td><td>set_buffer_by_input, <br />set_buffer_by_neuron, <br />set_buffer_by_past</td></tr><tr><td>2. </td><td>Continue the input collection, update local buffer with the result of the update function; Repeat until the end of the inputs</td><td>Weight</td><td>Input/neuron_data</td><td>input_function_index + past_index</td><td>input_function_by_input, input_function_by_neuron, <br />input_function_by_past</td></tr><tr><td>5.</td><td>Collect each remaining weight with the input function as bias, each time updating the local buffer</td><td>Weight</td><td></td><td>input_function_index</td><td>input_function_bias</td></tr><tr><td>6. </td><td>Apply the given transfer function to the collected inputs, store the result in the local buffer<br />( uses local buffer only )</td><td></td><td></td><td>transfer_function_index</td><td>transfer_function</td></tr><tr><td>7.</td><td>Apply Spike function to the result of the transfer function, store the result in the global pointer</td><td>Weight</td><td>neuron_data</td><td>spike_function_index</td><td>spike_function</td></tr></tbody></table>
+
+Each step collects some information from its input buffers and stores the result in a target buffer; Where the operations are based on the Structure of the Neuron (e.g.: what kind of transfer function or spike function to use); and the result is stored depending on the action. The actions set_buffer_past, input_function_past means that the current operations second input if targeting values from the past, and in these cases behavior index signals the prior number of runs the operation is targeting. This is to ensure that the Neuron can read from it's memory safely.
+
+In case input function is taking its input from the past, the information is arriving through a combined bitstring which contains both the input function index ( lower half ) and the past index ( upper half ); so both the number of input functions and the number of memory slots are maximized to 15.
+
+Most operations are stored on a local buffer and only the end result is stored in a global buffer. This is partly because of locality and aims to help cache optimization.
+
+The local and global memory naming in this description reflects the (OpenCL memory model)[https://www.khronos.org/registry/OpenCL/specs/2.2/html/OpenCL_API.html#_memory_model].
+
+The above is a compact definition of what the instruction set would look like, should the Neuron be implemented on a low level. Not shown in the table is a local buffer present in the execution unit, storing the intermediate results. Each action(or instruction) accepts their own inputs and behave according to the definition, but unfortunately the definition is missing memory relevance; Which means that before each execution, depending on the memory of the network, the inputs need to be prepared to be set to NULL, simulating the correct execution of the network ( previous exedcutions are remembered, no memory junk is used at first execution of the network, etc.. ). Unfortunately in OpenCL to run even a relatively small network would require to generate an instruction table which occupies more memory, than a video card (the card on which it was tested on) can handle; On top of that, compressing network execution into a single table of instructions disables many built-in optimizations in the kernel compiler, and seems not an optimal way to deploy micro-networks. 

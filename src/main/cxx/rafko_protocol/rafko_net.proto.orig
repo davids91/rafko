@@ -54,7 +54,12 @@ enum Spike_functions{
   spike_function_unknown = 0;
   spike_function_none = 1;
   spike_function_memory = 2; /* default; 1.0: previous neuron value only, 0.0: current neuron value only */
+<<<<<<< HEAD
+  spike_function_p = 3; /* from pid controller `p` part: adds the weighted delta to the current value (between the previous and current values) */
+  spike_function_amplify_value = 4; /* multiple new value by the weight value */
+=======
   spike_function_p = 3; /* from pid controller `p` part adds the weighted delta to the current value (between the previous and current values) */
+>>>>>>> b729346 (Kept extended GPU interfaces from rework attempt.)
   spike_function_end= 512;
 }
 
@@ -125,6 +130,7 @@ message IndexSynapseInterval{
 message Neuron{
   Input_functions input_function = 3; /* index of the input function the Neuron uses to collect its inputs */
   Transfer_functions transfer_function = 4; /* index of the transfer function this Neuron uses, empty is invalid */
+  Spike_functions spike_function = 5; /* index of the spike function this Neuron uses to process newly calculated data in relation to the previous activation */
 
   /**
    * Input weights shall only contain positive intervals,
