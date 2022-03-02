@@ -37,7 +37,7 @@ RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet& neural_network_, rafko_mai
 , agent(rafko_net::SolutionSolver::Builder(*network_solution, settings).build())
 , environment(std::make_unique<RafkoDummyEnvironment>(network.input_data_size(), network.output_neuron_number()))
 , objective(std::make_unique<RafkoDummyObjective>())
-, weight_updater(rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, rafko_gym::weight_updater_amsgrad, settings))
+, weight_updater(rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, rafko_gym::weight_updater_default, settings))
 , neuron_outputs_to_evaluate( /* For every thread, 1 sequence is evaluated.. */
   (settings.get_max_processing_threads() * environment->get_sequence_size() + 1u),
   std::vector<double>(network.output_neuron_number()) /* ..plus for the label errors one additional vector is needed */

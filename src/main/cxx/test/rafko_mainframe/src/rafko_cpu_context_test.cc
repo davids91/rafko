@@ -25,11 +25,12 @@
 #include "rafko_utilities/models/data_ringbuffer.h"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
+#include "rafko_mainframe/models/rafko_settings.h"
+#include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_net/services/solution_solver.h"
 #include "rafko_gym/services/cost_function_mse.h"
 #include "rafko_gym/models/rafko_cost.h"
-#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
 
 #include "test/test_utility.h"
@@ -146,7 +147,85 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   );
 }
 
-TEST_CASE("Testing if CPU context updates weights according to requests", "[context]"){
+TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-update]"){
+  google::protobuf::Arena arena;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t feature_size = rand()%5 + 1;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+    .input_size(2).expected_input_range((1.0))
+    .set_recurrence_to_layer()
+    .allowed_transfer_functions_by_layer(
+      {
+        {rafko_net::transfer_function_identity},
+        {rafko_net::transfer_function_sigmoid},
+        {rafko_net::transfer_function_tanh},
+        {rafko_net::transfer_function_elu},
+        {rafko_net::transfer_function_selu},
+        {rafko_net::transfer_function_relu},
+      }
+    ).dense_layers({2,2,2,2,2,feature_size});
+  rafko_mainframe::RafkoCPUContext context(*network, settings);
+
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){ /* modify single weight */
+    std::uint32_t weight_index = rand()%(network->weight_table_size());
+    double weight_value = static_cast<double>(rand()%20) / (15.0);
+    context.set_network_weight(weight_index, weight_value);
+    REQUIRE( network->weight_table(weight_index) == Catch::Approx(weight_value).epsilon(0.0000000001) );
+  }/*for(10 variants)*/
+}
+
+TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-update][bulk]"){
+  google::protobuf::Arena arena;
+  std::uint32_t sequence_size = rand()%3 + 1;
+  std::uint32_t feature_size = rand()%5 + 1;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+    .input_size(2).expected_input_range((1.0))
+    .set_recurrence_to_layer()
+    .allowed_transfer_functions_by_layer(
+      {
+        {rafko_net::transfer_function_identity},
+        {rafko_net::transfer_function_sigmoid},
+        {rafko_net::transfer_function_tanh},
+        {rafko_net::transfer_function_elu},
+        {rafko_net::transfer_function_selu},
+        {rafko_net::transfer_function_relu},
+      }
+    ).dense_layers({2,2,2,2,2,feature_size});
+  rafko_mainframe::RafkoCPUContext context(*network, settings);
+
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){ /* modify multiple weights */
+    std::vector<double> weight_values(network->weight_table_size());
+    std::generate(weight_values.begin(), weight_values.end(), [](){
+      return static_cast<double>(rand()%100) / (100.0);
+    });
+    context.set_network_weights(weight_values);
+    for(std::int32_t weight_index = 0; weight_index < network->weight_table_size(); ++weight_index){
+      REQUIRE( network->weight_table(weight_index) == Catch::Approx(weight_values[weight_index]).epsilon(0.0000000001) );
+    }
+  }/*for(10 variants)*/
+
+  std::vector<double> weight_values(network->weight_table().begin(),network->weight_table().end());
+  context.set_network_weights(weight_values);
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){ /* modify multiple weights */
+    std::vector<double> weight_deltas(network->weight_table_size());
+    std::generate(weight_deltas.begin(), weight_deltas.end(), [](){
+      return static_cast<double>(rand()%100) / (100.0);
+    });
+
+    context.apply_weight_update(weight_deltas);
+    for(std::int32_t weight_index = 0; weight_index < network->weight_table_size(); ++weight_index){
+      weight_values[weight_index] -= weight_deltas[weight_index] * settings.get_learning_rate();
+      REQUIRE( network->weight_table(weight_index) == Catch::Approx(weight_values[weight_index]).epsilon(0.0000000001) );
+    }
+  }/*for(10 variants)*/
 }
 
 } /* namespace rako_gym_test */

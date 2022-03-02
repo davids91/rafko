@@ -728,6 +728,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
         {rafko_net::transfer_function_relu},
       }
     ).dense_layers({2,2,2,2,2,feature_size});
+  rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(*network);
   std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
   CHECK_NOTHROW(
     context = (
@@ -736,7 +737,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
         .build()
     )
   );
-  rafko_mainframe::RafkoCPUContext reference_context(*network, settings);
+  rafko_mainframe::RafkoCPUContext reference_context(network_copy, settings);
 
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     settings, rafko_gym::cost_function_cross_entropy
