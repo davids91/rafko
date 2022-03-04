@@ -26,8 +26,9 @@ target_sources(rafko_net
   PUBLIC ${NET_HEADER_SERVICES} ${NET_HEADER_MODELS}
   PRIVATE
   models/src/neuron_info.cc
-  models/src/transfer_function.cc
   models/src/input_function.cc
+  models/src/transfer_function.cc
+  models/src/spike_function.cc
   services/src/feature_group_cache.cc
   services/src/neuron_router.cc
   services/src/partial_solution_builder.cc

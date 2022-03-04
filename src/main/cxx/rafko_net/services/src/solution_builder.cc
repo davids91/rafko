@@ -317,6 +317,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
       inner_neuron_operation += (
         "outputs[output_start + " + std::to_string(partial.output_data().starts() + inner_neuron_index) + "] = (\n"
         + SpikeFunction::get_cl_function_for(
+          partial.neuron_spike_functions(inner_neuron_index),
           "inputs[" + std::to_string(weight_table_offset + spike_weight_index)+ "]"/*parameter*/,
           "neuron_partial_result"/* new_data */,
           label_reach_guard(

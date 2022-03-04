@@ -95,16 +95,6 @@ public:
    */
   double get_value(Transfer_functions function, double data) const;
 
-  /**
-   * @brief      Gets a functions derivative calculated form the given data
-   *
-   * @param[in]  function  The function to use
-   * @param[in]  data      The data to use
-   *
-   * @return     The derivative from data.
-   */
-  double get_derivative(Transfer_functions function, double data) const;
-
   #if(RAFKO_USES_OPENCL)
   /**
    * @brief     Generates GPU kernel function code for the provided parameters

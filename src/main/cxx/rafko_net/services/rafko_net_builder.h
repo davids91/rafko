@@ -28,7 +28,9 @@
 #include <set>
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_net/models/input_function.h"
 #include "rafko_net/models/transfer_function.h"
+#include "rafko_net/models/spike_function.h"
 #include "rafko_net/models/weight_initializer.h"
 #include "rafko_net/models/neuron_info.h"
 

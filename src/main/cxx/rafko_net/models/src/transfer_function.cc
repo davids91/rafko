@@ -33,7 +33,7 @@ Transfer_functions TransferFunction::next(std::set<Transfer_functions> range){
   if(1u == range.size()) return *range.begin();
 
   Transfer_functions candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
-  while(find(range.begin(), range.end(), candidate) == range.end())
+  while(!Transfer_functions_IsValid(candidate)||find(range.begin(), range.end(), candidate) == range.end())
     candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);
 
   return candidate;
@@ -113,23 +113,5 @@ std::string TransferFunction::get_kernel_function_for(std::string operation_inde
 }
 
 #endif/*(RAFKO_USES_OPENCL)*/
-
-double TransferFunction::get_derivative(Transfer_functions function, double data) const{
-  switch(function){
-    case transfer_function_identity: return (1.0); /* Identity means f(x) = x */
-    case transfer_function_sigmoid: return std::exp(data)/std::pow((std::exp(data) + 1),2);
-    case transfer_function_tanh: return std::tanh(data);
-    case transfer_function_elu:
-      if(0 >= data) return settings.get_alpha() + get_value(function,data);
-      else return 1;
-    case transfer_function_selu:
-      if(0 >= data) return (settings.get_lambda() * settings.get_alpha() * exp(data));
-      else return settings.get_lambda();
-    case transfer_function_relu:
-      if(0 >= data) return 0;
-      else return 1;
-    default: throw std::runtime_error("Unidentified transfer function queried for information!");
-  }
-}
 
 } /* namespace rafko_net */

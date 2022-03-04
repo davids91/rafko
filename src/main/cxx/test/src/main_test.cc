@@ -69,6 +69,7 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
    */
   partial_solution.add_neuron_input_functions(rafko_net::input_function_add);
   partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
+  partial_solution.add_neuron_spike_functions(rafko_net::spike_function_memory);
 
   /* inputs go to neuron1 */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights */
@@ -86,6 +87,8 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
    */
   partial_solution.add_neuron_input_functions(rafko_net::input_function_add);
   partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
+  partial_solution.add_neuron_spike_functions(rafko_net::spike_function_memory);
+
   /* neuron1 goes to neuron2;  that is the output which isn't in the inside indexes */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights*/
   temp_input_interval.set_starts(0u); /* The input synapse starts at the 1st internal Neuron (index 0) */

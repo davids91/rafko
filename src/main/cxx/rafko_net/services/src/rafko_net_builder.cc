@@ -23,9 +23,8 @@
 #include <stdexcept>
 #include <string>
 
-#include "rafko_net/models/dense_net_weight_initializer.h"
-#include "rafko_net/models/input_function.h"
 #include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/models/dense_net_weight_initializer.h"
 
 namespace rafko_net {
 
@@ -201,6 +200,8 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
         }else{
           arg_neuron_array[neurIt].set_transfer_function(TransferFunction::next());
         }
+        
+        arg_neuron_array[neurIt].set_spike_function(SpikeFunction::next());
 
         /* Storing the expected output of this Net */
         if(0 < layer_index)expPrevLayerOutput += TransferFunction::get_average_output_range(
