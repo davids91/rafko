@@ -1,3 +1,9 @@
 [submodule "Catch2"]
 	path = src/main/cxx/test/external/Catch2
 	url = https://github.com/catchorg/Catch2.git
+[submodule "src/main/cxx/rafko_mainframe/external/spdlog"]
+	path = src/main/cxx/rafko_mainframe/external/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "src/main/cxx/rafko_mainframe/external/date"]
+	path = src/main/cxx/rafko_mainframe/external/date
+	url = https://github.com/HowardHinnant/date.git

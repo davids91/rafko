@@ -30,6 +30,11 @@ TEST_CASE("Testing Asserion system", "[assert]" ) {
   RFASSERT( 5 <= 6 );
   RFASSERT( 6u != small_value );
   RFASSERT( 5u == small_value );
+
+  /* create new Scope */
+  RFASSERT_SCOPE(test_scope);
+  RFASSERT_LOG("Trying a message...");
+  RFASSERT( false );
 }
 
 } /* namespace rafko_mainframe_test */

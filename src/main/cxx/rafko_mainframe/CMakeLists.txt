@@ -18,6 +18,14 @@ else()
   set(CONTEXT_SOURCES_OCL)
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_subdirectory(external/spdlog)
+  target_link_libraries(rafko_mainframe PUBLIC spdlog::spdlog)
+
+  add_subdirectory(external/date)
+  target_link_libraries(rafko_mainframe PUBLIC date::date)
+endif()
+
 set( MAINFRAME_HEADERS
   ${CONTEXT_HEARDERS_OCL}
   models/rafko_settings.h
@@ -32,7 +40,8 @@ set( MAINFRAME_SOURCES
   ${CONTEXT_SOURCES_OCL}
   models/src/rafko_settings.cc
   services/src/rafko_cpu_context.cc
-  services/src/training_logger.cc
+  services/src/rafko_training_logger.cc
+  services/src/rafko_assertion_logger.cc
 )
 if(BUILD_MAINFRAME)
   target_sources(rafko_mainframe

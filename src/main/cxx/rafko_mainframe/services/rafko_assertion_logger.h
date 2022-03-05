@@ -23,13 +23,21 @@
 #include <assert.h>
 #include <memory>
 #include <string>
+#include <mutex>
+#include <chrono>
+
+#include "spdlog/spdlog.h"
 
 namespace rafko_mainframe{
 
 #ifndef NDEBUG
-#define RFASSERT(condition) rafko_mainframe::RafkoAssertionLogger::rafko_assert(condition, __LINE__)
+#define RFASSERT(condition) rafko_mainframe::RafkoAssertionLogger::rafko_assert(condition)
+#define RFASSERT_SCOPE(name) auto rafko_scope = rafko_mainframe::RafkoAssertionLogger::set_scope(#name);
+#define RFASSERT_LOG(...) rafko_mainframe::RafkoAssertionLogger::rafko_log(__VA_ARGS__);
 #else
-#define RFASSERT(condition) ((void)condition)
+#define RFASSERT(condition)
+#define RFASSERT_SCOPE(name)
+#define RFASSERT_LOG(...)
 #endif/* NDEBUG */
 
 /**
@@ -38,22 +46,20 @@ namespace rafko_mainframe{
  */
 class RafkoAssertionLogger{
 public:
-  std::unique_ptr<int> set_scope(){
-    std::unique_ptr<int> next_scope = std::make_unique<int>();
-    *next_scope = rand();
-    if(!current_scope.expired()){
-      //TODO: Log into the previous scope that another scope took over, and flush it
+  static std::shared_ptr<spdlog::logger> set_scope(std::string name);
+
+  template<typename... Args>
+  static void rafko_log(spdlog::format_string_t<Args...> fmt, Args &&... args){
+    if(auto scope = current_scope.lock()){
+      scope->log(spdlog::level::debug, fmt, args...);
     }
-    return next_scope;
   }
 
-  constexpr static void rafko_assert(bool condition, std::size_t line_number){
-    //TODO: If assertion fails, store a log message
-    assert(condition);
-  }
-
+  static void rafko_assert(bool condition);
 private:
-  std::weak_ptr<int> current_scope;
+  static std::weak_ptr<spdlog::logger> current_scope;
+  static std::mutex scope_mutex;
+  static bool keep_log;
 };
 
 } /* namespace rafko_mainframe */
