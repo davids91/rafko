@@ -25,7 +25,8 @@ set( MAINFRAME_HEADERS
   services/rafko_dummies.h
   services/rafko_context.h
   services/rafko_cpu_context.h
-  services/training_logger.h
+  services/rafko_training_logger.h
+  services/rafko_assertion_logger.h
 )
 set( MAINFRAME_SOURCES
   ${CONTEXT_SOURCES_OCL}

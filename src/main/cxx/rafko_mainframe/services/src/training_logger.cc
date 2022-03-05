@@ -15,14 +15,14 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/services/training_logger.h"
+#include "rafko_mainframe/services/rafko_training_logger.h"
 
 #include <iostream>
 #include <fstream>
 
 namespace rafko_mainframe{
 
-void TrainingLogger::log(std::uint32_t iteration, const std::vector<std::uint32_t>& coordinates, const std::vector<std::string>& tags, const std::vector<double>& data){
+void RafkoTrainingLogger::log(std::uint32_t iteration, const std::vector<std::uint32_t>& coordinates, const std::vector<std::string>& tags, const std::vector<double>& data){
   DataPackage measured;
   measured.set_iteration(iteration);
   for(const std::uint32_t& coordinate : coordinates) measured.add_coordinates(coordinate);
@@ -34,7 +34,7 @@ void TrainingLogger::log(std::uint32_t iteration, const std::vector<std::uint32_
     flush();
 }
 
-void TrainingLogger::flush(){
+void RafkoTrainingLogger::flush(){
   std::filebuf logfile;
   logfile.open(id+".log", std::ios::out | std::ios::binary | std::ios::trunc);
   std::ostream log_stream(&logfile);
