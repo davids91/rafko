@@ -46,6 +46,7 @@ message PartialSolution{
    */
    repeated Input_functions neuron_input_functions = 11;
    repeated Transfer_functions neuron_transfer_functions = 12;
+   repeated Spike_functions neuron_spike_functions = 13;
 
   /** ################################################################################################
    * Synapse information

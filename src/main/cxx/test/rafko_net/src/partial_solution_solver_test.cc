@@ -115,7 +115,9 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   partial_solution.add_weight_table((0.0));  /* A weight for the spike function */
   for(std::uint32_t i = 0; i < network_inputs.size(); ++i){
     partial_solution.add_weight_table((1.0));
+    partial_solution.add_neuron_input_functions(rafko_net::input_function_add);
     partial_solution.add_neuron_transfer_functions(rafko_net::transfer_function_identity);
+    partial_solution.add_neuron_spike_functions(rafko_net::spike_function_memory);
 
     partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights */
     temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(i));

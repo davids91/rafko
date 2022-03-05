@@ -31,10 +31,15 @@ namespace rafko_net{
 
 class RAFKO_FULL_EXPORT InputFunction{
 public:
-  inline static const std::set<Input_functions> all_input_functions = {
+  static inline const std::set<Input_functions> all_input_functions = {
     input_function_add, input_function_multiply
   };
 
+  /**
+   * @brief   Provides a random Input function based on the given range ( default is `input_function_add`)
+   *
+   * @param[in]   range   The range of input functions to pick the next one from
+   */
   static Input_functions next(std::set<Input_functions> range = {input_function_add});
 
   /**
@@ -46,15 +51,7 @@ public:
    *
    * @return     The result of data.
    */
-  static constexpr double collect(Input_functions function, double a, double b){
-    switch(function){
-      case input_function_add: return a + b;
-      case input_function_multiply: return a * b;
-      case input_function_analog_xor: return std::abs(a - b) * (a + b);
-      /*!Note: This solution for a number sequence of indefinite size might leave some mathematicians very furious, and rightly so.. '^^ */
-      default: throw std::runtime_error("Unidentified Input function called!");
-    };
-  }
+  static double collect(Input_functions function, double a, double b);
 
   #if(RAFKO_USES_OPENCL)
   /**

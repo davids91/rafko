@@ -23,9 +23,8 @@
 #include <stdexcept>
 #include <string>
 
-#include "rafko_net/models/dense_net_weight_initializer.h"
-#include "rafko_net/models/input_function.h"
 #include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/models/dense_net_weight_initializer.h"
 
 namespace rafko_net {
 
@@ -42,6 +41,24 @@ RafkoNetBuilder& RafkoNetBuilder::set_neuron_input_function(std::uint32_t layer_
 
   if(found_element == arg_neuron_index_input_functions.end())
     arg_neuron_index_input_functions.push_back(std::move(new_element));
+    else  *found_element = std::move(new_element);
+
+  return *this;
+}
+
+RafkoNetBuilder& RafkoNetBuilder::set_neuron_spike_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Spike_functions function){
+  std::tuple<std::uint32_t,std::uint32_t,Spike_functions> new_element = std::make_tuple(
+    layer_index,layer_neuron_index,function
+  );
+  std::vector<std::tuple<std::uint32_t,std::uint32_t,Spike_functions>>::iterator found_element = std::find_if(
+    arg_neuron_index_spike_functions.begin(), arg_neuron_index_spike_functions.end(),
+    [&new_element](const std::tuple<std::uint32_t,std::uint32_t,rafko_net::Spike_functions>& current_element){
+      return ( (std::get<0>(new_element) == std::get<0>(current_element))&&(std::get<1>(new_element) == std::get<1>(current_element)) );
+    }
+  );
+
+  if(found_element == arg_neuron_index_spike_functions.end())
+    arg_neuron_index_spike_functions.push_back(std::move(new_element));
     else  *found_element = std::move(new_element);
 
   return *this;
@@ -71,6 +88,10 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
 
   std::sort(arg_neuron_index_input_functions.begin(),arg_neuron_index_input_functions.end(),
   [](const std::tuple<std::uint32_t,std::uint32_t,Input_functions>& a, std::tuple<std::uint32_t,std::uint32_t,Input_functions>& b){
+    return std::get<0>(a) < std::get<0>(b);
+  });
+  std::sort(arg_neuron_index_spike_functions.begin(),arg_neuron_index_spike_functions.end(),
+  [](const std::tuple<std::uint32_t,std::uint32_t,Spike_functions>& a, std::tuple<std::uint32_t,std::uint32_t,Spike_functions>& b){
     return std::get<0>(a) < std::get<0>(b);
   });
 
@@ -136,9 +157,11 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
       while( /* erase all the deprecated input function settings for Neurons based on the layer index */
         ( 0u < arg_neuron_index_input_functions.size() )
         &&( layer_index > std::get<0>(arg_neuron_index_input_functions.front()) )
-      ){
-        arg_neuron_index_input_functions.erase(arg_neuron_index_input_functions.begin());
-      }
+      )arg_neuron_index_input_functions.erase(arg_neuron_index_input_functions.begin());
+      while( /* erase all the deprecated spike function settings for Neurons based on the layer index */
+        ( 0u < arg_neuron_index_spike_functions.size() )
+        &&( layer_index > std::get<0>(arg_neuron_index_spike_functions.front()) )
+      )arg_neuron_index_spike_functions.erase(arg_neuron_index_spike_functions.begin());
 
       /* Configuring the weight_initializerializer for this layer */
       arg_weight_initer->set(
@@ -172,6 +195,22 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
           return std::get<1>(a) < std::get<1>(b); /* the relevant(to the layer_index)y part of the vector is sorted based on Neuron index */
         }
       );
+      /* Sort the spike function requests based on Neuron indices this time */
+      std::sort( /* starting from the beginning of the array.. */
+        arg_neuron_index_spike_functions.begin(), /* ..because builder continually removes the irrelevant front parts.. */
+        std::find_if(arg_neuron_index_spike_functions.begin(),arg_neuron_index_spike_functions.end(),
+          [layer_index](const std::tuple<std::uint32_t,std::uint32_t,Spike_functions>& element){
+            return std::get<0>(element) == (layer_index + 1u); /* ..until the part of the array which starts at the next layer. */
+          }
+          /*!Note: this works because the vector is already sorted based on layer index,
+           * so the element in this `find_if` is either the end of the vector
+           * or the start of the next layer relevant part of it
+           */
+        ),
+        [](const std::tuple<std::uint32_t,std::uint32_t,Spike_functions>& a, std::tuple<std::uint32_t,std::uint32_t,Spike_functions>& b){
+          return std::get<1>(a) < std::get<1>(b); /* the relevant(to the layer_index)y part of the vector is sorted based on Neuron index */
+        }
+      );
 
       /* Add the Neurons */
       expPrevLayerOutput = 0;
@@ -185,7 +224,6 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
             { std::get<2>(arg_neuron_index_input_functions.front()) }
           ) );
         }else arg_neuron_array[neurIt].set_input_function(InputFunction::next());
-
         while( /* erase all the deprecated input function settings for Neurons based on Neuron index inside the layer */
           ( 0u < arg_neuron_index_input_functions.size() )
           &&(layer_index == std::get<0>(arg_neuron_index_input_functions.front()))
@@ -193,13 +231,27 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
         ){
           arg_neuron_index_input_functions.erase(arg_neuron_index_input_functions.begin());
         }
-
         if(is_allowed_transfer_functions_by_layer_set){
           arg_neuron_array[neurIt].set_transfer_function(
             TransferFunction::next(arg_allowed_transfer_functions_by_layer[layer_index])
           );
         }else{
           arg_neuron_array[neurIt].set_transfer_function(TransferFunction::next());
+        }
+        if(
+          ( 0u < arg_neuron_index_spike_functions.size() )
+          &&(layer_neuron_index == std::get<1>(arg_neuron_index_spike_functions.front()))
+        ){ /* if a Neuron has its input function explicitly set */
+          arg_neuron_array[neurIt].set_spike_function( SpikeFunction::next(
+            { std::get<2>(arg_neuron_index_spike_functions.front()) }
+          ) );
+        }else arg_neuron_array[neurIt].set_spike_function(SpikeFunction::next());
+        while( /* erase all the deprecated input function settings for Neurons based on Neuron index inside the layer */
+          ( 0u < arg_neuron_index_spike_functions.size() )
+          &&(layer_index == std::get<0>(arg_neuron_index_spike_functions.front()))
+          &&(layer_neuron_index >= std::get<1>(arg_neuron_index_spike_functions.front()))
+        ){
+          arg_neuron_index_spike_functions.erase(arg_neuron_index_spike_functions.begin());
         }
 
         /* Storing the expected output of this Net */

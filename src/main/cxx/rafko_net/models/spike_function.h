@@ -20,12 +20,11 @@
 
 #include "rafko_global.h"
 
-#include <vector>
+#include "rafko_protocol/rafko_net.pb.h"
+
+#include <set>
 #if(RAFKO_USES_OPENCL)
 #include <string>
-#include <regex>
-
-#include "rafko_utilities/services/rafko_string_utils.h"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 
@@ -36,42 +35,39 @@ namespace rafko_net{
  */
 class RAFKO_FULL_EXPORT SpikeFunction{
 public:
+  static inline const std::set<Spike_functions> all_spike_functions = {
+    spike_function_none, spike_function_memory, spike_function_p, spike_function_amplify_value
+  };
+
+  /**
+   * @brief   Provides a random Input function based on the given range ( default is `input_function_add`)
+   *
+   * @param[in]   range   The range of input functions to pick the next one from
+   */
+   static Spike_functions next(std::set<Spike_functions> range = {spike_function_memory});
+
   /**
    * @brief      Apply the given spike function to a neurons activation data
    *
-   * @param[in]  parameter The parameter supplied by a Neuron
-   * @param[in]  data      The data to apply it to
+   * @param[in]   function         The function to apply
+   * @param[in]   parameter        The parameter supplied by a Neuron
+   * @param[in]   new_data         The data to apply it to
+   * @param[in]   previous_data    The data to apply it to
    */
-  static constexpr double get_value(double parameter, double new_data, double previous_data){
-    return (previous_data * parameter) + (new_data * ((1.0)-parameter));
-  }
-
-  /**
-   * @brief      Gets a functions derivative calculated form the given data
-   *
-   * @param[in]  parameter The parameter supplied by a Neuron
-   * @param[in]  data      The data to use
-   *
-   * @return     The derivative from data.
-   */
-  static constexpr double get_derivative(double parameter, double transfer_function_output, double previous_value){
-    parameter_not_used(parameter);
-    return (previous_value - transfer_function_output);
-  }
+  static double get_value(Spike_functions function, double parameter, double new_data, double previous_data);
 
   #if(RAFKO_USES_OPENCL)
   /**
    * @brief     Generates GPU kernel function code for the provided parameters
    *
+   * @param[in]   function         The function to apply
    * @param[in]   parameter       The Spike function to base the generated kernel code on
    * @param[in]   new_data        The result of the newly collected inputs and transfer function
    * @param[in]   previous_data   The previous activation value of the neuron
    *
    * @return    The generated Kernel code calling the asked spike function based on the parameter
    */
-  static std::string get_cl_function_for(std::string parameter, std::string new_data, std::string previous_data){
-    return "(((" + previous_data + ") * " + parameter + ") + ((" + new_data +") * (1.0 - " + parameter + ")))";
-  }
+  static std::string get_cl_function_for(Spike_functions function, std::string parameter, std::string new_data, std::string previous_data);
 
   /**
    * @brief     Generates GPU kernel function code for the provided parameters
@@ -84,26 +80,7 @@ public:
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  static std::string get_kernel_function_for(std::string operation_index, std::string parameter, std::string previous_data, std::string new_data){
-    std::string code = R"(
-      switch(==op==){
-        case neuron_spike_function_none:
-          ==previous_data== = ==new_data==;
-          break;
-        case neuron_spike_function_memory:
-          ==previous_data== = (==previous_data== * ==parameter==) - (==new_data== * ==parameter==) + ==new_data==;
-          break;
-        case neuron_spike_function_p:
-          ==previous_data== = ==previous_data== + ==parameter== * (==new_data== - ==previous_data==);
-          break;
-      }
-    )";
-    code = rafko_utilities::replace_all_in_string(code, std::regex("==parameter=="), parameter);
-    code = rafko_utilities::replace_all_in_string(code, std::regex("==new_data=="), new_data);
-    code = rafko_utilities::replace_all_in_string(code, std::regex("==previous_data=="), previous_data);
-    code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
-    return code;
-  }
+  static std::string get_kernel_function_for(std::string operation_index, std::string parameter, std::string previous_data, std::string new_data);
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel
@@ -112,14 +89,7 @@ public:
    *
    * @return    The enumeration name for the given function
    */
-  static std::string get_kernel_enum_for(Spike_functions function){
-    switch(function){
-      case spike_function_none: return "neuron_spike_function_none";
-      case spike_function_memory: return "neuron_spike_function_memory";
-      case spike_function_p: return "neuron_spike_function_p";
-      default: throw std::runtime_error("Unidentified spike function queried for information!");
-    }
-  }
+  static std::string get_kernel_enum_for(Spike_functions function);
 
   /**
    * @brief     Generates GPU kernel enumerations
@@ -131,7 +101,8 @@ public:
       typedef enum rafko_spike_function_e{
         neuron_spike_function_none = 0,
         neuron_spike_function_memory,
-        neuron_spike_function_p
+        neuron_spike_function_p,
+        neuron_spike_function_amplify_value
       }rafko_spike_function_t __attribute__ ((aligned));
     )";
   }

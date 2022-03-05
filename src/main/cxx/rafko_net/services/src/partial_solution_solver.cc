@@ -106,7 +106,8 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
     );
 
     new_neuron_data = SpikeFunction::get_value( /* apply spike function */
-      spike_function_weight, new_neuron_data, output_neuron_data.get_element(0, (detail.output_data().starts() + neuron_iterator))
+      detail.neuron_spike_functions(neuron_iterator), spike_function_weight, new_neuron_data,
+      output_neuron_data.get_element(0, (detail.output_data().starts() + neuron_iterator))
     );
 
     output_neuron_data.set_element( /* Store the resulting Neuron value */

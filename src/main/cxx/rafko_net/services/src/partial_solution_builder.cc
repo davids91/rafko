@@ -46,6 +46,7 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
     /* Copy in Neuron parameters and weights from the net */
     partial.add_neuron_input_functions(net.neuron_array(neuron_index).input_function());
     partial.add_neuron_transfer_functions(net.neuron_array(neuron_index).transfer_function());
+    partial.add_neuron_spike_functions(net.neuron_array(neuron_index).spike_function());
     partial.add_weight_synapse_number(net.neuron_array(neuron_index).input_weights_size());
     weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
       temp_synapse_interval.set_starts(partial.weight_table_size());

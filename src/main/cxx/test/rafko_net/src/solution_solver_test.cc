@@ -404,6 +404,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
             neuron_data
           );
           manual_neuron_values[neuron_iterator] = rafko_net::SpikeFunction::get_value(
+            net->neuron_array(neuron_iterator).spike_function(),
             spike_function_weight, neuron_data, manual_neuron_values[neuron_iterator]
           );
           solved[neuron_iterator] = true;
