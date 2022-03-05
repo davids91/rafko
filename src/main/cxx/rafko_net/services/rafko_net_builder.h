@@ -183,11 +183,23 @@ public:
    *
    * @param[in]   layer_index     The index of the Layer to set the features on
    * @param[in]   neuron_index    The relative index of the neuron inside the layer
-   * @param[in]   feature         The feature to set to the layer
+   * @param[in]   feature         The function to set to the Neuron
    *
    * @return     builder reference for chaining
    */
   RafkoNetBuilder& set_neuron_input_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Input_functions function);
+
+  /**
+   * @brief      Set the spike function of a Neuron other, than the default "+"
+   *
+   * @param[in]   layer_index     The index of the Layer to set the features on
+   * @param[in]   neuron_index    The relative index of the neuron inside the layer
+   * @param[in]   feature         The function to set to the Neuron
+   *
+   * @return     builder reference for chaining
+   */
+  RafkoNetBuilder& set_neuron_spike_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Spike_functions function);
+
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
@@ -248,6 +260,7 @@ private:
   std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
   std::vector< std::pair<std::uint32_t,Neuron_group_features> > layer_features;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Input_functions> > arg_neuron_index_input_functions;
+  std::vector< std::tuple<std::uint32_t,std::uint32_t,Spike_functions> > arg_neuron_index_spike_functions;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.

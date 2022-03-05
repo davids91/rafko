@@ -350,7 +350,7 @@ TEST_CASE( "Testing builder for setting Neuron input functions manually", "[buil
           layer_index, layer_neuron_index,
           rafko_net::InputFunction::next(rafko_net::InputFunction::all_input_functions)
         );
-        if( /* only add the try to the reference vector if its not present yet in the same layer_index/neuron_index */
+        if( /* only add the the reference vector if its not present yet in the same layer_index/neuron_index */
           std::find_if(
             set_neuron_input_functions.begin(),set_neuron_input_functions.end(),
             [&new_item](const std::tuple<std::uint32_t,std::uint32_t,rafko_net::Input_functions>& current_item){
@@ -378,7 +378,59 @@ TEST_CASE( "Testing builder for setting Neuron input functions manually", "[buil
 
       REQUIRE( network->neuron_array(neuron_index).input_function() == std::get<2>(element) );
     }
+  }/*for(10 variants)*/
+}
 
+TEST_CASE( "Testing builder for setting Neuron spike functions manually", "[build][spike-function]" ) {
+  google::protobuf::Arena arena;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(&arena);
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
+    rafko_net::RafkoNetBuilder builder(settings);
+
+    std::vector<std::uint32_t> net_structure;
+    while((rand()%10 < 9)||(4 > net_structure.size()))
+      net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
+
+    builder.input_size(2)
+      .output_neuron_number(net_structure.back())
+      .expected_input_range((5.0));
+
+    std::vector<std::tuple<std::uint32_t,std::uint32_t,rafko_net::Spike_functions>> set_neuron_spike_functions;
+    for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+      for(std::uint32_t tries = 0; tries < 5u; ++tries){
+        std::uint32_t layer_neuron_index = rand()%(net_structure[layer_index]);
+        std::tuple<std::uint32_t,std::uint32_t,rafko_net::Spike_functions> new_item = std::make_tuple(
+          layer_index, layer_neuron_index,
+          rafko_net::SpikeFunction::next(rafko_net::SpikeFunction::all_spike_functions)
+        );
+        if( /* only add the the reference vector if its not present yet in the same layer_index/neuron_index */
+          std::find_if(
+            set_neuron_spike_functions.begin(),set_neuron_spike_functions.end(),
+            [&new_item](const std::tuple<std::uint32_t,std::uint32_t,rafko_net::Spike_functions>& current_item){
+              return ( (std::get<0>(new_item) == std::get<0>(current_item))&&(std::get<1>(new_item) == std::get<1>(current_item)) );
+            }
+          ) == set_neuron_spike_functions.end()
+        ){
+          builder.set_neuron_spike_function(layer_index, layer_neuron_index, std::get<2>(new_item));
+          set_neuron_spike_functions.push_back( std::move(new_item) );
+        }
+      }/*for(5 tries)*/
+    }
+
+    rafko_net::RafkoNet* network(builder.dense_layers(net_structure));
+    std::vector<std::uint32_t> layer_starts(net_structure.size());
+    std::uint32_t layer_start_iterator = 0u;
+    for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+      layer_starts[layer_index] = layer_start_iterator;
+      layer_start_iterator += net_structure[layer_index];
+    }
+    for(const std::tuple<std::uint32_t,std::uint32_t,rafko_net::Spike_functions>& element : set_neuron_spike_functions){
+      REQUIRE( std::get<0>(element) < layer_starts.size() );
+      REQUIRE( std::get<1>(element) < net_structure[std::get<0>(element)] );
+      std::uint32_t neuron_index = layer_starts[std::get<0>(element)] + std::get<1>(element);
+
+      REQUIRE( network->neuron_array(neuron_index).spike_function() == std::get<2>(element) );
+    }
   }/*for(10 variants)*/
 }
 

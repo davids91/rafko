@@ -35,6 +35,10 @@ namespace rafko_net{
  */
 class RAFKO_FULL_EXPORT SpikeFunction{
 public:
+  static inline const std::set<Spike_functions> all_spike_functions = {
+    spike_function_none, spike_function_memory, spike_function_p, spike_function_amplify_value
+  };
+
   /**
    * @brief   Provides a random Input function based on the given range ( default is `input_function_add`)
    *

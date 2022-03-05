@@ -49,7 +49,7 @@ Spike_functions SpikeFunction::next(std::set<Spike_functions> range){
 }
 
 #if(RAFKO_USES_OPENCL)
-std::string SpikeFunction::get_cl_function_for(Spike_functions function, std::string parameter, std::string new_data, std::string previous_data){
+std::string SpikeFunction::get_cl_function_for(Spike_functions function, std::string new_data, std::string previous_data, std::string parameter){
   switch(function){
     case spike_function_none: return "(" + new_data + ")";
     case spike_function_memory: return "(((" + previous_data + ") * " + parameter + ") + ((" + new_data +") * (1.0 - " + parameter + ")))";
@@ -59,7 +59,7 @@ std::string SpikeFunction::get_cl_function_for(Spike_functions function, std::st
   }
 }
 
-std::string SpikeFunction::get_kernel_function_for(std::string operation_index, std::string parameter, std::string previous_data, std::string new_data){
+std::string SpikeFunction::get_kernel_function_for(std::string operation_index, std::string previous_data, std::string new_data, std::string parameter){
   std::string code = R"(
     switch(==op==){
       case neuron_spike_function_none:
