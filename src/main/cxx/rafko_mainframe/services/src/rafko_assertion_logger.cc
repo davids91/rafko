@@ -17,7 +17,6 @@
 
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
-#include <iostream> //Debug! Delete later..
 #include <filesystem>
 #include <chrono>
 #include <date/date.h>
@@ -27,23 +26,27 @@
 namespace rafko_mainframe{
 
 std::weak_ptr<spdlog::logger> RafkoAssertionLogger::current_scope;
+std::string RafkoAssertionLogger::current_scope_name;
 std::mutex RafkoAssertionLogger::scope_mutex;
 bool RafkoAssertionLogger::keep_log = false;
 
 std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name){
   auto today = date::year_month_day{date::floor<date::days>(std::chrono::system_clock::now())};
+  auto current_time = date::make_time(
+    std::chrono::system_clock::now() - date::floor<date::days>(std::chrono::system_clock::now())
+  );
   std::string scope_name = (
-    name + "_" + (std::stringstream() << today).str() + "_" + std::to_string(time(nullptr))
+    name + "_" + (std::stringstream() << today).str() + "_" + (std::stringstream() << current_time).str()
   );
 
   spdlog::file_event_handlers handlers;
   handlers.after_close = [](spdlog::filename_t filename) {
-    if(!keep_log){
-      std::filesystem::remove(filename);
-    }
+    if(!keep_log) std::filesystem::remove(filename);
   };
-  auto logger = spdlog::basic_logger_mt( scope_name, "logs/" + scope_name + ".log", false, handlers);
-  logger->set_level(spdlog::level::debug);
+  auto logger = spdlog::basic_logger_mt( scope_name, std::string(logs_folder) + "/" + scope_name + ".log", false, handlers);
+  // logger->set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
+  logger->set_pattern("[%H:%M:%S|%u][%^%L%$][thread %t] %v");
+  logger->set_level(spdlog::level::trace);
   logger->flush_on(spdlog::level::err);
 
   /*!Note: no need to call spdlog::register_logger(logger);, because access is only through the pointer anyway */
@@ -54,6 +57,7 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
 
   {
     std::lock_guard<std::mutex> my_lock(scope_mutex);
+    current_scope_name = scope_name;
     current_scope = logger;
   }
 
@@ -63,10 +67,8 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
 void RafkoAssertionLogger::rafko_assert(bool condition){
   if(!condition){
     keep_log = true;
-    if(auto scope = current_scope.lock()){
+    if(auto scope = current_scope.lock()){ /* no need to use mutex here, since the underlying logger is thread-safe */
       scope->error("Assertion failure!");
-      scope->enable_backtrace(32);
-      scope->dump_backtrace();
       scope->flush();
     }
     spdlog::shutdown();

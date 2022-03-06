@@ -17,13 +17,15 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <fstream>
+
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 #include "test/test_utility.h"
 
 namespace rafko_mainframe_test {
 
-TEST_CASE("Testing Asserion system", "[assert]" ) {
+TEST_CASE("Testing Logged Asserion System", "[assert]" ) {
   std::uint16_t small_value = 5;
   RFASSERT( 4 <= 5 );
   RFASSERT( 5 == 5 );
@@ -31,10 +33,25 @@ TEST_CASE("Testing Asserion system", "[assert]" ) {
   RFASSERT( 6u != small_value );
   RFASSERT( 5u == small_value );
 
-  /* create new Scope */
-  RFASSERT_SCOPE(test_scope);
-  RFASSERT_LOG("Trying a message...");
-  RFASSERT( false );
+  std::string scope_name;
+  {
+    /* create new Scope */
+    RFASSERT_SCOPE(test_scope);
+    RFASSERT_LOG("Trying a message...");
+    RFASSERT_LOGV(std::vector<int>(5),"This is a vector:");
+    RFASSERT( true );
+    scope_name = rafko_mainframe::RafkoAssertionLogger::get_current_scope_name();
+  }
+  spdlog::drop_all(); /* Need to drop the logger here, because otherwise async handling of logfiles might cause false positive failure here */
+  std::string log_file_name = std::string(rafko_mainframe::RafkoAssertionLogger::logs_folder) + "/" + scope_name + ".log";
+  bool file_exists;
+  if (FILE *file = fopen(log_file_name.c_str(), "r")) {
+    fclose(file);
+    file_exists = true;
+  }else{
+    file_exists = false;
+  }
+  REQUIRE( !file_exists ); /* No failed assertions were present so the logfile should not exist */
 }
 
 } /* namespace rafko_mainframe_test */
