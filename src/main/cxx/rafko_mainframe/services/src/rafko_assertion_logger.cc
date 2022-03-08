@@ -17,6 +17,8 @@
 
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
+#if(RAFKO_USES_ASSERTLOGS)
+
 #include <filesystem>
 #include <chrono>
 #include <date/date.h>
@@ -38,17 +40,15 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
   std::string scope_name = (
     name + "_" + (std::stringstream() << today).str() + "_" + (std::stringstream() << current_time).str()
   );
-
   spdlog::file_event_handlers handlers;
   handlers.after_close = [](spdlog::filename_t filename) {
     if(!keep_log) std::filesystem::remove(filename);
   };
+
   auto logger = spdlog::basic_logger_mt( scope_name, std::string(logs_folder) + "/" + scope_name + ".log", false, handlers);
-  // logger->set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
   logger->set_pattern("[%H:%M:%S|%u][%^%L%$][thread %t] %v");
   logger->set_level(spdlog::level::trace);
   logger->flush_on(spdlog::level::err);
-
   /*!Note: no need to call spdlog::register_logger(logger);, because access is only through the pointer anyway */
 
   if(auto scope = current_scope.lock()){
@@ -77,3 +77,5 @@ void RafkoAssertionLogger::rafko_assert(bool condition){
 }
 
 } /* rafko_mainframe */
+
+#endif/*(RAFKO_USES_ASSERTLOGS)*/

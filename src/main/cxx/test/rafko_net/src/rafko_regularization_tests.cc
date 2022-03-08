@@ -333,6 +333,7 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
 
 #if(RAFKO_USES_OPENCL)
 TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU context", "[GPU][context][regularization][features]"){
+  srand(576281468);
   google::protobuf::Arena arena;
   std::uint32_t feature_size = 2u;
   std::uint32_t sequence_size = 3u;

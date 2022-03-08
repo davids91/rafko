@@ -18,7 +18,7 @@ else()
   set(CONTEXT_SOURCES_OCL)
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(ASSERTLOGS)
   add_subdirectory(external/spdlog)
   target_link_libraries(rafko_mainframe PUBLIC spdlog::spdlog)
 

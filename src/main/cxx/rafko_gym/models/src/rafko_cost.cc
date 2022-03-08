@@ -18,8 +18,9 @@
 
 #include <math.h>
 #include <mutex>
-#include <assert.h>
 #include <functional>
+
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_gym{
 
@@ -29,7 +30,7 @@ double RafkoCost::set_feature_for_label(
   const rafko_gym::RafkoEnvironment& environment, std::uint32_t sample_index,
   const std::vector<double>& neuron_data
 ) const{
-  assert(environment.get_number_of_label_samples() > sample_index);
+  RFASSERT(environment.get_number_of_label_samples() > sample_index);
   return cost_function->get_feature_error(
     environment.get_label_sample(sample_index), neuron_data,
     environment.get_number_of_label_samples()
@@ -40,7 +41,7 @@ double RafkoCost::set_features_for_labels(
   const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
   std::uint32_t neuron_buffer_start_index, std::uint32_t raw_start_index, std::uint32_t labels_to_evaluate
 ) const{
-  assert((raw_start_index + labels_to_evaluate) <= environment.get_number_of_label_samples());
+  RFASSERT((raw_start_index + labels_to_evaluate) <= environment.get_number_of_label_samples());
 
   std::vector<double>& error_labels = common_datapool.reserve_buffer(labels_to_evaluate);
   /*!Note: No need to fill the reserved buffer with initial values because every element of it will be overwritten */
@@ -80,8 +81,8 @@ double RafkoCost::set_features_for_sequences(
   std::uint32_t neuron_buffer_start_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
   std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation, std::vector<double>& tmp_data
 ) const{
-  assert(environment.get_number_of_sequences() >= (sequence_start_index + sequences_to_evaluate));
-  assert(environment.get_sequence_size() >= (start_index_in_sequence + sequence_truncation));
+  RFASSERT(environment.get_number_of_sequences() >= (sequence_start_index + sequences_to_evaluate));
+  RFASSERT(environment.get_sequence_size() >= (start_index_in_sequence + sequence_truncation));
 
   std::uint32_t raw_start_index = sequence_start_index * environment.get_sequence_size();
   std::uint32_t labels_to_evaluate = sequences_to_evaluate * environment.get_sequence_size();

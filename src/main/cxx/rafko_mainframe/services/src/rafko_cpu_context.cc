@@ -26,6 +26,7 @@
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_gym/services/updater_factory.h"
 
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 #include "rafko_mainframe/services/rafko_dummies.h"
 
 namespace rafko_mainframe{
@@ -47,8 +48,8 @@ RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet& neural_network_, rafko_mai
 { neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples()); }
 
 void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_){
-  assert(environment_->get_feature_size() == network.output_neuron_number());
-  assert(environment_->get_input_size() == network.input_data_size());
+  RFASSERT(environment_->get_feature_size() == network.output_neuron_number());
+  RFASSERT(environment_->get_input_size() == network.input_data_size());
   environment.reset();
   environment = environment_;
   std::uint32_t old_output_buffer_num = neuron_outputs_to_evaluate.size();
@@ -80,7 +81,7 @@ double RafkoCPUContext::error_post_process(double raw_error, std::uint32_t label
 }
 
 double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t sequences_to_evaluate, std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation){
-  assert(environment->get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
+  RFASSERT(environment->get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
 
   double error_sum = (0.0);
   agent->set_eval_mode(true);

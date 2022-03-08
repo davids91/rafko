@@ -27,21 +27,17 @@
 #include <mutex>
 #include <chrono>
 
+#if(RAFKO_USES_ASSERTLOGS)
 #include "spdlog/spdlog.h"
+#endif/*(RAFKO_USES_ASSERTLOGS)*/
 
 namespace rafko_mainframe{
 
-#ifndef NDEBUG
+#if(RAFKO_USES_ASSERTLOGS)
 #define RFASSERT(condition) rafko_mainframe::RafkoAssertionLogger::rafko_assert(condition)
 #define RFASSERT_SCOPE(name) auto rafko_scope = rafko_mainframe::RafkoAssertionLogger::set_scope(#name);
 #define RFASSERT_LOG(...) rafko_mainframe::RafkoAssertionLogger::rafko_log(__VA_ARGS__);
 #define RFASSERT_LOGV(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector(vec, __VA_ARGS__);
-#else
-#define RFASSERT(condition)
-#define RFASSERT_SCOPE(name)
-#define RFASSERT_LOG(...)
-#define RFASSERT_LOGV(vec, ...)
-#endif/* NDEBUG */
 
 /**
  * @brief      Logger utility to create help identify problems in debug configurations, while
@@ -82,6 +78,16 @@ private:
   static std::mutex scope_mutex;
   static bool keep_log;
 };
+#else
+#ifndef NDEBUG
+#define RFASSERT(condition) (assert(condition))
+#else
+#define RFASSERT(condition) ((void)(condition))
+#endif
+#define RFASSERT_SCOPE(name)
+#define RFASSERT_LOG(...)
+#define RFASSERT_LOGV(vec, ...)
+#endif/*(RAFKO_USES_ASSERTLOGS)*/
 
 } /* namespace rafko_mainframe */
 

@@ -32,6 +32,7 @@
 #include "rafko_utilities/models/data_pool.h"
 #include "rafko_utilities/models/const_vector_subrange.h"
 #include "rafko_mainframe/models/rafko_settings.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_net/services/solution_builder.h"
 #include "rafko_mainframe/models/rafko_nbuf_shape.h"
@@ -96,7 +97,7 @@ public:
     bool reset_neuron_data = false, std::uint32_t thread_index = 0
   ){
     if(max_threads > thread_index){
-      assert( input.size() == solution.network_input_size() );
+      RFASSERT( input.size() == solution.network_input_size() );
       if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
       solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread), thread_index );
       return { /* return with the range of the output Neurons */
@@ -136,7 +137,7 @@ public:
    * @return         A const reference to the raw Neuron data
    */
   const rafko_utilities::DataRingbuffer& get_memory(std::uint32_t thread_index = 0) const{
-    assert(thread_index < neuron_value_buffers.size());
+    RFASSERT(thread_index < neuron_value_buffers.size());
     return neuron_value_buffers[thread_index];
   }
 

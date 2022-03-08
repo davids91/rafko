@@ -29,14 +29,22 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     "Enables test build"
     ON
   )
+
+  option(ASSERTLOGS
+    "Enables verbose logging for development assertions; Warning: Significantly hikes runtime, not suggested to turn on with full tests"
+    OFF
+  )
+
   option(TEST_CONVERGENCE
     "Makes the test builds examines convergence, instead of acceptance tests"
     OFF
   )
+
   option(STATIC_ANALYZERS
     "Enables CPPCheck diagnostics for the project"
     OFF
   )
+
   option(SANITIZE
     "Enables Gcc address sanitizer to check internal behavior"
     OFF
@@ -48,6 +56,11 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     add_compile_definitions(CL_HPP_MINIMUM_OPENCL_VERSION=120)
     add_compile_definitions(CL_HPP_TARGET_OPENCL_VERSION=${OPENCL_TARGET})
     add_compile_definitions(RAFKO_USES_OPENCL=1)
+  endif()
+  if(ASSERTLOGS)
+    add_compile_definitions(RAFKO_USES_ASSERTLOGS=1)
+  else()
+    add_compile_definitions(RAFKO_USES_ASSERTLOGS=0)
   endif()
   if(SANITIZE)
     set(ENV{ASAN_OPTIONS} detect_leaks=0) #All allocated memory on the Arena is detected as leaks, so leak check needs to be disabled
