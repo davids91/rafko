@@ -18,6 +18,14 @@ if(MAKE_TESTS)
     set(GPU_TEST_SOURCES)
   endif()
 
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set( DEBUG_ONLY_TESTS
+      rafko_mainframe/src/rafko_assertion_logger_test.cc
+    )
+  else()
+    set(DEBUG_ONLY_TESTS)
+  endif()
+
   if(TEST_CONVERGENCE)
     target_sources(rafko_test
       PRIVATE
@@ -29,6 +37,7 @@ if(MAKE_TESTS)
       PRIVATE
       src/main_test.cc
       ${GPU_TEST_SOURCES}
+      ${DEBUG_ONLY_TESTS}
       rafko_gym/src/rafko_dataset_cost_test.cc
       rafko_gym/src/rafko_dataset_wrapper_test.cc
       rafko_gym/src/cost_function_mse_test.cc
@@ -49,7 +58,7 @@ if(MAKE_TESTS)
       rafko_net/src/softmax_function_test.cc
       rafko_net/src/rafko_regularization_tests.cc
       rafko_net/src/weight_updater_test.cc
-      rafko_mainframe/src/service_context_test.cc
+      rafko_mainframe/src/rafko_settings_test.cc
       rafko_mainframe/src/rafko_cpu_context_test.cc
     )
   endif()

@@ -20,6 +20,7 @@
 #include <set>
 
 #include "rafko_net/services/synapse_iterator.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_gym {
 
@@ -143,7 +144,7 @@ std::uint32_t RafkoWeightUpdater::get_device_weight_table_start_for(
   std::uint32_t partial_index, const rafko_net::Solution& solution,
   std::unordered_map<std::uint32_t, std::uint32_t>& weight_starts_in_partials
 ){
-  assert( static_cast<std::int32_t>(partial_index) < solution.partial_solutions_size() );
+  RFASSERT( static_cast<std::int32_t>(partial_index) < solution.partial_solutions_size() );
 
   std::unordered_map<std::uint32_t, std::uint32_t>::iterator iter = weight_starts_in_partials.find(partial_index);
   if(iter != weight_starts_in_partials.end())
@@ -164,8 +165,8 @@ std::uint32_t RafkoWeightUpdater::get_weight_synapse_start_index_in_partial(
 ){
   std::uint32_t partial_first_neuron_index = partial.output_data().starts();
   std::uint32_t partial_neuron_number = partial.output_data().interval_size();
-  assert( neuron_index >= partial_first_neuron_index );
-  assert( neuron_index < (partial_first_neuron_index + partial_neuron_number) );
+  RFASSERT( neuron_index >= partial_first_neuron_index );
+  RFASSERT( neuron_index < (partial_first_neuron_index + partial_neuron_number) );
 
   std::unordered_map<std::uint32_t, std::uint32_t>::iterator iter = weight_synapse_starts_in_partial.find(neuron_index);
   if(iter != weight_synapse_starts_in_partial.end())
@@ -183,7 +184,7 @@ std::uint32_t RafkoWeightUpdater::get_weight_synapse_start_index_in_partial(
 
 void RafkoWeightUpdater::update_solution_with_weight(std::uint32_t weight_index) const{
   std::lock_guard<std::mutex> my_lock(reference_mutex);
-  assert(static_cast<std::int32_t>(weight_index) < net.weight_table_size());
+  RFASSERT(static_cast<std::int32_t>(weight_index) < net.weight_table_size());
   const std::vector<std::pair<std::uint32_t, std::uint32_t>>& relevant_partial_weights = get_relevant_partial_weight_indices_for(weight_index);
   for(const std::pair<std::uint32_t,std::uint32_t>& relevant_partial_weight : relevant_partial_weights){
     solution.mutable_partial_solutions(std::get<0>(relevant_partial_weight))->set_weight_table(

@@ -23,6 +23,7 @@
 #include <unordered_map>
 #endif/*(RAFKO_USES_OPENCL)*/
 
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 #include "rafko_net/services/synapse_iterator.h"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_utilities/services/rafko_string_utils.h"
@@ -51,7 +52,7 @@ void RafkoNetworkFeature::execute_solution_relevant(
   const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
   std::vector<double>& neuron_data, std::uint32_t thread_index
 ) const{
-  assert(thread_index < execution_threads.size());
+  RFASSERT(thread_index < execution_threads.size());
 
   switch(feature.feature()){
     case neuron_group_feature_softmax: execute_softmax(neuron_data, feature.relevant_neurons(), thread_index);
@@ -67,7 +68,7 @@ double RafkoNetworkFeature::calculate_performance_relevant(
   const RafkoNet& network, std::uint32_t thread_index
 ) const{
   parameter_not_used(settings);
-  assert(thread_index < execution_threads.size());
+  RFASSERT(thread_index < execution_threads.size());
 
   switch(feature.feature()){
     case neuron_group_feature_l1_regularization: return calculate_l1_regularization(network, feature.relevant_neurons(), thread_index);

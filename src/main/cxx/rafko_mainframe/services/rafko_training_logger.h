@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef TRAINING_LOGGER_H
-#define TRAINING_LOGGER_H
+#ifndef RAFKO_TRAINING_LOGGER_H
+#define RAFKO_TRAINING_LOGGER_H
 
 #include "rafko_global.h"
 
@@ -33,9 +33,9 @@ namespace rafko_mainframe{
  * @brief      This class is a helper utility to create measurements about the neuron activations and experiences
  *             during training
  */
-class TrainingLogger{
+class RafkoTrainingLogger{
 public:
-  TrainingLogger(std::string id_, RafkoSettings& settings)
+  RafkoTrainingLogger(std::string id_, RafkoSettings& settings)
   : id(id_)
   , settings(settings)
   { }
@@ -52,4 +52,4 @@ private:
 
 } /* namespace rafko_mainframe */
 
-#endif /* TRAINING_LOGGER_H */
+#endif /* RAFKO_TRAINING_LOGGER_H */

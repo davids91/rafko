@@ -24,12 +24,12 @@
 
 #include "rafko_utilities/services/rafko_string_utils.h"
 #endif/*(RAFKO_USES_OPENCL)*/
-
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_net {
 
 Transfer_functions TransferFunction::next(std::set<Transfer_functions> range){
-  assert( 0u < range.size() );
+  RFASSERT( 0u < range.size() );
   if(1u == range.size()) return *range.begin();
 
   Transfer_functions candidate = static_cast<Transfer_functions>(rand()%Transfer_functions_ARRAYSIZE);

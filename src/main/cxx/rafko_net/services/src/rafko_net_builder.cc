@@ -29,6 +29,7 @@
 namespace rafko_net {
 
 RafkoNetBuilder& RafkoNetBuilder::set_neuron_input_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Input_functions function){
+
   std::tuple<std::uint32_t,std::uint32_t,Input_functions> new_element = std::make_tuple(
     layer_index,layer_neuron_index,function
   );

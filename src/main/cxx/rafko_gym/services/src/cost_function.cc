@@ -22,6 +22,7 @@
 #if(RAFKO_USES_OPENCL)
 #include "rafko_utilities/models/rafko_gpu_kernel_library.h"
 #endif/*(RAFKO_USES_OPENCL)*/
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_gym {
 
@@ -73,7 +74,7 @@ double CostFunction::get_feature_error(
   const std::vector<double>& label, const std::vector<double>& neuron_data,
   std::uint32_t max_threads, std::uint32_t outer_thread_index, std::uint32_t sample_number
 ) const{
-  assert( label.size() == neuron_data.size() );
+  RFASSERT( label.size() == neuron_data.size() );
 
   double error_value = 0;
   std::uint32_t feature_start = 0;

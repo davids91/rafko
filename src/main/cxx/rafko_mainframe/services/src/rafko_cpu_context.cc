@@ -44,11 +44,16 @@ RafkoCPUContext::RafkoCPUContext(rafko_net::RafkoNet& neural_network_, rafko_mai
 ),execution_threads(settings.get_max_processing_threads())
 , used_sequence_truncation( std::min(settings.get_memory_truncation(), environment->get_sequence_size()) )
 , used_minibatch_size( std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) )
-{ neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples()); }
+{
+  neuron_outputs_to_evaluate.back().resize(environment->get_number_of_label_samples());
+}
 
 void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_){
-  assert(environment_->get_feature_size() == network.output_neuron_number());
-  assert(environment_->get_input_size() == network.input_data_size());
+  RFASSERT_LOG("Setting environment in CPU context..");
+  RFASSERT_LOG("Environment feature size: {} vs. Network output Neuron number: {}", environment_->get_feature_size(), network.output_neuron_number());
+  RFASSERT(environment_->get_feature_size() == network.output_neuron_number());
+  RFASSERT_LOG("Environment input size: {} vs. Network input size: {}", environment_->get_input_size(), network.input_data_size());
+  RFASSERT(environment_->get_input_size() == network.input_data_size());
   environment.reset();
   environment = environment_;
   std::uint32_t old_output_buffer_num = neuron_outputs_to_evaluate.size();
@@ -67,7 +72,6 @@ void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
 double RafkoCPUContext::error_post_process(double raw_error, std::uint32_t labels_evaluated){
   double result_error = raw_error;
   double divisor = std::max(1u, labels_evaluated);
-
   for(const rafko_net::FeatureGroup& feature : network.neuron_group_features()){
     if(rafko_net::NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
       result_error += agent->expose_executor().calculate_performance_relevant(
@@ -76,11 +80,20 @@ double RafkoCPUContext::error_post_process(double raw_error, std::uint32_t label
     }
   }
 
+  RFASSERT_LOG(
+    "Error post process: raw error value: {}; error corrected with performance: {}; divisor: {}",
+    raw_error, result_error, divisor
+  );
+
   return result_error / divisor;
 }
 
 double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t sequences_to_evaluate, std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation){
-  assert(environment->get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
+  RFASSERT_LOG(
+    "Evaluating sequences in CPU context: {} + {} / {}; start index inside sequence: {}; sequence truncation: {} ",
+    sequence_start, sequences_to_evaluate, environment->get_number_of_sequences(), start_index_in_sequence, sequence_truncation
+  );
+  RFASSERT(environment->get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
 
   double error_sum = (0.0);
   agent->set_eval_mode(true);
@@ -114,6 +127,8 @@ double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t seq
         }
       }
     });
+
+    RFASSERT_LOGV2(neuron_outputs_to_evaluate, "Neuron outputs to evaluate: ");
 
     double error_part = objective->set_features_for_sequences( /* Upload results to the data set */
       *environment, neuron_outputs_to_evaluate,

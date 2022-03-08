@@ -29,6 +29,7 @@
 #include "rafko_gym/services/updater_factory.h"
 
 #include "rafko_mainframe/services/rafko_context.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_mainframe {
 
@@ -46,28 +47,33 @@ public:
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
+    RFASSERT_LOG("Setting objective in CPU Context");
     objective.reset();
     objective = objective_;
   }
 
   void set_weight_updater(rafko_gym::Weight_updaters updater){
+    RFASSERT_LOG("Setting weight updater in CPU context to {}", rafko_gym::Weight_updaters_Name(updater));
     weight_updater.reset();
     weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, updater, settings);
   }
 
   void set_network_weight(std::uint32_t weight_index, double weight_value){
+    RFASSERT_LOG("Setting weight[{}] to {}(CPU Context)", weight_index, weight_value);
     assert( static_cast<std::int32_t>(weight_index) < network.weight_table_size() );
     network.set_weight_table(weight_index, weight_value);
     weight_updater->update_solution_with_weights();
   };
 
   void set_network_weights(const std::vector<double>& weights){
+    RFASSERT_LOGV(weights, "Setting weights(CPU Context) to:");
     assert( static_cast<std::int32_t>(weights.size()) == network.weight_table_size() );
     *network.mutable_weight_table() = {weights.begin(), weights.end()};
     weight_updater->update_solution_with_weights();
   };
 
   void apply_weight_update(const std::vector<double>& weight_delta){
+    RFASSERT_LOGV(weight_delta, "Applying weight(CPU context) update! Delta:");
     assert( static_cast<std::int32_t>(weight_delta.size()) == network.weight_table_size() );
     if(weight_updater->is_finished())
       weight_updater->start();
@@ -76,6 +82,7 @@ public:
   };
 
   double full_evaluation(){
+    RFASSERT_SCOPE(CPU_FULL_EVALUATION);
     return evaluate(
       0u, environment->get_number_of_sequences(),
       0u, environment->get_sequence_size()
@@ -83,6 +90,7 @@ public:
   }
 
   double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u){
+    RFASSERT_SCOPE(CPU_STOCHASTIC_EVALUATION);
     if(to_seed)srand(seed_value);
     std::uint32_t sequence_start_index = (rand()%(environment->get_number_of_sequences() - used_minibatch_size + 1));
     std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
@@ -98,6 +106,7 @@ public:
     const std::vector<double>& input,
     bool reset_neuron_data = false, std::uint32_t thread_index = 0
   ){
+    RFASSERT_SCOPE(CPU_STANDALONE_SOLVE);
     return agent->solve(input, reset_neuron_data, thread_index);
   }
 

@@ -16,7 +16,6 @@
  */
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 
-
 namespace rafko_gym{
 
 void RafkoDatasetWrapper::fill(const rafko_gym::DataSet& samples){

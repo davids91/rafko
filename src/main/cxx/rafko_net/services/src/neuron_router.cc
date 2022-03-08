@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <thread>
 
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 #include "rafko_net/models/neuron_info.h"
 
 #include "rafko_net/services/synapse_iterator.h"
@@ -223,9 +224,9 @@ void NeuronRouter::step(std::vector<std::uint32_t>& visiting, std::uint32_t visi
 }
 
 std::vector<std::reference_wrapper<const FeatureGroup>> NeuronRouter::confirm_first_subset_element_processed(std::uint32_t neuron_index){
-  assert(!collection_running);
-  assert(0 < net_subset.size());
-  assert(neuron_index == net_subset.front());
+  RFASSERT(!collection_running);
+  RFASSERT(0 < net_subset.size());
+  RFASSERT(neuron_index == net_subset.front());
   std::vector<std::uint32_t> solved_features; /* of index values pointing to tracked_features */
   std::vector<std::reference_wrapper<const FeatureGroup>> retval;
 
@@ -343,12 +344,12 @@ void NeuronRouter::omit_from_subset(std::uint32_t neuron_index, std::deque<std::
 }
 
 std::uint32_t NeuronRouter::neuron_state_reserved_value(std::uint32_t neuron_index) const{
-  assert(neuron_index < neuron_number_of_inputs.size());
+  RFASSERT(neuron_index < neuron_number_of_inputs.size());
   return neuron_number_of_inputs[neuron_index] + 1u;
 }
 
 std::uint32_t NeuronRouter::neuron_state_processed_value(std::uint32_t neuron_index) const{
-  assert(neuron_index < neuron_number_of_inputs.size());
+  RFASSERT(neuron_index < neuron_number_of_inputs.size());
   return neuron_number_of_inputs[neuron_index] + 2u;
 }
 
@@ -373,7 +374,7 @@ bool NeuronRouter::is_neuron_subset_candidate(std::uint32_t neuron_index, std::u
 }
 
 bool NeuronRouter::are_neuron_feature_groups_finished_for(std::uint32_t neuron_index) const{
-  assert(neuron_index < features_assigned_to_neurons.size());
+  RFASSERT(neuron_index < features_assigned_to_neurons.size());
   for(std::uint32_t feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
     const FeatureGroupCache& feature = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
     if(

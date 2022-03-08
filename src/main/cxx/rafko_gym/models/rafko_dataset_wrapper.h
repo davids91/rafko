@@ -25,6 +25,7 @@
 
 #include "rafko_protocol/training.pb.h"
 #include "rafko_gym/models/rafko_environment.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_gym{
 
@@ -65,12 +66,12 @@ public:
   , label_samples(samples_.labels_size() / samples_.feature_size())
   , prefill_sequences( static_cast<std::uint32_t>((input_samples.size() - label_samples.size())) / (label_samples.size() / sequence_size) )
   {
-    assert(0 == (label_samples.size()%sequence_size));
-    assert(0 < samples_.input_size());
-    assert(0 < samples_.feature_size());
-    assert(0 < samples_.sequence_size());
-    assert(0 < samples_.inputs_size());
-    assert(0 < samples_.labels_size());
+    RFASSERT(0 == (label_samples.size()%sequence_size));
+    RFASSERT(0 < samples_.input_size());
+    RFASSERT(0 < samples_.feature_size());
+    RFASSERT(0 < samples_.sequence_size());
+    RFASSERT(0 < samples_.inputs_size());
+    RFASSERT(0 < samples_.labels_size());
     fill(samples_);
   }
 
@@ -80,13 +81,13 @@ public:
   , label_samples(std::move(label_samples_))
   , prefill_sequences(static_cast<std::uint32_t>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
   {
-    assert(0 == (label_samples.size()%sequence_size));
-    assert(0 < input_samples.size());
-    assert(input_samples.size() == label_samples.size());
+    RFASSERT(0 == (label_samples.size()%sequence_size));
+    RFASSERT(0 < input_samples.size());
+    RFASSERT(input_samples.size() == label_samples.size());
   }
 
   const std::vector<double>& get_input_sample(std::uint32_t raw_input_index) const{
-    assert(input_samples.size() > raw_input_index);
+    RFASSERT(input_samples.size() > raw_input_index);
     return input_samples[raw_input_index];
   }
 
@@ -95,7 +96,7 @@ public:
   }
 
   const std::vector<double>& get_label_sample(std::uint32_t raw_label_index) const{
-    assert(label_samples.size() > raw_label_index);
+    RFASSERT(label_samples.size() > raw_label_index);
     return label_samples[raw_label_index];
   }
 

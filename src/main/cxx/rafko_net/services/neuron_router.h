@@ -26,7 +26,6 @@
 #include <atomic>
 #include <functional>
 #include <stdexcept>
-#include <assert.h>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/services/feature_group_cache.h"

@@ -33,6 +33,7 @@
 namespace rafko_gym_test {
 
 TEST_CASE("Testing if GPU Context is able to build a valid openCL environment", "[context][GPU]"){
+  srand(582801389);
   rafko_mainframe::RafkoSettings settings;
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
   std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
@@ -300,6 +301,7 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 }
 
 TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[context][GPU][evaluate][multi-label]"){
+  srand(318344848);
   google::protobuf::Arena arena;
   std::uint32_t sequence_size = rand()%3 + 1;
   std::uint32_t number_of_sequences = rand()%10 + 2;

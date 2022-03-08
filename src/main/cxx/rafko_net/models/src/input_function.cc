@@ -19,6 +19,7 @@
 
 #include <stdexcept>
 
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_utilities/services/rafko_string_utils.h"
 #endif/*(RAFKO_USES_OPENCL)*/
@@ -26,7 +27,7 @@
 namespace rafko_net {
 
 Input_functions InputFunction::next(std::set<Input_functions> range){
-  assert( 0u < range.size() );
+  RFASSERT( 0u < range.size() );
   if(1u == range.size()) return *range.begin();
 
   Input_functions candidate = static_cast<Input_functions>(rand()%Input_functions_ARRAYSIZE);
