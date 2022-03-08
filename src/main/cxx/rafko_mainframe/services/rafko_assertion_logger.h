@@ -34,7 +34,7 @@
 namespace rafko_mainframe{
 
 #if(RAFKO_USES_ASSERTLOGS)
-#define RFASSERT(condition) rafko_mainframe::RafkoAssertionLogger::rafko_assert(condition)
+#define RFASSERT(condition) rafko_mainframe::RafkoAssertionLogger::rafko_assert(condition,__LINE__)
 #define RFASSERT_SCOPE(name) auto rafko_scope = rafko_mainframe::RafkoAssertionLogger::set_scope(#name);
 #define RFASSERT_LOG(...) rafko_mainframe::RafkoAssertionLogger::rafko_log(__VA_ARGS__);
 #define RFASSERT_LOGV(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector(vec, __VA_ARGS__);
@@ -71,7 +71,7 @@ public:
     return current_scope_name;
   }
 
-  static void rafko_assert(bool condition);
+  static void rafko_assert(bool condition, std::uint32_t line_number);
 private:
   static std::weak_ptr<spdlog::logger> current_scope;
   static std::string current_scope_name;

@@ -75,10 +75,10 @@ void RafkoGPUContext::upload_weight_to_device(std::uint32_t weight_index){
     RFASSERT_LOG("Weight index in partial[{}]: {}", partial_index, weight_index_in_partial);
 
     /* Update weight at weight_table_offset + std::get<1>(index_pair) */
-    std::uint32_t current_offset = (sizeof(double) * (agent->get_input_shapes()[0].get_number_of_elements() + weight_table_offset + weight_index_in_partial) );
+    std::uint32_t current_offset = (sizeof(double) * (agent->get_input_shapes()[0][0] + weight_table_offset + weight_index_in_partial) );
     RFASSERT_LOG(
-      "buffer byte offset: {} / {}", current_offset,
-      (agent->get_input_shapes()[0].get_byte_size<double>() + agent->get_input_shapes()[1].get_byte_size<double>())
+      "buffer byte offset: {} / {}",
+      current_offset, (agent->get_input_shapes()[0].get_byte_size<double>())
     );
     cl_int return_value = opencl_queue.enqueueWriteBuffer(
       solution_phase.get_input_buffer(), CL_TRUE/* blocking */,
@@ -212,7 +212,7 @@ std::vector<cl::Event> RafkoGPUContext::upload_agent_inputs(
   std::uint32_t raw_input_num = (sequences_to_upload * elements_in_a_sequence);
   std::uint32_t input_buffer_byte_offset = (
     (
-      (device_weight_table_size + agent->get_input_shapes()[0].get_number_of_elements())
+      (device_weight_table_size + agent->get_input_shapes()[0][0])
       + (buffer_sequence_start_index * elements_in_a_sequence * environment->get_input_size())
     ) * sizeof(double)
   );

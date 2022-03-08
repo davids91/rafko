@@ -25,6 +25,7 @@
 
 namespace rafko_mainframe_test {
 
+#if(RAFKO_USES_ASSERTLOGS)
 TEST_CASE("Testing Logged Asserion System", "[assert]" ) {
   std::uint16_t small_value = 5;
   RFASSERT( 4 <= 5 );
@@ -53,5 +54,6 @@ TEST_CASE("Testing Logged Asserion System", "[assert]" ) {
   }
   REQUIRE( !file_exists ); /* No failed assertions were present so the logfile should not exist */
 }
+#endif/*(RAFKO_USES_ASSERTLOGS)*/
 
 } /* namespace rafko_mainframe_test */

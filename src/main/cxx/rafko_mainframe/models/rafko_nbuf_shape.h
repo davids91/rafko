@@ -72,7 +72,8 @@ public:
   }
 
   /**
-   * @brief      Provides the bytesize required to store the shape
+   * @brief      Provides the shape of the Nbuffer in `cl_int` datatype.
+   *             The bytesize of std::size_t and cl_int might differ! 
    *
    * @return     Allocated bytes representing the shape of the RafkoNDArray object
    */

@@ -53,6 +53,7 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
 
   if(auto scope = current_scope.lock()){
     scope->info("Scope snatched by " + scope_name + "..");
+    spdlog::drop(current_scope_name);
   }
 
   {
@@ -64,11 +65,11 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
   return logger;
 }
 
-void RafkoAssertionLogger::rafko_assert(bool condition){
+void RafkoAssertionLogger::rafko_assert(bool condition, std::uint32_t line_number){
   if(!condition){
     keep_log = true;
     if(auto scope = current_scope.lock()){ /* no need to use mutex here, since the underlying logger is thread-safe */
-      scope->error("Assertion failure!");
+      scope->error("Assertion failure on line {}!", line_number);
       scope->flush();
     }
     spdlog::shutdown();

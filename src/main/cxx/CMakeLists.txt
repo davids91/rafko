@@ -31,8 +31,8 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   )
 
   option(ASSERTLOGS
-    "Enables verbose logging for development assertions; Warning: Significantly hikes runtime, not suggested to turn on with full tests"
-    OFF
+    "Enables verbose logging for development assertions; Warning: May hike runtime"
+    ON
   )
 
   option(TEST_CONVERGENCE
