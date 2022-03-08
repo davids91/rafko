@@ -22,11 +22,11 @@
 
 #include <functional>
 #include <stdexcept>
-#include <assert.h>
 
 #include <google/protobuf/repeated_field.h>
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_net{
 
@@ -197,7 +197,7 @@ public:
    * @return     The Synapse index under the @index-th step into the iteration
    */
   int operator[](int index) const{
-    assert(0u < size());
+    RFASSERT(0u < size());
     std::int32_t result_index;
     std::uint32_t previous_last_reached_index = 0;
     std::int32_t iteration_helper = 0;
@@ -223,7 +223,7 @@ public:
         return false;
       }
     },synapse_start);
-    assert(iteration_helper == index);
+    RFASSERT(iteration_helper == index);
     --last_reached_synapse;
     last_reached_index = previous_last_reached_index;
     return result_index;
@@ -231,7 +231,7 @@ public:
 
   template<typename InputSynapseInterval>
   int reach_past_loops(int index){
-    assert(0u < size());
+    RFASSERT(0u < size());
     std::int32_t result_reach;
     std::uint32_t previous_last_reached_index = 0;
     std::int32_t iteration_helper = 0;
@@ -259,7 +259,7 @@ public:
         return false;
       }
     },synapse_start);
-    assert(iteration_helper == index);
+    RFASSERT(iteration_helper == index);
     --last_reached_synapse;
     last_reached_index = previous_last_reached_index;
     return result_reach;

@@ -28,6 +28,7 @@
 #include <functional>
 
 #include "rafko_utilities/models/rafko_gpu_kernel_library.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/models/spike_function.h"
@@ -138,7 +139,7 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
   solution->set_neuron_number(net.neuron_array_size());
   solution->set_network_memory_length(reach_back_max + 1u); /* Current loop is "0" reachback, so length should be at least 1 */
   solution->set_network_input_size(reach_index_max + 1u);
-  assert( net.input_data_size() == reach_index_max + 1u);
+  RFASSERT( net.input_data_size() == reach_index_max + 1u);
 
   return solution;
 }
@@ -265,7 +266,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
               input_index = partial_input_synapses[input_index];
               if(SynapseIterator<>::is_index_input(input_index)){
                 input_index = SynapseIterator<>::input_index_from_synapse_index(input_index);
-                assert( 0 == input_past_reach );
+                RFASSERT( 0 == input_past_reach );
                 inner_neuron_operation += input_function_lambda("neuron_partial_result", std::string("(")
                 /* input */+ " inputs[input_start + " + std::to_string(input_index) + "]"
                 /* weight */+ " * inputs[" + std::to_string(weight_table_offset + weight_index) + "]"

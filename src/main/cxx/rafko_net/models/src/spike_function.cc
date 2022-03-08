@@ -24,6 +24,7 @@
 
 #include "rafko_utilities/services/rafko_string_utils.h"
 #endif/*(RAFKO_USES_OPENCL)*/
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_net {
 
@@ -38,7 +39,7 @@ double SpikeFunction::get_value(Spike_functions function, double parameter, doub
 }
 
 Spike_functions SpikeFunction::next(std::set<Spike_functions> range){
-  assert( 0u < range.size() );
+  RFASSERT( 0u < range.size() );
   if(1u == range.size()) return *range.begin();
 
   Spike_functions candidate = static_cast<Spike_functions>(rand()%Spike_functions_ARRAYSIZE);

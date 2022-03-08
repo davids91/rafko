@@ -65,11 +65,11 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
   return logger;
 }
 
-void RafkoAssertionLogger::rafko_assert(bool condition, std::uint32_t line_number){
+void RafkoAssertionLogger::rafko_assert(bool condition, std::string file_name, std::uint32_t line_number){
   if(!condition){
     keep_log = true;
     if(auto scope = current_scope.lock()){ /* no need to use mutex here, since the underlying logger is thread-safe */
-      scope->error("Assertion failure on line {}!", line_number);
+      scope->error("Assertion failure in file {}; line {}!", file_name, line_number);
       scope->flush();
     }
     spdlog::shutdown();
