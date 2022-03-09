@@ -35,10 +35,10 @@ namespace rafko_mainframe{
 
 #if(RAFKO_USES_ASSERTLOGS)
 #define RFASSERT(condition) rafko_mainframe::RafkoAssertionLogger::rafko_assert(condition,__FILE__,__LINE__)
-#define RFASSERT_SCOPE(name) auto rafko_scope = rafko_mainframe::RafkoAssertionLogger::set_scope(#name);
-#define RFASSERT_LOG(...) rafko_mainframe::RafkoAssertionLogger::rafko_log(__VA_ARGS__);
-#define RFASSERT_LOGV(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector(vec, __VA_ARGS__);
-#define RFASSERT_LOGV2(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector2(vec, __VA_ARGS__);
+#define RFASSERT_SCOPE(name) std::shared_ptr<spdlog::logger> rafko_scope = rafko_mainframe::RafkoAssertionLogger::set_scope(#name)
+#define RFASSERT_LOG(...) rafko_mainframe::RafkoAssertionLogger::rafko_log(__VA_ARGS__)
+#define RFASSERT_LOGV(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector(vec, __VA_ARGS__)
+#define RFASSERT_LOGV2(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector2(vec, __VA_ARGS__)
 
 /**
  * @brief      Logger utility to create help identify problems in debug configurations, while

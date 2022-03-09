@@ -27,6 +27,8 @@
 #include "rafko_net/services/rafko_network_feature.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/services/rafko_net_builder.h"
+#include "rafko_net/services/solution_builder.h"
+#include "rafko_net/services/solution_solver.h"
 #include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"

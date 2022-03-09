@@ -81,36 +81,10 @@ public:
 
   class Builder{
   public:
-    Builder(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings())
-    : settings(settings_)
-    , network(neural_network_)
-    {
-      cl::Platform::get(&platforms);
-      assert( 0 < platforms.size() );
-    }
-
-    Builder& select_platform(std::uint32_t platform_index = 0u){
-      assert( platform_index < platforms.size() );
-      selected_platform = platform_index;
-      return *this;
-    }
-
-    Builder& select_device(cl_device_type type = CL_DEVICE_TYPE_GPU, std::uint32_t device_index = 0u){
-      platforms[selected_platform].getDevices(type, &devices);
-      assert( device_index < devices.size() );
-      selected_device = device_index;
-      return *this;
-    }
-
-    std::unique_ptr<RafkoGPUContext> build(){
-      assert( 0 < platforms.size() );
-      assert( 0 < devices.size() );
-      cl::Context context({devices[selected_device]});
-      return std::unique_ptr<RafkoGPUContext>( new RafkoGPUContext(
-        std::move(context), std::move(devices[selected_device]), std::move(settings), network
-      ) );
-    }
-
+    Builder(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
+    Builder& select_platform(std::uint32_t platform_index = 0u);
+    Builder& select_device(cl_device_type type = CL_DEVICE_TYPE_GPU, std::uint32_t device_index = 0u);
+    std::unique_ptr<RafkoGPUContext> build();
   private:
     rafko_mainframe::RafkoSettings settings;
     rafko_net::RafkoNet& network;
@@ -118,6 +92,7 @@ public:
     std::vector<cl::Device> devices;
     std::uint32_t selected_platform = 0u;
     std::uint32_t selected_device = 0u;
+    RFASSERT_SCOPE(RAFKO_GPU_BUILD);
   };
 private:
 

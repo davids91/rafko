@@ -140,6 +140,7 @@ const std::vector<std::pair<std::uint32_t,std::uint32_t>>& RafkoWeightUpdater::g
   return weights_in_partials.find(network_weight_index)->second;
 }
 
+#if(RAFKO_USES_OPENCL)
 std::uint32_t RafkoWeightUpdater::get_device_weight_table_start_for(
   std::uint32_t partial_index, const rafko_net::Solution& solution,
   std::unordered_map<std::uint32_t, std::uint32_t>& weight_starts_in_partials
@@ -158,6 +159,7 @@ std::uint32_t RafkoWeightUpdater::get_device_weight_table_start_for(
   }
   return (weight_start - solution.partial_solutions(partial_index).weight_table_size());
 }
+#endif/*(RAFKO_USES_OPENCL)*/
 
 std::uint32_t RafkoWeightUpdater::get_weight_synapse_start_index_in_partial(
   std::uint32_t neuron_index, const rafko_net::PartialSolution& partial,
