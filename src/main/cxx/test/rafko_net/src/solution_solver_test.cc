@@ -315,7 +315,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
     .output_neuron_number(network_layout_sizes.back())
     .expected_input_range((5.0));
 
-  rafko_net::RafkoNet* net(builder->dense_layers(
+  rafko_net::RafkoNet* network(builder->dense_layers(
     network_layout_sizes,{
       {rafko_net::transfer_function_identity},
       {rafko_net::transfer_function_selu,rafko_net::transfer_function_relu},
@@ -326,13 +326,13 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   /* Generate a solution */
   std::unique_ptr<rafko_net::Solution> solution = nullptr;
   REQUIRE_NOTHROW(
-     solution = rafko_net::SolutionBuilder(settings).build(*net)
+     solution = rafko_net::SolutionBuilder(settings).build(*network)
   );
   settings.set_device_max_megabytes( /* Introduce segmentation into the solution to test roboustness */
     (solution->SpaceUsedLong() /* Bytes */ / (1024.0) /* KB */ / (1024.0) /* MB */)/(4.0)
   );
   REQUIRE_NOTHROW(
-     solution = rafko_net::SolutionBuilder(settings).build(*net)
+     solution = rafko_net::SolutionBuilder(settings).build(*network)
   );
 
   /* Solve the generated solution */
@@ -365,18 +365,18 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
       /* if the Neuron is solvable --> all of its children are etiher inputs or solved already */
       /* solve them, store its data and update the meta */
       if(false == solved[neuron_iterator]){
-        rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> neuron_input_synapses(net->neuron_array(neuron_iterator).input_indices());
+        rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> neuron_input_synapses(network->neuron_array(neuron_iterator).input_indices());
         overall_inputs_in_neuron = neuron_input_synapses.size();
         solved_inputs_in_neuron = 0;
         neuron_input_iterator = 0;
         neuron_data = 0;
         first_weight_in_synapse = true;
         spike_function_weight = (0.0);
-        rafko_net::SynapseIterator<>::iterate(net->neuron_array(neuron_iterator).input_weights(),
+        rafko_net::SynapseIterator<>::iterate(network->neuron_array(neuron_iterator).input_weights(),
         [&](std::int32_t weight_index){
           if(true == first_weight_in_synapse){
             first_weight_in_synapse = false;
-            spike_function_weight = net->weight_table(weight_index);
+            spike_function_weight = network->weight_table(weight_index);
           }else{
             if(neuron_input_iterator < neuron_input_synapses.size()){
               input_index = neuron_input_synapses[neuron_input_iterator];
@@ -388,23 +388,23 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
               }
               if(rafko_net::SynapseIterator<>::is_index_input(input_index)){
                 input_index = rafko_net::SynapseIterator<>::input_index_from_synapse_index(input_index);
-                neuron_data += net_input[input_index] * net->weight_table(weight_index);
+                neuron_data += net_input[input_index] * network->weight_table(weight_index);
               }else{
-                neuron_data += manual_neuron_values[input_index] * net->weight_table(weight_index);
+                neuron_data += manual_neuron_values[input_index] * network->weight_table(weight_index);
               }
               ++neuron_input_iterator;
             }else{ /* After the inputs, every weight is the bias */
-              neuron_data += net->weight_table(weight_index);
+              neuron_data += network->weight_table(weight_index);
             }
           }
         });
         if(solved_inputs_in_neuron == overall_inputs_in_neuron){
           neuron_data = transfer_function.get_value(
-            net->neuron_array(neuron_iterator).transfer_function(),
+            network->neuron_array(neuron_iterator).transfer_function(),
             neuron_data
           );
           manual_neuron_values[neuron_iterator] = rafko_net::SpikeFunction::get_value(
-            net->neuron_array(neuron_iterator).spike_function(),
+            network->neuron_array(neuron_iterator).spike_function(),
             spike_function_weight, neuron_data, manual_neuron_values[neuron_iterator]
           );
           solved[neuron_iterator] = true;
@@ -424,7 +424,9 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
       == network_output[neuron_index]
     );
   }
-
+  if(nullptr == arena){
+    delete network;
+  }
 }
 
 TEST_CASE("Solution Solver test with Generated fully connected network", "[solve][full]"){
@@ -440,10 +442,11 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
     (10.0),(20.0),(30.0),(40.0),(50.0)
   };
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings();
-  rafko_net::RafkoNet* net = rafko_net::RafkoNetBuilder(settings)
+  std::unique_ptr<rafko_net::RafkoNet> network = std::unique_ptr<rafko_net::RafkoNet>(rafko_net::RafkoNetBuilder(settings)
     .input_size(5).expected_input_range((5.0))
-    .dense_layers(net_structure);
-  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*net);
+    .dense_layers(net_structure)
+  );
+  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
   std::unique_ptr<rafko_net::SolutionSolver> solver(rafko_net::SolutionSolver::Builder(*solution, settings).build());
 
   /* solve in a single thread */
@@ -478,11 +481,12 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
  */
 TEST_CASE("Solution Solver memory test", "[solve][memory]"){
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings();
-  rafko_net::RafkoNet* net = rafko_net::RafkoNetBuilder(settings)
+  std::unique_ptr<rafko_net::RafkoNet> net(rafko_net::RafkoNetBuilder(settings)
     .input_size(1).expected_input_range((5.0))
     .set_recurrence_to_self()
     .allowed_transfer_functions_by_layer({{rafko_net::transfer_function_identity}})
-    .dense_layers({1});
+    .dense_layers({1})
+  );
 
   for(std::int32_t weight_index = 0; weight_index < net->weight_table_size(); ++weight_index){
     net->set_weight_table(weight_index, (1.0));

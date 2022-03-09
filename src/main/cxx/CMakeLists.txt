@@ -63,7 +63,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     add_compile_definitions(RAFKO_USES_ASSERTLOGS=0)
   endif()
   if(SANITIZE)
-    set(ENV{ASAN_OPTIONS} detect_leaks=0) #All allocated memory on the Arena is detected as leaks, so leak check needs to be disabled
     add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
     add_link_options(-fsanitize=address -fno-omit-frame-pointer)
   endif()

@@ -106,7 +106,6 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   context.set_objective(std::make_unique<rafko_gym::RafkoCost>(settings, cost));
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
-  std::cout << "Stichastic evaluation:" << std::endl;
   double environment_error = context.stochastic_evaluation(true, seed);
 
   std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
