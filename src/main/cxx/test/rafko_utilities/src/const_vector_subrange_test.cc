@@ -43,7 +43,7 @@ TEST_CASE("Vector subrange", "[data-handling][sub-range]"){
 
   for(std::uint32_t variant = 0; variant < 10u; variant++){
     std::uint16_t start = rand()%big_vec.size();
-    std::uint16_t num = rand()%(big_vec.size() - start);
+    std::uint16_t num = rand()%(big_vec.size() - start) + 1;
 
     rafko_utilities::ConstVectorSubrange<> range = rafko_utilities::ConstVectorSubrange<>( big_vec.begin() + start, num );
 
