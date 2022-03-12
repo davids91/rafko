@@ -86,13 +86,13 @@ public:
   /**
    * @brief      Applies the colleted gradient fragment to the configured network
    */
-  void apply_fragment();
+  void apply_weight_vector_delta();
 
   /**
    * @brief      Discards the gradient fragment collected in the past
    */
   void discard_fragment(){
-    gradient_fragment = GradientFragment();
+    gradient_fragment = NetworkWeightVectorDelta();
   }
 
   /**
@@ -108,7 +108,7 @@ public:
    *
    * @return     The fragment.
    */
-  const GradientFragment get_fragment(){
+  const NetworkWeightVectorDelta get_fragment(){
     return gradient_fragment;
   }
 
@@ -117,7 +117,7 @@ public:
    *
    * @return     Constant reference to the current weight gradients array
    */
-  constexpr const GradientFragment& get_weight_gradient() const{
+  constexpr const NetworkWeightVectorDelta& get_weight_gradient() const{
     return gradient_fragment;
   }
 
@@ -159,7 +159,7 @@ public:
 
 private:
   rafko_mainframe::RafkoContext& context;
-  GradientFragment gradient_fragment;
+  NetworkWeightVectorDelta gradient_fragment;
   std::uint32_t stochastic_evaluation_loops;
 
   std::uint32_t iteration = 1u;

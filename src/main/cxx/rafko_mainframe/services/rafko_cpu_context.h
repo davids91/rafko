@@ -60,21 +60,21 @@ public:
 
   void set_network_weight(std::uint32_t weight_index, double weight_value){
     RFASSERT_LOG("Setting weight[{}] to {}(CPU Context)", weight_index, weight_value);
-    assert( static_cast<std::int32_t>(weight_index) < network.weight_table_size() );
+    RFASSERT( static_cast<std::int32_t>(weight_index) < network.weight_table_size() );
     network.set_weight_table(weight_index, weight_value);
     weight_updater->update_solution_with_weights();
   };
 
   void set_network_weights(const std::vector<double>& weights){
     RFASSERT_LOGV(weights, "Setting weights(CPU Context) to:");
-    assert( static_cast<std::int32_t>(weights.size()) == network.weight_table_size() );
+    RFASSERT( static_cast<std::int32_t>(weights.size()) == network.weight_table_size() );
     *network.mutable_weight_table() = {weights.begin(), weights.end()};
     weight_updater->update_solution_with_weights();
   };
 
   void apply_weight_update(const std::vector<double>& weight_delta){
     RFASSERT_LOGV(weight_delta, "Applying weight(CPU context) update! Delta:");
-    assert( static_cast<std::int32_t>(weight_delta.size()) == network.weight_table_size() );
+    RFASSERT( static_cast<std::int32_t>(weight_delta.size()) == network.weight_table_size() );
     if(weight_updater->is_finished())
       weight_updater->start();
     weight_updater->iterate(weight_delta);

@@ -211,7 +211,7 @@ void RafkoNetApproximizer::add_to_fragment(std::uint32_t weight_index, double gr
   }
 }
 
-void RafkoNetApproximizer::apply_fragment(){
+void RafkoNetApproximizer::apply_weight_vector_delta(){
   std::uint32_t fragment_value_index = 0;
   std::vector<double>& tmp_weight_table = tmp_data_pool.reserve_buffer(context.expose_network().weight_table_size());
   std::fill(tmp_weight_table.begin(),tmp_weight_table.end(), (0.0));
@@ -231,7 +231,7 @@ void RafkoNetApproximizer::apply_fragment(){
 
   context.apply_weight_update(tmp_weight_table);
   tmp_data_pool.release_buffer(tmp_weight_table);
-  gradient_fragment = GradientFragment();
+  gradient_fragment = NetworkWeightVectorDelta();
 }
 
 } /* namespace rafko_gym */

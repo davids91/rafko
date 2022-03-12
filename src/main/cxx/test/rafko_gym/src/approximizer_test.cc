@@ -80,7 +80,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
   gradient_value_index = approximizer.get_fragment().weight_synapses(0).starts();
   REQUIRE( static_cast<std::int32_t>(gradient_value_index) < nets[0]->weight_table_size() );
 
-  approximizer.apply_fragment(); /* Add the negative gradient */
+  approximizer.apply_weight_vector_delta(); /* Add the negative gradient */
   REQUIRE(
     (weight_old_value - (weight_gradient * settings.get_learning_rate()))
     == Catch::Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
@@ -105,7 +105,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
       nets[0]->weight_table(weight_index) == Catch::Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
     );
   }
-  approximizer.apply_fragment();
+  approximizer.apply_weight_vector_delta();
   for(weight_index = 0;static_cast<std::int32_t>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
     CHECK(
       Catch::Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
@@ -237,7 +237,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     }
     avg_gradient /= static_cast<double>(approximizer.get_weight_gradient().values_size());
 
-    approximizer.apply_fragment();
+    approximizer.apply_weight_vector_delta();
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
     average_duration += current_duration;
     ++number_of_steps;
