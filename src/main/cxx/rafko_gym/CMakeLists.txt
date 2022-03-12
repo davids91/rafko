@@ -17,6 +17,8 @@ set(GYM_HEADER_MODELS
   models/rafko_objective.h
   models/rafko_dataset_wrapper.h
   models/rafko_cost.h
+  models/rafko_network_delta_chain_link.h
+  models/rafko_network_proxy.h
 )
 set(GYM_HEADER_SERVICES
   services/cost_function.h
@@ -31,6 +33,7 @@ target_sources(rafko_gym
   PRIVATE
   models/src/rafko_cost.cc
   models/src/rafko_dataset_wrapper.cc
+  models/src/rafko_network_delta_chain_link.cc
   services/src/cost_function.cc
   services/src/rafko_net_approximizer.cc
   services/src/rafko_weight_updater.cc
