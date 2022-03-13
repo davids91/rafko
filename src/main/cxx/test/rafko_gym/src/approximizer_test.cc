@@ -181,6 +181,13 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   #endif/*(RAFKO_USES_OPENCL)*/
 
   rafko_gym::RafkoNetApproximizer approximizer(*context);
+  approximizer.set_weight_filter({
+    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 0 */
+    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 1 */
+    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 2 */
+    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 3 */
+    1.0, 1.0, 1.0, 1.0, 1.0  /* Neuron 4 */
+  });
 
   context->set_environment(std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::vector<std::vector<double>>(std::get<0>(tmp1)),

@@ -43,6 +43,9 @@ public:
    */
   RafkoNetApproximizer(rafko_mainframe::RafkoContext& context_, std::uint32_t stochastic_evaluation_loops_ = 1u)
   : context(context_)
+  , weight_filter(context.expose_network().weight_table_size(), 1.0)
+  , used_weight_filter(weight_filter)
+  , weight_exclude_chance_filter(context.expose_network().weight_table_size(), 0.0)
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
   , tmp_data_pool(2u, context.expose_network().weight_table_size())
   { }
@@ -121,6 +124,28 @@ public:
     return gradient_fragment;
   }
 
+  void set_weight_filter(std::vector<double>&& filter){
+    RFASSERT_LOG("Weight filter size: {} vs. {}", weight_filter.size(), filter.size());
+    RFASSERT( filter.size() == weight_filter.size());
+    weight_filter = filter;
+  }
+
+  void modify_weight_filter(std::uint32_t weight_index, double filter){
+    RFASSERT( weight_index < weight_filter.size());
+    weight_filter[weight_index] = filter;
+  }
+
+  void set_weight_exclude_chance_filter(std::vector<double>&& filter){
+    RFASSERT( filter.size() == weight_exclude_chance_filter.size());
+    weight_exclude_chance_filter = filter;
+  }
+
+  void modify_weight_exclude_chance_filter(std::uint32_t weight_index, double filter){
+    RFASSERT( weight_index < weight_exclude_chance_filter.size());
+    weight_exclude_chance_filter[weight_index] = filter;
+  }
+
+
   /**
    * @brief      Evaluates the network in the given environment fully
    */
@@ -159,6 +184,9 @@ public:
 
 private:
   rafko_mainframe::RafkoContext& context;
+  std::vector<double> weight_filter;
+  std::vector<double> used_weight_filter;
+  std::vector<double> weight_exclude_chance_filter;
   NetworkWeightVectorDelta gradient_fragment;
   std::uint32_t stochastic_evaluation_loops;
 

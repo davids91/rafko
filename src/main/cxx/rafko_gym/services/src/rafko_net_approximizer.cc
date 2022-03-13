@@ -27,18 +27,28 @@ void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
   double gradient_overview = get_gradient_for_all_weights() * context.expose_settings().get_learning_rate(iteration);
   double greatest_weight_value = (0.0);
   std::vector<double>& tmp_weight_gradients = tmp_data_pool.reserve_buffer(context.expose_network().weight_table_size());
+  used_weight_filter = weight_filter;
   for(std::uint32_t weight_index = 0; weight_index < tmp_weight_gradients.size(); ++weight_index){
-    tmp_weight_gradients[weight_index] = get_single_weight_gradient(weight_index);
-    if(greatest_weight_value < std::abs(tmp_weight_gradients[weight_index]))
-      greatest_weight_value = std::abs(tmp_weight_gradients[weight_index]);
+    if( weight_exclude_chance_filter[weight_index] >= (static_cast<double>(rand()%100 + 1)/100.0) ){
+      used_weight_filter[weight_index] = 0.0;
+    }
+    if(0.0 != used_weight_filter[weight_index]){
+      tmp_weight_gradients[weight_index] = get_single_weight_gradient(weight_index) * used_weight_filter[weight_index];
+      if(greatest_weight_value < std::abs(tmp_weight_gradients[weight_index]))
+        greatest_weight_value = std::abs(tmp_weight_gradients[weight_index]);
+    }else{
+      tmp_weight_gradients[weight_index] = 0.0;
+    }
   }
   for(std::uint32_t weight_index = 0; weight_index < tmp_weight_gradients.size(); ++weight_index){
-    tmp_weight_gradients[weight_index] = ( /* Gradients normalized by the biggest value */
-      ( tmp_weight_gradients[weight_index] + gradient_overview ) / (greatest_weight_value + std::abs(gradient_overview))
-    ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
-        * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
-        */
-    tmp_weight_gradients[weight_index] *= context.expose_settings().get_learning_rate(iteration);
+    if(0.0 != used_weight_filter[weight_index]){
+      tmp_weight_gradients[weight_index] = ( /* Gradients normalized by the biggest value */
+        ( tmp_weight_gradients[weight_index] + gradient_overview ) / (greatest_weight_value + std::abs(gradient_overview))
+      ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
+          * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
+          */
+      tmp_weight_gradients[weight_index] *= context.expose_settings().get_learning_rate(iteration);
+    }
   }
 
   convert_direction_to_gradient(tmp_weight_gradients,true);
@@ -53,7 +63,11 @@ void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<double>& di
     std::vector<double>& tmp_weight_table = tmp_data_pool.reserve_buffer(context.expose_network().weight_table_size());
 
     for(std::uint32_t weight_index = 0; weight_index < tmp_weight_table.size(); ++weight_index){
-      tmp_weight_table[weight_index] = context.expose_network().weight_table(weight_index) - direction[weight_index];
+      if(0.0 != used_weight_filter[weight_index]){
+        tmp_weight_table[weight_index] = context.expose_network().weight_table(weight_index) - direction[weight_index];
+      }else{
+        tmp_weight_table[weight_index] = context.expose_network().weight_table(weight_index);
+      }
     } /* apply the direction on which network approximation shall be done */
     context.set_network_weights(tmp_weight_table);
 
@@ -81,9 +95,11 @@ void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<double>& di
      */
     std::vector<double>& tmp_weight_gradients = tmp_data_pool.reserve_buffer(context.expose_network().weight_table_size());
     for(std::uint32_t weight_index = 0; weight_index < tmp_weight_table.size(); ++weight_index){
-      tmp_weight_gradients[weight_index] = ( ( error_positive_direction - error_negative_direction ) / (max_error) );
-       if(save_to_fragment)add_to_fragment( weight_index, (tmp_weight_gradients[weight_index] * direction[weight_index]) );
-      tmp_weight_table[weight_index] -= direction[weight_index];
+      if(0.0 != used_weight_filter[weight_index]){
+        tmp_weight_gradients[weight_index] = ( ( error_positive_direction - error_negative_direction ) / (max_error) );
+         if(save_to_fragment)add_to_fragment( weight_index, (tmp_weight_gradients[weight_index] * direction[weight_index]) );
+        tmp_weight_table[weight_index] -= direction[weight_index];
+      }
     }
     context.set_network_weights(tmp_weight_table);
     tmp_data_pool.release_buffer(tmp_weight_gradients);
