@@ -48,6 +48,13 @@ public:
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_);
   void set_weight_updater(rafko_gym::Weight_updaters updater);
+
+  void refresh_solution_weights(){
+    RFASSERT_LOG("Refreshing Solution weights in CPU context..");
+    weight_updater->update_solution_with_weights();
+    upload_weight_table_to_device();
+  }
+
   void set_network_weight(std::uint32_t weight_index, double weight_value);
   void set_network_weights(const std::vector<double>& weights);
   void apply_weight_update(const std::vector<double>& weight_delta);
@@ -72,7 +79,7 @@ public:
     return settings;
   }
 
-  constexpr const rafko_net::RafkoNet& expose_network(){
+  constexpr rafko_net::RafkoNet& expose_network(){
     return network;
   }
   /* --- Methods taken from @RafkoContext --- */
@@ -101,7 +108,6 @@ private:
     rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet& neural_network_
   );
 
-  rafko_mainframe::RafkoSettings settings;
   rafko_net::RafkoNet& network;
   std::unique_ptr<rafko_net::Solution> network_solution;
   std::shared_ptr<rafko_net::SolutionSolver> agent;

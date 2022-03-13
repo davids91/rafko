@@ -20,8 +20,10 @@
 
 #include "rafko_global.h"
 
+#include <memory>
 #include <vector>
 #include <limits>
+#include <mutex>
 
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_mainframe/services/rafko_context.h"
@@ -38,16 +40,21 @@ public:
   /**
    * @brief      Class Constructor
    *
-   * @param      context_                      The service context containing the network to enchance
+   * @param      contexts_                     An array of service contexts to use for training the network
    * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
-  RafkoNetApproximizer(rafko_mainframe::RafkoContext& context_, std::uint32_t stochastic_evaluation_loops_ = 1u)
-  : context(context_)
-  , weight_filter(context.expose_network().weight_table_size(), 1.0)
+  RafkoNetApproximizer(
+    std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> contexts_,
+    rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings(),
+    std::uint32_t stochastic_evaluation_loops_ = 1u
+  ):settings(settings_)
+  , contexts(contexts_)
+  , weight_filter(contexts[0]->expose_network().weight_table_size(), 1.0)
   , used_weight_filter(weight_filter)
-  , weight_exclude_chance_filter(context.expose_network().weight_table_size(), 0.0)
+  , weight_exclude_chance_filter(contexts[0]->expose_network().weight_table_size(), 0.0)
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
-  , tmp_data_pool(2u, context.expose_network().weight_table_size())
+  , execution_threads(std::min(contexts.size(), static_cast<std::size_t>(settings.get_max_processing_threads())))
+  , tmp_data_pool(2u, contexts[0]->expose_network().weight_table_size())
   { }
 
   RafkoNetApproximizer(const RafkoNetApproximizer& other) = delete;/* Copy constructor */
@@ -74,10 +81,11 @@ public:
    * @brief      Collects the approximate gradient of a single weight
    *
    * @param[in]  weight_index  The weight index to approximate for
+   * @param      context       Reference to the context handling the evaluation for the gradients
    *
    * @return     The gradient approximation for the configured dataset
    */
-  double get_single_weight_gradient(std::uint32_t weight_index);
+  double get_single_weight_gradient(std::uint32_t weight_index, rafko_mainframe::RafkoContext& context);
 
   /**
    * @brief      APproximates gradient information for all weights.
@@ -150,7 +158,7 @@ public:
    * @brief      Evaluates the network in the given environment fully
    */
   void full_evaluation(){
-    double fitness = context.full_evaluation();
+    double fitness = contexts[0]->full_evaluation();
     if(min_test_error > fitness){
       min_test_error = fitness;
       min_test_error_was_at_iteration = iteration;
@@ -172,10 +180,10 @@ public:
       (1u < iteration)
       &&((
         (
-          context.expose_settings().get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
-          &&(context.expose_settings().get_learning_rate() >= -min_test_error)
+          settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
+          &&(settings.get_learning_rate() >= -min_test_error)
         )||(
-          context.expose_settings().get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
+          settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
           &&((0.0) ==  -min_test_error)
         )
       ))
@@ -183,13 +191,16 @@ public:
   }
 
 private:
-  rafko_mainframe::RafkoContext& context;
+  rafko_mainframe::RafkoSettings settings;
+  std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> contexts;
   std::vector<double> weight_filter;
   std::vector<double> used_weight_filter;
   std::vector<double> weight_exclude_chance_filter;
   NetworkWeightVectorDelta gradient_fragment;
   std::uint32_t stochastic_evaluation_loops;
+  rafko_utilities::ThreadGroup execution_threads;
 
+  std::mutex network_mutex;
   std::uint32_t iteration = 1u;
   rafko_utilities::DataPool<> tmp_data_pool;
   double epsilon_addition = (0.0);
@@ -202,7 +213,7 @@ private:
    *
    * @return         The average of the resulting fitness values of the evaluations
    */
-  double stochastic_evaluation(){
+  double stochastic_evaluation(rafko_mainframe::RafkoContext& context){
     double fitness = (0.0);
     for(std::uint32_t i = 0; i < stochastic_evaluation_loops; ++i)
       fitness += context.stochastic_evaluation(iteration);
@@ -210,6 +221,34 @@ private:
     error_estimation = (error_estimation + -result_fitness)/(2.0);
     return result_fitness;
   }
+
+  /**
+   * @brief   Calculates the error value from a stochastic evaluation with the network shifted to the given direction
+   *          And does it in a thread-safe way for the Original network
+   *
+   * @param   context                     The used context for stochastic evaluation
+   * @param   network_original_weights    The original weights of the network, provided here as an optimiztion step
+   * @param   direction                   The direction value to add to every weight of the network
+   */
+  double get_error_from_direction(
+    rafko_mainframe::RafkoContext& context,
+    const std::vector<double>& network_original_weights,
+    double direction
+  );
+
+  /**
+   * @brief   Calculates the error value from a stochastic evaluation with the network shifted to the given direction
+   *          And does it in a thread-safe way for the Original network
+   *
+   * @param   context                     The used context for stochastic evaluation
+   * @param   network_original_weights    The original weights of the network, provided here as an optimiztion step
+   * @param   direction                   The direction value to add to every weight of the network
+   */
+  double get_error_from_direction(
+    rafko_mainframe::RafkoContext& context,
+    const std::vector<double>& network_original_weights,
+    const std::vector<double>& direction
+  );
 
   /**
    * @brief      Insert an element to the given position into the given field by

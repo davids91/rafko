@@ -33,6 +33,7 @@
 #include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/models/rafko_agent.h"
 #include "rafko_gym/services/rafko_weight_updater.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 
 namespace rafko_mainframe{
 
@@ -42,6 +43,10 @@ namespace rafko_mainframe{
  */
 class RAFKO_FULL_EXPORT RafkoContext{
 public:
+  RafkoContext(rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings())
+  : settings(settings_)
+  { }
+
   virtual ~RafkoContext() = default;
 
   /**
@@ -66,7 +71,12 @@ public:
   virtual void set_weight_updater(rafko_gym::Weight_updaters updater) = 0;
 
   /**
-   * @brief          Modifies a weight of the stored Netowrk
+   * @brief          Updates the stored solution based on the network reference
+   */
+  virtual void refresh_solution_weights() = 0;
+
+  /**
+   * @brief          Modifies a weight of the stored Network
    *
    * @param[in]      weight_index     The index inside the networks weight table to be modified
    * @param[in]      weight_value     The value to set the new weight to
@@ -139,7 +149,9 @@ public:
    *
    * @return      a reference of the referenced network
    */
-  virtual const rafko_net::RafkoNet& expose_network() = 0;
+  virtual rafko_net::RafkoNet& expose_network() = 0;
+protected:
+    rafko_mainframe::RafkoSettings settings;
 };
 
 } /* namespace rafko_mainframe */
