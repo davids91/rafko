@@ -52,14 +52,16 @@ public:
     return std::make_pair( std::move(current_network), RafkoNetworkDeltaChainLink(*current_network_ptr) );
   }
 
+  static void apply_to_network(NetworkDeltaChainLinkData& delta, rafko_net::RafkoNet& network);
+  static void apply_change(const NonStructuralNetworkDelta& change, rafko_net::RafkoNet& network);
+
 private:
   const rafko_net::RafkoNet& original_network;
   std::shared_ptr<RafkoNetworkDeltaChainLink> parent;
   NetworkDeltaChainLinkData data;
-  rafko_net::RafkoNet network = rafko_net::RafkoNet();
-  bool network_built = false;
 
-  static void apply_to_network(NetworkDeltaChainLinkData& delta, rafko_net::RafkoNet& network);
+  bool network_built = false;
+  rafko_net::RafkoNet network = rafko_net::RafkoNet();
 };
 
 } /* namespace rafko_gym */

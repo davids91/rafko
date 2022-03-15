@@ -25,6 +25,7 @@
 #include <limits>
 #include <mutex>
 
+#include "rafko_utilities/models/data_pool.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_mainframe/services/rafko_context.h"
 

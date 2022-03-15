@@ -37,15 +37,16 @@ public:
     std::shared_pointer<RafkoNetworkDeltaChainLink> start_link = std::make_shared<RafkoNetworkDeltaChainLink>()
   );
 
-  std::shared_pointer<RafkoNetworkDeltaChainLink> add_link(RafkoNetworkDeltaChainLinkData&& data);
+  void stage(std::uint32_t weight_index, double weight_delta);
+  void stage(std::vector<double>& weight_delta);
+  void stage(RafkoNetworkDeltaChainLinkData&& weight_delta);
+  std::shared_pointer<RafkoNetworkDeltaChainLink> commit();
 
-  rafko_net::RafkoNet build_current_network()
-
+  void revert();
+  std::uint32_t get_version();
+  rafko_net::RafkoNet current_network();
   std::shared_pointer<RafkoNetworkDeltaChainLink> parent();
 
-  void jump_to_parent();
-
-  std::uint32_t get_version();
 private:
   const rafko_net::RafkoNet& original_network;
   std::shared_pointer<RafkoNetworkDeltaChainLink> current_link;
