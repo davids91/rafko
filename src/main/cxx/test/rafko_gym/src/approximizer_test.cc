@@ -223,6 +223,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     std::vector<std::vector<double>>(std::get<1>(tmp1)),
     /* Sequence size */4
   );
+  settings.get_arena_ptr()->Own(after_test_set);
 
   double train_error = 1.0;
   double test_error = 1.0;
