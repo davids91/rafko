@@ -60,6 +60,10 @@ public:
     return std::next(start, range_size);
   }
 
+  constexpr std::vector<typename std::iterator_traits<Iterator>::value_type> as_vector(){
+    return {begin(),end()};
+  }
+
 private:
   const Iterator start;
   const std::size_t range_size;

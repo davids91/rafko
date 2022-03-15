@@ -49,66 +49,63 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
     .set_learning_rate(1e-1).set_arena_ptr(&arena);
 
   /* Create nets */
-  std::vector<rafko_net::RafkoNet*> nets = std::vector<rafko_net::RafkoNet*>();
   /*!Note: no need for smart pointers, because ownership is in the arena.
     * The builder automatically uses the arena pointer provided in the settings.
     */
-  nets.push_back(rafko_net::RafkoNetBuilder(settings)
+  rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    .allowed_transfer_functions_by_layer(
-      {
-        {rafko_net::transfer_function_selu}
-      }
-    ).dense_layers({1})
-  );
+    .allowed_transfer_functions_by_layer({{rafko_net::transfer_function_selu}})
+    .dense_layers({1});
 
-  rafko_mainframe::RafkoCPUContext context(*nets[0], settings);
-  rafko_gym::RafkoNetApproximizer approximizer(context);
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_shared<rafko_mainframe::RafkoCPUContext>(
+    *network, settings
+  );
+  rafko_gym::RafkoNetApproximizer approximizer({context},settings);
 
   /* adding a simple-weight-gradient fragment */
-  std::uint32_t weight_index = rand()%(nets[0]->weight_table_size());
+  std::uint32_t weight_index = rand()%(network->weight_table_size());
   std::uint32_t gradient_value_index;
   double weight_gradient = (0.5);
-  double weight_old_value = nets[0]->weight_table(weight_index);
+  double weight_old_value = network->weight_table(weight_index);
 
-  REQUIRE( nets[0]->weight_table(weight_index) == weight_old_value );
+  REQUIRE( network->weight_table(weight_index) == weight_old_value );
 
   approximizer.add_to_fragment(weight_index, weight_gradient);
   CHECK( 1 == approximizer.get_fragment().values_size() );
   CHECK( 1 == approximizer.get_fragment().weight_synapses_size() );
   CHECK( weight_gradient == approximizer.get_fragment().values(0) );
   gradient_value_index = approximizer.get_fragment().weight_synapses(0).starts();
-  REQUIRE( static_cast<std::int32_t>(gradient_value_index) < nets[0]->weight_table_size() );
+  REQUIRE( static_cast<std::int32_t>(gradient_value_index) < network->weight_table_size() );
 
   approximizer.apply_weight_vector_delta(); /* Add the negative gradient */
   REQUIRE(
     (weight_old_value - (weight_gradient * settings.get_learning_rate()))
-    == Catch::Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
+    == Catch::Approx(network->weight_table(weight_index)).epsilon(0.00000000000001)
   );
 
   REQUIRE(
-    (nets[0]->weight_table(weight_index) + (weight_gradient * settings.get_learning_rate()))
+    (network->weight_table(weight_index) + (weight_gradient * settings.get_learning_rate()))
     == Catch::Approx(weight_old_value).epsilon(0.00000000000001)
   );
 
   /* Continously adding gradients into a single fragment, while redundantly collecting them to see that the effect is the same */
-  std::vector<double> correct_weight_delta(nets[0]->weight_table_size(), (0.0));
-  std::vector<double> initial_weights = {nets[0]->weight_table().begin(),nets[0]->weight_table().end()};
+  std::vector<double> correct_weight_delta(network->weight_table_size(), (0.0));
+  std::vector<double> initial_weights = {network->weight_table().begin(),network->weight_table().end()};
   for(std::uint32_t variant = 0; variant < 10; ++variant){
-    weight_index = rand()%(nets[0]->weight_table_size());
+    weight_index = rand()%(network->weight_table_size());
     weight_gradient = (10.0)/static_cast<double>(rand()%10 + 1);
     correct_weight_delta[weight_index] += weight_gradient;
     approximizer.add_to_fragment(weight_index, weight_gradient);
   }
-  for(weight_index = 0;static_cast<std::int32_t>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
+  for(weight_index = 0;static_cast<std::int32_t>(weight_index) < network->weight_table_size(); ++weight_index){
     REQUIRE(
-      nets[0]->weight_table(weight_index) == Catch::Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
+      network->weight_table(weight_index) == Catch::Approx(initial_weights[weight_index]).epsilon(0.00000000000001)
     );
   }
   approximizer.apply_weight_vector_delta();
-  for(weight_index = 0;static_cast<std::int32_t>(weight_index) < nets[0]->weight_table_size(); ++weight_index){
+  for(weight_index = 0;static_cast<std::int32_t>(weight_index) < network->weight_table_size(); ++weight_index){
     CHECK(
-      Catch::Approx(nets[0]->weight_table(weight_index)).epsilon(0.00000000000001)
+      Catch::Approx(network->weight_table(weight_index)).epsilon(0.00000000000001)
       == (initial_weights[weight_index] - (correct_weight_delta[weight_index] * settings.get_learning_rate()))
     );
   }
@@ -141,8 +138,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   #endif/*(RAFKO_USES_OPENCL)*/
 
   /* Create nets */
-  std::vector<rafko_net::RafkoNet*> nets = std::vector<rafko_net::RafkoNet*>();
-  nets.push_back(rafko_net::RafkoNetBuilder(settings)
+  rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
     // .set_recurrence_to_layer()
     .set_recurrence_to_self()
@@ -157,37 +153,54 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu},
-    }).dense_layers({2,2,1})
-  );
+    }).dense_layers({2,2,1});
 
   /* Create dataset, test set and optimizers; optimize nets */
   std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
     rafko_test::create_sequenced_addition_dataset(number_of_samples, 4)
   );
   #if (RAFKO_USES_OPENCL)
-  std::unique_ptr<rafko_mainframe::RafkoGPUContext> context(
-    rafko_mainframe::RafkoGPUContext::Builder(*nets[0], settings)
+  std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
+    rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
       .select_platform().select_device()
       .build()
   );
-  std::unique_ptr<rafko_mainframe::RafkoGPUContext> test_context(
-    rafko_mainframe::RafkoGPUContext::Builder(*nets[0], settings)
+  // std::shared_ptr<rafko_mainframe::RafkoGPUContext> context2(
+  //   rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
+  //     .select_platform().select_device()
+  //     .build()
+  // );
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context2 = std::make_unique<rafko_mainframe::RafkoCPUContext>(
+    *network, settings.set_max_processing_threads(1u)
+  );
+  std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context(
+    rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
       .select_platform().select_device()
       .build()
   );
   #else
-  std::unique_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*nets[0], settings);
-  std::unique_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*nets[0], settings);
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  rafko_gym::RafkoNetApproximizer approximizer(*context);
+  rafko_gym::RafkoNetApproximizer approximizer({context1,context2},settings);
+  approximizer.set_weight_filter({
+    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 0 */
+    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 1 */
+    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 2 */
+    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 3 */
+    1.0, 1.0, 1.0, 1.0, 1.0  /* Neuron 4 */
+  });
 
-  context->set_environment(std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::vector<std::vector<double>>(std::get<0>(tmp1)),
     std::vector<std::vector<double>>(std::get<1>(tmp1)),
     /* Sequence size */4
-  ));
-  context->set_weight_updater(rafko_gym::weight_updater_amsgrad);
+  );
+  context1->set_environment(environment);
+  context1->set_weight_updater(rafko_gym::weight_updater_amsgrad);
+  context2->set_environment(environment);
+  context2->set_weight_updater(rafko_gym::weight_updater_amsgrad);
 
   tmp1 = ( rafko_test::create_sequenced_addition_dataset(number_of_samples, 4) );
   test_context->set_environment(std::make_shared<rafko_gym::RafkoDatasetWrapper>(
@@ -199,7 +212,8 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     settings, rafko_gym::cost_function_squared_error
   );
-  context->set_objective(objective);
+  context1->set_objective(objective);
+  context2->set_objective(objective);
   test_context->set_objective(objective);
 
   tmp1 = rafko_test::create_sequenced_addition_dataset(number_of_samples * 2, 4);
@@ -209,6 +223,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     std::vector<std::vector<double>>(std::get<1>(tmp1)),
     /* Sequence size */4
   );
+  settings.get_arena_ptr()->Own(after_test_set);
 
   double train_error = 1.0;
   double test_error = 1.0;
@@ -256,9 +271,18 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     if(0 == (iteration % 100)){
       srand(iteration);
       approximizer.full_evaluation();
-      rafko_test::print_training_sample((rand()%number_of_samples), *after_test_set, *nets[0], settings);
+      rafko_test::print_training_sample((rand()%number_of_samples), *after_test_set, *network, settings);
     }
     ++iteration;
+    // if(250 == iteration){
+    //   approximizer.set_weight_filter({
+    //     1.0, 0.0, 0.0, 0.0, 0.0,  /* Neuron 0 */
+    //     1.0, 0.0, 0.0, 0.0, 0.0,  /* Neuron 1 */
+    //     1.0, 0.0, 0.0, 0.0, 0.0,  /* Neuron 2 */
+    //     1.0, 0.0, 0.0, 0.0, 0.0,  /* Neuron 3 */
+    //     1.0, 0.0, 0.0, 0.0, 0.0  /* Neuron 4 */
+    //   });
+    // }
   }
   if(1 < number_of_steps)average_duration /= number_of_steps;
   std::cout << std::endl << "Optimum reached in " << number_of_steps
