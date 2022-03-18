@@ -250,7 +250,10 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     for(std::int32_t frag_index = 0; frag_index < approximizer.get_weight_gradient().values_size(); ++frag_index){
       avg_gradient += approximizer.get_weight_gradient().values(frag_index);
     }
-    avg_gradient /= static_cast<double>(approximizer.get_weight_gradient().values_size());
+    avg_gradient /= std::max(
+      std::numeric_limits<double>::epsilon(),
+      static_cast<double>(approximizer.get_weight_gradient().values_size())
+    );
 
     approximizer.apply_weight_vector_delta();
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
@@ -283,6 +286,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
     //     1.0, 0.0, 0.0, 0.0, 0.0  /* Neuron 4 */
     //   });
     // }
+    approximizer.set_weight_exclude_chance_filter(static_cast<double>(std::min(800u,iteration)) / 1000.0);
   }
   if(1 < number_of_steps)average_duration /= number_of_steps;
   std::cout << std::endl << "Optimum reached in " << number_of_steps

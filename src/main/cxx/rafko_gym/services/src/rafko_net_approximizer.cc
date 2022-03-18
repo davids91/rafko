@@ -24,44 +24,73 @@
 namespace rafko_gym{
 
 void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
-  double gradient_overview = get_gradient_for_all_weights() * contexts[0]->expose_settings().get_learning_rate(iteration);
-  double greatest_weight_value = (0.0);
-  std::mutex max_value_mutex;
-  std::vector<double>& tmp_weight_gradients = tmp_data_pool.reserve_buffer(contexts[0]->expose_network().weight_table_size());
-  used_weight_filter = weight_filter;
-  for(std::uint32_t weight_index = 0; weight_index < tmp_weight_gradients.size(); weight_index += execution_threads.get_number_of_threads()){
-    execution_threads.start_and_block(
-    [this, weight_index, &tmp_weight_gradients, &greatest_weight_value, &max_value_mutex](std::uint32_t thread_index){
-      const std::uint32_t actual_weight_index = (weight_index + thread_index);
-      if(actual_weight_index < tmp_weight_gradients.size()){
-        if( weight_exclude_chance_filter[actual_weight_index] >= (static_cast<double>(rand()%100 + 1)/100.0) ){
-          used_weight_filter[actual_weight_index] = 0.0;
-        }
-        if(0.0 != used_weight_filter[actual_weight_index]){
-          tmp_weight_gradients[actual_weight_index] = get_single_weight_gradient(actual_weight_index, *contexts[thread_index]) * used_weight_filter[actual_weight_index];
-          if(greatest_weight_value < std::abs(tmp_weight_gradients[actual_weight_index])){
-            std::lock_guard<std::mutex> my_lock(max_value_mutex);
-            greatest_weight_value = std::abs(tmp_weight_gradients[actual_weight_index]);
+  if(exclude_chance_sum < weight_exclude_chance_filter.size()){
+    double greatest_gradient_value = 0.0;
+    double used_weight_filter_sum = 0.0;
+    std::mutex weight_stats_mutex;
+    std::vector<double>& used_gradients = tmp_data_pool.reserve_buffer(contexts[0]->expose_network().weight_table_size());
+    used_weight_filter = weight_filter;
+    for(std::uint32_t weight_index = 0; weight_index < used_gradients.size(); weight_index += execution_threads.get_number_of_threads()){
+      execution_threads.start_and_block(
+      [this, weight_index, &used_gradients, &greatest_gradient_value, &weight_stats_mutex, &used_weight_filter_sum](std::uint32_t thread_index){
+        const std::uint32_t actual_weight_index = (weight_index + thread_index);
+        if(actual_weight_index < used_gradients.size()){
+          if(
+            (0 < exclude_chance_sum)
+            &&(weight_exclude_chance_filter[actual_weight_index] >= (static_cast<double>(rand()%100 + 1)/100.0))
+          ){
+            used_weight_filter[actual_weight_index] = 0.0;
           }
-        }else{
-          tmp_weight_gradients[actual_weight_index] = 0.0;
-        }
-      }/*if(actual_weight_index inside bounds)*/
-    });
-  }
-  for(std::uint32_t weight_index = 0; weight_index < tmp_weight_gradients.size(); ++weight_index){
-    if(0.0 != used_weight_filter[weight_index]){
-      tmp_weight_gradients[weight_index] = ( /* Gradients normalized by the biggest value */
-        ( tmp_weight_gradients[weight_index] + gradient_overview ) / (greatest_weight_value + std::abs(gradient_overview))
-      ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
-          * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
-          */
-      tmp_weight_gradients[weight_index] *= contexts[0]->expose_settings().get_learning_rate(iteration);
-    }
-  }
 
-  convert_direction_to_gradient(tmp_weight_gradients,true);
-  tmp_data_pool.release_buffer(tmp_weight_gradients);
+          if(0.0 != used_weight_filter[actual_weight_index]){
+            used_gradients[actual_weight_index] = get_single_weight_gradient(actual_weight_index, *contexts[thread_index]) * used_weight_filter[actual_weight_index];
+            if(greatest_gradient_value < std::abs(used_gradients[actual_weight_index])){
+              std::lock_guard<std::mutex> my_lock(weight_stats_mutex);
+              greatest_gradient_value = std::abs(used_gradients[actual_weight_index]);
+            }
+            std::lock_guard<std::mutex> my_lock(weight_stats_mutex);
+            used_weight_filter_sum += used_weight_filter[actual_weight_index];
+          }else{
+            used_gradients[actual_weight_index] = 0.0;
+          }
+        }/*if(actual_weight_index inside bounds)*/
+      });
+    }/*for(all weights)*/
+    double gradient_overview = 0.0;
+    double weight_filter_accumulate;
+    if(0 < used_weight_filter_sum){
+      weight_filter_accumulate = std::accumulate(weight_filter.begin(), weight_filter.end(), 0.0);
+    }
+    if((0 < used_weight_filter_sum)||(0 < weight_filter_accumulate)){
+      gradient_overview = get_gradient_for_all_weights() * contexts[0]->expose_settings().get_learning_rate(iteration);
+    }
+    if(0 < used_weight_filter_sum){ /* if any weights are included */
+      for(std::uint32_t weight_index = 0; weight_index < used_gradients.size(); ++weight_index){
+        if(0.0 != used_weight_filter[weight_index]){
+          used_gradients[weight_index] = ( /* Gradients normalized by the biggest value */
+            ( used_gradients[weight_index] + gradient_overview ) / (greatest_gradient_value + std::abs(gradient_overview))
+          ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
+              * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
+              */
+          used_gradients[weight_index] *= contexts[0]->expose_settings().get_learning_rate(iteration);
+        }
+      }
+      convert_direction_to_gradient(used_gradients,true);
+    }else if(0 < weight_filter_accumulate){ /* if no weights were selected, but only by chance */
+      std::uint32_t chosen_weight_index = rand()%weight_filter.size();
+      while(0.0 == weight_filter[chosen_weight_index]){ /* find a suitable single random weight */
+        chosen_weight_index = rand()%weight_filter.size();
+      }
+      /* approximize a single weight */
+      used_gradients[chosen_weight_index] = get_single_weight_gradient(chosen_weight_index, *contexts[0]) * weight_filter[chosen_weight_index];
+      std::cout << ".." << used_gradients[chosen_weight_index];
+      used_gradients[chosen_weight_index] = (
+        ( used_gradients[chosen_weight_index] + gradient_overview ) / (std::abs(used_gradients[chosen_weight_index]) + std::abs(gradient_overview))
+      ) * contexts[0]->expose_settings().get_learning_rate(iteration);
+      convert_direction_to_gradient(used_gradients,true);
+    }
+    tmp_data_pool.release_buffer(used_gradients);
+  }/*if(at least some weights are not excluded)*/
   ++iteration;
 }
 

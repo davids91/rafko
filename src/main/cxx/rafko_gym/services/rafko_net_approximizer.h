@@ -146,11 +146,23 @@ public:
   void set_weight_exclude_chance_filter(std::vector<double>&& filter){
     RFASSERT( filter.size() == weight_exclude_chance_filter.size());
     weight_exclude_chance_filter = filter;
+    exclude_chance_sum = std::accumulate(
+      weight_exclude_chance_filter.begin(),weight_exclude_chance_filter.end(), 0.0
+    );
   }
+
+  void set_weight_exclude_chance_filter(double filter){
+    std::fill(weight_exclude_chance_filter.begin(),weight_exclude_chance_filter.end(), filter);
+    exclude_chance_sum = filter * static_cast<double>(weight_exclude_chance_filter.size());
+  }
+
 
   void modify_weight_exclude_chance_filter(std::uint32_t weight_index, double filter){
     RFASSERT( weight_index < weight_exclude_chance_filter.size());
     weight_exclude_chance_filter[weight_index] = filter;
+    exclude_chance_sum = std::accumulate(
+      weight_exclude_chance_filter.begin(),weight_exclude_chance_filter.end(), 0.0
+    );
   }
 
 
@@ -203,9 +215,10 @@ private:
   std::mutex network_mutex;
   std::uint32_t iteration = 1u;
   rafko_utilities::DataPool<> tmp_data_pool;
-  double epsilon_addition = (0.0);
+  double epsilon_addition = 0.0;
   double min_test_error = std::numeric_limits<double>::max();
-  double error_estimation = (1.0);
+  double error_estimation = 1.0;
+  double exclude_chance_sum = 0.0;
   std::uint32_t min_test_error_was_at_iteration = 0u;
 
   /**
