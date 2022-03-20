@@ -53,13 +53,31 @@ public:
     return std::make_pair( std::move(current_network), RafkoNetworkDeltaChainLink(*current_network_ptr) );
   }
 
-  void store_change(std::uint32_t weight_index, double weight_delta);
+  void store_change(std::uint32_t weight_index, double weight_delta){
+    if(!is_last_change_simple())
+      data.add_simple_changes()->set_version(get_latest_version());
+    apply_change(weight_index, weight_delta, *data.mutable_simple_changes(data.simple_changes_size() - 1)->mutable_weights_delta());
+    network_built = false;
+  }
   void store_change(std::vector<double>& weight_delta);
   void store_change(NetworkWeightVectorDelta&& weight_delta);
-  void store_change(NetworkDeltaChainLinkData&& weight_delta);
+  void store_change(NonStructuralNetworkDelta&& change);
+  void store_change(StructuralNetworkDelta&& change);
+
+  std::uint32_t get_latest_version() const{
+    std::uint32_t version = 0u;
+    if( (0 == (data.simple_changes_size() + data.structural_changes_size())) && parent )
+      version = parent->get_latest_version();
+    if(0 < data.simple_changes_size())
+      version = data.simple_changes(data.simple_changes_size() - 1u).version();
+    if(0 < data.structural_changes_size())
+      version = std::max( version, data.structural_changes(data.structural_changes_size() - 1u).version() );
+    return version;
+  }
 
   static void apply_to_network(NetworkDeltaChainLinkData& delta, rafko_net::RafkoNet& network);
   static void apply_change(const NonStructuralNetworkDelta& change, rafko_net::RafkoNet& network);
+  static void apply_change(std::uint32_t weight_index, double weight_delta, NetworkWeightVectorDelta& weights_delta);
 
 private:
   static rafko_utilities::DataPool<> tmp_data_pool;
@@ -70,6 +88,17 @@ private:
   bool network_built = false;
   bool network_structure_built = false;
   rafko_net::RafkoNet current_network = rafko_net::RafkoNet();
+
+  bool is_last_change_simple() const{
+    return (
+      (0 < data.simple_changes_size())
+      &&((0u == data.structural_changes_size())
+      ||(
+        data.structural_changes(data.structural_changes_size() - 1u).version()
+        <= data.simple_changes(data.simple_changes_size() - 1u).version()
+      )
+    ));
+  }
 
   /**
    * @brief      Insert an element to the given position into the given field by
@@ -86,7 +115,7 @@ private:
       message_field.SwapElements(i, i - 1);
   }
 
-  static void unwrap_change_to(std::vector<double>& vector, NetworkWeightVectorDelta& delta);
+  static void unwrap_change_to(std::vector<double>& vector, const NetworkWeightVectorDelta& delta);
 
 };
 
