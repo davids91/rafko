@@ -44,11 +44,12 @@ public:
 
   void revert();
   std::uint32_t get_version();
-  rafko_net::RafkoNet current_network();
+  rafko_net::RafkoNet& current_network();
   std::shared_pointer<RafkoNetworkDeltaChainLink> parent();
 
 private:
   const rafko_net::RafkoNet& original_network;
+  rafko_net::RafkoNet current_network = rafko_net::RafkoNet();
   std::shared_pointer<RafkoNetworkDeltaChainLink> current_link;
 };
 

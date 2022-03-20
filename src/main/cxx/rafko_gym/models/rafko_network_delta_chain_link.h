@@ -24,6 +24,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
+#include "rafko_utilities/models/data_pool.h"
 
 namespace RAFKO_FULL_EXPORT rafko_gym{
 
@@ -52,16 +53,41 @@ public:
     return std::make_pair( std::move(current_network), RafkoNetworkDeltaChainLink(*current_network_ptr) );
   }
 
+  void store_change(std::uint32_t weight_index, double weight_delta);
+  void store_change(std::vector<double>& weight_delta);
+  void store_change(NetworkWeightVectorDelta&& weight_delta);
+  void store_change(NetworkDeltaChainLinkData&& weight_delta);
+
   static void apply_to_network(NetworkDeltaChainLinkData& delta, rafko_net::RafkoNet& network);
   static void apply_change(const NonStructuralNetworkDelta& change, rafko_net::RafkoNet& network);
 
 private:
+  static rafko_utilities::DataPool<> tmp_data_pool;
   const rafko_net::RafkoNet& original_network;
   std::shared_ptr<RafkoNetworkDeltaChainLink> parent;
   NetworkDeltaChainLinkData data;
 
   bool network_built = false;
-  rafko_net::RafkoNet network = rafko_net::RafkoNet();
+  bool network_structure_built = false;
+  rafko_net::RafkoNet current_network = rafko_net::RafkoNet();
+
+  /**
+   * @brief      Insert an element to the given position into the given field by
+   *             first adding it to the end, and then reverse iterating and swapping elements
+   *             until the desired position is reached
+   *
+   * @param      message_field  The message field
+   * @param[in]  value          The value
+   * @param[in]  position       The position
+   */
+  static void insert_element_at_position(google::protobuf::RepeatedField<double>& message_field, double value, std::uint32_t position){
+    *message_field.Add() = value;
+    for(std::int32_t i(message_field.size() - 1); i > static_cast<std::int32_t>(position); --i)
+      message_field.SwapElements(i, i - 1);
+  }
+
+  static void unwrap_change_to(std::vector<double>& vector, NetworkWeightVectorDelta& delta);
+
 };
 
 } /* namespace rafko_gym */

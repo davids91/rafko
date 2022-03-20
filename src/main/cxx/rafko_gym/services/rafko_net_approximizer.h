@@ -250,21 +250,6 @@ private:
     const std::vector<double>& network_original_weights,
     const std::vector<double>& direction
   );
-
-  /**
-   * @brief      Insert an element to the given position into the given field by
-   *             first adding it to the end, and then reverse iterating and swapping elements
-   *             until the desired position is reached
-   *
-   * @param      message_field  The message field
-   * @param[in]  value          The value
-   * @param[in]  position       The position
-   */
-  static void insert_element_at_position(google::protobuf::RepeatedField<double>& message_field, double value, std::uint32_t position){
-    *message_field.Add() = value;
-    for(std::int32_t i(message_field.size() - 1); i > static_cast<std::int32_t>(position); --i)
-      message_field.SwapElements(i, i - 1);
-  }
 };
 
 } /* namespace rafko_gym */

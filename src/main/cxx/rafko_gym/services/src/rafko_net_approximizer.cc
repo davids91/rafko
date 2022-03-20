@@ -251,65 +251,6 @@ double RafkoNetApproximizer::get_gradient_for_all_weights(){
   return -(error_positive_direction - error_negative_direction) * (current_epsilon_double);
 }
 
-void RafkoNetApproximizer::add_to_fragment(std::uint32_t weight_index, double gradient_fragment_value){
-  std::uint32_t values_index = 0;
-  std::uint32_t values_index_target = gradient_fragment.values_size();
-  std::uint32_t weight_synapse_index_target = gradient_fragment.weight_synapses_size();
-  rafko_net::IndexSynapseInterval tmp_synapse_interval;
-
-  for(std::uint32_t weight_syn_index = 0; static_cast<std::int32_t>(weight_syn_index) < gradient_fragment.weight_synapses_size(); ++weight_syn_index){
-    if( /* If the weight synapse is at or in-between the first index before the start of the synapse.. */
-      (
-        ((0 < gradient_fragment.weight_synapses(weight_syn_index).starts())
-        &&( gradient_fragment.weight_synapses(weight_syn_index).starts()-1) <= static_cast<std::int32_t>(weight_index) )
-        ||( 0 == gradient_fragment.weight_synapses(weight_syn_index).starts() )
-      )&&( /* ..and the one after the last index */
-        (gradient_fragment.weight_synapses(weight_syn_index).starts() + gradient_fragment.weight_synapses(weight_syn_index).interval_size())
-        >= weight_index
-      )
-    ){ /* current weight synapse is a sitable target to place the current fragment in */
-      weight_synapse_index_target = weight_syn_index;
-      values_index_target = values_index;
-      break; /* Found a suitable synapse, no need to continue */
-    }
-    values_index += gradient_fragment.weight_synapses(weight_syn_index).interval_size();
-  } /* Go through the synapses saving the last place */
-  if(
-    (0 == gradient_fragment.weight_synapses_size())
-    ||(static_cast<std::int32_t>(weight_synapse_index_target) >= gradient_fragment.weight_synapses_size())
-    ||(static_cast<std::int32_t>(values_index_target) >= gradient_fragment.values_size())
-  ){
-    gradient_fragment.add_values(gradient_fragment_value);
-    tmp_synapse_interval.set_interval_size(1);
-    tmp_synapse_interval.set_starts(weight_index);
-    *gradient_fragment.add_weight_synapses() = tmp_synapse_interval;
-  }else{
-    const std::uint32_t synapse_starts = gradient_fragment.weight_synapses(weight_synapse_index_target).starts();
-    const std::uint32_t synapse_size = gradient_fragment.weight_synapses(weight_synapse_index_target).interval_size();
-    const std::uint32_t synapse_ends = synapse_starts + synapse_size;
-
-    if(
-      (0 < synapse_starts) /* Synapse doesn't start at 0 */
-      &&((synapse_starts-1) == weight_index) /* And the weight index points to the first index before the synapse */
-    ){
-      gradient_fragment.mutable_weight_synapses(weight_synapse_index_target)->set_interval_size(synapse_size + 1);
-      gradient_fragment.mutable_weight_synapses(weight_synapse_index_target)->set_starts(synapse_starts - 1);
-      insert_element_at_position(*gradient_fragment.mutable_values(),gradient_fragment_value,values_index_target);
-    }else if(
-      (synapse_starts <= weight_index)
-      &&(synapse_ends > weight_index)
-    ){ /* the index is inside the synapse */
-      gradient_fragment.set_values(
-        values_index_target + weight_index - synapse_starts,
-        gradient_fragment.values(values_index_target + weight_index - synapse_starts) + gradient_fragment_value
-      );
-    }else{ /* The index is the first index after the synapse */
-      gradient_fragment.mutable_weight_synapses(weight_synapse_index_target)->set_interval_size(synapse_size + 1);
-      insert_element_at_position( *gradient_fragment.mutable_values(), gradient_fragment_value, (values_index_target + synapse_size) );
-    }
-  }
-}
-
 void RafkoNetApproximizer::apply_weight_vector_delta(){
   std::uint32_t fragment_value_index = 0;
   std::vector<double>& tmp_weight_table = tmp_data_pool.reserve_buffer(contexts[0]->expose_network().weight_table_size());
