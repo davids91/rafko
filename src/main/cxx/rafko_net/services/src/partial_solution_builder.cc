@@ -55,7 +55,7 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
     /* Copy in input data references */
     neuron_synapse_count = 0;
     previous_neuron_input_source = neuron_input_none;
-    previous_neuron_input_index = input_synapse.cached_size(); /* Input value to point above the size of the input */
+    previous_neuron_input_index = input_synapse.cached_size(); /* set input value to point above the size of the input */
     const std::uint32_t index_synapse_previous_size = partial.inside_indices_size();
 
     std::uint32_t current_backreach;
@@ -126,6 +126,21 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
 }
 
 bool PartialSolutionBuilder::look_for_neuron_input(std::int32_t neuron_input_index, std::uint32_t input_reach_back){
+  if( /* In case there are already inputs present.. */
+    (1u < input_synapse.cached_size()) /* ..and the previously found input is among them */
+    &&(previous_neuron_input_source == neuron_input_external)
+    &&(static_cast<std::int32_t>(previous_neuron_input_index) < (input_synapse.cached_size() - 1u))
+    &&(neuron_input_index == input_synapse[previous_neuron_input_index + 1u])
+    &&(input_reach_back == input_synapse.reach_past_loops<InputSynapseInterval>(previous_neuron_input_index + 1u))
+  ){/* ..and the input index currently in search is the next one in the input synapse */
+    ++previous_neuron_input_index;
+    /* previous_neuron_input_source = neuron_input_external; implicitly implied.. */
+    add_to_synapse(
+      SynapseIterator<>::synapse_index_from_input_index(previous_neuron_input_index),
+      0, neuron_synapse_count, partial.mutable_inside_indices()
+    );
+    return true;
+  }
   std::uint32_t candidate_index_inside_input = input_synapse.cached_size();
   auto cache_hit = found_network_input_in_partial_input.find(
     pair_hash({neuron_input_index,input_reach_back})
@@ -174,8 +189,11 @@ bool PartialSolutionBuilder::look_for_neuron_input_internally(std::uint32_t neur
   ){
     const std::uint32_t inner_neuron_index = (neuron_input_index - partial.output_data().starts());
     if( /* there is a synapse already open for the current Neuron input */
-      (0 < neuron_synapse_count) /* ..and the current found index can not continue it */
-      &&((neuron_input_internal != previous_neuron_input_source)||(static_cast<int>(inner_neuron_index)-1 != previous_neuron_input_index))
+      (0 < neuron_synapse_count)
+      &&( /* ..and the current found index can not continue it */
+        (neuron_input_internal != previous_neuron_input_source)
+        ||(static_cast<int>(inner_neuron_index)-1 != previous_neuron_input_index)
+      )
     )neuron_synapse_count = 0; /* Close synapse! */
     previous_neuron_input_index = inner_neuron_index;
     previous_neuron_input_source = neuron_input_internal;

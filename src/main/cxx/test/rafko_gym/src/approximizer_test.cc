@@ -39,6 +39,57 @@
 
 namespace rafko_gym_test {
 
+TEST_CASE("Stress-testing big input takein", "[bigpic]"){
+  return; /*!Note: This test should be disabled by default */
+  google::protobuf::Arena arena;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
+    .set_droput_probability(0.2)
+    .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero,true)
+    .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping,false)
+    .set_learning_rate_decay({{1000u,0.8}})
+    .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
+
+  std::uint32_t avg_ms = 0;
+  for(std::uint32_t i = 0; i < 6; ++i){
+    avg_ms = 0;
+    std::cout << "image size: " << std::pow(2, (3 + i));
+    for(std::uint32_t runs = 0; runs < 10; ++runs){
+      std::uint32_t input_size = std::pow(2, ( i))/*w*/* std::pow(2, ( i))/*h*/* 3/*rgb*/* 3/*pictures*/;
+      std::vector<double> input(input_size, 5.0);
+      rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+        .input_size(input_size).expected_input_range((1.0))
+        .set_recurrence_to_self()
+        .allowed_transfer_functions_by_layer({
+          {rafko_net::transfer_function_selu},
+          {rafko_net::transfer_function_selu},
+          {rafko_net::transfer_function_selu},
+        }).dense_layers({2,2,1});
+      std::chrono::steady_clock::time_point start;
+
+      start = std::chrono::steady_clock::now();
+      std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
+        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
+          .select_platform().select_device()
+          .build()
+      );
+      auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+      // std::uint32_t average_duration = 0;
+      // for(std::uint32_t j = 0; j < 500; ++j){
+      //   start = std::chrono::steady_clock::now();
+      //   (void)context1->solve(input,false);
+      //   auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+      //   if(0 == average_duration)average_duration = current_duration;
+      //     else average_duration = (average_duration + current_duration) / 2;
+      //   std::cout << "\rrun duration: " << current_duration << "ms; \t\tavg:" <<  average_duration << "ms      ";
+      // }
+      std::cout << "-" << std::flush;
+      avg_ms += current_duration;
+    }/*for(runs)*/
+    std::cout << ">" << (avg_ms / 10) << "ms" << std::endl;
+  }/*for(sizes)*/
+}
+
 /*###############################################################################################
  * Testing if the gradients are added to the fragment correctly
  * */
