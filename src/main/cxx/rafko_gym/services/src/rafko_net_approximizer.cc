@@ -57,8 +57,8 @@ void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
       });
     }/*for(all weights)*/
     double gradient_overview = 0.0;
-    double weight_filter_accumulate;
-    if(0 < used_weight_filter_sum){
+    double weight_filter_accumulate = 0.0;
+    if(0.0 < used_weight_filter_sum){
       weight_filter_accumulate = std::accumulate(weight_filter.begin(), weight_filter.end(), 0.0);
     }
     if((0 < used_weight_filter_sum)||(0 < weight_filter_accumulate)){

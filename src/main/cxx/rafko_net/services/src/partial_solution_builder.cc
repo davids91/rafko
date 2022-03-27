@@ -23,15 +23,9 @@
 
 namespace rafko_net{
 
-std::uint32_t PartialSolutionBuilder::neuron_synapse_count = 0;
-std::uint32_t PartialSolutionBuilder::partial_input_synapse_count = 0;
-std::int32_t PartialSolutionBuilder::previous_neuron_input_index;
-std::uint8_t PartialSolutionBuilder::previous_neuron_input_source;
-
-std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& net, std::uint32_t neuron_index, PartialSolution& partial){
+std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& net, std::uint32_t neuron_index){
   RFASSERT_LOG("Adding Neuron[{}] to partial solution!", neuron_index);
-  SynapseIterator<InputSynapseInterval> input_synapse(partial.input_data());
-  previous_neuron_input_index = input_synapse.size();
+  previous_neuron_input_index = input_synapse.cached_size();
   previous_neuron_input_source = neuron_input_none;
   partial_input_synapse_count = 0;
   neuron_synapse_count = 0;
@@ -39,11 +33,9 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
   if(net.neuron_array_size() > static_cast<int>(neuron_index)){
     std::uint32_t max_reach_back = 0;
     std::uint32_t max_reach_index = 0;
-    IndexSynapseInterval temp_synapse_interval;
     SynapseIterator<> weight_iterator(net.neuron_array(neuron_index).input_weights());
     SynapseIterator<InputSynapseInterval> input_iterator(net.neuron_array(neuron_index).input_indices());
     partial.mutable_output_data()->set_interval_size(partial.output_data().interval_size() + 1u);
-
 
     RFASSERT_LOG("Network Input synapses number for Neuron: {}", net.neuron_array(neuron_index).input_indices_size());
     RFASSERT_LOG("Network Weight synapses number for Neuron: {}", net.neuron_array(neuron_index).input_weights_size());
@@ -54,9 +46,8 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
     partial.add_neuron_spike_functions(net.neuron_array(neuron_index).spike_function());
     partial.add_weight_synapse_number(net.neuron_array(neuron_index).input_weights_size());
     weight_iterator.iterate([&](IndexSynapseInterval weight_synapse){
-      temp_synapse_interval.set_starts(partial.weight_table_size());
-      temp_synapse_interval.set_interval_size(weight_synapse.interval_size());
-      *partial.add_weight_indices() = temp_synapse_interval;
+      partial.add_weight_indices()->set_starts(partial.weight_table_size());
+      partial.mutable_weight_indices(partial.weight_indices_size() - 1u)->set_interval_size(weight_synapse.interval_size());
     },[&](std::int32_t weight_index){
       partial.add_weight_table(net.weight_table(weight_index));
     });
@@ -64,7 +55,7 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
     /* Copy in input data references */
     neuron_synapse_count = 0;
     previous_neuron_input_source = neuron_input_none;
-    previous_neuron_input_index = input_synapse.size(); /* Input value to point above the size of the input */
+    previous_neuron_input_index = input_synapse.cached_size(); /* Input value to point above the size of the input */
     const std::uint32_t index_synapse_previous_size = partial.inside_indices_size();
 
     std::uint32_t current_backreach;
@@ -78,19 +69,19 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
         if(max_reach_index < input_index)max_reach_index = input_index;
       }
     },[&](std::int32_t neuron_input_index){ /* Put each Neuron input into the @PartialSolution */
-      if(!look_for_neuron_input(neuron_input_index, current_backreach, input_synapse, partial)){
-        /* Check if the partial input synapse needs to be closed */
-        if( /* if the Neuron has any inputs from the past or not found internally */
-          (0 < current_backreach)||(!look_for_neuron_input_internally(neuron_input_index, partial))
+      if(!look_for_neuron_input(neuron_input_index, current_backreach)){ /* Neuron input was found in the @PartialSolution inputs, continue to look for it.. */
+        /* Check if any synapses needs to be closed */
+        if( /* if the Neuron has current inputs from the past or inputs are not found internally */
+          (0 < current_backreach)||(!look_for_neuron_input_internally(neuron_input_index))
         ){
           if( /* Close input synapse if */
             (0 < partial_input_synapse_count) /* There is one open already */
             &&(( /* The latest index in the input synapse isn't the preceeding index of the current index */
                 SynapseIterator<>::is_index_input(neuron_input_index)
-                &&(input_synapse.back() != neuron_input_index+1)
+                &&(input_synapse.back() != (neuron_input_index + 1))
               )||(
                 (!SynapseIterator<>::is_index_input(neuron_input_index))
-                &&(input_synapse.back() != neuron_input_index-1)
+                &&(input_synapse.back() != (neuron_input_index - 1))
               )||(input_synapse.last_synapse().reach_past_loops() != current_backreach) /* Current index not in same memory depth */
             )
           ){
@@ -99,18 +90,20 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
           if(0 < neuron_synapse_count){
             if(
               (neuron_input_external != previous_neuron_input_source)
-              ||(static_cast<int>(input_synapse.size()-1) != previous_neuron_input_index)
+              ||(static_cast<int>(input_synapse.cached_size() - 1) != previous_neuron_input_index)
             )neuron_synapse_count = 0; /* Close synapse! */
           }
-          previous_neuron_input_index = input_synapse.size(); /* Update previous neuron input source as well */
+          previous_neuron_input_index = input_synapse.cached_size(); /* Update previous neuron input source as well */
           previous_neuron_input_source = neuron_input_external;/* since the input was added to be taken from the @PartialSolution inputs */
           add_to_synapse( /* Neural input shall be added from the input of the @PartialSolution */
-            SynapseIterator<>::synapse_index_from_input_index(input_synapse.size()), 0,
+            SynapseIterator<>::synapse_index_from_input_index(input_synapse.cached_size()), 0,
             neuron_synapse_count, partial.mutable_inside_indices()
           );
-          add_to_synapse(neuron_input_index, current_backreach,partial_input_synapse_count, partial.mutable_input_data());
+          add_to_synapse(neuron_input_index, current_backreach, partial_input_synapse_count, partial.mutable_input_data());
+          input_synapse.refresh_cached_size();
+          RFASSERT_LOG("Extending partial input with: [{}:{}]", neuron_input_index, current_backreach);
         }/* Neuron input was found internally in the @PartialSolution */
-      }/* Neuron input was found in the @PartialSolution inputs, continue to look for it.. */
+      }/*if(Neuron input was not found in the partial inputs)*/
     });
 
     RFASSERT_LOG("Partial solution Input synapses number for Neuron: {}", (partial.inside_indices_size() - index_synapse_previous_size));
@@ -122,76 +115,59 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
     if( /* In case th latest input synapse is of 0 length, remove it */
       (0 < partial.input_data_size())
       &&(0 == partial.input_data(partial.input_data_size()-1).interval_size())
-    )partial.mutable_input_data()->RemoveLast();
+    ){
+      partial.mutable_input_data()->RemoveLast();
+      /*!Note: Since the last synapse was empty, size will not change by removing it, so the below line need not to be called. */
+      /* input_synapse.refresh_cached_size(); */
+    }
 
     return std::make_pair(max_reach_back, max_reach_index);
   }else throw std::runtime_error("Neuron index is out of bounds from net neuron array!");
 }
 
-void PartialSolutionBuilder::add_to_synapse(std::int32_t index, std::uint32_t reach_back, std::uint32_t& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals){
-  if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
-    ++current_synapse_count;
-    synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
-  }else{ /* Opening up a totally new Neuron Synapse */
-    InputSynapseInterval new_interval;
-    new_interval.set_starts(index);
-    new_interval.set_interval_size(1);
-    new_interval.set_reach_past_loops(reach_back);
-    *synapse_intervals->Add() = new_interval;
-    current_synapse_count = 1;
-  }
-}
-
-void PartialSolutionBuilder::add_to_synapse(std::int32_t index, std::uint32_t& current_synapse_count, google::protobuf::RepeatedPtrField<IndexSynapseInterval>* synapse_intervals){
-  if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
-    ++current_synapse_count;
-    synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
-  }else{ /* Opening up a totally new Neuron Synapse */
-    IndexSynapseInterval new_interval;
-    new_interval.set_starts(index);
-    new_interval.set_interval_size(1);
-    *synapse_intervals->Add() = new_interval;
-    current_synapse_count = 1;
-  }
-}
-
-bool PartialSolutionBuilder::look_for_neuron_input(
-  std::int32_t neuron_input_index, std::uint32_t input_reach_back,
-  SynapseIterator<InputSynapseInterval>& input_synapse, PartialSolution& partial
-){
-  std::uint32_t candidate_synapse_index = input_synapse.size();
-  std::uint32_t current_backreach;
-  input_synapse.iterate_terminatable([&](InputSynapseInterval interval_synapse){
-    current_backreach = interval_synapse.reach_past_loops();
-    return true;
-  },[&](std::int32_t synapse_index){
-    if(candidate_synapse_index == input_synapse.size()) candidate_synapse_index = 0;
-    if((input_reach_back == current_backreach)&&(synapse_index == neuron_input_index)){ /* If the index as well as the time of input matches */
-      return false; /* No need to continue Synapse iteration, found the right candidate! */
-    }else{ /* Step the candidate iterator forward to the next index in the input array */
-      ++candidate_synapse_index;
+bool PartialSolutionBuilder::look_for_neuron_input(std::int32_t neuron_input_index, std::uint32_t input_reach_back){
+  std::uint32_t candidate_index_inside_input = input_synapse.cached_size();
+  auto cache_hit = found_network_input_in_partial_input.find(
+    pair_hash({neuron_input_index,input_reach_back})
+  );
+  if(cache_hit == found_network_input_in_partial_input.end()){
+    std::uint32_t current_backreach;
+    input_synapse.iterate_terminatable([&current_backreach](InputSynapseInterval interval_synapse){
+      current_backreach = interval_synapse.reach_past_loops();
       return true;
-    }
-  });
-  if(candidate_synapse_index < input_synapse.size()){ /* Found the neuron input in the candidate synapse inputs */
-    /* Check if the newly added Neuron synapse can be continued based on value, or a new Synapse needs to be added */
+    },[&](std::int32_t synapse_index){
+      if(candidate_index_inside_input == input_synapse.cached_size()) candidate_index_inside_input = 0u;
+      if((input_reach_back == current_backreach)&&(synapse_index == neuron_input_index)){ /* If the index as well as the time of input matches */
+        cache_hit = std::get<0>(found_network_input_in_partial_input.insert({
+          pair_hash({neuron_input_index,input_reach_back}), candidate_index_inside_input
+        }));
+        return false; /* No need to continue Synapse iteration, found the right candidate! */
+      }else{ /* Step the candidate iterator forward to the next index in the input array */
+        ++candidate_index_inside_input;
+        return true;
+      }
+    });
+  }else candidate_index_inside_input = cache_hit->second; /* found in cache */
+  if(cache_hit != found_network_input_in_partial_input.end()){ /* Found the neuron input in the candidate synapse inputs */
+    RFASSERT_LOG("Input synapse cached size: {} vs size: {}", input_synapse.cached_size(), input_synapse.size());
+    RFASSERT(candidate_index_inside_input < input_synapse.cached_size());
     if(0 < neuron_synapse_count){
-      if(
+      if( /* Check if the newly added Neuron synapse can be continued based on value, or a new Synapse needs to be added */
         (neuron_input_external != previous_neuron_input_source)
-        ||(static_cast<int>(candidate_synapse_index-1) != previous_neuron_input_index)
+        ||(static_cast<int>(candidate_index_inside_input-1) != previous_neuron_input_index)
       )neuron_synapse_count = 0; /* Close synapse! */
     }
-    previous_neuron_input_index = candidate_synapse_index;
+    previous_neuron_input_index = candidate_index_inside_input;
     previous_neuron_input_source = neuron_input_external;
     add_to_synapse( /* inside indices always taking input from the current value */
-      SynapseIterator<>::synapse_index_from_input_index(candidate_synapse_index),
+      SynapseIterator<>::synapse_index_from_input_index(candidate_index_inside_input),
       0, neuron_synapse_count, partial.mutable_inside_indices()
     );
     return true;
   }else return false; /* couldn't find the Neuron input in the @Partial solution input synapses */
 }
 
-bool PartialSolutionBuilder::look_for_neuron_input_internally(std::uint32_t neuron_input_index, PartialSolution& partial){
+bool PartialSolutionBuilder::look_for_neuron_input_internally(std::uint32_t neuron_input_index){
   if(
     (static_cast<std::int32_t>(neuron_input_index) >= partial.output_data().starts())
     &&(neuron_input_index < (partial.output_data().starts() + partial.output_data().interval_size()))
@@ -208,6 +184,19 @@ bool PartialSolutionBuilder::look_for_neuron_input_internally(std::uint32_t neur
     );
     return true;
   }else return false;
+}
+
+void PartialSolutionBuilder::add_to_synapse(std::int32_t index, std::uint32_t reach_back, std::uint32_t& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals){
+  if((0 < synapse_intervals->size())&&(0 < current_synapse_count)){ /* Currently building a synapse already */
+    ++current_synapse_count;
+    synapse_intervals->Mutable(synapse_intervals->size()-1)->set_interval_size(current_synapse_count);
+  }else{ /* Opening up a totally new Neuron Synapse */
+    InputSynapseInterval& new_interval = *synapse_intervals->Add();
+    new_interval.set_starts(index);
+    new_interval.set_interval_size(1);
+    new_interval.set_reach_past_loops(reach_back);
+    current_synapse_count = 1;
+  }
 }
 
 } /* namespace rafko_net */

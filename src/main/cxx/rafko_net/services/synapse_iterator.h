@@ -56,7 +56,8 @@ template<typename Interval_type = IndexSynapseInterval>
 class RAFKO_FULL_EXPORT SynapseIterator{
 public:
    constexpr SynapseIterator(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval)
-  :  synapse_interval(arg_synapse_interval)
+  : synapse_interval(arg_synapse_interval)
+  , cached_size_var(size())
   { };
 
   constexpr void iterate(std::function< void(std::int32_t) > do_for_each_index, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
@@ -371,6 +372,26 @@ public:
   }
 
   /**
+   * @brief      Refresh the cache variable for @cached_size
+   *
+   */
+  void refresh_cached_size(){
+    cached_size_var = size();
+    RFASSERT_LOG("Refreshing caches size in synapse iterator to: {}", cached_size_var);
+  }
+
+  /**
+   * @brief      Return the number of input synapses in the iterator.
+   *             !!!IMPORTANT!!! This provides a cahce variable which
+   *             needs to be kept up to date with @refresh_cached_size
+   *
+   * @return     Size of the Repeatedfiled for the  synapse_intervals
+   */
+  constexpr std::uint32_t cached_size(){
+    return cached_size_var;
+  }
+
+  /**
    * @brief      Return the number of input synapses in the iterator.
    *
    * @return     Size of the Repeatedfiled for the  synapse_intervals
@@ -455,6 +476,7 @@ private:
   mutable std::uint32_t last_reached_synapse = 0u;
   mutable std::uint32_t last_reached_index = 0u;
   static std::uint32_t interval_size; /* temporary variable */
+  std::uint32_t cached_size_var;
 
   /**
    * @brief      Gets the number of synapses to iterate based on the provided start and size values.

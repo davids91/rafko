@@ -103,6 +103,7 @@ private:
 #define RFASSERT_SCOPE(name)
 #define RFASSERT_LOG(...)
 #define RFASSERT_LOGV(vec, ...)
+#define RFASSERT_LOGV2(vec, ...)
 #endif/*(RAFKO_USES_ASSERTLOGS)*/
 
 } /* namespace rafko_mainframe */
