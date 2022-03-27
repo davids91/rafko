@@ -83,7 +83,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
 
     reference_agent->set_eval_mode(false);
     for(std::uint32_t result_index = 0; result_index < reference_result.size(); ++result_index){
-      CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
+      REQUIRE( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
     }
   }/*for(50 variants)*/
 }

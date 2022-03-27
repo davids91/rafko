@@ -29,6 +29,7 @@ std::int32_t PartialSolutionBuilder::previous_neuron_input_index;
 std::uint8_t PartialSolutionBuilder::previous_neuron_input_source;
 
 std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_partial_solution(const RafkoNet& net, std::uint32_t neuron_index, PartialSolution& partial){
+  RFASSERT_LOG("Adding Neuron[{}] to partial solution!", neuron_index);
   SynapseIterator<InputSynapseInterval> input_synapse(partial.input_data());
   previous_neuron_input_index = input_synapse.size();
   previous_neuron_input_source = neuron_input_none;
@@ -42,6 +43,10 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
     SynapseIterator<> weight_iterator(net.neuron_array(neuron_index).input_weights());
     SynapseIterator<InputSynapseInterval> input_iterator(net.neuron_array(neuron_index).input_indices());
     partial.mutable_output_data()->set_interval_size(partial.output_data().interval_size() + 1u);
+
+
+    RFASSERT_LOG("Network Input synapses number for Neuron: {}", net.neuron_array(neuron_index).input_indices_size());
+    RFASSERT_LOG("Network Weight synapses number for Neuron: {}", net.neuron_array(neuron_index).input_weights_size());
 
     /* Copy in Neuron parameters and weights from the net */
     partial.add_neuron_input_functions(net.neuron_array(neuron_index).input_function());
@@ -64,6 +69,7 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
 
     std::uint32_t current_backreach;
     input_iterator.iterate([&](InputSynapseInterval interval_synapse){
+      RFASSERT_LOG("Input synapse reach past loops: {}", interval_synapse.reach_past_loops());
       current_backreach = interval_synapse.reach_past_loops();
       if(interval_synapse.reach_past_loops() > max_reach_back)
         max_reach_back = interval_synapse.reach_past_loops();
@@ -106,6 +112,9 @@ std::pair<std::uint32_t,std::uint32_t> PartialSolutionBuilder::add_neuron_to_par
         }/* Neuron input was found internally in the @PartialSolution */
       }/* Neuron input was found in the @PartialSolution inputs, continue to look for it.. */
     });
+
+    RFASSERT_LOG("Partial solution Input synapses number for Neuron: {}", (partial.inside_indices_size() - index_synapse_previous_size));
+    RFASSERT_LOG("partial.inside_indices_size(): {}", partial.inside_indices_size());
 
     if(0 < (partial.inside_indices_size() - index_synapse_previous_size))
       partial.add_index_synapse_number(partial.inside_indices_size() - index_synapse_previous_size);

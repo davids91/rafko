@@ -15,6 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
+#include <map>
 #include <catch2/catch_test_macros.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
@@ -286,7 +287,7 @@ TEST_CASE("Ranged Synapse iteration","[synapse-iteration]"){
 /*###############################################################################################
  * Testing if synapse iterator equality operator produces correct output
  */
-TEST_CASE("Synapseiterator equaly","[synapse-iteration]"){
+TEST_CASE("Synapseiterator equality","[synapse-iteration]"){
   rafko_net::Neuron neuron1 = rafko_net::Neuron();
   rafko_net::Neuron neuron2 = rafko_net::Neuron();
   rafko_net::Neuron neuron3 = rafko_net::Neuron();
@@ -321,6 +322,33 @@ TEST_CASE("Synapseiterator equaly","[synapse-iteration]"){
   CHECK( rafko_net::SynapseIterator<>(neuron1.input_weights()) != rafko_net::SynapseIterator<>(neuron2.input_weights()) );
   CHECK( rafko_net::SynapseIterator<>(neuron1.input_weights()) != rafko_net::SynapseIterator<>(neuron3.input_weights()) );
   CHECK( rafko_net::SynapseIterator<>(neuron2.input_weights()) != rafko_net::SynapseIterator<>(neuron3.input_weights()) );
+}
+
+TEST_CASE("Testing Utility functions reach_back_loops and interval_size_of of SynapseIterator","[synapse-iteration]"){
+  std::vector<std::size_t> synapse_sizes(rand()%5u + 1u);
+  std::vector<std::uint32_t> synapse_reachbacks(synapse_sizes.size());
+  std::uint32_t overall_elements = 0u;
+  google::protobuf::RepeatedPtrField<rafko_net::InputSynapseInterval> synapses;
+  std::map<std::uint32_t,std::uint32_t> nth_to_size;
+  std::map<std::uint32_t,std::uint32_t> nth_to_reachback;
+  for(std::uint32_t synapse_index = 0; synapse_index < synapse_sizes.size(); ++synapse_index){
+    synapse_sizes[synapse_index] = rand()%100u;
+    synapse_reachbacks[synapse_index] = rand()%10u;
+    synapses.Add()->set_interval_size(synapse_sizes[synapse_index]);
+    synapses.Mutable(synapse_index)->set_starts(overall_elements);
+    synapses.Mutable(synapse_index)->set_reach_past_loops(synapse_reachbacks[synapse_index]);
+    for(std::uint32_t n = 0; n < synapse_sizes[synapse_index]; ++n){
+      nth_to_size.insert({overall_elements + n,synapse_sizes[synapse_index]});
+      nth_to_reachback.insert({overall_elements + n,synapse_reachbacks[synapse_index]});
+    }
+    overall_elements += synapse_sizes[synapse_index];
+  }
+  rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> iterator(synapses);
+  for(std::uint32_t variant = 0u; variant < 100u; ++variant){
+    std::uint32_t index = rand()%overall_elements;
+    REQUIRE( iterator.interval_size_of(index) == nth_to_size[index] );
+    REQUIRE( iterator.reach_past_loops<rafko_net::InputSynapseInterval>(index) == nth_to_reachback[index] );
+  }
 }
 
 } /* namespace sparse_library_test */

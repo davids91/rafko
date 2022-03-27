@@ -196,14 +196,14 @@ public:
    *
    * @return     The Synapse index under the @index-th step into the iteration
    */
-  int operator[](int index) const{
+  int operator[](uint32_t index) const{
     RFASSERT(0u < size());
     std::int32_t result_index;
     std::uint32_t previous_last_reached_index = 0;
-    std::int32_t iteration_helper = 0;
+    std::uint32_t iteration_helper = 0;
     std::uint32_t synapse_start = 0;
 
-    if(static_cast<std::int32_t>(last_reached_index) <= index){
+    if(last_reached_index <= index){
       synapse_start = last_reached_synapse;
       iteration_helper = last_reached_index;
     }else last_reached_synapse = 0;
@@ -229,15 +229,46 @@ public:
     return result_index;
   }
 
-  template<typename InputSynapseInterval>
-  int reach_past_loops(int index){
+  std::uint32_t interval_size_of(std::uint32_t nth_element){
     RFASSERT(0u < size());
-    std::int32_t result_reach;
+    std::uint32_t result_size;
     std::uint32_t previous_last_reached_index = 0;
-    std::int32_t iteration_helper = 0;
+    std::uint32_t iteration_helper = 0;
     std::uint32_t synapse_start = 0;
 
-    if(static_cast<std::int32_t>(last_reached_index) <= index){
+    if(last_reached_index <= nth_element){
+      synapse_start = last_reached_synapse;
+      iteration_helper = last_reached_index;
+    }else last_reached_synapse = 0;
+
+    iterate_terminatable([&](InputSynapseInterval interval_synapse){
+      ++last_reached_synapse;
+      last_reached_index = iteration_helper;
+      previous_last_reached_index = last_reached_index;
+      result_size = interval_synapse.interval_size();
+      return true;
+    },[&](std::int32_t synapse_index){
+      parameter_not_used(synapse_index);
+      if(iteration_helper < nth_element){
+        ++iteration_helper;
+        return true;
+      }else return false; /* queired nth_element reached, no need to continue */
+    },synapse_start);
+    RFASSERT(iteration_helper == nth_element);
+    --last_reached_synapse;
+    last_reached_index = previous_last_reached_index;
+    return result_size;
+  }
+
+  template<typename InputSynapseInterval>
+  std::uint32_t reach_past_loops(std::uint32_t nth_element){
+    RFASSERT(0u < size());
+    std::uint32_t result_reach;
+    std::uint32_t previous_last_reached_index = 0;
+    std::uint32_t iteration_helper = 0;
+    std::uint32_t synapse_start = 0;
+
+    if(last_reached_index <= nth_element){
       synapse_start = last_reached_synapse;
       iteration_helper = last_reached_index;
     }else last_reached_synapse = 0;
@@ -251,7 +282,7 @@ public:
       return true;
     },[&](std::int32_t synapse_index){
       parameter_not_used(synapse_index);
-      if(iteration_helper < index){
+      if(iteration_helper < nth_element){
         ++iteration_helper;
         return true;
       }else{
@@ -259,7 +290,7 @@ public:
         return false;
       }
     },synapse_start);
-    RFASSERT(iteration_helper == index);
+    RFASSERT(iteration_helper == nth_element);
     --last_reached_synapse;
     last_reached_index = previous_last_reached_index;
     return result_reach;
