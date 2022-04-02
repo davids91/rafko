@@ -59,7 +59,6 @@ TEST_CASE("Stress-testing big input takein", "[bigpic]"){
       std::vector<double> input(input_size, 5.0);
       rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
         .input_size(input_size).expected_input_range((1.0))
-        .set_recurrence_to_self()
         .allowed_transfer_functions_by_layer({
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_selu},
@@ -191,8 +190,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   /* Create nets */
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    // .set_recurrence_to_layer()
-    .set_recurrence_to_self()
+    .add_feature_to_layer(1, rafko_net::neuron_group_feature_boltzmann_knot)
     // .add_feature_to_layer(0, rafko_net::neuron_group_feature_l1_regularization)
     .add_feature_to_layer(0, rafko_net::neuron_group_feature_l2_regularization)
     // // .add_feature_to_layer(1, rafko_net::neuron_group_feature_l1_regularization)

@@ -148,28 +148,6 @@ public:
   }
 
   /**
-   * @brief      If supported, produced network will also contain for every @Neuron
-   *             its previous input, in case this function is called
-   *
-   * @return     builder reference for chaining
-   */
-  constexpr RafkoNetBuilder& set_recurrence_to_self(){
-    recurrence = network_recurrence_to_self;
-    return *this;
-  }
-
-  /**
-   * @brief      If supported, produced network will also contain for every layer
-   *             the activation of the layer from the previous run
-   *
-   * @return     builder reference for chaining
-   */
-  constexpr RafkoNetBuilder& set_recurrence_to_layer(){
-    recurrence = network_recurrence_to_layer;
-    return *this;
-  }
-
-  /**
    * @brief      Add a feature to the layer of the network to be built
    *
    * @param[in]   layer_index   The index of the Layer to set the features on
@@ -204,6 +182,20 @@ public:
    */
   RafkoNetBuilder& set_neuron_spike_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Spike_functions function){
     insert_into(arg_neuron_index_spike_functions, layer_index, layer_neuron_index, function);
+    return *this;
+  }
+
+  /**
+   * @brief      Makes the Neuron take input from itself in the previous run
+   *
+   * @param[in]   layer_index     The index of the Layer to set the features on
+   * @param[in]   neuron_index    The relative index of the neuron inside the layer
+   * @param[in]   feature         The function to set to the Neuron
+   *
+   * @return     builder reference for chaining
+   */
+  RafkoNetBuilder& add_neuron_recurrence(std::uint32_t layer_index, std::uint32_t layer_neuron_index, std::uint32_t past){
+    arg_neuron_index_recurrence.push_back({layer_index, layer_neuron_index, past});
     return *this;
   }
 
@@ -262,11 +254,11 @@ private:
   /**
    * @brief   Helper variables for features and optional Neuron parameters
    */
-  std::uint32_t recurrence = network_recurrence_unknown;
   std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
   std::vector< std::pair<std::uint32_t,Neuron_group_features> > layer_features;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Input_functions> > arg_neuron_index_input_functions;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Spike_functions> > arg_neuron_index_spike_functions;
+  std::vector< std::tuple<std::uint32_t,std::uint32_t,std::uint32_t> > arg_neuron_index_recurrence;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
@@ -371,7 +363,7 @@ private:
   ){
     std::sort( /* starting from the beginning of the array.. */
       feature.begin(), /* ..because builder continually removes the irrelevant front parts.. */
-      std::find_if(feature.begin(),feature.end(),
+      std::find_if(feature.begin(),feature.end(), /* .. so the first index for the next layer is the end of the part we need to sort */
         [current_layer_index](const std::tuple<std::uint32_t,std::uint32_t,T>& element){
           return std::get<0>(element) == (current_layer_index + 1u); /* ..until the part of the array which starts at the next layer. */
         }
@@ -391,8 +383,8 @@ private:
    *            if it is set by the provided feature vector.
    *            Assumes that the vector is sorted by the layer index in ascending order;
    *            and the elements are also sorted in ascending order by neuron index per layer!
-   *            Also assumes that one Neuron can have at most 1 feature set to it by the given vector,
-   *            i.e.: no neurons have multiple features set to them
+   *            Also assumes that the feature is available to the given layer_neuron_index
+   *            if, and only if `feature.front()` contains the index.
    *
    * @param         feature                 A vector of {{layer_index,layer_neuron_index},T} pairs, where T is the feature the builder stores
    * @param[in]     current_layer_index     The layer index determines which elements inside the feature are deprecated and to be removed
@@ -432,6 +424,7 @@ private:
       feature.push_back({layer_index, layer_neuron_index,function});
       else *found_element = {layer_index, layer_neuron_index, function};
   }
+
 };
 
 } /* namespace rafko_net */

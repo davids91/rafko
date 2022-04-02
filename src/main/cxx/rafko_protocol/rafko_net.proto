@@ -59,17 +59,6 @@ enum Spike_functions{
   spike_function_end= 512;
 }
 
-/** @brief      Network basically describes the connections a recurrent network has
- *              with the past runs. This enumeration is for a utility which is for
- *              testing purposes only. Recurrences described here affect
- *              only the rpc @build_network in the service @RafkoDeepLearning
- */
-enum Network_recurrence{
-  network_recurrence_unknown = 0;
-  network_recurrence_to_self = 1;
-  network_recurrence_to_layer = 2;
-}
-
 /** @brief      Different features a group of Neurons(may even the whole network) might have.
  *              Each Feature is either relevant to:
  *                - Solution: Modifying the activation values of Neurons during the solution of the network
@@ -87,7 +76,8 @@ enum Neuron_group_features{
   neuron_group_feature_disentanglement = 225;
   neuron_group_feature_l1_regularization = 275;
   neuron_group_feature_l2_regularization = 276;
-  /* Currently unused: 300 - 399 */
+  /* Structural features: 300 - 399 */
+  neuron_group_feature_boltzmann_knot = 350;
   neuron_group_feature_end = 400;
 } /*!Note: I hope I reserved room for enough features... */
 
@@ -152,8 +142,10 @@ message FeatureGroup{
   repeated IndexSynapseInterval relevant_neurons = 10;
 }
 
-/** @brief      A sparse net implementation containing the
- *              Neurons and optimization cache files
+/** @brief      A sparse net implementation containing the Neurons and weights
+ *              Please do not: Add Neuron or dependent Neuron as present input for itself.
+ *              (It is OK to add as "past" inputs)
+ *
  */
 message RafkoNet{
   uint32 input_data_size = 10; /* Number of inputs (floating point numbers) accepted by the Neural network */

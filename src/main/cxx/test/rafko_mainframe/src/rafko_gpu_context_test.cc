@@ -144,7 +144,9 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
       .input_size(2).expected_input_range((1.0))
-      .set_recurrence_to_layer()
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -250,7 +252,9 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
       .input_size(2).expected_input_range((1.0))
-      .set_recurrence_to_layer()
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -313,7 +317,9 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
       .input_size(2).expected_input_range((1.0))
-      .set_recurrence_to_layer()
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -367,7 +373,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
   }/*for(10 variant)*/
 }
 
-TEST_CASE("Testing full evaluation with the GPU context with multiple labels and sequential data","[context][GPU][evaluate][multi-label][sequence]"){
+TEST_CASE("Testing full evaluation with the GPU context with multiple labels and sequential data","[context][GPU][evaluate][multi-label][sequence][memory]"){
   google::protobuf::Arena arena;
   std::uint32_t sequence_size = rand()%3 + 1;
   std::uint32_t number_of_sequences = rand()%10 + 2;
@@ -379,7 +385,9 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
       .input_size(2).expected_input_range((1.0))
-      .set_recurrence_to_layer()
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -445,7 +453,9 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
       .input_size(2).expected_input_range((1.0))
-      .set_recurrence_to_layer()
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -605,7 +615,9 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    .set_recurrence_to_layer()
+    .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+    .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+    .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
     .allowed_transfer_functions_by_layer(
       {
         {rafko_net::transfer_function_identity},
@@ -719,7 +731,6 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
       {
         {rafko_net::transfer_function_identity},
@@ -786,7 +797,6 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
       {
         {rafko_net::transfer_function_identity},

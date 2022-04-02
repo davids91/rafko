@@ -45,7 +45,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  double expected_label = (50.0);
+  double expected_label = 50.0;
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
   std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
@@ -83,6 +83,53 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   CHECK( Catch::Approx(environment_error).margin(0.00000000000001) == -(error_sum / (sample_number * sequence_size)) );
 }
 
+TEST_CASE("Testing if CPU context produces correct error values upon full evaluation when using inputs from the past", "[context][CPU][evaluation][memory]"){
+  std::uint32_t sample_number = 50;
+  std::uint32_t sequence_size = 6;
+  google::protobuf::Arena arena;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10);
+  double expected_label = 50.0;
+  rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features_and_recurrence(1u, settings);
+  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
+  std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
+  rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
+  rafko_gym::RafkoCost reference_cost(settings, cost);
+  rafko_mainframe::RafkoCPUContext context(*network, settings);
+  context.set_objective(std::make_unique<rafko_gym::RafkoCost>(settings, cost));
+  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
+
+  /* Set some error and see if the environment produces the expected */
+  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
+  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(*solution, settings).build());
+
+  double error_sum = (0.0);
+  std::uint32_t raw_inputs_index = 0;
+  std::uint32_t raw_label_index = 0;
+  reference_solver->set_eval_mode(true);
+  for(std::uint32_t sequence_index = 0; sequence_index < dataset_wrap.get_number_of_sequences(); ++sequence_index){
+    bool reset = true;
+    for(std::uint32_t prefill_index = 0; prefill_index < dataset_wrap.get_prefill_inputs_number(); ++prefill_index){
+      (void)reference_solver->solve(dataset_wrap.get_input_sample(raw_inputs_index), reset);
+      if(reset)reset = false;
+      ++raw_inputs_index;
+    }
+    for(std::uint32_t label_inside_sequence = 0; label_inside_sequence < dataset_wrap.get_sequence_size(); ++label_inside_sequence){
+      rafko_utilities::ConstVectorSubrange<> neuron_output = reference_solver->solve(dataset_wrap.get_input_sample(raw_inputs_index), reset);
+      double err = reference_cost.set_feature_for_label( dataset_wrap, raw_label_index, {neuron_output.begin(),neuron_output.end()} );
+      error_sum += err;
+      if(reset)reset = false;
+      ++raw_inputs_index;
+      ++raw_label_index;
+    }
+  }
+  double environment_error = context.full_evaluation();
+  CHECK( Catch::Approx(environment_error).margin(0.00000000000001) == -(error_sum / (sample_number * sequence_size)) );
+}
+
+
 TEST_CASE("Testing if CPU context produces correct error values upon stochastic evaluation", "[context][CPU][evaluation]"){
   std::uint32_t seed = rand() + 1;
   std::uint32_t sample_number = 50;
@@ -92,7 +139,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
-  double expected_label = (50.0);
+  double expected_label = 50.0;
   rafko_net::RafkoNet* network = rafko_test::generate_random_net_with_softmax_features(1u, settings);
   std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network->input_data_size(), network->output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
@@ -156,7 +203,6 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
       {
         {rafko_net::transfer_function_identity},
@@ -187,7 +233,6 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    .set_recurrence_to_layer()
     .allowed_transfer_functions_by_layer(
       {
         {rafko_net::transfer_function_identity},

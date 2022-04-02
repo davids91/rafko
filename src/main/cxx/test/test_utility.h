@@ -139,6 +139,17 @@ extern void check_data_match(std::vector<double>& sample_data, std::vector<doubl
 extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings);
 
 /**
+ * @brief      Generates a random Fully connected Dense network with some Layers set to have the softmax feature;
+ *             And some Neurons + Layers having inputs from the past
+ *
+ * @param[in]  input_size       The size of the input vector accepted by the produces network
+ * @param      settings         Contextual information
+ *
+ * @return     the generated network to be owned by the caller
+ */
+extern rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings);
+
+/**
  * @brief      Creates a random dataset based on the given parameters
  *
  * @param[in]  input_size         The number of expected inputs are stored for the @DataSet

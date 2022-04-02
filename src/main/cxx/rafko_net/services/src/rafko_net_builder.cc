@@ -19,6 +19,7 @@
 
 #include <time.h>
 
+#include <numeric>
 #include <algorithm>
 #include <stdexcept>
 #include <string>
@@ -46,7 +47,6 @@ RafkoNetBuilder& RafkoNetBuilder::add_feature_to_layer(std::uint32_t layer_index
 
 RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
   std::uint32_t previous_size = 0;
-  std::uint32_t numNeurons = 0;
 
   std::sort(arg_neuron_index_input_functions.begin(),arg_neuron_index_input_functions.end(),
   [](const std::tuple<std::uint32_t,std::uint32_t,Input_functions>& a, std::tuple<std::uint32_t,std::uint32_t,Input_functions>& b){
@@ -66,24 +66,6 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
     + std::string(" vs ") + std::to_string(arg_allowed_transfer_functions_by_layer.size())
   );
 
-  /* Calculate number of weights needed overall
-   * - Input Layer shall have a weight for every input for every neuron
-   * - Input Layer shall have a weight for every bias and memory_filter for every neuron
-   */
-  std::uint64_t numWeights = (layer_sizes[0] * arg_input_size) + (2 * layer_sizes[0]); /* The first layer only takes input from the @RafkoNet input data */
-  for(std::uint32_t layerSize : layer_sizes){
-    if(0 == layerSize) throw std::runtime_error("Unable to construct zero sized layer!");
-
-    if(0 != numNeurons){ /* The first layer is already included in numWeights */
-      numWeights += previous_size * layerSize; /* Calculate the number of weights needed */
-      numWeights += layerSize * 2; /* Every neuron shall store its bias and memory_filter amongst the weights */
-    }
-    if(network_recurrence_to_self == recurrence)numWeights += layerSize; /* Recurrence to self */
-    else if(network_recurrence_to_layer == recurrence)numWeights += (layerSize * layerSize); /* Recurrence to layer */
-    previous_size = layerSize;
-    numNeurons += layerSize; /* Calculate the number of elements needed */
-  }
-
   if( /* Required arguments are set */
     (is_input_size_set && is_expected_input_range_set)
     &&(
@@ -91,10 +73,8 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
       ||(arg_output_neuron_number == layer_sizes.back()) /* Or compliant to the Dense layer */
     )
   ){
-    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(settings.get_arena_ptr());
     std::uint32_t layer_input_starts_at = 0;
-    std::uint64_t weightIt = 0;
-    std::uint64_t neurIt = 0;
+    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(settings.get_arena_ptr());
     double expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);
 
     /* sort the requested features by layer */
@@ -108,77 +88,83 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
 
     previous_size = arg_input_size;
 
-    if(!is_weight_initializer_set){
+    if(!is_weight_initializer_set)
       weight_initializer(std::make_shared<DenseNetWeightInitializer>(settings));
-    }
 
-    arg_weight_table = std::vector<double>(numWeights);
-    arg_neuron_array = std::vector<Neuron>(numNeurons);
+    std::uint32_t neuron_number_estimation = std::accumulate(layer_sizes.begin(), layer_sizes.end(), 0.0);
+    arg_weight_table = std::vector<double>();
+    arg_neuron_array = std::vector<Neuron>();
+    arg_neuron_array.reserve(neuron_number_estimation);
+    arg_weight_table.reserve(neuron_number_estimation * neuron_number_estimation);
 
     previous_size = arg_input_size;
     for(std::uint32_t layer_index = 0; layer_index < layer_sizes.size(); layer_index++)
     { /* Create the Dense Layers */
+      if(0 == layer_sizes[layer_index]) throw std::runtime_error("Unable to construct zero sized layer!");
       invalidate(arg_neuron_index_input_functions, layer_index);
       invalidate(arg_neuron_index_spike_functions, layer_index);
+      invalidate(arg_neuron_index_recurrence, layer_index);
 
       /* Configuring the weight_initializerializer for this layer */
-      arg_weight_initer->set(
-        (0 == layer_index)?(arg_input_size):(layer_sizes[layer_index-1]),
-        expPrevLayerOutput
-      );
+      arg_weight_initer->set((0 == layer_index)?(arg_input_size):(layer_sizes[layer_index-1]),(expPrevLayerOutput));
 
       /* Store the features for this layer */
+      bool layer_is_boltzmann_knot = false;
       while( (0u < layer_features.size())&&(std::get<0>(layer_features.front()) == layer_index) ){
+        layer_is_boltzmann_knot = (neuron_group_feature_boltzmann_knot == std::get<1>(layer_features.front()));
+        RFASSERT_LOG(
+          "Storing feature {} for the network starting from Neuron[{}]",
+          Neuron_group_features_Name(std::get<1>(layer_features.front())),
+          (0u < layer_index)?(layer_input_starts_at + layer_sizes[layer_index - 1]):(0u)
+        );
         FeatureGroup& feature_to_add = *ret->add_neuron_group_features();
         feature_to_add.set_feature(std::get<1>(layer_features.front()));
         feature_to_add.add_relevant_neurons()->set_interval_size(layer_sizes[layer_index]);
-        feature_to_add.mutable_relevant_neurons(0)->set_starts(neurIt);
+
+        if(0u < layer_index)
+          feature_to_add.mutable_relevant_neurons(0)->set_starts( layer_input_starts_at + layer_sizes[layer_index - 1] );
+          else feature_to_add.mutable_relevant_neurons(0)->set_starts(0u);
+
         layer_features.erase(layer_features.begin());
       }
 
       /* Sort the input function requests based on Neuron indices this time */
       sort_next_layer(arg_neuron_index_input_functions, layer_index);
       sort_next_layer(arg_neuron_index_spike_functions, layer_index);
+      sort_next_layer(arg_neuron_index_recurrence, layer_index);
 
       /* Add the Neurons */
       expPrevLayerOutput = 0;
       for(std::uint32_t layer_neuron_index = 0; layer_neuron_index < layer_sizes[layer_index]; layer_neuron_index++){
+        arg_neuron_array.push_back(Neuron());
         std::optional<Input_functions> neuron_input_function = get_value(
           arg_neuron_index_input_functions, layer_neuron_index
         );
         if(neuron_input_function.has_value())
-          arg_neuron_array[neurIt].set_input_function( InputFunction::next({neuron_input_function.value()}) );
-          else arg_neuron_array[neurIt].set_input_function(InputFunction::next());
+          arg_neuron_array.back().set_input_function( InputFunction::next({neuron_input_function.value()}) );
+          else arg_neuron_array.back().set_input_function(InputFunction::next());
         invalidate(arg_neuron_index_input_functions, layer_index, layer_neuron_index);
 
         if(is_allowed_transfer_functions_by_layer_set)
-          arg_neuron_array[neurIt].set_transfer_function(TransferFunction::next(arg_allowed_transfer_functions_by_layer[layer_index]));
-        else arg_neuron_array[neurIt].set_transfer_function(TransferFunction::next());
+          arg_neuron_array.back().set_transfer_function(TransferFunction::next(arg_allowed_transfer_functions_by_layer[layer_index]));
+        else arg_neuron_array.back().set_transfer_function(TransferFunction::next());
 
         std::optional<Spike_functions> neuron_spike_function = get_value(
           arg_neuron_index_spike_functions, layer_neuron_index
         );
         if(neuron_spike_function.has_value())
-          arg_neuron_array[neurIt].set_spike_function(SpikeFunction::next({neuron_spike_function.value()}));
-          else arg_neuron_array[neurIt].set_spike_function(SpikeFunction::next());
+          arg_neuron_array.back().set_spike_function(SpikeFunction::next({neuron_spike_function.value()}));
+          else arg_neuron_array.back().set_spike_function(SpikeFunction::next());
         invalidate(arg_neuron_index_spike_functions, layer_index, layer_neuron_index);
 
         /* Storing the expected output of this Net */
         if(0 < layer_index)expPrevLayerOutput += TransferFunction::get_average_output_range(
-          arg_neuron_array[neurIt].transfer_function()
+          arg_neuron_array.back().transfer_function()
         );
 
-        /* Add the weights for the previous layer to the built net */
-        IndexSynapseInterval& weight_synapse = *arg_neuron_array[neurIt].add_input_weights();
-        weight_synapse.set_starts(weightIt);
-        weight_synapse.set_interval_size(previous_size + 1u); /* Previous layer + the spike function weight */
-
-        /* Add the spike function weight as the first weight of the Neuron */
-        arg_weight_table[weightIt] = arg_weight_initer->next_memory_filter();
-        ++weightIt;
-
-        {
-          InputSynapseInterval& interval = *arg_neuron_array[neurIt].add_input_indices();
+        std::uint32_t input_weights_to_add = previous_size; /* starting value is the previous layer  inputs ( below ) */
+        { /* Add the previous layer as an input */
+          InputSynapseInterval& interval = *arg_neuron_array.back().add_input_indices();
           if(0 == layer_index){
             interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0));
           }else{
@@ -188,59 +174,46 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
           interval.set_reach_past_loops(0);
         }
 
-        /* Add the input weights for the previous layer */
-        for(std::uint32_t neuron_weight_iterator = 0; neuron_weight_iterator < previous_size; neuron_weight_iterator++){
-          arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
-            arg_neuron_array[neurIt].transfer_function()
-          );
-          weightIt++;
-        }
-
-        /* Add recurrence of the Neuron */
-        if(network_recurrence_to_self == recurrence){ /* recurrence to self */
-          weight_synapse.set_interval_size(weight_synapse.interval_size() + 1 + 1); /* Update the weight synapse size: self-recurrence + a bias */
-
-          /* Add the weight */
-          arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
-            arg_neuron_array[neurIt].transfer_function()
-          );
-          weightIt++;
-
-          { /* Add the input synapse */
-            InputSynapseInterval& interval = *arg_neuron_array[neurIt].add_input_indices();
-            interval.set_starts(neurIt); /* self-recurrence, an additional input snypse */
-            interval.set_interval_size(1); /* of a lone input as the actual @Neuron itself */
-            interval.set_reach_past_loops(1);
-          }
-        }else if(network_recurrence_to_layer == recurrence){ /* recurrence to layer */
-          weight_synapse.set_interval_size(weight_synapse.interval_size() + layer_sizes[layer_index] + 1); /* Update the weight synapse size: Current layer + a bias */
-
-          /* Add the weights */
-          for(std::uint32_t neuron_weight_iterator = 0; neuron_weight_iterator < layer_sizes[layer_index]; neuron_weight_iterator++){
-            arg_weight_table[weightIt] = arg_weight_initer->next_weight_for(
-              arg_neuron_array[neurIt].transfer_function()
-            );
-            weightIt++;
-          }
-
-          { /* Add the input synapse */
-            InputSynapseInterval& interval = *arg_neuron_array[neurIt].add_input_indices();
-            if(0 < layer_index)interval.set_starts(layer_input_starts_at + layer_sizes[layer_index-1]); /* starts at the beginning of the current layer */
-            else interval.set_starts(layer_input_starts_at); /* starts at the beginning of the current layer */
+        if(layer_is_boltzmann_knot){ /* recurrence to layer */
+            InputSynapseInterval& interval = *arg_neuron_array.back().add_input_indices();
+            if(0 < layer_index)
+              interval.set_starts(layer_input_starts_at + layer_sizes[layer_index - 1]); /* starts at the beginning of the current layer */
+              else interval.set_starts(layer_input_starts_at); /* starts at the beginning of the current layer */
             interval.set_interval_size(layer_sizes[layer_index]); /* takes up the whole layer */
             interval.set_reach_past_loops(1);
-          }
-        }else{ /* Only bias */
-          weight_synapse.set_interval_size(weight_synapse.interval_size()+1); /* Update the weight synapse size: 1 bias */
+            input_weights_to_add += layer_sizes[layer_index];
         }
-        arg_weight_table[weightIt] = arg_weight_initer->next_bias();
-        weightIt++;
-        neurIt++; /* Step the neuron iterator forward */
-      }
+
+        /* Add self-recurrences to Neuron */
+        std::optional<std::uint32_t> past_index = get_value(arg_neuron_index_recurrence, layer_neuron_index);
+        while(past_index.has_value()){ /* recurrence to self */
+          ++input_weights_to_add;
+
+          /* Add the input synapse */
+          InputSynapseInterval& interval = *arg_neuron_array.back().add_input_indices();
+          interval.set_starts(layer_input_starts_at + layer_neuron_index); /* self-recurrence, an additional input snypse */
+          interval.set_interval_size(1u); /* of a lone input as the actual @Neuron itself */
+          interval.set_reach_past_loops(past_index.value());
+
+          /* pop the current and try to get the next recurrent value */
+          arg_neuron_index_recurrence.erase(arg_neuron_index_recurrence.begin());
+          past_index = get_value(arg_neuron_index_recurrence, layer_neuron_index);
+        }
+
+        /* Add the weights for the previous layer to the built net */
+        IndexSynapseInterval& weight_synapse = *arg_neuron_array.back().add_input_weights();
+        weight_synapse.set_starts(arg_weight_table.size());
+        weight_synapse.set_interval_size(input_weights_to_add + 2u); /* input weights plus bias plus the spike weight */
+        arg_weight_table.push_back(arg_weight_initer->next_memory_filter()); /* Add the spike function weight as the first weight of the Neuron */
+        arg_weight_table.resize(arg_weight_table.size() + input_weights_to_add); /* Add the weight for all the inputs */
+        std::generate(arg_weight_table.end() - input_weights_to_add, arg_weight_table.end(), [this](){
+          return arg_weight_initer->next_weight_for( arg_neuron_array.back().transfer_function() );
+        });
+        arg_weight_table.push_back(arg_weight_initer->next_bias()); /* Add bias weight */
+      }/*for(neurons inside the layer)*/
 
       if(0 == layer_index){
         expPrevLayerOutput = arg_expected_input_range;
-        layer_input_starts_at = 0;
       }else{
         expPrevLayerOutput /= static_cast<double>(layer_sizes[layer_index]);
         layer_input_starts_at += previous_size;

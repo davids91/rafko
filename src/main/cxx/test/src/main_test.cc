@@ -462,6 +462,40 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features(std::uint32_t inp
   return builder.dense_layers(net_structure);
 }
 
+rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings){
+  std::vector<std::uint32_t> net_structure;
+  while((rand()%10 < 9)||(4 > net_structure.size()))
+    net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
+
+  std::uint8_t num_of_features = rand()%(net_structure.size()/2) + 1u;
+  rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
+    .input_size(input_size)
+    .expected_input_range((5.0));
+
+  for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+    if(0 == (rand()%2)) /* Add Neuron recurrence by chance */
+      for(std::uint32_t layer_neuron_index = 0u; layer_neuron_index < net_structure[layer_index]; ++layer_neuron_index)
+        if(0 == (rand()%2)) builder.add_neuron_recurrence(layer_index, layer_neuron_index, rand()%5);
+    if(0 == (rand()%2)) /* Add boltzmann knot feature by chance */
+      builder.add_feature_to_layer(layer_index, rafko_net::neuron_group_feature_boltzmann_knot);
+  }
+
+  std::uint8_t layer_of_feature_index = 0;
+  std::uint32_t layer_start_index = 0;
+  std::uint8_t feature_index;
+  for(feature_index = 0u; feature_index < num_of_features; feature_index++){
+    if(layer_of_feature_index >= net_structure.size())break;
+    std::uint8_t layer_diff = 1u + ((rand()%(net_structure.size() - layer_of_feature_index)) / 2);
+    for(std::uint8_t i = 0; i < layer_diff; ++i){
+      layer_start_index += net_structure[layer_of_feature_index + i];
+    }
+    layer_of_feature_index += layer_diff;
+    builder.add_feature_to_layer(layer_of_feature_index, rafko_net::neuron_group_feature_softmax);
+  }
+
+  return builder.dense_layers(net_structure);
+}
+
 std::unique_ptr<rafko_gym::DataSet> create_dataset(
   std::uint32_t input_size, std::uint32_t feature_size,
   std::uint32_t sample_number, std::uint32_t sequence_size, std::uint32_t prefill_size,

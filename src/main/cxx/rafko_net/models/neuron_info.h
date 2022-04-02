@@ -73,6 +73,7 @@ public:
       case neuron_group_feature_dropout_regularization: return true;
       case neuron_group_feature_l1_regularization: return false;
       case neuron_group_feature_l2_regularization: return false;
+      case neuron_group_feature_boltzmann_knot: return false;
       default: return false;
     }
   }
@@ -89,6 +90,7 @@ public:
       case neuron_group_feature_dropout_regularization: return false;
       case neuron_group_feature_l1_regularization: return true;
       case neuron_group_feature_l2_regularization: return true;
+      case neuron_group_feature_boltzmann_knot: return true;
       default: return false;
     }
   }
@@ -105,6 +107,24 @@ public:
       case neuron_group_feature_dropout_regularization: return true;
       case neuron_group_feature_l1_regularization: return true;
       case neuron_group_feature_l2_regularization: return true;
+      case neuron_group_feature_boltzmann_knot: return true;
+      default: return false;
+    }
+  }
+
+  /**
+   * @brief      Determines whether the given feature is relevant to the structure of the Neural Network
+   *
+   * @param[in]  feature  The feature to be considered
+   */
+  static constexpr bool is_feature_relevant_to_structure(Neuron_group_features feature){
+    switch(feature){
+      case neuron_group_feature_softmax: return false;
+      case neuron_group_feature_disentanglement: return false;
+      case neuron_group_feature_dropout_regularization: return false;
+      case neuron_group_feature_l1_regularization: return false;
+      case neuron_group_feature_l2_regularization: return false;
+      case neuron_group_feature_boltzmann_knot: return true;
       default: return false;
     }
   }

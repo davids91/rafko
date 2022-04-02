@@ -104,16 +104,16 @@ void test_solution_solver_multithread(std::uint16_t threads){
   for(std::uint8_t variant_iterator = 0; variant_iterator < 10u; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights biases and memory filters */
       for(std::int32_t i = 0; i < solution.partial_solutions(0).weight_table_size(); ++i){
-        solution.mutable_partial_solutions(0)->set_weight_table(i,static_cast<double>(rand()%11) / (10.0));
+        solution.mutable_partial_solutions(0)->set_weight_table(i,static_cast<double>(rand()%11) / 10.0);
       } /* Modify weights */
       for(std::int32_t i = 0; i < solution.partial_solutions(1).weight_table_size(); ++i){
-        solution.mutable_partial_solutions(1)->set_weight_table(i,static_cast<double>(rand()%11) / (10.0));
+        solution.mutable_partial_solutions(1)->set_weight_table(i,static_cast<double>(rand()%11) / 10.0);
       } /* Modify weights */
       for(std::int32_t i = 0; i < solution.partial_solutions(2).weight_table_size(); ++i){
-        solution.mutable_partial_solutions(2)->set_weight_table(i,static_cast<double>(rand()%11) / (10.0));
+        solution.mutable_partial_solutions(2)->set_weight_table(i,static_cast<double>(rand()%11) / 10.0);
       } /* Modify weights */
       for(std::int32_t i = 0; i < solution.partial_solutions(3).weight_table_size(); ++i){
-        solution.mutable_partial_solutions(3)->set_weight_table(i,static_cast<double>(rand()%11) / (10.0));
+        solution.mutable_partial_solutions(3)->set_weight_table(i,static_cast<double>(rand()%11) / 10.0);
       } /* Modify weights */
 
       /* Modify transfer functions */
@@ -171,43 +171,36 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   .set_max_solve_threads(4).set_device_max_megabytes(2048)
   .set_arena_ptr(arena);
   std::vector<std::uint32_t> net_structure = {20,40,30,10,20};
-  std::vector<double> net_input = {(10.0),(20.0),(30.0),(40.0),(50.0)};
+  std::vector<double> net_input = {10.0,20.0,30.0,40.0,50.0};
 
-  /* Build the described net */
-  rafko_net::RafkoNet* net = rafko_net::RafkoNetBuilder(settings).input_size(5)
-    .expected_input_range((5.0)).dense_layers(net_structure);
-
-  /* Generate solution from Net */
+  /* Build the described net and generate a solution from it */
+  rafko_net::RafkoNet* net = rafko_net::RafkoNetBuilder(settings).input_size(5u)
+    .expected_input_range((5.0))
+    .dense_layers(net_structure);
   std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*net);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   std::unique_ptr<rafko_net::SolutionSolver> solver(rafko_net::SolutionSolver::Builder(*solution, settings).build());
-
   rafko_utilities::ConstVectorSubrange<> neuron_data = solver->solve(net_input, true);
-  std::vector<double> result = {
-    neuron_data.end() - solver->get_solution().output_neuron_number(),
-    neuron_data.end()
-  };
+  std::vector<double> result = {neuron_data.end() - solver->get_solution().output_neuron_number(), neuron_data.end()};
   std::vector<double> expected_neuron_data = std::vector<double>(net->neuron_array_size());
   rafko_test::manaual_fully_connected_network_result(net_input, {}, expected_neuron_data, net_structure, *net);
   std::vector<double> expected_result = {expected_neuron_data.end() - net->output_neuron_number(), expected_neuron_data.end()};
+
   /* Verify if the calculated values match the expected ones */
   REQUIRE( net_structure.back() == result.size() );
   REQUIRE( expected_result.size() == result.size() );
   for(std::uint32_t result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
-    CHECK( Catch::Approx(result[result_iterator]).epsilon((0.00000000000001)) == expected_result[result_iterator]);
+    REQUIRE( Catch::Approx(result[result_iterator]).epsilon((0.00000000000001)) == expected_result[result_iterator]);
 
   /* Re-veriy with guaranteed multiple partial solutions */
-  double solution_size_mb = solution->SpaceUsedLong() /* Bytes */* (1024.0) /* KB */* (1024.0) /* MB */;
-  (void)settings.set_device_max_megabytes(solution_size_mb/(4.0));
+  double solution_size_mb = solution->SpaceUsedLong() /* Bytes */* 1024.0 /* KB */* 1024.0 /* MB */;
+  (void)settings.set_device_max_megabytes(solution_size_mb/4.0);
   std::unique_ptr<rafko_net::Solution> solution2 = rafko_net::SolutionBuilder(settings).build(*net);
 
   std::unique_ptr<rafko_net::SolutionSolver> solver2(rafko_net::SolutionSolver::Builder(*solution2, settings).build());
   rafko_utilities::ConstVectorSubrange<> neuron_data2 = solver2->solve(net_input, true);
-  result = {
-    neuron_data2.end() - solver2->get_solution().output_neuron_number(),
-    neuron_data2.end()
-  };
+  result = { neuron_data2.end() - solver2->get_solution().output_neuron_number(), neuron_data2.end() };
 
   /* Verify once more if the calculated values match the expected ones */
   for(std::uint32_t result_iterator = 0; result_iterator < expected_result.size(); ++result_iterator)
@@ -226,20 +219,24 @@ TEST_CASE("Solution Solver test based on Fully Connected Dense Net", "[solve][bu
  * Testing if the solution solver produces correct data for Networks generated
  * with connections of memories of the past
  *//* The utility function returns with the number of megabytes required for the complete Solution */
-double testing_nets_with_memory_manually(google::protobuf::Arena* arena, double max_space_mb, std::uint32_t recurrence){
+double testing_nets_with_memory_manually(
+  google::protobuf::Arena* arena, double max_space_mb,
+  bool recursion, bool boltzman_knot
+){
   std::vector<std::uint32_t> net_structure = {20,30,40,30,20};
   std::vector<double> net_input = {
-    (10.0),(20.0),(30.0),(40.0),(50.0)
+    10.0,20.0,30.0,40.0,50.0
   };
 
   /* Build the above described net */
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(arena).set_device_max_megabytes(max_space_mb);
   rafko_net::RafkoNetBuilder net_builder = rafko_net::RafkoNetBuilder(settings);
   net_builder.input_size(5).expected_input_range((5.0));
-  if(rafko_net::network_recurrence_to_self == recurrence)
-    net_builder.set_recurrence_to_self();
-  else if(rafko_net::network_recurrence_to_layer == recurrence)
-    net_builder.set_recurrence_to_layer();
+
+  /* Add inputs from the past */
+  std::uint32_t layer_index = rand()%net_structure.size();
+  if(recursion) net_builder.add_neuron_recurrence(layer_index, rand()%net_structure[layer_index], 1u);
+  if(boltzman_knot) net_builder.add_feature_to_layer(layer_index, rafko_net::neuron_group_feature_boltzmann_knot);
 
   rafko_net::RafkoNet* net = net_builder.dense_layers(net_structure);
 
@@ -279,7 +276,7 @@ double testing_nets_with_memory_manually(google::protobuf::Arena* arena, double 
   }
 
   /* Return with the size of the overall solution */
-  double space_used_mb = solution->SpaceUsedLong() /* Bytes */* (1024.0) /* KB */* (1024.0) /* MB */;
+  double space_used_mb = solution->SpaceUsedLong() /* Bytes */* 1024.0 /* KB */* 1024.0 /* MB */;
 
   if(nullptr == settings.get_arena_ptr()){
     delete net;
@@ -290,12 +287,12 @@ double testing_nets_with_memory_manually(google::protobuf::Arena* arena, double 
 
 TEST_CASE("Solution Solver test with memory", "[solve][memory]"){
   /* Test if the network is producing correct results when neurons take past-inputs from themselves ( 0x01 ID given to builder ) */
-  double megabytes_used = testing_nets_with_memory_manually(nullptr, ((4.0) * (1024.0)), 0x01);
-  (void)testing_nets_with_memory_manually(nullptr, megabytes_used / (4.0),0x01); /* Even if the net needs to be splitted */
+  double megabytes_used = testing_nets_with_memory_manually(nullptr, (4.0 * 1024.0), true, false);
+  (void)testing_nets_with_memory_manually(nullptr, megabytes_used / 4.0, true, false); /* Even if the net needs to be splitted */
 
   /* Test if the network is producing correct results when neurons take past-inputs from their layers ( 0x02 ID given to builder ) */
-  megabytes_used = testing_nets_with_memory_manually(nullptr, ((4.0) * (1024.0)), 0x02);
-  (void)testing_nets_with_memory_manually(nullptr, megabytes_used / (4.0),0x02); /* Even if the net needs to be splitted */
+  megabytes_used = testing_nets_with_memory_manually(nullptr, (4.0 * 1024.0), true, true);
+  (void)testing_nets_with_memory_manually(nullptr, megabytes_used / 4.0, true, true); /* Even if the net needs to be splitted */
 }
 
 /*###############################################################################################
@@ -305,7 +302,7 @@ TEST_CASE("Solution Solver test with memory", "[solve][memory]"){
 void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(arena);
   std::vector<double> net_input = {
-    (10.0),(20.0),(30.0),(40.0),(50.0)
+    10.0,20.0,30.0,40.0,50.0
   };
   std::vector<std::uint32_t> network_layout_sizes = {10,30,20};
 
@@ -329,7 +326,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
      solution = rafko_net::SolutionBuilder(settings).build(*network)
   );
   settings.set_device_max_megabytes( /* Introduce segmentation into the solution to test roboustness */
-    (solution->SpaceUsedLong() /* Bytes */ / (1024.0) /* KB */ / (1024.0) /* MB */)/(4.0)
+    (solution->SpaceUsedLong() /* Bytes */ / 1024.0 /* KB */ / 1024.0 /* MB */)/4.0
   );
   REQUIRE_NOTHROW(
      solution = rafko_net::SolutionBuilder(settings).build(*network)
@@ -439,7 +436,7 @@ TEST_CASE("Solution Solver test with Generated fully connected network", "[solve
 TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
   std::vector<std::uint32_t> net_structure = {20,30,40,30,20};
   std::vector<double> net_input = {
-    (10.0),(20.0),(30.0),(40.0),(50.0)
+    10.0,20.0,30.0,40.0,50.0
   };
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings();
   std::unique_ptr<rafko_net::RafkoNet> network = std::unique_ptr<rafko_net::RafkoNet>(rafko_net::RafkoNetBuilder(settings)
@@ -483,7 +480,7 @@ TEST_CASE("Solution Solver memory test", "[solve][memory]"){
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings();
   std::unique_ptr<rafko_net::RafkoNet> net(rafko_net::RafkoNetBuilder(settings)
     .input_size(1).expected_input_range((5.0))
-    .set_recurrence_to_self()
+    .add_neuron_recurrence(0u,0u,1u)
     .allowed_transfer_functions_by_layer({{rafko_net::transfer_function_identity}})
     .dense_layers({1})
   );
