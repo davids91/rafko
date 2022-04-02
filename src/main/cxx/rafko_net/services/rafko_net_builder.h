@@ -26,6 +26,7 @@
 #include <utility>
 #include <tuple>
 #include <set>
+#include <optional>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/models/input_function.h"
@@ -187,7 +188,10 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& set_neuron_input_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Input_functions function);
+  RafkoNetBuilder& set_neuron_input_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Input_functions function){
+    insert_into(arg_neuron_index_input_functions, layer_index, layer_neuron_index, function);
+    return *this;
+  }
 
   /**
    * @brief      Set the spike function of a Neuron other, than the default "+"
@@ -198,8 +202,10 @@ public:
    *
    * @return     builder reference for chaining
    */
-  RafkoNetBuilder& set_neuron_spike_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Spike_functions function);
-
+  RafkoNetBuilder& set_neuron_spike_function(std::uint32_t layer_index, std::uint32_t layer_neuron_index, Spike_functions function){
+    insert_into(arg_neuron_index_spike_functions, layer_index, layer_neuron_index, function);
+    return *this;
+  }
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
@@ -314,6 +320,118 @@ private:
     }else throw std::runtime_error("Unable to build net, weight table is of size 0!");
   }
 
+  /**
+   * @brief     Looks inside the provided vector and removes the irrelevant parts based on the given layer index
+   *            The function works assuming that the vector is sorted by the layer index in ascending order
+   *
+   * @param         feature                 A vector of {{layer_index,layer_neuron_index},T} pairs, where T is the feature the builder stores
+   * @param[in]     current_layer_index     The layer index determines which elements inside the feature are deprecated and to be removed
+   */
+  template<typename T>
+  static void invalidate(
+    std::vector< std::tuple<std::uint32_t,std::uint32_t,T> >& feature,
+    std::uint32_t current_layer_index
+  ){ /* erase all the deprecated input function settings for Neurons based on the layer index */
+    while( (0u < feature.size())&&(current_layer_index > std::get<0>(feature.front())) )
+      feature.erase(feature.begin());
+  }
+
+  /**
+   * @brief     Looks inside the provided vector and removes the irrelevant parts based on the given layer index
+   *            Assumes that the vector is sorted by the layer index in ascending order;
+   *            and the elements are also sorted in ascending order by neuron index per layer!
+   *
+   * @param         feature                 A vector of {{layer_index,neuron_index},T} pairs, where T is the feature the builder stores
+   * @param[in]     current_layer_index     The layer index determines which elements inside the feature are deprecated and to be removed
+   * @param[in]     layer_neuron_index      The layer index determines which elements inside the feature are deprecated and to be removed
+   */
+  template<typename T>
+  static void invalidate(
+    std::vector< std::tuple<std::uint32_t,std::uint32_t,T> >& feature,
+    std::uint32_t current_layer_index, std::uint32_t layer_neuron_index
+  ){
+    while( /* erase all the deprecated input function settings for Neurons based on Neuron index inside the layer */
+      ( 0u < feature.size() )
+      &&(current_layer_index == std::get<0>(feature.front()))
+      &&(layer_neuron_index >= std::get<1>(feature.front()))
+    )feature.erase(feature.begin());
+  }
+
+  /**
+   * @brief     Sorts part the given feature vector for neuron index values.
+   *            The part which is sorted is determined by the provided layer_index
+   *
+   * @param         feature                 A vector of {{layer_index,layer_neuron_index},T} pairs, where T is the feature the builder stores
+   * @param[in]     current_layer_index     The layer index determines which elements inside the feature are to be sorted0
+   */
+  template<typename T>
+  static void sort_next_layer(
+    std::vector< std::tuple<std::uint32_t,std::uint32_t,T> >& feature,
+    std::uint32_t current_layer_index
+  ){
+    std::sort( /* starting from the beginning of the array.. */
+      feature.begin(), /* ..because builder continually removes the irrelevant front parts.. */
+      std::find_if(feature.begin(),feature.end(),
+        [current_layer_index](const std::tuple<std::uint32_t,std::uint32_t,T>& element){
+          return std::get<0>(element) == (current_layer_index + 1u); /* ..until the part of the array which starts at the next layer. */
+        }
+        /*!Note: this works because the vector is already sorted based on layer index,
+         * so the element in this `find_if` is either the end of the vector
+         * or the start of the next layer relevant part of it
+         */
+      ),
+      [](const std::tuple<std::uint32_t,std::uint32_t,T>& a, std::tuple<std::uint32_t,std::uint32_t,T>& b){
+        return std::get<1>(a) < std::get<1>(b); /* the relevant(to the layer_index)y part of the vector is sorted based on Neuron index */
+      }
+    );
+  }
+
+  /**
+   * @brief     Provides the value of the feature mapped to the neuron mapped inside the given layer
+   *            if it is set by the provided feature vector.
+   *            Assumes that the vector is sorted by the layer index in ascending order;
+   *            and the elements are also sorted in ascending order by neuron index per layer!
+   *            Also assumes that one Neuron can have at most 1 feature set to it by the given vector,
+   *            i.e.: no neurons have multiple features set to them
+   *
+   * @param         feature                 A vector of {{layer_index,layer_neuron_index},T} pairs, where T is the feature the builder stores
+   * @param[in]     current_layer_index     The layer index determines which elements inside the feature are deprecated and to be removed
+   * @param[in]     layer_neuron_index      The layer index determines which elements inside the feature are deprecated and to be removed
+   * @returns       The feature T, if set.
+   */
+  template<typename T>
+  static std::optional<T> get_value(
+    std::vector< std::tuple<std::uint32_t,std::uint32_t,T> >& feature,
+    std::uint32_t layer_neuron_index
+  ){  /* if a Neuron has its feature explicitly set */
+    if( (0u < feature.size())&&(layer_neuron_index == std::get<1>(feature.front())) )
+      return std::get<2>(feature.front());
+      else return {};
+  }
+
+  /**
+   * @brief     Inserts the provided arguments into the feature vector
+   *
+   * @param         feature               A vector of {{layer_index,neuron_index},T} pairs, where T is the feature the builder stores
+   * @param[in]     layer_index           The layer index determines which elements inside the feature are deprecated and to be removed
+   * @param[in]     layer_neuron_index    The layer index determines which elements inside the feature are deprecated and to be removed
+   */
+  template<typename T>
+  static void insert_into(
+    std::vector< std::tuple<std::uint32_t,std::uint32_t,T> >& feature,
+    std::uint32_t layer_index, std::uint32_t layer_neuron_index, T function
+  ){
+    typename std::vector<std::tuple<std::uint32_t,std::uint32_t,T>>::iterator
+    found_element = std::find_if(feature.begin(), feature.end(),
+      [layer_index,layer_neuron_index](const std::tuple<std::uint32_t,std::uint32_t,T>& current_element){
+        return ( (layer_index == std::get<0>(current_element))&&(layer_neuron_index == std::get<1>(current_element)) );
+      }
+    );
+
+    if(found_element == feature.end())
+      feature.push_back({layer_index, layer_neuron_index,function});
+      else *found_element = {layer_index, layer_neuron_index, function};
+  }
 };
 
 } /* namespace rafko_net */

@@ -129,7 +129,7 @@ bool PartialSolutionBuilder::look_for_neuron_input(std::int32_t neuron_input_ind
   if( /* In case there are already inputs present.. */
     (1u < input_synapse.cached_size()) /* ..and the previously found input is among them */
     &&(previous_neuron_input_source == neuron_input_external)
-    &&(static_cast<std::int32_t>(previous_neuron_input_index) < (input_synapse.cached_size() - 1u))
+    &&(previous_neuron_input_index < (input_synapse.cached_size() - 1u))
     &&(neuron_input_index == input_synapse[previous_neuron_input_index + 1u])
     &&(input_reach_back == input_synapse.reach_past_loops<InputSynapseInterval>(previous_neuron_input_index + 1u))
   ){/* ..and the input index currently in search is the next one in the input synapse */
