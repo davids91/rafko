@@ -95,7 +95,7 @@ public:
   }
 
   /**
-   * @brief      Gets adata value under the provided index parameters
+   * @brief      Gets a data value under the provided index parameters
    *
    * @param[in]  past_index  The past index
    * @param[in]  data_index  The index of the data point to retrive in the buffer
@@ -105,6 +105,20 @@ public:
   double get_element(std::uint32_t past_index, std::uint32_t data_index) const{
     if((data.size() > past_index)&&(data[0].size() > data_index))
       return get_const_element(past_index)[data_index];
+      else throw std::runtime_error("Ringbuffer data index out of bounds!");
+  }
+
+  /**
+   * @brief      Gets a data value under the provided index parameters
+   *
+   * @param[in]  past_index  The past index
+   * @param[in]  data_index  The index of the data point to retrive in the buffer
+   *
+   * @return     The value of the data in the   given index parameters
+   */
+  double& get_element(std::uint32_t past_index, std::uint32_t data_index){
+    if((data.size() > past_index)&&(data[0].size() > data_index))
+      return get_element(past_index)[data_index];
       else throw std::runtime_error("Ringbuffer data index out of bounds!");
   }
 
@@ -185,6 +199,12 @@ public:
    */
   std::uint32_t buffer_number() const{
     return data.size();
+  }
+
+  double& operator[](std::uint32_t index){
+    if(index < data[0].size())
+      return get_element(0, index);
+      else throw std::runtime_error("Ringbuffer data index out of bounds!");
   }
 
 private:

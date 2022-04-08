@@ -104,6 +104,17 @@ public:
     std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation, std::vector<double>& tmp_data
   )const = 0;
 
+  /**
+   * @brief      Calculates the derivative for one number-pair inside the label-data pair
+   *
+   * @param[in]  label_value    The label value
+   * @param[in]  feature_value  The data to comapre to the label value
+   *
+   * @return     The distance between the two given arguments
+   */
+  virtual double get_derivative(double label_value, double feature_value) const = 0;
+
+
   #if(RAFKO_USES_OPENCL)
   /**
    * @brief   Updates GPU relevant parameters deciding the size of the buffer and the global dimensions to solve the objective in

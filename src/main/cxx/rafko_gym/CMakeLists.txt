@@ -17,6 +17,8 @@ set(GYM_HEADER_MODELS
   models/rafko_objective.h
   models/rafko_dataset_wrapper.h
   models/rafko_cost.h
+  models/rafko_backpropagation.h
+  models/rafko_backpropagation_operation.h
 )
 set(GYM_HEADER_SERVICES
   services/cost_function.h
