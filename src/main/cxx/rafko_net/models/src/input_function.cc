@@ -47,6 +47,19 @@ double InputFunction::collect(Input_functions function, double a, double b){
   };
 }
 
+double InputFunction::get_derivate(Input_functions function, double a, double a_dw, double b, double b_dw){
+  switch(function){
+    case input_function_add: return a_dw + b_dw;
+    case input_function_multiply: return (a * b_dw) + (a_dw * b);
+    case input_function_analog_xor: return (
+      (((a*a)-(b*b))*(a_dw - b_dw))/(std::abs(a-b))
+      + std::abs(a-b)*(a_dw + b_dw)
+    );
+    default: throw std::runtime_error("Unidentified Input function called!");
+  };
+}
+
+
 #if(RAFKO_USES_OPENCL)
 std::string InputFunction::get_kernel_function_for(std::string operation_index, std::string a, std::string b){
   std::string code = R"(

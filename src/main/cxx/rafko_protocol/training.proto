@@ -64,6 +64,7 @@ enum Autodiff_operations{
   ad_operation_neuron_spike_d = 2; /* inputs: spike_function_input, spike_d, neuron_transfer_d */
   ad_operation_neuron_transfer_d = 3; /* inputs: transfer_function_input, transfer_d, neuron_input_d  */
   ad_operation_neuron_input_d = 4; /* inputs: network_input, neuron_data, network_input_d, spike_d  */
+  ad_operation_network_input_d = 5; /* inputs: network_input, neuron_data, network_input_d, spike_d  */
 }
 
 /**

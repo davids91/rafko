@@ -20,6 +20,12 @@
 
 #include "rafko_global.h"
 
+#include "rafko_gym/models/rafko_backpropagation_operation.h"
+#include "rafko_gym/models/rafko_backprop_network_input_operation.h"
+#include "rafko_gym/models/rafko_backprop_neuron_input_operation.h"
+#include "rafko_gym/models/rafko_backprop_transfer_fn_operation.h"
+#include "rafko_gym/models/rafko_backprop_spike_fn_operation.h"
+
 namespace rafko_gym{
 
 /**
@@ -28,7 +34,36 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT RafkoBackPropagation{
 public:
+  RafkoBackPropagation(rafko_net::RafkoNet& network)
+  : network(network_)
+  {
+    network_input_derivatives.reserve(network.input_data_size())
+  }
 
+  void build(){
+    //TODO: push up operations for every output
+    //TODO: loop until all operations are built up
+  }
+
+  //TODO: Make threadsafe with mutex maybe?
+  template<typename Args...>
+  std::shared_ptr<RafkoBackpropagationOperation> push_dependency(Autodiff_operations type, Args... arguments){
+    switch(type){
+      case ad_operation_objective_d: //TODO:
+      case ad_operation_neuron_spike_d:
+      case ad_operation_neuron_transfer_d:
+        return operations.emplace_back(std::make_shared<RafkoBackpropTransferFnOperation>(arguments...));
+      case ad_operation_neuron_input_d:
+        return operations.emplace_back(std::make_shared<RafkoBackpropNeuronInputOperation>(arguments...));
+      case ad_operation_network_input_d:
+        return operations.emplace_back(std::make_shared<RafkoBackpropNetworkInputOperation>(arguments...));
+      }break;
+    }
+  }
+
+private:
+  rafko_net::RafkoNet& network;
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>>& operations;
 };
 
 } /* namespace rafko_gym */

@@ -20,145 +20,84 @@
 
 #include "rafko_global.h"
 
+#include <memory>
 #include <vector>
-#include <utility>
 
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
-#include "rafko_net/models/spike_function.h"
-#include "rafko_net/services/synapse_iterator.h"
 
 namespace rafko_gym{
 
+class RafkoBackPropagation;
 /**
- * @brief
- *
+ * @brief A class representing an operation inside the backpropagation logic of reverse mode autodiff.
+ * each opeartion is collected with the help of the components of a Neuron ( input-, transfer- and spike function )
+ * and objective in each of the classes that inherit from this class; While this class provides a common base
+ * which aims to eliminate the stack restrictions present in recursive solutions, by storing every operation
+ * in a vector, and providing the chance to upload the operation dependencies into the vector when prompted.
  */
-template<typename ...OperationTypes>
 class RAFKO_FULL_EXPORT RafkoBackpropagationOperation{
 public:
-  RafkoBackpropagationOperation(
-    rafko_net::RafkoNet& network_, std::vector<RafkoBackpropagationOperation>& operations_,
-    std::uint32_t index, Autodiff_operations operation_, OperationType types_...
-  ):operation(operation_)
-  , type_arguments(types_...)
-  , operation_index(index)
-  , network(network_)
-  , operations(operations_)
+  RafkoBackpropagationOperation(RafkoBackPropagation& queue_, rafko_net::RafkoNet& network_)
+  : network(network_)
+  , queue(queue_)
   {
   }
 
-  //TODO: Make threadsafe with mutex maybe?
-  void upload_dependencies_to_operations(){
-    switch(operation){
-      case ad_operation_objective_d:{
-        std::uint32_t neuron_index = (network.neuron_array_size() - network.output_neuron_number() + operation_index);
-        dependencies.push_back(operations.size());
-        operations.emplace_back(
-          network, operations, neuron_index, ad_operation_neuron_spike_d,
-          network.neuron_array(neuron_index).spike_function()
-        );
-      }break;
-      case ad_operation_neuron_spike_d:{
-        dependencies.push_back(operations.size());
-        dependencies.push_back(operations.size() + 1u);
-        operations.emplace_back( /* current value provided by the transfer function */
-          network, operations, operation_index, ad_operation_neuron_transfer_d,
-          network.neuron_array(neuron_index).transfer_function()
-        );
-        operations.emplace_back( /* previous value of the neuron */
-          network, operations, operation_index, ad_operation_neuron_spike_d,
-          network.neuron_array(neuron_index).transfer_function(), 1u /*past_index*/
-        );
-      }break;
-      case ad_operation_neuron_transfer_d:{
-        dependencies.push_back(operations.size());
-        operations.emplace_back(
-          network, operations, operation_index, ad_operation_neuron_input_d,
-          network.neuron_array(operation_index).input_function_function()
-        );
-      }break;
-      case ad_operation_neuron_input_d:{
-        rafko_net::SynapseIterator::iterate(network.neuron_array(operation_index).input_indices(),
-        [this](std::int32 input_index){
-          if(rafko_net::SynapseIterator::is_index_input(input_index)){
-            dependencies.push_back(operations.size());
-            operations.emplace_back(
-              network, operations, rafko_net::SynapseIterator::synapse_index_from_input_index(input_index),
-              ad_operation_neuron_input_d
-            );
-          }else{
-            dependencies.push_back(operations.size());
-            operations.emplace_back(
-              network, operations, input_index, ad_operation_neuron_spike_d,
-              network.neuron_array(neuron_index).spike_function()
-            );
-          }
-        });
-      }break;
-    }/*switch(operation)*/
-    registered = true;
-  }
+  virtual void upload_dependencies_to_operations() = 0;
 
-  void calculate(
+  virtual void calculate(
     std::uint32 d_w_index, std::uint32 run_index,
     const std::vector<double>& error_data, const std::vector<double>& label_data,
     const DataRingbuffer& neuron_data, const std::vector<double>& network_input,
-    const std::vector<double>& spike_function_input, const std::vector<double>& transfer_function_input
-  ){
-    switch(operation){
-      case ad_operation_objective_d:{
-        RFASSERT(1u == dependencies.size());
-        std::uint32_t neuron_index = (network.neuron_array_size() - network.output_neuron_number() + operation_index);
-        value = ( /* Objective E(x,f(x))/dx = E'(x,f(x))/df(x)*f'(x)/dx  */
-          std::get<0>(type_arguments).get_derivative( label_data[operation_index], neuron_data[neuron_index]) * dependencies[0]()
-        );
-      }break;
-      case ad_operation_neuron_spike_d:{
-        RFASSERT(2u == dependencies.size());
-        double spike_derivative = SpikeFunction::get_derivative(..);
-        value = ( /* Spike function S(x,f(x),g(x))/dx = S'x() + g'(x) * S'g() + f'(x) * S'f() */
-          spike_derivative + dependencies[0]() * spike_derivative + dependencies[1]() * spike_derivative
-        );
-      }break;
-      case ad_operation_neuron_transfer_d:{
-        //TODO
-      }break;
-      case ad_operation_neuron_input_d:{
-        //TODO
-      }break;
-    }
-    processed = true;
-  }
+    const std::vector<double>& spike_function_input
+  ) = 0;
 
   // std::string get_kernel_function(){
   //
   // }
 
-  double operator()(){
+  double get_derivative(){
+    if(!processed)calculate();
+    return derivative_value;
+  }
+
+  double get_value(){
     if(!processed)calculate();
     return value;
   }
 
-  bool constexpr is_registered(){
-    return registered;
+  bool constexpr are_dependencies_registered() const{
+    return dependencies_registered;
   }
 
-  bool constexpr is_processed(){
+  bool constexpr is_processed() const{
     return processed;
   }
 
-private:
-  const Autodiff_operations operation;
-  const std::tuple<OperationTypes...> type_arguments;
-  const std::uint32_t operation_index;
+protected:
+  RafkoBackPropagation& queue;
   rafko_net::RafkoNet& network;
-  std::vector<RafkoBackpropagationOperation>& operations;
-  std::vector<std::uint32_t> dependencies;
 
   bool processed = false;
-  bool registered = false;
+  bool dependencies_registered = false;
+  double derivative_value = 0.0;
   double value = 0.0;
+
+  void constexpr reset_value(){
+    if(processed){
+      for(std::unique_ptr<RafkoBackpropagationOperation> dependency : dependencies)
+        dependecy->reset_value();
+    }
+    processed = false;
+  }
+
+  void constexpr set_processed(){
+    processed = true;
+  }
+
+  void constexpr set_registered(){
+    dependencies_registered = true;
+  }
 };
 
 } /* namespace rafko_gym */
