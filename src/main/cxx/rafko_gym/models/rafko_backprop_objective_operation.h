@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef RAFKO_BACKPROP_NETWORK_INPUT_OPERATION_H
-#define RAFKO_BACKPROP_NETWORK_INPUT_OPERATION_H
+#ifndef RAFKO_BACKPROP_OBJECTIVE_OPERATION_H
+#define RAFKO_BACKPROP_OBJECTIVE_OPERATION_H
 
 #include "rafko_global.h"
 
@@ -27,6 +27,7 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
+#include "rafko_gym/models/rafko_objective.h"
 #include "rafko_gym/models/rafko_backpropagation_operation.h"
 
 namespace rafko_gym{
@@ -35,19 +36,19 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackpropNetworkInputOperation{
+class RAFKO_FULL_EXPORT RafkoBackpropObjectiveOperation{
 public:
-  RafkoBackpropNetworkInputOperation(
+  RafkoBackpropObjectiveOperation(
     RafkoBackPropagation& queue, const rafko_net::RafkoNet& network,
-    std::uint32_t past_index, std::uint32_t input_index_, std::uint32_t weight_index_
-  ):RafkoBackpropagationOperation(queue, operations, past_index)
-  , input_index(input_index_)
-  , weight_index(weight_index_)
+    RafkoObjective& objective, std::uint32_t label_index_,  std::uint32_t sample_number_,
+  ):RafkoBackpropagationOperation(queue, network, 0u) /* Objective is always for the present value */
+  , label_index(label_index_)
+  , sample_number(sample_number_)
   {
   }
 
   void upload_dependencies_to_operations(){
-    /*!Note: Network inputs have no dependencies! */
+    feature_dependency = queue.push_dependency(ad_operation_neuron_spike_d, 0u/*past_index*/, label_index);
     set_registered();
   }
 
@@ -57,22 +58,21 @@ public:
   ){
     RFASSERT(run_index < network_input.size());
     RFASSERT(run_index < label_data.size());
-    if(past_index > run_index){
-      value = 0.0;
-      derivative_value = 0.0;
-    }else{
-      value = network_input[run_index - past_index][input_index] * network.neuron_array(weight_index);
-      if(d_w_index == weight_index)
-        derivative_value = network_input[run_index - past_index][input_index];
-        else derivative_value = 0.0;
-    }
+    RFASSERT(label_index < label_value[run_index].size());
+    value = 0.0; /* does not matter */
+    derivative_value = objective.get_derivative(
+      label_value[run_index][label_index], feature_dependency->get_value(),
+      feature_dependency->get_derivative(), static_cast<double>(sample_number)
+    );
     set_processed();
   }
+
 private:
-  std::uint32_t input_index;
-  std::uint32_t weight_index;
+  const std::uint32_t label_index;
+  const std::uint32_t sample_number;
+  std::shared_ptr<RafkoBackpropagationOperation> feature_dependency;
 };
 
 } /* namespace rafko_gym */
 
-#endif /* RAFKO_BACKPROP_NETWORK_INPUT_OPERATION_H */
+#endif /* RAFKO_BACKPROP_OBJECTIVE_OPERATION_H */

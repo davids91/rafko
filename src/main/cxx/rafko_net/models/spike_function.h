@@ -61,7 +61,14 @@ public:
 
   static double get_derivative_for_w(
     Spike_functions function, double parameter,
-    double new_data, double new_data_d, double previous_data, double previous_data_d
+    double new_data, double new_data_d,
+    double previous_data, double previous_data_d
+  );
+
+  static double get_derivative_not_for_w(
+    Spike_functions function, double parameter,
+    double new_data, double new_data_d,
+    double previous_data, double previous_data_d
   );
 
   #if(RAFKO_USES_OPENCL)

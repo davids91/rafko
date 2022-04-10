@@ -36,11 +36,17 @@ public:
 protected:
   constexpr double error_post_process(double error_value, std::uint32_t sample_number) const{
     parameter_not_used(sample_number);
-    return error_value / (2.0);
+    return error_value / 2.0;
   }
 
   constexpr double get_cell_error(double label_value, double feature_value) const{
-    return pow((label_value - feature_value),2);
+    return pow((label_value - feature_value),2.0);
+  }
+
+  constexpr double get_derivative(
+    double label_value, double feature_value, double feature_d, double sample_number
+  ) const{
+    return -(label_value - feature_value) * feature_d;
   }
 
   #if(RAFKO_USES_OPENCL)

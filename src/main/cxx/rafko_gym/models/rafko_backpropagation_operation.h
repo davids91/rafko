@@ -37,19 +37,20 @@ class RafkoBackPropagation;
  */
 class RAFKO_FULL_EXPORT RafkoBackpropagationOperation{
 public:
-  RafkoBackpropagationOperation(RafkoBackPropagation& queue_, rafko_net::RafkoNet& network_)
-  : network(network_)
+  RafkoBackpropagationOperation(
+    RafkoBackPropagation& queue_, const rafko_net::RafkoNet& network_, std::uint32_t past_index
+  ):network(network_)
   , queue(queue_)
+  , past_index(past_index_)
   {
+    RFASSERT(past_index < network.memory_size());
   }
 
   virtual void upload_dependencies_to_operations() = 0;
 
   virtual void calculate(
     std::uint32 d_w_index, std::uint32 run_index,
-    const std::vector<double>& error_data, const std::vector<double>& label_data,
-    const DataRingbuffer& neuron_data, const std::vector<double>& network_input,
-    const std::vector<double>& spike_function_input
+    const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
   ) = 0;
 
   // std::string get_kernel_function(){
@@ -76,7 +77,8 @@ public:
 
 protected:
   RafkoBackPropagation& queue;
-  rafko_net::RafkoNet& network;
+  const rafko_net::RafkoNet& network;
+  const std::uint32_t past_index;
 
   bool processed = false;
   bool dependencies_registered = false;

@@ -100,17 +100,6 @@ private:
    */
   static void add_to_synapse(std::int32_t index, std::uint32_t reach_back, std::uint32_t& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals);
 
-  /**
-   * @brief   Provides a unique hash for a provided pair based on value
-   *
-   * @param[in]   input   the pair to generate the hash for
-   *
-   * @return    the generated hash
-   */
-  static constexpr std::uint64_t pair_hash(std::pair<std::int32_t,std::uint32_t> input){
-    return(static_cast<std::uint64_t>(std::get<0>(input))|(static_cast<std::uint64_t>(std::get<1>(input)) << 32u));
-  }
-
 };
 
 } /* namespace rafko_net */

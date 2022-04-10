@@ -78,6 +78,10 @@ public:
     std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation, std::vector<double>& tmp_data
   ) const;
 
+  double get_derivative(double label_value, double feature_value, double feature_d, double sample_number) const{
+    return cost_function->get_derivative(label_value, feature_value, feature_d, sample_number);
+  }
+
   #if(RAFKO_USES_OPENCL)
   void set_gpu_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_){
     cost_function->set_parameters(pairs_to_evaluate_, feature_size_);

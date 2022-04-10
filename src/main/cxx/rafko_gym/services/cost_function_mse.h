@@ -42,6 +42,12 @@ protected:
     return pow((label_value - feature_value),2);
   }
 
+  constexpr double get_derivative(
+    double label_value, double feature_value, double feature_d, double sample_number
+  ) const{
+    return - sample_number * (label_value - feature_value) * feature_d;
+  }
+
   #if(RAFKO_USES_OPENCL)
   std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
     return "pow((" + label_value + " - " + feature_value + "),2.0)";

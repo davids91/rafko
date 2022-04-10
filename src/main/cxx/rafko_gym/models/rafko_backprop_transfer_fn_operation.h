@@ -25,6 +25,7 @@
 #include <utility>
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 #include "rafko_net/models/transfer_function_function.h"
 
@@ -40,43 +41,53 @@ namespace rafko_gym{
 class RAFKO_FULL_EXPORT RafkoBackpropTransferFnOperation{
 public:
   RafkoBackpropTransferFnOperation(
-    RafkoBackPropagation& queue, rafko_net::RafkoNet& network,
-    std::uint32_t neuron_index_, std::shared_ptr<double> tmp_value_buffer_ = {}
-  ):RafkoBackpropagationOperation(queue, network)
+    RafkoBackPropagation& queue, const rafko_net::RafkoNet& network,
+    std::uint32_t past_index, std::uint32_t neuron_index_,
+    rafko_mainframe::RafkoSettings& settings
+  ):RafkoBackpropagationOperation(queue, network, past_index)
+  , transfer_function(settings)
+  , neuron_index(neuron_index_)
   {
   }
 
   void upload_dependencies_to_operations(){
-    needed_input_dependency = std::reinterpret_pointer_cast<RafkoBackpropNeuronInputOperation>(
-      queue.push_dependency(ad_operation_neuron_input_d, queue, network, neuron_index, 0u/*neuron_input_index*/)
-    );
-    /*!Note: The first input of the Neuron is to calculate the whole derivative of the Neuron input */
+    if(past_index <= run_index){
+      needed_input_dependency = queue.push_dependency(ad_operation_neuron_input_d, past_index, neuron_index, 0u/*neuron_input_index*/);
+      /*!Note: The first input of the Neuron is to calculate the whole derivative of the Neuron input,
+       * so that is the only one this operation will need
+       */
+    }
     set_registered();
   }
 
   void calculate(
     std::uint32 d_w_index, std::uint32 run_index,
-    const std::vector<double>& error_data, const std::vector<double>& label_data,
-    const DataRingbuffer& neuron_data, const std::vector<double>& network_input,
-    const std::vector<double>& spike_function_input
+    const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
   ){
-    RFASSERT(are_dependencies_registered());
-    RFASSERT(needed_input_dependency->is_processed());
-    value = TransferFunction::get_value(
-      network.neuron_array(neuron_index).transfer_function(), needed_input_dependency->get_value()
-    );
-    derivative_value = TransferFunction::get_derivative( /* d t(f(w))/dx = f'(w) * t'(f(w))*/
-      network.neuron_array(neuron_index).transfer_function(),
-      needed_input_dependency->get_value(),
-      needed_input_dependency->operator();
-    );
+    RFASSERT(run_index < network_input.size());
+    RFASSERT(run_index < label_data.size());
+    if(past_index > run_index){
+      value = 0.0;
+      derivative_value = 0.0;
+    }else{
+      RFASSERT(are_dependencies_registered());
+      RFASSERT(needed_input_dependency->is_processed());
+      value = TransferFunction::get_value(
+        network.neuron_array(neuron_index).transfer_function(), needed_input_dependency->get_value()
+      );
+      derivative_value = transfer_function.get_derivative( /* d t(f(w))/dx = f'(w) * t'(f(w))*/
+        network.neuron_array(neuron_index).transfer_function(),
+        needed_input_dependency->get_value(),
+        needed_input_dependency->operator();
+      );
+    }
     set_processed();
   }
 
 private:
+  const TransferFunction transfer_function;
   const std::uint32_t neuron_index;
   std::shared_ptr<RafkoBackpropNeuronInputOperation> needed_input_dependency;
-  double transfer_function_output;
 };
 
 } /* namespace rafko_gym */

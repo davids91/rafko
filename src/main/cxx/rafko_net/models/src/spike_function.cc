@@ -38,43 +38,45 @@ double SpikeFunction::get_value(Spike_functions function, double parameter, doub
   }
 }
 
-double SpikeFunction::get_derivative_for_w(
+double SpikeFunction::get_derivative_for_w( /* means: x = w */
   Spike_functions function, double parameter,
   double new_data, double new_data_d,
   double previous_data, double previous_data_d
 ){
   switch(function){
-    /* S(x,w,f(x),g(x)) = f(x) */
-    case spike_function_none: return new_data_d;
-    /* S(x,w,f(x),g(x)) = w * f(x) + g(x) - w * g(x) */
-    case spike_function_memory: return ( /* S'(x,w,f(x),g(x)) = */
-      /* w * f'(x) + f(x) */
-      ((parameter * previous_data) + previous_data_d)
-      /* + g'(x) - w * g'(x) + g(x)*/
-      + new_data_d - (parameter * new_data_d) + new_data
-    );
-    /* S(x,w,f(x),g(x)) = g(x) + (f(x) - g(x)) * w */
-    case spike_function_p: return ( /* S'(x,w,f(x),g(x)) =  */
-      /* g'(x) + (w * (f'(x) - g'(x)) */
-      previous_data_d + (parameter * (new_data_d - previous_data_d))
-      /* + (f(x) - g(x)) */
-      + (new_data - previous_data)
-    );
-    /* S(x,w,f(x),g(x)) = w * g(x) */
-    case spike_function_amplify_value: return parameter + new_data_d;
-    default: throw std::runtime_error("Unknown spike function requested for calculation!");
+    case spike_function_none: /* S(x,w,f(x),g(x)) = g(x) */
+      return new_data_d; /* S'(x,w,f(x),g(x)) = g'(x) */
+    case spike_function_memory: /* S(x,w,f(x),g(x)) = w * f(x) + g(x) - w * g(x) */
+      /* S'(x,w,f(x),g(x)) =  w * f'(x) + f(x) + g'(x) - w * g'(x) - g(x) */
+      return (parameter * previous_data) + previous_data_d + new_data_d - (parameter * new_data_d) - new_data;
+    case spike_function_p: /* S(x,w,f(x),g(x)) = g(x) + (f(x) - g(x)) * w */
+      /* S'(x,w,f(x),g(x)) = g'(x) + (w * (f'(x) - g'(x)) + (f(x) - g(x)) */
+      return previous_data_d + (parameter * (new_data_d - previous_data_d)) + (new_data - previous_data);
+    case spike_function_amplify_value: /* S(x,w,f(x),g(x)) = w * g(x) */
+      /* S'(x,w,f(x),g(x)) = w * g'(x) + g(x) */
+      return parameter * new_data_d + new_data;
+    default: throw std::runtime_error("Unknown spike function requested for derivative calculation!");
   }
-  //TODO: What happens when weights are shared, so any f(x) could depend on any weight?
-  std::uint32_t spike_weight_index = network.neuron_array(operation_index).input_weights(0).interval_start();
-  /*!Note: the first weight of the Neuron is always the spike function index */
-  if(d_w_index == spike_weight_index){ /* current weight target is relevant to spike function */
-    /* S'(x,w,f(x),g(x))/dw = (f(x) + 0 - g(x) */
-    value = (neuron_data[operation_index] - neuron_data.get_element(1u, operation_index));
-  }else{
-    value = ( /* S'(x,w,f(x),g(x))/dx = f'(x) * w + g'(x) - w * g'(x) */
-      ( network.weight_table(spike_weight_index) * dependencies[0]() + dependencies[0]() )
-      + ( dependencies[1]() - network.weight_table(spike_weight_index) * dependencies[1]() )
-    );
+}
+
+double SpikeFunction::get_derivative_not_for_w(
+  Spike_functions function, double parameter,
+  double new_data, double new_data_d,
+  double previous_data, double previous_data_d
+){
+  switch(function){
+    case spike_function_none: /* S(x,w,f(x),g(x)) = g(x) */
+      return new_data_d;
+    case spike_function_memory: /* S(x,w,f(x),g(x)) = w * f(x) + g(x) - w * g(x) */
+      /* S'(x,w,f(x),g(x)) = w * f'(x) + f(x) - w * g'(x) + g(x) */
+      return ((parameter * previous_data) + previous_data_d) - (parameter * new_data_d) + new_data;
+    case spike_function_p: /* S(x,w,f(x),g(x)) = g(x) + (f(x) - g(x)) * w */
+      /* S'(x,w,f(x),g(x)) = g'(x) + (w * (f'(x) - g'(x)) */
+      return previous_data_d + (parameter * (new_data_d - previous_data_d));
+    case spike_function_amplify_value: /* S(x,w,f(x),g(x)) = w * g(x) */
+      /* S'(x,w,f(x),g(x)) = w * g'(x) */
+      return parameter * new_data_d;
+    default: throw std::runtime_error("Unknown spike function requested for derivative calculation!");
   }
 }
 

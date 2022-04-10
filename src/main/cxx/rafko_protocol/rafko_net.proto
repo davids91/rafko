@@ -150,8 +150,10 @@ message FeatureGroup{
 message RafkoNet{
   uint32 input_data_size = 10; /* Number of inputs (floating point numbers) accepted by the Neural network */
   uint32 output_neuron_number = 11; /* Number of outputs the Neural network has */
-  repeated FeatureGroup neuron_group_features = 12; /* Neurons grouped together for features. The same features may be repeated with different neuron indices */
+  uint32 memory_size = 12;
 
-  repeated Neuron neuron_array = 20; /* Array of Neurons the network has */
-  repeated double weight_table = 21; /* Stores individual weights used by the Neurons */
+  repeated FeatureGroup neuron_group_features = 20; /* Neurons grouped together for features. The same features may be repeated with different neuron indices */
+
+  repeated Neuron neuron_array = 30; /* Array of Neurons the network has */
+  repeated double weight_table = 31; /* Stores individual weights used by the Neurons */
 }

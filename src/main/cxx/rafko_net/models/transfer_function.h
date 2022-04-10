@@ -95,7 +95,7 @@ public:
    */
   double get_value(Transfer_functions function, double data) const;
 
-  static double get_derivative(Transfer_functions function, double input, double input_dw);
+  double get_derivative(Transfer_functions function, double input, double input_dw);
 
   #if(RAFKO_USES_OPENCL)
   /**

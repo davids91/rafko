@@ -46,6 +46,13 @@ protected:
     );
   }
 
+  constexpr double get_derivative(
+    double label_value, double feature_value, double feature_d, double sample_number
+  ) const{
+    return ((label_value - feature_value) * feature_d) / (sample_number * (1.0 - feature_value) * feature_value);
+  }
+
+
   #if(RAFKO_USES_OPENCL)
   std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
     std::string one_minus_label_value = "(1.0 - " + label_value + ")";

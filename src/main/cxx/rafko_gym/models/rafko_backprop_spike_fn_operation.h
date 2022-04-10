@@ -39,39 +39,58 @@ namespace rafko_gym{
 class RAFKO_FULL_EXPORT RafkoBackpropSpikeFnOperation{
 public:
   RafkoBackpropNetworkInputOperation(
-    rafko_net::RafkoNet& network, std::uint32_t neuron_index_,
-    std::vector<std::unique_ptr<RafkoBackpropagationOperation>>& operations
-  ):RafkoBackpropagationOperation(queue, network)
+    RafkoBackPropagation& queue, const rafko_net::RafkoNet& network,
+    std::uint32_t past_index, std::uint32_t neuron_index_
+  ):RafkoBackpropagationOperation(queue, network, past_index)
   , neuron_index(neuron_index_)
   {
   }
 
   void upload_dependencies_to_operations(){
-     = push_dependency( /* current value provided by the transfer function */
-      ad_operation_neuron_transfer_d, queue, network, neuron_index
-    );
-     = push_dependency( /* previous value of the neuron */
-      ad_operation_neuron_spike_d, queue, network,
-      operation_index, network.neuron_array(neuron_index).transfer_function(), 1u /*past_index*/
-    );
+    present_value_dependency = push_dependency(ad_operation_neuron_transfer_d, past_index, neuron_index);
+    if(past_index < network.memory_size()){
+      past_value_dependency = push_dependency(ad_operation_neuron_spike_d, (past_index + 1u), neuron_index);
+    }
     set_registered()
   }
 
   void calculate(
     std::uint32 d_w_index, std::uint32 run_index,
-    const std::vector<double>& error_data, const std::vector<double>& label_data,
-    const DataRingbuffer& neuron_data, const std::vector<double>& network_input,
-    const std::vector<double>& spike_function_input
+    const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
   ){
-    derivative_value = SpikeFunction::get_derivative(
-      network.neuron_array(neuron_index).spike_function()
-    );
-    set_processed()
+    RFASSERT(run_index < network_input.size());
+    RFASSERT(run_index < label_data.size());
+    if(past_index > run_index){
+      value = 0.0;
+      derivative_value = 0.0;
+    }else{
+      double past_value = (past_value_dependency)?(past_value_dependency->get_value()):(0.0);
+      value = SpikeFunction::get_value(
+        network.neuron_array(neuron_index).spike_function(),
+        network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
+        present_value_dependency->get_value(), past_value
+      );
+      double past_derivative_value = (past_value_dependency)?(past_value_dependency->get_derivative()):(0.0);
+      if(d_w_index == network.neuron_array(neuron_index).input_weights(0).starts()){
+        derivative_value = SpikeFunction::get_derivative_for_w(
+          network.neuron_array(neuron_index).spike_function(),
+          present_value_dependency->get_value(), present_value_dependency->get_derivative(),
+          past_value, past_derivative_value
+        );
+      }else{
+        derivative_value = SpikeFunction::get_derivative_not_for_w(
+          network.neuron_array(neuron_index).spike_function(),
+          present_value_dependency->get_value(), present_value_dependency->get_derivative(),
+          past_value, past_derivative_value
+        );
+      }
+    }
+    set_processed();
   }
 private:
   const std::uint32_t neuron_index;
-  std::shared_ptr<RafkoBackpropagationOperation> ;
-  std::shared_ptr<RafkoBackpropagationOperation> ;
+  std::shared_ptr<RafkoBackpropagationOperation> present_value_dependency;
+  std::shared_ptr<RafkoBackpropagationOperation> past_value_dependency;
 };
 
 } /* namespace rafko_gym */

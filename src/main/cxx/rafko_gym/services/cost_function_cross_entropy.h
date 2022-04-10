@@ -43,6 +43,13 @@ protected:
     return ( label_value * std::log(std::max((0.0000000000000001), feature_value)) );
   }
 
+  constexpr double get_derivative(
+    double label_value, double feature_value,
+    double feature_d, double sample_number
+  ) const{
+    return - (label_value * feature_d) / (sample_number * feature_value);
+  }
+
   #if(RAFKO_USES_OPENCL)
   std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
     return "( " + label_value + " * log(max(0.0000000000000001," + feature_value + ")) )";

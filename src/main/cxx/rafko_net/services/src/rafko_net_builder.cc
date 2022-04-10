@@ -47,6 +47,7 @@ RafkoNetBuilder& RafkoNetBuilder::add_feature_to_layer(std::uint32_t layer_index
 
 RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
   std::uint32_t previous_size = 0;
+  std::uint32_t reach_back_max = 0;
 
   std::sort(arg_neuron_index_input_functions.begin(),arg_neuron_index_input_functions.end(),
   [](const std::tuple<std::uint32_t,std::uint32_t,Input_functions>& a, std::tuple<std::uint32_t,std::uint32_t,Input_functions>& b){
@@ -180,7 +181,8 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
               interval.set_starts(layer_input_starts_at + layer_sizes[layer_index - 1]); /* starts at the beginning of the current layer */
               else interval.set_starts(layer_input_starts_at); /* starts at the beginning of the current layer */
             interval.set_interval_size(layer_sizes[layer_index]); /* takes up the whole layer */
-            interval.set_reach_past_loops(1);
+            interval.set_reach_past_loops(1u);
+            reach_back_max = std::max(reach_back_max, 1u);
             input_weights_to_add += layer_sizes[layer_index];
         }
 
@@ -194,7 +196,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
           interval.set_starts(layer_input_starts_at + layer_neuron_index); /* self-recurrence, an additional input snypse */
           interval.set_interval_size(1u); /* of a lone input as the actual @Neuron itself */
           interval.set_reach_past_loops(past_index.value());
-
+          reach_back_max = std::max(reach_back_max, past_index.value());
           /* pop the current and try to get the next recurrent value */
           arg_neuron_index_recurrence.erase(arg_neuron_index_recurrence.begin());
           past_index = get_value(arg_neuron_index_recurrence, layer_neuron_index);
@@ -223,24 +225,9 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
 
     set_weight_table(ret);
     set_neuron_array(ret);
+    ret->set_memory_size(reach_back_max + 1u);
     return ret;
   }else throw std::runtime_error("Input Output Pre-requisites failed;Unable to determine Net Structure!");
-}
-
-RafkoNet* RafkoNetBuilder::build(){
-  if( /* Required arguments are set */
-    (is_input_size_set && is_output_neuron_number_set)
-    &&(is_neuron_array_set && is_weight_table_set) /* needed arguments are set */
-    &&(0 < arg_weight_table.size())&&(0 < arg_neuron_array.size()) /* There are at least some Neurons and Weights */
-    &&(arg_output_neuron_number <= arg_neuron_array.size()) /* Output size isn't too big */
-  ){
-    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(settings.get_arena_ptr());
-    ret->set_input_data_size(arg_input_size);
-    ret->set_output_neuron_number(arg_output_neuron_number);
-    set_weight_table(ret);
-    set_neuron_array(ret);
-    return ret;
-  }else throw std::runtime_error("Inconsistent parameters given to Sparse Net Builder!");
 }
 
 } /* namespace rafko_net */

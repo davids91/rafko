@@ -138,6 +138,7 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
   solution->set_network_memory_length(reach_back_max + 1u); /* Current loop is "0" reachback, so length should be at least 1 */
   solution->set_network_input_size(reach_index_max + 1u);
   RFASSERT( net.input_data_size() == reach_index_max + 1u);
+  RFASSERT( net.memory_size() == solution->network_memory_length());
   return solution;
 }
 

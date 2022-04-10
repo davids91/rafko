@@ -19,6 +19,11 @@ set(GYM_HEADER_MODELS
   models/rafko_cost.h
   models/rafko_backpropagation.h
   models/rafko_backpropagation_operation.h
+  models/rafko_backprop_network_input_operation.h
+  models/rafko_backprop_neuron_input_operation.h
+  models/rafko_backprop_transfer_fn_operation.h
+  models/rafko_backprop_spike_fn_operation.h
+  models/rafko_backprop_objective_operation.h
 )
 set(GYM_HEADER_SERVICES
   services/cost_function.h

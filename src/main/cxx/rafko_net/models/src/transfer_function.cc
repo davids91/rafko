@@ -62,13 +62,13 @@ double TransferFunction::get_derivative(Transfer_functions function, double inpu
     return (input_dw * std::exp(input))/std::pow((std::exp(input) + 1.0),2.0);
   case transfer_function_tanh: input_dw / std::pow(std::cosh(input), 2.0);
   case transfer_function_elu:
-    if(data <= 0.0) return settings.get_alpha() * std::exp(data) * input_dw;
+    if(input <= 0.0) return settings.get_alpha() * std::exp(input) * input_dw;
     else return input_dw;
   case transfer_function_selu:
-    if(data <= 0.0) return settings.get_lambda() * settings.get_alpha() * std::exp(data) * input_dw;
+    if(input <= 0.0) return settings.get_lambda() * settings.get_alpha() * std::exp(input) * input_dw;
     else return settings.get_lambda() * input_dw;
   case transfer_function_relu:
-    if(data <= 0.0) return 0;
+    if(input <= 0.0) return 0;
     else return input_dw;
   }
 }

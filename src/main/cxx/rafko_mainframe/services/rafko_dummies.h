@@ -46,7 +46,7 @@ public:
     parameter_not_used(dataset);
     parameter_not_used(sample_index);
     parameter_not_used(neuron_data);
-    return (0.0);
+    return 0.0;
   }
   double set_features_for_labels(
      const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<double>>& neuron_data,
@@ -58,7 +58,7 @@ public:
     parameter_not_used(neuron_buffer_index);
     parameter_not_used(raw_start_index);
     parameter_not_used(labels_to_evaluate);
-    return (0.0);
+    return 0.0;
   }
   double set_features_for_sequences(
     const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<double>>& neuron_data,
@@ -72,7 +72,7 @@ public:
     parameter_not_used(sequences_to_evaluate);
     parameter_not_used(start_index_in_sequence);
     parameter_not_used(sequence_truncation);
-    return (0.0);
+    return 0.0;
   }
   double set_features_for_sequences(
     const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<double>>& neuron_data,
@@ -88,7 +88,10 @@ public:
     parameter_not_used(start_index_in_sequence);
     parameter_not_used(sequence_truncation);
     parameter_not_used(tmp_data);
-    return (0.0);
+    return 0.0;
+  }
+  double get_derivative(double label_value, double feature_value, double feature_d, double sample_number) const{
+    return 0.0;
   }
 
   #if(RAFKO_USES_OPENCL)
