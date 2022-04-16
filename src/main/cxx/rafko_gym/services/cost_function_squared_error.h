@@ -46,6 +46,7 @@ protected:
   constexpr double get_derivative(
     double label_value, double feature_value, double feature_d, double sample_number
   ) const{
+    parameter_not_used(sample_number);
     return -(label_value - feature_value) * feature_d;
   }
 

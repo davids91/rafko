@@ -38,12 +38,11 @@ class RafkoBackPropagation;
 class RAFKO_FULL_EXPORT RafkoBackpropagationOperation{
 public:
   RafkoBackpropagationOperation(
-    RafkoBackPropagation& queue_, const rafko_net::RafkoNet& network_, std::uint32_t past_index
+    RafkoBackPropagation& parent_, const rafko_net::RafkoNet& network_,
+    std::uint32_t operation_index
   ):network(network_)
-  , queue(queue_)
-  , past_index(past_index_)
+  , parent(parent_)
   {
-    RFASSERT(past_index < network.memory_size());
   }
 
   virtual void upload_dependencies_to_operations() = 0;
@@ -57,14 +56,12 @@ public:
   //
   // }
 
-  double get_derivative(){
-    if(!processed)calculate();
-    return derivative_value;
+  double get_derivative(std::uint32_t run_index, std::uint32_t d_w_index) const{
+    parent.get_derivative(run_index, operation_index, d_w_index);
   }
 
-  double get_value(){
-    if(!processed)calculate();
-    return value;
+  double get_value(std::uint32_t run_index) const{
+    return parent.get_value(run_index, operation_index);
   }
 
   bool constexpr are_dependencies_registered() const{
@@ -76,14 +73,12 @@ public:
   }
 
 protected:
-  RafkoBackPropagation& queue;
+  RafkoBackPropagation& parent;
   const rafko_net::RafkoNet& network;
-  const std::uint32_t past_index;
+  const std::uint32_t operation_index;
 
   bool processed = false;
   bool dependencies_registered = false;
-  double derivative_value = 0.0;
-  double value = 0.0;
 
   void constexpr reset_value(){
     if(processed){
@@ -99,6 +94,14 @@ protected:
 
   void constexpr set_registered(){
     dependencies_registered = true;
+  }
+
+  void set_derivative(std::uint32_t run_index, std::uint32_t d_w_index, double value){
+    parent.set_derivative(run_index, operation_index, d_w_index, double);
+  }
+
+  void set_value(std::uint32_t run_index, double value){
+    parent.set_value(run_index, operation_index, value);
   }
 };
 

@@ -41,22 +41,19 @@ namespace rafko_gym{
 class RAFKO_FULL_EXPORT RafkoBackpropTransferFnOperation{
 public:
   RafkoBackpropTransferFnOperation(
-    RafkoBackPropagation& queue, const rafko_net::RafkoNet& network,
-    std::uint32_t past_index, std::uint32_t neuron_index_,
-    rafko_mainframe::RafkoSettings& settings
-  ):RafkoBackpropagationOperation(queue, network, past_index)
+    RafkoBackPropagation& parent, const rafko_net::RafkoNet& network,
+    std::uint32_t operation_index, std::uint32_t neuron_index_, rafko_mainframe::RafkoSettings& settings
+  ):RafkoBackpropagationOperation(parent, network, operation_index)
   , transfer_function(settings)
   , neuron_index(neuron_index_)
   {
   }
 
   void upload_dependencies_to_operations(){
-    if(past_index <= run_index){
-      needed_input_dependency = queue.push_dependency(ad_operation_neuron_input_d, past_index, neuron_index, 0u/*neuron_input_index*/);
-      /*!Note: The first input of the Neuron is to calculate the whole derivative of the Neuron input,
-       * so that is the only one this operation will need
-       */
-    }
+    needed_input_dependency = parent.push_dependency(ad_operation_neuron_input_d, neuron_index, 0u/*neuron_input_index*/);
+    /*!Note: The first input of the Neuron is to calculate the whole derivative of the Neuron input,
+     * so that is the only one this operation will need
+     */
     set_registered();
   }
 
@@ -66,21 +63,16 @@ public:
   ){
     RFASSERT(run_index < network_input.size());
     RFASSERT(run_index < label_data.size());
-    if(past_index > run_index){
-      value = 0.0;
-      derivative_value = 0.0;
-    }else{
-      RFASSERT(are_dependencies_registered());
-      RFASSERT(needed_input_dependency->is_processed());
-      value = TransferFunction::get_value(
-        network.neuron_array(neuron_index).transfer_function(), needed_input_dependency->get_value()
-      );
-      derivative_value = transfer_function.get_derivative( /* d t(f(w))/dx = f'(w) * t'(f(w))*/
-        network.neuron_array(neuron_index).transfer_function(),
-        needed_input_dependency->get_value(),
-        needed_input_dependency->operator();
-      );
-    }
+    RFASSERT(are_dependencies_registered());
+    RFASSERT(needed_input_dependency->is_processed());
+    set_value(run_index, TransferFunction::get_value(
+      network.neuron_array(neuron_index).transfer_function(), needed_input_dependency->get_value(run_index)
+    ));
+    set_derivative(run_index, d_w_index, transfer_function.get_derivative( /* d t(f(w))/dx = f'(w) * t'(f(w))*/
+      network.neuron_array(neuron_index).transfer_function(),
+      needed_input_dependency->get_value(run_index),
+      needed_input_dependency->get_derivative(run_index, d_w_index);
+    ));
     set_processed();
   }
 

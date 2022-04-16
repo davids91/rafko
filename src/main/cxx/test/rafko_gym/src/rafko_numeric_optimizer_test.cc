@@ -29,7 +29,7 @@
 #include "rafko_gym/services/function_factory.h"
 #include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
-#include "rafko_gym/services/rafko_net_approximizer.h"
+#include "rafko_gym/services/rafko_numeric_optimizer.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/services/rafko_gpu_context.h"
@@ -110,7 +110,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_shared<rafko_mainframe::RafkoCPUContext>(
     *network, settings
   );
-  rafko_gym::RafkoNetApproximizer approximizer({context},settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context},settings);
 
   /* adding a simple-weight-gradient fragment */
   std::uint32_t weight_index = rand()%(network->weight_table_size());
@@ -232,7 +232,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  rafko_gym::RafkoNetApproximizer approximizer({context1,context2},settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context1,context2},settings);
   approximizer.set_weight_filter({
     1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 0 */
     1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 1 */

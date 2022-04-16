@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef RAFKO_BACKPROP_OBJECTIVE_OPERATION_H
-#define RAFKO_BACKPROP_OBJECTIVE_OPERATION_H
+#ifndef RAFKO_BACKPROP_NETWORK_INPUT_OPERATION_H
+#define RAFKO_BACKPROP_NETWORK_INPUT_OPERATION_H
 
 #include "rafko_global.h"
 
@@ -27,7 +27,6 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
-#include "rafko_gym/models/rafko_objective.h"
 #include "rafko_gym/models/rafko_backpropagation_operation.h"
 
 namespace rafko_gym{
@@ -36,19 +35,19 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackpropObjectiveOperation{
+class RAFKO_FULL_EXPORT RafkoBackpropNetworkInputOperation{
 public:
-  RafkoBackpropObjectiveOperation(
-    RafkoBackPropagation& queue, const rafko_net::RafkoNet& network,
-    RafkoObjective& objective, std::uint32_t label_index_,  std::uint32_t sample_number_,
-  ):RafkoBackpropagationOperation(queue, network, 0u) /* Objective is always for the present value */
-  , label_index(label_index_)
-  , sample_number(sample_number_)
+  RafkoBackpropNetworkInputOperation(
+    RafkoBackPropagation& parent, const rafko_net::RafkoNet& network,
+    std::uint32_t operation_index, std::uint32_t input_index_, std::uint32_t weight_index_
+  ):RafkoBackpropagationOperation(parent, operations, operation_index)
+  , input_index(input_index_)
+  , weight_index(weight_index_)
   {
   }
 
   void upload_dependencies_to_operations(){
-    feature_dependency = queue.push_dependency(ad_operation_neuron_spike_d, 0u/*past_index*/, label_index);
+    /*!Note: Network inputs have no dependencies! */
     set_registered();
   }
 
@@ -58,21 +57,17 @@ public:
   ){
     RFASSERT(run_index < network_input.size());
     RFASSERT(run_index < label_data.size());
-    RFASSERT(label_index < label_value[run_index].size());
-    value = 0.0; /* does not matter */
-    derivative_value = objective.get_derivative(
-      label_value[run_index][label_index], feature_dependency->get_value(),
-      feature_dependency->get_derivative(), static_cast<double>(sample_number)
-    );
+    set_value( run_index, operation_index, network_input[run_index][input_index] * network.neuron_array(weight_index) );
+    if(d_w_index == weight_index)
+      set_derivative(run_index, operation_index, d_w_index, network_input[run_index][input_index]);
+      else set_derivative(run_index, operation_index, d_w_index, 0.0);
     set_processed();
   }
-
 private:
-  const std::uint32_t label_index;
-  const std::uint32_t sample_number;
-  std::shared_ptr<RafkoBackpropagationOperation> feature_dependency;
+  std::uint32_t input_index;
+  std::uint32_t weight_index;
 };
 
 } /* namespace rafko_gym */
 
-#endif /* RAFKO_BACKPROP_OBJECTIVE_OPERATION_H */
+#endif /* RAFKO_BACKPROP_NETWORK_INPUT_OPERATION_H */

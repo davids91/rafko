@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_gym/services/rafko_net_approximizer.h"
+#include "rafko_gym/services/rafko_numeric_optimizer.h"
 
 #include <algorithm>
 
@@ -23,7 +23,7 @@
 
 namespace rafko_gym{
 
-void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
+void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
   if(exclude_chance_sum < weight_exclude_chance_filter.size()){
     double greatest_gradient_value = 0.0;
     double used_weight_filter_sum = 0.0;
@@ -94,7 +94,7 @@ void RafkoNetApproximizer::collect_approximates_from_weight_gradients(){
   ++iteration;
 }
 
-void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<double>& direction, bool save_to_fragment){
+void RafkoNumericOptimizer::convert_direction_to_gradient(std::vector<double>& direction, bool save_to_fragment){
   RFASSERT(contexts[0]->expose_network().weight_table_size() == static_cast<std::int32_t>(direction.size()));
   double error_negative_direction;
   double error_positive_direction;
@@ -155,7 +155,7 @@ void RafkoNetApproximizer::convert_direction_to_gradient(std::vector<double>& di
   tmp_data_pool.release_buffer(tmp_weight_gradients);
 }
 
-double RafkoNetApproximizer::get_single_weight_gradient(std::uint32_t weight_index, rafko_mainframe::RafkoContext& context){
+double RafkoNumericOptimizer::get_single_weight_gradient(std::uint32_t weight_index, rafko_mainframe::RafkoContext& context){
   double gradient;
   const double current_epsilon = context.expose_settings().get_sqrt_epsilon() * epsilon_addition;
 
@@ -186,7 +186,7 @@ double RafkoNetApproximizer::get_single_weight_gradient(std::uint32_t weight_ind
   return gradient;
 }
 
-double RafkoNetApproximizer::get_error_from_direction(
+double RafkoNumericOptimizer::get_error_from_direction(
   rafko_mainframe::RafkoContext& context,
   const std::vector<double>& network_original_weights,
   double direction
@@ -215,7 +215,7 @@ double RafkoNetApproximizer::get_error_from_direction(
   return result_error;
 }
 
-double RafkoNetApproximizer::get_error_from_direction(
+double RafkoNumericOptimizer::get_error_from_direction(
   rafko_mainframe::RafkoContext& context,
   const std::vector<double>& network_original_weights,
   const std::vector<double>& direction
@@ -246,7 +246,7 @@ double RafkoNetApproximizer::get_error_from_direction(
   return result_error;
 }
 
-double RafkoNetApproximizer::get_gradient_for_all_weights(){
+double RafkoNumericOptimizer::get_gradient_for_all_weights(){
   double error_negative_direction;
   double error_positive_direction;
   const double current_epsilon = contexts[0]->expose_settings().get_sqrt_epsilon();
@@ -280,7 +280,7 @@ double RafkoNetApproximizer::get_gradient_for_all_weights(){
   return -(error_positive_direction - error_negative_direction) * (current_epsilon_double);
 }
 
-void RafkoNetApproximizer::add_to_fragment(std::uint32_t weight_index, double gradient_fragment_value){
+void RafkoNumericOptimizer::add_to_fragment(std::uint32_t weight_index, double gradient_fragment_value){
   std::uint32_t values_index = 0;
   std::uint32_t values_index_target = gradient_fragment.values_size();
   std::uint32_t weight_synapse_index_target = gradient_fragment.weight_synapses_size();
@@ -339,7 +339,7 @@ void RafkoNetApproximizer::add_to_fragment(std::uint32_t weight_index, double gr
   }
 }
 
-void RafkoNetApproximizer::apply_weight_vector_delta(){
+void RafkoNumericOptimizer::apply_weight_vector_delta(){
   std::uint32_t fragment_value_index = 0;
   std::vector<double>& tmp_weight_table = tmp_data_pool.reserve_buffer(contexts[0]->expose_network().weight_table_size());
   std::fill(tmp_weight_table.begin(),tmp_weight_table.end(), (0.0));

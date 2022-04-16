@@ -30,7 +30,7 @@ if(MAKE_TESTS)
     target_sources(rafko_test
       PRIVATE
       src/main_test.cc
-      rafko_gym/src/approximizer_test.cc
+      rafko_gym/src/rafko_numeric_optimizer_test.cc
     )
   else()
     target_sources(rafko_test

@@ -44,8 +44,7 @@ protected:
   }
 
   constexpr double get_derivative(
-    double label_value, double feature_value,
-    double feature_d, double sample_number
+    double label_value, double feature_value, double feature_d, double sample_number
   ) const{
     return - (label_value * feature_d) / (sample_number * feature_value);
   }

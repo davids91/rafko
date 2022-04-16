@@ -47,8 +47,8 @@ double SpikeFunction::get_derivative_for_w( /* means: x = w */
     case spike_function_none: /* S(x,w,f(x),g(x)) = g(x) */
       return new_data_d; /* S'(x,w,f(x),g(x)) = g'(x) */
     case spike_function_memory: /* S(x,w,f(x),g(x)) = w * f(x) + g(x) - w * g(x) */
-      /* S'(x,w,f(x),g(x)) =  w * f'(x) + f(x) + g'(x) - w * g'(x) - g(x) */
-      return (parameter * previous_data) + previous_data_d + new_data_d - (parameter * new_data_d) - new_data;
+      /* S'(x,w,f(x),g(x)) =  w * f'(x) + f(x) - w * g'(x)  + g'(x) - g(x) */
+      return (parameter * previous_data_d) + previous_data - (parameter * new_data_d) + new_data_d - new_data;
     case spike_function_p: /* S(x,w,f(x),g(x)) = g(x) + (f(x) - g(x)) * w */
       /* S'(x,w,f(x),g(x)) = g'(x) + (w * (f'(x) - g'(x)) + (f(x) - g(x)) */
       return previous_data_d + (parameter * (new_data_d - previous_data_d)) + (new_data - previous_data);
@@ -68,12 +68,13 @@ double SpikeFunction::get_derivative_not_for_w(
     case spike_function_none: /* S(x,w,f(x),g(x)) = g(x) */
       return new_data_d;
     case spike_function_memory: /* S(x,w,f(x),g(x)) = w * f(x) + g(x) - w * g(x) */
-      /* S'(x,w,f(x),g(x)) = w * f'(x) + f(x) - w * g'(x) + g(x) */
-      return ((parameter * previous_data) + previous_data_d) - (parameter * new_data_d) + new_data;
+      /* S'(x,w,f(x),g(x)) = w * f'(x)        - w * g'(x) + g'(x) */
+      return (parameter * previous_data) - (parameter * new_data_d) + new_data_d;
     case spike_function_p: /* S(x,w,f(x),g(x)) = g(x) + (f(x) - g(x)) * w */
       /* S'(x,w,f(x),g(x)) = g'(x) + (w * (f'(x) - g'(x)) */
       return previous_data_d + (parameter * (new_data_d - previous_data_d));
-    case spike_function_amplify_value: /* S(x,w,f(x),g(x)) = w * g(x) */
+    case spike_function_amplify_value: /* S(x,w,
+      f(x),g(x)) = w * g(x) */
       /* S'(x,w,f(x),g(x)) = w * g'(x) */
       return parameter * new_data_d;
     default: throw std::runtime_error("Unknown spike function requested for derivative calculation!");

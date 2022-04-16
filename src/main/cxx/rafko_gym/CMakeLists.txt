@@ -17,20 +17,20 @@ set(GYM_HEADER_MODELS
   models/rafko_objective.h
   models/rafko_dataset_wrapper.h
   models/rafko_cost.h
-  models/rafko_backpropagation.h
-  models/rafko_backpropagation_operation.h
-  models/rafko_backprop_network_input_operation.h
-  models/rafko_backprop_neuron_input_operation.h
-  models/rafko_backprop_transfer_fn_operation.h
-  models/rafko_backprop_spike_fn_operation.h
-  models/rafko_backprop_objective_operation.h
 )
 set(GYM_HEADER_SERVICES
   services/cost_function.h
   services/function_factory.h
-  services/rafko_net_approximizer.h
+  services/rafko_numeric_optimizer.h
   services/updater_factory.h
   services/rafko_weight_updater.h
+  services/rafko_backpropagation.h
+  services/rafko_backpropagation_operation.h
+  services/rafko_backprop_network_input_operation.h
+  services/rafko_backprop_neuron_input_operation.h
+  services/rafko_backprop_transfer_fn_operation.h
+  services/rafko_backprop_spike_fn_operation.h
+  services/rafko_backprop_objective_operation.h
 )
 target_sources(rafko_gym
   INTERFACE ${GYM_INTERFACE_SERVICES}
@@ -39,7 +39,7 @@ target_sources(rafko_gym
   models/src/rafko_cost.cc
   models/src/rafko_dataset_wrapper.cc
   services/src/cost_function.cc
-  services/src/rafko_net_approximizer.cc
+  services/src/rafko_numeric_optimizer.cc
   services/src/rafko_weight_updater.cc
   services/src/weight_updater_adam.cc
   services/src/weight_updater_amsgrad.cc

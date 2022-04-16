@@ -91,6 +91,10 @@ public:
     return 0.0;
   }
   double get_derivative(double label_value, double feature_value, double feature_d, double sample_number) const{
+    parameter_not_used(label_value);
+    parameter_not_used(feature_value);
+    parameter_not_used(feature_d);
+    parameter_not_used(sample_number);
     return 0.0;
   }
 
