@@ -47,7 +47,7 @@ double InputFunction::collect(Input_functions function, double a, double b){
   };
 }
 
-double InputFunction::get_derivate(Input_functions function, double a, double a_dw, double b, double b_dw){
+double InputFunction::get_derivative(Input_functions function, double a, double a_dw, double b, double b_dw){
   switch(function){
     case input_function_add: return a_dw + b_dw;
     case input_function_multiply: return (a * b_dw) + (a_dw * b);

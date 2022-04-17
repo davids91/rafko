@@ -27,7 +27,7 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
-#include "rafko_gym/models/rafko_backpropagation_operation.h"
+#include "rafko_gym/services/rafko_backpropagation_operation.h"
 
 namespace rafko_gym{
 
@@ -35,32 +35,35 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackpropNetworkInputOperation{
+class RAFKO_FULL_EXPORT RafkoBackpropNetworkInputOperation
+: public RafkoBackpropagationOperation
+{
 public:
   RafkoBackpropNetworkInputOperation(
-    RafkoBackPropagation& parent, const rafko_net::RafkoNet& network,
+    RafkoBackPropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t input_index_, std::uint32_t weight_index_
-  ):RafkoBackpropagationOperation(parent, operations, operation_index)
+  ):RafkoBackpropagationOperation(data, network, operation_index)
   , input_index(input_index_)
   , weight_index(weight_index_)
   {
   }
 
-  void upload_dependencies_to_operations(){
+  DependencyRequest upload_dependencies_to_operations(){
     /*!Note: Network inputs have no dependencies! */
     set_registered();
+    return {};
   }
 
   void calculate(
-    std::uint32 d_w_index, std::uint32 run_index,
+    std::uint32_t d_w_index, std::uint32_t run_index,
     const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
   ){
     RFASSERT(run_index < network_input.size());
     RFASSERT(run_index < label_data.size());
-    set_value( run_index, operation_index, network_input[run_index][input_index] * network.neuron_array(weight_index) );
+    set_value(run_index, network_input[run_index][input_index] * network.weight_table(weight_index));
     if(d_w_index == weight_index)
-      set_derivative(run_index, operation_index, d_w_index, network_input[run_index][input_index]);
-      else set_derivative(run_index, operation_index, d_w_index, 0.0);
+      set_derivative(run_index, d_w_index, network_input[run_index][input_index]);
+      else set_derivative(run_index, d_w_index, 0.0);
     set_processed();
   }
 private:

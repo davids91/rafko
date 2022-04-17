@@ -22,18 +22,21 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 #include <map>
 
 #include "rafko_mainframe/models/rafko_settings.h"
 
-#include "rafko_gym/models/rafko_backpropagation_operation.h"
-#include "rafko_gym/models/rafko_backprop_network_input_operation.h"
-#include "rafko_gym/models/rafko_backprop_neuron_input_operation.h"
-#include "rafko_gym/models/rafko_backprop_transfer_fn_operation.h"
-#include "rafko_gym/models/rafko_backprop_spike_fn_operation.h"
-#include "rafko_gym/models/rafko_backprop_objective_operation.h"
 #include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/models/rafko_objective.h"
+#include "rafko_gym/models/rafko_backpropagation_data.h"
+
+#include "rafko_gym/services/rafko_backpropagation_operation.h"
+#include "rafko_gym/services/rafko_backprop_network_input_operation.h"
+#include "rafko_gym/services/rafko_backprop_neuron_input_operation.h"
+#include "rafko_gym/services/rafko_backprop_transfer_fn_operation.h"
+#include "rafko_gym/services/rafko_backprop_spike_fn_operation.h"
+#include "rafko_gym/services/rafko_backprop_objective_operation.h"
 
 namespace rafko_gym{
 
@@ -43,118 +46,99 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT RafkoBackPropagation{
 public:
-  RafkoBackPropagation(const rafko_net::RafkoNet& network, rafko_mainframe::RafkoSettings& settings_)
+  RafkoBackPropagation(const rafko_net::RafkoNet& network_, rafko_mainframe::RafkoSettings& settings_)
   : settings(settings_)
   , network(network_)
-  , calculated_derivatives(network.memory_size())
-  , calculated_values(network.memory_size())
+  , data(network)
   {
   }
 
   void build(RafkoEnvironment& environment, RafkoObjective& objective){
     for(std::uint32_t output_index = 0; output_index < network.output_neuron_number(); ++output_index){
-      (void)push_dependency(
-        ad_operation_objective_d, *this, network,
-        objective, output_index, environment.get_number_of_label_samples()
-      );
+      operations.emplace_back(std::make_shared<RafkoBackpropObjectiveOperation>(
+        data, network, objective, operations.size(), output_index, environment.get_number_of_label_samples()
+      ));
     }
 
     std::uint32_t done_index = 0;
     while(done_index < operations.size()){
       if(!operations[done_index]->are_dependencies_registered()){
-        operations[done_index]->upload_dependencies_to_operations();
+        DependencyRequest request = operations[done_index]->upload_dependencies_to_operations();
+        if(request.has_value()){
+          auto& [parameters, dependency_register] = request.value();
+          std::vector<std::shared_ptr<RafkoBackpropagationOperation>> new_dependencies;
+          for(const DependencyParameter& parameter : parameters)
+            new_dependencies.push_back(push_dependency(parameter));
+          dependency_register(new_dependencies);
+        }
       }
       ++done_index;
-    }
+    }/*while(done_index < operations.size())*/
+    data.build(operations.size());
+  }
 
-    calculated_values = std::vector<std::vector<double>>(
-      network.memory_size(), std::vector<double>(operations.size())
-    );
-    for(std::vector<std::vector<double>>& past : calculated_derivatives){
-      for(std::vector<std::vector<double>>& operation : past){
-        operation = std::vector<double>(network.weight_table_size());
-      }
+  void calculate(
+    const std::vector<std::vector<double>>& network_input,
+    const std::vector<std::vector<double>>& label_data
+  ){
+    RFASSERT(network_input.size() == label_data.size());
+    for(std::uint32_t run_index = 0; run_index < network_input.size(); ++run_index){
+      RFASSERT(network_input[run_index].size() == label_data[run_index].size());
+      for(std::int32_t weight_index = 0u; weight_index < network.weight_table_size(); ++weight_index)
+        for(std::int32_t operation_index = operations.size() - 1; operation_index >= 0; --operation_index)
+          operations[operation_index]->calculate(static_cast<std::uint32_t>(weight_index), run_index, network_input, label_data);
     }
   }
 
 private:
-  const rafko_net::RafkoNet& network;
   rafko_mainframe::RafkoSettings& settings;
-  std::vector<std::vector<std::vector<double>>> calculated_derivatives; /* {runs, operations, d_w values} */
-  std::vector<std::vector<double>> calculated_values; /* {runs, operations} */
+  const rafko_net::RafkoNet& network;
+  RafkoBackPropagationData data;
   std::map<std::uint32_t, std::uint32_t> neuron_spike_to_operation_map;
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations;
 
-  void set_value(std::uint32_t run_index, std::uint32_t operation_index, double value){
-    RFASSERT(run_index < calculated_values.size());
-    RFASSERT(operation_index < calculated_values[run_index].size());
-    calculated_values[run_index][operation_index] = value;
-  }
-
-  // TODO:constexpr these
-  void set_derivative(
-    std::uint32_t run_index, std::uint32_t operation_index,
-    std::uint32_t d_w_index, double value
-  ){
-    RFASSERT(run_index < calculated_values.size());
-    RFASSERT(d_w_index < calculated_values[run_index].size());
-    calculated_derivatives[run_index][operation_index][d_w_index] = value;
-  }
-
-  void get_value(std::uint32_t run_index, std::uint32_t operation_index){
-    RFASSERT(run_index < calculated_values.size());
-    RFASSERT(operation_index < calculated_values[run_index].size());
-    return calculated_values[run_index][operation_index];
-  }
-
-  void get_derivative(std::uint32_t run_index, std::uint32_t operation_index, std::uint32_t weight_index){
-    RFASSERT(run_index < calculated_values.size());
-    RFASSERT(operation_index < calculated_values[run_index].size());
-    RFASSERT(weight_index < calculated_values[run_index][operation_index].size());
-    return calculated_derivatives[run_index][operation_index][weight_index];
-  }
-
-  //TODO: Remove past index ??
-  template<typename Args...>
-  static std::shared_ptr<RafkoBackpropagationOperation> find_or_add_spike(std::uint32_t neuron_index, Args... arguments){
+  std::shared_ptr<RafkoBackpropagationOperation> find_or_add_spike(std::uint32_t neuron_index){
     auto found_element = neuron_spike_to_operation_map.find(neuron_index);
     if(found_element != neuron_spike_to_operation_map.end())
       return operations[found_element->second];
 
-    operations.emplace_back(std::make_shared<RafkoBackpropSpikeFnOperation>(
-      *this, network, operations.size(), neuron_index, arguments...
+    operations.emplace_back(new RafkoBackpropSpikeFnOperation(
+      data, network, operations.size(), neuron_index
     ));
     neuron_spike_to_operation_map.insert( {neuron_index, (operations.size() - 1u)} );
     return operations.back();
   }
 
-  //TODO: store values and weight derivatives for each run in the vectors
-  //TODO: Use one buffer for calculated values, and another for calculated derivatives
-  template<typename Args...>
-  std::shared_ptr<RafkoBackpropagationOperation> push_dependency( /* neuron index or label index or input index */
-    Autodiff_operations type, std::uint32_t content_index, Args... arguments
-  ){
-    switch(type){
-      case ad_operation_objective_d:
-        return operations.emplace_back(std::make_shared<RafkoBackpropObjectiveOperation>(
-          *this, network, operations.size(), content_index, arguments...
-        ));
+  using DependencyParameter = std::pair<Autodiff_operations,std::vector<std::uint32_t>>;
+  using DependencyParameters = std::vector<DependencyParameter>;
+  using DependencyRegister = std::function<void(std::vector<std::shared_ptr<RafkoBackpropagationOperation>>)>;
+  using DependencyRequest = std::optional<std::pair<DependencyParameters,DependencyRegister>>;
+  std::shared_ptr<RafkoBackpropagationOperation> push_dependency(DependencyParameter arguments){
+    switch(std::get<0>(arguments)){
       case ad_operation_neuron_spike_d:
-        return find_or_add_spike(content_index, arguments...);
+        RFASSERT(1u == std::get<1>(arguments).size());
+        return find_or_add_spike(std::get<1>(arguments)[0]);
       case ad_operation_neuron_transfer_d:
-        return operations.emplace_back(std::make_shared<RafkoBackpropTransferFnOperation>(
-          *this, network, operations.size(), content_index, settings, arguments...
+        RFASSERT(1u == std::get<1>(arguments).size());
+        return operations.emplace_back(new RafkoBackpropTransferFnOperation(
+          data, network, operations.size(), std::get<1>(arguments)[0], settings
         ));
       case ad_operation_neuron_input_d:
-        return operations.emplace_back(std::make_shared<RafkoBackpropNeuronInputOperation>(
-          *this, network, operations.size(), content_index, arguments...
+        RFASSERT(2u == std::get<1>(arguments).size());
+        return operations.emplace_back(new RafkoBackpropNeuronInputOperation(
+          data, network, operations.size(), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
         ));
       case ad_operation_network_input_d:
-        return operations.emplace_back(std::make_shared<RafkoBackpropNetworkInputOperation>(
-          *this, network, operations.size(), content_index, arguments...
+        RFASSERT(2u == std::get<1>(arguments).size());
+        return operations.emplace_back(new RafkoBackpropNetworkInputOperation(
+          data, network, operations.size(), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
         ));
-      }break;
+      break;
+      case ad_operation_objective_d: /* Objective operations are placed manually to the beginning of the vector */
+      case ad_operation_unknown:
+      default: break;
     }
+    return std::shared_ptr<RafkoBackpropagationOperation>();
   }
 };
 

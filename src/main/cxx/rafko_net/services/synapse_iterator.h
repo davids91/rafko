@@ -197,7 +197,7 @@ public:
    *
    * @return     The Synapse index under the @index-th step into the iteration
    */
-  int operator[](uint32_t index) const{
+  std::int32_t operator[](uint32_t index) const{
     RFASSERT(0u < size());
     std::int32_t result_index;
     std::uint32_t previous_last_reached_index = 0;

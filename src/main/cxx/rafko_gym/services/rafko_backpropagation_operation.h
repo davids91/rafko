@@ -22,12 +22,13 @@
 
 #include <memory>
 #include <vector>
+#include <optional>
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_gym/models/rafko_backpropagation_data.h"
 
 namespace rafko_gym{
 
-class RafkoBackPropagation;
 /**
  * @brief A class representing an operation inside the backpropagation logic of reverse mode autodiff.
  * each opeartion is collected with the help of the components of a Neuron ( input-, transfer- and spike function )
@@ -35,20 +36,26 @@ class RafkoBackPropagation;
  * which aims to eliminate the stack restrictions present in recursive solutions, by storing every operation
  * in a vector, and providing the chance to upload the operation dependencies into the vector when prompted.
  */
+class RafkoBackpropagationOperation;
+using DependencyParameter = std::pair<Autodiff_operations,std::vector<std::uint32_t>>;
+using DependencyParameters = std::vector<DependencyParameter>;
+using DependencyRegister = std::function<void(std::vector<std::shared_ptr<RafkoBackpropagationOperation>>)>;
+using DependencyRequest = std::optional<std::pair<DependencyParameters,DependencyRegister>>;
 class RAFKO_FULL_EXPORT RafkoBackpropagationOperation{
 public:
   RafkoBackpropagationOperation(
-    RafkoBackPropagation& parent_, const rafko_net::RafkoNet& network_,
-    std::uint32_t operation_index
-  ):network(network_)
-  , parent(parent_)
+    RafkoBackPropagationData& data_, const rafko_net::RafkoNet& network_,
+    std::uint32_t operation_index_
+  ):data(data_)
+  , network(network_)
+  , operation_index(operation_index_)
   {
   }
 
-  virtual void upload_dependencies_to_operations() = 0;
+  virtual DependencyRequest upload_dependencies_to_operations() = 0;
 
   virtual void calculate(
-    std::uint32 d_w_index, std::uint32 run_index,
+    std::uint32_t d_w_index, std::uint32_t run_index,
     const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
   ) = 0;
 
@@ -57,11 +64,11 @@ public:
   // }
 
   double get_derivative(std::uint32_t run_index, std::uint32_t d_w_index) const{
-    parent.get_derivative(run_index, operation_index, d_w_index);
+    return data.get_derivative(run_index, operation_index, d_w_index);
   }
 
   double get_value(std::uint32_t run_index) const{
-    return parent.get_value(run_index, operation_index);
+    return data.get_value(run_index, operation_index);
   }
 
   bool constexpr are_dependencies_registered() const{
@@ -73,7 +80,7 @@ public:
   }
 
 protected:
-  RafkoBackPropagation& parent;
+  RafkoBackPropagationData& data;
   const rafko_net::RafkoNet& network;
   const std::uint32_t operation_index;
 
@@ -81,10 +88,6 @@ protected:
   bool dependencies_registered = false;
 
   void constexpr reset_value(){
-    if(processed){
-      for(std::unique_ptr<RafkoBackpropagationOperation> dependency : dependencies)
-        dependecy->reset_value();
-    }
     processed = false;
   }
 
@@ -97,11 +100,11 @@ protected:
   }
 
   void set_derivative(std::uint32_t run_index, std::uint32_t d_w_index, double value){
-    parent.set_derivative(run_index, operation_index, d_w_index, double);
+    data.set_derivative(run_index, operation_index, d_w_index, value);
   }
 
   void set_value(std::uint32_t run_index, double value){
-    parent.set_value(run_index, operation_index, value);
+    data.set_value(run_index, operation_index, value);
   }
 };
 

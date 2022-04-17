@@ -53,7 +53,7 @@ public:
    */
   static double collect(Input_functions function, double a, double b);
 
-  static double get_derivate(Input_functions function, double a, double a_dw, double b, double b_dw);
+  static double get_derivative(Input_functions function, double a, double a_dw, double b, double b_dw);
 
   #if(RAFKO_USES_OPENCL)
   /**

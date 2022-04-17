@@ -92,7 +92,7 @@ TEST_CASE("Stress-testing big input takein", "[bigpic]"){
 /*###############################################################################################
  * Testing if the gradients are added to the fragment correctly
  * */
-TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]"){
+TEST_CASE("Testing aproximization fragment handling","[numeric_optimization][fragments]"){
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(7)
@@ -172,7 +172,7 @@ TEST_CASE("Testing aproximization fragment handling","[approximize][fragments]")
  *     - multi-layer
  * - For each dataset test if the each Net converges
  * */
-TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
+TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward]"){
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
@@ -187,7 +187,7 @@ TEST_CASE("Testing basic aproximization","[approximize][feed-forward]"){
   std::uint32_t number_of_samples = 128;
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  /* Create nets */
+  /* Create network */
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer(1, rafko_net::neuron_group_feature_boltzmann_knot)

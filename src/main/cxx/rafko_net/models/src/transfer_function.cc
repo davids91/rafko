@@ -55,7 +55,7 @@ double TransferFunction::get_value(Transfer_functions function, double data) con
   }
 }
 
-double TransferFunction::get_derivative(Transfer_functions function, double input, double input_dw){
+double TransferFunction::get_derivative(Transfer_functions function, double input, double input_dw) const{
   switch(function){
   case transfer_function_identity: return input_dw;
   case transfer_function_sigmoid:
