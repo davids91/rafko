@@ -23,6 +23,10 @@
 #include <memory>
 #include <vector>
 #include <optional>
+#if(RAFKO_USES_OPENCL)
+#include <string>
+#endif/*(RAFKO_USES_OPENCL)*/
+
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_gym/models/rafko_backpropagation_data.h"
@@ -46,7 +50,8 @@ public:
   RafkoBackpropagationOperation(
     RafkoBackPropagationData& data_, const rafko_net::RafkoNet& network_,
     std::uint32_t operation_index_
-  ):data(data_)
+  )
+  : data(data_)
   , network(network_)
   , operation_index(operation_index_)
   {
@@ -59,9 +64,11 @@ public:
     const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
   ) = 0;
 
-  // std::string get_kernel_function(){
-  //
-  // }
+  //TODO: Use these for actual Kernel build, not debugging..
+  #if(RAFKO_USES_OPENCL)
+  virtual std::string value_kernel_function() const = 0;
+  virtual std::string derivative_kernel_function() const = 0;
+  #endif/*(RAFKO_USES_OPENCL)*/
 
   double get_derivative(std::uint32_t run_index, std::uint32_t d_w_index) const{
     return data.get_derivative(run_index, operation_index, d_w_index);
@@ -78,6 +85,8 @@ public:
   bool constexpr is_processed() const{
     return processed;
   }
+
+  virtual std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies() = 0;
 
 protected:
   RafkoBackPropagationData& data;

@@ -21,9 +21,11 @@
 #include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
+#include "rafko_net/services/solution_solver.h"
 #include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_gym/services/rafko_backpropagation.h"
@@ -33,6 +35,8 @@
 namespace rafko_gym_test {
 
 TEST_CASE("Testing if autodiff optimizer converges small 1 Neuron networks", "[optimize][small]"){
+  std::uint32_t number_of_samples = 4;
+  std::uint32_t sequence_size = 1;
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
@@ -44,23 +48,66 @@ TEST_CASE("Testing if autodiff optimizer converges small 1 Neuron networks", "[o
 
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    .add_feature_to_layer(1, rafko_net::neuron_group_feature_boltzmann_knot)
-    // .add_feature_to_layer(0, rafko_net::neuron_group_feature_l1_regularization)
-    .add_feature_to_layer(0, rafko_net::neuron_group_feature_l2_regularization)
-    // // .add_feature_to_layer(1, rafko_net::neuron_group_feature_l1_regularization)
-    .add_feature_to_layer(1, rafko_net::neuron_group_feature_l2_regularization)
-    // // .add_feature_to_layer(2, rafko_net::neuron_group_feature_l1_regularization)
-    .add_feature_to_layer(2, rafko_net::neuron_group_feature_l2_regularization)
-    // .add_feature_to_layer(1, rafko_net::neuron_group_feature_dropout_regularization)
+    .set_neuron_spike_function(0u, 0u, rafko_net::spike_function_none)
     .allowed_transfer_functions_by_layer({
       {rafko_net::transfer_function_identity},
-    }).dense_layers({1});
-    //TODO: single input Neuron, no transfer function, no spike function
+    })
+    .dense_layers({1});
 
+  // std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
+  //   rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size)
+  // );
+  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+    // std::vector<std::vector<double>>(std::get<0>(tmp1)),
+    // std::vector<std::vector<double>>(std::get<1>(tmp1)),
+    std::vector<std::vector<double>>{{1.0,1.0}}, std::vector<std::vector<double>>{{2.0}}, sequence_size
+  );
+
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+    settings, rafko_gym::cost_function_squared_error
+  );
+
+  std::cout << "Building!" << std::endl;
   rafko_gym::RafkoBackPropagation optimizer(*network, settings);
+  optimizer.build(*environment, *objective);
+  std::cout << "Calculating!" << std::endl;
+  std::uint32_t i = 0;
+  double actual_value = 0.0;
+  while(actual_value != environment->get_label_sample(0u)[0]){
+    //++i;
 
+    optimizer.reset();
+    optimizer.calculate(
+      {environment->get_input_sample(0u)},
+      {environment->get_label_sample(0u)}
+    );
 
-  //TODO: Build Environment nd Objective
+    std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
+    std::unique_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Builder(*solution, settings)
+      .build();
+
+    for(std::uint32_t weight_index = 0; weight_index < network->weight_table_size(); ++weight_index){
+      network->set_weight_table(
+        weight_index,
+        network->weight_table(weight_index)
+        - (optimizer.get_avg_gradient(weight_index) * 0.001)
+      );
+    }
+
+    std::shared_ptr<rafko_gym::RafkoBackpropagationOperation> neuron_first_input = (
+      optimizer.get_neuron_operation(0u) /* spike */
+        ->get_dependencies()[0] /* transfer function */
+          ->get_dependencies()[0] /* first input */
+    );
+    std::shared_ptr<rafko_gym::RafkoBackpropagationOperation> neuron_second_input = (
+      neuron_first_input->get_dependencies().back() /* transfer function */
+    );
+    actual_value = optimizer.get_neuron_operation(0u)->get_value(0u);
+    std::cout << "calculated value: " << actual_value << " vs: " << reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
+    << " == " << neuron_first_input->get_value(0u) << " + " << neuron_second_input->get_value(0u)
+    << std::endl;
+  }
+  std::cout << "Structure: \n" << optimizer.value_kernel_function(0u) << std::endl;
 }
 
 } /* namespace rafko_gym_test */

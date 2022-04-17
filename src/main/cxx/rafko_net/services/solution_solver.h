@@ -89,8 +89,8 @@ public:
   class Builder{
   public:
     Builder(const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings);
-    std::unique_ptr<rafko_net::SolutionSolver> build(){
-      return std::unique_ptr<rafko_net::SolutionSolver>( new SolutionSolver(solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread) );
+    std::unique_ptr<SolutionSolver> build(){
+      return std::unique_ptr<SolutionSolver>( new SolutionSolver(solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread) );
     }
   private:
     const Solution& solution;

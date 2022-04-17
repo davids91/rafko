@@ -94,7 +94,7 @@ public:
    */
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<double>& input,
-    bool reset_neuron_data = false, std::uint32_t thread_index = 0
+    bool reset_neuron_data = false, std::uint32_t thread_index = 0u
   ){
     if(max_threads > thread_index){
       RFASSERT( input.size() == solution.network_input_size() );

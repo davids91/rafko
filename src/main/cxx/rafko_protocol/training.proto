@@ -60,11 +60,12 @@ enum Training_strategy{
 
 enum Autodiff_operations{
   ad_operation_unknown = 0;
-  ad_operation_objective_d = 1; /* inputs: error, error_d, neuron_data, spike_d */
-  ad_operation_neuron_spike_d = 2; /* inputs: spike_function_input, spike_d, neuron_transfer_d */
-  ad_operation_neuron_transfer_d = 3; /* inputs: transfer_function_input, transfer_d, neuron_input_d  */
-  ad_operation_neuron_input_d = 4; /* inputs: network_input, neuron_data, network_input_d, spike_d  */
-  ad_operation_network_input_d = 5; /* inputs: network_input, neuron_data, network_input_d, spike_d  */
+  ad_operation_objective_d = 1;
+  ad_operation_neuron_spike_d = 2;
+  ad_operation_neuron_transfer_d = 3;
+  ad_operation_neuron_input_d = 4;
+  ad_operation_neuron_bias_d = 5;
+  ad_operation_network_input_d = 6;
 }
 
 /**

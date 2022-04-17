@@ -205,9 +205,6 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward]")
     }).dense_layers({2,2,1});
 
   /* Create dataset, test set and optimizers; optimize nets */
-  std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
-    rafko_test::create_sequenced_addition_dataset(number_of_samples, 4)
-  );
   #if (RAFKO_USES_OPENCL)
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
     rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
@@ -241,6 +238,9 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward]")
     1.0, 1.0, 1.0, 1.0, 1.0  /* Neuron 4 */
   });
 
+  std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
+    rafko_test::create_sequenced_addition_dataset(number_of_samples, 4)
+  );
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::vector<std::vector<double>>(std::get<0>(tmp1)),
     std::vector<std::vector<double>>(std::get<1>(tmp1)),

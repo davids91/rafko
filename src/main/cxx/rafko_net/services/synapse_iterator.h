@@ -387,7 +387,7 @@ public:
    *
    * @return     Size of the Repeatedfiled for the  synapse_intervals
    */
-  constexpr std::uint32_t cached_size(){
+  constexpr std::uint32_t cached_size() const{
     return cached_size_var;
   }
 

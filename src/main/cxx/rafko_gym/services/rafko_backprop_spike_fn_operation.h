@@ -43,7 +43,8 @@ public:
   RafkoBackpropSpikeFnOperation(
     RafkoBackPropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t neuron_index_
-  ):RafkoBackpropagationOperation(data, network, operation_index)
+  )
+  : RafkoBackpropagationOperation(data, network, operation_index)
   , neuron_index(neuron_index_)
   {
   }
@@ -93,6 +94,24 @@ public:
     }
     set_processed();
   }
+
+  #if(RAFKO_USES_OPENCL)
+  std::string value_kernel_function() const{
+    return (
+      "Spike[" + std::to_string(neuron_index) + "]:"
+      + rafko_net::Spike_functions_Name(network.neuron_array(neuron_index).spike_function()) + "\n"
+      + present_value_dependency-> value_kernel_function()
+    );
+  }
+  std::string derivative_kernel_function() const{
+    return "";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
+
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+    return {present_value_dependency};
+  }
+
 private:
   const std::uint32_t neuron_index;
   std::shared_ptr<RafkoBackpropagationOperation> present_value_dependency;

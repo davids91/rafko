@@ -32,7 +32,12 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
   option(ASSERTLOGS
     "Enables verbose logging for development assertions; Warning: May hike runtime"
-    ON
+    OFF
+  )
+
+  option(ASSERTLOG_TRACE
+    "Enables very verbose logging for development assertions; Warning: Definetly hikes runtime!"
+    OFF
   )
 
   option(TEST_CONVERGENCE
@@ -63,8 +68,14 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
   if(ASSERTLOGS)
     add_compile_definitions(RAFKO_USES_ASSERTLOGS=1)
+    if(ASSERTLOG_TRACE)
+      add_compile_definitions(RAFKO_USES_ASSERTLOG_TRACE=1)
+    else()
+      add_compile_definitions(RAFKO_USES_ASSERTLOG_TRACE=0)
+    endif()
   else()
     add_compile_definitions(RAFKO_USES_ASSERTLOGS=0)
+    add_compile_definitions(RAFKO_USES_ASSERTLOG_TRACE=0)
   endif()
 
   if(SANITIZE)

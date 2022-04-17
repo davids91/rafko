@@ -43,17 +43,18 @@ public:
   RafkoBackpropObjectiveOperation(
     RafkoBackPropagationData& data, const rafko_net::RafkoNet& network,
     RafkoObjective& objective_, std::uint32_t operation_index,
-    std::uint32_t label_index_,  std::uint32_t sample_number_
-  ):RafkoBackpropagationOperation(data, network, operation_index)
+    std::uint32_t output_index_,  std::uint32_t sample_number_
+  )
+  : RafkoBackpropagationOperation(data, network, operation_index)
   , objective(objective_)
-  , label_index(label_index_)
+  , output_index(output_index_)
   , sample_number(sample_number_)
   {
   }
 
   DependencyRequest upload_dependencies_to_operations(){
     return {{
-      {{ad_operation_neuron_spike_d, {(network.neuron_array_size() - network.output_neuron_number() + label_index)}}},
+      {{ad_operation_neuron_spike_d, {(network.neuron_array_size() - network.output_neuron_number() + output_index)}}},
       [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>> dependencies){
         RFASSERT(1 == dependencies.size());
         feature_dependency = dependencies[0];
@@ -69,18 +70,32 @@ public:
   ){
     RFASSERT(run_index < network_input.size());
     RFASSERT(run_index < label_data.size());
-    RFASSERT(label_index < label_data[run_index].size());
+    RFASSERT(output_index < label_data[run_index].size());
     RFASSERT(static_cast<bool>(feature_dependency));
     set_derivative(run_index, d_w_index, objective.get_derivative(
-      label_data[run_index][label_index], feature_dependency->get_value(run_index),
+      label_data[run_index][output_index], feature_dependency->get_value(run_index),
       feature_dependency->get_derivative(run_index, d_w_index), static_cast<double>(sample_number)
     ));
+    //TODO: Do we need to have values for this?
     set_processed();
+  }
+
+  #if(RAFKO_USES_OPENCL)
+  std::string value_kernel_function() const{
+    return "";
+  }
+  std::string derivative_kernel_function() const{
+    return "";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
+
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+    return {feature_dependency};
   }
 
 private:
   RafkoObjective& objective;
-  const std::uint32_t label_index;
+  const std::uint32_t output_index;
   const std::uint32_t sample_number;
   std::shared_ptr<RafkoBackpropagationOperation> feature_dependency;
 };

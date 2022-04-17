@@ -45,7 +45,8 @@ public:
   RafkoBackpropTransferFnOperation(
     RafkoBackPropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t neuron_index_, rafko_mainframe::RafkoSettings& settings
-  ):RafkoBackpropagationOperation(data, network, operation_index)
+  )
+  : RafkoBackpropagationOperation(data, network, operation_index)
   , transfer_function(settings)
   , neuron_index(neuron_index_)
   {
@@ -80,6 +81,23 @@ public:
       needed_input_dependency->get_derivative(run_index, d_w_index)
     ));
     set_processed();
+  }
+
+  #if(RAFKO_USES_OPENCL)
+  std::string value_kernel_function() const{
+    return (
+      "| \t transfer function[" + std::to_string(neuron_index) + "]: "
+      + rafko_net::Transfer_functions_Name(network.neuron_array(neuron_index).transfer_function()) + "\n"
+      + needed_input_dependency->value_kernel_function()
+    );
+  }
+  std::string derivative_kernel_function() const{
+    return "";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
+
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+    return {needed_input_dependency};
   }
 
 private:

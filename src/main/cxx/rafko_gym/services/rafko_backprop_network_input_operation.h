@@ -23,6 +23,9 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#if(RAFKO_USES_OPENCL)
+#include <string>
+#endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
@@ -42,7 +45,8 @@ public:
   RafkoBackpropNetworkInputOperation(
     RafkoBackPropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t input_index_, std::uint32_t weight_index_
-  ):RafkoBackpropagationOperation(data, network, operation_index)
+  )
+  : RafkoBackpropagationOperation(data, network, operation_index)
   , input_index(input_index_)
   , weight_index(weight_index_)
   {
@@ -66,9 +70,27 @@ public:
       else set_derivative(run_index, d_w_index, 0.0);
     set_processed();
   }
+
+  #if(RAFKO_USES_OPENCL)
+  std::string value_kernel_function() const{
+    return (
+      " input[" +std::to_string(input_index) + "]"
+      + " * weight[" + std::to_string(weight_index) + "]"
+      + "(" + std::to_string(network.weight_table(weight_index)) + ")"
+    );
+  }
+  std::string derivative_kernel_function() const{
+    return "";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
+
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+    return {};
+  }
+
 private:
-  std::uint32_t input_index;
-  std::uint32_t weight_index;
+  const std::uint32_t input_index;
+  const std::uint32_t weight_index;
 };
 
 } /* namespace rafko_gym */

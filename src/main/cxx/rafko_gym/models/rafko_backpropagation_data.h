@@ -21,6 +21,7 @@
 #include "rafko_global.h"
 
 #include <vector>
+#include <algorithm>
 
 namespace rafko_gym{
 
@@ -32,6 +33,8 @@ class RAFKO_FULL_EXPORT RafkoBackPropagationData{
 public:
   RafkoBackPropagationData(const rafko_net::RafkoNet& network)
   : weight_table_size(network.weight_table_size())
+  , calculated_derivatives(network.memory_size())
+  , calculated_values(network.memory_size())
   {
   }
 
@@ -39,10 +42,20 @@ public:
     for(std::vector<double>& values : calculated_values)
       values = std::vector<double>(number_of_operations);
 
-    for(std::vector<std::vector<double>>& past : calculated_derivatives)
-      for(std::vector<double>& operation : past)
-        operation = std::vector<double>(weight_table_size);
+    for(std::vector<std::vector<double>>& past : calculated_derivatives){
+      past = std::vector<std::vector<double>>(
+        number_of_operations, std::vector<double>(weight_table_size)
+      );
+    }
     built = true;
+  }
+
+  void reset(){
+    for(std::vector<double>& values : calculated_values)
+      std::transform(values.begin(), values.end(), values.begin(), [](const double&){return 0.0;});
+    for(std::vector<std::vector<double>>& operations_d : calculated_derivatives)
+      for(std::vector<double>& weight_d : operations_d)
+        std::transform(weight_d.begin(), weight_d.end(), weight_d.begin(), [](const double&){return 0.0;});
   }
 
   void set_value(std::uint32_t run_index, std::uint32_t operation_index, double value){
@@ -58,8 +71,9 @@ public:
     std::uint32_t d_w_index, double value
   ){
     RFASSERT(built);
-    RFASSERT(run_index < calculated_values.size());
-    RFASSERT(d_w_index < calculated_values[run_index].size());
+    RFASSERT(run_index < calculated_derivatives.size());
+    RFASSERT(operation_index < calculated_derivatives[run_index].size());
+    RFASSERT(d_w_index < calculated_derivatives[run_index][operation_index].size());
     calculated_derivatives[run_index][operation_index][d_w_index] = value;
   }
 
