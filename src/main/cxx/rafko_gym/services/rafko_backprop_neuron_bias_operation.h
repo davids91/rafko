@@ -84,16 +84,21 @@ public:
       RFASSERT(next_bias_dependency->is_processed());
       dependency_value = next_bias_dependency->get_value(run_index);
       dependency_derivative = next_bias_dependency->get_derivative(run_index, d_w_index);
+      set_value(run_index, rafko_net::InputFunction::collect(
+        network.neuron_array(neuron_index).input_function(),
+        network.weight_table(weight_index), dependency_value
+      ));
+      set_derivative(run_index, d_w_index, rafko_net::InputFunction::get_derivative(
+        network.neuron_array(neuron_index).input_function(),
+        network.weight_table(weight_index), ((d_w_index == weight_index)?(1.0):(0.0)),
+        dependency_value, dependency_derivative
+      ));
+    }else{ /* no additional bias values are present as dependencies */
+      set_value( run_index, network.weight_table(weight_index) );
+      set_derivative( run_index, d_w_index, ((d_w_index == weight_index)?(1.0):(0.0)) );
+
     }
-    set_value(run_index, rafko_net::InputFunction::collect(
-      network.neuron_array(neuron_index).input_function(),
-      network.weight_table(weight_index), dependency_value
-    ));
-    set_derivative(run_index, d_w_index, rafko_net::InputFunction::get_derivative(
-      network.neuron_array(neuron_index).input_function(),
-      network.weight_table(weight_index), ((d_w_index == weight_index)?(1.0):(0.0)),
-      dependency_value, dependency_derivative
-    ));
+
     set_processed();
   }
 
@@ -102,11 +107,11 @@ public:
     std::string next_dependency_string = "";
     if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
       RFASSERT(static_cast<bool>(next_bias_dependency));
-      RFASSERT(next_bias_dependency->is_processed());
+      RFASSERT(next_bias_dependency->are_dependencies_registered());
       next_dependency_string = " -+-> " + next_bias_dependency->value_kernel_function();
     }
     return (
-      " bias weight[" + std::to_string(weight_index) + "]"
+      "|| \t ---> bias weight[" + std::to_string(weight_index) + "]"
       + "(" + std::to_string(network.weight_table(weight_index)) + ")"
       + next_dependency_string
     );

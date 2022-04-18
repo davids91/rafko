@@ -97,6 +97,8 @@ public:
 
   #if(RAFKO_USES_OPENCL)
   std::string value_kernel_function() const{
+    RFASSERT(static_cast<bool>(present_value_dependency));
+    RFASSERT(present_value_dependency->are_dependencies_registered());
     return (
       "Spike[" + std::to_string(neuron_index) + "]:"
       + rafko_net::Spike_functions_Name(network.neuron_array(neuron_index).spike_function()) + "\n"

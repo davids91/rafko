@@ -41,7 +41,6 @@ double InputFunction::collect(Input_functions function, double a, double b){
   switch(function){
     case input_function_add: return a + b;
     case input_function_multiply: return a * b;
-    case input_function_analog_xor: return std::abs(a - b) * (a + b);
     /*!Note: This solution for a number sequence of indefinite size might leave some mathematicians very furious, and rightly so.. '^^ */
     default: throw std::runtime_error("Unidentified Input function called!");
   };
@@ -51,10 +50,6 @@ double InputFunction::get_derivative(Input_functions function, double a, double 
   switch(function){
     case input_function_add: return a_dw + b_dw;
     case input_function_multiply: return (a * b_dw) + (a_dw * b);
-    case input_function_analog_xor: return (
-      (((a*a)-(b*b))*(a_dw - b_dw))/(std::abs(a-b))
-      + std::abs(a-b)*(a_dw + b_dw)
-    );
     default: throw std::runtime_error("Unidentified Input function called!");
   };
 }
@@ -66,9 +61,7 @@ std::string InputFunction::get_kernel_function_for(std::string operation_index, 
     switch(==op==){
       case neuron_input_function_add: ==a== = (==a== + ==b==); break;
       case neuron_input_function_multiply: ==a== = (==a== * ==b==); break;
-      case neuron_input_function_analog_xor:
-        ==a== = fabs(==a== - ==b==) * (==a== + ==b==);
-        break;
+      default: break;
     }
   )";
   code = rafko_utilities::replace_all_in_string(code, std::regex("==a=="), a);

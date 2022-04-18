@@ -95,7 +95,7 @@ public:
        */
     }else{ /* this is the last input, push in the bias dependency */
       dependency_parameters.push_back({
-        ad_operation_neuron_bias_d, {neuron_index, (weight_index + 1u)}
+        ad_operation_neuron_bias_d, {neuron_index, (1u + neuron_input_index + 1u)}
       });
     }
 
@@ -154,22 +154,23 @@ public:
     }
 
     /* calculate u(x) part, u(x) is either the inputs starting from the next, or the bias value(s) */
-    std::cout << "neuron[" << neuron_index << "], input[" << neuron_input_index << "]:";
     double next_value = 0.0;
     double next_derivative = 0.0;
+    // std::cout << "neuron[" << neuron_index << "], input[" << neuron_input_index << "]:";
     if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){
       RFASSERT(static_cast<bool>(neuron_input_dependency));
       RFASSERT(neuron_input_dependency->is_processed());
       next_value = neuron_input_dependency->get_value(run_index);
       next_derivative = neuron_input_dependency->get_derivative(run_index, d_w_index);
-      std::cout << "collecting: " << weighted_input << "+" << next_value << std::endl;
     }else{ /* the last input starts to collect bias */
       RFASSERT(static_cast<bool>(neuron_bias_dependency));
       RFASSERT(neuron_bias_dependency->is_processed());
       next_value = neuron_bias_dependency->get_value(run_index);
       next_derivative = neuron_bias_dependency->get_derivative(run_index, d_w_index);
-      std::cout << "getting with bias: : " << weighted_input << "+" << next_value << std::endl;
     }
+
+    /* calculate the overall value and derivative part */
+    // std::cout << weighted_input << " * " << next_value << std::endl;
     set_value(run_index, rafko_net::InputFunction::collect(
       network.neuron_array(neuron_index).input_function(),
       weighted_input, next_value
@@ -192,22 +193,28 @@ public:
     }
     if(is_network_input){
       RFASSERT(static_cast<bool>(network_input_dependency));
-      RFASSERT(network_input_dependency->is_processed());
+      RFASSERT(network_input_dependency->are_dependencies_registered());
       value_debug += (
         "|| \t --> " + network_input_dependency->value_kernel_function() + "\n"
       );
     }else{
       RFASSERT(static_cast<bool>(neuron_data_dependency));
-      RFASSERT(neuron_data_dependency->is_processed());
+      RFASSERT(neuron_data_dependency->are_dependencies_registered());
       value_debug += (
         "|| \t --> " + neuron_data_dependency->value_kernel_function() + "\n"
       );
     }
     if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){ /* not the last input */
       RFASSERT(static_cast<bool>(neuron_input_dependency));
-      RFASSERT(neuron_input_dependency->is_processed());
+      RFASSERT(neuron_input_dependency->are_dependencies_registered());
       value_debug += (
         "|| \t ---> \n" + neuron_input_dependency->value_kernel_function()
+      );
+    }else{
+      RFASSERT(static_cast<bool>(neuron_bias_dependency));
+      RFASSERT(neuron_bias_dependency->are_dependencies_registered());
+      value_debug += (
+        "|| \t ---> \n" + neuron_bias_dependency->value_kernel_function()
       );
     }
     return value_debug;

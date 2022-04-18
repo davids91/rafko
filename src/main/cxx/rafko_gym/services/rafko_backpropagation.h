@@ -55,11 +55,11 @@ public:
   }
 
   void build(RafkoEnvironment& environment, RafkoObjective& objective){
+    RFASSERT_SCOPE(AUTODIFF_BUILD);
     for(std::uint32_t output_index = 0; output_index < network.output_neuron_number(); ++output_index){
-      std::uint32_t neuron_index = (network.neuron_array_size() - network.output_neuron_number() + output_index);
       operations.emplace_back(std::make_shared<RafkoBackpropObjectiveOperation>(
         data, network, objective, operations.size(),
-        neuron_index, environment.get_number_of_label_samples()
+        output_index, environment.get_number_of_label_samples()
       ));
     }
 
@@ -84,6 +84,7 @@ public:
     const std::vector<std::vector<double>>& network_input,
     const std::vector<std::vector<double>>& label_data
   ){
+    RFASSERT_SCOPE(AUTODIFF_CALCULATE);
     for(std::uint32_t run_index = 0; run_index < network_input.size(); ++run_index){
       for(std::int32_t weight_index = 0u; weight_index < network.weight_table_size(); ++weight_index)
         for(std::int32_t operation_index = operations.size() - 1; operation_index >= 0; --operation_index)
@@ -105,7 +106,6 @@ public:
     return operations[found_element->second];
   }
 
-  //TODO: Store for every run, instead of the network
   double get_avg_gradient(std::uint32_t d_w_index){
     double sum = 0.0;
     double count = 0.0;
@@ -151,6 +151,8 @@ private:
   }
 
   std::shared_ptr<RafkoBackpropagationOperation> push_dependency(DependencyParameter arguments){
+    RFASSERT_LOG("Trying to push back operation {}", Autodiff_operations_Name(std::get<0>(arguments)));
+    RFASSERT_LOGV(std::get<1>(arguments), "With parameters: ");
     switch(std::get<0>(arguments)){
       case ad_operation_neuron_spike_d:
         RFASSERT(1u == std::get<1>(arguments).size());

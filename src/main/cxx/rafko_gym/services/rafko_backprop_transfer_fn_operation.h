@@ -85,6 +85,8 @@ public:
 
   #if(RAFKO_USES_OPENCL)
   std::string value_kernel_function() const{
+    RFASSERT(static_cast<bool>(needed_input_dependency));
+    RFASSERT(needed_input_dependency->are_dependencies_registered());
     return (
       "| \t transfer function[" + std::to_string(neuron_index) + "]: "
       + rafko_net::Transfer_functions_Name(network.neuron_array(neuron_index).transfer_function()) + "\n"
