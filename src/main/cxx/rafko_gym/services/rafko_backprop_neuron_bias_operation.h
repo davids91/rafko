@@ -111,7 +111,7 @@ public:
       next_dependency_string = " -+-> " + next_bias_dependency->value_kernel_function();
     }
     return (
-      "|| \t ---> bias weight[" + std::to_string(weight_index) + "]"
+      "|| ---> bias weight[" + std::to_string(weight_index) + "]"
       + "(" + std::to_string(network.weight_table(weight_index)) + ")"
       + next_dependency_string
     );

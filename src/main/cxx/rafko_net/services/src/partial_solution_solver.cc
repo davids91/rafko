@@ -86,15 +86,9 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
           new_neuron_input = (1.0);
         /* The weighted input shall be added to the calculated value */
         if(true == first_input_in_neuron){
-          RFASSERT_TRACE("Neuron[{}] value = {} * {}", new_neuron_input, detail.weight_table(weight_index));
           new_neuron_data = new_neuron_input * detail.weight_table(weight_index);
           first_input_in_neuron = false;
         }else{
-          RFASSERT_TRACE(
-            "Neuron[{}] value collecting: {} * {} <-- {}",
-            new_neuron_input, detail.weight_table(weight_index),
-            rafko_net::Input_functions_Name(detail.neuron_input_functions(neuron_iterator))
-          );
           new_neuron_data = InputFunction::collect(
             detail.neuron_input_functions(neuron_iterator),
             new_neuron_data, (new_neuron_input * detail.weight_table(weight_index))

@@ -65,9 +65,9 @@ public:
     RFASSERT(run_index < network_input.size());
     RFASSERT(run_index < label_data.size());
     set_value(run_index, network_input[run_index][input_index] * network.weight_table(weight_index));
-    if(d_w_index == weight_index)
-      set_derivative(run_index, d_w_index, network_input[run_index][input_index]);
-      else set_derivative(run_index, d_w_index, 0.0);
+    set_derivative(
+      run_index, d_w_index, ((d_w_index == weight_index)?(network_input[run_index][input_index]):(0.0))
+    );
     set_processed();
   }
 

@@ -59,6 +59,7 @@ public:
 
   virtual DependencyRequest upload_dependencies_to_operations() = 0;
 
+  //TODO: Only calculate value once, e.g. at d_w_index 0
   virtual void calculate(
     std::uint32_t d_w_index, std::uint32_t run_index,
     const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
