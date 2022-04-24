@@ -58,14 +58,20 @@ public:
     return {};
   }
 
-  void calculate(
+  void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data){
+    parameter_not_used(label_data);
+    RFASSERT(input_index < network_input.size());
+    set_value(network_input[input_index] * network.weight_table(weight_index));
+    set_value_processed();
+  }
+
+  void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ){
     parameter_not_used(label_data);
     RFASSERT(input_index < network_input.size());
-    set_value(network_input[input_index] * network.weight_table(weight_index));
     set_derivative( d_w_index, ((d_w_index == weight_index)?(network_input[input_index]):(0.0)) );
-    set_processed();
+    set_derivative_processed();
   }
 
   #if(RAFKO_USES_OPENCL)

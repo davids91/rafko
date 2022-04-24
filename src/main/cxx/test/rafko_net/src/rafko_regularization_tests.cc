@@ -298,8 +298,8 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
   std::vector<double> network_input(network->input_data_size(), (rand()%10));
   (void)regulated_agent->solve(network_input);
   (void)unregulated_agent->solve(network_input);
-  const std::vector<double>& regulated_neuron_data = regulated_agent->get_memory().get_const_element(0);
-  const std::vector<double>& unregulated_neuron_data = unregulated_agent->get_memory().get_const_element(0);
+  const std::vector<double>& regulated_neuron_data = regulated_agent->get_memory().get_element(0);
+  const std::vector<double>& unregulated_neuron_data = unregulated_agent->get_memory().get_element(0);
 
   /* Each data is either zero or matches the reference */
   std::uint32_t layer_start = std::accumulate(layer_sizes.begin(), layer_sizes.end() - 2u, (0.0) );
@@ -312,7 +312,7 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
 
   (void)settings.set_droput_probability((1.0));
   (void)regulated_agent->solve(network_input);
-  const std::vector<double>& regulated_neuron_data_2 = regulated_agent->get_memory().get_const_element(0);
+  const std::vector<double>& regulated_neuron_data_2 = regulated_agent->get_memory().get_element(0);
 
   for(std::uint32_t result_index = 0; result_index < layer_sizes[layer_sizes.size() - 2u]; ++result_index){
     REQUIRE( Catch::Approx(regulated_neuron_data_2[layer_start + result_index]).epsilon(0.0000000001) == (0.0) );
@@ -321,8 +321,8 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
   (void)settings.set_droput_probability((0.0));
   (void)unregulated_agent->solve(network_input, true);
   (void)regulated_agent->solve(network_input, true);
-  const std::vector<double>& regulated_neuron_data_3 = regulated_agent->get_memory().get_const_element(0);
-  const std::vector<double>& unregulated_neuron_data_3 = unregulated_agent->get_memory().get_const_element(0);
+  const std::vector<double>& regulated_neuron_data_3 = regulated_agent->get_memory().get_element(0);
+  const std::vector<double>& unregulated_neuron_data_3 = unregulated_agent->get_memory().get_element(0);
 
   for(std::uint32_t result_index = 0; result_index < layer_sizes[layer_sizes.size() - 2u]; ++result_index){
     REQUIRE(

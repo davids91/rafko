@@ -69,7 +69,6 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
  *  by querying sequence indices and comparing to past reaches
  *  Used interfaces:
  * - get_sequence_size
- * - get_const_element
  * - get_sequence_index
  * */
 TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-handling]"){

@@ -94,8 +94,7 @@ public:
    */
   void copy_latest(const DataRingbuffer& other){
     std::copy(
-      other.get_const_element(0).begin(),other.get_const_element(0).end(),
-      get_element(0).begin()
+      other.get_element(0).begin(),other.get_element(0).end(), get_element(0).begin()
     );
   }
 
@@ -118,7 +117,7 @@ public:
    */
   typename Content::value_type get_element(std::uint32_t past_index, std::uint32_t data_index) const{
     if((data.size() > past_index)&&(data[0].size() > data_index))
-      return get_const_element(past_index)[data_index];
+      return get_element(past_index)[data_index];
       else throw std::runtime_error("Ringbuffer data index out of bounds!");
   }
 
@@ -169,7 +168,7 @@ public:
    *
    * @return     The reference pointing to a data
    */
-  const Content& get_const_element(std::uint32_t past_index) const{
+  const Content& get_element(std::uint32_t past_index) const{
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
     }else throw std::runtime_error("Ringbuffer index out of bounds!");

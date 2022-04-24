@@ -25,7 +25,9 @@
 #include <utility>
 #include <map>
 #include <limits>
+#include <stdexcept>
 
+#include "rafko_utilities/models/const_vector_subrange.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/models/rafko_objective.h"
@@ -83,25 +85,33 @@ public:
   void calculate(
     const std::vector<std::vector<double>>& network_input,
     const std::vector<std::vector<double>>& label_data
-  ){//TODO: Step data but don't copy!
+  ){
     RFASSERT_SCOPE(AUTODIFF_CALCULATE);
     for(std::uint32_t run_index = 0; run_index < network_input.size(); ++run_index){
       data.step();
+      for(std::int32_t operation_index = operations.size() - 1; operation_index >= 0; --operation_index){
+        operations[operation_index]->calculate_value(network_input[run_index], label_data[run_index]);
+      }
       for(std::int32_t weight_index = 0u; weight_index < network.weight_table_size(); ++weight_index){
-        // std::cout << "weight ======== " << weight_index << " ========" << std::endl;
         for(std::int32_t operation_index = operations.size() - 1; operation_index >= 0; --operation_index)
-          operations[operation_index]->calculate(
+          operations[operation_index]->calculate_derivative(
             static_cast<std::uint32_t>(weight_index), network_input[run_index], label_data[run_index]
           );
       }
     }
   }
 
+  rafko_utilities::ConstVectorSubrange<> get_actual_value(std::uint32_t past_index){
+    if(past_index > data.get_value().get_sequence_size())
+      throw std::runtime_error("Reaching past value of Network beyond its memory");
+    const std::uint32_t output_index_start = network.neuron_array_size() - network.output_neuron_number();
+    return {data.get_value().get_element(past_index).begin() + output_index_start, data.get_value().get_element(past_index).end()};
+  }
+
   void reset(){
     data.reset();
   }
 
-  //TODO: Make this not horrible
   std::shared_ptr<RafkoBackpropagationOperation>& get_neuron_operation(std::uint32_t output_index){
     std::uint32_t neuron_index = (network.neuron_array_size() - network.output_neuron_number() + output_index);
     auto found_element = neuron_spike_to_operation_map.find(neuron_index);
@@ -112,7 +122,6 @@ public:
   double get_avg_gradient(std::uint32_t d_w_index){
     double sum = 0.0;
     double count = 0.0;
-    //double max = 0.0; TODO: normalize
     for(std::uint32_t run_index = 0; run_index < network.memory_size(); ++run_index){
       for(std::uint32_t output_index = 0; output_index < network.output_neuron_number(); ++output_index){
         sum += data.get_derivative(run_index, output_index, d_w_index);

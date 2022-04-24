@@ -64,7 +64,7 @@ public:
     calculated_derivatives->reset();
   }
 
-  void step(){
+  void step(){ /*!Note: Not using @clean_step, but only because both the value and derivative will be overwritten anyway.. */
     calculated_values->shallow_step();
     calculated_derivatives->shallow_step();
   }
@@ -75,7 +75,6 @@ public:
     calculated_values->get_element(0u/*past_index*/, operation_index) = value;
   }
 
-  // TODO:constexpr these
   void set_derivative(std::uint32_t operation_index, std::uint32_t d_w_index, double value){
     RFASSERT(built);
     RFASSERT(operation_index < calculated_derivatives->get_element(0u/*past_index*/).size());
@@ -83,11 +82,19 @@ public:
     calculated_derivatives->get_element(0u/*past_index*/, operation_index)[d_w_index] = value;
   }
 
+  const BackPropValueBuffer& get_value(){
+    return *calculated_values;
+  }
+
   double get_value(std::uint32_t past_index, std::uint32_t operation_index){
     RFASSERT(built);
     if(calculated_values->get_sequence_size() <= past_index) return 0.0;
     RFASSERT(operation_index < calculated_values->get_element(0).size());
     return calculated_values->get_element(past_index, operation_index);
+  }
+
+  const BackpropDerivativeBuffer& get_derivative(){
+    return *calculated_derivatives;
   }
 
   double get_derivative(std::uint32_t past_index, std::uint32_t operation_index, std::uint32_t weight_index){

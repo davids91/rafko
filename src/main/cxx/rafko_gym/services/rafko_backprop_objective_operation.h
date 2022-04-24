@@ -63,18 +63,36 @@ public:
     }};
   }
 
-  void calculate(
+  void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data){
+    parameter_not_used(network_input);
+    parameter_not_used(label_data);
+    RFASSERT(are_dependencies_registered());
+    RFASSERT(output_index < label_data.size());
+    RFASSERT(static_cast<bool>(feature_dependency));
+    RFASSERT(feature_dependency->is_value_processed());
+    set_value(feature_dependency->get_value(0u/*past_index*/));
+    /*!Note: Objective gets the value of it's input Neuron, so Neuron values can be queried at once;
+     * Because Neurons might be dependent of other Neurons, so order of them might change,
+     * but since nothing depends on  Objective operations, they can be added in any order,
+     * thus their value is being used in this instance to access the Network output in bulk
+     */
+    set_value_processed();
+  }
+
+  void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ){
     parameter_not_used(network_input);
+    RFASSERT(is_value_processed());
+    RFASSERT(are_dependencies_registered());
     RFASSERT(output_index < label_data.size());
     RFASSERT(static_cast<bool>(feature_dependency));
+    RFASSERT(feature_dependency->is_processed());
     set_derivative(d_w_index, objective.get_derivative(
       label_data[output_index], feature_dependency->get_value(0u/*past_index*/),
       feature_dependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(sample_number)
     ));
-    //TODO: Do we need to have values for this?
-    set_processed();
+    set_derivative_processed();
   }
 
   #if(RAFKO_USES_OPENCL)

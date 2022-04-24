@@ -59,8 +59,8 @@ public:
 
   virtual DependencyRequest upload_dependencies_to_operations() = 0;
 
-  //TODO: Only calculate value once, e.g. at d_w_index 0
-  virtual void calculate(
+  virtual void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data) = 0;
+  virtual void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ) = 0;
 
@@ -82,8 +82,12 @@ public:
     return dependencies_registered;
   }
 
+  bool constexpr is_value_processed() const{
+    return value_processed;
+  }
+
   bool constexpr is_processed() const{
-    return processed;
+    return (value_processed && derivative_processed);
   }
 
   virtual std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies() = 0;
@@ -93,15 +97,26 @@ protected:
   const rafko_net::RafkoNet& network;
   const std::uint32_t operation_index;
 
-  bool processed = false;
+  bool value_processed = false;
+  bool derivative_processed = false;
   bool dependencies_registered = false;
 
-  void constexpr reset_value(){
-    processed = false;
+  void constexpr reset_processed(){
+    value_processed = false;
+    derivative_processed = false;
+  }
+
+  void constexpr set_value_processed(){
+    value_processed = true;
+  }
+
+  void constexpr set_derivative_processed(){
+    derivative_processed = true;
   }
 
   void constexpr set_processed(){
-    processed = true;
+    value_processed = true;
+    derivative_processed = true;
   }
 
   void constexpr set_registered(){

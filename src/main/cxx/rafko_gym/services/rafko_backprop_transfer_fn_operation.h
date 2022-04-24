@@ -63,23 +63,33 @@ public:
     }};
   }
 
-  void calculate(
-    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
-  ){
+  void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data){
     parameter_not_used(network_input);
     parameter_not_used(label_data);
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));
-    RFASSERT(needed_input_dependency->is_processed());
+    RFASSERT(needed_input_dependency->is_value_processed());
     set_value(transfer_function.get_value(
       network.neuron_array(neuron_index).transfer_function(), needed_input_dependency->get_value(0u/*past_index*/)
     ));
+    set_value_processed();
+  }
+
+  void calculate_derivative(
+    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
+  ){
+    parameter_not_used(network_input);
+    parameter_not_used(label_data);
+    RFASSERT(is_value_processed());
+    RFASSERT(are_dependencies_registered());
+    RFASSERT(static_cast<bool>(needed_input_dependency));
+    RFASSERT(needed_input_dependency->is_processed());
     set_derivative(d_w_index, transfer_function.get_derivative( /* d t(f(w))/dx = f'(w) * t'(f(w))*/
       network.neuron_array(neuron_index).transfer_function(),
       needed_input_dependency->get_value(0u/*past_index*/),
       needed_input_dependency->get_derivative(0u/*past_index*/, d_w_index)
     ));
-    set_processed();
+    set_derivative_processed();
   }
 
   #if(RAFKO_USES_OPENCL)
