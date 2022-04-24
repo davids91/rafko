@@ -134,7 +134,7 @@ std::uint32_t NeuronRouter::get_next_neuron(std::vector<std::uint32_t>& visiting
           &&(static_cast<std::int32_t>(visiting.back()) == synapse_input_index)
         )||(( /* check for each input of the neuron if they are finished */
           (SynapseIterator<>::is_index_input(synapse_input_index))
-          ||(0 < current_backreach) /* Inputs from the past count as already processed */
+          ||(0u < current_backreach) /* Neuron Inputs from the past count as already processed */
           ||(is_neuron_processed(synapse_input_index))
           ||((!strict)&&(is_neuron_reserved(synapse_input_index)))
           /*!Note: In non-strict mode usually the whole of the net is collected into the subset in order,
@@ -142,6 +142,7 @@ std::uint32_t NeuronRouter::get_next_neuron(std::vector<std::uint32_t>& visiting
            **/
          )&&(
            (SynapseIterator<>::is_index_input(synapse_input_index))
+           ||(0u < current_backreach) /* Neuron Inputs from the past count as already processed */
            ||(are_neuron_feature_groups_finished_for(synapse_input_index))
            /*!Note: the index reference is never called with Inputs ( with negative index values ) because of the || clause */
        ))
