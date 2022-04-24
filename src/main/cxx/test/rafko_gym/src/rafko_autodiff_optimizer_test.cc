@@ -50,8 +50,8 @@ TEST_CASE("Testing if autodiff optimizer converges small 1 Neuron networks", "[o
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
-    // .add_neuron_recurrence(1u,0u,1u)
-    // .set_neuron_input_function(0u, 0u, rafko_net::input_function_add)
+    .add_neuron_recurrence(1u,0u,1u)
+    .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
     // .set_neuron_spike_function(0u, 0u, rafko_net::spike_function_none)
     // .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
     // .set_neuron_spike_function(0u, 1u, rafko_net::spike_function_none)
@@ -85,9 +85,16 @@ TEST_CASE("Testing if autodiff optimizer converges small 1 Neuron networks", "[o
   std::cout << "Calculating!" << std::endl;
   std::vector<double> actual_value(2, 0.0);
   std::uint32_t iteration = 0u;
-  while(std::abs(actual_value[0] - environment->get_label_sample(0u)[0]) > learning_rate){
+  while(
+    (
+      std::abs(actual_value[0] - environment->get_label_sample(0u)[0])
+      +std::abs(actual_value[1] - environment->get_label_sample(1u)[0])
+    )
+    > (2.0 * learning_rate)
+  ){
     optimizer.reset();
     optimizer.calculate(
+      // {environment->get_input_sample(0u)},{environment->get_label_sample(0u)}0
       {environment->get_input_sample(0u), environment->get_input_sample(1u)},
       {environment->get_label_sample(0u), environment->get_label_sample(1u)}
     );
@@ -97,13 +104,10 @@ TEST_CASE("Testing if autodiff optimizer converges small 1 Neuron networks", "[o
       *solution, settings
     ).build();
 
-    for(std::uint32_t weight_index = 0; weight_index < network->weight_table_size(); ++weight_index){
+    for(std::int32_t weight_index = 0; weight_index < network->weight_table_size(); ++weight_index){
       network->set_weight_table(
         weight_index,
-        (
-          network->weight_table(weight_index)
-          - (optimizer.get_avg_gradient(weight_index) * learning_rate)
-        )
+        ( network->weight_table(weight_index) - (optimizer.get_avg_gradient(weight_index) * learning_rate) )
       );
     }
 
@@ -115,15 +119,19 @@ TEST_CASE("Testing if autodiff optimizer converges small 1 Neuron networks", "[o
     std::shared_ptr<rafko_gym::RafkoBackpropagationOperation> neuron_second_input = (
       neuron_first_input->get_dependencies().back() /* transfer function */
     );
-    actual_value[0] = optimizer.get_neuron_operation(0u)->get_value(0u);
-    actual_value[1] = optimizer.get_neuron_operation(0u)->get_value(1u);
+    actual_value[0] = optimizer.get_neuron_operation(0u)->get_value(1u/*past_index*/);
+    actual_value[1] = optimizer.get_neuron_operation(0u)->get_value(0u/*past_index*/);
     REQUIRE(
       reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
-      == Catch::Approx(actual_value[0]).epsilon(0.00000000000001)
+      == Catch::Approx(actual_value[0]).epsilon(0.0000000000001)
+    );
+    REQUIRE(
+      reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
+      == Catch::Approx(actual_value[1]).epsilon(0.0000000000001)
     );
     // std::cout << "================" << std::endl;
     std::cout << "Target: "
-    << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[0] << ";"
+    << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[0] << ";   "
     << environment->get_label_sample(1u)[0] << " --?--> " << actual_value[1]
     << "     \r";
     ++iteration;

@@ -117,13 +117,12 @@ public:
   }
 
   void calculate(
-    std::uint32_t d_w_index, std::uint32_t run_index,
-    const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
+    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ){
-    /* i(w) = w * f(w) ¤ u(w) | f(w) = network_input or input_from_internal_neuron */
-    RFASSERT(run_index < network_input.size());
-    RFASSERT(run_index < label_data.size());
+    parameter_not_used(network_input);
+    parameter_not_used(label_data);
     RFASSERT(are_dependencies_registered());
+    /* i(w) = w * f(w) ¤ u(w) | f(w) = network_input or input_from_internal_neuron */
     /* calculate f(x) part */
     double weighted_input;
     double current_input_derivative;
@@ -131,52 +130,43 @@ public:
       RFASSERT(0u == input_past_index);
       RFASSERT(static_cast<bool>(network_input_dependency));
       RFASSERT(network_input_dependency->is_processed());
-      weighted_input = network_input_dependency->get_value(run_index);
-      current_input_derivative = network_input_dependency->get_derivative(run_index, d_w_index);
-    }else{
-      if(0u == input_past_index){
-        RFASSERT(static_cast<bool>(neuron_data_dependency));
-        RFASSERT(neuron_data_dependency->is_processed());
-      }
-      if(input_past_index <= run_index){
-        weighted_input = (
-          neuron_data_dependency->get_value(run_index - input_past_index)
-          * network.weight_table(weight_index)
-        );
-        //TODO: re-check derivative formula here
-        current_input_derivative = (
-          neuron_data_dependency->get_derivative(run_index - input_past_index, d_w_index)
-          * network.weight_table(weight_index)
-        );
-        if(weight_index == d_w_index)current_input_derivative += weighted_input;
-      }else{
-        weighted_input = 0.0;
-        current_input_derivative = 0.0;
-      }
+      weighted_input = network_input_dependency->get_value(0u/*past_index*/);
+      current_input_derivative = network_input_dependency->get_derivative(0u/*past_index*/, d_w_index);
+    }else{ /* f(x) comes from Neuron data, may have inputs from the past */
+      RFASSERT(static_cast<bool>(neuron_data_dependency));
+      RFASSERT( (0u < input_past_index)||(neuron_data_dependency->is_processed()) );
+      weighted_input = (
+        neuron_data_dependency->get_value(input_past_index) * network.weight_table(weight_index)
+      );
+      //TODO: re-check derivative formula here
+      current_input_derivative = (
+        neuron_data_dependency->get_derivative(input_past_index, d_w_index) * network.weight_table(weight_index)
+      );
+      if(weight_index == d_w_index)current_input_derivative += weighted_input;
     }/*if(is_network_input)*/
 
     /* calculate u(x) part, u(x) is either the inputs starting from the next, or the bias value(s) */
     double next_value = 0.0;
     double next_derivative = 0.0;
-    // std::cout << "neuron[" << neuron_index << "], input[" << neuron_input_index << "]:";
     if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){
       RFASSERT(static_cast<bool>(neuron_input_dependency));
       RFASSERT(neuron_input_dependency->is_processed());
-      next_value = neuron_input_dependency->get_value(run_index);
-      next_derivative = neuron_input_dependency->get_derivative(run_index, d_w_index);
+      next_value = neuron_input_dependency->get_value(0u/*past_index*/);
+      next_derivative = neuron_input_dependency->get_derivative(0u/*past_index*/, d_w_index);
     }else{ /* the last input starts to collect bias */
       RFASSERT(static_cast<bool>(neuron_bias_dependency));
       RFASSERT(neuron_bias_dependency->is_processed());
-      next_value = neuron_bias_dependency->get_value(run_index);
-      next_derivative = neuron_bias_dependency->get_derivative(run_index, d_w_index);
+      next_value = neuron_bias_dependency->get_value(0u/*past_index*/);
+      next_derivative = neuron_bias_dependency->get_derivative(0u/*past_index*/, d_w_index);
     }
-
+    // std::cout << "neuron[" << neuron_index << "], input[" << neuron_input_index << "]:"
+    //  << weighted_input << "+" << next_value << std::endl;
     /* calculate the overall value and derivative part */
-    set_value(run_index, rafko_net::InputFunction::collect(
+    set_value(rafko_net::InputFunction::collect(
       network.neuron_array(neuron_index).input_function(),
       weighted_input, next_value
     ));
-    set_derivative(run_index, d_w_index, rafko_net::InputFunction::get_derivative(
+    set_derivative(d_w_index, rafko_net::InputFunction::get_derivative(
       network.neuron_array(neuron_index).input_function(),
       weighted_input, current_input_derivative, next_value, next_derivative
     ));

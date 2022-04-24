@@ -23,6 +23,8 @@
 #include <vector>
 #include <algorithm>
 
+#include "rafko_utilities/models/data_ringbuffer.h"
+
 namespace rafko_gym{
 
 /**
@@ -30,72 +32,77 @@ namespace rafko_gym{
  *
  */
 class RAFKO_FULL_EXPORT RafkoBackPropagationData{
+  using BackpropDerivativeBuffer = rafko_utilities::DataRingbuffer<std::vector<std::vector<double>>>;
+  using BackPropValueBuffer = rafko_utilities::DataRingbuffer<>;
 public:
   RafkoBackPropagationData(const rafko_net::RafkoNet& network)
-  : weight_table_size(network.weight_table_size())
-  , calculated_derivatives(network.memory_size())
-  , calculated_values(network.memory_size())
+  : memory_slots(network.memory_size() + 1u) /* The network always remembers the previous value because of the Spike function */
+  , weight_table_size(network.weight_table_size())
+  , calculated_derivatives()
+  , calculated_values()
   {
   }
 
   void build(std::uint32_t number_of_operations){
-    for(std::vector<double>& values : calculated_values)
-      values = std::vector<double>(number_of_operations);
-
-    for(std::vector<std::vector<double>>& past : calculated_derivatives){
-      past = std::vector<std::vector<double>>(
-        number_of_operations, std::vector<double>(weight_table_size)
-      );
-    }
+    calculated_values = std::make_unique<BackPropValueBuffer>(
+      memory_slots, [number_of_operations](std::vector<double>& element){
+        element.resize(number_of_operations);
+      }
+    );
+    calculated_derivatives = std::make_unique<BackpropDerivativeBuffer>(
+      memory_slots, [this, number_of_operations](std::vector<std::vector<double>>& element){
+        element = std::vector<std::vector<double>>(
+          number_of_operations, std::vector<double>(weight_table_size)
+        );
+      }
+    );
     built = true;
   }
 
   void reset(){
-    for(std::vector<double>& values : calculated_values)
-      std::transform(values.begin(), values.end(), values.begin(), [](const double&){return 0.0;});
-    for(std::vector<std::vector<double>>& operations_d : calculated_derivatives)
-      for(std::vector<double>& weight_d : operations_d)
-        std::transform(weight_d.begin(), weight_d.end(), weight_d.begin(), [](const double&){return 0.0;});
+    calculated_values->reset();
+    calculated_derivatives->reset();
   }
 
-  void set_value(std::uint32_t run_index, std::uint32_t operation_index, double value){
+  void step(){
+    calculated_values->shallow_step();
+    calculated_derivatives->shallow_step();
+  }
+
+  void set_value(std::uint32_t operation_index, double value){
     RFASSERT(built);
-    RFASSERT(run_index < calculated_values.size());
-    RFASSERT(operation_index < calculated_values[run_index].size());
-    calculated_values[run_index][operation_index] = value;
+    RFASSERT(operation_index < calculated_values->get_element(0).size());
+    calculated_values->get_element(0u/*past_index*/, operation_index) = value;
   }
 
   // TODO:constexpr these
-  void set_derivative(
-    std::uint32_t run_index, std::uint32_t operation_index,
-    std::uint32_t d_w_index, double value
-  ){
+  void set_derivative(std::uint32_t operation_index, std::uint32_t d_w_index, double value){
     RFASSERT(built);
-    RFASSERT(run_index < calculated_derivatives.size());
-    RFASSERT(operation_index < calculated_derivatives[run_index].size());
-    RFASSERT(d_w_index < calculated_derivatives[run_index][operation_index].size());
-    calculated_derivatives[run_index][operation_index][d_w_index] = value;
+    RFASSERT(operation_index < calculated_derivatives->get_element(0u/*past_index*/).size());
+    RFASSERT(d_w_index < calculated_derivatives->get_element(0u/*past_index*/, operation_index).size());
+    calculated_derivatives->get_element(0u/*past_index*/, operation_index)[d_w_index] = value;
   }
 
-  double get_value(std::uint32_t run_index, std::uint32_t operation_index){
+  double get_value(std::uint32_t past_index, std::uint32_t operation_index){
     RFASSERT(built);
-    RFASSERT(run_index < calculated_values.size());
-    RFASSERT(operation_index < calculated_values[run_index].size());
-    return calculated_values[run_index][operation_index];
+    if(calculated_values->get_sequence_size() <= past_index) return 0.0;
+    RFASSERT(operation_index < calculated_values->get_element(0).size());
+    return calculated_values->get_element(past_index, operation_index);
   }
 
-  double get_derivative(std::uint32_t run_index, std::uint32_t operation_index, std::uint32_t weight_index){
+  double get_derivative(std::uint32_t past_index, std::uint32_t operation_index, std::uint32_t weight_index){
     RFASSERT(built);
-    RFASSERT(run_index < calculated_derivatives.size());
-    RFASSERT(operation_index < calculated_derivatives[run_index].size());
-    RFASSERT(weight_index < calculated_derivatives[run_index][operation_index].size());
-    return calculated_derivatives[run_index][operation_index][weight_index];
+    if(calculated_derivatives->get_sequence_size() <= past_index) return 0.0;
+    RFASSERT(operation_index < calculated_derivatives->get_element(0).size());
+    RFASSERT(weight_index < calculated_derivatives->get_element(past_index, operation_index).size());
+    return calculated_derivatives->get_element(past_index, operation_index)[weight_index];
   }
 
 private:
+  const std::uint32_t memory_slots;
   const std::uint32_t weight_table_size;
-  std::vector<std::vector<std::vector<double>>> calculated_derivatives; /* {runs, operations, d_w values} */
-  std::vector<std::vector<double>> calculated_values; /* {runs, operations} */
+  std::unique_ptr<BackpropDerivativeBuffer> calculated_derivatives; /* {runs, operations, d_w values} */
+  std::unique_ptr<BackPropValueBuffer> calculated_values; /* {runs, operations} */
   bool built = false;
 };
 

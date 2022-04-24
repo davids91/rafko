@@ -30,7 +30,7 @@ namespace rafko_net {
 
 rafko_utilities::DataPool<double> PartialSolutionSolver::common_data_pool;
 
-void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer& output_neuron_data,  std::vector<double>& temp_data) const{
+void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer<>& output_neuron_data,  std::vector<double>& temp_data) const{
   std::uint32_t weight_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   std::uint32_t input_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   std::uint32_t input_synapse_index = 0; /* Which synapse is being processed inside the Neuron */

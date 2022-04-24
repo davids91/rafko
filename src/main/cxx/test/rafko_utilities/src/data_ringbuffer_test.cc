@@ -42,7 +42,7 @@ TEST_CASE("Testing Data Ringbuffer implementation", "[data-handling]"){
   std::uint32_t buffer_size = 30;
   std::vector<double> data_sample(buffer_size, (0.0));
   std::vector<double> previous_data_sample(buffer_size, (0.0));
-  rafko_utilities::DataRingbuffer buffer(buffer_number, buffer_size);
+  rafko_utilities::DataRingbuffer<> buffer(buffer_number, buffer_size);
 
   REQUIRE( buffer.buffer_size() == buffer_size );
   REQUIRE( buffer.get_sequence_size() == buffer_number );
@@ -76,7 +76,7 @@ TEST_CASE("Testing if ringbuffer past indexing logic is as expected", "[data-han
   rafko_mainframe::RafkoSettings settings;
   std::uint32_t sequence_number = 5;
   std::uint32_t buffer_size = 30;
-  rafko_utilities::DataRingbuffer buffer(sequence_number, buffer_size);
+  rafko_utilities::DataRingbuffer<> buffer(sequence_number, buffer_size);
   std::vector<double> data_sample(buffer_size);
 
   /* Simulate some runs: each element in the buffer shall have the value of it's past value */

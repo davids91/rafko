@@ -61,8 +61,7 @@ public:
 
   //TODO: Only calculate value once, e.g. at d_w_index 0
   virtual void calculate(
-    std::uint32_t d_w_index, std::uint32_t run_index,
-    const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
+    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ) = 0;
 
   //TODO: Use these for actual Kernel build, not debugging..
@@ -71,12 +70,12 @@ public:
   virtual std::string derivative_kernel_function() const = 0;
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  double get_derivative(std::uint32_t run_index, std::uint32_t d_w_index) const{
-    return data.get_derivative(run_index, operation_index, d_w_index);
+  double get_derivative(std::uint32_t past_index, std::uint32_t d_w_index) const{
+    return data.get_derivative(past_index, operation_index, d_w_index);
   }
 
-  double get_value(std::uint32_t run_index) const{
-    return data.get_value(run_index, operation_index);
+  double get_value(std::uint32_t past_index) const{
+    return data.get_value(past_index, operation_index);
   }
 
   bool constexpr are_dependencies_registered() const{
@@ -109,12 +108,12 @@ protected:
     dependencies_registered = true;
   }
 
-  void set_derivative(std::uint32_t run_index, std::uint32_t d_w_index, double value){
-    data.set_derivative(run_index, operation_index, d_w_index, value);
+  void set_derivative(std::uint32_t d_w_index, double value){
+    data.set_derivative(operation_index, d_w_index, value);
   }
 
-  void set_value(std::uint32_t run_index, double value){
-    data.set_value(run_index, operation_index, value);
+  void set_value(double value){
+    data.set_value(operation_index, value);
   }
 };
 

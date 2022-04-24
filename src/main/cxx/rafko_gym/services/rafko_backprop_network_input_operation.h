@@ -59,15 +59,12 @@ public:
   }
 
   void calculate(
-    std::uint32_t d_w_index, std::uint32_t run_index,
-    const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
+    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ){
-    RFASSERT(run_index < network_input.size());
-    RFASSERT(run_index < label_data.size());
-    set_value(run_index, network_input[run_index][input_index] * network.weight_table(weight_index));
-    set_derivative(
-      run_index, d_w_index, ((d_w_index == weight_index)?(network_input[run_index][input_index]):(0.0))
-    );
+    parameter_not_used(label_data);
+    RFASSERT(input_index < network_input.size());
+    set_value(network_input[input_index] * network.weight_table(weight_index));
+    set_derivative( d_w_index, ((d_w_index == weight_index)?(network_input[input_index]):(0.0)) );
     set_processed();
   }
 

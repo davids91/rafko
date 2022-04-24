@@ -83,17 +83,15 @@ public:
   void calculate(
     const std::vector<std::vector<double>>& network_input,
     const std::vector<std::vector<double>>& label_data
-  ){
+  ){//TODO: Step data but don't copy!
     RFASSERT_SCOPE(AUTODIFF_CALCULATE);
     for(std::uint32_t run_index = 0; run_index < network_input.size(); ++run_index){
-      if(network.memory_size() <= run_index){
-        //TODO: shift the memory forward
-      }
+      data.step();
       for(std::int32_t weight_index = 0u; weight_index < network.weight_table_size(); ++weight_index){
         // std::cout << "weight ======== " << weight_index << " ========" << std::endl;
         for(std::int32_t operation_index = operations.size() - 1; operation_index >= 0; --operation_index)
           operations[operation_index]->calculate(
-            static_cast<std::uint32_t>(weight_index), run_index, network_input, label_data
+            static_cast<std::uint32_t>(weight_index), network_input[run_index], label_data[run_index]
           );
       }
     }

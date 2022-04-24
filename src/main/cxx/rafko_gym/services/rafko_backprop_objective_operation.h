@@ -64,17 +64,14 @@ public:
   }
 
   void calculate(
-    std::uint32_t d_w_index, std::uint32_t run_index,
-    const std::vector<std::vector<double>>& network_input,
-    const std::vector<std::vector<double>>& label_data
+    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ){
-    RFASSERT(run_index < network_input.size());
-    RFASSERT(run_index < label_data.size());
-    RFASSERT(output_index < label_data[run_index].size());
+    parameter_not_used(network_input);
+    RFASSERT(output_index < label_data.size());
     RFASSERT(static_cast<bool>(feature_dependency));
-    set_derivative(run_index, d_w_index, objective.get_derivative(
-      label_data[run_index][output_index], feature_dependency->get_value(run_index),
-      feature_dependency->get_derivative(run_index, d_w_index), static_cast<double>(sample_number)
+    set_derivative(d_w_index, objective.get_derivative(
+      label_data[output_index], feature_dependency->get_value(0u/*past_index*/),
+      feature_dependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(sample_number)
     ));
     //TODO: Do we need to have values for this?
     set_processed();

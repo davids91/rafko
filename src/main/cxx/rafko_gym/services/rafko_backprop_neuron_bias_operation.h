@@ -71,32 +71,29 @@ public:
   }
 
   void calculate(
-    std::uint32_t d_w_index, std::uint32_t run_index,
-    const std::vector<std::vector<double>>& network_input,
-    const std::vector<std::vector<double>>& label_data
+    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ){
-    RFASSERT(run_index < network_input.size());
-    RFASSERT(run_index < label_data.size());
+    parameter_not_used(network_input);
+    parameter_not_used(label_data);
     double dependency_value = 0.0;
     double dependency_derivative = 0.0;
     if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
       RFASSERT(static_cast<bool>(next_bias_dependency));
       RFASSERT(next_bias_dependency->is_processed());
-      dependency_value = next_bias_dependency->get_value(run_index);
-      dependency_derivative = next_bias_dependency->get_derivative(run_index, d_w_index);
-      set_value(run_index, rafko_net::InputFunction::collect(
+      dependency_value = next_bias_dependency->get_value(0u/*past_index*/);
+      dependency_derivative = next_bias_dependency->get_derivative(0u/*past_index*/, d_w_index);
+      set_value(rafko_net::InputFunction::collect(
         network.neuron_array(neuron_index).input_function(),
         network.weight_table(weight_index), dependency_value
       ));
-      set_derivative(run_index, d_w_index, rafko_net::InputFunction::get_derivative(
+      set_derivative(d_w_index, rafko_net::InputFunction::get_derivative(
         network.neuron_array(neuron_index).input_function(),
         network.weight_table(weight_index), ((d_w_index == weight_index)?(1.0):(0.0)),
         dependency_value, dependency_derivative
       ));
     }else{ /* no additional bias values are present as dependencies */
-      set_value( run_index, network.weight_table(weight_index) );
-      set_derivative( run_index, d_w_index, ((d_w_index == weight_index)?(1.0):(0.0)) );
-
+      set_value(network.weight_table(weight_index));
+      set_derivative( d_w_index, ((d_w_index == weight_index)?(1.0):(0.0)) );
     }
 
     set_processed();

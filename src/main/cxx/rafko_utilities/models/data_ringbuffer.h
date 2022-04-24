@@ -36,22 +36,37 @@ namespace rafko_utilities{
  *             the data from the previous loops into the current one. The data under the current loop
  *             needs to keep its contents, while the data from previous loops also need to be stored.
  */
+template <typename Content = std::vector<double>>
 class RAFKO_FULL_EXPORT DataRingbuffer{
 public:
-  DataRingbuffer(std::uint32_t buffer_number, std::uint32_t buffer_size)
+  DataRingbuffer(std::uint32_t buffer_number, std::function<void(Content&)> initer)
   :  data(buffer_number)
   {
-    for(std::vector<double>& buffer : data)
-      buffer = std::vector<double>(buffer_size, (0.0));
+    for(Content& buffer : data) initer(buffer);
   }
 
   /**
    * @brief      Store the current data and move the iterator forward for the next one
    */
-  void step(){
+  void copy_step(){
     current_index = (current_index + 1)%(data.size());
     if(1 < data.size())
       std::copy(get_element(1).begin(),get_element(1).end(),get_element(0).begin());
+  }
+
+  /**
+   * @brief      Move the iterator forward for the next data buffer, emptying it
+   */
+  void clean_step(){
+    current_index = (current_index + 1)%(data.size());
+    reset(get_element(0));
+  }
+
+  /**
+   * @brief      Move the iterator forward and do nothing more
+   */
+  constexpr void shallow_step(){
+    current_index = (current_index + 1)%(data.size());
   }
 
   /**
@@ -59,8 +74,7 @@ public:
    */
   void reset(){
     current_index = (data.size()-1); /* Set the current index into the last index, so at the next @ */
-    for(std::vector<double>& vector : data)
-      for(double& element : vector) element = (0.0);
+    reset(data);
   }
 
   /**
@@ -90,7 +104,7 @@ public:
    *
    * @return     The non-modifyable raw buffer data
    */
-  constexpr const std::vector<std::vector<double>>& get_whole_buffer() const{
+  constexpr const std::vector<Content>& get_whole_buffer() const{
     return data;
   }
 
@@ -102,7 +116,7 @@ public:
    *
    * @return     The value of the data in the   given index parameters
    */
-  double get_element(std::uint32_t past_index, std::uint32_t data_index) const{
+  typename Content::value_type get_element(std::uint32_t past_index, std::uint32_t data_index) const{
     if((data.size() > past_index)&&(data[0].size() > data_index))
       return get_const_element(past_index)[data_index];
       else throw std::runtime_error("Ringbuffer data index out of bounds!");
@@ -116,7 +130,7 @@ public:
    *
    * @return     The value of the data in the   given index parameters
    */
-  double& get_element(std::uint32_t past_index, std::uint32_t data_index){
+  typename Content::value_type& get_element(std::uint32_t past_index, std::uint32_t data_index){
     if((data.size() > past_index)&&(data[0].size() > data_index))
       return get_element(past_index)[data_index];
       else throw std::runtime_error("Ringbuffer data index out of bounds!");
@@ -129,7 +143,7 @@ public:
    * @param[in]  data_index  The index of the data inside the buffer
    * @param[in]  value       The value to overwrite the data with
    */
-  void set_element(std::uint32_t past_index, std::uint32_t data_index, double value){
+  void set_element(std::uint32_t past_index, std::uint32_t data_index, typename Content::value_type value){
     if((data.size() > past_index)&&(data[0].size() > data_index))
       get_element(past_index)[data_index] = value;
       else throw std::runtime_error("Ringbuffer data index out of bounds!");
@@ -142,7 +156,7 @@ public:
    *
    * @return     The reference pointing to a data
    */
-  std::vector<double>& get_element(std::uint32_t past_index){
+  Content& get_element(std::uint32_t past_index){
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
     }else throw std::runtime_error("Ringbuffer index out of bounds!");
@@ -155,7 +169,7 @@ public:
    *
    * @return     The reference pointing to a data
    */
-  const std::vector<double>& get_const_element(std::uint32_t past_index) const{
+  const Content& get_const_element(std::uint32_t past_index) const{
     if(past_index < data.size()){
       return data[get_buffer_index(past_index)];
     }else throw std::runtime_error("Ringbuffer index out of bounds!");
@@ -201,7 +215,7 @@ public:
     return data.size();
   }
 
-  double& operator[](std::uint32_t index){
+  typename Content::value_type& operator[](std::uint32_t index){
     if(index < data[0].size())
       return get_element(0, index);
       else throw std::runtime_error("Ringbuffer data index out of bounds!");
@@ -209,7 +223,7 @@ public:
 
 private:
   std::uint32_t current_index = 0u;
-  std::vector<std::vector<double>> data;
+  std::vector<Content> data;
 
   /**
    * @brief      Gets the buffer index for the given past index
@@ -222,6 +236,30 @@ private:
     if(data.size() <= past_index) throw std::runtime_error("Older data queried, than memory capacity.");
     if(past_index > current_index) return (data.size() + current_index - past_index);
       else return(current_index - past_index);
+  }
+
+  /**
+   * @brief resets different underlying vector types
+   */
+  constexpr void reset(double buf){
+    buf = (0.0);
+  }
+
+  void reset(std::vector<double> buf){
+    for(double& element : buf) element = (0.0);
+  }
+
+  void reset(std::vector<std::vector<double>> buf){
+    for(std::vector<double>& inner_vector : buf)
+      for(double& element : inner_vector)
+          element = (0.0);
+  }
+
+  void reset(std::vector<std::vector<std::vector<double>>> buf){
+    for(std::vector<std::vector<double>>& outer_vector : buf)
+      for(std::vector<double>& inner_vector : outer_vector)
+        for(double& element : inner_vector)
+            element = (0.0);
   }
 };
 

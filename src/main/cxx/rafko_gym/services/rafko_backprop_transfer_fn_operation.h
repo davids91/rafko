@@ -64,21 +64,20 @@ public:
   }
 
   void calculate(
-    std::uint32_t d_w_index, std::uint32_t run_index,
-    const std::vector<std::vector<double>>& network_input, const std::vector<std::vector<double>>& label_data
+    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ){
-    RFASSERT(run_index < network_input.size());
-    RFASSERT(run_index < label_data.size());
+    parameter_not_used(network_input);
+    parameter_not_used(label_data);
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));
     RFASSERT(needed_input_dependency->is_processed());
-    set_value(run_index, transfer_function.get_value(
-      network.neuron_array(neuron_index).transfer_function(), needed_input_dependency->get_value(run_index)
+    set_value(transfer_function.get_value(
+      network.neuron_array(neuron_index).transfer_function(), needed_input_dependency->get_value(0u/*past_index*/)
     ));
-    set_derivative(run_index, d_w_index, transfer_function.get_derivative( /* d t(f(w))/dx = f'(w) * t'(f(w))*/
+    set_derivative(d_w_index, transfer_function.get_derivative( /* d t(f(w))/dx = f'(w) * t'(f(w))*/
       network.neuron_array(neuron_index).transfer_function(),
-      needed_input_dependency->get_value(run_index),
-      needed_input_dependency->get_derivative(run_index, d_w_index)
+      needed_input_dependency->get_value(0u/*past_index*/),
+      needed_input_dependency->get_derivative(0u/*past_index*/, d_w_index)
     ));
     set_processed();
   }

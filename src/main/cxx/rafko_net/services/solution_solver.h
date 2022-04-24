@@ -59,7 +59,7 @@ public:
 
   /* +++ Methods taken from @RafkoAgent +++ */
   void solve(
-    const std::vector<double>& input, rafko_utilities::DataRingbuffer& output,
+    const std::vector<double>& input, rafko_utilities::DataRingbuffer<>& output,
     const std::vector<std::reference_wrapper<std::vector<double>>>& tmp_data_pool,
     std::uint32_t used_data_pool_start = 0, std::uint32_t thread_index = 0
   ) const;
