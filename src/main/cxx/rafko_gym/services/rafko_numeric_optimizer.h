@@ -132,6 +132,10 @@ public:
     return gradient_fragment;
   }
 
+  /**
+   * @brief:
+   * 
+   */
   void set_weight_filter(std::vector<double>&& filter){
     RFASSERT_LOG("Weight filter size: {} vs. {}", weight_filter.size(), filter.size());
     RFASSERT( filter.size() == weight_filter.size());

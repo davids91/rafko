@@ -29,6 +29,8 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/models/input_function.h"
 
 #include "rafko_gym/services/rafko_backpropagation_operation.h"
 
@@ -43,7 +45,7 @@ class RAFKO_FULL_EXPORT RafkoBackpropNeuronBiasOperation
 {
 public:
   RafkoBackpropNeuronBiasOperation(
-    RafkoBackPropagationData& data, const rafko_net::RafkoNet& network,
+    RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t neuron_index_, std::uint32_t neuron_weight_index_
   )
   : RafkoBackpropagationOperation(data, network, operation_index)
@@ -129,7 +131,9 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
-    return {};
+    if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
+      return {next_bias_dependency};
+    }else return {};
   }
 
 private:

@@ -28,7 +28,7 @@
 #include "rafko_net/services/solution_solver.h"
 #include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
-#include "rafko_gym/services/rafko_backpropagation.h"
+#include "rafko_gym/services/rafko_autodiff_optimizer.h"
 
 #include "test/test_utility.h"
 
@@ -79,22 +79,21 @@ TEST_CASE("Testing if autodiff optimizer converges small 1 Neuron networks", "[o
   );
 
   std::cout << "Building!" << std::endl;
-  rafko_gym::RafkoBackPropagation optimizer(*network, settings);
+  rafko_gym::RafkoAutodiffOptimizer optimizer(*network, settings);
   optimizer.build(*environment, *objective);
   std::cout << "Structure: \n" << optimizer.value_kernel_function(0u) << std::endl;
   std::cout << "Calculating!" << std::endl;
-  std::vector<double> actual_value(2, 0.0);
+  std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   std::uint32_t iteration = 0u;
   while(
     (
-      std::abs(actual_value[0] - environment->get_label_sample(0u)[0])
-      +std::abs(actual_value[1] - environment->get_label_sample(1u)[0])
+      std::abs(actual_value[1][0] - environment->get_label_sample(0u)[0])
+      + std::abs(actual_value[0][0] - environment->get_label_sample(1u)[0])
     )
     > (2.0 * learning_rate)
   ){
     optimizer.reset();
     optimizer.calculate(
-      // {environment->get_input_sample(0u)},{environment->get_label_sample(0u)}0
       {environment->get_input_sample(0u), environment->get_input_sample(1u)},
       {environment->get_label_sample(0u), environment->get_label_sample(1u)}
     );
@@ -110,29 +109,26 @@ TEST_CASE("Testing if autodiff optimizer converges small 1 Neuron networks", "[o
         ( network->weight_table(weight_index) - (optimizer.get_avg_gradient(weight_index) * learning_rate) )
       );
     }
-
-    std::shared_ptr<rafko_gym::RafkoBackpropagationOperation> neuron_first_input = (
-      optimizer.get_neuron_operation(0u) /* spike */
-        ->get_dependencies()[0] /* transfer function */
-          ->get_dependencies()[0] /* first input */
-    );
-    std::shared_ptr<rafko_gym::RafkoBackpropagationOperation> neuron_second_input = (
-      neuron_first_input->get_dependencies().back() /* transfer function */
-    );
-    actual_value[0] = optimizer.get_neuron_operation(0u)->get_value(1u/*past_index*/);
-    actual_value[1] = optimizer.get_neuron_operation(0u)->get_value(0u/*past_index*/);
+    actual_value[1][0] = optimizer.get_neuron_operation(0u)->get_value(1u/*past_index*/);
+    actual_value[0][0] = optimizer.get_neuron_operation(0u)->get_value(0u/*past_index*/);
     REQUIRE(
       reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
-      == Catch::Approx(actual_value[0]).epsilon(0.0000000000001)
+      == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)
+    );
+    REQUIRE(
+      optimizer.get_actual_value(1u)[0] == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)
     );
     REQUIRE(
       reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
-      == Catch::Approx(actual_value[1]).epsilon(0.0000000000001)
+      == Catch::Approx(actual_value[0][0]).epsilon(0.0000000000001)
+    );
+    REQUIRE(
+      optimizer.get_actual_value(0u)[0] == Catch::Approx(actual_value[0][0]).epsilon(0.0000000000001)
     );
     // std::cout << "================" << std::endl;
     std::cout << "Target: "
-    << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[0] << ";   "
-    << environment->get_label_sample(1u)[0] << " --?--> " << actual_value[1]
+    << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
+    << environment->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
     << "     \r";
     ++iteration;
   }

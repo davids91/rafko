@@ -43,7 +43,7 @@ class RAFKO_FULL_EXPORT RafkoBackpropNetworkInputOperation
 {
 public:
   RafkoBackpropNetworkInputOperation(
-    RafkoBackPropagationData& data, const rafko_net::RafkoNet& network,
+    RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t input_index_, std::uint32_t weight_index_
   )
   : RafkoBackpropagationOperation(data, network, operation_index)

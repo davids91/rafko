@@ -55,7 +55,7 @@ enum Spike_functions{
   spike_function_memory = 2; /* default; 1.0: previous neuron value only, 0.0: current neuron value only */
   spike_function_p = 3; /* from pid controller `p` part: adds the weighted delta to the current value (between the previous and current values) */
   spike_function_amplify_value = 4; /* multiple new value by the weight value */
-  spike_function_end                     = 512;
+  spike_function_end = 512;
 }
 
 /** @brief      Different features a group of Neurons(may even the whole network) might have.

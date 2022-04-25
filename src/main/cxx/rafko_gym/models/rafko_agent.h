@@ -65,7 +65,7 @@ public:
     max_threads, rafko_utilities::DataRingbuffer<>(
       solution.network_memory_length(),
       [this](std::vector<double>& buffer){
-        buffer.resize(solution.neuron_number());
+        buffer = std::vector<double>(solution.neuron_number(), 0.0);
       }
     )
   )

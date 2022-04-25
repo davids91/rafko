@@ -41,7 +41,7 @@ class RAFKO_FULL_EXPORT RafkoBackpropObjectiveOperation
 {
 public:
   RafkoBackpropObjectiveOperation(
-    RafkoBackPropagationData& data, const rafko_net::RafkoNet& network,
+    RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     RafkoObjective& objective_, std::uint32_t operation_index,
     std::uint32_t output_index_,  std::uint32_t sample_number_
   )

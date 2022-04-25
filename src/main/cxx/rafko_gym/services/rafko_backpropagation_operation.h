@@ -29,6 +29,7 @@
 
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_protocol/training.pb.h"
 #include "rafko_gym/models/rafko_backpropagation_data.h"
 
 namespace rafko_gym{
@@ -41,6 +42,7 @@ namespace rafko_gym{
  * in a vector, and providing the chance to upload the operation dependencies into the vector when prompted.
  */
 class RafkoBackpropagationOperation;
+using Dependency = std::shared_ptr<RafkoBackpropagationOperation>;
 using DependencyParameter = std::pair<Autodiff_operations,std::vector<std::uint32_t>>;
 using DependencyParameters = std::vector<DependencyParameter>;
 using DependencyRegister = std::function<void(std::vector<std::shared_ptr<RafkoBackpropagationOperation>>)>;
@@ -48,7 +50,7 @@ using DependencyRequest = std::optional<std::pair<DependencyParameters,Dependenc
 class RAFKO_FULL_EXPORT RafkoBackpropagationOperation{
 public:
   RafkoBackpropagationOperation(
-    RafkoBackPropagationData& data_, const rafko_net::RafkoNet& network_,
+    RafkoBackpropagationData& data_, const rafko_net::RafkoNet& network_,
     std::uint32_t operation_index_
   )
   : data(data_)
@@ -90,10 +92,10 @@ public:
     return (value_processed && derivative_processed);
   }
 
-  virtual std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies() = 0;
+  virtual std::vector<Dependency> get_dependencies() = 0;
 
 protected:
-  RafkoBackPropagationData& data;
+  RafkoBackpropagationData& data;
   const rafko_net::RafkoNet& network;
   const std::uint32_t operation_index;
 

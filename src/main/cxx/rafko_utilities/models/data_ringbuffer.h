@@ -244,17 +244,17 @@ private:
     buf = (0.0);
   }
 
-  void reset(std::vector<double> buf){
+  void reset(std::vector<double>& buf){
     for(double& element : buf) element = (0.0);
   }
 
-  void reset(std::vector<std::vector<double>> buf){
+  void reset(std::vector<std::vector<double>>& buf){
     for(std::vector<double>& inner_vector : buf)
       for(double& element : inner_vector)
           element = (0.0);
   }
 
-  void reset(std::vector<std::vector<std::vector<double>>> buf){
+  void reset(std::vector<std::vector<std::vector<double>>>& buf){
     for(std::vector<std::vector<double>>& outer_vector : buf)
       for(std::vector<double>& inner_vector : outer_vector)
         for(double& element : inner_vector)

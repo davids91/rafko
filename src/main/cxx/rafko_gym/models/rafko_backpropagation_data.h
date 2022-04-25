@@ -31,11 +31,11 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackPropagationData{
+class RAFKO_FULL_EXPORT RafkoBackpropagationData{
   using BackpropDerivativeBuffer = rafko_utilities::DataRingbuffer<std::vector<std::vector<double>>>;
   using BackPropValueBuffer = rafko_utilities::DataRingbuffer<>;
 public:
-  RafkoBackPropagationData(const rafko_net::RafkoNet& network)
+  RafkoBackpropagationData(const rafko_net::RafkoNet& network)
   : memory_slots(network.memory_size() + 1u) /* The network always remembers the previous value because of the Spike function */
   , weight_table_size(network.weight_table_size())
   , calculated_derivatives()

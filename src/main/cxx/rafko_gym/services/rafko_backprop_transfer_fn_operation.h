@@ -43,7 +43,7 @@ class RAFKO_FULL_EXPORT RafkoBackpropTransferFnOperation
 {
 public:
   RafkoBackpropTransferFnOperation(
-    RafkoBackPropagationData& data, const rafko_net::RafkoNet& network,
+    RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t neuron_index_, rafko_mainframe::RafkoSettings& settings
   )
   : RafkoBackpropagationOperation(data, network, operation_index)
