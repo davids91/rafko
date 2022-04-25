@@ -44,7 +44,7 @@ class RAFKO_FULL_EXPORT RafkoBackpropTransferFnOperation
 public:
   RafkoBackpropTransferFnOperation(
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    std::uint32_t operation_index, std::uint32_t neuron_index_, rafko_mainframe::RafkoSettings& settings
+    std::uint32_t operation_index, std::uint32_t neuron_index_, const rafko_mainframe::RafkoSettings& settings
   )
   : RafkoBackpropagationOperation(data, network, operation_index)
   , transfer_function(settings)
@@ -63,9 +63,8 @@ public:
     }};
   }
 
-  void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data){
+  void calculate_value(const std::vector<double>& network_input){
     parameter_not_used(network_input);
-    parameter_not_used(label_data);
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));
     RFASSERT(needed_input_dependency->is_value_processed());

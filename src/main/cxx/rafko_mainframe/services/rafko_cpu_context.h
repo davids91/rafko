@@ -39,7 +39,7 @@ public:
   RafkoCPUContext(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
   ~RafkoCPUContext() = default;
 
-  void fix_dirty(){ /*!Note: When another contex updates the weights this hack takes over the changes */
+  void fix_dirty(){ /*!Note: When weights are updated elsewhere this hack takes over the changes */
     weight_updater->update_solution_with_weights();
   }
 
@@ -96,7 +96,7 @@ public:
     if(to_seed)srand(seed_value);
     std::uint32_t sequence_start_index = (rand()%(environment->get_number_of_sequences() - used_minibatch_size + 1));
     std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
-      environment->get_sequence_size() - used_sequence_truncation + 1 /* ..not all result output values are evaluated.. */
+      environment->get_sequence_size() - used_sequence_truncation + 1u /* ..not all result output values are evaluated.. */
     )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
     return evaluate(
       sequence_start_index, used_minibatch_size,

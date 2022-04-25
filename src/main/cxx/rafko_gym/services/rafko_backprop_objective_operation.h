@@ -42,7 +42,7 @@ class RAFKO_FULL_EXPORT RafkoBackpropObjectiveOperation
 public:
   RafkoBackpropObjectiveOperation(
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    RafkoObjective& objective_, std::uint32_t operation_index,
+    const RafkoObjective& objective_, std::uint32_t operation_index,
     std::uint32_t output_index_,  std::uint32_t sample_number_
   )
   : RafkoBackpropagationOperation(data, network, operation_index)
@@ -63,11 +63,9 @@ public:
     }};
   }
 
-  void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data){
+  void calculate_value(const std::vector<double>& network_input){
     parameter_not_used(network_input);
-    parameter_not_used(label_data);
     RFASSERT(are_dependencies_registered());
-    RFASSERT(output_index < label_data.size());
     RFASSERT(static_cast<bool>(feature_dependency));
     RFASSERT(feature_dependency->is_value_processed());
     set_value(feature_dependency->get_value(0u/*past_index*/));
@@ -109,7 +107,7 @@ public:
   }
 
 private:
-  RafkoObjective& objective;
+  const RafkoObjective& objective;
   const std::uint32_t output_index;
   const std::uint32_t sample_number;
   std::shared_ptr<RafkoBackpropagationOperation> feature_dependency;

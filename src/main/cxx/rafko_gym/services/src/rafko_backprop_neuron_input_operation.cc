@@ -92,9 +92,8 @@ DependencyRequest RafkoBackpropNeuronInputOperation::upload_dependencies_to_oper
   }};
 }
 
-void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data){
+void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double>& network_input){
   parameter_not_used(network_input);
-  parameter_not_used(label_data);
   RFASSERT(are_dependencies_registered());
   /* i(w) = w * f(w) ¤ u(w) | f(w) = network_input or input_from_internal_neuron */
   /* calculate f(x) part */

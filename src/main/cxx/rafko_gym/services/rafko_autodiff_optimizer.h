@@ -23,6 +23,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <cmath>
 #include <map>
 #include <limits>
 #include <stdexcept>
@@ -44,36 +45,69 @@
 namespace rafko_gym{
 
 /**
- * @brief
- *
+ * @brief A class to calculate the values and derivatives of a Network, and update its weights based on it
  */
 class RAFKO_FULL_EXPORT RafkoAutodiffOptimizer{
 public:
-  RafkoAutodiffOptimizer(const rafko_net::RafkoNet& network_, rafko_mainframe::RafkoSettings& settings_)
+  RafkoAutodiffOptimizer(const RafkoEnvironment& environment_, rafko_net::RafkoNet& network_, const rafko_mainframe::RafkoSettings& settings_)
   : settings(settings_)
+  , environment(environment_)
   , network(network_)
   , data(network)
+  , used_sequence_truncation( std::min(settings.get_memory_truncation(), environment.get_sequence_size()) )
+  , used_minibatch_size( std::min(settings.get_minibatch_size(), environment.get_number_of_sequences()) )
   {
   }
 
-  void build(RafkoEnvironment& environment, RafkoObjective& objective);
+  /**
+   * @brief   build or re-build the operateions based on the provided parameters
+   *
+   * @param[in]   objective     The objective function evaluating the network output
+   */
+  void build(const RafkoObjective& objective);
 
-  void calculate(
-    const std::vector<std::vector<double>>& network_input,
-    const std::vector<std::vector<double>>& label_data
-  );
+  /**
+   * @brief     calculates the values and derivatives from the provided inputs and the stored Network reference
+   *
+   * @param[in]   network_input   The input the network is provided to produce its result
+   * @param[in]   label_data      The values the network is expected to produce
+   */
+  using BackpropDataBufferRange = rafko_utilities::ConstVectorSubrange<std::vector<std::vector<double>>::const_iterator>;
+  void calculate(BackpropDataBufferRange network_input, BackpropDataBufferRange label_data);
 
+  /**
+   * @brief   calculate the values and derivatives and update the weights based on them
+   */
+  void iterate();
+
+  /**
+   * @brief     provides a const reference to the calculated values of the network output
+   *
+   * @param[in]   past_index    The index of the run the network remembers
+   *
+   * @return      const reference of the data stored in the value buffers of the calculated network values
+   */
   rafko_utilities::ConstVectorSubrange<> get_actual_value(std::uint32_t past_index){
     if(past_index > data.get_value().get_sequence_size())
       throw std::runtime_error("Reaching past value of Network beyond its memory");
     return {data.get_value().get_element(past_index).begin(), data.get_value().get_element(past_index).end()};
   }
 
+  /**
+   * @brief resets the internal buffers of the calculated values and derivatives
+   */
   void reset(){
     data.reset();
   }
 
-  std::shared_ptr<RafkoBackpropagationOperation>& get_neuron_operation(std::uint32_t output_index){
+  /**
+   * @brief Provides a const reference of the stored operations representing the objective comparison for a Neuron output
+   *
+   * @param[in]   output_index    the index of the output Neuron to query
+   *
+   * @return    const access to one of the underlying outputoperations
+   */
+  const std::shared_ptr<RafkoBackpropagationOperation>& get_neuron_operation(std::uint32_t output_index){
     std::uint32_t neuron_index = (network.neuron_array_size() - network.output_neuron_number() + output_index);
     auto found_element = neuron_spike_to_operation_map.find(neuron_index);
     RFASSERT(found_element != neuron_spike_to_operation_map.end());
@@ -88,11 +122,34 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
-  rafko_mainframe::RafkoSettings& settings;
-  const rafko_net::RafkoNet& network;
+  const rafko_mainframe::RafkoSettings& settings;
+  const RafkoEnvironment& environment;
+  rafko_net::RafkoNet& network;
   RafkoBackpropagationData data;
+
+  const std::uint32_t used_sequence_truncation;
+  const std::uint32_t used_minibatch_size;
+  std::uint32_t iteration = 0;
+
   std::map<std::uint32_t, std::uint32_t> neuron_spike_to_operation_map;
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations;
+
+  /**
+   * @brief   calculate network value based on the given inputs
+   *
+   * @param[in]   network_input     the values the network takes as input
+   */
+  void calculate_value(const std::vector<double>& network_input);
+
+  /**
+   * @brief   calculate network derivative value for all weights based on the given inputs
+   *
+   * @param[in]   network_input     the values the network takes as input
+   * @param[in]   label_data        the values the network output is compared to by the objective function
+   */
+  void calculate_derivative(
+    const std::vector<double>& network_input, const std::vector<double>& label_data
+  );
 
   std::shared_ptr<RafkoBackpropagationOperation> find_or_add_spike(std::uint32_t neuron_index);
   std::shared_ptr<RafkoBackpropagationOperation> push_dependency(DependencyParameter arguments);

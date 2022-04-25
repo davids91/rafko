@@ -61,7 +61,7 @@ public:
 
   virtual DependencyRequest upload_dependencies_to_operations() = 0;
 
-  virtual void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data) = 0;
+  virtual void calculate_value(const std::vector<double>& network_input) = 0;
   virtual void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ) = 0;

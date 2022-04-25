@@ -133,8 +133,11 @@ public:
   }
 
   /**
-   * @brief:
-   * 
+   * @brief   Function to set weight of the networks weight in bulk for iterations;
+   *          Filter vector must be equal in sze of the stored networks weight table
+   *          Meaning: no modification | 0 --> 1 | gradient * 1.0
+   *
+   * @param[in]   filter    the filter to set for the whole weight array
    */
   void set_weight_filter(std::vector<double>&& filter){
     RFASSERT_LOG("Weight filter size: {} vs. {}", weight_filter.size(), filter.size());
@@ -142,11 +145,26 @@ public:
     weight_filter = filter;
   }
 
+  /**
+   * @brief   Function to set weight of the networks weight for iterations;
+   *          Filter vector must be equal in sze of the stored networks weight table
+   *          Meaning: no modification | 0 --> 1 | gradient * 1.0
+   *
+   * @param[in]   weight_index    the affected weight index
+   * @param[in]   filter          the filter to set for the whole weight array
+   */
   void modify_weight_filter(std::uint32_t weight_index, double filter){
     RFASSERT( weight_index < weight_filter.size());
     weight_filter[weight_index] = filter;
   }
 
+  /**
+   * @brief   Function to set weight chance to be excluded in bulk for iterations;
+   *          Filter vector must be equal in sze of the stored networks weight table
+   *          Meaning: don't exclude weight: 0 --> 1 definitely exclude weight
+   *
+   * @param[in]   filter    the filter to set for the whole weight array
+   */
   void set_weight_exclude_chance_filter(std::vector<double>&& filter){
     RFASSERT( filter.size() == weight_exclude_chance_filter.size());
     weight_exclude_chance_filter = filter;
@@ -155,12 +173,26 @@ public:
     );
   }
 
+  /**
+   * @brief   Function to set weight chance to be excluded in bulk for iterations;
+   *          The given value shall be set for all weights
+   *          Meaning: don't exclude weight: 0 --> 1 definitely exclude weight
+   *
+   * @param[in]   filter    the filter to set for the whole weight array
+   */
   void set_weight_exclude_chance_filter(double filter){
     std::fill(weight_exclude_chance_filter.begin(),weight_exclude_chance_filter.end(), filter);
     exclude_chance_sum = filter * static_cast<double>(weight_exclude_chance_filter.size());
   }
 
-
+  /**
+   * @brief   Function to set weight chance to be excluded in bulk for iterations;
+   *          Filter vector must be equal in sze of the stored networks weight table
+   *          Meaning: don't exclude weight: 0 --> 1 definitely exclude weight
+   *
+   * @param[in]   weight_index    the affected weight index
+   * @param[in]   filter          the filter to set for the whole weight array
+   */
   void modify_weight_exclude_chance_filter(std::uint32_t weight_index, double filter){
     RFASSERT( weight_index < weight_exclude_chance_filter.size());
     weight_exclude_chance_filter[weight_index] = filter;

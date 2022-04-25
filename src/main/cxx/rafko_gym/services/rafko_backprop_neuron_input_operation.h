@@ -49,7 +49,7 @@ public:
 
   DependencyRequest upload_dependencies_to_operations();
 
-  void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data);
+  void calculate_value(const std::vector<double>& network_input);
   void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   );

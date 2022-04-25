@@ -110,7 +110,7 @@ double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t seq
         for(std::uint32_t prefill_iterator = 0; prefill_iterator < environment->get_prefill_inputs_number(); ++prefill_iterator){
           (void)agent->solve(environment->get_input_sample(raw_inputs_index), (0 == prefill_iterator), thread_index);
           ++raw_inputs_index;
-        } /* The first few labels are there to set an initial state to the network */
+        } /* The first few inputs are there to set an initial state to the network */
 
         /* Solve the data and store the result after the inital "prefill" */
         for(std::uint32_t sequence_iterator = 0; sequence_iterator < environment->get_sequence_size(); ++sequence_iterator){
@@ -124,8 +124,8 @@ double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t seq
             neuron_outputs_to_evaluate[(thread_index * environment->get_sequence_size()) + sequence_iterator].begin()
           );
           ++raw_inputs_index;
-        }
-      }
+        }/*for(relevant sequences)*/
+      }/*if(thread index inside bounds)*/
     });
 
     RFASSERT_LOGV2(neuron_outputs_to_evaluate, "Neuron outputs to evaluate: ");

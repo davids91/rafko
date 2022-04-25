@@ -60,8 +60,10 @@ public:
   }
 
   void reset(){
-    calculated_values->reset();
-    calculated_derivatives->reset();
+    if(built){
+      calculated_values->reset();
+      calculated_derivatives->reset();      
+    }
   }
 
   void step(){ /*!Note: Not using @clean_step, but only because both the value and derivative will be overwritten anyway.. */

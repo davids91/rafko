@@ -58,8 +58,7 @@ public:
     return {};
   }
 
-  void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data){
-    parameter_not_used(label_data);
+  void calculate_value(const std::vector<double>& network_input){
     RFASSERT(input_index < network_input.size());
     set_value(network_input[input_index] * network.weight_table(weight_index));
     set_value_processed();

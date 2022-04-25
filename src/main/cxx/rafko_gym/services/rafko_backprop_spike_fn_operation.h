@@ -60,9 +60,8 @@ public:
     }};
   }
 
-  void calculate_value(const std::vector<double>& network_input, const std::vector<double>& label_data){
+  void calculate_value(const std::vector<double>& network_input){
     parameter_not_used(network_input);
-    parameter_not_used(label_data);
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(present_value_dependency));
     RFASSERT(present_value_dependency->is_value_processed());
