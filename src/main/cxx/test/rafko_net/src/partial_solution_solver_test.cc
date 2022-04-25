@@ -45,7 +45,9 @@ namespace rafko_net_test {
 
 TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-solution][manual]" ){
   rafko_mainframe::RafkoSettings settings;
-  rafko_utilities::DataRingbuffer neuron_data(1,2);
+  rafko_utilities::DataRingbuffer<> neuron_data(1u, [](std::vector<double>& element){
+    element.resize(2u);
+  });
   rafko_net::PartialSolution partial_solution;
   std::vector<std::uint32_t> helper_vector_uint;
   std::vector<double> expected_neuron_output;
@@ -107,7 +109,9 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   std::vector<double> network_inputs = {(1.9),(2.8),(3.7),(4.6),(5.5),(6.4),(7.3),(8.2),(9.1),(10.0)};
   rafko_net::IndexSynapseInterval temp_index_interval;
   rafko_net::InputSynapseInterval temp_input_interval;
-  rafko_utilities::DataRingbuffer neuron_data(1, network_inputs.size());
+  rafko_utilities::DataRingbuffer<> neuron_data(1u,[&network_inputs](std::vector<double>& element){
+    element.resize(network_inputs.size());
+  });
 
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(network_inputs.size());

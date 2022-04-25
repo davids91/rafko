@@ -119,6 +119,21 @@ public:
     return the_function;
   }
 
+  /**
+   * @brief      Calculates the derivative for one number-pair inside the label-data pair
+   *
+   * @param[in]  label_value    The label value
+   * @param[in]  feature_value  The data to comapre to the label value
+   * @param[in]  feature_d      The derivative of the of the feature value
+   *
+   * @return     The distance between the two given arguments
+   */
+   virtual double get_derivative(
+     double label_value, double feature_value,
+     double feature_d, double sample_number
+   ) const = 0;
+
+
   virtual ~CostFunction() = default;
 
   #if(RAFKO_USES_OPENCL)

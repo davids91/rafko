@@ -327,7 +327,7 @@ void print_training_sample(
   std::cout << std::endl;
   std::cout << "--------------expected:" << std::endl;
   std::cout.precision(2);
-  rafko_utilities::DataRingbuffer output_data_copy(0,0);
+  rafko_utilities::DataRingbuffer<> output_data_copy(0,0);
   for(std::uint32_t j = 0;j < data_set.get_sequence_size();++j){
     std::cout << "\t\t["<< data_set.get_label_sample(raw_label_index)[0] <<"]";
     rafko_utilities::ConstVectorSubrange output_data = sample_solver->solve(

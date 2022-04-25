@@ -60,7 +60,7 @@ SolutionSolver::SolutionSolver(
 }
 
 void SolutionSolver::solve(
-  const std::vector<double>& input, rafko_utilities::DataRingbuffer& output,
+  const std::vector<double>& input, rafko_utilities::DataRingbuffer<>& output,
   const std::vector<std::reference_wrapper<std::vector<double>>>& tmp_data_pool,
   std::uint32_t used_data_pool_start, std::uint32_t thread_index
 ) const{
@@ -69,7 +69,7 @@ void SolutionSolver::solve(
     std::mutex solved_features_mutex;
     std::vector<std::reference_wrapper<const FeatureGroup>> solved_features;
 
-    output.step(); /* move the iterator forward to the next slot and store the current data */
+    output.copy_step(); /* move the iterator forward to the next slot and store the current data */
     for(std::int32_t row_iterator = 0; row_iterator < solution.cols_size(); ++row_iterator){
       if(0 == solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
       col_iterator = 0;

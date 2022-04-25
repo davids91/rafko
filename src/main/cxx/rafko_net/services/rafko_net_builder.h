@@ -224,19 +224,6 @@ public:
    */
   RafkoNet* dense_layers(std::vector<std::uint32_t> layer_sizes);
 
-  /**
-   * @brief    creates a Neural network from the given Arguments. Requires the following
-   *       components to be set:
-   *       - The Neuron Array contains in an array the initialized Neuron
-   *       - The Weight Table containing the weights used by the Neural network
-   *       Building Networks like this is very dangerous, as the integrity of the components are not
-   *       checked, therefore the user of this interface should be responsible for the behavior of the
-   *       resulted Neural Network.
-   *
-   * @return   the built neural network
-   */
-  RafkoNet* build();
-
 private:
   const rafko_mainframe::RafkoSettings& settings;
 

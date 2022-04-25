@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef RAFKO_NET_APPROXIMIZER_H
-#define RAFKO_NET_APPROXIMIZER_H
+#ifndef RAFKO_NUMERIC_OPTIMIZER_H
+#define RAFKO_NUMERIC_OPTIMIZER_H
 
 #include "rafko_global.h"
 
@@ -34,7 +34,7 @@ namespace rafko_gym{
  * @brief      This class approximates gradients for a @Dataset and @RafkoNet.
  *             The approximated gradients are collected into one gradient fragment.
  */
-class RAFKO_FULL_EXPORT RafkoNetApproximizer{
+class RAFKO_FULL_EXPORT RafkoNumericOptimizer{
 public:
 
   /**
@@ -43,7 +43,7 @@ public:
    * @param      contexts_                     An array of service contexts to use for training the network
    * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
-  RafkoNetApproximizer(
+  RafkoNumericOptimizer(
     std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> contexts_,
     rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings(),
     std::uint32_t stochastic_evaluation_loops_ = 1u
@@ -57,10 +57,10 @@ public:
   , tmp_data_pool(2u, contexts[0]->expose_network().weight_table_size())
   { }
 
-  RafkoNetApproximizer(const RafkoNetApproximizer& other) = delete;/* Copy constructor */
-  RafkoNetApproximizer(RafkoNetApproximizer&& other) = delete; /* Move constructor */
-  RafkoNetApproximizer& operator=(const RafkoNetApproximizer& other) = delete; /* Copy assignment */
-  RafkoNetApproximizer& operator=(RafkoNetApproximizer&& other) = delete; /* Move assignment */
+  RafkoNumericOptimizer(const RafkoNumericOptimizer& other) = delete;/* Copy constructor */
+  RafkoNumericOptimizer(RafkoNumericOptimizer&& other) = delete; /* Move constructor */
+  RafkoNumericOptimizer& operator=(const RafkoNumericOptimizer& other) = delete; /* Copy assignment */
+  RafkoNumericOptimizer& operator=(RafkoNumericOptimizer&& other) = delete; /* Move assignment */
 
   /**
    * @brief      Moves the network in a direction based on induvidual weight gradients,
@@ -132,6 +132,10 @@ public:
     return gradient_fragment;
   }
 
+  /**
+   * @brief:
+   * 
+   */
   void set_weight_filter(std::vector<double>&& filter){
     RFASSERT_LOG("Weight filter size: {} vs. {}", weight_filter.size(), filter.size());
     RFASSERT( filter.size() == weight_filter.size());
@@ -281,4 +285,4 @@ private:
 
 } /* namespace rafko_gym */
 
-#endif /* RAFKO_NET_APPROXIMIZER_H */
+#endif /* RAFKO_NUMERIC_OPTIMIZER_H */

@@ -53,6 +53,8 @@ public:
    */
   static double collect(Input_functions function, double a, double b);
 
+  static double get_derivative(Input_functions function, double a, double a_dw, double b, double b_dw);
+
   #if(RAFKO_USES_OPENCL)
   /**
    * @brief     Generates GPU kernel function code for the provided parameters
@@ -67,7 +69,6 @@ public:
     switch(function){
       case input_function_add: return "( " + a + " + " + b + ")";
       case input_function_multiply: return  "( " + a + " * " + b + ")";
-      case input_function_analog_xor: return "(abs(" + a + "-" + b +")" + " * (" + a + " + " + b + "))";
       default: throw std::runtime_error("Unidentified Input function called!");
     };
   }
@@ -94,7 +95,6 @@ public:
     switch(function){
       case input_function_add: return "neuron_input_function_add";
       case input_function_multiply: return "neuron_input_function_multiply";
-      case input_function_analog_xor: return "neuron_input_function_analog_xor";
       default: throw std::runtime_error("Unidentified input function queried for information!");
     }
   }
@@ -108,8 +108,7 @@ public:
     return R"(
       typedef enum rafko_input_function_e{
         neuron_input_function_add = 0,
-        neuron_input_function_multiply,
-        neuron_input_function_analog_xor
+        neuron_input_function_multiply
       }rafko_input_function_t __attribute__ ((aligned));
     )";
   }

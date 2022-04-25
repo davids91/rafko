@@ -45,13 +45,32 @@ double TransferFunction::get_value(Transfer_functions function, double data) con
     case transfer_function_sigmoid: return 1.0/(1.0+std::exp(-data));
     case transfer_function_tanh: return std::tanh(data);
     case transfer_function_elu:
-      if(0 >= data) return settings.get_alpha() * (std::exp(data) - 1);
+      if(data <= 0.0) return settings.get_alpha() * (std::exp(data) - 1.0);
       else return data;
     case transfer_function_selu:
-      if(0 >= data) return settings.get_lambda() * settings.get_alpha() * (std::exp(data) - (1.0));
+      if(data <= 0.0) return settings.get_lambda() * settings.get_alpha() * (std::exp(data) - 1.0);
       else return settings.get_lambda() * data;
     case transfer_function_relu: return std::max((0.0),data);
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
+  }
+}
+
+double TransferFunction::get_derivative(Transfer_functions function, double input, double input_dw) const{
+  switch(function){
+  case transfer_function_identity: return input_dw;
+  case transfer_function_sigmoid:
+    return (input_dw * std::exp(input))/std::pow((std::exp(input) + 1.0),2.0);
+  case transfer_function_tanh: return input_dw / std::pow(std::cosh(input), 2.0);
+  case transfer_function_elu:
+    if(input <= 0.0) return settings.get_alpha() * std::exp(input) * input_dw;
+    else return input_dw;
+  case transfer_function_selu:
+    if(input <= 0.0) return settings.get_lambda() * settings.get_alpha() * std::exp(input) * input_dw;
+    else return settings.get_lambda() * input_dw;
+  case transfer_function_relu:
+    if(input <= 0.0) return 0.0;
+    else return input_dw;
+  default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
 

@@ -61,7 +61,14 @@ public:
   , required_temp_data_size(required_temp_data_size_)
   , max_threads(max_threads_)
   , common_data_pool((required_temp_data_number_per_thread * max_threads_), required_temp_data_size_)
-  , neuron_value_buffers(max_threads, rafko_utilities::DataRingbuffer( solution.network_memory_length(), solution.neuron_number()))
+  , neuron_value_buffers(
+    max_threads, rafko_utilities::DataRingbuffer<>(
+      solution.network_memory_length(),
+      [this](std::vector<double>& buffer){
+        buffer = std::vector<double>(solution.neuron_number(), 0.0);
+      }
+    )
+  )
   #if(RAFKO_USES_OPENCL)
   , device_weight_table_size( std::accumulate(
     solution.partial_solutions().begin(), solution.partial_solutions().end(), 0u,
@@ -94,15 +101,15 @@ public:
    */
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<double>& input,
-    bool reset_neuron_data = false, std::uint32_t thread_index = 0
+    bool reset_neuron_data = false, std::uint32_t thread_index = 0u
   ){
     if(max_threads > thread_index){
       RFASSERT( input.size() == solution.network_input_size() );
       if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
       solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread), thread_index );
       return { /* return with the range of the output Neurons */
-        neuron_value_buffers[thread_index].get_const_element(0).end() - solution.output_neuron_number(),
-        neuron_value_buffers[thread_index].get_const_element(0).end()
+        neuron_value_buffers[thread_index].get_element(0).end() - solution.output_neuron_number(),
+        neuron_value_buffers[thread_index].get_element(0).end()
       };
     } else throw std::runtime_error("Thread index out of bounds!");
   }
@@ -116,7 +123,7 @@ public:
    * @param[in]      used_data_pool_start     The first index inside @tmp_data_pool to be used
    */
   virtual void solve(
-    const std::vector<double>& input, rafko_utilities::DataRingbuffer& output,
+    const std::vector<double>& input, rafko_utilities::DataRingbuffer<>& output,
     const std::vector<std::reference_wrapper<std::vector<double>>>& tmp_data_pool,
     std::uint32_t used_data_pool_start = 0, std::uint32_t thread_index = 0
   ) const = 0;
@@ -136,7 +143,7 @@ public:
    * @param[in]      thread_index     The index of the target thread
    * @return         A const reference to the raw Neuron data
    */
-  const rafko_utilities::DataRingbuffer& get_memory(std::uint32_t thread_index = 0) const{
+  const rafko_utilities::DataRingbuffer<>& get_memory(std::uint32_t thread_index = 0) const{
     RFASSERT(thread_index < neuron_value_buffers.size());
     return neuron_value_buffers[thread_index];
   }
@@ -212,7 +219,7 @@ protected:
 
 private:
   mutable rafko_utilities::DataPool<double> common_data_pool;
-  std::vector<rafko_utilities::DataRingbuffer> neuron_value_buffers; /* One rafko_utilities::DataRingbuffer per thread */
+  std::vector<rafko_utilities::DataRingbuffer<>> neuron_value_buffers; /* One rafko_utilities::DataRingbuffer per thread */
   std::vector<std::reference_wrapper<std::vector<double>>> used_data_buffers;
 #if(RAFKO_USES_OPENCL)
   std::uint32_t sequences_evaluating = 1u;

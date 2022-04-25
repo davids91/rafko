@@ -39,7 +39,6 @@ namespace rafko_mainframe{
 #define RFASSERT_LOG(...) rafko_mainframe::RafkoAssertionLogger::rafko_log(__VA_ARGS__)
 #define RFASSERT_LOGV(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector(vec, __VA_ARGS__)
 #define RFASSERT_LOGV2(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector2(vec, __VA_ARGS__)
-
 /**
  * @brief      Logger utility to create help identify problems in debug configurations, while
  *             not straining performance in release configurations

@@ -256,7 +256,7 @@ TEST_CASE("Checking if the network solver is correctly producing the softmax fea
     solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(*solution, settings).build());
 
     (void)solver->solve({(0),(6),(5)});
-    rafko_utilities::DataRingbuffer neuron_data = solver->get_memory();
+    rafko_utilities::DataRingbuffer<> neuron_data = solver->get_memory();
     for(const rafko_net::FeatureGroup& feature : net->neuron_group_features()){ /* check if all the features point to the correct neuron indices */
       double sum = (0.0);
       rafko_net::SynapseIterator<>::iterate(feature.relevant_neurons(),[&sum, neuron_data](std::int32_t neuron_index){

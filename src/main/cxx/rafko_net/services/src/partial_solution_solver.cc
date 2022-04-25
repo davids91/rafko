@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <math.h>
 
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 #include "rafko_net/models/input_function.h"
 #include "rafko_net/models/transfer_function.h"
 #include "rafko_net/models/spike_function.h"
@@ -29,7 +30,7 @@ namespace rafko_net {
 
 rafko_utilities::DataPool<double> PartialSolutionSolver::common_data_pool;
 
-void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer& output_neuron_data,  std::vector<double>& temp_data) const{
+void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer<>& output_neuron_data,  std::vector<double>& temp_data) const{
   std::uint32_t weight_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   std::uint32_t input_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   std::uint32_t input_synapse_index = 0; /* Which synapse is being processed inside the Neuron */
@@ -83,7 +84,6 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
           }
         }else /* Any additional weight shall count as biases, so the input value is set to 1.0 */
           new_neuron_input = (1.0);
-
         /* The weighted input shall be added to the calculated value */
         if(true == first_input_in_neuron){
           new_neuron_data = new_neuron_input * detail.weight_table(weight_index);

@@ -99,7 +99,9 @@ void test_solution_solver_multithread(std::uint16_t threads){
   std::unique_ptr<rafko_net::SolutionSolver> solution_solver(rafko_net::SolutionSolver::Builder(solution, settings).build());
   std::vector<double> expected_neuron_data = std::vector<double>(solution.neuron_number());
   std::vector<double> network_output_vector;
-  rafko_utilities::DataRingbuffer neuron_data_partials(1,8);
+  rafko_utilities::DataRingbuffer<> neuron_data_partials(1u, [](std::vector<double>& element){
+    element.resize(8u);
+  });
 
   for(std::uint8_t variant_iterator = 0; variant_iterator < 10u; variant_iterator++){
     if(0 < variant_iterator){ /* modify some weights biases and memory filters */

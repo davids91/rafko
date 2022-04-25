@@ -95,6 +95,8 @@ public:
    */
   double get_value(Transfer_functions function, double data) const;
 
+  double get_derivative(Transfer_functions function, double input, double input_dw) const;
+
   #if(RAFKO_USES_OPENCL)
   /**
    * @brief     Generates GPU kernel function code for the provided parameters

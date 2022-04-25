@@ -18,6 +18,7 @@ set(UTIL_INTERFACE_MODELS
 set(UTIL_INTERFACE_SERVICES
   services/thread_group.h
   services/rafko_string_utils.h
+  services/rafko_math_utils.h
 )
 
 target_sources(rafko_utilities

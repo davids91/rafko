@@ -32,7 +32,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
   option(ASSERTLOGS
     "Enables verbose logging for development assertions; Warning: May hike runtime"
-    ON
+    OFF
   )
 
   option(TEST_CONVERGENCE

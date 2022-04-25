@@ -19,6 +19,7 @@
 
 #include <stdexcept>
 
+#include "rafko_utilities/services/rafko_math_utils.h"
 #include "rafko_net/models/input_function.h"
 
 namespace rafko_net{
@@ -143,7 +144,7 @@ bool PartialSolutionBuilder::look_for_neuron_input(std::int32_t neuron_input_ind
   }
   std::uint32_t candidate_index_inside_input = input_synapse.cached_size();
   auto cache_hit = found_network_input_in_partial_input.find(
-    pair_hash({neuron_input_index,input_reach_back})
+    rafko_utilities::pair_hash({neuron_input_index,input_reach_back})
   );
   if(cache_hit == found_network_input_in_partial_input.end()){
     std::uint32_t current_backreach;
@@ -154,7 +155,7 @@ bool PartialSolutionBuilder::look_for_neuron_input(std::int32_t neuron_input_ind
       if(candidate_index_inside_input == input_synapse.cached_size()) candidate_index_inside_input = 0u;
       if((input_reach_back == current_backreach)&&(synapse_index == neuron_input_index)){ /* If the index as well as the time of input matches */
         cache_hit = std::get<0>(found_network_input_in_partial_input.insert({
-          pair_hash({neuron_input_index,input_reach_back}), candidate_index_inside_input
+          rafko_utilities::pair_hash({neuron_input_index,input_reach_back}), candidate_index_inside_input
         }));
         return false; /* No need to continue Synapse iteration, found the right candidate! */
       }else{ /* Step the candidate iterator forward to the next index in the input array */

@@ -59,7 +59,7 @@ public:
 
   /* +++ Methods taken from @RafkoAgent +++ */
   void solve(
-    const std::vector<double>& input, rafko_utilities::DataRingbuffer& output,
+    const std::vector<double>& input, rafko_utilities::DataRingbuffer<>& output,
     const std::vector<std::reference_wrapper<std::vector<double>>>& tmp_data_pool,
     std::uint32_t used_data_pool_start = 0, std::uint32_t thread_index = 0
   ) const;
@@ -89,8 +89,8 @@ public:
   class Builder{
   public:
     Builder(const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings);
-    std::unique_ptr<rafko_net::SolutionSolver> build(){
-      return std::unique_ptr<rafko_net::SolutionSolver>( new SolutionSolver(solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread) );
+    std::unique_ptr<SolutionSolver> build(){
+      return std::unique_ptr<SolutionSolver>( new SolutionSolver(solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread) );
     }
   private:
     const Solution& solution;

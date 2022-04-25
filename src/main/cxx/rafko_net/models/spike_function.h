@@ -54,7 +54,22 @@ public:
    * @param[in]   new_data         The data to apply it to
    * @param[in]   previous_data    The data to apply it to
    */
-  static double get_value(Spike_functions function, double parameter, double new_data, double previous_data);
+  static double get_value(
+    Spike_functions function, double parameter,
+    double new_data, double previous_data
+  );
+
+  static double get_derivative_for_w(
+    Spike_functions function, double parameter,
+    double new_data, double new_data_d,
+    double previous_data, double previous_data_d
+  );
+
+  static double get_derivative_not_for_w(
+    Spike_functions function, double parameter,
+    double new_data, double new_data_d,
+    double previous_data, double previous_data_d
+  );
 
   #if(RAFKO_USES_OPENCL)
   /**
