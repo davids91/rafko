@@ -40,7 +40,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
   double learning_rate = 0.0001;
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
-    .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
+    .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(1)
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
 
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
@@ -171,6 +171,8 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
   std::cout << "Calculating!" << std::endl;
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   std::uint32_t iteration = 0u;
+  std::uint32_t avg_duration = 0.0;
+  std::chrono::steady_clock::time_point start;
   while(
     (
       std::abs(actual_value[1][0] - environment->get_label_sample(0u)[0])
@@ -183,7 +185,11 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
       *solution, settings
     ).build();
 
+    start = std::chrono::steady_clock::now();
     optimizer.iterate();
+    auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+    if(0.0 == avg_duration)avg_duration = current_duration;
+    else avg_duration = (avg_duration + current_duration)/2.0;
 
     actual_value[1][0] = optimizer.get_neuron_operation(0u)->get_value(1u/*past_index*/);
     actual_value[0][0] = optimizer.get_neuron_operation(0u)->get_value(0u/*past_index*/);
@@ -205,6 +211,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     std::cout << "Target: "
     << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
     << environment->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
+    << " | avg duration: " << avg_duration << "ms "
     << "     \r";
     ++iteration;
   }

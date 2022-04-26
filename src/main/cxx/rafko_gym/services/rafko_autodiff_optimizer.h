@@ -90,6 +90,7 @@ public:
   rafko_utilities::ConstVectorSubrange<> get_actual_value(std::uint32_t past_index){
     if(past_index > data.get_value().get_sequence_size())
       throw std::runtime_error("Reaching past value of Network beyond its memory");
+    /*!Note: The first operations are for the Network output objectives, containing the output Neuron results */
     return {data.get_value().get_element(past_index).begin(), data.get_value().get_element(past_index).end()};
   }
 
@@ -129,7 +130,7 @@ private:
 
   const std::uint32_t used_sequence_truncation;
   const std::uint32_t used_minibatch_size;
-  std::uint32_t iteration = 0;
+  std::uint32_t iteration = 0u;
 
   std::map<std::uint32_t, std::uint32_t> neuron_spike_to_operation_map;
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations;

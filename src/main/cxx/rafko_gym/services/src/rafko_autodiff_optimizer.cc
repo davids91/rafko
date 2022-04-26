@@ -24,6 +24,7 @@ void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
   neuron_spike_to_operation_map.clear();
   data.reset();
 
+  /*!Note: other components depend on the output objectives being the first operations in the array. */
   for(std::uint32_t output_index = 0; output_index < network.output_neuron_number(); ++output_index){
     operations.emplace_back(std::make_shared<RafkoBackpropObjectiveOperation>(
       data, network, objective, operations.size(),
@@ -31,6 +32,7 @@ void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
     ));
   }
 
+  /* Upload the dependencies for every operation until everything is uploaded */
   std::uint32_t done_index = 0;
   while(done_index < operations.size()){
     if(!operations[done_index]->are_dependencies_registered()){
@@ -45,7 +47,7 @@ void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
     }
     ++done_index;
   }/*while(done_index < operations.size())*/
-  data.build(operations.size());
+  data.build(operations.size(), environment.get_sequence_size());
 }
 
 void RafkoAutodiffOptimizer::calculate_value(const std::vector<double>& network_input){
@@ -93,13 +95,19 @@ void RafkoAutodiffOptimizer::iterate(){
     } /* The first few inputs are there to set an initial state to the network */
 
     /* Solve the data and store the result after the inital "prefill" */
-    for(std::uint32_t sequence_iterator = 0; sequence_iterator < environment.get_sequence_size(); ++sequence_iterator){
+    //TODO: Calculate derivatives only when they are in the truncation interval
+    for(std::uint32_t sequence_index = 0; sequence_index < environment.get_sequence_size(); ++sequence_index){
       data.step();
       calculate_value(environment.get_input_sample(raw_inputs_index));
-      calculate_derivative(
-        environment.get_input_sample(raw_inputs_index),
-        environment.get_label_sample(raw_labels_index)
-      );
+      if(
+        (sequence_index >= start_index_inside_sequence)
+        &&(sequence_index < (start_index_inside_sequence + used_sequence_truncation))
+      ){
+        calculate_derivative(
+          environment.get_input_sample(raw_inputs_index),
+          environment.get_label_sample(raw_labels_index)
+        );
+      }
       ++raw_inputs_index;
       ++raw_labels_index;
     }/*for(relevant sequences)*/
@@ -115,15 +123,12 @@ void RafkoAutodiffOptimizer::iterate(){
   ++iteration;
 }
 
-//TODO: Store gradients for the whole sequence, not just the netwrok memory..
 double RafkoAutodiffOptimizer::get_avg_gradient(std::uint32_t d_w_index){
   double sum = 0.0;
   double count = 0.0;
-  for(std::uint32_t run_index = 0; run_index < network.memory_size(); ++run_index){
-    for(std::uint32_t output_index = 0; output_index < network.output_neuron_number(); ++output_index){
-      sum += data.get_derivative(run_index, output_index, d_w_index);
-      count += 1.0;
-    }
+  for(std::uint32_t past_index = 0u; past_index < network.memory_size(); ++past_index){
+    sum += data.get_average_derivative(past_index, d_w_index);
+    count += 1.0;
   }
   return sum / count;
 }
