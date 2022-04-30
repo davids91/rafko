@@ -61,7 +61,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
 
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::vector<std::vector<double>>{{1.0,1.0},{1.0,1.0}},
-    std::vector<std::vector<double>>{{10.5},{21.0}},
+    std::vector<std::vector<double>>{{1.0},{2.0}},
     2.0/*sequence_size*/
   );
 
@@ -136,8 +136,10 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
+    // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l1_regularization)
+    // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l2_regularization)
     .add_neuron_recurrence(1u,0u,1u)
-    // .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
+    .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
     // .set_neuron_spike_function(0u, 0u, rafko_net::spike_function_none)
     // .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
     // .set_neuron_spike_function(0u, 1u, rafko_net::spike_function_none)
@@ -156,7 +158,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     // std::vector<std::vector<double>>(std::get<0>(tmp1)),
     // std::vector<std::vector<double>>(std::get<1>(tmp1)),
     std::vector<std::vector<double>>{{1.0,1.0},{1.0,1.0}},
-    std::vector<std::vector<double>>{{10.5},{21.0}},
+    std::vector<std::vector<double>>{{10.0},{20.0}},
     2 /*sequence_size*/
   );
 
@@ -207,11 +209,17 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     REQUIRE(
       optimizer.get_actual_value(0u)[0] == Catch::Approx(actual_value[0][0]).epsilon(0.0000000000001)
     );
-    // std::cout << "================" << std::endl;
+    double weight_sum = std::accumulate(
+      network->weight_table().begin(), network->weight_table().end(), 0.0,
+      [](const double& accu, const double& element){
+        return accu + std::abs(element);
+      }
+    );
     std::cout << "Target: "
     << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
     << environment->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
     << " | avg duration: " << avg_duration << "ms "
+    << " | weight_sum: " << weight_sum
     << "     \r";
     ++iteration;
   }

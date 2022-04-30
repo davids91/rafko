@@ -46,7 +46,7 @@ public:
   RafkoBackpropagationData(const rafko_net::RafkoNet& network)
   : memory_slots(network.memory_size() + 1u) /* The network always remembers the previous value because of the Spike function */
   , weight_table_size(network.weight_table_size())
-  , output_neuron_numer(network.output_neuron_number())
+  , weight_relevant_operation_count(0u)
   , calculated_derivatives()
   , calculated_values()
   , sequence_derivatives()
@@ -56,10 +56,11 @@ public:
   /**
    * @brief   Constructs ( or re-constructs ) the buffers based on the provided information
    *
-   * @param[in]     number_of_operations    The number of backpropagation operations to store inside the buffers
-   * @param[in]     sequence_size           The size of a sequence the network is going to be running in
+   * @param[in]     number_of_operations        The number of backpropagation operations to store inside the buffers
+   * @param[in]     relevant_operation_count    The number of backpropagation operations to relevant to weights, i.e. not only used internally
+   * @param[in]     sequence_size               The size of a sequence the network is going to be running in
    */
-  void build(std::uint32_t number_of_operations, std::uint32_t sequence_size){
+  void build(std::uint32_t number_of_operations, std::uint32_t relevant_operation_count, std::uint32_t sequence_size){
     calculated_values = std::make_unique<NetworkValueBuffer>(
       memory_slots, [number_of_operations](std::vector<double>& element){
         element.resize(number_of_operations);
@@ -78,6 +79,7 @@ public:
       }
     );
     built = true;
+    weight_relevant_operation_count = relevant_operation_count;
   }
 
 
@@ -130,7 +132,7 @@ public:
     RFASSERT(operation_index < calculated_derivatives->get_element(0u/*past_index*/).size());
     RFASSERT(d_w_index < calculated_derivatives->get_element(0u/*past_index*/, operation_index).size());
     calculated_derivatives->get_element(0u/*past_index*/, operation_index)[d_w_index] = value;
-    if(operation_index < output_neuron_numer){
+    if(operation_index < weight_relevant_operation_count){
       /*!Note: The first operations are the objective operations for the outputs, only those matter in this case */
       double& stored_avg = sequence_derivatives->get_element(0u/*past_index*/)[d_w_index];
       stored_avg = (stored_avg + value)/2.0;
@@ -213,7 +215,7 @@ public:
 private:
   const std::uint32_t memory_slots;
   const std::uint32_t weight_table_size;
-  const std::uint32_t output_neuron_numer;
+  std::uint32_t weight_relevant_operation_count;
   std::unique_ptr<NetworkDerivativeBuffer> calculated_derivatives; /* {runs, operations, d_w values} */
   std::unique_ptr<NetworkValueBuffer> calculated_values; /* {runs, operations} */
   std::unique_ptr<SequenceDerivativeBuffer> sequence_derivatives; /* past_sequences_index, average d_w_values */

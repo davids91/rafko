@@ -73,7 +73,7 @@ double RafkoNetworkFeature::calculate_performance_relevant(
   switch(feature.feature()){
     case neuron_group_feature_l1_regularization: return calculate_l1_regularization(network, feature.relevant_neurons(), thread_index);
     case neuron_group_feature_l2_regularization: return calculate_l2_regularization(network, feature.relevant_neurons(), thread_index);
-    default: return (0.0);
+    default: return 0.0;
   }
 }
 
@@ -119,18 +119,18 @@ void RafkoNetworkFeature::execute_dropout(
   /*!Note: Since no Neuron will be involved in the execution twice, no need for a mutual exclusive lock or atomics */
   execute_in_paralell_for(relevant_neurons,[&neuron_data, &settings](std::uint32_t neuron_index){
     if((settings.get_dropout_probability()*(100.0)) >= static_cast<double>(rand()%100 + 1u)){
-      neuron_data[neuron_index] = (0.0);
+      neuron_data[neuron_index] = 0.0;
     }
   }, thread_index);
 }
 
 
 double RafkoNetworkFeature::calculate_l1_regularization(
-  const rafko_net::RafkoNet& network,
+  const RafkoNet& network,
   const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
   std::uint32_t thread_index
 ) const{
-  std::atomic<double> error_value = (0.0);
+  std::atomic<double> error_value = 0.0;
   execute_in_paralell_for(relevant_neurons,[&error_value, &network](std::uint32_t neuron_index){
     SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
     [&error_value, &network](std::uint32_t weight_index){
@@ -143,11 +143,11 @@ double RafkoNetworkFeature::calculate_l1_regularization(
 }
 
 double RafkoNetworkFeature::calculate_l2_regularization(
-  const rafko_net::RafkoNet& network,
+  const RafkoNet& network,
   const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
   std::uint32_t thread_index
 ) const{
-  std::atomic<double> error_value = (0.0);
+  std::atomic<double> error_value = 0.0;
   execute_in_paralell_for(relevant_neurons,[&error_value, &network](std::uint32_t neuron_index){
     SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
     [&error_value, &network](std::uint32_t weight_index){
@@ -174,10 +174,10 @@ void RafkoNetworkFeature::add_kernel_code_to(
     case neuron_group_feature_softmax:
       add_softmax_kernel_to(operations, feature, output_start_index, declare_locals);
       break;
-    case rafko_net::neuron_group_feature_l1_regularization:
+    case neuron_group_feature_l1_regularization:
       add_l1_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
       break;
-    case rafko_net::neuron_group_feature_l2_regularization:
+    case neuron_group_feature_l2_regularization:
       add_l2_kernel_to(operations, feature, solution, input_start_index, output_start_index, declare_locals);
       break;
     default: break;

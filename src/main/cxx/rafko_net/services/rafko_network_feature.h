@@ -72,7 +72,6 @@ public:
     const RafkoNet& network, std::uint32_t thread_index = 0
   ) const;
 
-
   #if(RAFKO_USES_OPENCL)
   /**
    * @brief      Provide the calculations of the given feature group as GPU kernel code

@@ -36,12 +36,6 @@
 
 #include "rafko_gym/services/updater_factory.h"
 #include "rafko_gym/services/rafko_backpropagation_operation.h"
-#include "rafko_gym/services/rafko_backprop_network_input_operation.h"
-#include "rafko_gym/services/rafko_backprop_neuron_bias_operation.h"
-#include "rafko_gym/services/rafko_backprop_neuron_input_operation.h"
-#include "rafko_gym/services/rafko_backprop_transfer_fn_operation.h"
-#include "rafko_gym/services/rafko_backprop_spike_fn_operation.h"
-#include "rafko_gym/services/rafko_backprop_objective_operation.h"
 
 namespace rafko_gym{
 

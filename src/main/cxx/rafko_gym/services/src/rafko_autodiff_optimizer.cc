@@ -16,21 +16,43 @@
  */
 #include "rafko_gym/services/rafko_autodiff_optimizer.h"
 
+#include "rafko_gym/services/rafko_backprop_network_input_operation.h"
+#include "rafko_gym/services/rafko_backprop_neuron_bias_operation.h"
+#include "rafko_gym/services/rafko_backprop_neuron_input_operation.h"
+#include "rafko_gym/services/rafko_backprop_transfer_fn_operation.h"
+#include "rafko_gym/services/rafko_backprop_spike_fn_operation.h"
+#include "rafko_gym/services/rafko_backprop_objective_operation.h"
+#include "rafko_gym/services/rafko_backprop_weight_reg_operation.h"
+
 namespace rafko_gym{
 
 void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
   RFASSERT_SCOPE(AUTODIFF_BUILD);
+  std::uint32_t weight_relevant_operation_count;
   operations.clear();
   neuron_spike_to_operation_map.clear();
   data.reset();
 
   /*!Note: other components depend on the output objectives being the first operations in the array. */
   for(std::uint32_t output_index = 0; output_index < network.output_neuron_number(); ++output_index){
-    operations.emplace_back(std::make_shared<RafkoBackpropObjectiveOperation>(
+    operations.push_back(std::make_shared<RafkoBackpropObjectiveOperation>(
       data, network, objective, operations.size(),
       output_index, environment.get_number_of_label_samples()
     ));
   }
+
+  /* Upload the performance related operations */
+  for(const rafko_net::FeatureGroup& feature_group : network.neuron_group_features()){
+    if(
+      (feature_group.feature() == rafko_net::neuron_group_feature_l1_regularization)
+      ||(feature_group.feature() == rafko_net::neuron_group_feature_l2_regularization)
+    ){
+      operations.push_back(std::make_shared<RafkoBackpropWeightRegOperation>(
+        data, network, operations.size(), feature_group
+      ));
+    }
+  }
+  weight_relevant_operation_count = operations.size();
 
   /* Upload the dependencies for every operation until everything is uploaded */
   std::uint32_t done_index = 0;
@@ -47,7 +69,7 @@ void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
     }
     ++done_index;
   }/*while(done_index < operations.size())*/
-  data.build(operations.size(), environment.get_sequence_size());
+  data.build(operations.size(), weight_relevant_operation_count, environment.get_sequence_size());
 }
 
 void RafkoAutodiffOptimizer::calculate_value(const std::vector<double>& network_input){
@@ -121,14 +143,12 @@ void RafkoAutodiffOptimizer::iterate(){
     const std::vector<double>& sequence_derivative = data.get_average_derivative()
       .get_element(past_sequence_index);
     std::transform(
-      sequence_derivative.begin(),sequence_derivative.end(),
+      sequence_derivative.begin(), sequence_derivative.end(),
       avg_derivatives.begin(), avg_derivatives.begin(),
-      [](const double& a, const double& b){
-        return (a+b)/2.0;
-      }
+      [](const double& a, const double& b){ return (a+b)/2.0; }
     );
   }
-
+  
   weight_updater->iterate(avg_derivatives);
   ++iteration;
 }
