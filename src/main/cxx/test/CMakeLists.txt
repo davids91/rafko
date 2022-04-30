@@ -41,6 +41,7 @@ if(MAKE_TESTS)
       rafko_utilities/src/data_ringbuffer_test.cc
       rafko_utilities/src/thread_group_test.cc
       rafko_utilities/src/const_vector_subrange_test.cc
+      rafko_utilities/src/subscript_proxy_test.cc
       rafko_net/src/synapse_iterator_test.cc
       rafko_net/src/neuron_router_test.cc
       rafko_net/src/rafko_net_builder_test.cc

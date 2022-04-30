@@ -32,6 +32,7 @@
 #endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_utilities/models/subscript_proxy.h"
 #include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/models/rafko_settings.h"
 
@@ -40,6 +41,7 @@ namespace rafko_net{
 /**
  * @brief      A base class for all RafkoNeuralNetwork related features
  */
+using NeuronDataProxy = rafko_utilities::SubscriptProxy<std::vector<double>>;
 class RAFKO_FULL_EXPORT RafkoNetworkFeature{
 public:
   RafkoNetworkFeature(std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_)
@@ -56,7 +58,7 @@ public:
    */
   void execute_solution_relevant(
     const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
-    std::vector<double>& neuron_data, std::uint32_t thread_index = 0
+    NeuronDataProxy neuron_data, std::uint32_t thread_index = 0
   ) const;
 
   /**
@@ -122,7 +124,7 @@ private:
    * @param[in]  thread_index       The index of the thread the feature is to be executed
    */
   void execute_softmax(
-    std::vector<double>& neuron_data,
+    NeuronDataProxy neuron_data,
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
     std::uint32_t thread_index = 0u
   ) const;
@@ -136,7 +138,8 @@ private:
    * @param[in]  thread_index       The index of the thread the feature is to be executed
    */
   void execute_dropout(
-    std::vector<double>& neuron_data, const rafko_mainframe::RafkoSettings& settings,
+    NeuronDataProxy neuron_data,
+    const rafko_mainframe::RafkoSettings& settings,
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
     std::uint32_t thread_index = 0u
   ) const;

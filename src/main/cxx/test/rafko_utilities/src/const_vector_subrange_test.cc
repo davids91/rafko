@@ -25,10 +25,7 @@
 
 namespace rafko_utilities_test {
 
-/*###############################################################################################
- * Testing if Subvector range works as expected
- * */
-TEST_CASE("Vector subrange", "[data-handling][sub-range]"){
+TEST_CASE("Testing Vector subrange", "[data-handling][sub-range]"){
   std::vector<double> big_vec = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
   rafko_utilities::ConstVectorSubrange<> my_range{ big_vec.begin(), big_vec.end() };
 

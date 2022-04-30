@@ -50,7 +50,7 @@ void RafkoNetworkFeature::execute_in_paralell_for(
 
 void RafkoNetworkFeature::execute_solution_relevant(
   const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
-  std::vector<double>& neuron_data, std::uint32_t thread_index
+  NeuronDataProxy neuron_data, std::uint32_t thread_index
 ) const{
   RFASSERT(thread_index < execution_threads.size());
 
@@ -79,7 +79,7 @@ double RafkoNetworkFeature::calculate_performance_relevant(
 
 
 void RafkoNetworkFeature::execute_softmax(
-  std::vector<double>& neuron_data,
+  NeuronDataProxy neuron_data,
   const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
   std::uint32_t thread_index
 ) const{
@@ -112,7 +112,8 @@ void RafkoNetworkFeature::execute_softmax(
 }
 
 void RafkoNetworkFeature::execute_dropout(
-  std::vector<double>& neuron_data, const rafko_mainframe::RafkoSettings& settings,
+  NeuronDataProxy neuron_data,
+  const rafko_mainframe::RafkoSettings& settings,
   const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
   std::uint32_t thread_index
 ) const{
@@ -123,7 +124,6 @@ void RafkoNetworkFeature::execute_dropout(
     }
   }, thread_index);
 }
-
 
 double RafkoNetworkFeature::calculate_l1_regularization(
   const RafkoNet& network,

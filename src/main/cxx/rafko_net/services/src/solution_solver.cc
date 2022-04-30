@@ -123,8 +123,8 @@ void SolutionSolver::solve(
         ){
           /*!Note: training relevant features only need to be run during evaluation */
           feature_executor.execute_solution_relevant(
-            solved_features[feature_index], settings, output.get_element(0u),
-            thread_index
+            solved_features[feature_index], settings,
+            {output.get_element(0u)}, thread_index
           );
         }
       }
