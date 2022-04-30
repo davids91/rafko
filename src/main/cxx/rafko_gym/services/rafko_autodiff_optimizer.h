@@ -34,6 +34,7 @@
 #include "rafko_gym/models/rafko_objective.h"
 #include "rafko_gym/models/rafko_backpropagation_data.h"
 
+#include "rafko_gym/services/updater_factory.h"
 #include "rafko_gym/services/rafko_backpropagation_operation.h"
 #include "rafko_gym/services/rafko_backprop_network_input_operation.h"
 #include "rafko_gym/services/rafko_backprop_neuron_bias_operation.h"
@@ -54,6 +55,7 @@ public:
   , environment(environment_)
   , network(network_)
   , data(network)
+  , weight_updater(UpdaterFactory::build_weight_updater(network, weight_updater_default, settings))
   , used_sequence_truncation( std::min(settings.get_memory_truncation(), environment.get_sequence_size()) )
   , used_minibatch_size( std::min(settings.get_minibatch_size(), environment.get_number_of_sequences()) )
   {
@@ -127,6 +129,7 @@ private:
   const RafkoEnvironment& environment;
   rafko_net::RafkoNet& network;
   RafkoBackpropagationData data;
+  std::shared_ptr<rafko_gym::RafkoWeightUpdater> weight_updater;
 
   const std::uint32_t used_sequence_truncation;
   const std::uint32_t used_minibatch_size;
@@ -134,6 +137,20 @@ private:
 
   std::map<std::uint32_t, std::uint32_t> neuron_spike_to_operation_map;
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations;
+
+  void set_weight_updater(rafko_gym::Weight_updaters updater){
+    RFASSERT_LOG("Setting weight updater in Autodiff optimizer to {}", rafko_gym::Weight_updaters_Name(updater));
+    weight_updater.reset();
+    weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, updater, settings);
+  }
+
+  void apply_weight_update(const std::vector<double>& weight_delta){
+    RFASSERT_LOGV(weight_delta, "Applying weight(autodiff optimizer) update! Delta:");
+    RFASSERT( static_cast<std::int32_t>(weight_delta.size()) == network.weight_table_size() );
+    if(weight_updater->is_finished())
+      weight_updater->start();
+    weight_updater->iterate(weight_delta);
+  }
 
   /**
    * @brief   calculate network value based on the given inputs

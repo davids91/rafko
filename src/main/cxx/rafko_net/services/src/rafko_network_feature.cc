@@ -27,7 +27,7 @@
 #include "rafko_net/services/synapse_iterator.h"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_utilities/services/rafko_string_utils.h"
-#include "rafko_gym/services/rafko_weight_updater.h"
+#include "rafko_gym/services/rafko_weight_adapter.h"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 
@@ -319,15 +319,15 @@ void RafkoNetworkFeature::add_lx_kernel_to(
   SynapseIterator<>::iterate(feature.relevant_neurons(),
   [&](std::uint32_t neuron_index){
     /* find neuron inside the partial solutions */
-    std::uint32_t partial_index = rafko_gym::RafkoWeightUpdater::get_relevant_partial_index_for(
+    std::uint32_t partial_index = rafko_gym::RafkoWeightAdapter::get_relevant_partial_index_for(
       neuron_index, solution, map_neurons_to_partials
     );
     const PartialSolution& partial = solution.partial_solutions(partial_index);
-    std::uint32_t weight_start_in_partial = rafko_gym::RafkoWeightUpdater::get_device_weight_table_start_for(
+    std::uint32_t weight_start_in_partial = rafko_gym::RafkoWeightAdapter::get_device_weight_table_start_for(
       partial_index, solution, map_weight_starts_to_partials
     );
     std::uint32_t inner_neuron_index = (neuron_index - solution.partial_solutions(partial_index).output_data().starts());
-    std::uint32_t weight_start_synapse = rafko_gym::RafkoWeightUpdater::get_weight_synapse_start_index_in_partial(
+    std::uint32_t weight_start_synapse = rafko_gym::RafkoWeightAdapter::get_weight_synapse_start_index_in_partial(
       neuron_index, partial, map_weight_sypase_start_to_neurons
     );
     SynapseIterator<>::iterate(partial.weight_indices(),

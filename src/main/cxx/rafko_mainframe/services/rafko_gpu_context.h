@@ -29,6 +29,7 @@
 #include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/models/rafko_objective.h"
 #include "rafko_gym/models/rafko_agent.h"
+#include "rafko_gym/services/rafko_weight_adapter.h"
 #include "rafko_gym/services/updater_factory.h"
 
 #include "rafko_mainframe/services/rafko_gpu_phase.h"
@@ -40,7 +41,7 @@ class RAFKO_FULL_EXPORT RafkoGPUContext : public RafkoContext{
 public:
 
   void fix_dirty(){ /*!Note: When weights are updated elsewhere this hack takes over the changes */
-    weight_updater->update_solution_with_weights();
+    weight_adapter.update_solution_with_weights();
     upload_weight_table_to_device();
   }
 
@@ -51,7 +52,7 @@ public:
 
   void refresh_solution_weights(){
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
-    weight_updater->update_solution_with_weights();
+    weight_adapter.update_solution_with_weights();
     upload_weight_table_to_device();
   }
 
@@ -110,6 +111,7 @@ private:
 
   rafko_net::RafkoNet& network;
   std::unique_ptr<rafko_net::Solution> network_solution;
+  rafko_gym::RafkoWeightAdapter weight_adapter;
   std::shared_ptr<rafko_net::SolutionSolver> agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> environment;
   std::shared_ptr<rafko_gym::RafkoObjective> objective;

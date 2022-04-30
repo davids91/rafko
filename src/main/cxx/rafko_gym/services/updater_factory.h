@@ -38,20 +38,19 @@ public:
    * @brief      Builds a weight updater.
    *
    * @param      net             The network to base the weight updater upon
-   * @param      solution        A reference of the Solution built from the network
    * @param[in]  weight_updater  The weight updater type
    * @param      settings         The service settings
    *
    * @return     The weight updater; Owner is arena, if settings has a pointer set, otherwise ownership is transferred to the caller of the function.
    */
-  static std::unique_ptr<RafkoWeightUpdater> build_weight_updater(rafko_net::RafkoNet& net, rafko_net::Solution& solution, Weight_updaters weight_updater, const rafko_mainframe::RafkoSettings& settings){
+  static std::unique_ptr<RafkoWeightUpdater> build_weight_updater(rafko_net::RafkoNet& net, Weight_updaters weight_updater, const rafko_mainframe::RafkoSettings& settings){
     switch(weight_updater){
-      case weight_updater_momentum:   return std::make_unique<RafkoWeightUpdaterMomentum>(net, solution, settings);
-      case weight_updater_nesterovs:  return std::make_unique<RafkoWeightUpdaterNesterovs>(net, solution, settings);
-      case weight_updater_adam:       return std::make_unique<RafkoWeightUpdaterAdam>(net, solution, settings);
-      case weight_updater_amsgrad:    return std::make_unique<RafkoWeightUpdaterAMSGrad>(net, solution, settings);
+      case weight_updater_momentum:   return std::make_unique<RafkoWeightUpdaterMomentum>(net, settings);
+      case weight_updater_nesterovs:  return std::make_unique<RafkoWeightUpdaterNesterovs>(net, settings);
+      case weight_updater_adam:       return std::make_unique<RafkoWeightUpdaterAdam>(net, settings);
+      case weight_updater_amsgrad:    return std::make_unique<RafkoWeightUpdaterAMSGrad>(net, settings);
       case weight_updater_default:
-      default:                        return std::make_unique<rafko_gym::RafkoWeightUpdater>(net, solution, settings);
+      default:                        return std::make_unique<rafko_gym::RafkoWeightUpdater>(net, settings);
     };
   }
 };

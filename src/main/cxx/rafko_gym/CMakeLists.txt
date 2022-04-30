@@ -23,6 +23,7 @@ set(GYM_HEADER_SERVICES
   services/function_factory.h
   services/rafko_numeric_optimizer.h
   services/updater_factory.h
+  services/rafko_weight_adapter.h
   services/rafko_weight_updater.h
   services/rafko_autodiff_optimizer.h
   services/rafko_backpropagation_operation.h
@@ -43,6 +44,7 @@ target_sources(rafko_gym
   services/src/rafko_backprop_neuron_input_operation.cc
   services/src/rafko_autodiff_optimizer.cc
   services/src/rafko_numeric_optimizer.cc
+  services/src/rafko_weight_adapter.cc
   services/src/rafko_weight_updater.cc
   services/src/weight_updater_adam.cc
   services/src/weight_updater_amsgrad.cc

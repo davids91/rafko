@@ -26,6 +26,7 @@
 #include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/models/rafko_objective.h"
 #include "rafko_gym/models/rafko_agent.h"
+#include "rafko_gym/services/rafko_weight_adapter.h"
 #include "rafko_gym/services/updater_factory.h"
 
 #include "rafko_mainframe/services/rafko_context.h"
@@ -40,7 +41,7 @@ public:
   ~RafkoCPUContext() = default;
 
   void fix_dirty(){ /*!Note: When weights are updated elsewhere this hack takes over the changes */
-    weight_updater->update_solution_with_weights();
+    weight_adapter.update_solution_with_weights();
   }
 
   /* +++ Methods taken from @RafkoContext +++ */
@@ -55,24 +56,24 @@ public:
   void set_weight_updater(rafko_gym::Weight_updaters updater){
     RFASSERT_LOG("Setting weight updater in CPU context to {}", rafko_gym::Weight_updaters_Name(updater));
     weight_updater.reset();
-    weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, *network_solution, updater, settings);
+    weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, updater, settings);
   }
   void refresh_solution_weights(){
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
-    weight_updater->update_solution_with_weights();
+    weight_adapter.update_solution_with_weights();
   }
   void set_network_weight(std::uint32_t weight_index, double weight_value){
     RFASSERT_LOG("Setting weight[{}] to {}(CPU Context)", weight_index, weight_value);
     RFASSERT( static_cast<std::int32_t>(weight_index) < network.weight_table_size() );
     network.set_weight_table(weight_index, weight_value);
     refresh_solution_weights();
-  };
+  }
   void set_network_weights(const std::vector<double>& weights){
     RFASSERT_LOGV(weights, "Setting weights(CPU Context) to:");
     RFASSERT( static_cast<std::int32_t>(weights.size()) == network.weight_table_size() );
     *network.mutable_weight_table() = {weights.begin(), weights.end()};
     refresh_solution_weights();
-  };
+  }
 
   void apply_weight_update(const std::vector<double>& weight_delta){
     RFASSERT_LOGV(weight_delta, "Applying weight(CPU context) update! Delta:");
@@ -81,7 +82,7 @@ public:
       weight_updater->start();
     weight_updater->iterate(weight_delta);
     refresh_solution_weights();
-  };
+  }
 
   double full_evaluation(){
     RFASSERT_SCOPE(CPU_FULL_EVALUATION);
@@ -132,6 +133,7 @@ public:
 private:
   rafko_net::RafkoNet& network;
   std::unique_ptr<rafko_net::Solution> network_solution;
+  rafko_gym::RafkoWeightAdapter weight_adapter;
   std::unique_ptr<rafko_net::SolutionSolver> agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> environment;
   std::shared_ptr<rafko_gym::RafkoObjective> objective;

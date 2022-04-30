@@ -95,11 +95,10 @@ void RafkoAutodiffOptimizer::iterate(){
     } /* The first few inputs are there to set an initial state to the network */
 
     /* Solve the data and store the result after the inital "prefill" */
-    //TODO: Calculate derivatives only when they are in the truncation interval
     for(std::uint32_t sequence_index = 0; sequence_index < environment.get_sequence_size(); ++sequence_index){
       data.step();
       calculate_value(environment.get_input_sample(raw_inputs_index));
-      if(
+      if( /* calculate derivatives only when they are in the truncation interval */
         (sequence_index >= start_index_inside_sequence)
         &&(sequence_index < (start_index_inside_sequence + used_sequence_truncation))
       ){
@@ -113,13 +112,24 @@ void RafkoAutodiffOptimizer::iterate(){
     }/*for(relevant sequences)*/
   }
 
-  for(std::int32_t weight_index = 0; weight_index < network.weight_table_size(); ++weight_index){
-    network.set_weight_table(
-      weight_index, (
-        network.weight_table(weight_index) - (get_avg_gradient(weight_index) * settings.get_learning_rate(iteration))
-      )
+  std::vector<double> avg_derivatives(network.weight_table_size(), 0.0);
+  for(
+    std::uint32_t past_sequence_index = start_index_inside_sequence;
+    past_sequence_index < (start_index_inside_sequence + used_sequence_truncation);
+    ++past_sequence_index
+  ){
+    const std::vector<double>& sequence_derivative = data.get_average_derivative()
+      .get_element(past_sequence_index);
+    std::transform(
+      sequence_derivative.begin(),sequence_derivative.end(),
+      avg_derivatives.begin(), avg_derivatives.begin(),
+      [](const double& a, const double& b){
+        return (a+b)/2.0;
+      }
     );
-  }/* for(every weight) */
+  }
+
+  weight_updater->iterate(avg_derivatives);
   ++iteration;
 }
 

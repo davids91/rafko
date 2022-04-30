@@ -24,8 +24,8 @@ namespace rafko_gym{
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterAMSGrad : public RafkoWeightUpdater{
 public:
-  RafkoWeightUpdaterAMSGrad(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_)
-  :  RafkoWeightUpdater(rafko_net, solution_, settings_)
+  RafkoWeightUpdaterAMSGrad(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings_)
+  :  RafkoWeightUpdater(rafko_net, settings_)
   ,  moment(rafko_net.weight_table_size(),(0.0))
   ,  raw_moment_max(rafko_net.weight_table_size(),(0.0))
   { }

@@ -37,17 +37,15 @@ namespace rafko_gym {
  */
 class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
-  RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_, std::uint32_t required_iterations_for_step_ = 1u)
+  RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings_, std::uint32_t required_iterations_for_step_ = 1u)
   : net(rafko_net)
-  , solution(solution_)
   , settings(settings_)
   , required_iterations_for_step(required_iterations_for_step_)
   , weights_to_do_in_one_thread(1u + static_cast<std::uint32_t>(net.weight_table_size()/settings.get_max_solve_threads()))
   , current_velocity(rafko_net.weight_table_size(),(0.0))
   , execution_threads(settings.get_max_solve_threads())
-  , weights_in_partials(rafko_net.weight_table_size())
-  , neurons_in_partials(solution.partial_solutions_size())
-  { };
+  {
+  }
 
 
   /**
@@ -68,26 +66,9 @@ public:
   void iterate(const std::vector<double>& gradients){
     calculate_velocity(gradients);
     update_weights_with_velocity();
-    update_solution_with_weights();
     iteration = (iteration + 1) % required_iterations_for_step;
     finished = (0u == iteration);
   }
-
-  /**
-   * @brief      Copies the weights in the stored @RafkoNet reference into the provided solution.
-   *             It supposes that the solution is one already built, and it is built from
-   *             the same @RafkoNet referenced in the updater. Uses a different thread for every partial solution.
-   */
-  void update_solution_with_weights() const;
-
-  /**
-   * @brief      Copies the weights in the stored @RafkoNet reference into the provided solution.
-   *             It supposes that the solution is one already built, and it is built from
-   *             the same @RafkoNet referenced in the updater. Uses a different thread for every partial solution.
-   *
-   * @param[in]  weight_index   The index of the weight to take over fro the @RafkoNet
-   */
-  void update_solution_with_weight(std::uint32_t weight_index) const;
 
   /**
    * @brief      Tells if an iteration is at its valid state or not based on
@@ -119,80 +100,10 @@ public:
     return current_velocity;
   }
 
-  /**
-   * @brief      Provides a list of partials and weight indices inside them for every given network weight_index
-   *             Each weight might be present inside multiple partials, but shall not be repeated multiple times
-   *             inside each partial.
-   *
-   * @param[in]  network_weight_index   The Weight index inside the @RafkoNet
-   *
-   * @return     A vector of the following structure: {{partial index,weight_index},...,{...}}
-   *             The elements of the vector are in ascending order by partial index.
-   */
-  const std::vector<std::pair<std::uint32_t,std::uint32_t>>& get_relevant_partial_weight_indices_for(std::uint32_t network_weight_index) const;
-
-  /**
-   * @brief      Provides the partial index the given neuron_index belongs to
-   *
-   * @param[in]  neuron_index   The Neuron index inside the @RafkoNet
-   *
-   * @return     The index of the partial solution the Neuron belongs to
-   */
-  std::uint32_t get_relevant_partial_index_for(std::uint32_t neuron_index) const{
-    return get_relevant_partial_index_for(neuron_index, solution, neurons_in_partials);
-  }
-
-  /**
-   * @brief      Provides the partial index the given neuron_index belongs to
-   *
-   * @param[in]  neuron_index         The Neuron index inside the @RafkoNet
-   * @param[in]  solution             The solution in which to search
-   * @param      neurons_in_partials  The unordered map of the cache data
-   *
-   * @return     The index of the partial solution the Neuron belongs to
-   */
-  static std::uint32_t get_relevant_partial_index_for(
-    std::uint32_t neuron_index, const rafko_net::Solution& solution,
-    std::unordered_map<std::uint32_t, std::uint32_t>& neurons_in_partials
-  );
-
-  /**
-   * @brief      Provides the first weight synapse index of the neuron inside the @PartialSolution
-   *
-   * @param[in]  neuron_index                       The Neuron index inside the @RafkoNet
-   * @param[in]  partial                            The solution in which to search
-   * @param      weight_synapse_starts_in_partial   The unordered map of the cache data
-   *
-   * @return     The index of the first weight synapse belonging to the given neuron
-   */
-  static std::uint32_t get_weight_synapse_start_index_in_partial(
-    std::uint32_t neuron_index, const rafko_net::PartialSolution& partial,
-    std::unordered_map<std::uint32_t, std::uint32_t>& weight_synapse_starts_in_partial
-  );
-
-#if(RAFKO_USES_OPENCL)
-  /**
-   * @brief      Provides the start index of the weight table for the given partial
-   *             inside a weight common global weight table
-   *
-   * @param[in]  partial_index                The index of the Partial inside the solution
-   * @param[in]  solution                     The solution in which to search
-   * @param      weight_starts_in_partials    The unordered map of the cache data
-   *
-   * @return     The index of the first weight belonging to the partial solution inside the GPU device weight table
-   */
-  static std::uint32_t get_device_weight_table_start_for(
-    std::uint32_t partial_index, const rafko_net::Solution& solution,
-    std::unordered_map<std::uint32_t, std::uint32_t>& weight_starts_in_partials
-  );
-#endif/*(RAFKO_USES_OPENCL)*/
-
-
   virtual ~RafkoWeightUpdater() = default;
 
 protected:
   rafko_net::RafkoNet& net;
-  rafko_net::Solution& solution;
   const rafko_mainframe::RafkoSettings& settings;
   const std::uint32_t required_iterations_for_step;
   const std::uint32_t weights_to_do_in_one_thread;
@@ -225,8 +136,6 @@ protected:
 
 private:
   rafko_utilities::ThreadGroup execution_threads;
-  mutable std::unordered_map<std::uint32_t,std::vector<std::pair<std::uint32_t,std::uint32_t>>> weights_in_partials; /* key: Weight index; {{partial_index, weight_index},...{..}} */
-  mutable std::unordered_map<std::uint32_t, std::uint32_t> neurons_in_partials; /* key: Neuron index; value :Partial index */
   mutable std::mutex reference_mutex;
 
   /**

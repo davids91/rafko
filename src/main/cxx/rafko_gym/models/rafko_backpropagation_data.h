@@ -161,7 +161,7 @@ public:
   /**
    * @brief provides access to the underlying buffer for the network operation derivatives
    */
-  const NetworkDerivativeBuffer& get_derivative(){
+  const NetworkDerivativeBuffer& get_actual_derivative(){
     RFASSERT(built);
     return *calculated_derivatives;
   }
@@ -182,6 +182,14 @@ public:
   }
 
   /**
+   * @brief provides access to the underlying buffer for the network operation derivatives
+   */
+  const NetworkDerivativeBuffer& get_sequence_derivative(){
+    RFASSERT(built);
+    return *calculated_derivatives;
+  }
+
+  /**
    * @brief     queries the calculated derivative for the given sequence and weight
    *
    * @param[in]    past_sequence_index    The index of the previous loop to collect the derivative from
@@ -194,13 +202,21 @@ public:
     return sequence_derivatives->get_element(past_sequence_index, weight_index);
   }
 
+  /**
+   * @brief provides access to the underlying buffer for the weight derivative buffers
+   */
+  const SequenceDerivativeBuffer& get_average_derivative(){
+    RFASSERT(built);
+    return *sequence_derivatives;
+  }
+
 private:
   const std::uint32_t memory_slots;
   const std::uint32_t weight_table_size;
   const std::uint32_t output_neuron_numer;
   std::unique_ptr<NetworkDerivativeBuffer> calculated_derivatives; /* {runs, operations, d_w values} */
   std::unique_ptr<NetworkValueBuffer> calculated_values; /* {runs, operations} */
-  std::unique_ptr<SequenceDerivativeBuffer> sequence_derivatives; /* sequences_index, average d_w_values */
+  std::unique_ptr<SequenceDerivativeBuffer> sequence_derivatives; /* past_sequences_index, average d_w_values */
   //TODO: Maybe don't store just averages of output objective operations?
   bool built = false;
 };
