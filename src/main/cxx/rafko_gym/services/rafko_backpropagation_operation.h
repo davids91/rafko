@@ -51,11 +51,12 @@ class RAFKO_FULL_EXPORT RafkoBackpropagationOperation{
 public:
   RafkoBackpropagationOperation(
     RafkoBackpropagationData& data_, const rafko_net::RafkoNet& network_,
-    std::uint32_t operation_index_
+    std::uint32_t operation_index_, Autodiff_operations type_
   )
   : data(data_)
   , network(network_)
   , operation_index(operation_index_)
+  , type(type_)
   {
   }
 
@@ -96,8 +97,12 @@ public:
     ++operation_index;
   }
 
-  std::uint32_t get_operation_index(){
+  std::uint32_t get_operation_index() const{
     return operation_index;
+  }
+
+  constexpr Autodiff_operations get_type() const{
+    return type;
   }
 
   virtual std::vector<Dependency> get_dependencies() = 0;
@@ -105,11 +110,7 @@ public:
 protected:
   RafkoBackpropagationData& data;
   const rafko_net::RafkoNet& network;
-
   std::uint32_t operation_index;
-  bool value_processed = false;
-  bool derivative_processed = false;
-  bool dependencies_registered = false;
 
   void constexpr reset_processed(){
     value_processed = false;
@@ -140,6 +141,12 @@ protected:
   void set_value(double value){
     data.set_value(operation_index, value);
   }
+
+private:
+  const Autodiff_operations type;
+  bool value_processed = false;
+  bool derivative_processed = false;
+  bool dependencies_registered = false;
 };
 
 } /* namespace rafko_gym */

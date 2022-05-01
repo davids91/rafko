@@ -45,7 +45,7 @@ public:
     const RafkoObjective& objective_, std::uint32_t operation_index,
     std::uint32_t output_index_,  std::uint32_t sample_number_
   )
-  : RafkoBackpropagationOperation(data, network, operation_index)
+  : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_objective_d)
   , objective(objective_)
   , output_index(output_index_)
   , sample_number(sample_number_)

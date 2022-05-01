@@ -24,7 +24,7 @@
 #include <vector>
 #include <utility>
 #include <cmath>
-#include <map>
+#include <unordered_map>
 #include <limits>
 #include <stdexcept>
 
@@ -37,6 +37,7 @@
 
 #include "rafko_gym/services/updater_factory.h"
 #include "rafko_gym/services/rafko_backpropagation_operation.h"
+#include "rafko_gym/services/rafko_backprop_spike_fn_operation.h"
 
 namespace rafko_gym{
 
@@ -44,6 +45,7 @@ namespace rafko_gym{
  * @brief A class to calculate the values and derivatives of a Network, and update its weights based on it
  */
 class RAFKO_FULL_EXPORT RafkoAutodiffOptimizer{
+  using BackpropDataBufferRange = rafko_utilities::ConstVectorSubrange<std::vector<std::vector<double>>::const_iterator>;
 public:
   RafkoAutodiffOptimizer(const RafkoEnvironment& environment_, rafko_net::RafkoNet& network_, const rafko_mainframe::RafkoSettings& settings_)
   : settings(settings_)
@@ -81,7 +83,6 @@ public:
    * @param[in]   network_input   The input the network is provided to produce its result
    * @param[in]   label_data      The values the network is expected to produce
    */
-  using BackpropDataBufferRange = rafko_utilities::ConstVectorSubrange<std::vector<std::vector<double>>::const_iterator>;
   void calculate(BackpropDataBufferRange network_input, BackpropDataBufferRange label_data);
 
   /**
@@ -137,6 +138,8 @@ private:
   RafkoBackpropagationData data;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> weight_updater;
   std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_spike_to_operation_map;
+  std::unordered_map<std::uint32_t, std::shared_ptr<RafkoBackpropSpikeFnOperation>> unplaced_spikes;
+  std::unordered_map<std::uint32_t, std::uint32_t> spike_solves_feature_map;
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations;
 
   const std::uint32_t used_sequence_truncation;
@@ -168,7 +171,8 @@ private:
     const std::vector<double>& network_input, const std::vector<double>& label_data
   );
 
-  std::shared_ptr<RafkoBackpropagationOperation> find_or_add_spike(std::uint32_t neuron_index);
+  std::shared_ptr<RafkoBackpropagationOperation> place_spike_to_operations(std::uint32_t neuron_index);
+  std::shared_ptr<RafkoBackpropagationOperation> find_or_queue_spike(std::uint32_t neuron_index);
   std::shared_ptr<RafkoBackpropagationOperation> push_dependency(DependencyParameter arguments);
 };
 

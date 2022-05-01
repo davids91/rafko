@@ -134,7 +134,7 @@ public:
     calculated_derivatives->get_element(0u/*past_index*/, operation_index)[d_w_index] = value;
     if(operation_index < weight_relevant_operation_count){
       /*!Note: The first operations are the objective operations for the outputs, only those matter in this case */
-      double stored_avg = sequence_derivatives->get_element(0u/*past_index*/)[d_w_index];
+      double& stored_avg = sequence_derivatives->get_element(0u/*past_index*/)[d_w_index];
       stored_avg = (stored_avg + value)/2.0;
     }
   }

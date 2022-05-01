@@ -135,11 +135,11 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
 
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
-    .add_feature_to_layer(0u, rafko_net::neuron_group_feature_softmax)
+    .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
+    // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_softmax)
     // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l1_regularization)
     // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l2_regularization)
-    .add_neuron_recurrence(1u,0u,1u)
+    // .add_neuron_recurrence(1u,0u,1u)
     .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
     // .set_neuron_spike_function(0u, 0u, rafko_net::spike_function_none)
     // .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
@@ -148,9 +148,10 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     // .set_neuron_spike_function(0u, 2u, rafko_net::spike_function_none)
     .allowed_transfer_functions_by_layer({
       {rafko_net::transfer_function_selu},
+      {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({3,1});
+    .dense_layers({3,3,1});
 
   // std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
   //   rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size)
@@ -166,13 +167,9 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     settings, rafko_gym::cost_function_squared_error
   );
-
-  std::cout << "Building!" << std::endl;
   rafko_gym::RafkoAutodiffOptimizer optimizer(*environment, *network, settings);
   optimizer.build(*objective);
   optimizer.set_weight_updater(rafko_gym::weight_updater_amsgrad);
-  std::cout << "Structure: \n" << optimizer.value_kernel_function(0u) << std::endl;
-  std::cout << "Calculating!" << std::endl;
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   std::uint32_t iteration = 0u;
   std::uint32_t avg_duration = 0.0;
@@ -195,15 +192,8 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     if(0.0 == avg_duration)avg_duration = current_duration;
     else avg_duration = (avg_duration + current_duration)/2.0;
 
-    actual_value[1][0] = optimizer.get_neuron_operation(3u)->get_value(1u/*past_index*/);
-    actual_value[0][0] = optimizer.get_neuron_operation(3u)->get_value(0u/*past_index*/);
-    std::cout << "First layer sum: " <<
-    (
-      optimizer.get_neuron_operation(0u)->get_value(0u/*past_index*/)
-      +optimizer.get_neuron_operation(1u)->get_value(0u/*past_index*/)
-      +optimizer.get_neuron_operation(2u)->get_value(0u/*past_index*/)
-    )
-    << std::endl;
+    actual_value[1][0] = optimizer.get_neuron_operation(6u)->get_value(1u/*past_index*/);
+    actual_value[0][0] = optimizer.get_neuron_operation(6u)->get_value(0u/*past_index*/);
     REQUIRE(
       reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)

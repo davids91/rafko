@@ -48,7 +48,7 @@ public:
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t neuron_index_, std::uint32_t neuron_weight_index_
   )
-  : RafkoBackpropagationOperation(data, network, operation_index)
+  : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_neuron_bias_d)
   , neuron_index(neuron_index_)
   , neuron_weight_index(neuron_weight_index_)
   , weights_iterator(network.neuron_array(neuron_index).input_weights())

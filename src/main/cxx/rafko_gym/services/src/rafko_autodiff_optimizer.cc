@@ -17,13 +17,14 @@
 #include "rafko_gym/services/rafko_autodiff_optimizer.h"
 
 #include <limits>
+#include <deque>
 
 #include "rafko_net/models/neuron_info.h"
+#include "rafko_net/services/neuron_router.h"
 #include "rafko_gym/services/rafko_backprop_network_input_operation.h"
 #include "rafko_gym/services/rafko_backprop_neuron_bias_operation.h"
 #include "rafko_gym/services/rafko_backprop_neuron_input_operation.h"
 #include "rafko_gym/services/rafko_backprop_transfer_fn_operation.h"
-#include "rafko_gym/services/rafko_backprop_spike_fn_operation.h"
 #include "rafko_gym/services/rafko_backprop_objective_operation.h"
 #include "rafko_gym/services/rafko_backprop_weight_reg_operation.h"
 #include "rafko_gym/services/rafko_backprop_feature_operation.h"
@@ -31,7 +32,10 @@
 namespace rafko_gym{
 
 void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
-  RFASSERT_SCOPE(AUTODIFF_BUILD);
+  // RFASSERT_SCOPE
+  RFASSERT_STORE_LOG(AUTODIFF_BUILD);
+  RFASSERT(unplaced_spikes.empty());
+  RFASSERT(spike_solves_feature_map.empty());
   std::uint32_t weight_relevant_operation_count;
   operations.clear();
   neuron_spike_to_operation_map->clear();
@@ -43,6 +47,10 @@ void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
       data, network, objective, operations.size(),
       output_index, environment.get_number_of_label_samples()
     ));
+    RFASSERT_LOG(
+      "operation[{}]: {} for output {} ",
+      operations.size()-1, Autodiff_operations_Name(ad_operation_objective_d), output_index
+    );
   }
 
   /* handle the group feature related operations, upload performance related feature group operations */
@@ -53,60 +61,88 @@ void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
         data, network, operations.size(), feature_group
       ));
       /*!Note: weight_relevant_operation_count counts on the placed items into the operation array here */
+      RFASSERT_LOG(
+        "operation[{}]: {} for feature_group[{}]",
+        operations.size()-1, Autodiff_operations_Name(ad_operation_network_weight_regularization_feature),
+        feature_group_index
+      );
     }
     ++feature_group_index;
   }
   weight_relevant_operation_count = operations.size();
 
-  /* Upload the dependencies for every operation until everything is uploaded */
-  std::uint32_t done_index = 0;
-  while(done_index < operations.size()){
-    if(!operations[done_index]->are_dependencies_registered()){
-      DependencyRequest request = operations[done_index]->upload_dependencies_to_operations();
-      if(request.has_value()){
-        auto& [parameters, dependency_register] = request.value();
-        std::vector<std::shared_ptr<RafkoBackpropagationOperation>> new_dependencies;
-        for(const DependencyParameter& parameter : parameters)
-          new_dependencies.push_back(push_dependency(parameter));
-        dependency_register(new_dependencies);
-      }
-    }
-    ++done_index;
-  }/*while(done_index < operations.size())*/
+  /* Collect the Neuron subsets to determine the order of placement */
+  rafko_net::NeuronRouter neuron_router(network);
+  std::vector<std::deque<std::uint32_t>> neuron_subsets;
+  bool strict_mode = false;
+  while(!neuron_router.finished()){
+    neuron_router.collect_subset(settings.get_max_solve_threads(), settings.get_device_max_megabytes(), strict_mode);
+    neuron_subsets.insert( neuron_subsets.begin(),  {neuron_router.get_subset().rbegin(), neuron_router.get_subset().rend()} );
+    /*!Note: new subsets are inserted into the beginning of the array, so that the Neurons depending on everything
+     * will be place to the beginning of the operations array, as it is being executed from the end towards the beginning.
+     * The deque is added with the reverse iterators, because in non-strict mode order matters, so the neuron at the end
+     * might depend on the other neurons, so it must be placed before them, in strict mode the order doesn't matter.
+     */
 
-  feature_group_index = 0u;
-  for(const rafko_net::FeatureGroup& feature_group : network.neuron_group_features()){
-    if(rafko_net::NeuronInfo::is_feature_relevant_to_solution(feature_group.feature()) ){
-      std::uint32_t smallest_operation_index = operations.size();
-      std::uint32_t neuron_index_;
-      rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),
-      [this, &smallest_operation_index, &neuron_index_](std::uint32_t neuron_index){
-        auto found = neuron_spike_to_operation_map->find(neuron_index);
-        RFASSERT(found != neuron_spike_to_operation_map->end());
-        if(found->second < smallest_operation_index){
-          smallest_operation_index = found->second;
-          neuron_index_ = neuron_index;
+    for(const std::uint32_t& neuron_index : neuron_router.get_subset()){ /* confirm each Neuron as processed, and store the resultin solved feature groups */
+      std::vector<std::uint32_t> solved_features = neuron_router.confirm_first_subset_element_processed(neuron_index);
+      for(std::uint32_t feature_group_index : solved_features){
+        if( rafko_net::NeuronInfo::is_feature_relevant_to_solution(network.neuron_group_features(feature_group_index).feature()) ){
+          spike_solves_feature_map.insert({neuron_index, feature_group_index});
         }
-      });
-      operations.insert(
-        operations.begin() + smallest_operation_index,
-        std::make_shared<RafkoBackpropFeatureOperation>(
-        data, network, smallest_operation_index,
-        settings, feature_group, neuron_spike_to_operation_map
-      ));
+      }/*for(each solved feature group index)*/
+    }/*for(each neuron_index in the subset)*/
+    strict_mode = false; /* Strict mode should only run at the first subset collection */
+  }/*while(neuron_router is finished)*/
 
-      /* Update the operations and the spike map, because operation index changed */
-      for(std::uint32_t operation_index = smallest_operation_index + 1u; operation_index < operations.size(); ++operation_index){
-        operations[operation_index]->increase_operation_index();
+  RFASSERT_LOGV2( neuron_subsets, "Subset array:");
+
+  /* Place one subset of Neurons */
+  std::uint32_t done_index = 0;
+  while(0u < neuron_subsets.size()){
+    for(std::uint32_t neuron_index : *neuron_subsets.begin()){
+      auto found_feature = spike_solves_feature_map.find(neuron_index);
+      if(found_feature != spike_solves_feature_map.end()){
+        operations.push_back( std::make_shared<RafkoBackpropFeatureOperation>(
+          data, network, operations.size(), settings,
+          network.neuron_group_features(found_feature->second), neuron_spike_to_operation_map
+        ));
+        RFASSERT_LOG(
+          "operation[{}]:  {} for feature_group[{}], triggered by Neuron[]",
+          operations.size(), Neuron_group_features_Name(network.neuron_group_features(found_feature->second).feature()),
+          found_feature->second, found_feature->first
+        );
       }
-      for(auto& [neuron_index, operation_index] : *neuron_spike_to_operation_map){
-        if(operation_index >= smallest_operation_index)
-          ++operation_index;
-      }
-      /*!Note: weight_relevant_operation_count counts on the placed items into the operation array here */
-    }
-    ++feature_group_index;
+
+      place_spike_to_operations(neuron_index);
+
+      /* Upload dependencies for every operation until every dependency is registered */
+      while(done_index < operations.size()){
+        if(!operations[done_index]->are_dependencies_registered()){
+          DependencyRequest request = operations[done_index]->upload_dependencies_to_operations();
+          if(request.has_value()){
+            auto& [parameters, dependency_register] = request.value();
+            std::vector<std::shared_ptr<RafkoBackpropagationOperation>> new_dependencies;
+            for(const DependencyParameter& parameter : parameters){
+              new_dependencies.push_back(push_dependency(parameter));
+            }
+            dependency_register(new_dependencies);
+          }
+        }
+        ++done_index;
+      }/*while(done_index < operations.size())*/
+    }/*for(every neuron_index in the collected subset begin)*/
+    neuron_subsets.erase(neuron_subsets.begin());
+  }/*while(subsets remain)*/
+
+  RFASSERT_LOG("Spike map:");
+  #if(RAFKO_USES_ASSERTLOGS)
+  for(const auto& [neuron_index, operation_index] : *neuron_spike_to_operation_map){
+    RFASSERT_LOG("Neuron[{}] --> Operation[{}]", neuron_index, operation_index);
   }
+  #endif/*(RAFKO_USES_ASSERTLOGS)*/
+  RFASSERT_LOG("============================");
+
   data.build(operations.size(), weight_relevant_operation_count, environment.get_sequence_size());
 }
 
@@ -169,7 +205,7 @@ void RafkoAutodiffOptimizer::iterate(){
       }
       ++raw_inputs_index;
       ++raw_labels_index;
-    }/*for(relevant sequences)*/  
+    }/*for(relevant sequences)*/
   }
 
   std::vector<double> avg_derivatives(network.weight_table_size(), 0.0);
@@ -213,42 +249,95 @@ std::string RafkoAutodiffOptimizer::derivative_kernel_function() const{
 }
 #endif/*(RAFKO_USES_OPENCL)*/
 
-std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::find_or_add_spike(std::uint32_t neuron_index){
-  auto found_element = neuron_spike_to_operation_map->find(neuron_index);
-  if(found_element != neuron_spike_to_operation_map->end())
-    return operations[found_element->second];
-
-  operations.emplace_back(new RafkoBackpropSpikeFnOperation(
-    data, network, operations.size(), neuron_index
-  ));
+std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::place_spike_to_operations(std::uint32_t neuron_index){
+  /* find the Spike index in the not yet placed Neuron spikes */
+  auto found_element = unplaced_spikes.find(neuron_index);
+  if(found_element != unplaced_spikes.end()){
+    found_element->second->set_operation_index(operations.size());
+    operations.push_back(found_element->second);
+    unplaced_spikes.erase(found_element);
+    RFASSERT_LOG(
+      "operation[{}]:  Neuron[{}] {} inserted from unplaced spikes",
+      operations.size() - 1u, neuron_index, Autodiff_operations_Name(ad_operation_neuron_spike_d)
+    );
+  }else{
+    operations.push_back(std::make_shared<RafkoBackpropSpikeFnOperation>(
+      data, network, operations.size(), neuron_index
+    ));
+    RFASSERT_LOG(
+      "operation[{}]:  Neuron[{}] {} built, because not found elsewhere",
+      operations.size() - 1u, neuron_index, Autodiff_operations_Name(ad_operation_neuron_spike_d)
+    );
+  }
   neuron_spike_to_operation_map->insert( {neuron_index, (operations.size() - 1u)} );
   return operations.back();
 }
 
+std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::find_or_queue_spike(std::uint32_t neuron_index){
+  { /* find the Spoike index in the already placed Neuron spikes */
+    auto found_element = neuron_spike_to_operation_map->find(neuron_index);
+    if(found_element != neuron_spike_to_operation_map->end())
+      return operations[found_element->second];
+  }
+
+  { /* find the Spike index in the not yet placed Neuron spikes */
+    auto found_element = unplaced_spikes.find(neuron_index);
+    if(found_element != unplaced_spikes.end())
+      return found_element->second;
+  }
+
+  /* Neuron index was not found, so add it to the unplaced spikes */
+  auto insertion = unplaced_spikes.insert({ /* with a dummy operation index which is to be set in @place_spike */
+    neuron_index, std::make_shared<RafkoBackpropSpikeFnOperation>(
+      data, network, 0u/*operation index*/, neuron_index
+    )
+  });
+  RFASSERT_LOG(
+    "Neuron[{}] {} inserted into unplaced spikes",
+    neuron_index, Autodiff_operations_Name(ad_operation_neuron_spike_d)
+  );
+  RFASSERT(std::get<1>(insertion));
+  return std::get<0>(insertion)->second;
+}
+
 std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_dependency(DependencyParameter arguments){
-  RFASSERT_LOG("Trying to push back operation {}", Autodiff_operations_Name(std::get<0>(arguments)));
-  RFASSERT_LOGV(std::get<1>(arguments), "With parameters: ");
   switch(std::get<0>(arguments)){
     case ad_operation_neuron_spike_d:
       RFASSERT(1u == std::get<1>(arguments).size());
-      return find_or_add_spike(std::get<1>(arguments)[0]);
+      return find_or_queue_spike(std::get<1>(arguments)[0]);
     case ad_operation_neuron_transfer_d:
       RFASSERT(1u == std::get<1>(arguments).size());
+      RFASSERT_LOG(
+        "operation[{}]: {} for Neuron[{}]",
+        operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0]
+      );
       return operations.emplace_back(new RafkoBackpropTransferFnOperation(
         data, network, operations.size(), std::get<1>(arguments)[0], settings
       ));
     case ad_operation_neuron_input_d:
       RFASSERT(2u == std::get<1>(arguments).size());
+      RFASSERT_LOG(
+        "operation[{}]: {} for Neuron[{}] input[{}]",
+        operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
+      );
       return operations.emplace_back(new RafkoBackpropNeuronInputOperation(
         data, network, operations.size(), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
       ));
     case ad_operation_neuron_bias_d:
       RFASSERT(2u == std::get<1>(arguments).size());
+      RFASSERT_LOG(
+        "operation[{}]: {} for Neuron[{}] weight_input[{}] ( not weight index ) ",
+        operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
+      );
       return operations.emplace_back(new RafkoBackpropNeuronBiasOperation(
         data, network, operations.size(), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
       ));
     case ad_operation_network_input_d:
-      RFASSERT(2u == std::get<1>(arguments).size());
+      RFASSERT(3u == std::get<1>(arguments).size());
+      RFASSERT_LOG(
+        "operation[{}]: {} for Input[{}] weight_index[{}] (Neuron[{}])",
+        operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0], std::get<1>(arguments)[1], std::get<1>(arguments)[2]
+      );
       return operations.emplace_back(new RafkoBackpropNetworkInputOperation(
         data, network, operations.size(), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
       ));

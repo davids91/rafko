@@ -25,6 +25,8 @@
 #include <string>
 #include <sstream>
 #include <mutex>
+#include <vector>
+#include <deque>
 #include <chrono>
 
 #if(RAFKO_USES_ASSERTLOGS)
@@ -73,6 +75,21 @@ public:
     if(auto scope = current_scope.lock()){
       scope->log(spdlog::level::debug, fmt, args...);
       for(const std::vector<T>& v : vec){
+        std::stringstream vector_string;
+        for(const T& e : v){
+          vector_string << "[" << e << "]";
+        }
+        scope->log(spdlog::level::debug, vector_string.str());
+      }
+      scope->log(spdlog::level::debug, "=== VECTOR END ===");
+    }
+  }
+
+  template<typename T, typename... Args>
+  static void rafko_log_vector2(std::vector<std::deque<T>> vec, spdlog::format_string_t<Args...> fmt, Args &&... args){
+    if(auto scope = current_scope.lock()){
+      scope->log(spdlog::level::debug, fmt, args...);
+      for(const std::deque<T>& v : vec){
         std::stringstream vector_string;
         for(const T& e : v){
           vector_string << "[" << e << "]";

@@ -22,7 +22,7 @@ RafkoBackpropNeuronInputOperation::RafkoBackpropNeuronInputOperation(
   RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
   std::uint32_t operation_index, std::uint32_t neuron_index_, std::uint32_t neuron_input_index_
 )
-: RafkoBackpropagationOperation(data, network, operation_index)
+: RafkoBackpropagationOperation(data, network, operation_index, ad_operation_neuron_input_d)
 , neuron_index(neuron_index_)
 , neuron_input_index(neuron_input_index_)
 , inputs_iterator(network.neuron_array(neuron_index).input_indices())
@@ -55,7 +55,8 @@ DependencyRequest RafkoBackpropNeuronInputOperation::upload_dependencies_to_oper
       ad_operation_network_input_d,
       {
         input_index_from_neuron_input_index, /*!Note: Network input dependency contains weight */
-        static_cast<std::uint32_t>(weights_iterator[1 + neuron_input_index])
+        static_cast<std::uint32_t>(weights_iterator[1 + neuron_input_index]),
+        neuron_index /* debug information */
       }
     });
   }else{ /* if it's not an input, then it's an internal neuron value */

@@ -45,7 +45,7 @@ public:
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, const rafko_net::FeatureGroup& feature_group_
   )
-  : RafkoBackpropagationOperation(data, network, operation_index)
+  : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_weight_regularization_feature)
   , feature_group(feature_group_)
   , each_weight_derivative(network.weight_table_size())
   {

@@ -52,7 +52,7 @@ public:
     const rafko_net::FeatureGroup& feature_group_,
     std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary
   )
-  : RafkoBackpropagationOperation(data, network, operation_index)
+  : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_feature)
   , settings(settings_)
   , feature_group(feature_group_)
   , network_data_proxy(dummy_vector, neuron_index_dictionary)
@@ -67,9 +67,7 @@ public:
 
   void calculate_value(const std::vector<double>& network_input){
     parameter_not_used(network_input);
-    network_data_proxy = network_data_proxy.create(
-      data.get_mutable_value().get_element(0)
-    );
+    network_data_proxy.update(data.get_mutable_value().get_element(0));
     feature_executor.execute_solution_relevant(
       feature_group, settings, network_data_proxy, 0u/*thread_index*/
     );
