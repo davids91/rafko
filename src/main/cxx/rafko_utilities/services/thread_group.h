@@ -26,7 +26,7 @@
 #include <numeric>
 #include <atomic>
 #include <condition_variable>
-#include <assert.h>
+#include <cassert>
 
 namespace rafko_utilities{
 

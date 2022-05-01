@@ -27,6 +27,7 @@ set(GYM_HEADER_SERVICES
   services/rafko_weight_updater.h
   services/rafko_autodiff_optimizer.h
   services/rafko_backpropagation_operation.h
+  services/rafko_backprop_feature_operation.h
   services/rafko_backprop_weight_reg_operation.h
   services/rafko_backprop_network_input_operation.h
   services/rafko_backprop_neuron_bias_operation.h
@@ -43,6 +44,7 @@ target_sources(rafko_gym
   models/src/rafko_dataset_wrapper.cc
   services/src/cost_function.cc
   services/src/rafko_backprop_neuron_input_operation.cc
+  services/src/rafko_backprop_feature_operation.cc
   services/src/rafko_autodiff_optimizer.cc
   services/src/rafko_numeric_optimizer.cc
   services/src/rafko_weight_adapter.cc

@@ -92,13 +92,21 @@ public:
     return (value_processed && derivative_processed);
   }
 
+  void increase_operation_index(){
+    ++operation_index;
+  }
+
+  std::uint32_t get_operation_index(){
+    return operation_index;
+  }
+
   virtual std::vector<Dependency> get_dependencies() = 0;
 
 protected:
   RafkoBackpropagationData& data;
   const rafko_net::RafkoNet& network;
-  const std::uint32_t operation_index;
 
+  std::uint32_t operation_index;
   bool value_processed = false;
   bool derivative_processed = false;
   bool dependencies_registered = false;

@@ -120,8 +120,6 @@ void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double
     RFASSERT(neuron_bias_dependency->is_value_processed());
     next_value = neuron_bias_dependency->get_value(0u/*past_index*/);
   }
-  // std::cout << "neuron[" << neuron_index << "], input[" << neuron_input_index << "]:"
-  //  << weighted_input << "+" << next_value << std::endl;
   /* calculate the overall value and derivative part */
   set_value( rafko_net::InputFunction::collect(
     network.neuron_array(neuron_index).input_function(), weighted_input, next_value

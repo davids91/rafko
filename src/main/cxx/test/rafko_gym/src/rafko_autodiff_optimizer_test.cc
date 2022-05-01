@@ -97,8 +97,8 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
         ( network->weight_table(weight_index) - (optimizer.get_avg_gradient(weight_index) * learning_rate) )
       );
     }
-    actual_value[1][0] = optimizer.get_neuron_operation(0u)->get_value(1u/*past_index*/);
-    actual_value[0][0] = optimizer.get_neuron_operation(0u)->get_value(0u/*past_index*/);
+    actual_value[1][0] = optimizer.get_neuron_operation(3u)->get_value(1u/*past_index*/);
+    actual_value[0][0] = optimizer.get_neuron_operation(3u)->get_value(0u/*past_index*/);
     REQUIRE(
       reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)
@@ -135,7 +135,8 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
 
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
+    // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
+    .add_feature_to_layer(0u, rafko_net::neuron_group_feature_softmax)
     // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l1_regularization)
     // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l2_regularization)
     .add_neuron_recurrence(1u,0u,1u)
@@ -169,6 +170,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
   std::cout << "Building!" << std::endl;
   rafko_gym::RafkoAutodiffOptimizer optimizer(*environment, *network, settings);
   optimizer.build(*objective);
+  optimizer.set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::cout << "Structure: \n" << optimizer.value_kernel_function(0u) << std::endl;
   std::cout << "Calculating!" << std::endl;
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
@@ -193,8 +195,15 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     if(0.0 == avg_duration)avg_duration = current_duration;
     else avg_duration = (avg_duration + current_duration)/2.0;
 
-    actual_value[1][0] = optimizer.get_neuron_operation(0u)->get_value(1u/*past_index*/);
-    actual_value[0][0] = optimizer.get_neuron_operation(0u)->get_value(0u/*past_index*/);
+    actual_value[1][0] = optimizer.get_neuron_operation(3u)->get_value(1u/*past_index*/);
+    actual_value[0][0] = optimizer.get_neuron_operation(3u)->get_value(0u/*past_index*/);
+    std::cout << "First layer sum: " <<
+    (
+      optimizer.get_neuron_operation(0u)->get_value(0u/*past_index*/)
+      +optimizer.get_neuron_operation(1u)->get_value(0u/*past_index*/)
+      +optimizer.get_neuron_operation(2u)->get_value(0u/*past_index*/)
+    )
+    << std::endl;
     REQUIRE(
       reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)
@@ -220,6 +229,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     << environment->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
     << " | avg duration: " << avg_duration << "ms "
     << " | weight_sum: " << weight_sum
+    << " | iteration: " << iteration
     << "     \r";
     ++iteration;
   }
