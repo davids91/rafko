@@ -58,7 +58,7 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
   if(0 == net.output_neuron_number()) throw std::runtime_error("Can't build a solution with 0 output Neurons!");
   while(!neuron_router.finished()){ /* Until the whole network is processed */
     if( (!optimize_to_gpu)&&(0 == solution->cols_size()) )
-      neuron_router.collect_subset(settings.get_max_solve_threads(),settings.get_device_max_megabytes(), false);
+      neuron_router.collect_subset(settings.get_max_solve_threads(), settings.get_device_max_megabytes(), false);
     else neuron_router.collect_subset(settings.get_max_solve_threads(),settings.get_device_max_megabytes(), true);
 
     remaining_megabytes_in_row = settings.get_device_max_megabytes();
@@ -100,9 +100,9 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
           if(reach_index_max < std::get<1>(neuron_input_params))
             reach_index_max = std::get<1>(neuron_input_params);
 
-          std::vector<std::reference_wrapper<const FeatureGroup>> features_solved_by_neuron = neuron_router.confirm_first_subset_element_processed(current_neuron_index);
-          for(const FeatureGroup& feature : features_solved_by_neuron){
-            *this_partial.add_solved_features() = feature;
+          std::vector<std::uint32_t> features_solved_by_neuron = neuron_router.confirm_first_subset_element_processed(current_neuron_index);
+          for(std::uint32_t feature_index : features_solved_by_neuron){
+            *this_partial.add_solved_features() = net.neuron_group_features(feature_index);
           }
 
           has_neuron = neuron_router.get_first_neuron_index_from_subset(current_neuron_index);

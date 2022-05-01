@@ -31,17 +31,20 @@ namespace rafko_net{
  */
 class RAFKO_FULL_EXPORT FeatureGroupCache{
 private:
-  const FeatureGroup& feature_in_network;
+  const std::uint32_t feature_group_index;
   const std::uint32_t num_of_neurons_needed;
   std::uint32_t num_of_neurons_solved = 0u;
 public:
   const std::uint32_t checksum;
 
-  FeatureGroupCache(const FeatureGroup& host)
-  : feature_in_network(host)
-  , num_of_neurons_needed(SynapseIterator<>(host.relevant_neurons()).size())
-  , checksum(construct(host))
-  { }
+  FeatureGroupCache(const rafko_net::RafkoNet& network, std::uint32_t feature_group_index_)
+  : feature_group_index(feature_group_index_)
+  , num_of_neurons_needed(
+    SynapseIterator<>(network.neuron_group_features(feature_group_index_).relevant_neurons()).size()
+  )
+  , checksum(construct(network.neuron_group_features(feature_group_index_)))
+  {
+  }
 
   void constexpr neuron_triggered(){
     ++num_of_neurons_solved;
@@ -51,11 +54,10 @@ public:
      return (num_of_neurons_needed <= num_of_neurons_solved);
   }
 
-  constexpr const FeatureGroup& get_host() const{
-    return feature_in_network;
+  constexpr std::uint32_t get_index() const{
+    return feature_group_index;
   }
 private:
-
   /**
    * @brief      Calculate the checksum for the object and apply itself to every relevant neuron inside the cache
    *
