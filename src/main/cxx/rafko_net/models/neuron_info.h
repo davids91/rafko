@@ -90,7 +90,7 @@ public:
       case neuron_group_feature_dropout_regularization: return false;
       case neuron_group_feature_l1_regularization: return true;
       case neuron_group_feature_l2_regularization: return true;
-      case neuron_group_feature_boltzmann_knot: return true;
+      case neuron_group_feature_boltzmann_knot: return false;
       default: return false;
     }
   }

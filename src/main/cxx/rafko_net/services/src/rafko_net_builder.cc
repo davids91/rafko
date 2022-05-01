@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 #include "rafko_net/services/synapse_iterator.h"
 #include "rafko_net/models/dense_net_weight_initializer.h"
 

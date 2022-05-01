@@ -20,11 +20,13 @@
 
 #include "rafko_global.h"
 
-#include <assert.h>
+#include <cassert>
 #include <memory>
 #include <string>
 #include <sstream>
 #include <mutex>
+#include <vector>
+#include <deque>
 #include <chrono>
 
 #if(RAFKO_USES_ASSERTLOGS)
@@ -39,6 +41,7 @@ namespace rafko_mainframe{
 #define RFASSERT_LOG(...) rafko_mainframe::RafkoAssertionLogger::rafko_log(__VA_ARGS__)
 #define RFASSERT_LOGV(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector(vec, __VA_ARGS__)
 #define RFASSERT_LOGV2(vec, ...) rafko_mainframe::RafkoAssertionLogger::rafko_log_vector2(vec, __VA_ARGS__)
+#define RFASSERT_STORE_LOG(name) RFASSERT_SCOPE(name); rafko_mainframe::RafkoAssertionLogger::set_keep_log(true);
 /**
  * @brief      Logger utility to create help identify problems in debug configurations, while
  *             not straining performance in release configurations
@@ -82,8 +85,27 @@ public:
     }
   }
 
+  template<typename T, typename... Args>
+  static void rafko_log_vector2(std::vector<std::deque<T>> vec, spdlog::format_string_t<Args...> fmt, Args &&... args){
+    if(auto scope = current_scope.lock()){
+      scope->log(spdlog::level::debug, fmt, args...);
+      for(const std::deque<T>& v : vec){
+        std::stringstream vector_string;
+        for(const T& e : v){
+          vector_string << "[" << e << "]";
+        }
+        scope->log(spdlog::level::debug, vector_string.str());
+      }
+      scope->log(spdlog::level::debug, "=== VECTOR END ===");
+    }
+  }
+
   static std::string get_current_scope_name(){
     return current_scope_name;
+  }
+
+  static void set_keep_log(bool keep){
+    keep_log = keep;
   }
 
   static void rafko_assert(bool condition, std::string file_name, std::uint32_t line_number);
@@ -103,6 +125,7 @@ private:
 #define RFASSERT_LOG(...)
 #define RFASSERT_LOGV(vec, ...)
 #define RFASSERT_LOGV2(vec, ...)
+#define RFASSERT_STORE_LOG(name)
 #endif/*(RAFKO_USES_ASSERTLOGS)*/
 
 } /* namespace rafko_mainframe */

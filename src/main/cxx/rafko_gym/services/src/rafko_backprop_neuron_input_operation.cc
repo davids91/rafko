@@ -22,7 +22,7 @@ RafkoBackpropNeuronInputOperation::RafkoBackpropNeuronInputOperation(
   RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
   std::uint32_t operation_index, std::uint32_t neuron_index_, std::uint32_t neuron_input_index_
 )
-: RafkoBackpropagationOperation(data, network, operation_index)
+: RafkoBackpropagationOperation(data, network, operation_index, ad_operation_neuron_input_d)
 , neuron_index(neuron_index_)
 , neuron_input_index(neuron_input_index_)
 , inputs_iterator(network.neuron_array(neuron_index).input_indices())
@@ -55,7 +55,8 @@ DependencyRequest RafkoBackpropNeuronInputOperation::upload_dependencies_to_oper
       ad_operation_network_input_d,
       {
         input_index_from_neuron_input_index, /*!Note: Network input dependency contains weight */
-        static_cast<std::uint32_t>(weights_iterator[1 + neuron_input_index])
+        static_cast<std::uint32_t>(weights_iterator[1 + neuron_input_index]),
+        neuron_index /* debug information */
       }
     });
   }else{ /* if it's not an input, then it's an internal neuron value */
@@ -120,8 +121,6 @@ void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double
     RFASSERT(neuron_bias_dependency->is_value_processed());
     next_value = neuron_bias_dependency->get_value(0u/*past_index*/);
   }
-  // std::cout << "neuron[" << neuron_index << "], input[" << neuron_input_index << "]:"
-  //  << weighted_input << "+" << next_value << std::endl;
   /* calculate the overall value and derivative part */
   set_value( rafko_net::InputFunction::collect(
     network.neuron_array(neuron_index).input_function(), weighted_input, next_value

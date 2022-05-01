@@ -46,7 +46,7 @@ public:
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t neuron_index_, const rafko_mainframe::RafkoSettings& settings
   )
-  : RafkoBackpropagationOperation(data, network, operation_index)
+  : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_neuron_transfer_d)
   , transfer_function(settings)
   , neuron_index(neuron_index_)
   {

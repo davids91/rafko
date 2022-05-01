@@ -21,7 +21,7 @@
 #include "rafko_global.h"
 
 #include <vector>
-#include <assert.h>
+#include <cassert>
 
 namespace rafko_utilities{
 

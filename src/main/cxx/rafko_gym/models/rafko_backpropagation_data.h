@@ -147,6 +147,10 @@ public:
     return *calculated_values;
   }
 
+  NetworkValueBuffer& get_mutable_value(){
+    return *calculated_values;
+  }
+
   /**
    * @brief     queries the network operation calculated result under the given parameters
    *

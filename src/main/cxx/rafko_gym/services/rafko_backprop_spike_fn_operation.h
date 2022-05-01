@@ -44,9 +44,13 @@ public:
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t neuron_index_
   )
-  : RafkoBackpropagationOperation(data, network, operation_index)
+  : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_neuron_spike_d)
   , neuron_index(neuron_index_)
   {
+  }
+
+  void set_operation_index(std::uint32_t index){
+    operation_index = index;
   }
 
   DependencyRequest upload_dependencies_to_operations(){

@@ -37,8 +37,8 @@ public:
   {
   }
 
-  SubscriptProxy create(Proxee& new_object) {
-    return SubscriptProxy(new_object, dictionary);
+  void update(Proxee& new_object) {
+    object = &new_object;
   }
 
   typename Proxee::value_type& operator[](std::size_t index){

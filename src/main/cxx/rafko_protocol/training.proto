@@ -66,6 +66,10 @@ enum Autodiff_operations{
   ad_operation_neuron_input_d = 4;
   ad_operation_neuron_bias_d = 5;
   ad_operation_network_input_d = 6;
+  
+  /* Feature operations are indirectly modifying derivatives */
+  ad_operation_network_weight_regularization_feature = 20;
+  ad_operation_network_feature = 21;
 }
 
 /**

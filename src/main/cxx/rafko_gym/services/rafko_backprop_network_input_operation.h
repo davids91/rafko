@@ -46,7 +46,7 @@ public:
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t input_index_, std::uint32_t weight_index_
   )
-  : RafkoBackpropagationOperation(data, network, operation_index)
+  : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_input_d)
   , input_index(input_index_)
   , weight_index(weight_index_)
   {

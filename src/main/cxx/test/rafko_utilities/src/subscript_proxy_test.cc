@@ -43,12 +43,23 @@ TEST_CASE("Testing if Subscript Proxy works as expected", "[data-handling][proxy
     if(dictionary.size() == base_vector.size())break;
   }
 
-  rafko_utilities::SubscriptProxy<> proxy(base_vector, dictionary);
+  rafko_utilities::SubscriptProxy<> proxy(
+    base_vector, std::make_shared<std::unordered_map<std::size_t, std::size_t>>(dictionary)
+  );
   for(std::uint32_t i = 0; i < base_vector.size(); ++i){
     if(0u == dictionary.count(i))
       REQUIRE( i == proxy[i] );
       else REQUIRE( dictionary[i] == proxy[i] );
   }
+  for(std::uint32_t i = 0; i < base_vector.size(); ++i){
+    proxy[i] = i;
+    if(0u == dictionary.count(i))
+      REQUIRE( base_vector[i] == i );
+      else{
+        auto found = dictionary.find(i);
+        REQUIRE( base_vector[found->second] == i );
+      }
+  }/*for(i in base_vector)*/
 }
 
 } /* namespace rafko_utilities_test */
