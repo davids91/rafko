@@ -44,7 +44,7 @@ NeuronRouter::NeuronRouter(const RafkoNet& rafko_net)
   for(std::int32_t feature_index = 0; feature_index < rafko_net.neuron_group_features_size(); feature_index++){
     /* For each relevant feature group */
     const FeatureGroup& feature_group = rafko_net.neuron_group_features(feature_index);
-    tracked_features.push_back( FeatureGroupCache(feature_group) );
+    tracked_features.push_back( FeatureGroupCache(net, feature_index) );
     SynapseIterator<>::iterate(feature_group.relevant_neurons(),[&](std::int32_t neuron_index){
       features_assigned_to_neurons[neuron_index].push_back(tracked_features.size() - 1u);
     });
@@ -67,8 +67,7 @@ void NeuronRouter::collect_subset(std::uint8_t arg_max_solve_threads, double arg
   std::for_each(processing_threads.begin(),processing_threads.end(),[](std::thread& processing_thread){
     if(true == processing_thread.joinable())processing_thread.join();
   });
-  if(strict) /* in strict mode, all Neurons are independent, so the order of the queue doesn't matter */
-    std::sort(net_subset.begin(),net_subset.end());
+  if(strict)std::sort(net_subset.begin(),net_subset.end());
   collection_running = false;
   ++iteration;
 }
@@ -137,9 +136,6 @@ std::uint32_t NeuronRouter::get_next_neuron(std::vector<std::uint32_t>& visiting
           ||(0u < current_backreach) /* Neuron Inputs from the past count as already processed */
           ||(is_neuron_processed(synapse_input_index))
           ||((!strict)&&(is_neuron_reserved(synapse_input_index)))
-          /*!Note: In non-strict mode usually the whole of the net is collected into the subset in order,
-           * which might be undesirable compared to the Neurons being collected into smaller non-dependent subsets.
-           **/
          )&&(
            (SynapseIterator<>::is_index_input(synapse_input_index))
            ||(0u < current_backreach) /* Neuron Inputs from the past count as already processed */
@@ -224,12 +220,12 @@ void NeuronRouter::step(std::vector<std::uint32_t>& visiting, std::uint32_t visi
   } /* (1 == visiting.size()) */
 }
 
-std::vector<std::reference_wrapper<const FeatureGroup>> NeuronRouter::confirm_first_subset_element_processed(std::uint32_t neuron_index){
+std::vector<std::uint32_t> NeuronRouter::confirm_first_subset_element_processed(std::uint32_t neuron_index){
   RFASSERT(!collection_running);
   RFASSERT(0 < net_subset.size());
   RFASSERT(neuron_index == net_subset.front());
   std::vector<std::uint32_t> solved_features; /* of index values pointing to tracked_features */
-  std::vector<std::reference_wrapper<const FeatureGroup>> retval;
+  std::vector<std::uint32_t> retval; /* of index value pointing to network feature groups */
 
   (neuron_states[neuron_index])->store(neuron_state_processed_value(neuron_index));
   net_subset.pop_front();
@@ -240,17 +236,18 @@ std::vector<std::reference_wrapper<const FeatureGroup>> NeuronRouter::confirm_fi
     feature.neuron_triggered();
     if(feature.solved()){
       solved_features.push_back(features_assigned_to_neurons[neuron_index][feature_index]);
-      retval.push_back(feature.get_host());
+      retval.push_back(feature.get_index());
     }
   }
 
   for(std::uint32_t feature_index : solved_features){ /* Removed already solved features from Neuron feature vector cache */
-      SynapseIterator<>::iterate(tracked_features[feature_index].get_host().relevant_neurons(), [&](std::int32_t neuron_index){
-        /* find feature in Neuron assigned features */
-        std::vector<std::uint32_t>& neuron_features_vecor = features_assigned_to_neurons[neuron_index];
-        std::vector<std::uint32_t>::iterator it = std::find(neuron_features_vecor.begin(), neuron_features_vecor.end(), feature_index);
-        if(it != neuron_features_vecor.end()){ neuron_features_vecor.erase(it); }
-      });
+    const FeatureGroup& solved_feature_group = net.neuron_group_features(tracked_features[feature_index].get_index());
+    SynapseIterator<>::iterate(solved_feature_group.relevant_neurons(), [&](std::int32_t neuron_index){
+      /* find feature in Neuron assigned features */
+      std::vector<std::uint32_t>& neuron_features_vecor = features_assigned_to_neurons[neuron_index];
+      std::vector<std::uint32_t>::iterator it = std::find(neuron_features_vecor.begin(), neuron_features_vecor.end(), feature_index);
+      if(it != neuron_features_vecor.end()){ neuron_features_vecor.erase(it); }
+    });
   }
   return retval;
 }
@@ -377,11 +374,10 @@ bool NeuronRouter::is_neuron_subset_candidate(std::uint32_t neuron_index, std::u
 bool NeuronRouter::are_neuron_feature_groups_finished_for(std::uint32_t neuron_index) const{
   RFASSERT(neuron_index < features_assigned_to_neurons.size());
   for(std::uint32_t feature_index = 0; feature_index < features_assigned_to_neurons[neuron_index].size(); feature_index++){
-    const FeatureGroupCache& feature = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
-    if(
-      ( NeuronInfo::is_feature_relevant_to_solution(feature.get_host().feature()) )
-      &&(!feature.solved())
-    )return false;
+    const FeatureGroupCache& feature_group_cache = tracked_features[features_assigned_to_neurons[neuron_index][feature_index]];
+    const FeatureGroup& feature_group = net.neuron_group_features(feature_group_cache.get_index());
+    if( (NeuronInfo::is_feature_relevant_to_solution(feature_group.feature()))&&(!feature_group_cache.solved()) )
+      return false;
   }
   return true;
 }

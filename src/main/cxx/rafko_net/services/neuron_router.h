@@ -24,7 +24,6 @@
 #include <vector>
 #include <mutex>
 #include <atomic>
-#include <functional>
 #include <stdexcept>
 
 #include "rafko_protocol/rafko_net.pb.h"
@@ -34,15 +33,21 @@ namespace rafko_net {
 
 /**
  * @brief      This class describes a neuron router which iterates through the given @RafkoNet,
- *             collecting a subset of Neurons from the thread, all of whom are able to be solved without
- *             waiting for any other Neurons. The subset is being collected based on the input relations
+ *             collecting a subset of Neurons from the thread, all of who are able to be solved without
+ *             waiting for any other Neurons. The subset is being collected based on the input connections
  *             between the Neurons. The Neurons at the beginning of the net only take in input data,
  *             so they already have their inputs ready. Any other Neurons build upon that, with each Iteration
- *             some additional @Neuron nodes are collected into a subset. That subset is later to be used by
- *             the @SolutionBuilder to compile @PartialSolutions.
+ *             some additional @Neuron nodes are collected into a subset.
  *             If a Neuron is solvable, its state is being set to "reserved", and collected into the subset.
  *             After an iteration the state update from the subset needs to be handled by whoever has access to
  *             the Neuron indexes inside.
+ *             In strict mode reserved Neurons do not count as finished, which means Neurons whose inputs are
+ *             reserved ( i.e. collected into the subset but not yet processed ) are not collected into the subset.
+ *             Non-strict mode enables to collect Neurons into the current subset even if its dependencies are reserved,
+ *             so usually the whole of the net is collected into the subset in order in this mode. This might be undesirable
+ *             in bigger nets, where the Neurons aimed to be in smaller non-dependent subsets. The subset collected in this mode
+ *             is order sensitive, meaning a Neuron in the subset might depend on a different Neuron in the same subset before it,
+ *             whereas in strict mode all Neurons are independent, so the order of the queue doesn't matter.
  */
 class RAFKO_FULL_EXPORT NeuronRouter{
 public:
@@ -97,9 +102,9 @@ public:
    *
    * @param[in]  neuron_index  The neuron index to compare against
    *
-   * @return     List of @neuron_group_features inside the @RafkoNet solved by processing this Neuron
+   * @return     List of @neuron_group_features indexes inside the @RafkoNet solved by processing this Neuron
    */
-  std::vector<std::reference_wrapper<const FeatureGroup>> confirm_first_subset_element_processed(std::uint32_t neuron_index);
+  std::vector<std::uint32_t> confirm_first_subset_element_processed(std::uint32_t neuron_index);
 
   /**
    * @brief      If the index in the arguments matches the first index in the subset,
@@ -144,7 +149,7 @@ public:
    *             argument. The list has to match the subset exactly, or the function
    *             throws an exception.
    *
-   * @param[in]  the_front  The front
+   * @param[in]  the_front  The front of the subset
    */
   void reset_all_except(std::vector<std::uint32_t> the_front){
     std::uint32_t front_index = 0;
