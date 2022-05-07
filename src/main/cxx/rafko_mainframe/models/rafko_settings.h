@@ -139,8 +139,9 @@ public:
     return *this;
   }
 
-  constexpr void set_tolerance_loop_value(std::uint32_t tolerance_loop_value_){
+  constexpr RafkoSettings& set_tolerance_loop_value(std::uint32_t tolerance_loop_value_){
     tolerance_loop_value = tolerance_loop_value_;
+    return *this;
   }
 
   constexpr RafkoSettings& set_device_max_megabytes(double device_max_megabytes_){

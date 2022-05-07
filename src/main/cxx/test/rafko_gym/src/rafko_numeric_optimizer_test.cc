@@ -309,7 +309,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward]")
     average_duration += current_duration;
     ++number_of_steps;
     train_error = approximizer.get_error_estimation();
-    test_context->fix_dirty();
+    test_context->refresh_solution_weights();
     test_error = -test_context->full_evaluation();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
     std::cout << "\tError:" << std::setprecision(9)

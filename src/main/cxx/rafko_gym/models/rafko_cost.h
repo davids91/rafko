@@ -72,7 +72,7 @@ public:
     std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
     std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation
   ) const;
-  
+
   double set_features_for_sequences(
     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
     std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,

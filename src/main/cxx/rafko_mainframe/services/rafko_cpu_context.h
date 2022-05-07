@@ -39,11 +39,7 @@ public:
 
   RafkoCPUContext(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
   ~RafkoCPUContext() = default;
-
-  void fix_dirty(){ /*!Note: When weights are updated elsewhere this hack takes over the changes */
-    weight_adapter.update_solution_with_weights();
-  }
-
+  
   /* +++ Methods taken from @RafkoContext +++ */
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
 

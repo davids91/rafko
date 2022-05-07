@@ -31,7 +31,7 @@
 
 namespace rafko_gym{
 
-void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
+void RafkoAutodiffOptimizer::build(std::shared_ptr<RafkoObjective> objective){
   // RFASSERT_SCOPE
   RFASSERT_STORE_LOG(AUTODIFF_BUILD);
   RFASSERT(unplaced_spikes.empty());
@@ -40,12 +40,15 @@ void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
   operations.clear();
   neuron_spike_to_operation_map->clear();
   data.reset();
+  if(training_evaluator){
+    training_evaluator->set_objective(objective);
+  }
 
   /*!Note: other components depend on the output objectives being the first operations in the array. */
   for(std::uint32_t output_index = 0; output_index < network.output_neuron_number(); ++output_index){
     operations.push_back(std::make_shared<RafkoBackpropObjectiveOperation>(
-      data, network, objective, operations.size(),
-      output_index, environment.get_number_of_label_samples()
+      data, network, *objective, operations.size(),
+      output_index, environment->get_number_of_label_samples()
     ));
     RFASSERT_LOG(
       "operation[{}]: {} for output {} ",
@@ -143,7 +146,7 @@ void RafkoAutodiffOptimizer::build(const RafkoObjective& objective){
   #endif/*(RAFKO_USES_ASSERTLOGS)*/
   RFASSERT_LOG("============================");
 
-  data.build(operations.size(), weight_relevant_operation_count, environment.get_sequence_size());
+  data.build(operations.size(), weight_relevant_operation_count, environment->get_sequence_size());
 }
 
 void RafkoAutodiffOptimizer::calculate_value(const std::vector<double>& network_input){
@@ -171,32 +174,33 @@ void RafkoAutodiffOptimizer::calculate(BackpropDataBufferRange network_input, Ba
 }
 
 void RafkoAutodiffOptimizer::iterate(){
-  std::uint32_t sequence_start_index = (rand()%(environment.get_number_of_sequences() - used_minibatch_size + 1));
+  RFASSERT(static_cast<bool>(environment));
+  std::uint32_t sequence_start_index = (rand()%(environment->get_number_of_sequences() - used_minibatch_size + 1));
   std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
-    environment.get_sequence_size() - used_sequence_truncation + 1u /* ..not all result output values are evaluated.. */
+    environment->get_sequence_size() - used_sequence_truncation + 1u /* ..not all result output values are evaluated.. */
   )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
 
   for(std::uint32_t sequence_index = sequence_start_index; sequence_index < used_minibatch_size; ++sequence_index){
-    std::uint32_t raw_inputs_index = sequence_index * (environment.get_sequence_size() + environment.get_prefill_inputs_number());
-    std::uint32_t raw_labels_index = sequence_index * environment.get_sequence_size();
+    std::uint32_t raw_inputs_index = sequence_index * (environment->get_sequence_size() + environment->get_prefill_inputs_number());
+    std::uint32_t raw_labels_index = sequence_index * environment->get_sequence_size();
 
     /* Evaluate the current sequence step by step */
     reset();
-    for(std::uint32_t prefill_iterator = 0; prefill_iterator < environment.get_prefill_inputs_number(); ++prefill_iterator){
+    for(std::uint32_t prefill_iterator = 0; prefill_iterator < environment->get_prefill_inputs_number(); ++prefill_iterator){
       data.step();
-      calculate_value(environment.get_input_sample(raw_inputs_index));
+      calculate_value(environment->get_input_sample(raw_inputs_index));
       ++raw_inputs_index;
     } /* The first few inputs are there to set an initial state to the network */
 
     /* Solve the data and store the result after the inital "prefill" */
-    for(std::uint32_t sequence_index = 0; sequence_index < environment.get_sequence_size(); ++sequence_index){
+    for(std::uint32_t sequence_index = 0; sequence_index < environment->get_sequence_size(); ++sequence_index){
       data.step();
       data.set_weight_derivative_update( /* Add to the relevant derivatives only when truncation parameters match */
         (sequence_index >= start_index_inside_sequence)
         &&(sequence_index < (start_index_inside_sequence + used_sequence_truncation))
       );
-      calculate_value(environment.get_input_sample(raw_inputs_index));
-      calculate_derivative( environment.get_input_sample(raw_inputs_index), environment.get_label_sample(raw_labels_index) );
+      calculate_value(environment->get_input_sample(raw_inputs_index));
+      calculate_derivative( environment->get_input_sample(raw_inputs_index), environment->get_label_sample(raw_labels_index) );
       ++raw_inputs_index;
       ++raw_labels_index;
     }/*for(relevant sequences)*/
@@ -215,6 +219,24 @@ void RafkoAutodiffOptimizer::iterate(){
       avg_derivatives.begin(), avg_derivatives.begin(),
       [](const double& a, const double& b){ return (a+b)/2.0; }
     );
+  }
+
+  if( (training_evaluator) && (0 == (iteration%settings.get_tolerance_loop_value())) ){
+    training_evaluator->refresh_solution_weights();
+    last_training_error = training_evaluator->stochastic_evaluation();
+  }
+  if(
+    (test_evaluator)
+    &&(
+      (0 == (iteration%settings.get_tolerance_loop_value()))
+      ||(
+        (training_evaluator)
+        &&((last_training_error * settings.get_delta()) < std::abs(last_training_error - last_testing_error))
+      )
+    )
+  ){
+    test_evaluator->refresh_solution_weights();
+    last_testing_error = test_evaluator->stochastic_evaluation();
   }
 
   weight_updater->iterate(avg_derivatives);

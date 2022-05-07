@@ -31,6 +31,7 @@
 #include "rafko_utilities/models/const_vector_subrange.h"
 #include "rafko_utilities/models/subscript_proxy.h"
 #include "rafko_mainframe/models/rafko_settings.h"
+#include "rafko_mainframe/services/rafko_context.h"
 #include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/models/rafko_objective.h"
 #include "rafko_gym/models/rafko_backpropagation_data.h"
@@ -47,16 +48,33 @@ namespace rafko_gym{
 class RAFKO_FULL_EXPORT RafkoAutodiffOptimizer{
   using BackpropDataBufferRange = rafko_utilities::ConstVectorSubrange<std::vector<std::vector<double>>::const_iterator>;
 public:
-  RafkoAutodiffOptimizer(const RafkoEnvironment& environment_, rafko_net::RafkoNet& network_, const rafko_mainframe::RafkoSettings& settings_)
+  RafkoAutodiffOptimizer(
+    const rafko_mainframe::RafkoSettings& settings_,
+    std::shared_ptr<RafkoEnvironment> environment_, rafko_net::RafkoNet& network_,
+    std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator_ = {},
+    std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator_ = {}
+  )
   : settings(settings_)
   , environment(environment_)
   , network(network_)
   , data(network)
   , weight_updater(UpdaterFactory::build_weight_updater(network, weight_updater_default, settings))
   , neuron_spike_to_operation_map(std::make_shared<rafko_utilities::SubscriptDictionary>())
-  , used_sequence_truncation( std::min(settings.get_memory_truncation(), environment.get_sequence_size()) )
-  , used_minibatch_size( std::min(settings.get_minibatch_size(), environment.get_number_of_sequences()) )
+  , training_evaluator(training_evaluator_)
+  , test_evaluator(test_evaluator_)
+  , used_sequence_truncation( std::min(settings.get_memory_truncation(), environment->get_sequence_size()) )
+  , used_minibatch_size( std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) )
   {
+    if(training_evaluator){
+      training_evaluator->set_environment(environment);
+    }
+  }
+
+  bool early_stopping_triggered(){
+    return (
+      (training_evaluator && test_evaluator)
+      &&( last_training_error > ( last_testing_error * (1.0 + settings.get_delta()) ) )
+    );
   }
 
   /**
@@ -73,9 +91,9 @@ public:
   /**
    * @brief   build or re-build the operateions based on the provided parameters
    *
-   * @param[in]   objective     The objective function evaluating the network output
+   * @param   objective     The objective function evaluating the network output
    */
-  void build(const RafkoObjective& objective);
+  void build(std::shared_ptr<RafkoObjective> objective);
 
   /**
    * @brief     calculates the values and derivatives from the provided inputs and the stored Network reference
@@ -125,6 +143,21 @@ public:
   }
 
   double get_avg_gradient(std::uint32_t d_w_index);
+  double get_avg_gradient(){
+    double sum = 0.0;
+    for(std::int32_t weight_index = 0; weight_index < network.weight_table_size(); ++weight_index){
+      sum += get_avg_gradient(weight_index);
+    }
+    return sum / static_cast<double>(network.weight_table_size());
+  }
+
+  constexpr double get_last_training_error(){
+      return last_training_error;
+  }
+
+  constexpr double get_last_testing_error(){
+      return last_testing_error;
+  }
 
   #if(RAFKO_USES_OPENCL)
   std::string value_kernel_function(std::uint32_t output_index) const;
@@ -133,7 +166,7 @@ public:
 
 private:
   const rafko_mainframe::RafkoSettings& settings;
-  const RafkoEnvironment& environment;
+  std::shared_ptr<RafkoEnvironment> environment;
   rafko_net::RafkoNet& network;
   RafkoBackpropagationData data;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> weight_updater;
@@ -142,9 +175,14 @@ private:
   std::unordered_map<std::uint32_t, std::uint32_t> spike_solves_feature_map;
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations;
 
+  std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator;
+  std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator;
+
   const std::uint32_t used_sequence_truncation;
   const std::uint32_t used_minibatch_size;
   std::uint32_t iteration = 0u;
+  double last_training_error = std::numeric_limits<double>::quiet_NaN();
+  double last_testing_error = std::numeric_limits<double>::quiet_NaN();
 
   void apply_weight_update(const std::vector<double>& weight_delta){
     RFASSERT_LOGV(weight_delta, "Applying weight(autodiff optimizer) update! Delta:");
@@ -173,6 +211,10 @@ private:
 
   std::shared_ptr<RafkoBackpropagationOperation> place_spike_to_operations(std::uint32_t neuron_index);
   std::shared_ptr<RafkoBackpropagationOperation> find_or_queue_spike(std::uint32_t neuron_index);
+
+  /**
+   * @brief
+   */
   std::shared_ptr<RafkoBackpropagationOperation> push_dependency(DependencyParameter arguments);
 };
 

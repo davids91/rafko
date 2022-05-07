@@ -62,7 +62,7 @@ public:
   };
 
   /**
-   * @brief      Gets the error for a feature for a feature-label pair under the given index
+   * @brief      Gets the error for a feature-label pair under the given index
    *
    * @param[in]  label          The array containing the label array to compare the given neuron data to
    * @param[in]  neuron_data    The neuron data to compare for the given label array
