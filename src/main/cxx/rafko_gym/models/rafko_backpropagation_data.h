@@ -108,6 +108,10 @@ public:
     sequence_derivatives->clean_step(); /* ..and so the averages would start with 0.0 as initial value */
   }
 
+  constexpr void set_weight_derivative_update(bool update){
+    update_weight_derivative = update;
+  }
+
   /**
    * @brief     Stores the provided value as a result of an operation inside the network for the current iteration of the bufffers
    *
@@ -132,7 +136,7 @@ public:
     RFASSERT(operation_index < calculated_derivatives->get_element(0u/*past_index*/).size());
     RFASSERT(d_w_index < calculated_derivatives->get_element(0u/*past_index*/, operation_index).size());
     calculated_derivatives->get_element(0u/*past_index*/, operation_index)[d_w_index] = value;
-    if(operation_index < weight_relevant_operation_count){
+    if( (update_weight_derivative)&&(operation_index < weight_relevant_operation_count) ){
       /*!Note: The first operations are the objective operations for the outputs, only those matter in this case */
       double& stored_avg = sequence_derivatives->get_element(0u/*past_index*/)[d_w_index];
       stored_avg = (stored_avg + value)/2.0;
@@ -225,6 +229,7 @@ private:
   std::unique_ptr<SequenceDerivativeBuffer> sequence_derivatives; /* past_sequences_index, average d_w_values */
   //TODO: Maybe don't store just averages of output objective operations?
   bool built = false;
+  bool update_weight_derivative = true;
 };
 
 } /* namespace rafko_gym */

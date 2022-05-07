@@ -157,9 +157,7 @@ void RafkoAutodiffOptimizer::calculate_derivative(
 ){
   for(std::int32_t weight_index = 0u; weight_index < network.weight_table_size(); ++weight_index){
     for(std::int32_t operation_index = operations.size() - 1; operation_index >= 0; --operation_index)
-      operations[operation_index]->calculate_derivative(
-        static_cast<std::uint32_t>(weight_index), network_input, label_data
-      );
+      operations[operation_index]->calculate_derivative(static_cast<std::uint32_t>(weight_index), network_input, label_data);
   }
 }
 
@@ -193,16 +191,12 @@ void RafkoAutodiffOptimizer::iterate(){
     /* Solve the data and store the result after the inital "prefill" */
     for(std::uint32_t sequence_index = 0; sequence_index < environment.get_sequence_size(); ++sequence_index){
       data.step();
-      calculate_value(environment.get_input_sample(raw_inputs_index));
-      if( /* calculate derivatives only when they are in the truncation interval */
+      data.set_weight_derivative_update( /* Add to the relevant derivatives only when truncation parameters match */
         (sequence_index >= start_index_inside_sequence)
         &&(sequence_index < (start_index_inside_sequence + used_sequence_truncation))
-      ){
-        calculate_derivative(
-          environment.get_input_sample(raw_inputs_index),
-          environment.get_label_sample(raw_labels_index)
-        );
-      }
+      );
+      calculate_value(environment.get_input_sample(raw_inputs_index));
+      calculate_derivative( environment.get_input_sample(raw_inputs_index), environment.get_label_sample(raw_labels_index) );
       ++raw_inputs_index;
       ++raw_labels_index;
     }/*for(relevant sequences)*/

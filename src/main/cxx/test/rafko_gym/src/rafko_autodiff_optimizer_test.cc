@@ -148,10 +148,9 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     // .set_neuron_spike_function(0u, 2u, rafko_net::spike_function_none)
     .allowed_transfer_functions_by_layer({
       {rafko_net::transfer_function_selu},
-      {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({3,3,1});
+    .dense_layers({3,1});
 
   // std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
   //   rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size)
@@ -192,21 +191,21 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     if(0.0 == avg_duration)avg_duration = current_duration;
     else avg_duration = (avg_duration + current_duration)/2.0;
 
-    actual_value[1][0] = optimizer.get_neuron_operation(6u)->get_value(1u/*past_index*/);
-    actual_value[0][0] = optimizer.get_neuron_operation(6u)->get_value(0u/*past_index*/);
+    actual_value[1][0] = optimizer.get_neuron_operation(3u)->get_value(1u/*past_index*/);
+    actual_value[0][0] = optimizer.get_neuron_operation(3u)->get_value(0u/*past_index*/);
     REQUIRE(
       reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
-      == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)
+      == Catch::Approx(actual_value[1][0]).epsilon(0.0000000001)
     );
     REQUIRE(
-      optimizer.get_actual_value(1u)[0] == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)
+      optimizer.get_actual_value(1u)[0] == Catch::Approx(actual_value[1][0]).epsilon(0.0000000001)
     );
     REQUIRE(
       reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
-      == Catch::Approx(actual_value[0][0]).epsilon(0.0000000000001)
+      == Catch::Approx(actual_value[0][0]).epsilon(0.0000000001)
     );
     REQUIRE(
-      optimizer.get_actual_value(0u)[0] == Catch::Approx(actual_value[0][0]).epsilon(0.0000000000001)
+      optimizer.get_actual_value(0u)[0] == Catch::Approx(actual_value[0][0]).epsilon(0.0000000001)
     );
     double weight_sum = std::accumulate(
       network->weight_table().begin(), network->weight_table().end(), 0.0,
