@@ -60,6 +60,7 @@ public:
   , data(network)
   , weight_updater(UpdaterFactory::build_weight_updater(network, weight_updater_default, settings))
   , neuron_spike_to_operation_map(std::make_shared<rafko_utilities::SubscriptDictionary>())
+  , execution_threads()
   , training_evaluator(training_evaluator_)
   , test_evaluator(test_evaluator_)
   , used_sequence_truncation( std::min(settings.get_memory_truncation(), environment->get_sequence_size()) )
@@ -68,6 +69,10 @@ public:
     if(training_evaluator){
       training_evaluator->set_environment(environment);
     }
+    for(std::uint32_t thread_index = 0; thread_index < settings.get_max_processing_threads(); ++ thread_index)
+      execution_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(
+        settings.get_max_solve_threads()
+      ));
   }
 
   bool early_stopping_triggered(){
@@ -174,6 +179,7 @@ private:
   std::unordered_map<std::uint32_t, std::shared_ptr<RafkoBackpropSpikeFnOperation>> unplaced_spikes;
   std::unordered_map<std::uint32_t, std::uint32_t> spike_solves_feature_map;
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations;
+  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> execution_threads;
 
   std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator;
   std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator;

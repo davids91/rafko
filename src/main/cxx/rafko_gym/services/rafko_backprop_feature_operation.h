@@ -50,17 +50,16 @@ public:
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index,  const rafko_mainframe::RafkoSettings& settings_,
     const rafko_net::FeatureGroup& feature_group_,
+    std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_,
     std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary
   )
   : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_feature)
   , settings(settings_)
   , feature_group(feature_group_)
   , network_data_proxy(dummy_vector, neuron_index_dictionary)
-  , execution_threads()
+  , execution_threads(execution_threads_)
   , feature_executor(execution_threads)
   {
-    for(std::uint32_t thread_index = 0; thread_index < settings.get_max_processing_threads(); ++ thread_index)
-      execution_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_solve_threads()));
   }
 
   DependencyRequest upload_dependencies_to_operations();
@@ -100,7 +99,7 @@ private:
   const rafko_mainframe::RafkoSettings& settings;
   const rafko_net::FeatureGroup& feature_group;
   rafko_utilities::SubscriptProxy<> network_data_proxy;
-  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> execution_threads;
+  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
   rafko_net::RafkoNetworkFeature feature_executor;
 
   std::vector<double> dummy_vector;

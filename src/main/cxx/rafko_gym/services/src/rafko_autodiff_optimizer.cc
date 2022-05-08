@@ -107,8 +107,8 @@ void RafkoAutodiffOptimizer::build(std::shared_ptr<RafkoObjective> objective){
       auto found_feature = spike_solves_feature_map.find(neuron_index);
       if(found_feature != spike_solves_feature_map.end()){
         operations.push_back( std::make_shared<RafkoBackpropFeatureOperation>(
-          data, network, operations.size(), settings,
-          network.neuron_group_features(found_feature->second), neuron_spike_to_operation_map
+          data, network, operations.size(), settings, network.neuron_group_features(found_feature->second),
+          execution_threads, neuron_spike_to_operation_map
         ));
         RFASSERT_LOG(
           "operation[{}]:  {} for feature_group[{}], triggered by Neuron[]",
@@ -158,10 +158,21 @@ void RafkoAutodiffOptimizer::calculate_value(const std::vector<double>& network_
 void RafkoAutodiffOptimizer::calculate_derivative(
   const std::vector<double>& network_input, const std::vector<double>& label_data
 ){
-  for(std::int32_t weight_index = 0u; weight_index < network.weight_table_size(); ++weight_index){
-    for(std::int32_t operation_index = operations.size() - 1; operation_index >= 0; --operation_index)
-      operations[operation_index]->calculate_derivative(static_cast<std::uint32_t>(weight_index), network_input, label_data);
-  }
+  execution_threads[0]->start_and_block([this, &network_input, &label_data](std::uint32_t thread_index){
+    const std::int32_t weights_in_one_thread = 1 + (network.weight_table_size() / execution_threads[0]->get_number_of_threads());
+    const std::int32_t weight_start_in_thread = (weights_in_one_thread * thread_index);
+    const std::int32_t weights_to_do_in_this_thread = std::min(
+      weights_in_one_thread, (network.weight_table_size() - weight_start_in_thread)
+    );
+    for(
+      std::int32_t weight_index = weight_start_in_thread;
+      weight_index < (weight_start_in_thread + weights_to_do_in_this_thread);
+       ++weight_index
+    ){
+      for(std::int32_t operation_index = operations.size() - 1; operation_index >= 0; --operation_index)
+        operations[operation_index]->calculate_derivative(static_cast<std::uint32_t>(weight_index), network_input, label_data);
+    }
+  });
 }
 
 void RafkoAutodiffOptimizer::calculate(BackpropDataBufferRange network_input, BackpropDataBufferRange label_data){
