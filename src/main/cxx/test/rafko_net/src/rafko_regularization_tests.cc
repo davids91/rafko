@@ -33,6 +33,7 @@
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
 #if(RAFKO_USES_OPENCL)
+#include "rafko_mainframe/services/rafko_ocl_factory.h"
 #include "rafko_mainframe/services/rafko_gpu_context.h"
 #endif/*(RAFKO_USES_OPENCL)*/
 
@@ -380,9 +381,8 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> gpu_context;
     REQUIRE_NOTHROW(
       gpu_context = (
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       )
     );
 

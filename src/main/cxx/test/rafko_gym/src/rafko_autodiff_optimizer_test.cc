@@ -26,6 +26,7 @@
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
 #if(RAFKO_USES_OPENCL)
+#include "rafko_mainframe/services/rafko_ocl_factory.h"
 #include "rafko_mainframe/services/rafko_gpu_context.h"
 #endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_net/services/rafko_net_builder.h"
@@ -249,15 +250,14 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
     .dense_layers({2,2,1});
 
   #if (RAFKO_USES_OPENCL)
+  rafko_mainframe::RafkoOCLFactory factory;
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> context(
-    rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-      .select_platform().select_device()
-      .build()
+    factory.select_platform().select_device()
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
   );
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context(
-    rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-      .select_platform().select_device()
-      .build()
+    factory.select_platform().select_device()
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
   );
   #else
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);

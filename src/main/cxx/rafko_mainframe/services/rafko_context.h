@@ -43,7 +43,7 @@ namespace rafko_mainframe{
  */
 class RAFKO_FULL_EXPORT RafkoContext{
 public:
-  RafkoContext(rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings())
+  RafkoContext(rafko_mainframe::RafkoSettings settings_ = RafkoSettings())
   : settings(settings_)
   { }
 

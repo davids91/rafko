@@ -32,6 +32,7 @@
 #include "rafko_gym/services/rafko_numeric_optimizer.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
 #if(RAFKO_USES_OPENCL)
+#include "rafko_mainframe/services/rafko_ocl_factory.h"
 #include "rafko_mainframe/services/rafko_gpu_context.h"
 #endif/*(RAFKO_USES_OPENCL)*/
 
@@ -68,9 +69,8 @@ TEST_CASE("Stress-testing big input takein", "[bigpic]"){
 
       start = std::chrono::steady_clock::now();
       std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       );
       auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
       // std::uint32_t average_duration = 0;
@@ -207,22 +207,19 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward]")
   /* Create dataset, test set and optimizers; optimize nets */
   #if (RAFKO_USES_OPENCL)
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
-    rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-      .select_platform().select_device()
-      .build()
+    rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
   );
   // std::shared_ptr<rafko_mainframe::RafkoGPUContext> context2(
-  //   rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-  //     .select_platform().select_device()
-  //     .build()
+  //   rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+  //   .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
   // );
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context2 = std::make_unique<rafko_mainframe::RafkoCPUContext>(
     *network, settings.set_max_processing_threads(1u)
   );
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context(
-    rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-      .select_platform().select_device()
-      .build()
+    rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
   );
   #else
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);

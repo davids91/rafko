@@ -26,50 +26,9 @@
 
 namespace rafko_mainframe{
 
-RafkoGPUContext::Builder::Builder(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_)
-: settings(settings_)
-, network(neural_network_)
-{
-  cl::Platform::get(&platforms);
-  RFASSERT_LOG("Number of GPU Platforms: {}", platforms.size());
-  RFASSERT( 0 < platforms.size() );
-}
-
-RafkoGPUContext::Builder& RafkoGPUContext::Builder::select_platform(std::uint32_t platform_index){
-  RFASSERT_LOG("Selected platform[{}]..", platform_index);
-  RFASSERT( platform_index < platforms.size() );
-  RFASSERT_LOG("Platform name: {}", platforms[selected_platform].getInfo<CL_PLATFORM_NAME>());
-  RFASSERT_LOG("Platform version: {}", platforms[selected_platform].getInfo<CL_PLATFORM_VERSION>());
-  RFASSERT_LOG("Platform vendor: {}", platforms[selected_platform].getInfo<CL_PLATFORM_VENDOR>());
-  selected_platform = platform_index;
-  return *this;
-}
-
-RafkoGPUContext::Builder& RafkoGPUContext::Builder::select_device(cl_device_type type, std::uint32_t device_index){
-  RFASSERT_LOG("Selected device[{}]..", device_index);
-  platforms[selected_platform].getDevices(type, &devices);
-  RFASSERT( device_index < devices.size() );
-  RFASSERT_LOG(
-    "Device: {} --> OCL {}",
-    devices[device_index].getInfo<CL_DEVICE_NAME>(),
-    devices[device_index].getInfo<CL_DEVICE_OPENCL_C_VERSION>()
-  );
-  selected_device = device_index;
-  return *this;
-}
-
-std::unique_ptr<RafkoGPUContext> RafkoGPUContext::Builder::build(){
-  RFASSERT( 0 < platforms.size() );
-  RFASSERT( 0 < devices.size() );
-  cl::Context context({devices[selected_device]});
-  return std::unique_ptr<RafkoGPUContext>( new RafkoGPUContext(
-    std::move(context), std::move(devices[selected_device]), std::move(settings), network
-  ) );
-}
-
 RafkoGPUContext::RafkoGPUContext(
-  cl::Context&& context_, cl::Device&& device_,
-  rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet& neural_network_
+  cl::Context&& context_, cl::Device device_,
+  rafko_mainframe::RafkoSettings settings_, rafko_net::RafkoNet& neural_network_
 ):RafkoContext(settings_)
 , network(neural_network_)
 , network_solution(rafko_net::SolutionBuilder(settings).build(network))
@@ -77,12 +36,14 @@ RafkoGPUContext::RafkoGPUContext(
 , agent(rafko_net::SolutionSolver::Builder(*network_solution, settings).build())
 , environment(std::make_unique<RafkoDummyEnvironment>(
   network.input_data_size(), network.output_neuron_number())
-),objective(std::make_unique<RafkoDummyObjective>())
+)
+, objective(std::make_unique<RafkoDummyObjective>())
 , weight_updater(rafko_gym::UpdaterFactory::build_weight_updater(network, rafko_gym::weight_updater_default, settings))
 , neuron_outputs_to_evaluate( /* For every thread, 1 sequence is evaluated.. */
   (settings.get_max_processing_threads() * environment->get_sequence_size() + 1u),
   std::vector<double>(network.output_neuron_number()) /* ..plus for the label errors one additional vector is needed */
-),execution_threads(settings.get_max_processing_threads())
+)
+, execution_threads(settings.get_max_processing_threads())
 , opencl_context(context_)
 , opencl_device(device_)
 , opencl_queue(opencl_context, opencl_device)

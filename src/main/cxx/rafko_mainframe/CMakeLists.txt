@@ -4,18 +4,19 @@ target_include_directories(rafko_mainframe PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_
 if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
   target_link_libraries(rafko_mainframe PUBLIC rafko_protocol OpenCL::OpenCL)
-  set(CONTEXT_HEARDERS_OCL
+  set(HEADERS_WITH_OCL
     models/rafko_gpu_strategy_phase.h
-    services/src/rafko_gpu_phase.cc
+    services/rafko_ocl_factory.h
   )
-  set(CONTEXT_SOURCES_OCL
+  set(SOURCES_WITH_OCL
     models/src/rafko_gpu_strategy_phase.cc
+    services/src/rafko_gpu_phase.cc
     services/src/rafko_gpu_context.cc
   )
 else()
   target_link_libraries(rafko_mainframe PUBLIC rafko_protocol)
-  set(CONTEXT_HEARDERS_OCL)
-  set(CONTEXT_SOURCES_OCL)
+  set(HEADERS_WITH_OCL)
+  set(SOURCES_WITH_OCL)
 endif()
 
 if(ASSERTLOGS)
@@ -27,7 +28,7 @@ if(ASSERTLOGS)
 endif()
 
 set( MAINFRAME_HEADERS
-  ${CONTEXT_HEARDERS_OCL}
+  ${HEADERS_WITH_OCL}
   models/rafko_settings.h
   models/rafko_nbuf_shape.h
   services/rafko_dummies.h
@@ -37,7 +38,7 @@ set( MAINFRAME_HEADERS
   services/rafko_assertion_logger.h
 )
 set( MAINFRAME_SOURCES
-  ${CONTEXT_SOURCES_OCL}
+  ${SOURCES_WITH_OCL}
   models/src/rafko_settings.cc
   services/src/rafko_cpu_context.cc
   services/src/rafko_training_logger.cc

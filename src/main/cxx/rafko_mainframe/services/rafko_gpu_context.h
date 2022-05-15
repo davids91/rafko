@@ -39,6 +39,11 @@ namespace rafko_mainframe {
 
 class RAFKO_FULL_EXPORT RafkoGPUContext : public RafkoContext{
 public:
+  RafkoGPUContext(
+    cl::Context&& context_, cl::Device device_,
+    rafko_mainframe::RafkoSettings settings_,
+    rafko_net::RafkoNet& neural_network_
+  );
 
   /* +++ Methods taken from @RafkoContext +++ */
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
@@ -82,28 +87,7 @@ public:
 
   ~RafkoGPUContext() = default;
 
-  class Builder{
-  public:
-    Builder(rafko_net::RafkoNet& neural_network_, rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings());
-    Builder& select_platform(std::uint32_t platform_index = 0u);
-    Builder& select_device(cl_device_type type = CL_DEVICE_TYPE_GPU, std::uint32_t device_index = 0u);
-    std::unique_ptr<RafkoGPUContext> build();
-  private:
-    rafko_mainframe::RafkoSettings settings;
-    rafko_net::RafkoNet& network;
-    std::vector<cl::Platform> platforms;
-    std::vector<cl::Device> devices;
-    std::uint32_t selected_platform = 0u;
-    std::uint32_t selected_device = 0u;
-    RFASSERT_SCOPE(RAFKO_GPU_BUILD);
-  };
 private:
-
-  RafkoGPUContext(
-    cl::Context&& context_, cl::Device&& device_,
-    rafko_mainframe::RafkoSettings&& settings_, rafko_net::RafkoNet& neural_network_
-  );
-
   rafko_net::RafkoNet& network;
   std::unique_ptr<rafko_net::Solution> network_solution;
   rafko_gym::RafkoWeightAdapter weight_adapter;

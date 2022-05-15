@@ -26,6 +26,7 @@
 #include "rafko_net/services/solution_solver.h"
 #include "rafko_gym/models/rafko_cost.h"
 #include "rafko_gym/models/rafko_dataset_wrapper.h"
+#include "rafko_mainframe/services/rafko_ocl_factory.h"
 #include "rafko_mainframe/services/rafko_gpu_context.h"
 #include "rafko_mainframe/services/rafko_cpu_context.h"
 #include "test/test_utility.h"
@@ -39,9 +40,8 @@ TEST_CASE("Testing if GPU Context is able to build a valid openCL environment", 
   std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
   REQUIRE_NOTHROW(
     context = (
-      rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-        .select_platform().select_device()
-        .build()
+      rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+        .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
     )
   );
 }
@@ -69,9 +69,8 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
     CHECK_NOTHROW(
       context = (
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       )
     );
 
@@ -115,9 +114,8 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
     CHECK_NOTHROW(
       context = (
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       )
     );
 
@@ -160,9 +158,8 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
     CHECK_NOTHROW(
       context = (
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       )
     );
 
@@ -205,9 +202,8 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
     CHECK_NOTHROW(
       context = (
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       )
     );
 
@@ -268,9 +264,8 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
     CHECK_NOTHROW(
       context = (
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       )
     );
 
@@ -333,9 +328,8 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
     CHECK_NOTHROW(
       context = (
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       )
     );
 
@@ -401,9 +395,8 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
     CHECK_NOTHROW(
       context = (
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       )
     );
 
@@ -469,9 +462,8 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
     CHECK_NOTHROW(
       context = (
-        rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-          .select_platform().select_device()
-          .build()
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
       )
     );
 
@@ -632,9 +624,8 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
   rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(*network);
   CHECK_NOTHROW(
     context = (
-      rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-        .select_platform().select_device()
-        .build()
+      rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+        .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
     )
   );
   std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(network_copy);
@@ -731,23 +722,22 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     .set_minibatch_size(10);
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
-    .allowed_transfer_functions_by_layer(
-      {
-        {rafko_net::transfer_function_identity},
-        {rafko_net::transfer_function_sigmoid},
-        {rafko_net::transfer_function_tanh},
-        {rafko_net::transfer_function_elu},
-        {rafko_net::transfer_function_selu},
-        {rafko_net::transfer_function_relu},
-      }
-    ).dense_layers({2,2,2,2,2,feature_size});
-  rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(*network);
+    .allowed_transfer_functions_by_layer({
+      {rafko_net::transfer_function_identity},
+      {rafko_net::transfer_function_sigmoid},
+      {rafko_net::transfer_function_tanh},
+      {rafko_net::transfer_function_elu},
+      {rafko_net::transfer_function_selu},
+      {rafko_net::transfer_function_relu},
+    })
+    .dense_layers({2,2,2,2,2,feature_size});
+  rafko_net::RafkoNet network_copy;
+  network_copy.CopyFrom(*network);
   std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
   CHECK_NOTHROW(
     context = (
-      rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-        .select_platform().select_device()
-        .build()
+      rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+        .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
     )
   );
   rafko_mainframe::RafkoCPUContext reference_context(network_copy, settings);
@@ -810,12 +800,12 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
   std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
   CHECK_NOTHROW(
     context = (
-      rafko_mainframe::RafkoGPUContext::Builder(*network, settings)
-        .select_platform().select_device()
-        .build()
+      rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+        .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
     )
   );
-  rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(*network);
+  rafko_net::RafkoNet network_copy;
+  network_copy.CopyFrom(*network);
   rafko_mainframe::RafkoCPUContext reference_context(network_copy, settings);
 
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
