@@ -98,7 +98,10 @@ public:
    *
    * @param   objective     The objective function evaluating the network output
    */
-  void build(std::shared_ptr<RafkoObjective> objective);
+  void build(std::shared_ptr<RafkoObjective> objective){
+    build_without_data(objective);
+    data.build(operations.size(), weight_relevant_operation_count, environment->get_sequence_size());
+  }
 
   /**
    * @brief     calculates the values and derivatives from the provided inputs and the stored Network reference
@@ -164,12 +167,7 @@ public:
       return last_testing_error;
   }
 
-  #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function(std::uint32_t output_index) const;
-  std::string derivative_kernel_function() const;
-  #endif/*(RAFKO_USES_OPENCL)*/
-
-private:
+protected:
   const rafko_mainframe::RafkoSettings& settings;
   std::shared_ptr<RafkoEnvironment> environment;
   rafko_net::RafkoNet& network;
@@ -197,6 +195,14 @@ private:
       weight_updater->start();
     weight_updater->iterate(weight_delta);
   }
+
+  /**
+   * @brief   build or re-build the operateions based on the provided parameters
+   *
+   * @param   objective     The objective function evaluating the network output
+   */
+  void build_without_data(std::shared_ptr<RafkoObjective> objective);
+
 
   /**
    * @brief   calculate network value based on the given inputs

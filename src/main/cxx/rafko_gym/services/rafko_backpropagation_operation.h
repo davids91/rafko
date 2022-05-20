@@ -67,9 +67,13 @@ public:
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
   ) = 0;
 
-  //TODO: Use these for actual Kernel build, not debugging..
   #if(RAFKO_USES_OPENCL)
-  virtual std::string value_kernel_function() const = 0;
+  virtual std::string value_kernel_operation(
+    std::string network_input_array, std::string network_input_array_start,
+    std::string weight_array, std::string weight_array_start,
+    std::string operations_value_array, std::string operations_value_array_start,
+    std::string operations_value_array_size
+  ) const = 0;
   virtual std::string derivative_kernel_function() const = 0;
   #endif/*(RAFKO_USES_OPENCL)*/
 

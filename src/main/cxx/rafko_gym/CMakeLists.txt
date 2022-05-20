@@ -1,6 +1,23 @@
 add_library(rafko_gym OBJECT)
 target_link_libraries(rafko_gym PUBLIC rafko_protocol rafko_net)
 target_include_directories(rafko_gym PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services)
+
+if(USE_OPENCL)
+  find_package(OpenCL REQUIRED)
+  target_link_libraries(rafko_mainframe PUBLIC rafko_protocol OpenCL::OpenCL)
+  set(GYM_HEADERS_WITH_OCL
+    services/rafko_autodiff_gpu_strategy.h
+    services/rafko_autodiff_gpu_optimizer.h
+  )
+  set(GYM_SOURCES_WITH_OCL
+    services/src/rafko_autodiff_gpu_strategy.cc
+  )
+else()
+  target_link_libraries(rafko_mainframe PUBLIC rafko_protocol)
+  set(GYM_HEADERS_WITH_OCL)
+  set(GYM_SOURCES_WITH_OCL)
+endif()
+
 set(GYM_INTERFACE_SERVICES
   services/cost_function_squared_error.h
   services/cost_function_mse.h

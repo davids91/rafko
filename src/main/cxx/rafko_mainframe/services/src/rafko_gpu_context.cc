@@ -558,8 +558,6 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
   if(0u != thread_index)
     throw std::runtime_error("Multi-threaded openCL Environment not supported!");
 
-
-
   cl_int return_value;
   cl::Event fill_event;
   const std::uint32_t network_memory_slots = std::max(2u, (network_solution->network_memory_length() - 1u));

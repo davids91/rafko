@@ -92,13 +92,22 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const{
+  std::string value_kernel_function(
+    std::string network_input_array, std::string network_input_array_start,
+    std::string weight_array, std::string weight_array_start,
+    std::string operations_value_array, std::string operations_value_array_start,
+    std::string operations_value_array_size
+  ) const{
     RFASSERT(static_cast<bool>(needed_input_dependency));
     RFASSERT(needed_input_dependency->are_dependencies_registered());
-    return (
-      "| \t transfer function[" + std::to_string(neuron_index) + "]: "
-      + rafko_net::Transfer_functions_Name(network.neuron_array(neuron_index).transfer_function()) + "\n"
-      + needed_input_dependency->value_kernel_function()
+    return ( operations_value_array + "[" + operations_value_array_start + std::to_string(operation_index) + "] = "
+      + transfer_function.get_kernel_function_for(
+        network.neuron_array(neuron_index).transfer_function(),
+        operations_value_array + "["
+          + operations_value_array_start
+          + std::to_string(needed_input_dependency->get_operation_index())
+        + "]"
+      )
     );
   }
   std::string derivative_kernel_function() const{

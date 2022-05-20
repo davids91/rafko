@@ -68,12 +68,7 @@ public:
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(feature_dependency));
     RFASSERT(feature_dependency->is_value_processed());
-    set_value(feature_dependency->get_value(0u/*past_index*/));
-    /*!Note: Objective gets the value of it's input Neuron, so Neuron values can be queried at once;
-     * Because Neurons might be dependent of other Neurons, so order of them might change,
-     * but since nothing depends on  Objective operations, they can be added in any order,
-     * thus their value is being used in this instance to access the Network output in bulk
-     */
+    /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     set_value_processed();
   }
 
@@ -94,7 +89,9 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const{
+  std::string value_kernel_operation(
+    std::string, std::string, std::string, std::string, std::string, std::string, std::string
+  ) const{
     return "";
   }
   std::string derivative_kernel_function() const{

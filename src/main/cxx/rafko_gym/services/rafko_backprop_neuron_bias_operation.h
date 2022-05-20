@@ -111,18 +111,34 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const{
-    std::string next_dependency_string = "";
+  std::string value_kernel_operation(
+    std::string network_input_array, std::string network_input_array_start,
+    std::string weight_array, std::string weight_array_start,
+    std::string operations_value_array, std::string operations_value_array_start,
+    std::string operations_value_array_size
+  ) const{
+    std::string kernel_code;
     if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
       RFASSERT(static_cast<bool>(next_bias_dependency));
-      RFASSERT(next_bias_dependency->are_dependencies_registered());
-      next_dependency_string = " -+-> " + next_bias_dependency->value_kernel_function();
+      RFASSERT(next_bias_dependency->is_value_processed());
+      kernel_code = (
+        operations_value_array + "[" + operations_value_array_start + std::to_string(operation_index) + "] = "
+        + rafko_net::InputFunction::get_kernel_function_for(
+          network.neuron_array(neuron_index).input_function(),
+          weight_array + "[" + weight_array_start + std::to_string(weight_index) + "]",
+          operations_value_array + "["
+            + operations_value_array_start
+            + std::to_string(next_bias_dependency->get_operation_index())
+          + "]
+        )
+      );
+    }else{ /* no additional bias values are present as dependencies */
+      kernel_code = (
+        operations_value_array + "[" + operations_value_array_start + std::to_string(operation_index) + "] = "
+        + weight_array + "[" + weight_array_start + std::to_string(weight_index) + "];"
+      );
     }
-    return (
-      "|| ---> bias weight[" + std::to_string(weight_index) + "]"
-      + "(" + std::to_string(network.weight_table(weight_index)) + ")"
-      + next_dependency_string
-    );
+    return kernel_code;
   }
   std::string derivative_kernel_function() const{
     return "";

@@ -31,9 +31,8 @@
 
 namespace rafko_gym{
 
-void RafkoAutodiffOptimizer::build(std::shared_ptr<RafkoObjective> objective){
-  // RFASSERT_SCOPE
-  RFASSERT_STORE_LOG(AUTODIFF_BUILD);
+void RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoObjective> objective){
+  RFASSERT_SCOPE(AUTODIFF_BUILD);
   RFASSERT(unplaced_spikes.empty());
   RFASSERT(spike_solves_feature_map.empty());
   std::uint32_t weight_relevant_operation_count;
@@ -145,8 +144,6 @@ void RafkoAutodiffOptimizer::build(std::shared_ptr<RafkoObjective> objective){
   }
   #endif/*(RAFKO_USES_ASSERTLOGS)*/
   RFASSERT_LOG("============================");
-
-  data.build(operations.size(), weight_relevant_operation_count, environment->get_sequence_size());
 }
 
 void RafkoAutodiffOptimizer::calculate_value(const std::vector<double>& network_input){

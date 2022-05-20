@@ -24,6 +24,12 @@
 #include <memory>
 #include <utility>
 
+#if(RAFKO_USES_OPENCL)
+#include <string>
+#include <regex>
+
+#include "rafko_utilities/rafko_string_utils.h"
+#endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 #include "rafko_net/models/spike_function.h"
@@ -110,14 +116,37 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const{
+  std::string value_kernel_operation(
+    std::string network_input_array, std::string network_input_array_start,
+    std::string weight_array, std::string weight_array_start,
+    std::string operations_value_array, std::string operations_value_array_start,
+    std::string operations_value_array_size
+  ) const{
+    RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(present_value_dependency));
-    RFASSERT(present_value_dependency->are_dependencies_registered());
-    return (
-      "Spike[" + std::to_string(neuron_index) + "]:"
-      + rafko_net::Spike_functions_Name(network.neuron_array(neuron_index).spike_function()) + "\n"
-      + present_value_dependency-> value_kernel_function()
+    RFASSERT(present_value_dependency->is_value_processed());
+    std::string kernel_code = R"(
+      double past_value;
+      if(0 < available_memory_slots){
+        past_value = ==op_value_array==[==op_value_array_start== - ==op_value_array_size== + ==op_index==];
+      }else{
+        past_value = 0.0;
+      }
+      ==op_value_array==[==op_value_array_start== + ==op_index==] = ==spike_kernel==;
+    )";
+    kernel_code = rafko_utilities::replace_all_in_string(
+      kernel_code, "==spike_kernel==", rafko_net::SpikeFunction::get_kernel_function_for(
+        network.neuron_array(neuron_index).spike_function(),
+        weight_array + "[" + weight_array_start + " + " + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
+        "==op_value_array==[==op_value_array_start== + ==value_dep_op_index==]", "past_value"
+      )
     );
+    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_value_array==", operations_value_array);
+    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_value_array_start==", operations_value_array_start);
+    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_value_array_size==", operations_value_array_size);
+    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_index==", operation_index);
+    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==value_dep_op_index==", present_value_dependency->get_operation_index());
+    return kernel_code;
   }
   std::string derivative_kernel_function() const{
     return "";

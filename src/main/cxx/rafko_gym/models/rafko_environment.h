@@ -124,6 +124,10 @@ public:
    */
   virtual std::uint32_t get_prefill_inputs_number() const = 0;
 
+  std::uint32_t get_inputs_in_one_sequence(){
+    return get_prefill_inputs_number() + get_sequence_size();
+  }
+
   virtual ~RafkoEnvironment() = default;
 };
 

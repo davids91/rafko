@@ -74,11 +74,16 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const{
+  std::string value_kernel_operation(
+    std::string network_input_array, std::string network_input_array_start,
+    std::string weight_array, std::string weight_array_start,
+    std::string operations_value_array, std::string operations_value_array_start,
+    std::string operations_value_array_size
+  ) const{
     return (
-      " input[" +std::to_string(input_index) + "]"
-      + " * weight[" + std::to_string(weight_index) + "]"
-      + "(" + std::to_string(network.weight_table(weight_index)) + ")"
+      operations_value_array + "[" + operations_value_array_start + std::to_string(operation_index) + "] = "
+      + network_input_array + "[" + network_input_array_start + std::to_string(input_index) + "]"
+      + " * " + weight_array + "[" + weight_array_start + std::to_string(weight_index) + "]"
     );
   }
   std::string derivative_kernel_function() const{
