@@ -99,7 +99,7 @@ void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double
   /* i(w) = w * f(w) ¤ u(w) | f(w) = network_input or input_from_internal_neuron */
   /* calculate f(x) part */
   double weighted_input;
-  if(is_network_input){
+  if(is_network_input){ /* f(x) comes from network input, should not get it from the past */
     RFASSERT(0u == input_past_index);
     RFASSERT(static_cast<bool>(network_input_dependency));
     RFASSERT(network_input_dependency->is_value_processed());
@@ -121,7 +121,7 @@ void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double
     RFASSERT(neuron_bias_dependency->is_value_processed());
     next_value = neuron_bias_dependency->get_value(0u/*past_index*/);
   }
-  /* calculate the overall value and derivative part */
+  /* calculate the overall value */
   set_value( rafko_net::InputFunction::collect(
     network.neuron_array(neuron_index).input_function(), weighted_input, next_value
   ) );
@@ -167,9 +167,7 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
     next_value = neuron_bias_dependency->get_value(0u/*past_index*/);
     next_derivative = neuron_bias_dependency->get_derivative(0u/*past_index*/, d_w_index);
   }
-  // std::cout << "neuron[" << neuron_index << "], input[" << neuron_input_index << "]:"
-  //  << weighted_input << "+" << next_value << std::endl;
-  /* calculate the overall value and derivative part */
+  /* calculate the derivative part */
   set_derivative(d_w_index, rafko_net::InputFunction::get_derivative(
     network.neuron_array(neuron_index).input_function(),
     get_value(0u/*past_index*/), f_x_derivative, next_value, next_derivative
@@ -178,51 +176,61 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
 }
 
 #if(RAFKO_USES_OPENCL)
-std::string RafkoBackpropNeuronInputOperation::value_kernel_function() const{
-  std::string value_debug;
-  if(0u == neuron_input_index){ /* the first input!*/
-    value_debug = (
-      "|| \t input_function[" + std::to_string(neuron_index) + "]: "
-      + rafko_net::Input_functions_Name(network.neuron_array(neuron_index).input_function()) + "\n"
-    );
-  }
-  if(is_network_input){
+std::string RafkoBackpropNeuronInputOperation::value_kernel_function(
+  std::string network_input_array, std::string network_input_array_start,
+  std::string weight_array, std::string weight_array_start,
+  std::string operations_value_array, std::string operations_value_array_start,
+  std::string operations_array_size
+) const{
+  std::string operations = R"(
+    double weighted_input = 0;
+  )";
+
+  /* Calculate the weighted input(f(x)) */
+  if(is_network_input){ /* f(x) comes from network input, should not get it from the past */
+    RFASSERT(0u == input_past_index);
     RFASSERT(static_cast<bool>(network_input_dependency));
-    RFASSERT(network_input_dependency->are_dependencies_registered());
-    value_debug += (
-      "|| \t --> " + network_input_dependency->value_kernel_function() + "\n"
-    );
-  }else{
-    if(0u == input_past_index){
-      RFASSERT(static_cast<bool>(neuron_data_dependency));
-      RFASSERT(neuron_data_dependency->are_dependencies_registered());
-      value_debug += (
-        "|| \t --> " + neuron_data_dependency->value_kernel_function()
-        + "\n || * weight[" + std::to_string(weight_index) + "](" + std::to_string(network.weight_table(weight_index)) + ")"
-        + "\n"
-      );
-    }else{ /* input is from the past, so just mention it once.. */
-      value_debug += (
-        "|| \t --> Neuron[" + std::to_string(input_index_from_neuron_input_index) + "] past value " + std::to_string(input_past_index)
-        + "\n|| * weight[" + std::to_string(weight_index) + "](" + std::to_string(network.weight_table(weight_index)) + ")"
-        + "\n"
-      );
-    }
-  }
-  if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){ /* not the last input */
+    operations += "weighted_input = " + operations_value_array + "["
+      + operations_value_array_start + " + "
+      + std::to_string(network_input_dependency->get_operation_index())
+    + "];\n";
+  }else{ /* f(x) comes from Neuron data, may have inputs from the past */
+    RFASSERT(static_cast<bool>(neuron_data_dependency));
+    RFASSERT( (0u < input_past_index)||(neuron_data_dependency->is_value_processed()) );
+    operations += R"(
+      if(==past_index== <= available_memory_slots){
+        weighted_input = ==op_value_array==[
+          ==op_value_array_start== + ==op_index==
+          - (==op_value_array_size== * ==past_index==)
+        ];
+      }else{
+        weighted_input = 0.0;
+      }
+    )";
+  }/*if(is_network_input)*/
+
+  /* calculate the next value (u(x)) */
+  if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){
     RFASSERT(static_cast<bool>(neuron_input_dependency));
-    RFASSERT(neuron_input_dependency->are_dependencies_registered());
-    value_debug += (
-      "|| \t ---> \n" + neuron_input_dependency->value_kernel_function()
-    );
-  }else{
+    RFASSERT(neuron_input_dependency->is_value_processed());
+    operations += "weighted_input = " + operations_value_array + "["
+      + operations_value_array_start + " + "
+      + std::to_string(neuron_input_dependency->get_operation_index())
+    + "];\n";
+  }else{ /* the last input starts to collect bias */
     RFASSERT(static_cast<bool>(neuron_bias_dependency));
-    RFASSERT(neuron_bias_dependency->are_dependencies_registered());
-    value_debug += (
-      "|| \t ---> \n" + neuron_bias_dependency->value_kernel_function()
-    );
+    RFASSERT(neuron_bias_dependency->is_value_processed());
+    operations += "weighted_input = " + operations_value_array + "["
+      + operations_value_array_start + " + "
+      + std::to_string(neuron_bias_dependency->get_operation_index())
+    + "];\n";
   }
-  return value_debug;
+
+  /* add the input function */
+  operations += rafko_net::InputFunction::get_kernel_function_for(
+    network.neuron_array(neuron_index).input_function(), "weighted_input", "next_value"
+  ) + ";\n";
+  return operations;
 }
 std::string RafkoBackpropNeuronInputOperation::derivative_kernel_function() const{
   return "";

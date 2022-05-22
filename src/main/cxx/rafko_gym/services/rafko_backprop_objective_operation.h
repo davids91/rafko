@@ -91,7 +91,7 @@ public:
   #if(RAFKO_USES_OPENCL)
   std::string value_kernel_operation(
     std::string, std::string, std::string, std::string, std::string, std::string, std::string
-  ) const{
+  ) const{ /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     return "";
   }
   std::string derivative_kernel_function() const{

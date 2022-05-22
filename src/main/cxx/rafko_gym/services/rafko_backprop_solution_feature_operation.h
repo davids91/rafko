@@ -33,6 +33,7 @@
 #include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 #include "rafko_net/services/rafko_network_feature.h"
+#include "rafko_net/models/neuron_info.h"
 
 #include "rafko_gym/services/rafko_backpropagation_operation.h"
 
@@ -42,25 +43,17 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackpropFeatureOperation
+class RAFKO_FULL_EXPORT RafkoBackPropSolutionFeatureOperation
 : public RafkoBackpropagationOperation
 {
 public:
-  RafkoBackpropFeatureOperation(
+  RafkoBackPropSolutionFeatureOperation(
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index,  const rafko_mainframe::RafkoSettings& settings_,
     const rafko_net::FeatureGroup& feature_group_,
     std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_,
     std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary
-  )
-  : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_feature)
-  , settings(settings_)
-  , feature_group(feature_group_)
-  , network_data_proxy(dummy_vector, neuron_index_dictionary)
-  , execution_threads(execution_threads_)
-  , feature_executor(execution_threads)
-  {
-  }
+  );
 
   DependencyRequest upload_dependencies_to_operations();
 
@@ -87,9 +80,17 @@ public:
     std::string network_input_array, std::string network_input_array_start,
     std::string weight_array, std::string weight_array_start,
     std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_value_array_size
+    std::string operations_array_size
   ) const{
-    return "";
+    if(rafko_net::NeuronInfo::is_feature_relevant_to_solution(feature_group.feature())){
+      /*!Note: e.g. dropout, softmax */
+      return rafko_net::RafkoNetworkFeature::generate_kernel_code(
+        settings, feature_group.feature(), relevant_index_values,
+        ""/*input_array*/, ""/*input_array_start*/,
+        operations_value_array/*output_array*/, operations_value_array_start/*output_start_index*/,
+        true/*declare_locals*/
+      );
+    }/*!Note: performance relevant features don't have a value, only derivative */
   }
   std::string derivative_kernel_function() const{
     return "";
@@ -106,6 +107,7 @@ private:
   rafko_utilities::SubscriptProxy<> network_data_proxy;
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
   rafko_net::RafkoNetworkFeature feature_executor;
+  std::vector<double> relevant_index_values;
 
   std::vector<double> dummy_vector;
 };

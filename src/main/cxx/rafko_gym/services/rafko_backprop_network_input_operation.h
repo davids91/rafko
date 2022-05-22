@@ -78,12 +78,12 @@ public:
     std::string network_input_array, std::string network_input_array_start,
     std::string weight_array, std::string weight_array_start,
     std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_value_array_size
+    std::string operations_array_size
   ) const{
     return (
-      operations_value_array + "[" + operations_value_array_start + std::to_string(operation_index) + "] = "
-      + network_input_array + "[" + network_input_array_start + std::to_string(input_index) + "]"
-      + " * " + weight_array + "[" + weight_array_start + std::to_string(weight_index) + "]"
+      operations_value_array + "[" + operations_value_array_start + " + " + std::to_string(operation_index) + "] = "
+      + network_input_array + "[" + network_input_array_start + " + " + std::to_string(input_index) + "]"
+      + " * " + weight_array + "[" + weight_array_start + " + " + std::to_string(weight_index) + "]"
     );
   }
   std::string derivative_kernel_function() const{

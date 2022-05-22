@@ -55,7 +55,7 @@ public:
   {
   }
 
-  void set_operation_index(std::uint32_t index){
+  void constexpr set_operation_index(std::uint32_t index){
     operation_index = index;
   }
 
@@ -70,87 +70,21 @@ public:
     }};
   }
 
-  void calculate_value(const std::vector<double>& network_input){
-    parameter_not_used(network_input);
-    RFASSERT(are_dependencies_registered());
-    RFASSERT(static_cast<bool>(present_value_dependency));
-    RFASSERT(present_value_dependency->is_value_processed());
-    double past_value = get_value(1u/*past_index*/);
-    set_value(rafko_net::SpikeFunction::get_value(
-      network.neuron_array(neuron_index).spike_function(),
-      network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
-      present_value_dependency->get_value(0u/*past_index*/), past_value
-    ));
-    set_value_processed();
-  }
+  void calculate_value(const std::vector<double>& network_input);
 
   void calculate_derivative(
-    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
-  ){
-    parameter_not_used(network_input);
-    parameter_not_used(label_data);
-    RFASSERT(is_value_processed());
-    RFASSERT(are_dependencies_registered());
-    RFASSERT(static_cast<bool>(present_value_dependency));
-    RFASSERT(present_value_dependency->is_processed());
-    double past_value = get_value(1u/*past_index*/);
-    double past_derivative_value = get_derivative(1u/*past_index*/, d_w_index);
-    if(static_cast<std::int32_t>(d_w_index) == network.neuron_array(neuron_index).input_weights(0).starts()){
-      set_derivative(d_w_index, rafko_net::SpikeFunction::get_derivative_for_w(
-        network.neuron_array(neuron_index).spike_function(),
-        network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
-        present_value_dependency->get_value(0u/*past_index*/),
-        present_value_dependency->get_derivative(0u/*past_index*/, d_w_index),
-        past_value, past_derivative_value
-      ));
-    }else{
-      set_derivative(d_w_index, rafko_net::SpikeFunction::get_derivative_not_for_w(
-        network.neuron_array(neuron_index).spike_function(),
-        network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
-        present_value_dependency->get_value(0u/*past_index*/),
-        present_value_dependency->get_derivative(0u/*past_index*/, d_w_index),
-        past_value, past_derivative_value
-      ));
-    }
-    set_derivative_processed();
-  }
+    std::uint32_t d_w_index,
+    const std::vector<double>& network_input, const std::vector<double>& label_data
+  );
 
   #if(RAFKO_USES_OPENCL)
   std::string value_kernel_operation(
     std::string network_input_array, std::string network_input_array_start,
     std::string weight_array, std::string weight_array_start,
     std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_value_array_size
-  ) const{
-    RFASSERT(are_dependencies_registered());
-    RFASSERT(static_cast<bool>(present_value_dependency));
-    RFASSERT(present_value_dependency->is_value_processed());
-    std::string kernel_code = R"(
-      double past_value;
-      if(0 < available_memory_slots){
-        past_value = ==op_value_array==[==op_value_array_start== - ==op_value_array_size== + ==op_index==];
-      }else{
-        past_value = 0.0;
-      }
-      ==op_value_array==[==op_value_array_start== + ==op_index==] = ==spike_kernel==;
-    )";
-    kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, "==spike_kernel==", rafko_net::SpikeFunction::get_kernel_function_for(
-        network.neuron_array(neuron_index).spike_function(),
-        weight_array + "[" + weight_array_start + " + " + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
-        "==op_value_array==[==op_value_array_start== + ==value_dep_op_index==]", "past_value"
-      )
-    );
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_value_array==", operations_value_array);
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_value_array_start==", operations_value_array_start);
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_value_array_size==", operations_value_array_size);
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_index==", operation_index);
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==value_dep_op_index==", present_value_dependency->get_operation_index());
-    return kernel_code;
-  }
-  std::string derivative_kernel_function() const{
-    return "";
-  }
+    std::string operations_array_size
+  ) const;
+  std::string derivative_kernel_function() const;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){

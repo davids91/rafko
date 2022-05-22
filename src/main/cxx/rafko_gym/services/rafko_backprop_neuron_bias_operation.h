@@ -115,27 +115,31 @@ public:
     std::string network_input_array, std::string network_input_array_start,
     std::string weight_array, std::string weight_array_start,
     std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_value_array_size
+    std::string operations_array_size
   ) const{
     std::string kernel_code;
     if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
       RFASSERT(static_cast<bool>(next_bias_dependency));
       RFASSERT(next_bias_dependency->is_value_processed());
       kernel_code = (
-        operations_value_array + "[" + operations_value_array_start + std::to_string(operation_index) + "] = "
+        operations_value_array + "[" + operations_value_array_start + " + " + std::to_string(operation_index) + "] = "
         + rafko_net::InputFunction::get_kernel_function_for(
           network.neuron_array(neuron_index).input_function(),
-          weight_array + "[" + weight_array_start + std::to_string(weight_index) + "]",
+          weight_array + "[" + weight_array_start + " + " + std::to_string(weight_index) + "]",
           operations_value_array + "["
-            + operations_value_array_start
+            + operations_value_array_start + " + "
             + std::to_string(next_bias_dependency->get_operation_index())
           + "]
         )
       );
     }else{ /* no additional bias values are present as dependencies */
       kernel_code = (
-        operations_value_array + "[" + operations_value_array_start + std::to_string(operation_index) + "] = "
-        + weight_array + "[" + weight_array_start + std::to_string(weight_index) + "];"
+        operations_value_array + "["
+          + operations_value_array_start + " + " + std::to_string(operation_index)
+        + "] = "
+        + weight_array + "["
+          + weight_array_start + " + " + std::to_string(weight_index)
+        + "];"
       );
     }
     return kernel_code;

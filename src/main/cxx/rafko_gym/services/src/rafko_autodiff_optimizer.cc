@@ -27,7 +27,7 @@
 #include "rafko_gym/services/rafko_backprop_transfer_fn_operation.h"
 #include "rafko_gym/services/rafko_backprop_objective_operation.h"
 #include "rafko_gym/services/rafko_backprop_weight_reg_operation.h"
-#include "rafko_gym/services/rafko_backprop_feature_operation.h"
+#include "rafko_gym/services/rafko_backrpop_solution_feature_operation.h"
 
 namespace rafko_gym{
 
@@ -105,7 +105,7 @@ void RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoObjective> 
     for(std::uint32_t neuron_index : *neuron_subsets.begin()){
       auto found_feature = spike_solves_feature_map.find(neuron_index);
       if(found_feature != spike_solves_feature_map.end()){
-        operations.push_back( std::make_shared<RafkoBackpropFeatureOperation>(
+        operations.push_back( std::make_shared<RafkoBackPropSolutionFeatureOperation>(
           data, network, operations.size(), settings, network.neuron_group_features(found_feature->second),
           execution_threads, neuron_spike_to_operation_map
         ));

@@ -14,24 +14,24 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/rafko_backprop_feature_operation.h"
-
-#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_gym/services/rafko_backprop_weight_reg_operation.h"
 
 namespace rafko_gym{
 
-DependencyRequest RafkoBackpropFeatureOperation::upload_dependencies_to_operations(){
-  DependencyParameters dependency_parameters;
+void RafkoBackpropWeightRegOperation::refresh_weight_derivatives(){
+  relevant_index_values.clear();
   rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),
-  [&dependency_parameters](std::uint32_t neuron_index){
-    dependency_parameters.push_back({ ad_operation_neuron_spike_d, { neuron_index } });
+  [this](std::uint32_t neuron_index){
+    rafko_net::SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
+    [this](std::uint32_t weight_index){
+      relevant_index_values.push_back(weight_index);
+      if(feature_group.feature() == rafko_net::neuron_group_feature_l1_regularization){
+        each_weight_derivative[weight_index] = 1.0;
+      }else if(feature_group.feature() == rafko_net::neuron_group_feature_l2_regularization){
+        each_weight_derivative[weight_index] = 2.0 * network.weight_table(weight_index);
+      }
+    });
   });
-
-  set_registered();
-  return {{
-    dependency_parameters, [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>>){}
-  }};
 }
-
 
 } /* namespace rafko_gym */

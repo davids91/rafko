@@ -49,6 +49,7 @@ public:
   , feature_group(feature_group_)
   , each_weight_derivative(network.weight_table_size())
   {
+    relevant_index_values.reserve(network.weight_table_size());
     refresh_weight_derivatives();
   }
 
@@ -84,15 +85,25 @@ public:
 
   #if(RAFKO_USES_OPENCL)
   std::string value_kernel_operation(
+    std::string, std::string, std::string, std::string, std::string, std::string, std::string
+  ) const{
+    /*!Note: No actual value is calculated for weight regularization */
+    return "";
+  }
+
+  std::string derivative_kernel_function(
     std::string network_input_array, std::string network_input_array_start,
     std::string weight_array, std::string weight_array_start,
     std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_value_array_size
+    std::string operations_derivative_array, std::string operations_derivative_array_start,
+    std::string operations_array_size
   ) const{
-    return "";
-  }
-  std::string derivative_kernel_function() const{
-    return "";
+    return std::string generate_kernel_code(
+      settings, feature_group.feature(), relevant_index_values,
+      weight_array, weight_array_start,
+      operations_value_array, (operations_value_array_start + " + " + std::string(get_operation_index())),
+      true/*declare_locals*/
+    );
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
@@ -103,20 +114,9 @@ public:
 private:
   const rafko_net::FeatureGroup& feature_group;
   std::vector<double> each_weight_derivative;
+  std::vector<std::uint32_t> relevant_index_values;
 
-  void refresh_weight_derivatives(){
-    rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),
-    [this](std::uint32_t neuron_index){
-      rafko_net::SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
-      [this](std::uint32_t weight_index){
-        if(feature_group.feature() == rafko_net::neuron_group_feature_l1_regularization){
-          each_weight_derivative[weight_index] = 1.0;
-        }else if(feature_group.feature() == rafko_net::neuron_group_feature_l2_regularization){
-          each_weight_derivative[weight_index] = 2.0 * network.weight_table(weight_index);
-        }
-      });
-    });
-  }
+  void refresh_weight_derivatives();
 };
 
 } /* namespace rafko_gym */
