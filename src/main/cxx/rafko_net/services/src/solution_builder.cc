@@ -382,13 +382,13 @@ std::string SolutionBuilder::get_kernel_for_solution(
         }/*if(there are no more inputs to pair to the weights --> all inputs are biases)*/
         first_weight_synapse_in_neuron = false;
       }, weight_synapse_start, partial.weight_synapse_number(inner_neuron_index));
-      inner_neuron_operation += "neuron_partial_result = " + transfer_function.get_cl_function_for(
+      inner_neuron_operation += "neuron_partial_result = " + transfer_function.get_kernel_function_for(
         partial.neuron_transfer_functions(inner_neuron_index),
         "neuron_partial_result"
       )+";\n";
       inner_neuron_operation += (
         "outputs[output_start + " + std::to_string(partial.output_data().starts() + inner_neuron_index) + "] = (\n"
-        + SpikeFunction::get_cl_function_for(
+        + SpikeFunction::get_kernel_function_for(
           partial.neuron_spike_functions(inner_neuron_index),
           "neuron_partial_result"/* new_data */,
           label_reach_guard(
@@ -410,8 +410,10 @@ std::string SolutionBuilder::get_kernel_for_solution(
       for(const FeatureGroup& feature : partial.solved_features()){
         if(NeuronInfo::is_feature_relevant_to_solution(feature.feature())){
           RafkoNetworkFeature::add_kernel_code_to(
-            neuron_operations, feature, settings, solution, "", "output_start", !feature_locals_declared
+            neuron_operations, feature, settings, solution,
+            ""/*input_array*/, ""/*input_start_index*/, "outputs", "output_start", !feature_locals_declared
           );
+          /*!Note: in solution relevant features, only the output array is used, so no need to add any input info */
           feature_locals_declared = true;
         }else if(NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
           performance_feature_list.push_back(feature);
@@ -432,9 +434,10 @@ std::string SolutionBuilder::get_kernel_for_solution(
     );
     RafkoNetworkFeature::add_kernel_code_to(
       performance_operations, feature, settings, solution,
-      "1u"/*input_start_index:weight table start*/, "output_sizes[0]"/*output_start_index: last output*/,
+      "inputs"/*input_array*/, "1u"/*input_start_index:weight table start*/,
+      "outputs"/*output_array*/, "output_sizes[0]"/*output_start_index: last output*/,
       declare_locals
-    );
+    );/*!Note: Disentanglement would require the the input to be of the Neuron array */
 
     if(declare_locals)
      already_declared_locals.insert(feature.feature());

@@ -82,7 +82,7 @@ public:
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  static std::string get_kernel_function_for(std::string operation_index, std::string a, std::string b);
+  static std::string get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b);
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel

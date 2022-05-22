@@ -75,7 +75,7 @@ double TransferFunction::get_derivative(Transfer_functions function, double inpu
 }
 
 #if(RAFKO_USES_OPENCL)
-std::string TransferFunction::get_cl_function_for(Transfer_functions function, std::string x_){
+std::string TransferFunction::get_kernel_function_for(Transfer_functions function, std::string x_){
   std::string x = std::string("(") + x_ + ")";
   switch(function){
     case transfer_function_identity: return x;
@@ -96,7 +96,7 @@ std::string TransferFunction::get_cl_function_for(Transfer_functions function, s
   }
 }
 
-std::string TransferFunction::get_kernel_function_for(std::string operation_index, std::string a, std::string b){
+std::string TransferFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b){
   std::string code = R"(
     switch(==op==){
       case neuron_transfer_function_identity:

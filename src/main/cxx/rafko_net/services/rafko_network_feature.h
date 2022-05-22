@@ -75,21 +75,45 @@ public:
   ) const;
 
   #if(RAFKO_USES_OPENCL)
+
   /**
    * @brief      Provide the calculations of the given feature group as GPU kernel code
    *
    * @param      operations           The string to append the relevant operations into
-   * @param[in]  feature              The Neuron group feature to generate the kernel code for
+   * @param[in]  feature_group        The Neuron group feature to generate the kernel code for
    * @param[in]  settings             The settings object containing the required hyperparameters for the features
    * @param[in]  solution             The feature group relevant solution
-   * @param[in]  input_start_index    Variable to help with indexing
-   * @param[in]  output_start_index   Variable to help with indexing
+   * @param[in]  input_array          Might mean the weights array or the input array, etc..
+   * @param[in]  input_start_index    Index helper: Might mean the start of the weights array or the input array, etc..
+   * @param[in]  output_array         Might mean the neuron array, weight derivatives etc..
+   * @param[in]  output_start_index   Index helper: Might mean the start of the neuron array, weight derivatives etc..
    * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
    */
   static void add_kernel_code_to(
-    std::string& operations, const FeatureGroup& feature,
+    std::string& operations, const FeatureGroup& feature_group,
     const rafko_mainframe::RafkoSettings& settings, const Solution& solution,
-    std::string input_start_index = "", std::string output_start_index = "",
+    std::string input_array, std::string input_start_index,
+    std::string output_array, std::string output_start_index,
+    bool declare_locals
+  );
+
+  /**
+   * @brief      Provide the calculations of the given feature group as GPU kernel code
+   *
+   * @param[in]  settings                 The settings object containing the required hyperparameters for the features
+   * @param[in]  feature                  The feature to generate the kernel code for
+   * @param[in]  relevant_index_values    The index values the feature is relevant to
+   * @param[in]  input_array              Might mean the weights array or the input array, etc..
+   * @param[in]  input_start_index        Index helper: Might mean the start of the weights array or the input array, etc..
+   * @param[in]  output_array             Might mean the neuron array, weight derivatives etc..
+   * @param[in]  output_start_index       Index helper: Might mean the start of the neuron array, weight derivatives etc..
+   * @param[in]  declare_locals           Decides whether local variables used by the kernel are to be declared or just updated
+   */
+  static std::string generate_kernel_code(
+    const rafko_mainframe::RafkoSettings& settings, Neuron_group_features feature,
+    const std::vector<std::uint32_t>& relevant_index_values,
+    std::string input_array, std::string input_start_index,
+    std::string output_array, std::string output_start_index,
     bool declare_locals = true
   );
   #endif/*(RAFKO_USES_OPENCL)*/
@@ -97,9 +121,8 @@ public:
 private:
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
   #if(RAFKO_USES_OPENCL)
-  static std::mutex feature_cache_mutex;
-  static std::uint32_t l1_feature_called;
-  static std::uint32_t l2_feature_called;
+  static inline std::mutex feature_cache_mutex;
+  static inline std::uint32_t lx_feature_called;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   /**
@@ -113,7 +136,6 @@ private:
     const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
     std::function<void(std::uint32_t)>&& fun, std::uint32_t thread_index = 0u
   ) const;
-
 
   /**
    * @brief      Calculate the softmax function by setting the data values provided in the arguments
@@ -179,80 +201,84 @@ private:
   /**
    * @brief      Provide the softmax function GPU Kernel.
    *
-   * @param      operations           The string to append the relevant operations into
-   * @param[in]  feature              The Neuron group feature to generate the kernel code for
-   * @param[in]  output_start_index   Variable to help with indexing
-   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
+   * @param      operations                 The string to append the relevant operations into
+   * @param[in]  relevant_index_values      The relevant index values of the given arrays to base kernel operations on
+   * @param[in]  neuron_data_array          The Neuron array containing the data values to softmax
+   * @param[in]  neuron_data_start_index    The start of the neuron array
+   * @param[in]  declare_locals             Decides whether local variables used by the kernel are to be declared or just updated
    */
   static void add_softmax_kernel_to(
-    std::string& operations, const FeatureGroup& feature,
-    std::string output_start_index = "", bool declare_locals = true
+    std::string& operations, const std::vector<std::uint32_t>& relevant_index_values,
+    std::string neuron_data_array, std::string neuron_data_start_index, bool declare_locals
   );
 
   /**
    * @brief      Provide the dropout function GPU Kernel.
    *
-   * @param      operations           The string to append the relevant operations into
-   * @param[in]  settings             The settings object containing the required hyperparameters for the features
-   * @param[in]  feature              The Neuron group feature to generate the kernel code for
-   * @param[in]  output_start_index   Variable to help with indexing
-   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
+   * @param      operations                 The string to append the relevant operations into
+   * @param[in]  settings                   The settings object containing the required hyperparameters for the features
+   * @param[in]  relevant_index_values      The relevant index values of the given arrays to base kernel operations on
+   * @param[in]  neuron_data_array          The Neuron array containing the data values to softmax
+   * @param[in]  neuron_data_start_index    The start of the neuron array
+   * @param[in]  declare_locals             Decides whether local variables used by the kernel are to be declared or just updated
    */
   static void add_dropout_kernel_to(
     std::string& operations, const rafko_mainframe::RafkoSettings& settings,
-    const FeatureGroup& feature, std::string output_start_index = "",
-    bool declare_locals = true
+    const std::vector<std::uint32_t>& relevant_index_values,
+    std::string neuron_data_array, std::string neuron_data_start_index, bool declare_locals
   );
 
   /**
    * @brief      Provide the l1 weight regularization GPU Kernel parts into the provided operations argument.
    *
-   * @param      operations           The string to append the relevant operations into
-   * @param[in]  feature              The Neuron group feature to generate the kernel code for
-   * @param[in]  solution             The feature group relevant solution
-   * @param[in]  input_start_index    Variable to help with indexing
-   * @param[in]  output_start_index   Variable to help with indexing
-   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
+   * @param      operations                 The string to append the relevant operations into
+   * @param[in]  relevant_index_values      The relevant index values of the given arrays to base kernel operations on
+   * @param[in]  weight_array               The buffer containing the target to read weight info from
+   * @param[in]  weight_start_index         Variable to help with indexing
+   * @param[in]  output_array               The buffer containing the target to write the calcualted error into
+   * @param[in]  output_start_index         The start of the output array
+   * @param[in]  declare_locals             Decides whether local variables used by the kernel are to be declared or just updated
    */
   static void add_l1_kernel_to(
-    std::string& operations, const FeatureGroup& feature, const Solution& solution,
-    std::string input_start_index = "", std::string output_start_index = "",
-    bool declare_locals = true
+    std::string& operations, const std::vector<std::uint32_t>& relevant_index_values,
+    std::string weight_array, std::string weight_start_index,
+    std::string output_array, std::string output_start_index, bool declare_locals
   );
 
   /**
    * @brief      Provide the l2 weight regularization GPU Kernel parts into the provided operations argument.
    *
-   * @param      operations           The string to append the relevant operations into
-   * @param[in]  feature              The Neuron group feature to generate the kernel code for
-   * @param[in]  solution             The feature group relevant solution
-   * @param[in]  input_start_index    Variable to help with indexing
-   * @param[in]  output_start_index   Variable to help with indexing
-   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
+   * @param      operations                 The string to append the relevant operations into
+   * @param[in]  relevant_index_values      The relevant index values of the given arrays to base kernel operations on
+   * @param[in]  weight_array               The buffer containing the target to read weight info from
+   * @param[in]  weight_start_index         Variable to help with indexing
+   * @param[in]  output_array               The buffer containing the target to write the calcualted error into
+   * @param[in]  output_start_index         The start of the output array
+   * @param[in]  declare_locals             Decides whether local variables used by the kernel are to be declared or just updated
    */
   static void add_l2_kernel_to(
-    std::string& operations, const FeatureGroup& feature, const Solution& solution,
-    std::string input_start_index = "", std::string output_start_index = "",
-    bool declare_locals = true
+    std::string& operations, const std::vector<std::uint32_t>& relevant_index_values,
+    std::string weight_array, std::string weight_start_index,
+    std::string output_array, std::string output_start_index, bool declare_locals
   );
 
   /**
    * @brief      The common part of L1 and L2 weight regularization
    *
-   * @param      operations           The string to append the relevant operations into
-   * @param[in]  lx                   The operation to use on each weight
-   * @param[in]  local_name           Name of the local variable to be used in the feature
-   * @param[in]  feature              The Neuron group feature to generate the kernel code for
-   * @param[in]  solution             The feature group relevant solution
-   * @param[in]  input_start_index    Variable to help with indexing
-   * @param[in]  output_start_index   Variable to help with indexing
-   * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
+   * @param      operations                 The string to append the relevant operations into
+   * @param[in]  lx                         The operation to use on each weight
+   * @param[in]  local_name                 Name of the local variable to be used in the feature
+   * @param[in]  relevant_index_values      The relevant index values of the given arrays to base kernel operations on
+   * @param[in]  weight_start_index         Variable to help with indexing
+   * @param[in]  output_start_index         Variable to help with indexing
+   * @param[in]  declare_locals             Decides whether local variables used by the kernel are to be declared or just updated
    */
   static void add_lx_kernel_to(
     std::string& operations, std::function<std::string(std::string)>&& lx, std::string local_name,
-    const FeatureGroup& feature, const Solution& solution,
-    std::string input_start_index = "", std::string output_start_index = "",
-    bool declare_locals = true
+    const std::vector<std::uint32_t>& relevant_index_values,
+    std::string weight_array, std::string weight_start_index,
+    std::string output_array, std::string output_start_index,
+    bool declare_locals
   );
   #endif/*(RAFKO_USES_OPENCL)*/
 
