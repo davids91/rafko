@@ -82,7 +82,7 @@ public:
    *
    * @return    The generated Kernel code calling the asked spike function based on the parameter
    */
-  static std::string get_cl_function_for(Spike_functions function, std::string parameter, std::string new_data, std::string previous_data);
+  static std::string get_kernel_function_for(Spike_functions function, std::string parameter, std::string new_data, std::string previous_data);
 
   /**
    * @brief     Generates GPU kernel function code for the provided parameters
@@ -95,7 +95,7 @@ public:
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  static std::string get_kernel_function_for(std::string operation_index, std::string parameter, std::string previous_data, std::string new_data);
+  static std::string get_all_kernel_functions_for(std::string operation_index, std::string parameter, std::string previous_data, std::string new_data);
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel

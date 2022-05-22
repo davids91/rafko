@@ -56,7 +56,7 @@ double InputFunction::get_derivative(Input_functions function, double a, double 
 
 
 #if(RAFKO_USES_OPENCL)
-std::string InputFunction::get_kernel_function_for(std::string operation_index, std::string a, std::string b){
+std::string InputFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b){
   std::string code = R"(
     switch(==op==){
       case neuron_input_function_add: ==a== = (==a== + ==b==); break;
