@@ -101,7 +101,7 @@ public:
     return std::string generate_kernel_code(
       settings, feature_group.feature(), relevant_index_values,
       weight_array, weight_array_start,
-      operations_value_array, (operations_value_array_start + " + " + std::string(get_operation_index())),
+      operations_derivative_array, (operations_derivative_array_start + " + " + std::string(get_operation_index())),
       true/*declare_locals*/
     );
   }

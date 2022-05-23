@@ -84,7 +84,13 @@ public:
     std::string operations_value_array, std::string operations_value_array_start,
     std::string operations_array_size
   ) const;
-  std::string derivative_kernel_function() const;
+  std::string derivative_kernel_function(
+    std::string network_input_array, std::string network_input_array_start,
+    std::string weight_array, std::string weight_array_start,
+    std::string operations_value_array, std::string operations_value_array_start,
+    std::string operations_derivative_array, std::string operations_derivative_array_start,
+    std::string operations_array_size
+  ) const;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){

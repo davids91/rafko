@@ -20,13 +20,17 @@
 namespace rafko_utilities {
 
 std::string replace_all_in_string(std::string input_text, std::regex regex_to_replace, std::string substitute){
-  std::uint32_t matches_count = 1u; /* to start the iteration */
   std::string text = input_text;
+  std::uint32_t matches_count = std::distance( /* https://stackoverflow.com/questions/8283735/count-number-of-matches */
+    std::sregex_iterator(text.begin(), text.end(), regex_to_replace), std::sregex_iterator()
+  );
+  if(0u == matches_count){
+    RFASSERT_LOG("Unneccesary replacement: couldn't find regex in '{}' initially!", text);
+  }
   while(0u < matches_count){
     text = std::regex_replace(text, regex_to_replace, substitute);
-    matches_count = std::distance( /* https://stackoverflow.com/questions/8283735/count-number-of-matches */
-      std::sregex_iterator(text.begin(), text.end(), regex_to_replace),
-      std::sregex_iterator()
+    matches_count = std::distance(
+      std::sregex_iterator(text.begin(), text.end(), regex_to_replace), std::sregex_iterator()
     );
   }
   return text;

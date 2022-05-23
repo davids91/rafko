@@ -92,7 +92,13 @@ public:
       );
     }/*!Note: performance relevant features don't have a value, only derivative */
   }
-  std::string derivative_kernel_function() const{
+  std::string derivative_kernel_function(
+    std::string network_input_array, std::string network_input_array_start,
+    std::string weight_array, std::string weight_array_start,
+    std::string operations_value_array, std::string operations_value_array_start,
+    std::string operations_derivative_array, std::string operations_derivative_array_start,
+    std::string operations_array_size
+  ) const{ /*!Note: solution features don't have any derivatives, so nothuing is here.. */
     return "";
   }
   #endif/*(RAFKO_USES_OPENCL)*/

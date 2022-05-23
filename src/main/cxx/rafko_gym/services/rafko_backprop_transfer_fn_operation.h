@@ -119,7 +119,6 @@ public:
   ) const{
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));
-    RFASSERT(needed_input_dependency->is_processed());
     return (
       operations_derivative_array + "[" + operations_derivative_array_start + " + " + std::to_string(operation_index) + "] = "
       transfer_function.get_kernel_function_for_d(
@@ -134,12 +133,6 @@ public:
         + "]"
       );
     );
-    // set_derivative(d_w_index, transfer_function.get_derivative( /* d t(f(w))/dx = f'(w) * t'(f(w))*/
-    //   network.neuron_array(neuron_index).transfer_function(),
-    //   needed_input_dependency->get_value(0u/*past_index*/),
-    //   needed_input_dependency->get_derivative(0u/*past_index*/, d_w_index)
-    // ));
-    return "";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 

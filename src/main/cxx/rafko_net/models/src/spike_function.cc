@@ -127,6 +127,50 @@ std::string SpikeFunction::get_all_kernel_functions_for(std::string operation_in
   return code;
 }
 
+std::string SpikeFunction::get_derivative_kernel_for_w(
+  Spike_functions function, std::string parameter,
+  std::string new_data, std::string new_data_d,
+  std::string previous_data, std::string previous_data_d
+){
+  switch(function){
+    case spike_function_none: return new_data_d;
+    case spike_function_memory:
+      return(
+        "(" + parameter + "*" + previous_data_d + ") + " + previous_data
+        + " - (" + parameter + "*" + new_data_d + ")"
+        + "+" + new_data_d + "-" + new_data
+      );
+    case spike_function_p:
+      return(
+        previous_data_d + "+ (" + parameter + " * (" + new_data_d + "-" + previous_data_d + "))"
+        + "+ (" + new_data + "-" + previous_data + ")"
+      );
+    case spike_function_amplify_value:
+      return "(" + parameter + "*" + new_data_d + "+" + new_data + ")";
+    default: throw std::runtime_error("Unknown spike function requested for derivative calculation!");
+  }
+}
+
+std::string SpikeFunction::get_derivative_kernel_not_for_w(
+  Spike_functions function, std::string parameter,
+  std::string new_data, std::string new_data_d,
+  std::string previous_data, std::string previous_data_d
+){
+  switch(function){
+    case spike_function_none: return new_data_d;
+    case spike_function_memory:
+    return(
+      "(" + parameter + "*" + previous_data_d + ")"
+      + " - (" + parameter + "*" + new_data_d + ")" + "+" + new_data_d
+    );
+    case spike_function_p:
+      return previous_data_d + "+ (" + parameter + " * (" + new_data_d + "-" + previous_data_d + "))";
+    case spike_function_amplify_value:
+      return "(" + parameter + "*" + new_data_d + ")";
+    default: throw std::runtime_error("Unknown spike function requested for derivative calculation!");
+  }
+}
+
 std::string SpikeFunction::get_kernel_enum_for(Spike_functions function){
   switch(function){
     case spike_function_none: return "neuron_spike_function_none";

@@ -69,6 +69,15 @@ std::string InputFunction::get_all_kernel_functions_for(std::string operation_in
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
   return code;
 }
+
+std::string derivative_kernel_for(Input_functions function, std::string a, std::string a_dw, std::string b, std::string b_dw){
+  switch(function){
+    case input_function_add: return "(" + a_dw + "+" + b_dw + ")";
+    case input_function_multiply: return "(" + a + "*" + b_dw + ") + (" + a_dw + "*" + b ")";
+    default: throw std::runtime_error("Unidentified Input function called!");
+  };
+}
+
 #endif/*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_net */
