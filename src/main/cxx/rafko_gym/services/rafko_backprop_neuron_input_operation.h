@@ -55,14 +55,15 @@ public:
   );
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function(
+  std::string value_kernel_operation(
     std::string network_input_array, std::string network_input_array_start,
     std::string weight_array, std::string weight_array_start,
     std::string operations_value_array, std::string operations_value_array_start,
     std::string operations_array_size
   ) const;
-  std::string derivative_kernel_function(
+  std::string derivative_kernel_operation(
     std::string network_input_array, std::string network_input_array_start,
+    std::string label_array, std::string label_array_start,
     std::string weight_array, std::string weight_array_start,
     std::string operations_value_array, std::string operations_value_array_start,
     std::string operations_derivative_array, std::string operations_derivative_array_start,

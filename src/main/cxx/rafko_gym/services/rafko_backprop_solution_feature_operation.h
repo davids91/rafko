@@ -77,27 +77,27 @@ public:
 
   #if(RAFKO_USES_OPENCL)
   std::string value_kernel_operation(
-    std::string network_input_array, std::string network_input_array_start,
-    std::string weight_array, std::string weight_array_start,
+    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
+    std::string /*weight_array*/, std::string /*weight_array_start*/,
     std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_array_size
+    std::string /*operations_array_size*/
   ) const{
-    if(rafko_net::NeuronInfo::is_feature_relevant_to_solution(feature_group.feature())){
-      /*!Note: e.g. dropout, softmax */
-      return rafko_net::RafkoNetworkFeature::generate_kernel_code(
-        settings, feature_group.feature(), relevant_index_values,
-        ""/*input_array*/, ""/*input_array_start*/,
-        operations_value_array/*output_array*/, operations_value_array_start/*output_start_index*/,
-        true/*declare_locals*/
-      );
-    }/*!Note: performance relevant features don't have a value, only derivative */
+    RFASSERT(rafko_net::NeuronInfo::is_feature_relevant_to_solution(feature_group.feature()));
+    return rafko_net::RafkoNetworkFeature::generate_kernel_code(
+      settings, feature_group.feature(), relevant_index_values,
+      ""/*input_array*/, ""/*input_array_start*/,
+      operations_value_array/*output_array*/, operations_value_array_start/*output_start_index*/,
+      true/*declare_locals*/
+    );
   }
-  std::string derivative_kernel_function(
-    std::string network_input_array, std::string network_input_array_start,
-    std::string weight_array, std::string weight_array_start,
-    std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_derivative_array, std::string operations_derivative_array_start,
-    std::string operations_array_size
+
+  std::string derivative_kernel_operation(
+    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
+    std::string /*label_array*/, std::string /*label_array_start*/,
+    std::string /*weight_array*/, std::string /*weight_array_start*/,
+    std::string /*operations_value_array*/, std::string /*operations_value_array_start*/,
+    std::string /*operations_derivative_array*/, std::string /*operations_derivative_array_start*/,
+    std::string /*operations_array_size*/
   ) const{ /*!Note: solution features don't have any derivatives, so nothuing is here.. */
     return "";
   }
@@ -109,11 +109,12 @@ public:
 
 private:
   const rafko_mainframe::RafkoSettings& settings;
+  const rafko_net::RafkoNet& network;
   const rafko_net::FeatureGroup& feature_group;
   rafko_utilities::SubscriptProxy<> network_data_proxy;
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
   rafko_net::RafkoNetworkFeature feature_executor;
-  std::vector<double> relevant_index_values;
+  std::vector<std::uint32_t> relevant_index_values;
 
   std::vector<double> dummy_vector;
 };

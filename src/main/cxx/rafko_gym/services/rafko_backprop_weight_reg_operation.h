@@ -42,10 +42,12 @@ class RAFKO_FULL_EXPORT RafkoBackpropWeightRegOperation
 {
 public:
   RafkoBackpropWeightRegOperation(
-    RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    std::uint32_t operation_index, const rafko_net::FeatureGroup& feature_group_
+    const rafko_mainframe::RafkoSettings& settings_, RafkoBackpropagationData& data,
+    const rafko_net::RafkoNet& network, std::uint32_t operation_index,
+    const rafko_net::FeatureGroup& feature_group_
   )
   : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_weight_regularization_feature)
+  , settings(settings_)
   , feature_group(feature_group_)
   , each_weight_derivative(network.weight_table_size())
   {
@@ -91,17 +93,18 @@ public:
     return "";
   }
 
-  std::string derivative_kernel_function(
-    std::string network_input_array, std::string network_input_array_start,
+  std::string derivative_kernel_operation(
+    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
+    std::string /*label_array*/, std::string /*label_array_start*/,
     std::string weight_array, std::string weight_array_start,
-    std::string operations_value_array, std::string operations_value_array_start,
+    std::string /*operations_value_array*/, std::string /*operations_value_array_start*/,
     std::string operations_derivative_array, std::string operations_derivative_array_start,
-    std::string operations_array_size
+    std::string /*operations_array_size*/
   ) const{
-    return std::string generate_kernel_code(
+    return rafko_net::RafkoNetworkFeature::generate_kernel_code(
       settings, feature_group.feature(), relevant_index_values,
       weight_array, weight_array_start,
-      operations_derivative_array, (operations_derivative_array_start + " + " + std::string(get_operation_index())),
+      operations_derivative_array, (operations_derivative_array_start + " + " + std::to_string(get_operation_index())),
       true/*declare_locals*/
     );
   }
@@ -112,6 +115,7 @@ public:
   }
 
 private:
+  const rafko_mainframe::RafkoSettings& settings;
   const rafko_net::FeatureGroup& feature_group;
   std::vector<double> each_weight_derivative;
   std::vector<std::uint32_t> relevant_index_values;

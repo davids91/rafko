@@ -99,8 +99,11 @@ public:
    * @param   objective     The objective function evaluating the network output
    */
   void build(std::shared_ptr<RafkoObjective> objective){
-    build_without_data(objective);
-    data.build(operations.size(), weight_relevant_operation_count, environment->get_sequence_size());
+    std::uint32_t weight_relevant_operation_count = build_without_data(objective);
+    data.build(
+      operations.size(), weight_relevant_operation_count,
+      environment->get_sequence_size()
+    );
   }
 
   /**
@@ -200,8 +203,10 @@ protected:
    * @brief   build or re-build the operateions based on the provided parameters
    *
    * @param   objective     The objective function evaluating the network output
+   *
+   * @return  The number of operations at the start of the array directly relevant to weight derivatives
    */
-  void build_without_data(std::shared_ptr<RafkoObjective> objective);
+  std::uint32_t build_without_data(std::shared_ptr<RafkoObjective> objective);
 
 
   /**

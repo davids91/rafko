@@ -40,7 +40,7 @@
 namespace rafko_gym{
 
 /**
- * @brief      Error Statistics for a @RafkoDatasetWrapper
+ * @brief      Implementation of an objective based on a @CostFunction
  */
 class RAFKO_FULL_EXPORT RafkoCost : public RafkoObjective
 {
@@ -57,6 +57,7 @@ public:
   , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
   { }
 
+  /* +++ Methods taken from @RafkoObjective +++ */
   double set_feature_for_label(
     const rafko_gym::RafkoEnvironment& environment, std::uint32_t sample_index,
     const std::vector<double>& neuron_data
@@ -88,9 +89,17 @@ public:
     cost_function->set_parameters(pairs_to_evaluate_, feature_size_);
     pairs_to_evaluate = pairs_to_evaluate_;
   }
+
+  std::string get_derivative_kernel_source(
+    std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
+  ) const{
+    return cost_function->get_derivative_kernel_source(label_value, feature_value, feature_d, sample_number);
+  }
+
   cl::Program::Sources get_step_sources() const{
     return cost_function->get_step_sources();
   }
+
   std::vector<std::string> get_step_names() const{
     return cost_function->get_step_names();
   }
@@ -123,6 +132,7 @@ public:
     return cost_function->get_solution_space();
   }
   #endif/*(RAFKO_USES_OPENCL)*/
+  /* --- Methods taken from @RafkoObjective --- */
 
 
 private:

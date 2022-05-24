@@ -75,7 +75,7 @@ double TransferFunction::get_derivative(Transfer_functions function, double inpu
 }
 
 #if(RAFKO_USES_OPENCL)
-std::string TransferFunction::get_kernel_function_for(Transfer_functions function, std::string x_){
+std::string TransferFunction::get_kernel_function_for(Transfer_functions function, std::string x_) const{
   std::string x = std::string("(") + x_ + ")";
   switch(function){
     case transfer_function_identity: return x;
@@ -97,7 +97,7 @@ std::string TransferFunction::get_kernel_function_for(Transfer_functions functio
 
 std::string TransferFunction::get_kernel_function_for_d(
   Transfer_functions function, std::string input, std::string input_dw
-){
+) const{
   switch(function){
     case transfer_function_identity: return input_dw;
     case transfer_function_sigmoid:
@@ -108,7 +108,7 @@ std::string TransferFunction::get_kernel_function_for_d(
       return "(" + input + " < 0.0)?(" + positive_derivative + "):(" + input_dw + ")";
     }
     case transfer_function_selu:{
-      std::string constant_modifiers = std::to_string(settings.get_lambda()) + " * " + std::to_string(setings.get_alpha())
+      std::string constant_modifiers = std::to_string(settings.get_lambda()) + " * " + std::to_string(settings.get_alpha());
       std::string positive_derivative = constant_modifiers + " * exp(" + input + ") * " + input_dw;
       return "(" + input + " < 0.0)?(" + positive_derivative + "):(" + std::to_string(settings.get_lambda()) + "*" + input_dw + ")";
     }
@@ -119,7 +119,7 @@ std::string TransferFunction::get_kernel_function_for_d(
   }
 }
 
-std::string TransferFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b){
+std::string TransferFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b) const{
   std::string code = R"(
     switch(==op==){
       case neuron_transfer_function_identity:

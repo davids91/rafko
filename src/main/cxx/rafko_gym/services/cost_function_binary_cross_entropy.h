@@ -62,8 +62,15 @@ protected:
       "( " + one_minus_label_value + " * log(1.0 - min(0.9999999999999999," + feature_value + ")) )"
     );
   }
+
   std::string get_post_process_kernel_source(std::string error_value) const{
     return "((" + error_value + ") / (double)(sample_number) )";
+  }
+
+  std::string get_derivative_kernel_source(
+    std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
+  ) const{
+    return "- (" + label_value + " * " + feature_d + ") / (" + sample_number + " * (1.0 - " + feature_value + ")" + " * " + feature_value + ")";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 };

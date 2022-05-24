@@ -144,18 +144,15 @@ public:
    *
    * @param[in]   function          The function to apply
    * @param[in]   parameter         The parameter of the spike function
-   * @param[in]   new_data          The latest data as input to the spike function
    * @param[in]   new_data_d        The derivative of the latest data
-   * @param[in]   previous_data     The previously stored state of the Spike function
    * @param[in]   previous_data_d   The derivative of the previously stored state
    *
    * @return    The single kernel operation representing the provided spike functions derivative function
    */
   static std::string get_derivative_kernel_not_for_w(
     Spike_functions function, std::string parameter,
-    std::string new_data, std::string new_data_d,
-    std::string previous_data, std::string previous_data_d
-  );
+    std::string new_data_d, std::string previous_data_d
+);
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel

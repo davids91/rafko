@@ -27,11 +27,11 @@
 #include "rafko_gym/services/rafko_backprop_transfer_fn_operation.h"
 #include "rafko_gym/services/rafko_backprop_objective_operation.h"
 #include "rafko_gym/services/rafko_backprop_weight_reg_operation.h"
-#include "rafko_gym/services/rafko_backrpop_solution_feature_operation.h"
+#include "rafko_gym/services/rafko_backprop_solution_feature_operation.h"
 
 namespace rafko_gym{
 
-void RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoObjective> objective){
+std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoObjective> objective){
   RFASSERT_SCOPE(AUTODIFF_BUILD);
   RFASSERT(unplaced_spikes.empty());
   RFASSERT(spike_solves_feature_map.empty());
@@ -60,7 +60,7 @@ void RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoObjective> 
   for(const rafko_net::FeatureGroup& feature_group : network.neuron_group_features()){
     if(rafko_net::NeuronInfo::is_feature_relevant_to_performance(feature_group.feature()) ){
       operations.push_back(std::make_shared<RafkoBackpropWeightRegOperation>(
-        data, network, operations.size(), feature_group
+        settings, data, network, operations.size(), feature_group
       ));
       /*!Note: weight_relevant_operation_count counts on the placed items into the operation array here */
       RFASSERT_LOG(
@@ -144,6 +144,8 @@ void RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoObjective> 
   }
   #endif/*(RAFKO_USES_ASSERTLOGS)*/
   RFASSERT_LOG("============================");
+
+  return weight_relevant_operation_count;
 }
 
 void RafkoAutodiffOptimizer::calculate_value(const std::vector<double>& network_input){
@@ -262,15 +264,15 @@ double RafkoAutodiffOptimizer::get_avg_gradient(std::uint32_t d_w_index){
 }
 
 #if(RAFKO_USES_OPENCL)
-std::string RafkoAutodiffOptimizer::value_kernel_function(std::uint32_t output_index) const{
-  std::uint32_t neuron_index = (network.neuron_array_size() - network.output_neuron_number() + output_index);
-  auto found_element = neuron_spike_to_operation_map->find(neuron_index);
-  RFASSERT(found_element != neuron_spike_to_operation_map->end());
-  return operations[found_element->second]->value_kernel_function();
-}
-std::string RafkoAutodiffOptimizer::derivative_kernel_function() const{
-  return "";
-}
+// std::string RafkoAutodiffOptimizer::value_kernel_function(std::uint32_t output_index) const{
+//   std::uint32_t neuron_index = (network.neuron_array_size() - network.output_neuron_number() + output_index);
+//   auto found_element = neuron_spike_to_operation_map->find(neuron_index);
+//   RFASSERT(found_element != neuron_spike_to_operation_map->end());
+//   return operations[found_element->second]->value_kernel_function();
+// }
+// std::string RafkoAutodiffOptimizer::derivative_kernel_function() const{
+//   return "";
+// }
 #endif/*(RAFKO_USES_OPENCL)*/
 
 std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::place_spike_to_operations(std::uint32_t neuron_index){

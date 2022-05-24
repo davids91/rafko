@@ -90,18 +90,31 @@ public:
 
   #if(RAFKO_USES_OPENCL)
   std::string value_kernel_operation(
-    std::string, std::string, std::string, std::string, std::string, std::string, std::string
+    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
+    std::string /*weight_array*/, std::string /*weight_array_start*/,
+    std::string /*operations_value_array*/, std::string /*operations_value_array_start*/,
+    std::string /*operations_array_size*/
   ) const{ /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     return "";
   }
-  std::string derivative_kernel_function(
-    std::string network_input_array, std::string network_input_array_start,
-    std::string weight_array, std::string weight_array_start,
-    std::string operations_value_array, std::string operations_value_array_start,
+  std::string derivative_kernel_operation(
+    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
+    std::string /*label_array*/, std::string /*label_array_start*/,
+    std::string /*weight_array*/, std::string /*weight_array_start*/,
+    std::string /*operations_value_array*/, std::string /*operations_value_array_start*/,
     std::string operations_derivative_array, std::string operations_derivative_array_start,
-    std::string operations_array_size
+    std::string /*operations_array_size*/
   ) const{
-    return "";
+    return (
+      operations_derivative_array + "["
+        + operations_derivative_array_start + " + " + std::to_string(get_operation_index())
+      + "] = " + objective.get_derivative_kernel_source(
+        "label_value",
+        "feature_value",
+        "feature_d",
+        "sample_number"
+      )
+    );
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 

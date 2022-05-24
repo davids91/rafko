@@ -153,8 +153,7 @@ std::string SpikeFunction::get_derivative_kernel_for_w(
 
 std::string SpikeFunction::get_derivative_kernel_not_for_w(
   Spike_functions function, std::string parameter,
-  std::string new_data, std::string new_data_d,
-  std::string previous_data, std::string previous_data_d
+  std::string new_data_d, std::string previous_data_d
 ){
   switch(function){
     case spike_function_none: return new_data_d;

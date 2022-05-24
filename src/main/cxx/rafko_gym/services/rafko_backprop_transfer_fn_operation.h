@@ -92,11 +92,11 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function(
-    std::string network_input_array, std::string network_input_array_start,
-    std::string weight_array, std::string weight_array_start,
+  std::string value_kernel_operation(
+    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
+    std::string /*weight_array*/, std::string /*weight_array_start*/,
     std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_array_size
+    std::string /*operations_array_size*/
   ) const{
     RFASSERT(static_cast<bool>(needed_input_dependency));
     RFASSERT(needed_input_dependency->are_dependencies_registered());
@@ -110,18 +110,20 @@ public:
       )
     );
   }
-  std::string derivative_kernel_function(
-    std::string network_input_array, std::string network_input_array_start,
-    std::string weight_array, std::string weight_array_start,
+
+  std::string derivative_kernel_operation(
+    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
+    std::string /*label_array*/, std::string /*label_array_start*/,
+    std::string /*weight_array*/, std::string /*weight_array_start*/,
     std::string operations_value_array, std::string operations_value_array_start,
     std::string operations_derivative_array, std::string operations_derivative_array_start,
-    std::string operations_array_size
+    std::string /*operations_array_size*/
   ) const{
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));
     return (
       operations_derivative_array + "[" + operations_derivative_array_start + " + " + std::to_string(operation_index) + "] = "
-      transfer_function.get_kernel_function_for_d(
+      + transfer_function.get_kernel_function_for_d(
         network.neuron_array(neuron_index).transfer_function(),
         operations_value_array + "["
           + operations_value_array_start + " + "
@@ -129,9 +131,9 @@ public:
         + "]",
         operations_derivative_array + "["
           + operations_derivative_array_start + " + "
-          + needed_input_dependency->get_operation_index()
+          + std::to_string(needed_input_dependency->get_operation_index())
         + "]"
-      );
+      )
     );
   }
   #endif/*(RAFKO_USES_OPENCL)*/

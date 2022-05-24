@@ -28,7 +28,7 @@
 #include <string>
 #include <regex>
 
-#include "rafko_utilities/rafko_string_utils.h"
+#include "rafko_utilities/services/rafko_string_utils.h"
 #endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
@@ -84,8 +84,9 @@ public:
     std::string operations_value_array, std::string operations_value_array_start,
     std::string operations_array_size
   ) const;
-  std::string derivative_kernel_function(
+  std::string derivative_kernel_operation(
     std::string network_input_array, std::string network_input_array_start,
+    std::string label_array, std::string label_array_start,
     std::string weight_array, std::string weight_array_start,
     std::string operations_value_array, std::string operations_value_array_start,
     std::string operations_derivative_array, std::string operations_derivative_array_start,

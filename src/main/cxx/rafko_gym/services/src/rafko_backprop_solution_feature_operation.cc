@@ -14,21 +14,22 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/rafko_backrpop_solution_feature_operation.h"
+#include "rafko_gym/services/rafko_backprop_solution_feature_operation.h"
 
 #include "rafko_net/services/synapse_iterator.h"
 
 namespace rafko_gym{
 
 RafkoBackPropSolutionFeatureOperation::RafkoBackPropSolutionFeatureOperation(
-  RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
+  RafkoBackpropagationData& data, const rafko_net::RafkoNet& network_,
   std::uint32_t operation_index,  const rafko_mainframe::RafkoSettings& settings_,
   const rafko_net::FeatureGroup& feature_group_,
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_,
   std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary
 )
-: RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_feature)
+: RafkoBackpropagationOperation(data, network_, operation_index, ad_operation_network_feature)
 , settings(settings_)
+, network(network_)
 , feature_group(feature_group_)
 , network_data_proxy(dummy_vector, neuron_index_dictionary)
 , execution_threads(execution_threads_)
@@ -37,17 +38,17 @@ RafkoBackPropSolutionFeatureOperation::RafkoBackPropSolutionFeatureOperation(
   #if(RAFKO_USES_OPENCL)
   /* Calculate relevant index values */
   switch(feature_group.feature()){
-    case neuron_group_feature_softmax:
-    case neuron_group_feature_dropout_regularization:{
-      SynapseIterator<>::iterate(feature_group.relevant_neurons(),[&relevant_index_values](std::uint32_t index){
+    case rafko_net::neuron_group_feature_softmax:
+    case rafko_net::neuron_group_feature_dropout_regularization:{
+      rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),[this](std::uint32_t index){
         relevant_index_values.push_back(index);
       });
     } break;
-    case neuron_group_feature_l1_regularization:
-    case neuron_group_feature_l2_regularization: {
-      SynapseIterator<>::iterate(feature_group.relevant_neurons(), [&](std::uint32_t neuron_index){
-        SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
-        [&relevant_index_values](std::uint32_t weight_index){
+    case rafko_net::neuron_group_feature_l1_regularization:
+    case rafko_net::neuron_group_feature_l2_regularization: {
+      rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(), [this](std::uint32_t neuron_index){
+        rafko_net::SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
+        [this](std::uint32_t weight_index){
           relevant_index_values.push_back(weight_index);
         });
       });

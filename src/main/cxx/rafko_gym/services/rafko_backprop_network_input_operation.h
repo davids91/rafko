@@ -25,8 +25,9 @@
 #include <utility>
 #if(RAFKO_USES_OPENCL)
 #include <string>
-#endif/*(RAFKO_USES_OPENCL)*/
 
+#include "rafko_utilities/services/rafko_string_utils.h"
+#endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
@@ -78,7 +79,7 @@ public:
     std::string network_input_array, std::string network_input_array_start,
     std::string weight_array, std::string weight_array_start,
     std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_array_size
+    std::string /*operations_array_size*/
   ) const{
     return (
       operations_value_array + "[" + operations_value_array_start + " + " + std::to_string(get_operation_index()) + "] = "
@@ -87,12 +88,13 @@ public:
     );
   }
   //TODO: d_w_index inside the kernels is a hidden dependency!
-  std::string derivative_kernel_function(
-    std::string network_input_array, std::string network_input_array_start,
+  std::string derivative_kernel_operation(
+    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
+    std::string /*label_array*/, std::string /*label_array_start*/,
     std::string weight_array, std::string weight_array_start,
-    std::string operations_value_array, std::string operations_value_array_start,
+    std::string /*operations_value_array*/, std::string /*operations_value_array_start*/,
     std::string operations_derivative_array, std::string operations_derivative_array_start,
-    std::string operations_array_size
+    std::string /*operations_array_size*/
   ) const{
     std::string kernel_code = R"(
       if(d_w_index == ==this_op_weight_index==){
@@ -104,16 +106,15 @@ public:
       }
     )";
     kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, "==this_op_weight_index==", std::to_string(weight_index)
+      kernel_code, std::regex("==this_op_weight_index=="), std::to_string(weight_index)
     );
     kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, "==weight_value==", std::to_string(
-        weight_array + "[" + weight_array_start + " + " + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]"
-      )
+      kernel_code, std::regex("==weight_value=="),
+      weight_array + "[" + weight_array_start + " + " + std::to_string(weight_index) + "]"
     );
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_derivative_array==", operations_derivative_array);
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_derivative_array_start==", operations_derivative_array_start);
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, "==op_index==", std::to_string(get_operation_index));
+    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_derivative_array=="), operations_derivative_array);
+    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_derivative_array_start=="), operations_derivative_array_start);
+    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_index=="), std::to_string(get_operation_index()));
     return kernel_code;
   }
   #endif/*(RAFKO_USES_OPENCL)*/
