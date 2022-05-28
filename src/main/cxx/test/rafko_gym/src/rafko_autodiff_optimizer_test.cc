@@ -28,6 +28,7 @@
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/services/rafko_ocl_factory.h"
 #include "rafko_mainframe/services/rafko_gpu_context.h"
+#include "rafko_gym/services/rafko_autodiff_gpu_optimizer.h"
 #endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_net/services/rafko_net_builder.h"
 #include "rafko_net/services/solution_builder.h"
@@ -109,14 +110,8 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)
     );
     REQUIRE(
-      optimizer.get_actual_value(1u)[0] == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)
-    );
-    REQUIRE(
       reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
       == Catch::Approx(actual_value[0][0]).epsilon(0.0000000000001)
-    );
-    REQUIRE(
-      optimizer.get_actual_value(0u)[0] == Catch::Approx(actual_value[0][0]).epsilon(0.0000000000001)
     );
     std::cout << "Target: "
     << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
@@ -128,7 +123,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
 }
 
 TEST_CASE("Testing if autodiff optimizer converges networks with the iteration interface", "[optimize][small]"){
-  return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
+  // return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(0.0001).set_minibatch_size(64).set_memory_truncation(2)
@@ -157,6 +152,14 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     settings, rafko_gym::cost_function_squared_error
   );
+
+
+
+  rafko_gym::RafkoAutodiffGPUOptimizer optimizerGPU(settings, environment, *network);
+  optimizerGPU.build(objective);
+
+
+
   rafko_gym::RafkoAutodiffOptimizer optimizer(settings, environment, *network);
   optimizer.build(objective);
   optimizer.set_weight_updater(rafko_gym::weight_updater_amsgrad);
@@ -189,20 +192,12 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000001)
     );
     REQUIRE(
-      optimizer.get_actual_value(1u)[0] == Catch::Approx(actual_value[1][0]).epsilon(0.0000000001)
-    );
-    REQUIRE(
       reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
       == Catch::Approx(actual_value[0][0]).epsilon(0.0000000001)
     );
-    REQUIRE(
-      optimizer.get_actual_value(0u)[0] == Catch::Approx(actual_value[0][0]).epsilon(0.0000000001)
-    );
     double weight_sum = std::accumulate(
       network->weight_table().begin(), network->weight_table().end(), 0.0,
-      [](const double& accu, const double& element){
-        return accu + std::abs(element);
-      }
+      [](const double& accu, const double& element){ return accu + std::abs(element); }
     );
     std::cout << "Target: "
     << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "

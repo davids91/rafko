@@ -26,6 +26,7 @@
 
 #include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
 #include "rafko_mainframe/services/rafko_gpu_phase.h"
+#include "rafko_gym/services/rafko_autodiff_gpu_strategy.h"
 #include "rafko_gym/services/rafko_autodiff_optimizer.h"
 
 namespace rafko_gym{
@@ -36,7 +37,7 @@ namespace rafko_gym{
 class RAFKO_FULL_EXPORT RafkoAutodiffGPUOptimizer
 : private RafkoAutodiffOptimizer
 {
-public:
+public: //TODO: Initialize OCL context
   RafkoAutodiffGPUOptimizer(
     const rafko_mainframe::RafkoSettings& settings_,
     std::shared_ptr<RafkoEnvironment> environment_, rafko_net::RafkoNet& network_,
@@ -45,21 +46,24 @@ public:
   )
   : RafkoAutodiffOptimizer(settings_, environment_, network_, training_evaluator_, test_evaluator_)
   , strategy(std::make_shared<AutoDiffGPUStrategy>(settings, network))
+  // , gpu_phase()
   {
     strategy->set_environment(environment);
   }
 
   void build(std::shared_ptr<RafkoObjective> objective){
-    build_without_data(objective);
+    std::uint32_t weight_relevant_operation_count = build_without_data(objective);
+    strategy->build(operations);
     //TODO: Sort operations into groups that can be executed in paralell
     // |--> traverse operations backwards, collecting everything solvable
     // |--> collect them, and mark them solved
     // |--> traverse again, collect newly solvable operations
     // |--> collect them, and mark them solved
     // |--> repeat until there are operations left
-    //TODO: build strategy
-    gpu_phase.set_strategy(strategy);
+    //TODO: build phase  
+    // gpu_phase.set_strategy(strategy);
   }
+
   void iterate(){
     //TODO: Update stochastic data in buffers
     //TODO: Run Phase
@@ -69,7 +73,7 @@ public:
 
 private:
   std::shared_ptr<AutoDiffGPUStrategy> strategy;
-  RafkoGPUPhase gpu_phase;
+  // rafko_mainframe::RafkoGPUPhase gpu_phase;
 };
 
 } /* namespace rafko_gym */

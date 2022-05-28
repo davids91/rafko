@@ -25,7 +25,11 @@
 #include <string>
 #include <CL/opencl.hpp>
 
+#include "rafko_mainframe/models/rafko_nbuf_shape.h"
+#include "rafko_mainframe/models/rafko_settings.h"
 #include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
+
+#include "rafko_gym/models/rafko_environment.h"
 #include "rafko_gym/services/rafko_backpropagation_operation.h"
 
 namespace rafko_gym{
@@ -37,7 +41,7 @@ class AutoDiffGPUStrategy
 : public rafko_mainframe::RafkoGPUStrategyPhase
 {
 public:
-  AutoDiffGPUStrategy(rafko_mainframe::RafkoSettings& settings_, rafko_net::RafkoNet& network_)
+  AutoDiffGPUStrategy(const rafko_mainframe::RafkoSettings& settings_, rafko_net::RafkoNet& network_)
   : settings(settings_)
   , network(network_)
   {
@@ -64,11 +68,11 @@ public:
     return {"autodiff_iterate"};
   }
 
-  std::vector<RafkoNBufShape> get_input_shapes() const{
+  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
     RFASSERT(static_cast<bool>(environment));
     return{ rafko_mainframe::RafkoNBufShape{
       /* Weights */
-      network.weight_table_size(),
+      static_cast<std::uint32_t>(network.weight_table_size()),
       /* Inputs */
       used_minibatch_size * environment->get_inputs_in_one_sequence() * network.input_data_size(),
       /* Labels */
@@ -76,9 +80,9 @@ public:
     } };
   }
 
-  std::vector<RafkoNBufShape> get_output_shapes() const{
+  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
     /* Weight derivatives */
-    return{ rafko_mainframe::RafkoNBufShape{network.weight_table_size()} };
+    return{ rafko_mainframe::RafkoNBufShape{static_cast<std::uint32_t>(network.weight_table_size())} };
   }
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
@@ -87,7 +91,7 @@ public:
   }
 
 private:
-  rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& settings;
   rafko_net::RafkoNet& network;
   std::shared_ptr<RafkoEnvironment> environment;
   std::uint32_t used_minibatch_size;

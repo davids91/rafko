@@ -154,9 +154,8 @@ std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
     )
   );
   kernel_code = rafko_utilities::replace_all_in_string(
-    kernel_code, std::regex("==this_op_weight_index=="), std::to_string(
-      network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts())
-    )
+    kernel_code, std::regex("==this_op_weight_index=="),
+    std::to_string( network.neuron_array(neuron_index).input_weights(0).starts() )
   );
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==op_value_array=="), operations_value_array
