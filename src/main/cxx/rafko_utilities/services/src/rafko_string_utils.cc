@@ -33,5 +33,16 @@ std::string replace_all_in_string(std::string input_text, std::regex regex_to_re
   return text;
 }
 
+std::string escape_string(std::string characters_to_escape, std::string s){
+  std::string result = s;
+  for(const char& c : characters_to_escape){
+    result = replace_all_in_string(
+      result, std::regex(std::to_string(c)),
+      "\\" + std::to_string(c)
+    );
+  }
+  return result;
+}
+
 
 } /* namespace rafko_utilities */

@@ -59,10 +59,9 @@ public:
   , memMin(memRatioMin)
   , memMax(std::max(memMin,memRatioMax))
   {
-
   }
 
-  constexpr DenseNetWeightInitializer(
+  DenseNetWeightInitializer(
     std::uint32_t seed, const rafko_mainframe::RafkoSettings& settings,
     double memRatioMin = 0.0, double memRatioMax = 1.0
   ): DenseNetWeightInitializer(settings, memRatioMin, memRatioMax)

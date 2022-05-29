@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <iostream>
 
+#include "rafko_utilities/services/rafko_string_utils.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_mainframe{
@@ -50,7 +51,7 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
   return_value = program.build({opencl_device});
   if(return_value != CL_SUCCESS){
     std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(opencl_device);
-    RFASSERT_LOG(build_log);
+    RFASSERT_LOG("{}", build_log);
     throw std::runtime_error( "OpenCL Kernel compilation failed with error: \n" + build_log + "\n" );
   }
 

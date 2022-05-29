@@ -65,35 +65,36 @@ void RafkoBackpropSpikeFnOperation::calculate_derivative(
 }
 
 #if(RAFKO_USES_OPENCL)
+std::string RafkoBackpropSpikeFnOperation::local_declaration_operation() const{
+  return R"( /* Spike Function Operation locals */
+    double past_value;
+    double past_derivative_value;
+  )";
+}
+
 std::string RafkoBackpropSpikeFnOperation::value_kernel_operation(
-  std::string /*network_input_array*/, std::string /*network_input_array_start*/,
-  std::string weight_array, std::string weight_array_start,
-  std::string operations_value_array, std::string operations_value_array_start,
-  std::string operations_array_size
+  std::string /*network_input_array*/, std::string weight_array,
+  std::string operations_value_array, std::string operations_array_size
 ) const{
   RFASSERT(are_dependencies_registered());
   RFASSERT(static_cast<bool>(present_value_dependency));
   std::string kernel_code = R"(
-    double past_value;
     if(0 < available_memory_slots){
-      past_value = ==op_value_array==[==op_value_array_start== - ==op_array_size== + ==op_index==];
+      past_value = ==op_value_array==[==op_array_size== + ==op_index==];
     }else{
       past_value = 0.0;
     }
-    ==op_value_array==[==op_value_array_start== + ==op_index==] = ==spike_kernel==;
+    ==op_value_array==[==op_index==] = ==spike_kernel==;
   )";
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==spike_kernel=="), rafko_net::SpikeFunction::get_kernel_function_for(
       network.neuron_array(neuron_index).spike_function(),
-      weight_array + "[" + weight_array_start + " + " + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
-      "==op_value_array==[==op_value_array_start== + ==value_dep_op_index==]", "past_value"
+      weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
+      "==op_value_array==[==value_dep_op_index==]", "past_value"
     )
   );
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==op_value_array=="), operations_value_array
-  );
-  kernel_code = rafko_utilities::replace_all_in_string(
-    kernel_code, std::regex("==op_value_array_start=="), operations_value_array_start
   );
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==op_array_size=="), operations_array_size
@@ -108,21 +109,20 @@ std::string RafkoBackpropSpikeFnOperation::value_kernel_operation(
 }
 
 std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
-    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
-    std::string /*label_array*/, std::string /*label_array_start*/,
-    std::string weight_array, std::string weight_array_start,
-    std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_derivative_array, std::string operations_derivative_array_start,
-    std::string operations_array_size
+  std::string /*network_input_array*/, std::string /*label_array*/, std::string weight_array,
+  std::string operations_value_array, std::string operations_derivative_array,
+  std::string operations_array_size
 ) const{
   RFASSERT(are_dependencies_registered());
   RFASSERT(static_cast<bool>(present_value_dependency));
+  /*!Note: Past values are supposed to be mapped just before the current array, so
+   * the negative index should contain the previous run. It the responsibility of the caller
+   * to make sure there is no out pf bounds error with these index values.
+   */
   std::string kernel_code = R"(
-    double past_value;
-    double past_derivative_value;
     if(0 < available_memory_slots){
-      past_value = ==op_value_array==[==op_value_array_start== - ==op_array_size== + ==op_index==];
-      past_derivative_value = ==op_derivative_array==[==op_derivative_array_start== - ==op_array_size== + ==op_index==];
+      past_value = ==op_value_array==[-==op_array_size== + ==op_index==];
+      past_derivative_value = ==op_derivative_array==[-==op_array_size== + ==op_index==];
     }else{
       past_value = 0.0;
       past_derivative_value = 0.0;
@@ -131,25 +131,25 @@ std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
 
   kernel_code += R"(
     if(d_w_index == ==this_op_weight_index==){
-      ==op_derivative_array==[==op_derivative_array_start== + ==op_index==] = ==spike_w_kernel==;
+      ==op_derivative_array==[==op_index==] = ==spike_w_kernel==;
     }else{
-      ==op_derivative_array==[==op_derivative_array_start== + ==op_index==] = ==spike_kernel==;
+      ==op_derivative_array==[==op_index==] = ==spike_kernel==;
     }
   )";
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==spike_w_kernel=="), rafko_net::SpikeFunction::get_derivative_kernel_for_w(
       network.neuron_array(neuron_index).spike_function(),
-      weight_array + "[" + weight_array_start + " + " + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
-      "==op_value_array==[==op_value_array_start== + ==value_dep_op_index==]",
-      "==op_derivative_array==[==op_derivative_array_start== + ==value_dep_op_index==]",
+      weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
+      "==op_value_array==[==value_dep_op_index==]",
+      "==op_derivative_array==[==value_dep_op_index==]",
       "past_value", "past_derivative_value"
     )
   );
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==spike_kernel=="), rafko_net::SpikeFunction::get_derivative_kernel_not_for_w(
       network.neuron_array(neuron_index).spike_function(),
-      weight_array + "[" + weight_array_start + " + " + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
-      "==op_derivative_array==[==op_derivative_array_start== + ==value_dep_op_index==]",
+      weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
+      "==op_derivative_array==[==value_dep_op_index==]",
       "past_derivative_value"
     )
   );
@@ -161,16 +161,10 @@ std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
     kernel_code, std::regex("==op_value_array=="), operations_value_array
   );
   kernel_code = rafko_utilities::replace_all_in_string(
-    kernel_code, std::regex("==op_value_array_start=="), operations_value_array_start
-  );
-  kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==op_array_size=="), operations_array_size
   );
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==op_derivative_array=="), operations_derivative_array
-  );
-  kernel_code = rafko_utilities::replace_all_in_string(
-    kernel_code, std::regex("==op_derivative_array_start=="), operations_derivative_array_start
   );
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==op_index=="), std::to_string(get_operation_index())

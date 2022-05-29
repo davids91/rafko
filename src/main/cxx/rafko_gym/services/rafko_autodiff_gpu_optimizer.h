@@ -24,8 +24,10 @@
 #include <memory>
 #include <CL/opencl.hpp>
 
+#include "rafko_mainframe/models/rafko_nbuf_shape.h"
 #include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
 #include "rafko_mainframe/services/rafko_gpu_phase.h"
+#include "rafko_mainframe/services/rafko_dummies.h"
 #include "rafko_gym/services/rafko_autodiff_gpu_strategy.h"
 #include "rafko_gym/services/rafko_autodiff_optimizer.h"
 
@@ -37,30 +39,40 @@ namespace rafko_gym{
 class RAFKO_FULL_EXPORT RafkoAutodiffGPUOptimizer
 : private RafkoAutodiffOptimizer
 {
-public: //TODO: Initialize OCL context
+public:
   RafkoAutodiffGPUOptimizer(
+    cl::Context&& context_, cl::Device device_,
     const rafko_mainframe::RafkoSettings& settings_,
     std::shared_ptr<RafkoEnvironment> environment_, rafko_net::RafkoNet& network_,
     std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator_ = {},
     std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator_ = {}
   )
   : RafkoAutodiffOptimizer(settings_, environment_, network_, training_evaluator_, test_evaluator_)
-  , strategy(std::make_shared<AutoDiffGPUStrategy>(settings, network))
-  // , gpu_phase()
+  , opencl_context(context_)
+  , opencl_device(device_)
+  , opencl_queue(opencl_context, opencl_device)
+  , strategy(std::make_shared<AutoDiffGPUStrategy>(settings, network, environment))
+  , gpu_phase(
+    opencl_context, opencl_device, opencl_queue,
+    std::make_shared<rafko_mainframe::RafkoDummyGPUStrategyPhase>(
+      rafko_mainframe::RafkoNBufShape({0u})/*input_shape*/,
+      rafko_mainframe::RafkoNBufShape({0u})/*output_shape*/
+    )
+  )
   {
-    strategy->set_environment(environment);
   }
 
   void build(std::shared_ptr<RafkoObjective> objective){
     std::uint32_t weight_relevant_operation_count = build_without_data(objective);
     strategy->build(operations);
+    gpu_phase.set_strategy(strategy);
     //TODO: Sort operations into groups that can be executed in paralell
     // |--> traverse operations backwards, collecting everything solvable
     // |--> collect them, and mark them solved
     // |--> traverse again, collect newly solvable operations
     // |--> collect them, and mark them solved
     // |--> repeat until there are operations left
-    //TODO: build phase  
+    //TODO: build phase
     // gpu_phase.set_strategy(strategy);
   }
 
@@ -72,8 +84,11 @@ public: //TODO: Initialize OCL context
   }
 
 private:
+  cl::Context opencl_context;
+  cl::Device opencl_device;
+  cl::CommandQueue opencl_queue;
   std::shared_ptr<AutoDiffGPUStrategy> strategy;
-  // rafko_mainframe::RafkoGPUPhase gpu_phase;
+  rafko_mainframe::RafkoGPUPhase gpu_phase;
 };
 
 } /* namespace rafko_gym */

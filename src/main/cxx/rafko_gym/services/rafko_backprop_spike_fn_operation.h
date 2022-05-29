@@ -54,6 +54,7 @@ public:
   , neuron_index(neuron_index_)
   {
   }
+  ~RafkoBackpropSpikeFnOperation() = default;
 
   void constexpr set_operation_index(std::uint32_t index){
     operation_index = index;
@@ -78,18 +79,14 @@ public:
   );
 
   #if(RAFKO_USES_OPENCL)
+  std::string local_declaration_operation() const;
   std::string value_kernel_operation(
-    std::string network_input_array, std::string network_input_array_start,
-    std::string weight_array, std::string weight_array_start,
-    std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_array_size
+    std::string network_input_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_array_size
   ) const;
   std::string derivative_kernel_operation(
-    std::string network_input_array, std::string network_input_array_start,
-    std::string label_array, std::string label_array_start,
-    std::string weight_array, std::string weight_array_start,
-    std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_derivative_array, std::string operations_derivative_array_start,
+    std::string network_input_array, std::string label_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_derivative_array,
     std::string operations_array_size
   ) const;
   #endif/*(RAFKO_USES_OPENCL)*/

@@ -154,10 +154,12 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
   );
 
 
-
-  rafko_gym::RafkoAutodiffGPUOptimizer optimizerGPU(settings, environment, *network);
-  optimizerGPU.build(objective);
-
+  std::unique_ptr<rafko_gym::RafkoAutodiffGPUOptimizer> optimizerGPU = (
+    rafko_mainframe::RafkoOCLFactory() .select_platform().select_device()
+    .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, environment, *network)
+  );
+  optimizerGPU->build(objective);
+  exit(0);
 
 
   rafko_gym::RafkoAutodiffOptimizer optimizer(settings, environment, *network);

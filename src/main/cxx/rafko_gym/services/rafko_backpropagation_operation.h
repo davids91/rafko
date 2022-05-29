@@ -59,7 +59,7 @@ public:
   , type(type_)
   {
   }
-
+  virtual ~RafkoBackpropagationOperation() = default;
   virtual DependencyRequest upload_dependencies_to_operations() = 0;
 
   virtual void calculate_value(const std::vector<double>& network_input) = 0;
@@ -68,18 +68,14 @@ public:
   ) = 0;
 
   #if(RAFKO_USES_OPENCL)
+  virtual std::string local_declaration_operation() const = 0;
   virtual std::string value_kernel_operation(
-    std::string network_input_array, std::string network_input_array_start,
-    std::string weight_array, std::string weight_array_start,
-    std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_array_size
+    std::string network_input_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_array_size
   ) const = 0;
   virtual std::string derivative_kernel_operation(
-    std::string network_input_array, std::string network_input_array_start,
-    std::string label_array, std::string label_array_start,
-    std::string weight_array, std::string weight_array_start,
-    std::string operations_value_array, std::string operations_value_array_start,
-    std::string operations_derivative_array, std::string operations_derivative_array_start,
+    std::string network_input_array, std::string label_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_derivative_array,
     std::string operations_array_size
   ) const = 0;
   #endif/*(RAFKO_USES_OPENCL)*/

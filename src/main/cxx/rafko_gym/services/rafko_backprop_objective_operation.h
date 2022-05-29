@@ -51,6 +51,7 @@ public:
   , sample_number(sample_number_)
   {
   }
+  ~RafkoBackpropObjectiveOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations(){
     return {{
@@ -89,31 +90,31 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
+  std::string local_declaration_operation() const{
+    return "";
+  }
+
+
   std::string value_kernel_operation(
-    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
-    std::string /*weight_array*/, std::string /*weight_array_start*/,
-    std::string /*operations_value_array*/, std::string /*operations_value_array_start*/,
-    std::string /*operations_array_size*/
+    std::string /*network_input_array*/, std::string /*weight_array*/,
+    std::string /*operations_value_array*/, std::string /*operations_array_size*/
   ) const{ /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     return "";
   }
   std::string derivative_kernel_operation(
-    std::string /*network_input_array*/, std::string /*network_input_array_start*/,
-    std::string /*label_array*/, std::string /*label_array_start*/,
-    std::string /*weight_array*/, std::string /*weight_array_start*/,
-    std::string /*operations_value_array*/, std::string /*operations_value_array_start*/,
-    std::string operations_derivative_array, std::string operations_derivative_array_start,
+    std::string /*network_input_array*/, std::string label_array, std::string /*weight_array*/,
+    std::string operations_value_array, std::string operations_derivative_array,
     std::string /*operations_array_size*/
   ) const{
+    RFASSERT(static_cast<bool>(feature_dependency));
     return (
-      operations_derivative_array + "["
-        + operations_derivative_array_start + " + " + std::to_string(get_operation_index())
-      + "] = " + objective.get_derivative_kernel_source(
-        "label_value",
-        "feature_value",
-        "feature_d",
-        "sample_number"
-      )
+      operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
+      + objective.get_derivative_kernel_source(
+        label_array + "[" + std::to_string(output_index) + "]",
+        operations_value_array + "[" + std::to_string(feature_dependency->get_operation_index()) + "]",
+        operations_derivative_array + "[" + std::to_string(feature_dependency->get_operation_index()) + "]",
+        std::to_string(sample_number)
+      ) + ";"
     );
   }
   #endif/*(RAFKO_USES_OPENCL)*/

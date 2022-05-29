@@ -47,6 +47,15 @@ public:
   {
   }
 
+  AutoDiffGPUStrategy(
+    const rafko_mainframe::RafkoSettings& settings_, rafko_net::RafkoNet& network_,
+    std::shared_ptr<RafkoEnvironment> environment_
+  )
+  : AutoDiffGPUStrategy(settings_, network_)
+  {
+    set_environment(environment_);
+  }
+
   void set_environment(std::shared_ptr<RafkoEnvironment> environment_){
     environment = environment_;
     RFASSERT(environment->get_input_size() == network.input_data_size());
