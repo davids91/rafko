@@ -23,10 +23,10 @@
 #include <memory>
 #include <vector>
 #include <optional>
+#include <algorithm>
 #if(RAFKO_USES_OPENCL)
 #include <string>
 #endif/*(RAFKO_USES_OPENCL)*/
-
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
@@ -59,6 +59,7 @@ public:
   , type(type_)
   {
   }
+
   virtual ~RafkoBackpropagationOperation() = default;
   virtual DependencyRequest upload_dependencies_to_operations() = 0;
 
@@ -81,11 +82,11 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
   double get_derivative(std::uint32_t past_index, std::uint32_t d_w_index) const{
-    return data.get_derivative(past_index, operation_index, d_w_index);
+    return data.get_derivative(past_index, get_operation_index(), d_w_index);
   }
 
   double get_value(std::uint32_t past_index) const{
-    return data.get_value(past_index, operation_index);
+    return data.get_value(past_index, get_operation_index());
   }
 
   bool constexpr are_dependencies_registered() const{
@@ -100,10 +101,6 @@ public:
     return (value_processed && derivative_processed);
   }
 
-  void increase_operation_index(){
-    ++operation_index;
-  }
-
   std::uint32_t get_operation_index() const{
     return operation_index;
   }
@@ -114,10 +111,16 @@ public:
 
   virtual std::vector<Dependency> get_dependencies() = 0;
 
+  constexpr bool operation_index_finalised(){
+    return true; /*!Note: Descendants might want to have operation index set dynamically */
+  }
+
+  std::uint32_t get_max_dependency_index();
+
 protected:
   RafkoBackpropagationData& data;
   const rafko_net::RafkoNet& network;
-  std::uint32_t operation_index;
+  const std::uint32_t operation_index;
 
   void constexpr reset_processed(){
     value_processed = false;

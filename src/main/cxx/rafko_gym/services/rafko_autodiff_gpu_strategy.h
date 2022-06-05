@@ -90,13 +90,23 @@ public:
   }
 
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
-    /* Weight derivatives */
-    return{ rafko_mainframe::RafkoNBufShape{static_cast<std::uint32_t>(network.weight_table_size())} };
+    return{ rafko_mainframe::RafkoNBufShape{
+      /* operation values */
+      (used_minibatch_size * network.memory_size() * number_of_operations),
+      /* operation derivatives */
+      (used_minibatch_size * network.memory_size() * number_of_operations * network.weight_table_size()),
+      /* Weight derivatives */
+      static_cast<std::uint32_t>(network.weight_table_size())
+    } };
   }
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
     RFASSERT(static_cast<bool>(environment));
-    return {cl::NullRange/*offset*/, cl::NDRange(used_minibatch_size)/*global*/, cl::NullRange/*local*/ };
+    return {
+      cl::NullRange/*offset*/,
+      cl::NDRange(used_minibatch_size * maximum_local_workers)/*global*/,
+      cl::NDRange(maximum_local_workers)/*local*/
+    };
   }
 
 private:
@@ -106,6 +116,8 @@ private:
   std::uint32_t used_minibatch_size;
   bool built = false;
   std::string built_source;
+  std::uint32_t number_of_operations;
+  std::uint32_t maximum_local_workers;
 };
 
 } /* namespace rafko_gym */

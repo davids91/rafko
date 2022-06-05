@@ -61,6 +61,7 @@ target_sources(rafko_gym
   models/src/rafko_cost.cc
   models/src/rafko_dataset_wrapper.cc
   services/src/cost_function.cc
+  services/src/rafko_backpropagation_operation.cc
   services/src/rafko_backprop_neuron_input_operation.cc
   services/src/rafko_backprop_neuron_bias_operation.cc
   services/src/rafko_backprop_weight_reg_operation.cc

@@ -69,10 +69,8 @@ public:
   ) const;
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
-    return {network_input_dependency, neuron_data_dependency, neuron_input_dependency};
-  }
-
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies();
+  
 private:
   const std::uint32_t neuron_index;
   const std::uint32_t neuron_input_index;

@@ -263,18 +263,6 @@ double RafkoAutodiffOptimizer::get_avg_gradient(std::uint32_t d_w_index){
   return sum / count;
 }
 
-#if(RAFKO_USES_OPENCL)
-// std::string RafkoAutodiffOptimizer::value_kernel_function(std::uint32_t output_index) const{
-//   std::uint32_t neuron_index = (network.neuron_array_size() - network.output_neuron_number() + output_index);
-//   auto found_element = neuron_spike_to_operation_map->find(neuron_index);
-//   RFASSERT(found_element != neuron_spike_to_operation_map->end());
-//   return operations[found_element->second]->value_kernel_function();
-// }
-// std::string RafkoAutodiffOptimizer::derivative_kernel_function() const{
-//   return "";
-// }
-#endif/*(RAFKO_USES_OPENCL)*/
-
 std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::place_spike_to_operations(std::uint32_t neuron_index){
   /* find the Spike index in the not yet placed Neuron spikes */
   auto found_element = unplaced_spikes.find(neuron_index);

@@ -99,6 +99,7 @@ public:
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
     if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
+    RFASSERT(static_cast<bool>(next_bias_dependency));
       return {next_bias_dependency};
     }else return {};
   }

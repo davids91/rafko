@@ -76,14 +76,14 @@ public:
   /**
    * @brief      Gets the number of floating point values the evaluation accepts to produce the label values
    *
-   * @return     The feature size.
+   * @return     The size of one input inside the environment
    */
   virtual std::uint32_t get_input_size() const = 0;
 
   /**
    * @brief      Gets the number of values present in the output
    *
-   * @return     The feature size.
+   * @return     The feature array size(usually the number of output neurons inside the network).
    */
   virtual std::uint32_t get_feature_size() const = 0;
 

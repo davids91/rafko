@@ -226,11 +226,33 @@ protected:
     const std::vector<double>& network_input, const std::vector<double>& label_data
   );
 
+  /**
+   * @brief   Inserts the spike function operation to teh operations map for the given Neuron index;
+   *          Looks into the unplaced map first, if there's already an unplaced spike
+   *          it inserts it from there
+   *
+   * @param[in]   neuron_index    the index of the Neuron Spike to place
+   *
+   * @return    A shared pointer of the placed operation
+   */
   std::shared_ptr<RafkoBackpropagationOperation> place_spike_to_operations(std::uint32_t neuron_index);
+
+  /**
+   * @brief   Inserts the spike function operation into the unplaced map;
+   *          Or finds the index in it and returns with the pointer to it
+   *
+   * @param[in]   neuron_index    the index of the Neuron Spike to place
+   *
+   * @return    A shared pointer of the operation
+   */
   std::shared_ptr<RafkoBackpropagationOperation> find_or_queue_spike(std::uint32_t neuron_index);
 
   /**
-   * @brief
+   * @brief   Places the dependency either into the operations array, or maybe the unplaced map;
+   *
+   * @param[in]   DependencyParameter   the parameters of the operation to place
+   *
+   * @return    A shared pointer of the placed operation
    */
   std::shared_ptr<RafkoBackpropagationOperation> push_dependency(DependencyParameter arguments);
 };

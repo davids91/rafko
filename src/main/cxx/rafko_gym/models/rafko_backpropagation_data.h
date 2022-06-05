@@ -24,6 +24,7 @@
 #include <algorithm>
 
 #include "rafko_utilities/models/data_ringbuffer.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_gym{
 

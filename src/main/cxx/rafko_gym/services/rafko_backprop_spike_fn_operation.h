@@ -52,12 +52,22 @@ public:
   )
   : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_neuron_spike_d)
   , neuron_index(neuron_index_)
+  , actual_operation_index(operation_index)
   {
   }
   ~RafkoBackpropSpikeFnOperation() = default;
 
-  void constexpr set_operation_index(std::uint32_t index){
-    operation_index = index;
+  std::uint32_t get_operation_index() const{
+    return actual_operation_index;
+  }
+
+  void set_operation_index(std::uint32_t index){
+    RFASSERT(!operation_index_final);
+    actual_operation_index = index;
+  }
+
+  constexpr bool operation_index_finalised(){
+    return operation_index_final;
   }
 
   DependencyRequest upload_dependencies_to_operations(){
@@ -92,12 +102,15 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+    RFASSERT(static_cast<bool>(present_value_dependency));
     return {present_value_dependency};
   }
 
 private:
   const std::uint32_t neuron_index;
   std::shared_ptr<RafkoBackpropagationOperation> present_value_dependency;
+  std::uint32_t actual_operation_index;
+  bool operation_index_final = false;
 };
 
 } /* namespace rafko_gym */

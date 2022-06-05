@@ -95,6 +95,19 @@ DependencyRequest RafkoBackpropNeuronInputOperation::upload_dependencies_to_oper
   }};
 }
 
+std::vector<std::shared_ptr<RafkoBackpropagationOperation>> RafkoBackpropNeuronInputOperation::get_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> dependencies;
+  if(network_input_dependency)
+    dependencies.push_back(network_input_dependency);
+  if(neuron_data_dependency)
+    dependencies.push_back(neuron_data_dependency);
+  if(neuron_input_dependency)
+    dependencies.push_back(neuron_input_dependency);
+  if(neuron_bias_dependency)
+    dependencies.push_back(neuron_bias_dependency);
+  return dependencies;
+}
+
 void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double>& network_input){
   parameter_not_used(network_input);
   RFASSERT(are_dependencies_registered());
