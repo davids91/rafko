@@ -93,8 +93,10 @@ public:
     return{ rafko_mainframe::RafkoNBufShape{
       /* operation values */
       (used_minibatch_size * network.memory_size() * number_of_operations),
-      /* operation derivatives */
-      (used_minibatch_size * network.memory_size() * number_of_operations * network.weight_table_size()),
+      ( /* operation derivatives */
+        network.memory_size() * used_minibatch_size
+        * number_of_operations * network.weight_table_size()
+      ),
       /* Weight derivatives */
       static_cast<std::uint32_t>(network.weight_table_size())
     } };
@@ -108,6 +110,20 @@ public:
       cl::NDRange(maximum_local_workers)/*local*/
     };
   }
+
+  /**
+   * @brief     Generates a 2D vector of operation index values
+   *            where each operations in one row can be run in paralell, and each row depends on the previous one
+   *            IMPORTANT: The function assumes that there are no cyclic dependencies
+   *
+   * @param[in]   operations    The array of operations to process
+   *
+   * @return    A 2D matrix of unsigned index values where each row can be run in paralell
+   *            and the row ordering is ascending(i.e.: the last row depends on the previous rows)
+   */
+  static std::vector<std::vector<std::uint32_t>> generate_operation_paralell_matrix(
+    const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>& operations
+  );
 
 private:
   const rafko_mainframe::RafkoSettings& settings;

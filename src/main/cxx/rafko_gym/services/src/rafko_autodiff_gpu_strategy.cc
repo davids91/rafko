@@ -23,17 +23,90 @@
 
 namespace rafko_gym{
 
+std::vector<std::vector<std::uint32_t>> AutoDiffGPUStrategy::generate_operation_paralell_matrix(
+  const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>& operations
+){
+  std::uint32_t done_marker = 0u;
+  std::vector<bool> operation_included_mark(operations.size());
+  std::vector<std::vector<std::uint32_t>> operations_matrix(1);
+
+  /*!Note: the operations in each row can be executed in paralell;
+   * Meaning all operations who have 'done' dependencies in an iteration
+   * can be run in paralell in that iteration
+   */
+  std::vector<std::uint32_t> current_depth_dependencies;
+  std::vector<std::uint32_t> next_depth_dependencies;
+  std::uint32_t current_dependency_depth = 0u; /* 0 depth is in the last row of operations_matrix*/
+  while(done_marker < operations.size()){
+    RFASSERT(0u == next_depth_dependencies.size());
+
+    while((done_marker < operations.size())&&(operation_included_mark[done_marker]))
+      ++done_marker; /* Increase the number of done operations */
+
+    RFASSERT_LOG("Done marker at: {}", done_marker);
+    RFASSERT_LOG("current depth dependencies size: {}", current_depth_dependencies.size());
+    if(0 == current_depth_dependencies.size()){ /* if no dependencies need to be extracted */
+      current_dependency_depth = 0u;
+      /* put the firstmost not yet included operation into the back of the matrix */
+      if( (done_marker < operations.size())&&(!operation_included_mark[done_marker]) ){
+        RFASSERT_LOG("Adding operation[{}] into current current_depth_dependencies", done_marker);
+        operations_matrix.back().push_back(done_marker);
+        current_depth_dependencies.push_back(done_marker);
+        operation_included_mark[done_marker] = true;
+      }
+    }
+
+    /* until there are no more of them, collect current depth dependencies into the next depth */
+    RFASSERT_LOG("current depth dependencies grew to: {}", current_depth_dependencies.size());
+    while(0u < current_depth_dependencies.size()){
+      std::uint32_t dependencies_of = current_depth_dependencies.back();
+      for(auto& d : operations[dependencies_of]->get_dependencies() ){
+        std::uint32_t dependency_index = d->get_operation_index();
+        if(!operation_included_mark[dependency_index]){
+          RFASSERT_LOG("Pushing operation[{}] into next_depth_dependencies", dependency_index);
+          next_depth_dependencies.push_back(dependency_index);
+          operation_included_mark[dependency_index] = true;
+        }
+      }
+      current_depth_dependencies.pop_back();
+    }
+
+    /* add additional layers into the operations_matrix if needed */
+    ++current_dependency_depth;
+    while(
+      (0u < next_depth_dependencies.size())
+      &&(operations_matrix.size() <= current_dependency_depth)
+    ){
+      RFASSERT_LOG("Adding depth {} to operations_matrix", current_dependency_depth);
+      operations_matrix.insert(operations_matrix.begin(), std::vector<std::uint32_t>());
+    }
+
+    /* insert the dependencies into the target depth */
+    RFASSERT_LOGV(next_depth_dependencies, "Adding operations to depth {}:", current_dependency_depth);
+    for(std::uint32_t dependency_index : next_depth_dependencies){
+      (operations_matrix.end() - current_dependency_depth - 1)->push_back(dependency_index);
+    }
+
+    /* The ol' switcheroo */
+    RFASSERT(0u == current_depth_dependencies.size());
+    current_depth_dependencies = next_depth_dependencies;
+    next_depth_dependencies.clear();
+    RFASSERT_LOGV(current_depth_dependencies,"current_depth_dependencies coming up:");
+  }/*while(there are operations to put into the matrix yet)*/
+  RFASSERT_LOGV2(operations_matrix, "Operations matrix:");
+  return operations_matrix;
+}
+
 void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations){
   std::string source_base = R"(
-    void execute_local_worker(
+
+    void execute_local_derivative_worker(
       int local_id, int available_memory_slots, int weight_table_size,
       __constant double* network_inputs, __constant double* labels, __constant double* network_weights,
-      __global double* operations_value_array, __global double* operations_d_array
+      __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array,
     ){
       ==operation_locals==
-      switch(local_id){
-        ==local_worker_cases==
-      }
+      //TODO: provide sequence truncation data
       const int weights_in_one_thread = weight_table_size / get_local_size(0);
       const int weights_index_start = weights_in_one_thread * get_local_id(0);
       const int weights_in_this_thread = min(
@@ -41,6 +114,22 @@ void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagation
       );
       for(int d_w_index = weights_index_start; d_w_index < (weights_index_start + weights_in_this_thread); ++d_w_index){
         ==derivative_operations==
+        //TODO: average the relevant weight derivatives and udpdate the output buffer with them
+        //TODO: ...in every non-truncated sequence
+      }
+    }
+
+    void execute_local_value_worker(
+      int local_id, int available_memory_slots, int weight_table_size,
+      __constant double* network_inputs, __constant double* network_weights,
+      __global double* operations_value_array
+    ){
+      ==operation_locals==
+      switch(local_id){
+        ==local_worker_cases==
+        default:
+        ==default_worker_case==
+        break;
       }
     }
 
@@ -92,61 +181,80 @@ void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagation
       const int sequences_in_this_group = min( sequences_in_work_group, (minibatch_size - sequence_start) );
 
       int network_inputs_start_index = (input_sizes[0]/*weight_table_size*/ + sequence_start * ==one_input_size==);
-      int network_labels_start_index = (input_sizes[0]/*weight_table_size*/ + input_sizes[1]/*network_inputs*/ + sequence_start * ==one_label_size== );
-      int network_values_start_index = (sequence_start * operation_count);
-      int network_derivatives_start_index = (output_sizes[0] + sequence_start * inputs[0]/*weight_table_size*/ * operation_count);
-      //TODO: Step index values forward, until network memory(or label number..) permits
-      /*!Note: Index values are not stepped forward, instead the last available memory slot is added, and then data is moved backwards */
+      int network_labels_start_index = (input_sizes[0]/*weight_table_size*/ + input_sizes[1]/*network_inputs*/ + sequence_start * ==one_label_size==);
+      int network_values_start_index = (sequence_start * network_memory_size * operation_count);
+      int network_derivatives_start_index = (
+        output_sizes[0] + sequence_start * network_memory_size * inputs[0]/*weight_table_size*/ * operation_count
+      );
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
+        int network_ran_count = 0;
         int available_memory_slots = 0;
+        network_values_start_index = (sequence_index * network_memory_size * operation_count);
+        network_derivatives_start_index = (
+          output_sizes[0] + sequence_index * network_memory_size * inputs[0]/*weight_table_size*/ * operation_count
+        );
+        int network_derivatives_sequence_start_index = network_derivatives_start_index;
+        int network_values_sequence_start_index = network_values_start_index;
         for(int prefill_index = 0; prefill_index < ==prefill_num==; ++prefill_index){
-          execute_local_worker(
+          execute_local_value_worker(
             get_local_id(0), available_memory_slots, input_sizes[0]/*weight_table_size*/,
             &inputs[network_inputs_start_index]/*network_inputs*/,
-            &inputs[network_labels_start_index]/*labels*/,
             &inputs[0]/*network_weights*/,
             &outputs[network_values_start_index]/*operation_values*/,
-            &outputs[network_derivatives_start_index]/*operation_derivatives*/
           );
-          available_memory_slots = max(available_memory_slots + 1, network_memory_size);
-          shift_local_buffer_back(
-            &outputs[0]/*operation_values*/,
-            operation_count,
-            network_memory_size,
-            false/*reset_last*/
-          );
-          shift_local_buffer_back(
-            &outputs[output_sizes[0]]/*operation_derivatives*/,
-            operation_count * input_sizes[0]/*weight_table_size*/,
-            network_memory_size,
-            false/*reset_last*/
-          );
+          ++network_ran_count;
+          available_memory_slots = min(network_ran_count, network_memory_size);
+          network_inputs_start_index += ==one_input_size==;
+          if(network_ran_count < network_memory_size){
+            network_values_start_index += operation_count;
+          }else{
+            shift_local_buffer_back(
+              &outputs[network_values_sequence_start_index]/*operation_values*/,
+              operation_count,
+              network_memory_size,
+              false/*reset_last*/
+            );
+          }
         }/*for(prefill of the sequence)*/
         for(int label_index = 0; label_index < ==sequence_size==; ++label_index){
-          execute_local_worker(
+          execute_local_value_worker(
+            get_local_id(0), available_memory_slots, input_sizes[0]/*weight_table_size*/,
+            &inputs[network_inputs_start_index]/*network_inputs*/,
+            &inputs[0]/*network_weights*/,
+            &outputs[network_derivatives_start_index]/*operation_derivatives*/
+          );
+          execute_local_derivative_worker(
             get_local_id(0), available_memory_slots, input_sizes[0]/*weight_table_size*/,
             &inputs[network_inputs_start_index]/*network_inputs*/,
             &inputs[network_labels_start_index]/*labels*/,
             &inputs[0]/*network_weights*/,
             &outputs[network_values_start_index]/*operation_values*/,
-            &outputs[network_derivatives_start_index]/*operation_derivatives*/
+            &outputs[network_derivatives_start_index]/*operation_derivatives*/,
+            &outputs[output_sizes[0] + output_sizes[1]]/*d_w_array*/
           );
-          //TODO: average the relevant weight derivatives and udpdate the output buffer with them
-          available_memory_slots = max(available_memory_slots + 1, network_memory_size);
-          shift_local_buffer_back(
-            &outputs[0]/*operation_values*/,
-            operation_count,
-            network_memory_size,
-            false/*reset_last*/
-          );
-          shift_local_buffer_back(
-            &outputs[output_sizes[0]]/*operation_derivatives*/,
-            operation_count * input_sizes[0]/* weight_table_size */,
-            network_memory_size,
-            false/*reset_last*/
-          );
-        }
-        //TODO: update the starting index values
+          network_inputs_start_index += ==one_input_size==;
+          network_labels_start_index += ==one_label_size==;
+          if(network_ran_count < network_memory_size){
+            network_values_start_index += operation_count;
+          }else{
+            shift_local_buffer_back(
+              &outputs[network_values_sequence_start_index]/*operation_values*/,
+              operation_count,
+              network_memory_size,
+              false/*reset_last*/
+            );
+          }
+          if(network_ran_count < network_memory_size){
+            network_derivatives_start_index += operation_count * input_sizes[0]/*weight_table_size*/;
+          }else{
+            shift_local_buffer_back(
+              &outputs[network_derivatives_sequence_start_index]/*operation_derivatives*/,
+              operation_count * input_sizes[0]/*weight_table_size*/,
+              network_memory_size,
+              false/*reset_last*/
+            );
+          }
+        }/*for(every label inside the sequence)*/
       }/*for(every relevant sequence index)*/
     }/*kernel*/
   )";
@@ -178,92 +286,49 @@ void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagation
       declared_operations.insert(operation_type);
     }
   }
-
-  /* Find the operations that can be run simultaniously */
-  std::uint32_t avg_row_size = 1u;
-  std::uint32_t done_marker = operations.size();
-  std::vector<bool> operation_included_mark(operations.size());
-  std::vector<std::vector<std::uint32_t>> operations_matrix(1);
-  /*!Note: the operations in each row can be executed in paralell;
-   * Meaning all operations who have 'done' dependencies in an iteration
-   * can be run in paralell in that iteration
-   */
-   //TODO: There are surely more, than 1 workers generated from 4 Neurons ans 36 operations...
-   //TODO: default case where only barriers are present..
-  while(0 < done_marker){ /* Until the whole operation array is processed */
-    /* Collect all operations with max dependency_index pointing above marker */
-    for(std::uint32_t operation_index = 0; operation_index < done_marker; ++operation_index){
-      if(!operation_included_mark[operation_index]){
-        std::uint32_t max_dependency_index = operations[operation_index]->get_max_dependency_index();
-        bool no_unmarked_dependencies = false;
-        if(max_dependency_index >= done_marker){
-          /*!Note: Since done_marker starts at operations.size() and decreases,
-           * the above line implicitly checks for operation size as well
-           */
-          no_unmarked_dependencies = true;
-        }else{ /* check if all dependencies are marked */
-          std::uint32_t marked_dependencies = 0u;
-          std::vector<Dependency> dependencies = operations[operation_index]->get_dependencies();
-          for(const Dependency& dependency : dependencies){
-            if(operation_included_mark[dependency->get_operation_index()])
-              ++marked_dependencies;
-          }
-          no_unmarked_dependencies = (
-            (0u == dependencies.size())
-            ||(marked_dependencies == dependencies.size())
-          );
-        }
-        if(no_unmarked_dependencies){
-          /*!Note: All operations not yet */
-          operations_matrix.back().push_back(operation_index);
-          operation_included_mark[operation_index] = true;
-        }/*if(operation has all dependencies marked)*/
-      }/*if(operation is not marked yet)*/
-    }/*for(all operations below the marker)*/
-
-    /* Decrease the marker until the first unmarked operation or the start of the array */
-    while( (0 < done_marker)&&(operation_included_mark[done_marker - 1]) )
-      --done_marker;
-
-    /* Store the maximum length of the rows, and add a new row */
-    avg_row_size = (avg_row_size + operations_matrix.back().size())/2u;
-    operations_matrix.emplace_back();
-  }
+  std::vector<std::vector<std::uint32_t>> operations_matrix = generate_operation_paralell_matrix(operations);
+  std::uint32_t avg_row_size = 0u;
+  for(const std::vector<std::uint32_t>& row : operations_matrix) avg_row_size += row.size();
+  avg_row_size /= operations_matrix.size();
 
   /* For each thread create the network phases */
-  std::string one_worker_case = " case 0:{ ==local_worker_phases== } break;";
-  std::string one_worker_phase = R"(
-    ==worker_operations==
-    work_group_barrier(CLK_GLOBAL_MEM_FENCE);
-  )";
-
   std::vector<std::string> worker_phases(operations_matrix.size());
+  std::string default_worker_case = "";
   /*!Note: one phase of workers involves some independent operations and a local barrier.
    * Because of coordination multiple barriers might be inserted into one worker case
    */
    /* Add value operations into worker phases */
+  RFASSERT_LOG("Starting to split operations into workers..");
   for(const std::vector<std::uint32_t>& operations_in_phase : operations_matrix){
     std::uint32_t placed_operation_count = 0u;
     while(placed_operation_count < operations_in_phase.size()){
       for(std::uint32_t worker_index = 0u; worker_index < avg_row_size; ++worker_index){
         if((placed_operation_count + worker_index) < operations_in_phase.size()){
-          std::string operation = operations[placed_operation_count + worker_index]->value_kernel_operation(
+          std::uint32_t operation_index = operations_in_phase[placed_operation_count + worker_index];
+          std::string operation = operations[operation_index]->value_kernel_operation(
             "network_inputs", "network_weights", "operations_value_array",
             std::to_string(operations.size()) /*operations_array_size*/
           );
+          if(0 == operation_index)
+            std::cout << "Operation[0]: " << operation << std::endl;
           worker_phases[worker_index] += operation;
+          RFASSERT_LOG(
+            "Placing operation[operation_in_phase[{}] ==> {}] into worker[{}] phase",
+            (placed_operation_count + worker_index), operation_index, worker_index
+          );
         }
       }/*for(every worker thread)*/
       placed_operation_count += avg_row_size;
     }/*while(any operation remain unplaced)*/
     for(std::uint32_t worker_index = 0u; worker_index < avg_row_size; ++worker_index)
       worker_phases[worker_index] += "\nwork_group_barrier(CLK_GLOBAL_MEM_FENCE);\n";
-
+    default_worker_case += "\nwork_group_barrier(CLK_GLOBAL_MEM_FENCE);\n";
   }/*for(every operation phase)*/
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==operation_locals=="), operation_locals
   );
   std::string all_worker_cases;
+
   for(std::uint32_t worker_index = 0u; worker_index < avg_row_size; ++worker_index){
     std::string one_worker_case = rafko_utilities::replace_all_in_string(
       "case ==op_index==:{==worker_operations==} break;\n",
@@ -275,6 +340,9 @@ void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagation
   }
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==local_worker_cases=="), all_worker_cases
+  );
+  source_base = rafko_utilities::replace_all_in_string(
+    source_base, std::regex("==default_worker_case=="), default_worker_case
   );
 
   /* Add derivative operations into the kernel */

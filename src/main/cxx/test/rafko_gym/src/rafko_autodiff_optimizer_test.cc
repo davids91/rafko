@@ -138,10 +138,17 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
     .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
     .allowed_transfer_functions_by_layer({
+      // {rafko_net::transfer_function_selu},
+      // {rafko_net::transfer_function_selu},
+      // {rafko_net::transfer_function_selu},
+      // {rafko_net::transfer_function_selu},
+      // {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
     .dense_layers({3,1});
+    // .dense_layers({30,1});
+    // .dense_layers({10,15,20,15,10,5,1});
 
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::vector<std::vector<double>>{{1.0,1.0},{1.0,1.0}},
