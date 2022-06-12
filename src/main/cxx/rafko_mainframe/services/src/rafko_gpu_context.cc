@@ -201,100 +201,6 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
   last_ran_evaluation = not_eval_run;
 }
 
-std::vector<cl::Event> RafkoGPUContext::upload_agent_inputs(
-  std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index, std::uint32_t sequences_to_upload
-){
-  cl_int return_value;
-  RFASSERT_LOG(
-    "Uploading agent inputs: sequence start index: {}, sequence start index in buffer: {}, sequences to upload: {}",
-    sequence_start_index, buffer_sequence_start_index, sequences_to_upload
-  );
-  std::uint32_t elements_in_a_sequence = environment->get_sequence_size() + environment->get_prefill_inputs_number();
-  /*!Note: elements == inputs */
-  std::uint32_t raw_input_start = (sequence_start_index * elements_in_a_sequence);
-  std::uint32_t raw_input_num = (sequences_to_upload * elements_in_a_sequence);
-  std::uint32_t input_buffer_byte_offset = (
-    (
-      (device_weight_table_size + agent->get_input_shapes()[0][0])
-      + (buffer_sequence_start_index * elements_in_a_sequence * environment->get_input_size())
-    ) * sizeof(double)
-  );
-  RFASSERT_LOG(
-    "input_size: {}; sequence size: {}; prefill inputs: {}; weight table size: {}; Resulting offset: {}",
-    environment->get_input_size(), environment->get_sequence_size(), environment->get_prefill_inputs_number(),
-    device_weight_table_size, input_buffer_byte_offset
-  );
-  std::vector<cl::Event> events(raw_input_num);
-
-  RFASSERT( (raw_input_start + raw_input_num) <= environment->get_number_of_input_samples() );
-  for(std::uint32_t raw_input_index = raw_input_start; raw_input_index < (raw_input_start + raw_input_num); ++raw_input_index){
-    RFASSERT_LOG("Input buffer byte offset: {}", input_buffer_byte_offset);
-    return_value = opencl_queue.enqueueWriteBuffer(
-      solution_phase.get_input_buffer(), CL_FALSE/*blocking*/,
-      input_buffer_byte_offset/*offset*/,
-      (sizeof(double) * environment->get_input_sample(raw_input_index).size())/*size*/,
-      environment->get_input_sample(raw_input_index).data(),
-      NULL, &events[raw_input_index - raw_input_start]
-    );
-    RFASSERT( return_value == CL_SUCCESS );
-    input_buffer_byte_offset += (sizeof(double) * environment->get_input_sample(raw_input_index).size());
-  }
-  return events;
-}
-
-std::vector<cl::Event> RafkoGPUContext::upload_labels(
-  std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
-  std::uint32_t sequences_to_upload, std::uint32_t buffer_start_byte_offset,
-  std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
-){
-  cl_int return_value;
-  RFASSERT_LOG(
-    "Uploading labels to evaluate: sequence start index: {}, sequence start index in buffer: {}, buffer labels byte offset: {} sequences to upload: {}; start index inside sequence: {}; sequence truncation: {}",
-    sequence_start_index, buffer_sequence_start_index, buffer_start_byte_offset, sequences_to_upload, start_index_inside_sequence, sequence_truncation
-  );
-  std::uint32_t elements_in_a_sequence = environment->get_sequence_size();
-  /*!Note: elements == labels */
-  std::uint32_t raw_label_start = (sequence_start_index * elements_in_a_sequence);
-  std::uint32_t raw_label_num = (sequences_to_upload * elements_in_a_sequence);
-
-  RFASSERT( (raw_label_start + raw_label_num) <= environment->get_number_of_label_samples() );
-  RFASSERT( (start_index_inside_sequence + sequence_truncation) <= environment->get_sequence_size() );
-  RFASSERT( 0u < sequence_truncation );
-
-  const std::uint32_t buffer_byte_offset = (
-    buffer_start_byte_offset
-    + (
-      buffer_sequence_start_index * sequence_truncation
-      * environment->get_feature_size() * sizeof(double)
-    )
-  );
-  RFASSERT_LOG("Buffer byte offset corrected by sequence index: {}", buffer_byte_offset);
-
-  std::uint32_t labels_byte_offset = 0u;
-  const std::uint32_t label_byte_size = (sizeof(double) * environment->get_feature_size());
-  std::vector<cl::Event> events(sequences_to_upload * sequence_truncation);
-  for(std::uint32_t sequence_index = sequence_start_index; sequence_index < (sequence_start_index + sequences_to_upload); ++sequence_index){
-    std::uint32_t truncated_start = (sequence_index * elements_in_a_sequence) + start_index_inside_sequence;
-    std::uint32_t uploaded_label_index = (sequence_index - sequence_start_index) * sequence_truncation;
-    for(std::uint32_t truncated_index = truncated_start; truncated_index < (truncated_start + sequence_truncation); ++truncated_index){
-      RFASSERT_LOG(
-        "used offset for label[{}]: {} ( + {}) / {}",
-        truncated_index, (buffer_byte_offset + labels_byte_offset), label_byte_size, objective->get_input_shapes()[0].get_byte_size<double>()
-      );
-      return_value = opencl_queue.enqueueWriteBuffer(
-        error_phase.get_input_buffer(), CL_FALSE/*blocking*/,
-        (buffer_byte_offset + labels_byte_offset)/*offset*/,
-        label_byte_size/*size*/, environment->get_label_sample(truncated_index).data(),
-        NULL, &events[uploaded_label_index + truncated_index - truncated_start]
-      );
-      RFASSERT( return_value == CL_SUCCESS );
-      labels_byte_offset += label_byte_size;
-    }
-  }
-
-  return events;
-}
-
 std::vector<cl::Event> RafkoGPUContext::upload_agent_output(
   std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
 ){
@@ -370,15 +276,20 @@ double RafkoGPUContext::full_evaluation(){
     return_value = fill_event.wait();
     RFASSERT( return_value == CL_SUCCESS );
 
-    std::vector<cl::Event> input_events = upload_agent_inputs(
+    std::vector<cl::Event> input_events = environment->upload_inputs_to_buffer(
+      opencl_queue, solution_phase.get_input_buffer(),
+      (device_weight_table_size + agent->get_input_shapes()[0][0])/*buffer offset*/,
       0u/*sequence_start_index*/, 0u/*buffer_sequence_start_index*/,
       environment->get_number_of_sequences()/*sequences_to_upload*/
     );
 
-    label_events = upload_labels(
+    label_events = environment->upload_labels_to_buffer(
+      opencl_queue, error_phase.get_input_buffer(), (
+        environment->get_number_of_label_samples()
+        * environment->get_feature_size() * sizeof(double)
+      ) /*buffer_start_byte_offset*/,
       0u/*sequence_start_index*/, 0/*buffer_sequence_start_index*/,
       environment->get_number_of_sequences()/*sequences_to_upload*/,
-      (environment->get_number_of_label_samples() * environment->get_feature_size() * sizeof(double)) /*buffer_start_byte_offset*/,
       0u/*start_index_inside_sequence*/, environment->get_sequence_size()/*sequence_truncation*/
     );
 
@@ -454,13 +365,15 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
     return_value = fill_event.wait();
     RFASSERT( return_value == CL_SUCCESS );
 
-    /* upload random labels and inputs */
+    /* upload pseudo-random labels and inputs */
     std::uint32_t uploaded_sequences = 0u;
     while(uploaded_sequences < used_minibatch_size){
       std::uint32_t sequences_to_upload = rand()%(used_minibatch_size - uploaded_sequences + 1u);
       std::uint32_t sequence_start_index = rand()%(environment->get_number_of_sequences() - sequences_to_upload + 1u);
       RFASSERT_LOG("Uploading {} sequences starting from {}", sequences_to_upload, sequence_start_index);
-      std::vector<cl::Event> input_events_ = upload_agent_inputs(
+      std::vector<cl::Event> input_events_ = environment->upload_inputs_to_buffer(
+        opencl_queue, solution_phase.get_input_buffer(),
+        (device_weight_table_size + agent->get_input_shapes()[0][0])/*buffer offset*/,
         sequence_start_index, uploaded_sequences/*buffer_sequence_start_index*/,
         sequences_to_upload/*sequences_to_upload*/
       );
@@ -468,10 +381,12 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
         input_events.end(),
         input_events_.begin(), input_events_.end()
       );
-      std::vector<cl::Event> label_events_ = upload_labels(
+      std::vector<cl::Event> label_events_ = environment->upload_labels_to_buffer(
+        opencl_queue, error_phase.get_input_buffer(), (
+          environment->get_number_of_label_samples() * environment->get_feature_size() * sizeof(double)
+        ) /*buffer_start_byte_offset*/,
         sequence_start_index, uploaded_sequences/*buffer_sequence_start_index*/,
         sequences_to_upload/*sequences_to_upload*/,
-        (environment->get_number_of_label_samples() * environment->get_feature_size() * sizeof(double)) /*buffer_start_byte_offset*/,
         start_index_inside_sequence, used_sequence_truncation
       );
       label_events.insert(
