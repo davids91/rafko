@@ -128,37 +128,6 @@ private:
    *
    * @return      A vector of events to wait for, signaling operation completion
    */
-  std::vector<cl::Event> upload_agent_inputs(
-    std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index, std::uint32_t sequences_to_upload
-  );
-
-  /**
-   * @brief     Upload labels to the error phase to be able to evaluate agent output
-   *
-   * @param[in]   sequence_start_index          The index of the first sequence in the environment to upload the inputs from
-   * @param[in]   buffer_sequence_start_index   Start index of a sequence to start uploading inputs from in the global buffer
-   * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
-   * @param[in]   buffer_start_byte_offset      The start index where the labels start inside the evaluation buffer
-   * @param[in]   start_index_inside_sequence   Start index inside sequence for sequence truncation
-   * @param[in]   sequence_truncation           Number of labels to evaluate per sequence (sequence truncation size)
-   *
-   * @return      A vector of events to wait for, signaling operation completion
-   */
-  std::vector<cl::Event> upload_labels(
-    std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
-    std::uint32_t sequences_to_upload, std::uint32_t buffer_start_byte_offset,
-    std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
-  );
-
-  /**
-   * @brief     Upload inputs to the solution phase to be able to run the agent kernel code on the inputs
-   *
-   * @param[in]   sequence_start_index          The index of the first sequence in the environment to upload the inputs from
-   * @param[in]   buffer_sequence_start_index   Start index of a sequence to start uploading inputs from in the global buffer
-   * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
-   *
-   * @return      A vector of events to wait for, signaling operation completion
-   */
   std::vector<cl::Event> upload_agent_output(
     std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
   );

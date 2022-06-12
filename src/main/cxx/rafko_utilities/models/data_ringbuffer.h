@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <stdexcept>
+#include <functional>
 
 namespace rafko_utilities{
 

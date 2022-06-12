@@ -41,6 +41,7 @@ target_sources(rafko_gym
   PUBLIC ${GYM_HEADERS}
   PRIVATE
   models/src/rafko_cost.cc
+  models/src/rafko_environment.cc
   models/src/rafko_dataset_wrapper.cc
   services/src/cost_function.cc
   services/src/rafko_backprop_neuron_input_operation.cc
