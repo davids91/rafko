@@ -18,6 +18,7 @@
 
 #include <set>
 
+#include "rafko_utilities/models/rafko_gpu_kernel_library.h"
 #include "rafko_utilities/services/rafko_string_utils.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
@@ -97,35 +98,45 @@ std::vector<std::vector<std::uint32_t>> AutoDiffGPUStrategy::generate_operation_
   return operations_matrix;
 }
 
-void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations){
-  std::string source_base = R"(
-
+void AutoDiffGPUStrategy::build(
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations,
+  std::uint32_t weight_relevant_operation_count
+){
+  std::string source_base = rafko_utilities::atomic_double_average_function + rafko_utilities::random_function + R"(
     void execute_local_derivative_worker(
-      int local_id, int available_memory_slots, int weight_table_size,
+      int available_memory_slots, int weight_table_size, bool save_to_output,
       __constant double* network_inputs, __constant double* labels, __constant double* network_weights,
-      __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array,
+      __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array
     ){
       ==operation_locals==
-      //TODO: provide sequence truncation data
       const int weights_in_one_thread = weight_table_size / get_local_size(0);
       const int weights_index_start = weights_in_one_thread * get_local_id(0);
       const int weights_in_this_thread = min(
         weights_in_one_thread, max(0, (weight_table_size - weights_index_start))
       );
       for(int d_w_index = weights_index_start; d_w_index < (weights_index_start + weights_in_this_thread); ++d_w_index){
+
         ==derivative_operations==
-        //TODO: average the relevant weight derivatives and udpdate the output buffer with them
-        //TODO: ...in every non-truncated sequence
-      }
-    }
+
+        if(save_to_output){
+          double average_gradient = 0.0;
+          double relevant_operation_count = ==weight_relevant_operation_count==;
+          for(int operation_index = 0; operation_index < relevant_operation_count;++operation_index){
+            average_gradient += operations_d_array[(weight_table_size * d_w_index) + operation_index];
+          }
+          average_gradient /= relevant_operation_count;
+          AtomicAvg(&d_w_array[d_w_index],average_gradient);
+        }
+      }/*for(all relevant weights)*/
+    }/*execute_local_derivative_worker()*/
 
     void execute_local_value_worker(
-      int local_id, int available_memory_slots, int weight_table_size,
+      int available_memory_slots, int weight_table_size,
       __constant double* network_inputs, __constant double* network_weights,
       __global double* operations_value_array
     ){
       ==operation_locals==
-      switch(local_id){
+      switch(get_local_id(0)){
         ==local_worker_cases==
         default:
         ==default_worker_case==
@@ -180,6 +191,8 @@ void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagation
       const int sequence_start = sequences_in_work_group * get_local_id(0);
       const int sequences_in_this_group = min( sequences_in_work_group, (minibatch_size - sequence_start) );
 
+      uint local_seed = (uint)(inputs[input_sizes[0] + get_global_id(0)] * 100000.0);
+      int sequence_truncation = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]];
       int network_inputs_start_index = (input_sizes[0]/*weight_table_size*/ + sequence_start * ==one_input_size==);
       int network_labels_start_index = (input_sizes[0]/*weight_table_size*/ + input_sizes[1]/*network_inputs*/ + sequence_start * ==one_label_size==);
       int network_values_start_index = (sequence_start * network_memory_size * operation_count);
@@ -197,10 +210,10 @@ void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagation
         int network_values_sequence_start_index = network_values_start_index;
         for(int prefill_index = 0; prefill_index < ==prefill_num==; ++prefill_index){
           execute_local_value_worker(
-            get_local_id(0), available_memory_slots, input_sizes[0]/*weight_table_size*/,
+            available_memory_slots, input_sizes[0]/*weight_table_size*/,
             &inputs[network_inputs_start_index]/*network_inputs*/,
             &inputs[0]/*network_weights*/,
-            &outputs[network_values_start_index]/*operation_values*/,
+            &outputs[network_values_start_index]/*operation_values*/
           );
           ++network_ran_count;
           available_memory_slots = min(network_ran_count, network_memory_size);
@@ -216,15 +229,22 @@ void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagation
             );
           }
         }/*for(prefill of the sequence)*/
+        uint sequence_truncation_start = get_random_number(
+          max(1, (==sequence_size== - sequence_truncation)), &local_seed
+        );
         for(int label_index = 0; label_index < ==sequence_size==; ++label_index){
           execute_local_value_worker(
-            get_local_id(0), available_memory_slots, input_sizes[0]/*weight_table_size*/,
+            available_memory_slots, input_sizes[0]/*weight_table_size*/,
             &inputs[network_inputs_start_index]/*network_inputs*/,
             &inputs[0]/*network_weights*/,
             &outputs[network_derivatives_start_index]/*operation_derivatives*/
           );
           execute_local_derivative_worker(
-            get_local_id(0), available_memory_slots, input_sizes[0]/*weight_table_size*/,
+            available_memory_slots, input_sizes[0]/*weight_table_size*/,
+            (
+              ( label_index >= sequence_truncation_start )
+              &&( label_index < (sequence_truncation_start + sequence_truncation) )
+            ),
             &inputs[network_inputs_start_index]/*network_inputs*/,
             &inputs[network_labels_start_index]/*labels*/,
             &inputs[0]/*network_weights*/,
@@ -259,22 +279,32 @@ void AutoDiffGPUStrategy::build(std::vector<std::shared_ptr<RafkoBackpropagation
     }/*kernel*/
   )";
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==network_memory_size=="), std::to_string(network.memory_size())
+    source_base, std::regex("==network_memory_size=="),
+    std::to_string(network.memory_size())
   );
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==operation_count=="), std::to_string(operations.size())
+    source_base, std::regex("==operation_count=="),
+    std::to_string(operations.size())
   );
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==neuron_count=="), std::to_string(network.neuron_array_size())
+    source_base, std::regex("==neuron_count=="),
+    std::to_string(network.neuron_array_size())
   );
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==sequence_size=="), std::to_string(environment->get_sequence_size())
+    source_base, std::regex("==sequence_size=="),
+    std::to_string(environment->get_sequence_size())
   );
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==prefill_num=="), std::to_string(environment->get_prefill_inputs_number())
+    source_base, std::regex("==prefill_num=="),
+    std::to_string(environment->get_prefill_inputs_number())
   );
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==minibatch_size=="), std::to_string(used_minibatch_size)
+    source_base, std::regex("==minibatch_size=="),
+    std::to_string(used_minibatch_size)
+  );
+  source_base = rafko_utilities::replace_all_in_string(
+    source_base, std::regex("==weight_relevant_operation_count=="),
+    std::to_string(weight_relevant_operation_count)
   );
 
   std::string operation_locals;

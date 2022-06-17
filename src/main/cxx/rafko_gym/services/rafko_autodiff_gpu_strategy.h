@@ -65,7 +65,10 @@ public:
     built = false;
   }
 
-  void build(std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations);
+  void build(
+    std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations,
+    std::uint32_t weight_relevant_operation_count
+  );
 
   cl::Program::Sources get_step_sources() const{
     RFASSERT(built);
@@ -80,12 +83,10 @@ public:
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
     RFASSERT(static_cast<bool>(environment));
     return{ rafko_mainframe::RafkoNBufShape{
-      /* Weights */
-      static_cast<std::uint32_t>(network.weight_table_size()),
-      /* Inputs */
-      used_minibatch_size * environment->get_inputs_in_one_sequence() * network.input_data_size(),
-      /* Labels */
-      used_minibatch_size * environment->get_sequence_size() * network.output_neuron_number()
+      /* Weights */ static_cast<std::uint32_t>(network.weight_table_size()),
+      /* Inputs */ used_minibatch_size * environment->get_inputs_in_one_sequence() * network.input_data_size(),
+      /* Labels */ used_minibatch_size * environment->get_sequence_size() * network.output_neuron_number(),
+      /* Sequence_truncation */ sizeof(double)
     } };
   }
 

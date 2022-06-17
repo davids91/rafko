@@ -63,8 +63,8 @@ public:
   }
 
   void build(std::shared_ptr<RafkoObjective> objective){
-    std::uint32_t weight_relevant_operation_count = build_without_data(objective);
-    strategy->build(operations);
+    // std::uint32_t weight_relevant_operation_count = build_without_data(objective);
+    strategy->build(operations, build_without_data(objective));
     gpu_phase.set_strategy(strategy);
     //TODO: Sort operations into groups that can be executed in paralell
     // |--> traverse operations backwards, collecting everything solvable
