@@ -36,7 +36,7 @@ namespace rafko_mainframe{
 class RAFKO_FULL_EXPORT RafkoGPUPhase{
 public:
   RafkoGPUPhase(
-    const cl::Context& context_, const cl::Device& device_, const cl::CommandQueue& queue_,
+    const cl::Context& context_, const cl::Device& device_, cl::CommandQueue& queue_,
     std::shared_ptr<RafkoGPUStrategyPhase> strategy_
   ):opencl_context(context_)
   , opencl_device(device_)
@@ -55,10 +55,30 @@ public:
   /**
    * @brief      Executes the implemented strategy phase
    *
+   * @param[in]  input    the input array to upload to device memory
+   */
+  void operator()(const std::vector<double>& input);
+
+  /**
+   * @brief      Executes the implemented strategy phase
+   *
+   * @param[in]  input    the input buffer containing input data already on device
+   */
+  void operator()(cl::Buffer& input);
+
+  /**
+   * @brief      Executes the implemented strategy phase
+   *
+   */
+  void operator()();
+
+  /**
+   * @brief      Executes the implemented strategy phase
+   *
    * @param[in]  enq      the OpenCL enqeue arguments provided by the caller
    * @param[in]  input    the input array to upload to device memory
    */
-  void operator()(cl::EnqueueArgs& enq, const std::vector<double>& input);
+  void operator()(cl::EnqueueArgs enq, const std::vector<double>& input);
 
   /**
    * @brief      Executes the implemented strategy phase
@@ -66,14 +86,14 @@ public:
    * @param[in]  enq      the OpenCL enqeue arguments provided by the caller
    * @param[in]  input    the input buffer containing input data already on device
    */
-  void operator()(cl::EnqueueArgs& enq, cl::Buffer& input);
+  void operator()(cl::EnqueueArgs enq, cl::Buffer& input);
 
   /**
    * @brief      Executes the implemented strategy phase
    *
    * @param[in]  enq      the OpenCL enqeue arguments provided by the caller
    */
-  void operator()(cl::EnqueueArgs& enq);
+  void operator()(cl::EnqueueArgs enq);
 
   /**
    * @brief      Constructs a buffer containing the output data of the implemented strategy phase
@@ -88,7 +108,7 @@ public:
   /**
    * @brief      Loads the output of the Phase into the supported pointer
    *
-   * @param[in]  target     The pointer to load the output data into
+   * @param[in]  target   The pointer to load the output data into
    * @param[in]  size     The number of elements to take from the output
    * @param[in]  offset   An offset inside the output buffer to get
    */
@@ -117,7 +137,7 @@ public:
 private:
   const cl::Context& opencl_context;
   const cl::Device& opencl_device;
-  const cl::CommandQueue& opencl_device_queue;
+  cl::CommandQueue& opencl_device_queue;
   std::shared_ptr<RafkoGPUStrategyPhase> strategy;
   std::vector<std::tuple<cl::Buffer, cl::Buffer, int>> kernel_args;
   std::vector<cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>> steps;

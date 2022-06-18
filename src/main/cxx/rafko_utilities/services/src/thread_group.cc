@@ -19,6 +19,26 @@
 
 namespace rafko_utilities {
 
+ThreadGroup::ThreadGroup(std::uint32_t number_of_threads){
+  assert(0u < number_of_threads);
+  for(std::uint32_t i = 0; i < number_of_threads; ++i)
+   threads.emplace_back(std::thread(&ThreadGroup::worker, this, i));
+}
+
+ThreadGroup::~ThreadGroup(){
+  { /* Signal to the worker threads that the show is over */
+   std::lock_guard<std::mutex> my_lock(state_mutex);
+   state.store(End);
+  }
+  while(0 < threads.size()){
+    synchroniser.notify_all();
+    if(threads.back().joinable()){
+      threads.back().join();
+      threads.pop_back();
+    }
+  }
+}
+
 void ThreadGroup::start_and_block(const std::function<void(std::uint32_t)>& function) const{
   { /* initialize, start.. */
     std::unique_lock<std::mutex> my_lock(state_mutex);

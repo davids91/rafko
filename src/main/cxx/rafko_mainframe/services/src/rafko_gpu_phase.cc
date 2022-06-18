@@ -103,7 +103,31 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
 
 }
 
-void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, const std::vector<double>& input){
+void RafkoGPUPhase::operator()(const std::vector<double>& input){
+  (*this)(
+    std::make_from_tuple<cl::EnqueueArgs>(
+      std::tuple_cat(std::tie(opencl_device_queue), strategy->get_solution_space())
+    ), input
+  );
+}
+
+void RafkoGPUPhase::operator()(cl::Buffer& input){
+  (*this)(
+    std::make_from_tuple<cl::EnqueueArgs>(
+      std::tuple_cat(std::tie(opencl_device_queue), strategy->get_solution_space())
+    ), input
+  );
+}
+
+void RafkoGPUPhase::operator()(){
+  (*this)(
+    std::make_from_tuple<cl::EnqueueArgs>(
+      std::tuple_cat(std::tie(opencl_device_queue), strategy->get_solution_space())
+    )
+  );
+}
+
+void RafkoGPUPhase::operator()(cl::EnqueueArgs enq, const std::vector<double>& input){
   RafkoNBufShape input_shape = strategy->get_input_shapes()[0];
   RFASSERT_LOG(
     "Number of inputs: {} vs. {}",
@@ -122,7 +146,7 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, const std::vector<double>& 
   (*this)(enq, input_buf_cl);
 }
 
-void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, cl::Buffer& input){
+void RafkoGPUPhase::operator()(cl::EnqueueArgs enq, cl::Buffer& input){
   steps[0](enq,
     input, std::get<1>(kernel_args[0]), std::get<2>(kernel_args[0]),
     std::get<0>(kernel_args[1]), std::get<1>(kernel_args[1]), std::get<2>(kernel_args[1])
@@ -136,7 +160,7 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq, cl::Buffer& input){
   }
 }
 
-void RafkoGPUPhase::operator()(cl::EnqueueArgs& enq){
+void RafkoGPUPhase::operator()(cl::EnqueueArgs enq){
   steps[0](enq,
     std::get<0>(kernel_args[0]), std::get<1>(kernel_args[0]), std::get<2>(kernel_args[0]),
     std::get<0>(kernel_args[1]), std::get<1>(kernel_args[1]), std::get<2>(kernel_args[1])
