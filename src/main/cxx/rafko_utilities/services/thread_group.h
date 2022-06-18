@@ -37,26 +37,12 @@ namespace rafko_utilities{
  */
 class RAFKO_FULL_EXPORT ThreadGroup{
 public:
-  ThreadGroup(std::uint32_t number_of_threads){
-    assert(0u < number_of_threads);
-    for(std::uint32_t i = 0; i < number_of_threads; ++i)
-     threads.emplace_back(std::thread(&ThreadGroup::worker, this, i));
-  }
+  ThreadGroup(std::uint32_t number_of_threads);
+  ~ThreadGroup();
 
-  ~ThreadGroup(){
-    { /* Signal to the worker threads that the show is over */
-     std::lock_guard<std::mutex> my_lock(state_mutex);
-     state.store(End);
-    }
-    while(0 < threads.size()){
-      synchroniser.notify_all();
-      if(threads.back().joinable()){
-        threads.back().join();
-        threads.pop_back();
-      }
-    }
-  }
-
+  /**
+   * @brief     Executes the profided function in all of the handled threads with the index of the executing thread provided to it
+   */
   void start_and_block(const std::function<void(std::uint32_t)>& function) const;
 
   /**
