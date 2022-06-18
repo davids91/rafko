@@ -37,7 +37,7 @@ namespace rafko_gym{
  * @brief
  */
 class RAFKO_FULL_EXPORT RafkoAutodiffGPUOptimizer
-: private RafkoAutodiffOptimizer
+: private RafkoAutodiffGOptimizer
 {
 public:
   RafkoAutodiffGPUOptimizer(
@@ -63,25 +63,16 @@ public:
   }
 
   void build(std::shared_ptr<RafkoObjective> objective){
-    // std::uint32_t weight_relevant_operation_count = build_without_data(objective);
     strategy->build(operations, build_without_data(objective));
     gpu_phase.set_strategy(strategy);
-    //TODO: Sort operations into groups that can be executed in paralell
-    // |--> traverse operations backwards, collecting everything solvable
-    // |--> collect them, and mark them solved
-    // |--> traverse again, collect newly solvable operations
-    // |--> collect them, and mark them solved
-    // |--> repeat until there are operations left
-    //TODO: build phase
-    // gpu_phase.set_strategy(strategy);
   }
 
-  void iterate(){
-    //TODO: Update stochastic data in buffers
-    //TODO: Run Phase
-    //TODO: Weight updates based on result data
-    //TODO: Training and test set evaluation ?
-  }
+  void iterate(bool refresh_environment);
+
+  //TODO: Documentation for these
+  void upload_weight_table();
+  std::vector<cl::Event> update_inputs();
+  std::vector<cl::Event> update_labels();
 
 private:
   cl::Context opencl_context;

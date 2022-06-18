@@ -183,15 +183,25 @@ void AutoDiffGPUStrategy::build(
       __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
       __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){
-      const int network_memory_size = ==network_memory_size==;
+      /* deciding main parameters of the kernel */
+      const int number_of_sequences = ==number_of_sequences==;
       const int minibatch_size = ==minibatch_size==;
+      const int network_memory_size = ==network_memory_size==;
       const int operation_count = ==operation_count==;
       const int neuron_count = ==neuron_count==;
-      const int sequences_in_work_group = (minibatch_size / get_num_groups(0)) + 1;
-      const int sequence_start = sequences_in_work_group * get_local_id(0);
-      const int sequences_in_this_group = min( sequences_in_work_group, (minibatch_size - sequence_start) );
 
-      uint local_seed = (uint)(inputs[input_sizes[0] + get_global_id(0)] * 100000.0);
+      /* deciding the sequence start index values for each workgroup */
+      const int sequences_in_work_group = (number_of_sequences / get_num_groups(0)) + 1;
+      uint local_seed = (uint)(inputs[min(get_global_id(0)), input_sizes[0]] * 100000.0);
+      int sequence_start;
+      int sequences_in_this_group;
+      if(0 == get_local_id(0)){
+        sequence_start = get_random_number(minibatch_size, &local_seed);
+        sequences_in_this_group = min( sequences_in_work_group, (minibatch_size - sequence_start) );
+      }
+      work_group_barrier(CLK_LOCAL_MEM_FENCE);
+
+      /* Main cache variables for running */
       int sequence_truncation = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]];
       int network_inputs_start_index = (input_sizes[0]/*weight_table_size*/ + sequence_start * ==one_input_size==);
       int network_labels_start_index = (input_sizes[0]/*weight_table_size*/ + input_sizes[1]/*network_inputs*/ + sequence_start * ==one_label_size==);
@@ -199,6 +209,7 @@ void AutoDiffGPUStrategy::build(
       int network_derivatives_start_index = (
         output_sizes[0] + sequence_start * network_memory_size * inputs[0]/*weight_table_size*/ * operation_count
       );
+
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
         int network_ran_count = 0;
         int available_memory_slots = 0;
@@ -299,8 +310,13 @@ void AutoDiffGPUStrategy::build(
     std::to_string(environment->get_prefill_inputs_number())
   );
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==minibatch_size=="),
-    std::to_string(used_minibatch_size)
+    source_base, std::regex("==number_of_sequences=="),
+    environment->get_number_of_sequences()
+  );
+  source_base = rafko_utilities::replace_all_in_string(
+    source_base, std::regex("==minibatch_size=="), std::to_string( std::min(
+      settings.get_minibatch_size(), environment->get_number_of_sequences()
+    ) )
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==weight_relevant_operation_count=="),

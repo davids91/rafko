@@ -11,6 +11,7 @@ if(USE_OPENCL)
   )
   set(GYM_SOURCES_WITH_OCL
     services/src/rafko_autodiff_gpu_strategy.cc
+    services/src/rafko_autodiff_gpu_optimizer.cc
   )
 else()
   target_link_libraries(rafko_mainframe PUBLIC rafko_protocol)

@@ -59,9 +59,6 @@ public:
   void set_environment(std::shared_ptr<RafkoEnvironment> environment_){
     environment = environment_;
     RFASSERT(environment->get_input_size() == network.input_data_size());
-    used_minibatch_size = std::min(
-      settings.get_minibatch_size(), environment->get_number_of_sequences()
-    );
     built = false;
   }
 
@@ -83,9 +80,9 @@ public:
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
     RFASSERT(static_cast<bool>(environment));
     return{ rafko_mainframe::RafkoNBufShape{
-      /* Weights */ static_cast<std::uint32_t>(network.weight_table_size()),
-      /* Inputs */ used_minibatch_size * environment->get_inputs_in_one_sequence() * network.input_data_size(),
-      /* Labels */ used_minibatch_size * environment->get_sequence_size() * network.output_neuron_number(),
+      /* Weights */ (sizeof(double) * static_cast<std::uint32_t>(network.weight_table_size())),
+      /* Inputs */ (sizeof(double) * environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
+      /* Labels */(sizeof(double) * environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
       /* Sequence_truncation */ sizeof(double)
     } };
   }
@@ -93,9 +90,9 @@ public:
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
     return{ rafko_mainframe::RafkoNBufShape{
       /* operation values */
-      (used_minibatch_size * network.memory_size() * number_of_operations),
+      (environment->get_number_of_sequences() * network.memory_size() * number_of_operations),
       ( /* operation derivatives */
-        network.memory_size() * used_minibatch_size
+        network.memory_size() * environment->get_number_of_sequences()
         * number_of_operations * network.weight_table_size()
       ),
       /* Weight derivatives */
@@ -107,7 +104,7 @@ public:
     RFASSERT(static_cast<bool>(environment));
     return {
       cl::NullRange/*offset*/,
-      cl::NDRange(used_minibatch_size * maximum_local_workers)/*global*/,
+      cl::NDRange(environment->get_number_of_sequences() * maximum_local_workers)/*global*/,
       cl::NDRange(maximum_local_workers)/*local*/
     };
   }
@@ -130,7 +127,6 @@ private:
   const rafko_mainframe::RafkoSettings& settings;
   rafko_net::RafkoNet& network;
   std::shared_ptr<RafkoEnvironment> environment;
-  std::uint32_t used_minibatch_size;
   bool built = false;
   std::string built_source;
   std::uint32_t number_of_operations;
