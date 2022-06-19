@@ -192,7 +192,7 @@ void AutoDiffGPUStrategy::build(
 
       /* deciding the sequence start index values for each workgroup */
       const int sequences_in_work_group = (number_of_sequences / get_num_groups(0)) + 1;
-      uint local_seed = (uint)(inputs[min(get_global_id(0)), input_sizes[0]] * 100000.0);
+      uint local_seed = (uint)(inputs[min(get_global_id(0), (size_t)(input_sizes[0]))] * 100000.0);
       int sequence_start;
       int sequences_in_this_group;
       if(0 == get_local_id(0)){
@@ -311,7 +311,7 @@ void AutoDiffGPUStrategy::build(
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==number_of_sequences=="),
-    environment->get_number_of_sequences()
+    std::to_string(environment->get_number_of_sequences())
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==minibatch_size=="), std::to_string( std::min(

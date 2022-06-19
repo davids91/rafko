@@ -65,6 +65,7 @@ public:
   , test_evaluator(test_evaluator_)
   , used_sequence_truncation( std::min(settings.get_memory_truncation(), environment->get_sequence_size()) )
   , used_minibatch_size( std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) )
+  , tmp_avg_derivatives(network.weight_table_size())
   {
     if(training_evaluator){
       training_evaluator->set_environment(environment);
@@ -141,16 +142,14 @@ public:
   }
 
   /**
-   * @brief Provides a const reference of the stored operations representing the objective comparison for a Neuron output
+   * @brief     Provides a const reference of the stored operations representing the objective comparison for a Neuron output
    *
    * @param[in]   neuron_index    the index of the Neuron to query
    *
-   * @return    const access to one of the underlying outputoperations
+   * @return    const access to one of the underlying output operations
    */
-  const std::shared_ptr<RafkoBackpropagationOperation>& get_neuron_operation(std::uint32_t neuron_index){
-    auto found_element = neuron_spike_to_operation_map->find(neuron_index);
-    RFASSERT(found_element != neuron_spike_to_operation_map->end());
-    return operations[found_element->second];
+  const std::shared_ptr<RafkoBackpropagationOperation>& get_neuron_operation(std::uint32_t neuron_index) const{
+    return operations[get_operation_index(neuron_index)];
   }
 
   double get_avg_gradient(std::uint32_t d_w_index);
@@ -162,11 +161,11 @@ public:
     return sum / static_cast<double>(network.weight_table_size());
   }
 
-  constexpr double get_last_training_error(){
+  constexpr double get_last_training_error() const{
       return last_training_error;
   }
 
-  constexpr double get_last_testing_error(){
+  constexpr double get_last_testing_error() const{
       return last_testing_error;
   }
 
@@ -190,7 +189,31 @@ protected:
   std::uint32_t iteration = 0u;
   double last_training_error = std::numeric_limits<double>::quiet_NaN();
   double last_testing_error = std::numeric_limits<double>::quiet_NaN();
+  std::vector<double> tmp_avg_derivatives;
 
+  /**
+   * @brief     Queries the index of the output operation of the given neuron index
+   *
+   * @param[in]   neuron_index    the index of the Neuron to query
+   *
+   * @return    the operation index
+   */
+  std::uint32_t get_operation_index(std::uint32_t neuron_index) const{
+    auto found_element = neuron_spike_to_operation_map->find(neuron_index);
+    RFASSERT(found_element != neuron_spike_to_operation_map->end());
+    return found_element->second;
+  }
+
+  /**
+   * @brief   Calculates the training and test set values where appropriate
+   */
+  void update_context_errors();
+
+  /**
+   * @brief   applies a weight update to the network
+   *
+   * @param[in]   weight_delta    the weight delta to update
+   */
   void apply_weight_update(const std::vector<double>& weight_delta){
     RFASSERT_LOGV(weight_delta, "Applying weight(autodiff optimizer) update! Delta:");
     RFASSERT( static_cast<std::int32_t>(weight_delta.size()) == network.weight_table_size() );

@@ -37,7 +37,7 @@ namespace rafko_gym{
  * @brief
  */
 class RAFKO_FULL_EXPORT RafkoAutodiffGPUOptimizer
-: private RafkoAutodiffGOptimizer
+: private RafkoAutodiffOptimizer
 {
 public:
   RafkoAutodiffGPUOptimizer(
@@ -67,12 +67,17 @@ public:
     gpu_phase.set_strategy(strategy);
   }
 
-  void iterate(bool refresh_environment);
+  using RafkoAutodiffOptimizer::set_weight_updater;
+  void iterate(bool refresh_environment = false);
 
   //TODO: Documentation for these
   void upload_weight_table();
   std::vector<cl::Event> update_inputs();
   std::vector<cl::Event> update_labels();
+  void refresh_environment();
+  double get_neuron_data(
+    std::uint32_t sequence_index, std::uint32_t past_index, std::uint32_t neuron_index
+  );
 
 private:
   cl::Context opencl_context;
@@ -80,6 +85,7 @@ private:
   cl::CommandQueue opencl_queue;
   std::shared_ptr<AutoDiffGPUStrategy> strategy;
   rafko_mainframe::RafkoGPUPhase gpu_phase;
+
 };
 
 } /* namespace rafko_gym */

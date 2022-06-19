@@ -183,6 +183,26 @@ void RafkoAutodiffOptimizer::calculate(BackpropDataBufferRange network_input, Ba
   }
 }
 
+void RafkoAutodiffOptimizer::update_context_errors(){
+  if( (training_evaluator) && (0 == (iteration%settings.get_tolerance_loop_value())) ){
+    training_evaluator->refresh_solution_weights();
+    last_training_error = training_evaluator->stochastic_evaluation();
+  }
+  if(
+    (test_evaluator)
+    &&(
+      (0 == (iteration%settings.get_tolerance_loop_value()))
+      ||(
+        (training_evaluator)
+        &&((last_training_error * settings.get_delta()) < std::abs(last_training_error - last_testing_error))
+      )
+    )
+  ){
+    test_evaluator->refresh_solution_weights();
+    last_testing_error = test_evaluator->stochastic_evaluation();
+  }
+}
+
 void RafkoAutodiffOptimizer::iterate(){
   RFASSERT(static_cast<bool>(environment));
   std::uint32_t sequence_start_index = (rand()%(environment->get_number_of_sequences() - used_minibatch_size + 1));
@@ -216,7 +236,7 @@ void RafkoAutodiffOptimizer::iterate(){
     }/*for(relevant sequences)*/
   }
 
-  std::vector<double> avg_derivatives(network.weight_table_size(), 0.0);
+  std::fill(tmp_avg_derivatives.begin(), tmp_avg_derivatives.end(), 0.0);
   for(
     std::uint32_t past_sequence_index = start_index_inside_sequence;
     past_sequence_index < (start_index_inside_sequence + used_sequence_truncation);
@@ -226,31 +246,15 @@ void RafkoAutodiffOptimizer::iterate(){
       .get_element(past_sequence_index);
     std::transform(
       sequence_derivative.begin(), sequence_derivative.end(),
-      avg_derivatives.begin(), avg_derivatives.begin(),
+      tmp_avg_derivatives.begin(), tmp_avg_derivatives.begin(),
       [](const double& a, const double& b){ return (a+b)/2.0; }
     );
   }
 
-  if( (training_evaluator) && (0 == (iteration%settings.get_tolerance_loop_value())) ){
-    training_evaluator->refresh_solution_weights();
-    last_training_error = training_evaluator->stochastic_evaluation();
-  }
-  if(
-    (test_evaluator)
-    &&(
-      (0 == (iteration%settings.get_tolerance_loop_value()))
-      ||(
-        (training_evaluator)
-        &&((last_training_error * settings.get_delta()) < std::abs(last_training_error - last_testing_error))
-      )
-    )
-  ){
-    test_evaluator->refresh_solution_weights();
-    last_testing_error = test_evaluator->stochastic_evaluation();
-  }
-
-  weight_updater->iterate(avg_derivatives);
+  apply_weight_update(tmp_avg_derivatives);
   ++iteration;
+
+  update_context_errors();
 }
 
 double RafkoAutodiffOptimizer::get_avg_gradient(std::uint32_t d_w_index){
