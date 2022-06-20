@@ -24,6 +24,30 @@
 
 namespace rafko_gym{
 
+std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_output_shapes() const{
+  RFASSERT_LOG(
+    "Autdif GPU Strategy output buffer overall size: ({} + {} + {})",
+    /* operation values */
+    (environment->get_number_of_sequences() * network.memory_size() * number_of_operations),
+    ( /* operation derivatives */
+      network.memory_size() * environment->get_number_of_sequences()
+      * number_of_operations * network.weight_table_size()
+    ),
+    /* Weight derivatives */
+    static_cast<std::uint32_t>(network.weight_table_size())
+  );
+  return{ rafko_mainframe::RafkoNBufShape{
+    /* operation values */
+    (environment->get_number_of_sequences() * network.memory_size() * number_of_operations),
+    ( /* operation derivatives */
+      network.memory_size() * environment->get_number_of_sequences()
+      * number_of_operations * network.weight_table_size()
+    ),
+    /* Weight derivatives */
+    static_cast<std::uint32_t>(network.weight_table_size())
+  } };
+}
+
 std::vector<std::vector<std::uint32_t>> AutoDiffGPUStrategy::generate_operation_paralell_matrix(
   const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>& operations
 ){
@@ -114,8 +138,9 @@ void AutoDiffGPUStrategy::build(
       const int weights_in_this_thread = min(
         weights_in_one_thread, max(0, (weight_table_size - weights_index_start))
       );
-      for(int d_w_index = weights_index_start; d_w_index < (weights_index_start + weights_in_this_thread); ++d_w_index){
-
+      // for(int d_w_index = weights_index_start; d_w_index < (weights_index_start + weights_in_this_thread); ++d_w_index){
+        int d_w_index = 1;
+        //TODO: Re-structure so only 1 weight is calculated in one kernel run
         ==derivative_operations==
 
         if(save_to_output){
@@ -127,7 +152,7 @@ void AutoDiffGPUStrategy::build(
           average_gradient /= relevant_operation_count;
           AtomicAvg(&d_w_array[d_w_index],average_gradient);
         }
-      }/*for(all relevant weights)*/
+      // }/*for(all relevant weights)*/
     }/*execute_local_derivative_worker()*/
 
     void execute_local_value_worker(
@@ -193,8 +218,8 @@ void AutoDiffGPUStrategy::build(
       /* deciding the sequence start index values for each workgroup */
       const int sequences_in_work_group = (number_of_sequences / get_num_groups(0)) + 1;
       uint local_seed = (uint)(inputs[min(get_global_id(0), (size_t)(input_sizes[0]))] * 100000.0);
-      int sequence_start;
-      int sequences_in_this_group;
+      __local int sequence_start;
+      __local int sequences_in_this_group;
       if(0 == get_local_id(0)){
         sequence_start = get_random_number(minibatch_size, &local_seed);
         sequences_in_this_group = min( sequences_in_work_group, (minibatch_size - sequence_start) );
@@ -209,7 +234,8 @@ void AutoDiffGPUStrategy::build(
       int network_derivatives_start_index = (
         output_sizes[0] + sequence_start * network_memory_size * inputs[0]/*weight_table_size*/ * operation_count
       );
-
+      /* In case there is no sequence truncation, all of the sequence elements will be considered when calculating the derivative */
+      sequence_truncation = (sequence_truncation == 0)?(==sequence_size==):(sequence_truncation);
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
         int network_ran_count = 0;
         int available_memory_slots = 0;
@@ -219,6 +245,10 @@ void AutoDiffGPUStrategy::build(
         );
         int network_derivatives_sequence_start_index = network_derivatives_start_index;
         int network_values_sequence_start_index = network_values_start_index;
+        // printf(
+        //   "global[%d], local[%d]: inside sequence[%d]\n",
+        //   get_global_id(0), get_local_id(0), sequence_index
+        // );
         for(int prefill_index = 0; prefill_index < ==prefill_num==; ++prefill_index){
           execute_local_value_worker(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,
@@ -248,7 +278,7 @@ void AutoDiffGPUStrategy::build(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,
             &inputs[network_inputs_start_index]/*network_inputs*/,
             &inputs[0]/*network_weights*/,
-            &outputs[network_derivatives_start_index]/*operation_derivatives*/
+            &outputs[network_values_start_index]/*operation_values*/
           );
           execute_local_derivative_worker(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,

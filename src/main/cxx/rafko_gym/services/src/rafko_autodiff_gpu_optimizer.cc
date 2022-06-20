@@ -18,6 +18,12 @@
 
 namespace rafko_gym{
 
+void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoObjective> objective){
+  RFASSERT_SCOPE(AUTODIFF_GPU_BUILD);
+  strategy->build(operations, build_without_data(objective));
+  gpu_phase.set_strategy(strategy);
+}
+
 void RafkoAutodiffGPUOptimizer::upload_weight_table(){
   RFASSERT_LOG("Uploading network weight table(size: {} bytes) to device..", (sizeof(double) * network.weight_table_size()));
   cl_int return_value = opencl_queue.enqueueWriteBuffer(
@@ -66,22 +72,57 @@ void RafkoAutodiffGPUOptimizer::refresh_environment(){
 }
 
 void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
+  RFASSERT_SCOPE(AUTODIFF_GPU_ITERATE);
   upload_weight_table();
   if(refresh_environment)update_context_errors();
 
   std::thread tmp_reset_thread([this](){
     std::fill(tmp_avg_derivatives.begin(), tmp_avg_derivatives.end(), 0.0);
   });
+  //TODO: Run for all weights
   gpu_phase();
   tmp_reset_thread.join();
-  gpu_phase.load_output(
-    tmp_avg_derivatives.data()/*target*/,
-    (sizeof(double) * tmp_avg_derivatives.size())/*size*/,
+  RFASSERT_LOG("sequence count: {}", environment->get_number_of_sequences());
+  RFASSERT_LOG("network memory size: {}", network.memory_size());
+  RFASSERT_LOG("operations count: {}", operations.size());
+  RFASSERT_LOG("weights count: {}", network.weight_table_size());
+  RFASSERT_LOG(
+    "Getting Autodiff Phase weight derivatives({} numbers) from: [{}]",
+    tmp_avg_derivatives.size(),
     ( /* operation values + operation derivatives size */
       (environment->get_number_of_sequences() * network.memory_size() * operations.size())
       + ( network.memory_size() * environment->get_number_of_sequences() * operations.size() * network.weight_table_size() )
     )/*offset*/
   );
+  gpu_phase.load_output(
+    tmp_avg_derivatives.data()/*target*/, tmp_avg_derivatives.size()/*size*/,
+    ( /* operation values + operation derivatives size */
+      (environment->get_number_of_sequences() * network.memory_size() * operations.size())
+      + ( network.memory_size() * environment->get_number_of_sequences() * operations.size() * network.weight_table_size() )
+    )/*offset*/
+  );
+
+  /*!Debug: See values output:*/
+  std::vector<double> output_buffer_values(
+    environment->get_number_of_sequences()
+    * network.memory_size()
+    * operations.size()
+  );
+  gpu_phase.load_output(
+    output_buffer_values.data()/*target*/,
+    output_buffer_values.size()/*size*/,
+    0/*offset*/
+  );
+
+  std::cout << "output_values:";
+  std::uint32_t i = 0;
+  for(const double& d : output_buffer_values){
+    if(0 == (i % operations.size()))std::cout << std::endl;
+    if(0 == (i++ % 5))std::cout << " ";
+    std::cout << "[" << d << "]";
+  }
+  std::cout << std::endl;
+
   apply_weight_update(tmp_avg_derivatives);
   ++iteration;
 
@@ -93,10 +134,18 @@ double RafkoAutodiffGPUOptimizer::get_neuron_data(
 ){
   double ret = 0.0;
   RFASSERT(past_index < network.memory_size());
+  RFASSERT_LOG(
+    "Loading Neuron data from GPU Phase: sequence[{}/{}], past[{}/{}], Neuron[{}/{}], operation[{}/{}];",
+    sequence_index, environment->get_number_of_sequences(),
+    past_index, network.memory_size(),
+    neuron_index, network.neuron_array_size(),
+    get_operation_index(neuron_index), operations.size()
+  );
+
   gpu_phase.load_output(
     &ret/*target*/, 1u/*size*/, (
       (sequence_index * network.memory_size() * operations.size())
-      + ((network.memory_size() - past_index) * operations.size())
+      + ((network.memory_size() - past_index - 1) * operations.size())
       + get_operation_index(neuron_index)
     )/*offset*/
   );

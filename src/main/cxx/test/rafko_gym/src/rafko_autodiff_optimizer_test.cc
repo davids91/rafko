@@ -275,14 +275,15 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
 
     actual_value[1][0] = optimizerGPU->get_neuron_data(0u/*sequence_index*/, 1u/*past_index*/, 3u/*neuron_index*/);
     actual_value[0][0] = optimizerGPU->get_neuron_data(0u/*sequence_index*/, 0u/*past_index*/, 3u/*neuron_index*/);
-    REQUIRE(
+    CHECK(
       reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000001)
     );
-    REQUIRE(
+    CHECK( //REQUIRE(
       reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
       == Catch::Approx(actual_value[0][0]).epsilon(0.0000000001)
     );
+    RFASSERT(0);
     double weight_sum = std::accumulate(
       network->weight_table().begin(), network->weight_table().end(), 0.0,
       [](const double& accu, const double& element){ return accu + std::abs(element); }
@@ -389,7 +390,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
     else avg_duration = (avg_duration + current_duration)/2.0;
 
     train_error = optimizer.get_last_training_error();
-    test_error = optimizer.get_last_training_error();
+    test_error = optimizer.get_last_testing_error();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
 
     std::cout << "   Error:" << std::setprecision(9)

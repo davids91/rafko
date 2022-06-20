@@ -178,7 +178,7 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs enq){
 std::unique_ptr<double[]> RafkoGPUPhase::acquire_output(std::size_t size, std::size_t offset){
   RafkoNBufShape output_shape = strategy->get_output_shapes().back();
 
-  RFASSERT_LOG("Acquiring output[{} + {}] / ", offset, size, output_shape.get_number_of_elements());
+  RFASSERT_LOG("Acquiring output[{} + {}]", offset, size, output_shape.get_number_of_elements());
   RFASSERT( (offset + size) <= output_shape.get_number_of_elements() );
 
   std::unique_ptr<double[]> output(new double[size]);
@@ -188,8 +188,7 @@ std::unique_ptr<double[]> RafkoGPUPhase::acquire_output(std::size_t size, std::s
 
 void RafkoGPUPhase::load_output(double* target, std::size_t size, std::size_t offset){
   RafkoNBufShape output_shape = strategy->get_output_shapes().back();
-
-  RFASSERT_LOG("Loading output[{} + {}] / ", offset, size, output_shape.get_number_of_elements());
+  RFASSERT_LOG("Loading output[{} + {}]", offset, size, output_shape.get_number_of_elements());
   RFASSERT( (sizeof(double) * size) <= output_shape.get_byte_size<double>() );
 
   cl::Buffer& output_buffer_cl = std::get<0>(kernel_args.back());

@@ -204,6 +204,7 @@ void RafkoAutodiffOptimizer::update_context_errors(){
 }
 
 void RafkoAutodiffOptimizer::iterate(){
+  RFASSERT_SCOPE(AUTODIFF_ITERATE);
   RFASSERT(static_cast<bool>(environment));
   std::uint32_t sequence_start_index = (rand()%(environment->get_number_of_sequences() - used_minibatch_size + 1));
   std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */

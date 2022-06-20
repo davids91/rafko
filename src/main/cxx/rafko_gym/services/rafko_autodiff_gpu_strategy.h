@@ -87,18 +87,7 @@ public:
     } };
   }
 
-  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
-    return{ rafko_mainframe::RafkoNBufShape{
-      /* operation values */
-      (environment->get_number_of_sequences() * network.memory_size() * number_of_operations),
-      ( /* operation derivatives */
-        network.memory_size() * environment->get_number_of_sequences()
-        * number_of_operations * network.weight_table_size()
-      ),
-      /* Weight derivatives */
-      static_cast<std::uint32_t>(network.weight_table_size())
-    } };
-  }
+  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const;
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
     RFASSERT(static_cast<bool>(environment));

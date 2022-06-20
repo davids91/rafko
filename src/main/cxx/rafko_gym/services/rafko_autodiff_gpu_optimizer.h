@@ -62,11 +62,7 @@ public:
   {
   }
 
-  void build(std::shared_ptr<RafkoObjective> objective){
-    strategy->build(operations, build_without_data(objective));
-    gpu_phase.set_strategy(strategy);
-  }
-
+  void build(std::shared_ptr<RafkoObjective> objective);
   using RafkoAutodiffOptimizer::set_weight_updater;
   void iterate(bool refresh_environment = false);
 
