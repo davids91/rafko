@@ -20,8 +20,14 @@ namespace rafko_gym{
 
 void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoObjective> objective){
   RFASSERT_SCOPE(AUTODIFF_GPU_BUILD);
-  strategy->build(operations, build_without_data(objective));
+  std::uint32_t asd = build_without_data(objective);
+  strategy->build(operations, asd);
   gpu_phase.set_strategy(strategy);
+  data.build(operations.size(), asd, environment->get_sequence_size());
+  // RFASSERT(0);
+  // RFASSERT_SCOPE(AUTODIFF_GPU_BUILD);
+  // strategy->build(operations, build_without_data(objective));
+  // gpu_phase.set_strategy(strategy);
 }
 
 void RafkoAutodiffGPUOptimizer::upload_weight_table(){
@@ -114,11 +120,23 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
     0/*offset*/
   );
 
-  std::cout << "output_values:";
+  std::cout << "GPU output_values:";
   std::uint32_t i = 0;
   for(const double& d : output_buffer_values){
-    if(0 == (i % operations.size()))std::cout << std::endl;
-    if(0 == (i++ % 5))std::cout << " ";
+    if(0 == (i++ % 15u)){
+      std::cout << std::endl;
+      if(operations.size() == i)break;
+    }
+    std::cout << "[" << d << "]";
+  }
+  std::cout << std::endl;
+
+  RafkoAutodiffOptimizer::iterate();
+  std::cout << "CPU output_values:";
+  i = 0;
+  for(const double& d : data.get_value().get_element(0u/*past_index*/)){
+    if(0 == (i++ % 15u))
+      std::cout << std::endl;
     std::cout << "[" << d << "]";
   }
   std::cout << std::endl;

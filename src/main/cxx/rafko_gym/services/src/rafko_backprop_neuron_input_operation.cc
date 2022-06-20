@@ -251,6 +251,11 @@ std::string RafkoBackpropNeuronInputOperation::value_kernel_operation(
   );
 
   /* Replacing the tokens with actual kernel string values */
+  operations += R"(
+    if(35 == ==op_index==){
+      printf("f_x_value: %f; u_x_value: %f\n", f_x_value, u_x_value);
+    }
+  )";
   operations = rafko_utilities::replace_all_in_string(
     operations, std::regex("==op_value_array=="), operations_value_array
   );

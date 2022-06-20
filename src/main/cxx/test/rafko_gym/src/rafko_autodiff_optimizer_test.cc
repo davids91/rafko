@@ -123,7 +123,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
 }
 
 TEST_CASE("Testing if autodiff optimizer converges networks with the iteration interface", "[optimize][small]"){
-  return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
+  //return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(0.0001).set_minibatch_size(64).set_memory_truncation(2)
