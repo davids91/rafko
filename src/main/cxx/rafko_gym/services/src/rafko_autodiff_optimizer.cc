@@ -94,7 +94,7 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
         }
       }/*for(each solved feature group index)*/
     }/*for(each neuron_index in the subset)*/
-    strict_mode = false; /* Strict mode should only run at the first subset collection */
+    strict_mode = true; /* Strict mode should only run be released in the first subset collection */
   }/*while(neuron_router is finished)*/
 
   RFASSERT_LOGV2( neuron_subsets, "Subset array:");
@@ -121,6 +121,7 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
       /* Upload dependencies for every operation until every dependency is registered */
       while(done_index < operations.size()){
         if(!operations[done_index]->are_dependencies_registered()){
+          RFASSERT_LOG("Registering dependencies for operation[{}]...", done_index);
           DependencyRequest request = operations[done_index]->upload_dependencies_to_operations();
           if(request.has_value()){
             auto& [parameters, dependency_register] = request.value();
@@ -144,7 +145,6 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
   }
   #endif/*(RAFKO_USES_ASSERTLOGS)*/
   RFASSERT_LOG("============================");
-
   return weight_relevant_operation_count;
 }
 
@@ -336,7 +336,7 @@ std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_depe
     case ad_operation_neuron_input_d:
       RFASSERT(2u == std::get<1>(arguments).size());
       RFASSERT_LOG(
-        "operation[{}]: {} for Neuron[{}] input[{}]",
+        "Created operation[{}]: {} for Neuron[{}] input[{}]",
         operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
       );
       return operations.emplace_back(new RafkoBackpropNeuronInputOperation(

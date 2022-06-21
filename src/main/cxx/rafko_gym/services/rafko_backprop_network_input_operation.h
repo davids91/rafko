@@ -64,6 +64,10 @@ public:
     RFASSERT(input_index < network_input.size());
     set_value(network_input[input_index] * network.weight_table(weight_index));
     set_value_processed();
+    RFASSERT_LOG(
+      "operation[{}]: Network Input[{}] * weight[{}] = {}", get_operation_index(),
+      input_index, weight_index, network_input[input_index] * network.weight_table(weight_index)
+    );
   }
 
   void calculate_derivative(
@@ -91,7 +95,7 @@ public:
       + " * " + weight_array + "[" + std::to_string(weight_index) + "];\n"
     );
   }
-  //TODO: d_w_index, available_memory_slots inside the kernels are hidden dependencies!
+  //TODO: available_memory_slots inside the kernels are hidden dependencies!
   std::string derivative_kernel_operation(
     std::string /*network_input_array*/, std::string /*label_array*/, std::string weight_array,
     std::string /*operations_value_array*/, std::string operations_derivative_array,

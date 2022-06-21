@@ -101,7 +101,7 @@ public:
     return (value_processed && derivative_processed);
   }
 
-  std::uint32_t get_operation_index() const{
+  virtual std::uint32_t get_operation_index() const{
     return operation_index;
   }
 

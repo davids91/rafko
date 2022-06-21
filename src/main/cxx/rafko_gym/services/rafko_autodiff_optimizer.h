@@ -169,6 +169,15 @@ public:
       return last_testing_error;
   }
 
+
+  void print_operation_values(){
+    std::cout << "Operation values:";
+    for(const auto& op : operations){
+      std::cout << "[" << op->get_value(0) << "]";
+    }
+    std::cout << std::endl;
+  }
+
 protected:
   const rafko_mainframe::RafkoSettings& settings;
   std::shared_ptr<RafkoEnvironment> environment;

@@ -163,7 +163,7 @@ double RafkoAutodiffGPUOptimizer::get_neuron_data(
   gpu_phase.load_output(
     &ret/*target*/, 1u/*size*/, (
       (sequence_index * network.memory_size() * operations.size())
-      + ((network.memory_size() - past_index - 1) * operations.size())
+      + ((network.memory_size() - past_index) * operations.size())
       + get_operation_index(neuron_index)
     )/*offset*/
   );

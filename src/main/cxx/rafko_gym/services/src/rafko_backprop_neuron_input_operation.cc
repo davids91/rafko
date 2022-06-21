@@ -79,15 +79,39 @@ DependencyRequest RafkoBackpropNeuronInputOperation::upload_dependencies_to_oper
   }
 
   return {{dependency_parameters, [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>> dependencies){
-      RFASSERT(1 <= dependencies.size());
-      if(is_network_input)
+      if(is_network_input){
+        RFASSERT(1 <= dependencies.size());
+        RFASSERT(static_cast<bool>(dependencies[0]));
+        RFASSERT_LOG(
+          "Neuron input operation[{}]: Registering dependency: operation[{}(?)] as network input based on [{}]",
+          get_operation_index(), dependencies[0]->get_operation_index(), inputs_iterator[neuron_input_index]
+        );
         network_input_dependency = dependencies[0];
-        else neuron_data_dependency = dependencies[0];
+      }else{
+        RFASSERT(1 <= dependencies.size());
+        RFASSERT(static_cast<bool>(dependencies[0]));
+        RFASSERT_LOG(
+          "Neuron input operation[{}]: Registering dependency: operation[{}(?)] as neuron data input based on [{}]",
+          get_operation_index(), dependencies[0]->get_operation_index(), inputs_iterator[neuron_input_index]
+        );
+        neuron_data_dependency = dependencies[0];
+      }
+
       if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){
         RFASSERT(2 == dependencies.size());
+        RFASSERT(static_cast<bool>(dependencies[1]));
+        RFASSERT_LOG(
+          "Neuron input operation[{}]: Registering dependency: operation[{}(?)] as other neuron input",
+          get_operation_index(), dependencies[1]->get_operation_index()
+        );
         neuron_input_dependency = dependencies[1];
       }else{
         RFASSERT(2 == dependencies.size());
+        RFASSERT(static_cast<bool>(dependencies[1]));
+        RFASSERT_LOG(
+          "Neuron input operation[{}]: Registering dependency: operation[{}(?)] as neuron bias",
+          get_operation_index(), dependencies[1]->get_operation_index()
+        );
         neuron_bias_dependency = dependencies[1];
       }
       set_registered();
@@ -119,10 +143,18 @@ void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double
     RFASSERT(static_cast<bool>(network_input_dependency));
     RFASSERT(network_input_dependency->is_value_processed());
     weighted_input = network_input_dependency->get_value(0u/*past_index*/);
+    RFASSERT_LOG(
+      "operation[{}]: Neuron[{}] Input[{}] f_x = {}(op[{}])", get_operation_index(), neuron_index, neuron_input_index,
+      weighted_input, network_input_dependency->get_operation_index()
+    );
   }else{ /* f(x) comes from Neuron data, may have inputs from the past */
     RFASSERT(static_cast<bool>(neuron_data_dependency));
     RFASSERT( (0u < input_past_index)||(neuron_data_dependency->is_value_processed()) );
     weighted_input = ( neuron_data_dependency->get_value(input_past_index) * network.weight_table(weight_index) );
+    RFASSERT_LOG(
+      "operation[{}]: Neuron[{}] Input[{}] f_x = op[{}] * weight[{}] = {}", get_operation_index(), neuron_index, neuron_input_index,
+      neuron_data_dependency->get_operation_index(), weight_index, weighted_input
+    );
   }/*if(is_network_input)*/
 
   /* calculate u(x) part, u(x) is either the inputs starting from the next, or the bias value(s) */
@@ -131,15 +163,27 @@ void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double
     RFASSERT(static_cast<bool>(neuron_input_dependency));
     RFASSERT(neuron_input_dependency->is_value_processed());
     next_value = neuron_input_dependency->get_value(0u/*past_index*/);
+    RFASSERT_LOG(
+      "operation[{}]: Neuron[{}] Input[{}] u_x = {}(op[{}])", get_operation_index(), neuron_index, neuron_input_index,
+      next_value, neuron_input_dependency->get_operation_index()
+    );
   }else{ /* the last input starts to collect bias */
     RFASSERT(static_cast<bool>(neuron_bias_dependency));
     RFASSERT(neuron_bias_dependency->is_value_processed());
     next_value = neuron_bias_dependency->get_value(0u/*past_index*/);
+    RFASSERT_LOG(
+      "operation[{}]: Neuron[{}] Input[{}] u_x = b{}(op[{}])", get_operation_index(), neuron_index, neuron_input_index,
+      next_value, neuron_bias_dependency->get_operation_index()
+    );
   }
   /* calculate the overall value */
   set_value( rafko_net::InputFunction::collect(
     network.neuron_array(neuron_index).input_function(), weighted_input, next_value
   ) );
+  RFASSERT_LOG(
+    "operation[{}]: Neuron[{}] Input[{}] = {} (collected with {})", get_operation_index(), neuron_index, neuron_input_index,
+    get_value(0u/*past_index*/), Input_functions_Name(network.neuron_array(neuron_index).input_function())
+  );
   set_value_processed();
 }
 
