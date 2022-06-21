@@ -70,7 +70,7 @@ public:
   void upload_weight_table();
   std::vector<cl::Event> update_inputs();
   std::vector<cl::Event> update_labels();
-  void refresh_environment();
+  void refresh_GPU_environment();
   double get_neuron_data(
     std::uint32_t sequence_index, std::uint32_t past_index, std::uint32_t neuron_index
   );

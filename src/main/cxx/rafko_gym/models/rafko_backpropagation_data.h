@@ -102,7 +102,7 @@ public:
    */
   void step(){
     RFASSERT(built);
-    /*!Note: Not using @clean_step, but only because both the value and derivative will be overwritten anyway.. */
+    /*!Note: Not using @clean_step, here because the value will be overwritten anyway.. */
     calculated_values->shallow_step();
     /* using clean step, because the at each step the values depend on being clean (0.0).. */
     calculated_derivatives->clean_step(); /* ..so sequence truncation would have 0.0 if sequence is excluded and not calculated */

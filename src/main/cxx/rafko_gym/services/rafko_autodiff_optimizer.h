@@ -169,7 +169,7 @@ public:
       return last_testing_error;
   }
 
-
+  //TODO: delete this
   void print_operation_values(){
     std::cout << "Operation values:";
     for(const auto& op : operations){

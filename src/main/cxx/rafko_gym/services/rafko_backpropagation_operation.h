@@ -145,11 +145,11 @@ protected:
   }
 
   void set_derivative(std::uint32_t d_w_index, double value){
-    data.set_derivative(operation_index, d_w_index, value);
+    data.set_derivative(get_operation_index(), d_w_index, value);
   }
 
   void set_value(double value){
-    data.set_value(operation_index, value);
+    data.set_value(get_operation_index(), value);
   }
 
 private:

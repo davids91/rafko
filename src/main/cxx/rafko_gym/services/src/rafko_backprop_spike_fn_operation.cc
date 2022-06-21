@@ -29,6 +29,17 @@ void RafkoBackpropSpikeFnOperation::calculate_value(const std::vector<double>& n
     network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
     present_value_dependency->get_value(0u/*past_index*/), past_value
   ));
+  RFASSERT_LOG(
+    "operation[{}]: Neuron[{}] Spike(present:{},past:{}, weight:{}) = {} (calculated with {}) ??{}", get_operation_index(), neuron_index,
+    present_value_dependency->get_value(0u/*past_index*/), past_value,
+    network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
+    get_value(0u/*past_index*/), Spike_functions_Name(network.neuron_array(neuron_index).spike_function()),
+    rafko_net::SpikeFunction::get_value(
+      network.neuron_array(neuron_index).spike_function(),
+      network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
+      present_value_dependency->get_value(0u/*past_index*/), past_value
+    )
+  );
   set_value_processed();
 }
 

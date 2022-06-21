@@ -278,7 +278,7 @@ double RafkoGPUContext::full_evaluation(){
 
     std::vector<cl::Event> input_events = environment->upload_inputs_to_buffer(
       opencl_queue, solution_phase.get_input_buffer(),
-      (device_weight_table_size + agent->get_input_shapes()[0][0])/*buffer_start_byte_offset*/,
+      sizeof(double) * (device_weight_table_size + agent->get_input_shapes()[0][0])/*buffer_start_byte_offset*/,
       0u/*sequence_start_index*/, 0u/*buffer_sequence_start_index*/,
       environment->get_number_of_sequences()/*sequences_to_upload*/
     );
@@ -373,7 +373,7 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
       RFASSERT_LOG("Uploading {} sequences starting from {}", sequences_to_upload, sequence_start_index);
       std::vector<cl::Event> input_events_ = environment->upload_inputs_to_buffer(
         opencl_queue, solution_phase.get_input_buffer(),
-        (device_weight_table_size + agent->get_input_shapes()[0][0])/*buffer_start_byte_offset*/,
+        sizeof(double) * (device_weight_table_size + agent->get_input_shapes()[0][0])/*buffer_start_byte_offset*/,
         sequence_start_index, uploaded_sequences/*buffer_sequence_start_index*/,
         sequences_to_upload/*sequences_to_upload*/
       );

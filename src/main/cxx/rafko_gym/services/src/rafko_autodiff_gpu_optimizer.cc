@@ -28,6 +28,7 @@ void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoObjective> objective)
   // RFASSERT_SCOPE(AUTODIFF_GPU_BUILD);
   // strategy->build(operations, build_without_data(objective));
   // gpu_phase.set_strategy(strategy);
+  refresh_GPU_environment();
 }
 
 void RafkoAutodiffGPUOptimizer::upload_weight_table(){
@@ -43,10 +44,8 @@ void RafkoAutodiffGPUOptimizer::upload_weight_table(){
 std::vector<cl::Event> RafkoAutodiffGPUOptimizer::update_inputs(){
   return environment->upload_inputs_to_buffer(
     opencl_queue, gpu_phase.get_input_buffer(),
-    0u/*buffer_start_byte_offset*/,
-    0u/*sequence_start_index*/, (
-      sizeof(double) * static_cast<std::uint32_t>(network.weight_table_size())
-    )/*buffer_sequence_start_index*/,
+    sizeof(double) * static_cast<std::uint32_t>(network.weight_table_size())/*buffer_start_byte_offset*/,
+    0u/*sequence_start_index*/, 0u/*buffer_sequence_start_index*/,
     environment->get_number_of_sequences()/*sequences_to_upload*/
   );
 }
@@ -54,17 +53,17 @@ std::vector<cl::Event> RafkoAutodiffGPUOptimizer::update_inputs(){
 std::vector<cl::Event> RafkoAutodiffGPUOptimizer::update_labels(){
   return environment->upload_labels_to_buffer(
     opencl_queue, gpu_phase.get_input_buffer(),
-    0u/*buffer_start_byte_offset*/,
-    0u/*sequence_start_index*/, (
+    (
       sizeof(double) * static_cast<std::uint32_t>(network.weight_table_size())
       + (sizeof(double) * environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size())
-    )/*buffer_sequence_start_index*/,
+    )/*buffer_start_byte_offset*/,
+    0u/*sequence_start_index*/, 0u/*buffer_sequence_start_index*/,
     environment->get_number_of_sequences()/*sequences_to_upload*/,
     0u/*start_index_inside_sequence*/, environment->get_sequence_size()/*sequence_truncation*/
   );
 }
 
-void RafkoAutodiffGPUOptimizer::refresh_environment(){
+void RafkoAutodiffGPUOptimizer::refresh_GPU_environment(){
   std::vector<cl::Event> input_events = update_inputs();
   std::vector<cl::Event> label_events = update_labels();
   for(cl::Event& e : input_events){
@@ -80,13 +79,17 @@ void RafkoAutodiffGPUOptimizer::refresh_environment(){
 void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   RFASSERT_SCOPE(AUTODIFF_GPU_ITERATE);
   upload_weight_table();
-  if(refresh_environment)update_context_errors();
+  if(refresh_environment){
+    refresh_GPU_environment();
+  }
 
   std::thread tmp_reset_thread([this](){
     std::fill(tmp_avg_derivatives.begin(), tmp_avg_derivatives.end(), 0.0);
   });
   //TODO: Run for all weights
+  std::cout << "======================" << std::endl;
   gpu_phase();
+  std::cout << "======================" << std::endl;
   tmp_reset_thread.join();
   RFASSERT_LOG("sequence count: {}", environment->get_number_of_sequences());
   RFASSERT_LOG("network memory size: {}", network.memory_size());
@@ -109,6 +112,23 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   );
 
   /*!Debug: See values output:*/
+  std::vector<double> input_buffer_values(strategy->get_input_shapes()[0].get_number_of_elements());
+  cl_int return_value = opencl_queue.enqueueReadBuffer(
+    gpu_phase.get_input_buffer(), CL_TRUE/*blocking*/,
+    0U/*offset*/, (strategy->get_input_shapes()[0].get_byte_size<double>())/*size*/,
+    input_buffer_values.data()
+  );
+  assert(return_value == CL_SUCCESS);
+  std::cout << "GPU input values:";
+  std::uint32_t i = 0;
+  for(const double& d : input_buffer_values){
+    if(0 == (i++ % 10)){
+      std::cout << std::endl;
+    }
+    std::cout << "[" << d << "]";
+  }
+  std::cout << std::endl;
+
   std::vector<double> output_buffer_values(
     environment->get_number_of_sequences()
     * network.memory_size()
@@ -121,11 +141,10 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   );
 
   std::cout << "GPU output_values:";
-  std::uint32_t i = 0;
+  i = 0;
   for(const double& d : output_buffer_values){
-    if(0 == (i++ % 15u)){
+    if(0 == (i++ % operations.size())){
       std::cout << std::endl;
-      if(operations.size() == i)break;
     }
     std::cout << "[" << d << "]";
   }
@@ -133,10 +152,11 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
 
   RafkoAutodiffOptimizer::iterate();
   std::cout << "CPU output_values:";
-  i = 0;
   for(const double& d : data.get_value().get_element(0u/*past_index*/)){
-    if(0 == (i++ % 15u))
-      std::cout << std::endl;
+    std::cout << "[" << d << "]";
+  }
+  std::cout << std::endl;
+  for(const double& d : data.get_value().get_element(1u/*past_index*/)){
     std::cout << "[" << d << "]";
   }
   std::cout << std::endl;

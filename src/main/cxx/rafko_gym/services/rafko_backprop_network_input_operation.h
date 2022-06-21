@@ -90,7 +90,13 @@ public:
     std::string operations_value_array, std::string /*operations_array_size*/
   ) const{
     return (
-      operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
+      "if(32 == " + std::to_string(get_operation_index()) + "){ \n"
+      + std::string("  printf(\"\\n[%d]network input[%d]: %f * %f\\n\", (int)(get_global_id(0)), " + std::to_string(input_index) + ",")
+      + network_input_array + "[" + std::to_string(input_index) + "],"
+      + weight_array + "[" + std::to_string(weight_index) + "]"
+      + "  ); \n"
+      + "} \n"
+      + operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
       + network_input_array + "[" + std::to_string(input_index) + "]"
       + " * " + weight_array + "[" + std::to_string(weight_index) + "];\n"
     );

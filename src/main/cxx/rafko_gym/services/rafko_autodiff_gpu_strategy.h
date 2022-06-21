@@ -79,11 +79,18 @@ public:
 
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
     RFASSERT(static_cast<bool>(environment));
+    RFASSERT_LOG(
+      "Autodiff strategy Input shape: {} + {} + {} + {}",
+      /* Weights */ (static_cast<std::uint32_t>(network.weight_table_size())),
+      /* Inputs */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
+      /* Labels */(environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
+      /* Sequence_truncation */ 1u
+    );
     return{ rafko_mainframe::RafkoNBufShape{
-      /* Weights */ (sizeof(double) * static_cast<std::uint32_t>(network.weight_table_size())),
-      /* Inputs */ (sizeof(double) * environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
-      /* Labels */(sizeof(double) * environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
-      /* Sequence_truncation */ sizeof(double)
+      /* Weights */ (static_cast<std::uint32_t>(network.weight_table_size())),
+      /* Inputs */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
+      /* Labels */(environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
+      /* Sequence_truncation */ 1u
     } };
   }
 
@@ -91,6 +98,10 @@ public:
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
     RFASSERT(static_cast<bool>(environment));
+    std::cout << "Dimensions: "
+    << "global:" << environment->get_number_of_sequences() * maximum_local_workers
+    << " local: " << maximum_local_workers 
+    << std::endl;
     return {
       cl::NullRange/*offset*/,
       cl::NDRange(environment->get_number_of_sequences() * maximum_local_workers)/*global*/,

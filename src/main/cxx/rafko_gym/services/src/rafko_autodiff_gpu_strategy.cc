@@ -17,6 +17,7 @@
 #include "rafko_gym/services/rafko_autodiff_gpu_strategy.h"
 
 #include <set>
+#include <cmath>
 
 #include "rafko_utilities/models/rafko_gpu_kernel_library.h"
 #include "rafko_utilities/services/rafko_string_utils.h"
@@ -160,6 +161,13 @@ void AutoDiffGPUStrategy::build(
       __constant double* network_inputs, __constant double* network_weights,
       __global double* operations_value_array
     ){
+
+      if(0 == get_global_id(0)){
+        printf("Inputs:");
+        for(int i=0; i < 4; ++i){
+          printf("[%f]", network_inputs[i]);
+        }
+      }
       ==operation_locals==
       switch(get_local_id(0)){
         ==local_worker_cases==
@@ -225,7 +233,10 @@ void AutoDiffGPUStrategy::build(
         sequences_in_this_group = min( sequences_in_work_group, (minibatch_size - sequence_start) );
       }
       work_group_barrier(CLK_LOCAL_MEM_FENCE);
-
+      printf(
+        "global[%d], local[%d]: Number of sequences in this group: %d \n",
+        (int)(get_global_id(0)), (int)(get_local_id(0)), sequences_in_this_group
+      );
       /* Main cache variables for running */
       int sequence_truncation = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]];
       int network_inputs_start_index = (input_sizes[0]/*weight_table_size*/ + sequence_start * ==one_input_size==);
@@ -233,6 +244,23 @@ void AutoDiffGPUStrategy::build(
       int network_values_start_index = (sequence_start * network_memory_size * operation_count);
       int network_derivatives_start_index = (
         output_sizes[0] + sequence_start * network_memory_size * inputs[0]/*weight_table_size*/ * operation_count
+      );
+
+      printf(
+        "global[%d], local[%d]: weight_table_size: %d \n",
+        (int)(get_global_id(0)), (int)(get_local_id(0)), input_sizes[0]
+      );
+      printf(
+        "global[%d], local[%d]: sequence_start: %d \n",
+        (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_start
+      );
+      printf(
+        "global[%d], local[%d]: one_input_size: %d \n",
+        (int)(get_global_id(0)), (int)(get_local_id(0)), ==one_input_size==
+      );
+      printf(
+        "global[%d], local[%d]: network_input initial start_index: %d \n",
+        (int)(get_global_id(0)), (int)(get_local_id(0)), network_inputs_start_index
       );
       /* In case there is no sequence truncation, all of the sequence elements will be considered when calculating the derivative */
       sequence_truncation = (sequence_truncation == 0)?(==sequence_size==):(sequence_truncation);
@@ -245,10 +273,6 @@ void AutoDiffGPUStrategy::build(
         );
         int network_derivatives_sequence_start_index = network_derivatives_start_index;
         int network_values_sequence_start_index = network_values_start_index;
-        // printf(
-        //   "global[%d], local[%d]: inside sequence[%d]\n",
-        //   get_global_id(0), get_local_id(0), sequence_index
-        // );
         for(int prefill_index = 0; prefill_index < ==prefill_num==; ++prefill_index){
           execute_local_value_worker(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,
@@ -274,6 +298,11 @@ void AutoDiffGPUStrategy::build(
           max(1, (==sequence_size== - sequence_truncation)), &local_seed
         );
         for(int label_index = 0; label_index < ==sequence_size==; ++label_index){
+          printf(
+            "global[%d], local[%d]: inside sequence[%d] and label[%d], network_input start_index: %d \n",
+            (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index,
+            label_index, network_inputs_start_index
+          );
           execute_local_value_worker(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,
             &inputs[network_inputs_start_index]/*network_inputs*/,
@@ -343,6 +372,7 @@ void AutoDiffGPUStrategy::build(
     source_base, std::regex("==number_of_sequences=="),
     std::to_string(environment->get_number_of_sequences())
   );
+  std::cout << "number_of_sequences: " << environment->get_number_of_sequences() << std::endl;
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==minibatch_size=="), std::to_string( std::min(
       settings.get_minibatch_size(), environment->get_number_of_sequences()
@@ -365,7 +395,9 @@ void AutoDiffGPUStrategy::build(
   std::vector<std::vector<std::uint32_t>> operations_matrix = generate_operation_paralell_matrix(operations);
   std::uint32_t avg_row_size = 0u;
   for(const std::vector<std::uint32_t>& row : operations_matrix) avg_row_size += row.size();
-  avg_row_size /= operations_matrix.size();
+  avg_row_size = static_cast<std::uint32_t>( std::ceil(
+    static_cast<double>(avg_row_size) / static_cast<double>(operations_matrix.size())
+  ) );
 
   /* For each thread create the network phases */
   std::vector<std::string> worker_phases(operations_matrix.size());

@@ -33,9 +33,11 @@ std::vector<cl::Event> RafkoEnvironment::upload_inputs_to_buffer(
   std::uint32_t raw_input_start = (sequence_start_index * elements_in_a_sequence);
   std::uint32_t raw_input_num = (sequences_to_upload * elements_in_a_sequence);
   std::uint32_t input_buffer_byte_offset = (
-    ( buffer_start_byte_offset + (
-        buffer_sequence_start_index * elements_in_a_sequence * get_input_size()
-    ) ) * sizeof(double)
+    buffer_start_byte_offset
+    + (
+      buffer_sequence_start_index * elements_in_a_sequence
+      * get_input_size() * sizeof(double)
+    )
   );
   RFASSERT_LOG(
     "starting offset: {}; input_size: {}; sequence size: {}; prefill inputs: {}; Resulting offset: {}",
