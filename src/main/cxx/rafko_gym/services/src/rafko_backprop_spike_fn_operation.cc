@@ -30,15 +30,10 @@ void RafkoBackpropSpikeFnOperation::calculate_value(const std::vector<double>& n
     present_value_dependency->get_value(0u/*past_index*/), past_value
   ));
   RFASSERT_LOG(
-    "operation[{}]: Neuron[{}] Spike(present:{},past:{}, weight:{}) = {} (calculated with {}) ??{}", get_operation_index(), neuron_index,
-    present_value_dependency->get_value(0u/*past_index*/), past_value,
+    "operation[{}]: Neuron[{}] Spike(present:{}(op[{}]),past:{}, weight:{}) = {} (calculated with {})", get_operation_index(), neuron_index,
+    present_value_dependency->get_value(0u/*past_index*/), present_value_dependency->get_operation_index(), past_value,
     network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
-    get_value(0u/*past_index*/), Spike_functions_Name(network.neuron_array(neuron_index).spike_function()),
-    rafko_net::SpikeFunction::get_value(
-      network.neuron_array(neuron_index).spike_function(),
-      network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
-      present_value_dependency->get_value(0u/*past_index*/), past_value
-    )
+    get_value(0u/*past_index*/), Spike_functions_Name(network.neuron_array(neuron_index).spike_function())
   );
   set_value_processed();
 }
@@ -91,17 +86,40 @@ std::string RafkoBackpropSpikeFnOperation::value_kernel_operation(
   RFASSERT(static_cast<bool>(present_value_dependency));
   std::string kernel_code = R"(
     if(0 < available_memory_slots){
-      past_value = ==op_value_array==[==op_array_size== + ==op_index==];
+      past_value = ==op_value_array==[-==op_array_size== + ==op_index==];
     }else{
       past_value = 0.0;
     }
     ==op_value_array==[==op_index==] = ==spike_kernel==;
   )";
+
+  // //debug
+  // kernel_code += R"(
+  //   if(27 == ==op_index==){
+  //     printf(
+  //       "global[%d], local[%d]: Neuron[%d] spike = %s(p:%f, %f, w:%f) = %f \n",
+  //       (int)(get_global_id(0)), (int)(get_local_id(0)), ==neuron_index==,
+  //       "==spike_function==", past_value, ==op_value_array==[==value_dep_op_index==],
+  //       ==weight_value==, ==op_value_array==[==op_index==]
+  //     );
+  //   }
+  // )";
+  // kernel_code = rafko_utilities::replace_all_in_string(
+  //   kernel_code, std::regex("==spike_function=="), Spike_functions_Name(network.neuron_array(neuron_index).spike_function())
+  // );
+  // kernel_code = rafko_utilities::replace_all_in_string(
+  //   kernel_code, std::regex("==neuron_index=="), std::to_string(neuron_index)
+  // );
+  // kernel_code = rafko_utilities::replace_all_in_string(
+  //   kernel_code, std::regex("==weight_value=="),
+  //   weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]"
+  // );
+  // //--debug
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==spike_kernel=="), rafko_net::SpikeFunction::get_kernel_function_for(
       network.neuron_array(neuron_index).spike_function(),
-      weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
-      "==op_value_array==[==value_dep_op_index==]", "past_value"
+      "==op_value_array==[==value_dep_op_index==]", "past_value",
+      weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]"
     )
   );
   kernel_code = rafko_utilities::replace_all_in_string(

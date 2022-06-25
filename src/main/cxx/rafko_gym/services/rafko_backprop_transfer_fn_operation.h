@@ -69,6 +69,11 @@ public:
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));
     RFASSERT(needed_input_dependency->is_value_processed());
+    RFASSERT_LOG(
+      "operation[{}]: Neuron[{}] Transfer function = {}({}(op[{}]))", get_operation_index(),
+      neuron_index, Transfer_functions_Name(network.neuron_array(neuron_index).transfer_function()),
+      needed_input_dependency->get_value(0u/*past_index*/), needed_input_dependency->get_operation_index()
+    );
     set_value(transfer_function.get_value(
       network.neuron_array(neuron_index).transfer_function(), needed_input_dependency->get_value(0u/*past_index*/)
     ));

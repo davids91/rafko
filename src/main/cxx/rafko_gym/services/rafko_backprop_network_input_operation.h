@@ -65,8 +65,9 @@ public:
     set_value(network_input[input_index] * network.weight_table(weight_index));
     set_value_processed();
     RFASSERT_LOG(
-      "operation[{}]: Network Input[{}] * weight[{}] = {}", get_operation_index(),
-      input_index, weight_index, network_input[input_index] * network.weight_table(weight_index)
+      "operation[{}]: Network Input[{}]({}) * weight[{}]({}) = {}", get_operation_index(),
+      input_index, network_input[input_index], weight_index, network.weight_table(weight_index),
+      ( network_input[input_index] * network.weight_table(weight_index) )
     );
   }
 
@@ -90,13 +91,14 @@ public:
     std::string operations_value_array, std::string /*operations_array_size*/
   ) const{
     return (
-      "if(32 == " + std::to_string(get_operation_index()) + "){ \n"
-      + std::string("  printf(\"\\n[%d]network input[%d]: %f * %f\\n\", (int)(get_global_id(0)), " + std::to_string(input_index) + ",")
-      + network_input_array + "[" + std::to_string(input_index) + "],"
-      + weight_array + "[" + std::to_string(weight_index) + "]"
-      + "  ); \n"
-      + "} \n"
-      + operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
+      // "if(28 == " + std::to_string(get_operation_index()) + "){ \n"
+      // + std::string("  printf(\"\\n[%d]network input[%d]: %f * %f\\n\", (int)(get_global_id(0)), " + std::to_string(input_index) + ",")
+      // + network_input_array + "[" + std::to_string(input_index) + "],"
+      // + weight_array + "[" + std::to_string(weight_index) + "]"
+      // + "  ); \n"
+      // + "} \n"
+      // +
+      operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
       + network_input_array + "[" + std::to_string(input_index) + "]"
       + " * " + weight_array + "[" + std::to_string(weight_index) + "];\n"
     );

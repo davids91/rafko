@@ -152,8 +152,10 @@ void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double
     RFASSERT( (0u < input_past_index)||(neuron_data_dependency->is_value_processed()) );
     weighted_input = ( neuron_data_dependency->get_value(input_past_index) * network.weight_table(weight_index) );
     RFASSERT_LOG(
-      "operation[{}]: Neuron[{}] Input[{}] f_x = op[{}] * weight[{}] = {}", get_operation_index(), neuron_index, neuron_input_index,
-      neuron_data_dependency->get_operation_index(), weight_index, weighted_input
+      "operation[{}]: Neuron[{}] Input[{}] f_x = op[{}](past:{} = {}) * weight[{}]({}) = {}",
+      get_operation_index(), neuron_index, neuron_input_index,
+      neuron_data_dependency->get_operation_index(), input_past_index, neuron_data_dependency->get_value(input_past_index),
+      weight_index, network.weight_table(weight_index), weighted_input
     );
   }/*if(is_network_input)*/
 
@@ -293,6 +295,23 @@ std::string RafkoBackpropNeuronInputOperation::value_kernel_operation(
       network.neuron_array(neuron_index).input_function(), "f_x_value", "u_x_value"
     ) + ";\n"
   );
+
+  //Debug
+  // "operation[{}]: Neuron[{}] Input[{}] f_x = op[{}](past:{} = {}) * weight[{}]({}) = {}",
+  std::string debug_print = R"(
+    if(25 == ==op_index==){
+      printf(
+        "global[%d], local[%d]: operation[==op_index==]: ==input_function==(%f,%f)  \n",
+        (int)(get_global_id(0)), (int)(get_local_id(0)), f_x_value, u_x_value
+      );
+    }
+  )";
+  debug_print = rafko_utilities::replace_all_in_string(
+    debug_print, std::regex("==input_function=="),
+    Input_functions_Name(network.neuron_array(neuron_index).input_function())
+  );
+  operations += debug_print;
+  //--Debug
 
   /* Replacing the tokens with actual kernel string values */
   operations = rafko_utilities::replace_all_in_string(

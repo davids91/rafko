@@ -161,13 +161,6 @@ void AutoDiffGPUStrategy::build(
       __constant double* network_inputs, __constant double* network_weights,
       __global double* operations_value_array
     ){
-
-      if(0 == get_global_id(0)){
-        printf("Inputs:");
-        for(int i=0; i < 4; ++i){
-          printf("[%f]", network_inputs[i]);
-        }
-      }
       ==operation_locals==
       switch(get_local_id(0)){
         ==local_worker_cases==
@@ -233,10 +226,10 @@ void AutoDiffGPUStrategy::build(
         sequences_in_this_group = min( sequences_in_work_group, (minibatch_size - sequence_start) );
       }
       work_group_barrier(CLK_LOCAL_MEM_FENCE);
-      printf(
-        "global[%d], local[%d]: Number of sequences in this group: %d \n",
-        (int)(get_global_id(0)), (int)(get_local_id(0)), sequences_in_this_group
-      );
+      // printf(
+      //   "global[%d], local[%d]: Number of sequences in this group: %d \n",
+      //   (int)(get_global_id(0)), (int)(get_local_id(0)), sequences_in_this_group
+      // );
       /* Main cache variables for running */
       int sequence_truncation = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]];
       int network_inputs_start_index = (input_sizes[0]/*weight_table_size*/ + sequence_start * ==one_input_size==);
@@ -246,25 +239,29 @@ void AutoDiffGPUStrategy::build(
         output_sizes[0] + sequence_start * network_memory_size * inputs[0]/*weight_table_size*/ * operation_count
       );
 
-      printf(
-        "global[%d], local[%d]: weight_table_size: %d \n",
-        (int)(get_global_id(0)), (int)(get_local_id(0)), input_sizes[0]
-      );
-      printf(
-        "global[%d], local[%d]: sequence_start: %d \n",
-        (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_start
-      );
-      printf(
-        "global[%d], local[%d]: one_input_size: %d \n",
-        (int)(get_global_id(0)), (int)(get_local_id(0)), ==one_input_size==
-      );
-      printf(
-        "global[%d], local[%d]: network_input initial start_index: %d \n",
-        (int)(get_global_id(0)), (int)(get_local_id(0)), network_inputs_start_index
-      );
+      // printf(
+      //   "global[%d], local[%d]: weight_table_size: %d \n",
+      //   (int)(get_global_id(0)), (int)(get_local_id(0)), input_sizes[0]
+      // );
+      // printf(
+      //   "global[%d], local[%d]: sequence_start: %d \n",
+      //   (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_start
+      // );
+      // printf(
+      //   "global[%d], local[%d]: one_input_size: %d \n",
+      //   (int)(get_global_id(0)), (int)(get_local_id(0)), ==one_input_size==
+      // );
+      // printf(
+      //   "global[%d], local[%d]: network_input initial start_index: %d \n",
+      //   (int)(get_global_id(0)), (int)(get_local_id(0)), network_inputs_start_index
+      // );
       /* In case there is no sequence truncation, all of the sequence elements will be considered when calculating the derivative */
       sequence_truncation = (sequence_truncation == 0)?(==sequence_size==):(sequence_truncation);
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
+        printf(
+          "global[%d], local[%d]: ======================= sequence: %d \n",
+          (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index
+        );
         int network_ran_count = 0;
         int available_memory_slots = 0;
         network_values_start_index = (sequence_index * network_memory_size * operation_count);

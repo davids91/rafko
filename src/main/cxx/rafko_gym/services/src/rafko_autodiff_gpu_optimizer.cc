@@ -122,9 +122,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   std::cout << "GPU input values:";
   std::uint32_t i = 0;
   for(const double& d : input_buffer_values){
-    if(0 == (i++ % 10)){
-      std::cout << std::endl;
-    }
+    if(0 == (i++ % 10))std::cout << std::endl;
     std::cout << "[" << d << "]";
   }
   std::cout << std::endl;
@@ -140,24 +138,39 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
     0/*offset*/
   );
 
-  std::cout << "GPU output_values:";
+  const std::uint32_t examined_operation = 25u;
+  std::cout << "GPU output_values(op_size:" << operations.size() << "):";
   i = 0;
   for(const double& d : output_buffer_values){
-    if(0 == (i++ % operations.size())){
-      std::cout << std::endl;
+    if(0 == (i % operations.size())){
+      std::cout << std::endl << "past: " << (i / operations.size()) << ":";
+      i = 0;
     }
-    std::cout << "[" << d << "]";
+    if(0 == (i % 5))std::cout << "  ";
+    if(examined_operation == (i % operations.size())) std::cout << "[x" << d << "]";
+      else std::cout << "[" << d << "]";
+    ++i;
   }
   std::cout << std::endl;
 
   RafkoAutodiffOptimizer::iterate();
-  std::cout << "CPU output_values:";
+  std::cout << "CPU output_values:\n";
+  i = 0;
+  std::cout << "past 0: ";
   for(const double& d : data.get_value().get_element(0u/*past_index*/)){
-    std::cout << "[" << d << "]";
+    if(0 == (i % 5))std::cout << "  ";
+    if(examined_operation == (i % operations.size())) std::cout << "[x" << d << "]";
+      else std::cout << "[" << d << "]";
+    ++i;
   }
   std::cout << std::endl;
+  i = 0;
+  std::cout << "past 1: ";
   for(const double& d : data.get_value().get_element(1u/*past_index*/)){
-    std::cout << "[" << d << "]";
+    if(0 == (i % 5))std::cout << "  ";
+    if(examined_operation == (i % operations.size())) std::cout << "[x" << d << "]";
+      else std::cout << "[" << d << "]";
+    ++i;
   }
   std::cout << std::endl;
 
