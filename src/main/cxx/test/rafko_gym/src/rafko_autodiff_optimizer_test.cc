@@ -279,11 +279,11 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
       reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000001)
     );
-    CHECK( //REQUIRE(
+    CHECK( // REQUIRE
       reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
       == Catch::Approx(actual_value[0][0]).epsilon(0.0000000001)
     );
-    RFASSERT(0);
+
     double weight_sum = std::accumulate(
       network->weight_table().begin(), network->weight_table().end(), 0.0,
       [](const double& accu, const double& element){ return accu + std::abs(element); }

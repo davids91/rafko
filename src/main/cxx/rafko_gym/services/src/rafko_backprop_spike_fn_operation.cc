@@ -93,28 +93,26 @@ std::string RafkoBackpropSpikeFnOperation::value_kernel_operation(
     ==op_value_array==[==op_index==] = ==spike_kernel==;
   )";
 
-  // //debug
-  // kernel_code += R"(
-  //   if(27 == ==op_index==){
-  //     printf(
-  //       "global[%d], local[%d]: Neuron[%d] spike = %s(p:%f, %f, w:%f) = %f \n",
-  //       (int)(get_global_id(0)), (int)(get_local_id(0)), ==neuron_index==,
-  //       "==spike_function==", past_value, ==op_value_array==[==value_dep_op_index==],
-  //       ==weight_value==, ==op_value_array==[==op_index==]
-  //     );
-  //   }
-  // )";
-  // kernel_code = rafko_utilities::replace_all_in_string(
-  //   kernel_code, std::regex("==spike_function=="), Spike_functions_Name(network.neuron_array(neuron_index).spike_function())
-  // );
-  // kernel_code = rafko_utilities::replace_all_in_string(
-  //   kernel_code, std::regex("==neuron_index=="), std::to_string(neuron_index)
-  // );
-  // kernel_code = rafko_utilities::replace_all_in_string(
-  //   kernel_code, std::regex("==weight_value=="),
-  //   weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]"
-  // );
-  // //--debug
+  //debug
+  kernel_code += R"(
+    printf(
+      "global[%d], local[%d]: operation[==op_index==] Neuron[%d] spike = %s(p:%f, %f, w:%f) = %f \n",
+      (int)(get_global_id(0)), (int)(get_local_id(0)), ==neuron_index==,
+      "==spike_function==", past_value, ==op_value_array==[==value_dep_op_index==],
+      ==weight_value==, ==op_value_array==[==op_index==]
+    );
+  )";
+  kernel_code = rafko_utilities::replace_all_in_string(
+    kernel_code, std::regex("==spike_function=="), Spike_functions_Name(network.neuron_array(neuron_index).spike_function())
+  );
+  kernel_code = rafko_utilities::replace_all_in_string(
+    kernel_code, std::regex("==neuron_index=="), std::to_string(neuron_index)
+  );
+  kernel_code = rafko_utilities::replace_all_in_string(
+    kernel_code, std::regex("==weight_value=="),
+    weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]"
+  );
+  //--debug
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==spike_kernel=="), rafko_net::SpikeFunction::get_kernel_function_for(
       network.neuron_array(neuron_index).spike_function(),

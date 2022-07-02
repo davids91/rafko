@@ -138,16 +138,16 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
     0/*offset*/
   );
 
-  const std::uint32_t examined_operation = 25u;
+  const std::uint32_t examined_operation = 5u;
   std::cout << "GPU output_values(op_size:" << operations.size() << "):";
   i = 0;
   for(const double& d : output_buffer_values){
     if(0 == (i % operations.size())){
-      std::cout << std::endl << "past: " << (i / operations.size()) << ":";
+      std::cout << std::endl << "past " << 1 - (i / operations.size()) << ":";
       i = 0;
     }
-    if(0 == (i % 5))std::cout << "  ";
-    if(examined_operation == (i % operations.size())) std::cout << "[x" << d << "]";
+    if(0 == (i % 10))std::cout << "\n";
+    if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
       else std::cout << "[" << d << "]";
     ++i;
   }
@@ -156,19 +156,19 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   RafkoAutodiffOptimizer::iterate();
   std::cout << "CPU output_values:\n";
   i = 0;
-  std::cout << "past 0: ";
-  for(const double& d : data.get_value().get_element(0u/*past_index*/)){
-    if(0 == (i % 5))std::cout << "  ";
-    if(examined_operation == (i % operations.size())) std::cout << "[x" << d << "]";
+  std::cout << "past 1: ";
+  for(const double& d : data.get_value().get_element(1u/*past_index*/)){
+    if(0 == (i % 10))std::cout << "\n";
+    if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
       else std::cout << "[" << d << "]";
     ++i;
   }
   std::cout << std::endl;
   i = 0;
-  std::cout << "past 1: ";
-  for(const double& d : data.get_value().get_element(1u/*past_index*/)){
-    if(0 == (i % 5))std::cout << "  ";
-    if(examined_operation == (i % operations.size())) std::cout << "[x" << d << "]";
+  std::cout << "past 0: ";
+  for(const double& d : data.get_value().get_element(0u/*past_index*/)){
+    if(0 == (i % 10))std::cout << "\n";
+    if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
       else std::cout << "[" << d << "]";
     ++i;
   }
@@ -186,17 +186,24 @@ double RafkoAutodiffGPUOptimizer::get_neuron_data(
   double ret = 0.0;
   RFASSERT(past_index < network.memory_size());
   RFASSERT_LOG(
-    "Loading Neuron data from GPU Phase: sequence[{}/{}], past[{}/{}], Neuron[{}/{}], operation[{}/{}];",
+    "Loading Neuron data from GPU Phase: sequence[{}/{}], past[{}/{}], Neuron[{}/{}], operation[{}/{}] ==> offset: {}",
     sequence_index, environment->get_number_of_sequences(),
     past_index, network.memory_size(),
     neuron_index, network.neuron_array_size(),
-    get_operation_index(neuron_index), operations.size()
+    get_operation_index(neuron_index), operations.size(),
+    (
+      (sequence_index * network.memory_size() * operations.size())
+      + ((network.memory_size() - past_index - 1) * operations.size())
+      + get_operation_index(neuron_index)
+    )
   );
+  // sequence[0/1], past[1/2], Neuron[3/4], operation[1/37] ==> offset: 38
+  // sequence[0/1], past[0/2], Neuron[3/4], operation[1/37] ==> offset: 75
 
   gpu_phase.load_output(
     &ret/*target*/, 1u/*size*/, (
       (sequence_index * network.memory_size() * operations.size())
-      + ((network.memory_size() - past_index) * operations.size())
+      + ((network.memory_size() - past_index - 1) * operations.size())
       + get_operation_index(neuron_index)
     )/*offset*/
   );

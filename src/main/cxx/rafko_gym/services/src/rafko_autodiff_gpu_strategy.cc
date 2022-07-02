@@ -162,12 +162,7 @@ void AutoDiffGPUStrategy::build(
       __global double* operations_value_array
     ){
       ==operation_locals==
-      switch(get_local_id(0)){
-        ==local_worker_cases==
-        default:
-        ==default_worker_case==
-        break;
-      }
+      ==operation_switches==
     }
 
     void reset_buffer(__global double* buffer, int buffer_size){
@@ -189,6 +184,9 @@ void AutoDiffGPUStrategy::build(
       const int elements_in_this_worker = min(
         elements_per_worker, max((slot_size - start_index_in_slot), 0)
       );
+      if(0 == get_local_id(0)){
+        printf("Shifting back local buffers!\n");
+      }
       if(0 < elements_in_this_worker){
         for(int slot_index = 0; slot_index < (slot_number - 1); ++slot_number){
           for(int i = 0; i < elements_in_this_worker; ++i){
@@ -259,8 +257,8 @@ void AutoDiffGPUStrategy::build(
       sequence_truncation = (sequence_truncation == 0)?(==sequence_size==):(sequence_truncation);
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
         printf(
-          "global[%d], local[%d]: ======================= sequence: %d \n",
-          (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index
+          "global[%d], local[%d]: ======================= sequence: %d (%d %d %d work groups)\n",
+          (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index, get_num_groups(0), get_num_groups(1), get_num_groups(2)
         );
         int network_ran_count = 0;
         int available_memory_slots = 0;
@@ -278,17 +276,17 @@ void AutoDiffGPUStrategy::build(
             &outputs[network_values_start_index]/*operation_values*/
           );
           ++network_ran_count;
-          available_memory_slots = min(network_ran_count, network_memory_size);
-          network_inputs_start_index += ==one_input_size==;
-          if(network_ran_count < network_memory_size){
-            network_values_start_index += operation_count;
-          }else{
-            shift_local_buffer_back(
-              &outputs[network_values_sequence_start_index]/*operation_values*/,
-              operation_count,
-              network_memory_size,
-              false/*reset_last*/
-            );
+          if(prefill_index < ==prefill_num==-1){
+            available_memory_slots = min(network_ran_count, (network_memory_size-1));
+            network_inputs_start_index += ==one_input_size==;
+            if(network_ran_count < network_memory_size){
+              network_values_start_index += operation_count;
+            }else{
+              shift_local_buffer_back(
+                &outputs[network_values_sequence_start_index]/*operation_values*/,
+                operation_count, available_memory_slots, false/*reset_last*/
+              );
+            }
           }
         }/*for(prefill of the sequence)*/
         uint sequence_truncation_start = get_random_number(
@@ -296,9 +294,10 @@ void AutoDiffGPUStrategy::build(
         );
         for(int label_index = 0; label_index < ==sequence_size==; ++label_index){
           printf(
-            "global[%d], local[%d]: inside sequence[%d] and label[%d], network_input start_index: %d \n",
-            (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index,
-            label_index, network_inputs_start_index
+            "global[%d], local[%d]: available memory: %d; network_ran_count: %d; network_memory_size: %d; label_in_sequence: %d/%d\n",
+            (int)(get_global_id(0)), (int)(get_local_id(0)),
+            available_memory_slots, network_ran_count, network_memory_size,
+            label_index, ==sequence_size==
           );
           execute_local_value_worker(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,
@@ -319,27 +318,25 @@ void AutoDiffGPUStrategy::build(
             &outputs[network_derivatives_start_index]/*operation_derivatives*/,
             &outputs[output_sizes[0] + output_sizes[1]]/*d_w_array*/
           );
-          network_inputs_start_index += ==one_input_size==;
-          network_labels_start_index += ==one_label_size==;
-          if(network_ran_count < network_memory_size){
-            network_values_start_index += operation_count;
-          }else{
-            shift_local_buffer_back(
-              &outputs[network_values_sequence_start_index]/*operation_values*/,
-              operation_count,
-              network_memory_size,
-              false/*reset_last*/
-            );
-          }
-          if(network_ran_count < network_memory_size){
-            network_derivatives_start_index += operation_count * input_sizes[0]/*weight_table_size*/;
-          }else{
-            shift_local_buffer_back(
-              &outputs[network_derivatives_sequence_start_index]/*operation_derivatives*/,
-              operation_count * input_sizes[0]/*weight_table_size*/,
-              network_memory_size,
-              false/*reset_last*/
-            );
+          ++network_ran_count;
+          if(label_index < ==sequence_size==-1){
+            available_memory_slots = min(network_ran_count, (network_memory_size-1));
+            network_inputs_start_index += ==one_input_size==;
+            network_labels_start_index += ==one_label_size==;
+            if(network_ran_count < network_memory_size){
+              network_values_start_index += operation_count;
+              network_derivatives_start_index += operation_count * input_sizes[0]/*weight_table_size*/;
+            }else{
+              shift_local_buffer_back(
+                &outputs[network_values_sequence_start_index]/*operation_values*/,
+                operation_count, available_memory_slots, false/*reset_last*/
+              );
+              shift_local_buffer_back(
+                &outputs[network_derivatives_sequence_start_index]/*operation_derivatives*/,
+                operation_count * input_sizes[0]/*weight_table_size*/,
+                available_memory_slots, false/*reset_last*/
+              );
+            }
           }
         }/*for(every label inside the sequence)*/
       }/*for(every relevant sequence index)*/
@@ -389,6 +386,10 @@ void AutoDiffGPUStrategy::build(
       declared_operations.insert(operation_type);
     }
   }
+  source_base = rafko_utilities::replace_all_in_string(
+    source_base, std::regex("==operation_locals=="), operation_locals
+  );
+
   std::vector<std::vector<std::uint32_t>> operations_matrix = generate_operation_paralell_matrix(operations);
   std::uint32_t avg_row_size = 0u;
   for(const std::vector<std::uint32_t>& row : operations_matrix) avg_row_size += row.size();
@@ -396,58 +397,72 @@ void AutoDiffGPUStrategy::build(
     static_cast<double>(avg_row_size) / static_cast<double>(operations_matrix.size())
   ) );
 
-  /* For each thread create the network phases */
-  std::vector<std::string> worker_phases(operations_matrix.size());
-  std::string default_worker_case = "";
-  /*!Note: one phase of workers involves some independent operations and a local barrier.
-   * Because of coordination multiple barriers might be inserted into one worker case
-   */
-   /* Add value operations into worker phases */
   RFASSERT_LOG("Starting to split operations into workers..");
-  for(const std::vector<std::uint32_t>& operations_in_phase : operations_matrix){
+  std::string switch_case_template = R"(
+    switch(get_local_id(0)){
+      ==all_worker_cases==
+      default:break;
+    }
+    // if(0 == get_local_id(0)){
+    //   printf("op[25]: %f \n", operations_value_array[25]);
+    // }
+    work_group_barrier(CLK_GLOBAL_MEM_FENCE);
+  )";
+  std::string worker_case_template = R"(
+    case ==thread_index==:{
+      ==thread_contents==
+    }break;
+  )";
+  std::vector<std::string> value_phases(operations_matrix.size());
+  std::uint32_t operations_phase = 0u;
+  std::string all_switch_cases = "";
+  for(const std::vector<std::uint32_t>& current_row : operations_matrix){
+    /*!Note: one row to be split up between the workers */
+    std::vector<std::string> worker_operations(avg_row_size);
     std::uint32_t placed_operation_count = 0u;
-    while(placed_operation_count < operations_in_phase.size()){
+    while(placed_operation_count < current_row.size()){
       for(std::uint32_t worker_index = 0u; worker_index < avg_row_size; ++worker_index){
-        if((placed_operation_count + worker_index) < operations_in_phase.size()){
-          std::uint32_t operation_index = operations_in_phase[placed_operation_count + worker_index];
+        if((placed_operation_count + worker_index) < current_row.size()){
+          std::uint32_t operation_index = current_row[placed_operation_count + worker_index];
           std::string operation = operations[operation_index]->value_kernel_operation(
             "network_inputs", "network_weights", "operations_value_array",
             std::to_string(operations.size()) /*operations_array_size*/
           );
-          if(0 == operation_index)
-            std::cout << "Operation[0]: " << operation << std::endl;
-          worker_phases[worker_index] += operation;
+          worker_operations[worker_index] += operation;
           RFASSERT_LOG(
-            "Placing operation[operation_in_phase[{}] ==> {}] into worker[{}] phase",
-            (placed_operation_count + worker_index), operation_index, worker_index
+            "Placing operation[current_row[{}] ==> {}] into worker[{}] phase[{}]",
+            (placed_operation_count + worker_index), operation_index, worker_index, operations_phase
           );
         }
       }/*for(every worker thread)*/
       placed_operation_count += avg_row_size;
     }/*while(any operation remain unplaced)*/
-    for(std::uint32_t worker_index = 0u; worker_index < avg_row_size; ++worker_index)
-      worker_phases[worker_index] += "\nwork_group_barrier(CLK_GLOBAL_MEM_FENCE);\n";
-    default_worker_case += "\nwork_group_barrier(CLK_GLOBAL_MEM_FENCE);\n";
-  }/*for(every operation phase)*/
-  source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==operation_locals=="), operation_locals
-  );
-  std::string all_worker_cases;
 
-  for(std::uint32_t worker_index = 0u; worker_index < avg_row_size; ++worker_index){
-    std::string one_worker_case = rafko_utilities::replace_all_in_string(
-      "case ==op_index==:{==worker_operations==} break;\n",
-      std::regex("==op_index=="), std::to_string(worker_index)
+    /* wrap every worker operation into a switch case*/
+    std::uint32_t worker_index = 0;
+    std::string all_worker_cases = "";
+    for(std::string& worker_case : worker_operations){
+      std::string one_worker_case = rafko_utilities::replace_all_in_string(
+        worker_case_template, std::regex("==thread_index=="), std::to_string(worker_index)
+      );
+      worker_case = rafko_utilities::replace_all_in_string(
+        one_worker_case, std::regex("==thread_contents=="), worker_case
+      );
+      all_worker_cases += worker_case;
+      ++worker_index;
+    }
+    all_switch_cases += rafko_utilities::replace_all_in_string(
+      switch_case_template, std::regex("==all_worker_cases=="), all_worker_cases
     );
-    all_worker_cases += rafko_utilities::replace_all_in_string(
-      one_worker_case, std::regex("==worker_operations=="), worker_phases[worker_index]
+    RFASSERT_LOGV(
+      current_row, "Used every available worker, row(at index {}/{}):",
+      placed_operation_count, current_row.size()
     );
-  }
+    ++operations_phase;
+  }/*for(all rows in the operations_matrix)*/
+
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==local_worker_cases=="), all_worker_cases
-  );
-  source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==default_worker_case=="), default_worker_case
+    source_base, std::regex("==operation_switches=="), all_switch_cases
   );
 
   /* Add derivative operations into the kernel */

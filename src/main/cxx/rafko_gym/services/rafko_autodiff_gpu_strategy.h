@@ -100,7 +100,7 @@ public:
     RFASSERT(static_cast<bool>(environment));
     std::cout << "Dimensions: "
     << "global:" << environment->get_number_of_sequences() * maximum_local_workers
-    << " local: " << maximum_local_workers 
+    << " local: " << maximum_local_workers
     << std::endl;
     return {
       cl::NullRange/*offset*/,

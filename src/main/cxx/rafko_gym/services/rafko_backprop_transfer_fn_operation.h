@@ -108,12 +108,45 @@ public:
   ) const{
     RFASSERT(static_cast<bool>(needed_input_dependency));
     RFASSERT(needed_input_dependency->are_dependencies_registered());
-    return ( operations_value_array + "[" + std::to_string(operation_index) + "] = "
+    //++debug
+    std::string printf_code;
+    // printf_code = R"(
+    //   if(2 == ==op_index==){
+    //     printf(
+    //       "operation[==op_index==]: ==transfer_function==(%f(op[%d])) == %f",
+    //       ==dep_value==, ==dep_op_index==, ==result==
+    //     );
+    //   }
+    // )";
+    // printf_code = rafko_utilities::replace_all_in_string(
+    //   printf_code, std::regex("==op_index=="), std::to_string(get_operation_index())
+    // );
+    // printf_code = rafko_utilities::replace_all_in_string(
+    //   printf_code, std::regex("==transfer_function=="),
+    //   Transfer_functions_Name(network.neuron_array(neuron_index).transfer_function())
+    // );
+    // printf_code = rafko_utilities::replace_all_in_string(
+    //   printf_code, std::regex("==dep_value=="),
+    //   operations_value_array + "[" + std::to_string(needed_input_dependency->get_operation_index()) + "]"
+    // );
+    // printf_code = rafko_utilities::replace_all_in_string(
+    //   printf_code, std::regex("==dep_op_index=="), std::to_string(needed_input_dependency->get_operation_index())
+    // );
+    // printf_code = rafko_utilities::replace_all_in_string(
+    //   printf_code, std::regex("==result=="), ( operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
+    //     + transfer_function.get_kernel_function_for(
+    //       network.neuron_array(neuron_index).transfer_function(),
+    //       operations_value_array + "[" + std::to_string(needed_input_dependency->get_operation_index()) + "]"
+    //     )
+    //   )
+    // );
+    //--debug
+    return ( operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
       + transfer_function.get_kernel_function_for(
         network.neuron_array(neuron_index).transfer_function(),
         operations_value_array + "[" + std::to_string(needed_input_dependency->get_operation_index()) + "]"
       )
-    ) + ";";
+    ) + ";" + printf_code;
   }
 
   std::string derivative_kernel_operation(
@@ -124,7 +157,7 @@ public:
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));
     return (
-      operations_derivative_array + "[" + std::to_string(operation_index) + "] = "
+      operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
       + transfer_function.get_kernel_function_for_d(
         network.neuron_array(neuron_index).transfer_function(),
         operations_value_array + "[" + std::to_string(needed_input_dependency->get_operation_index()) + "]",
