@@ -59,8 +59,8 @@ double InputFunction::get_derivative(Input_functions function, double a, double 
 std::string InputFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b){
   std::string code = R"(
     switch(==op==){
-      case neuron_input_function_add: ==a== = (==a== + ==b==); break;
-      case neuron_input_function_multiply: ==a== = (==a== * ==b==); break;
+      case neuron_input_function_add: ==a== = ((==a==) + (==b==)); break;
+      case neuron_input_function_multiply: ==a== = ((==a==) * (==b==)); break;
       default: break;
     }
   )";
@@ -72,8 +72,8 @@ std::string InputFunction::get_all_kernel_functions_for(std::string operation_in
 
 std::string InputFunction::derivative_kernel_for(Input_functions function, std::string a, std::string a_dw, std::string b, std::string b_dw){
   switch(function){
-    case input_function_add: return "(" + a_dw + "+" + b_dw + ")";
-    case input_function_multiply: return "(" + a + "*" + b_dw + ") + (" + a_dw + "*" + b + ")";
+    case input_function_add: return "((" + a_dw + ")+(" + b_dw + "))";
+    case input_function_multiply: return "((" + a + ")*(" + b_dw + ")) + ((" + a_dw + ")*(" + b + "))";
     default: throw std::runtime_error("Unidentified Input function called!");
   };
 }

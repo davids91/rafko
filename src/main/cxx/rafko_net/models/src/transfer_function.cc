@@ -59,7 +59,7 @@ double TransferFunction::get_derivative(Transfer_functions function, double inpu
   switch(function){
   case transfer_function_identity: return input_dw;
   case transfer_function_sigmoid:
-    return (input_dw * std::exp(input))/std::pow((std::exp(input) + 1.0),2.0);
+    return (input_dw * std::exp(input))/std::pow((std::exp(input) + 1.0), 2.0);
   case transfer_function_tanh: return input_dw / std::pow(std::cosh(input), 2.0);
   case transfer_function_elu:
     if(input <= 0.0) return settings.get_alpha() * std::exp(input) * input_dw;
@@ -98,22 +98,30 @@ std::string TransferFunction::get_kernel_function_for(Transfer_functions functio
 std::string TransferFunction::get_kernel_function_for_d(
   Transfer_functions function, std::string input, std::string input_dw
 ) const{
+  std::string input_ = "(" + input + ")";
+  std::string input_dw_ = "(" + input_dw + ")";
   switch(function){
-    case transfer_function_identity: return input_dw;
+    case transfer_function_identity: return input_dw_;
     case transfer_function_sigmoid:
-      return "(" + input_dw + " * exp(" + input + "))/pow((exp(" + input + ") + 1.0), 2.0)";
-    case transfer_function_tanh: return input_dw + "/pow(cosh(" + input + "),2.0)";
+      return "(" + input_dw_ + " * exp(" + input_ + "))/pow((exp(" + input_ + ") + 1.0), 2.0)";
+    case transfer_function_tanh: return input_dw_ + "/pow(cosh(" + input_ + "), 2.0)";
     case transfer_function_elu:{
-      std::string positive_derivative = std::to_string(settings.get_alpha()) + " * exp(" + input + ") * " + input_dw;
-      return "(" + input + " < 0.0)?(" + positive_derivative + "):(" + input_dw + ")";
+      return (
+        "(" + input_ + " <= 0.0)"
+        + "?(" + std::to_string(settings.get_alpha()) + " * exp(" + input_ + ") * " + input_dw_ + ")"
+        + ":(" + input_dw_ + ")"
+      );
     }
     case transfer_function_selu:{
       std::string constant_modifiers = std::to_string(settings.get_lambda()) + " * " + std::to_string(settings.get_alpha());
-      std::string positive_derivative = constant_modifiers + " * exp(" + input + ") * " + input_dw;
-      return "(" + input + " < 0.0)?(" + positive_derivative + "):(" + std::to_string(settings.get_lambda()) + "*" + input_dw + ")";
+      return (
+        "(" + input_ + " < 0.0)"
+        + "?(" + constant_modifiers + " * exp(" + input_ + ") * " + input_dw_ + ")"
+        + ":(" + std::to_string(settings.get_lambda()) + "*" + input_dw_ + ")"
+      );
     }
     case transfer_function_relu:{
-      return "(" + input + " <= 0.0)?(0.0):(" + input_dw + ")";
+      return "(" + input_ + " <= 0.0)?(0.0):(" + input_dw_ + ")";
     }
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }

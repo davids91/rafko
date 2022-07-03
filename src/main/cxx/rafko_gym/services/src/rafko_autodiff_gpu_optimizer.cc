@@ -87,9 +87,9 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
     std::fill(tmp_avg_derivatives.begin(), tmp_avg_derivatives.end(), 0.0);
   });
   //TODO: Run for all weights
-  std::cout << "======================" << std::endl;
+  // std::cout << "======================" << std::endl;
   gpu_phase();
-  std::cout << "======================" << std::endl;
+  // std::cout << "======================" << std::endl;
   tmp_reset_thread.join();
   RFASSERT_LOG("sequence count: {}", environment->get_number_of_sequences());
   RFASSERT_LOG("network memory size: {}", network.memory_size());
@@ -112,68 +112,72 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   );
 
   /*!Debug: See values output:*/
-  std::vector<double> input_buffer_values(strategy->get_input_shapes()[0].get_number_of_elements());
-  cl_int return_value = opencl_queue.enqueueReadBuffer(
-    gpu_phase.get_input_buffer(), CL_TRUE/*blocking*/,
-    0U/*offset*/, (strategy->get_input_shapes()[0].get_byte_size<double>())/*size*/,
-    input_buffer_values.data()
-  );
-  assert(return_value == CL_SUCCESS);
-  std::cout << "GPU input values:";
-  std::uint32_t i = 0;
-  for(const double& d : input_buffer_values){
-    if(0 == (i++ % 10))std::cout << std::endl;
-    std::cout << "[" << d << "]";
-  }
-  std::cout << std::endl;
-
-  std::vector<double> output_buffer_values(
-    environment->get_number_of_sequences()
-    * network.memory_size()
-    * operations.size()
-  );
-  gpu_phase.load_output(
-    output_buffer_values.data()/*target*/,
-    output_buffer_values.size()/*size*/,
-    0/*offset*/
-  );
-
-  const std::uint32_t examined_operation = 5u;
-  std::cout << "GPU output_values(op_size:" << operations.size() << "):";
-  i = 0;
-  for(const double& d : output_buffer_values){
-    if(0 == (i % operations.size())){
-      std::cout << std::endl << "past " << 1 - (i / operations.size()) << ":";
-      i = 0;
-    }
-    if(0 == (i % 10))std::cout << "\n";
-    if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
-      else std::cout << "[" << d << "]";
-    ++i;
-  }
-  std::cout << std::endl;
-
-  RafkoAutodiffOptimizer::iterate();
-  std::cout << "CPU output_values:\n";
-  i = 0;
-  std::cout << "past 1: ";
-  for(const double& d : data.get_value().get_element(1u/*past_index*/)){
-    if(0 == (i % 10))std::cout << "\n";
-    if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
-      else std::cout << "[" << d << "]";
-    ++i;
-  }
-  std::cout << std::endl;
-  i = 0;
-  std::cout << "past 0: ";
-  for(const double& d : data.get_value().get_element(0u/*past_index*/)){
-    if(0 == (i % 10))std::cout << "\n";
-    if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
-      else std::cout << "[" << d << "]";
-    ++i;
-  }
-  std::cout << std::endl;
-
+  // std::vector<double> input_buffer_values(strategy->get_input_shapes()[0].get_number_of_elements());
+  // cl_int return_value = opencl_queue.enqueueReadBuffer(
+  //   gpu_phase.get_input_buffer(), CL_TRUE/*blocking*/,
+  //   0U/*offset*/, (strategy->get_input_shapes()[0].get_byte_size<double>())/*size*/,
+  //   input_buffer_values.data()
+  // );
+  // assert(return_value == CL_SUCCESS);
+  // std::cout << "GPU input values:";
+  // std::uint32_t i = 0;
+  // for(const double& d : input_buffer_values){
+  //   if(0 == (i++ % 10))std::cout << std::endl;
+  //   std::cout << "[" << d << "]";
+  // }
+  // std::cout << std::endl;
+  //
+  // std::vector<double> output_buffer_values(
+  //   environment->get_number_of_sequences()
+  //   * network.memory_size()
+  //   * operations.size()
+  // );
+  // gpu_phase.load_output(
+  //   output_buffer_values.data()/*target*/,
+  //   output_buffer_values.size()/*size*/,
+  //   0/*offset*/
+  // );
+  //
+  // const std::uint32_t examined_operation = 5u;
+  // std::cout << "GPU output_values(op_size:" << operations.size() << "):";
+  // i = 0;
+  // for(const double& d : output_buffer_values){
+  //   if(0 == (i % operations.size())){
+  //     std::cout << std::endl << "past " << 1 - (i / operations.size()) << ":";
+  //     i = 0;
+  //   }
+  //   if(0 == (i % 10))std::cout << "\n";
+  //   if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
+  //     else std::cout << "[" << d << "]";
+  //   ++i;
+  // }
+  // std::cout << std::endl;
+  //
+  // RafkoAutodiffOptimizer::iterate();
+  // std::cout << "CPU output_values:\n";
+  // i = 0;
+  // std::cout << "past 1: ";
+  // for(const double& d : data.get_value().get_element(1u/*past_index*/)){
+  //   if(0 == (i % 10))std::cout << "\n";
+  //   if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
+  //     else std::cout << "[" << d << "]";
+  //   ++i;
+  // }
+  // std::cout << std::endl;
+  // i = 0;
+  // std::cout << "past 0: ";
+  // for(const double& d : data.get_value().get_element(0u/*past_index*/)){
+  //   if(0 == (i % 10))std::cout << "\n";
+  //   if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
+  //     else std::cout << "[" << d << "]";
+  //   ++i;
+  // }
+  // std::cout << std::endl;
+  // std::cout << "Weight derivatives:\n";
+  // for(const double& d : tmp_avg_derivatives){
+  //   std::cout << "[" << d << "]";
+  // }
+  // std::cout << std::endl;
   apply_weight_update(tmp_avg_derivatives);
   ++iteration;
 

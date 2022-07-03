@@ -62,9 +62,7 @@ void RafkoBackpropSpikeFnOperation::calculate_derivative(
     set_derivative(d_w_index, rafko_net::SpikeFunction::get_derivative_not_for_w(
       network.neuron_array(neuron_index).spike_function(),
       network.weight_table(network.neuron_array(neuron_index).input_weights(0).starts()),
-      present_value_dependency->get_value(0u/*past_index*/),
-      present_value_dependency->get_derivative(0u/*past_index*/, d_w_index),
-      past_value, past_derivative_value
+      present_value_dependency->get_derivative(0u/*past_index*/, d_w_index), past_derivative_value
     ));
   }
   set_derivative_processed();
@@ -86,7 +84,7 @@ std::string RafkoBackpropSpikeFnOperation::value_kernel_operation(
   RFASSERT(static_cast<bool>(present_value_dependency));
   std::string kernel_code = R"(
     if(0 < available_memory_slots){
-      past_value = ==op_value_array==[-==op_array_size== + ==op_index==];
+      past_value = ==op_value_array==[==op_index== - ==op_array_size==];
     }else{
       past_value = 0.0;
     }
@@ -94,24 +92,24 @@ std::string RafkoBackpropSpikeFnOperation::value_kernel_operation(
   )";
 
   //debug
-  kernel_code += R"(
-    printf(
-      "global[%d], local[%d]: operation[==op_index==] Neuron[%d] spike = %s(p:%f, %f, w:%f) = %f \n",
-      (int)(get_global_id(0)), (int)(get_local_id(0)), ==neuron_index==,
-      "==spike_function==", past_value, ==op_value_array==[==value_dep_op_index==],
-      ==weight_value==, ==op_value_array==[==op_index==]
-    );
-  )";
-  kernel_code = rafko_utilities::replace_all_in_string(
-    kernel_code, std::regex("==spike_function=="), Spike_functions_Name(network.neuron_array(neuron_index).spike_function())
-  );
-  kernel_code = rafko_utilities::replace_all_in_string(
-    kernel_code, std::regex("==neuron_index=="), std::to_string(neuron_index)
-  );
-  kernel_code = rafko_utilities::replace_all_in_string(
-    kernel_code, std::regex("==weight_value=="),
-    weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]"
-  );
+  // kernel_code += R"(
+  //   printf(
+  //     "global[%d], local[%d]: operation[==op_index==] Neuron[%d] spike = %s(p:%f, %f, w:%f) = %f \n",
+  //     (int)(get_global_id(0)), (int)(get_local_id(0)), ==neuron_index==,
+  //     "==spike_function==", past_value, ==op_value_array==[==value_dep_op_index==],
+  //     ==weight_value==, ==op_value_array==[==op_index==]
+  //   );
+  // )";
+  // kernel_code = rafko_utilities::replace_all_in_string(
+  //   kernel_code, std::regex("==spike_function=="), Spike_functions_Name(network.neuron_array(neuron_index).spike_function())
+  // );
+  // kernel_code = rafko_utilities::replace_all_in_string(
+  //   kernel_code, std::regex("==neuron_index=="), std::to_string(neuron_index)
+  // );
+  // kernel_code = rafko_utilities::replace_all_in_string(
+  //   kernel_code, std::regex("==weight_value=="),
+  //   weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]"
+  // );
   //--debug
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==spike_kernel=="), rafko_net::SpikeFunction::get_kernel_function_for(
@@ -148,8 +146,8 @@ std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
    */
   std::string kernel_code = R"(
     if(0 < available_memory_slots){
-      past_value = ==op_value_array==[-==op_array_size== + ==op_index==];
-      past_derivative_value = ==op_derivative_array==[-==op_array_size== + ==op_index==];
+      past_value = ==op_value_array==[==op_index== - ==op_array_size==];
+      past_derivative_value = ==op_derivative_array==[==op_index== - ==op_array_size==];
     }else{
       past_value = 0.0;
       past_derivative_value = 0.0;
@@ -167,8 +165,7 @@ std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
     kernel_code, std::regex("==spike_w_kernel=="), rafko_net::SpikeFunction::get_derivative_kernel_for_w(
       network.neuron_array(neuron_index).spike_function(),
       weight_array + "[" + std::to_string(network.neuron_array(neuron_index).input_weights(0).starts()) + "]",
-      "==op_value_array==[==value_dep_op_index==]",
-      "==op_derivative_array==[==value_dep_op_index==]",
+      "==op_value_array==[==value_dep_op_index==]", "==op_derivative_array==[==value_dep_op_index==]",
       "past_value", "past_derivative_value"
     )
   );

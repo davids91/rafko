@@ -137,6 +137,10 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
     .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
+    .set_neuron_spike_function(1u, 0u, rafko_net::spike_function_p)
+    .set_neuron_spike_function(0u, 1u, rafko_net::spike_function_memory)
+    .set_neuron_spike_function(0u, 2u, rafko_net::spike_function_memory)
+    .set_neuron_spike_function(0u, 3u, rafko_net::spike_function_memory)
     .allowed_transfer_functions_by_layer({
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}

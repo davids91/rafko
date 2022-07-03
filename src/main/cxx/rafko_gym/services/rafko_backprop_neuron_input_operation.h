@@ -70,7 +70,7 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies();
-  
+
 private:
   const std::uint32_t neuron_index;
   const std::uint32_t neuron_input_index;
@@ -78,7 +78,6 @@ private:
   rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval> weights_iterator;
 
   const bool is_network_input;
-  const std::uint32_t input_index_from_neuron_input_index;
   const std::uint32_t input_past_index;
   const std::uint32_t weight_index;
 

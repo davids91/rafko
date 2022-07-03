@@ -105,14 +105,14 @@ public:
   }
   //TODO: available_memory_slots inside the kernels are hidden dependencies!
   std::string derivative_kernel_operation(
-    std::string /*network_input_array*/, std::string /*label_array*/, std::string weight_array,
+    std::string network_input_array, std::string /*label_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string operations_derivative_array,
     std::string /*operations_array_size*/
   ) const{
     std::string kernel_code = R"(
       if(d_w_index == ==this_op_weight_index==){
         ==op_derivative_array==[==op_index==] = (
-          ==weight_value==
+          ==network_input_array==
         );
       }else{
         ==op_derivative_array==[==op_index==] = 0.0;
@@ -122,8 +122,8 @@ public:
       kernel_code, std::regex("==this_op_weight_index=="), std::to_string(weight_index)
     );
     kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, std::regex("==weight_value=="),
-      weight_array + "[" + std::to_string(weight_index) + "]"
+      kernel_code, std::regex("==network_input_array=="),
+      network_input_array + "[" + std::to_string(input_index) + "]"
     );
     kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_derivative_array=="), operations_derivative_array);
     kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_index=="), std::to_string(get_operation_index()));

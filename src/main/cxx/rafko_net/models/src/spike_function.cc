@@ -32,13 +32,13 @@ double SpikeFunction::get_value(Spike_functions function, double parameter, doub
   switch(function){
     case spike_function_none: return new_data;
     case spike_function_memory: return (previous_data * parameter) + (new_data * (1.0-parameter));
-    case spike_function_p: return previous_data + ((new_data - previous_data)*parameter);
+    case spike_function_p: return previous_data + ((new_data - previous_data) * parameter);
     case spike_function_amplify_value: return new_data * parameter;
     default: throw std::runtime_error("Unknown spike function requested for calculation!");
   }
 }
 
-double SpikeFunction::get_derivative_for_w( /* means: x = w */
+double SpikeFunction::get_derivative_for_w( /* means: x = w; new_data = g(x); previous_data = f(x) */
   Spike_functions function, double parameter,
   double new_data, double new_data_d,
   double previous_data, double previous_data_d
@@ -49,9 +49,9 @@ double SpikeFunction::get_derivative_for_w( /* means: x = w */
     case spike_function_memory: /* S(x,w,f(x),g(x)) = w * f(x) + g(x) - w * g(x) */
       /* S'(x,w,f(x),g(x)) =  w * f'(x) + f(x) - w * g'(x)  + g'(x) - g(x) */
       return (parameter * previous_data_d) + previous_data - (parameter * new_data_d) + new_data_d - new_data;
-    case spike_function_p: /* S(x,w,f(x),g(x)) = g(x) + (f(x) - g(x)) * w */
-      /* S'(x,w,f(x),g(x)) = g'(x) + (w * (f'(x) - g'(x)) + (f(x) - g(x)) */
-      return previous_data_d + (parameter * (new_data_d - previous_data_d)) + (new_data - previous_data);
+    case spike_function_p: /* S(x,w,f(x),g(x)) = f(x) + g(x) * w - f(x) * w */
+      /* S'(x,w,f(x),g(x)) = -w * f'(x) + f'(x) - f(w) + w * g'(x) + g(x) */
+      return -parameter * previous_data_d + previous_data_d - previous_data + parameter * new_data_d + new_data;
     case spike_function_amplify_value: /* S(x,w,f(x),g(x)) = w * g(x) */
       /* S'(x,w,f(x),g(x)) = w * g'(x) + g(x) */
       return parameter * new_data_d + new_data;
@@ -59,21 +59,18 @@ double SpikeFunction::get_derivative_for_w( /* means: x = w */
   }
 }
 
-double SpikeFunction::get_derivative_not_for_w(
-  Spike_functions function, double parameter,
-  double new_data, double new_data_d,
-  double previous_data, double previous_data_d
+double SpikeFunction::get_derivative_not_for_w( /* means: x = w; new_data = g(x); previous_data = f(x) */
+  Spike_functions function, double parameter, double new_data_d, double previous_data_d
 ){
-  parameter_not_used(new_data); // TODO: Really??
   switch(function){
     case spike_function_none: /* S(x,w,f(x),g(x)) = g(x) */
       return new_data_d;
     case spike_function_memory: /* S(x,w,f(x),g(x)) = w * f(x) + g(x) - w * g(x) */
       /* S'(x,w,f(x),g(x)) = w * f'(x)        - w * g'(x) + g'(x) */
-      return (parameter * previous_data) - (parameter * new_data_d) + new_data_d;
-    case spike_function_p: /* S(x,w,f(x),g(x)) = g(x) + (f(x) - g(x)) * w */
-      /* S'(x,w,f(x),g(x)) = g'(x) + (w * (f'(x) - g'(x)) */
-      return previous_data_d + (parameter * (new_data_d - previous_data_d));
+      return (parameter * previous_data_d) - (parameter * new_data_d) + new_data_d;
+    case spike_function_p: /* S(x,w,f(x),g(x)) = f(x) + g(x) * w - f(x) * w */
+      /* S'(x,w,f(x),g(x)) = w * g'(x) - (w - 1) * f'(x) */
+      return (parameter * new_data_d)  - ((parameter - 1.0) * previous_data_d);
     case spike_function_amplify_value: /* S(x,w,f(x),g(x)) = w * g(x) */
       /* S'(x,w,f(x),g(x)) = w * g'(x) */
       return parameter * new_data_d;
@@ -132,21 +129,23 @@ std::string SpikeFunction::get_derivative_kernel_for_w(
   std::string new_data, std::string new_data_d,
   std::string previous_data, std::string previous_data_d
 ){
+  std::string parameter_ = "(" + parameter + ")";
+  std::string new_data_d_ = "(" + new_data_d + ")";
+  std::string previous_data_d_ = "(" + previous_data_d + ")";
   switch(function){
     case spike_function_none: return new_data_d;
     case spike_function_memory:
       return(
-        "(" + parameter + "*" + previous_data_d + ") + " + previous_data
-        + " - (" + parameter + "*" + new_data_d + ")"
-        + "+" + new_data_d + "-" + new_data
+        "(" + parameter_ + "*" + previous_data_d_ + ") + " + previous_data
+        + " - ((" + parameter_ + ") * (" + new_data_d_ + ")) + (" + new_data_d_ + ")-(" + new_data + ")"
       );
     case spike_function_p:
       return(
-        previous_data_d + "+ (" + parameter + " * (" + new_data_d + "-" + previous_data_d + "))"
-        + "+ (" + new_data + "-" + previous_data + ")"
+        "-" + parameter_ + " * " + previous_data_d_ + " + " + previous_data_d_ + " - " + previous_data
+        + " + " + parameter_ + " * " + new_data_d_ + " + " + new_data
       );
     case spike_function_amplify_value:
-      return "(" + parameter + "*" + new_data_d + "+" + new_data + ")";
+      return "(" + parameter_ + "*" + new_data_d_ + "+" + new_data + ")";
     default: throw std::runtime_error("Unknown spike function requested for derivative calculation!");
   }
 }
@@ -155,17 +154,19 @@ std::string SpikeFunction::get_derivative_kernel_not_for_w(
   Spike_functions function, std::string parameter,
   std::string new_data_d, std::string previous_data_d
 ){
+  std::string parameter_ = "(" + parameter + ")";
+  std::string new_data_d_ = "(" + new_data_d + ")";
+  std::string previous_data_d_ = "(" + previous_data_d + ")";
   switch(function){
-    case spike_function_none: return new_data_d;
+    case spike_function_none: return new_data_d_;
     case spike_function_memory:
     return(
-      "(" + parameter + "*" + previous_data_d + ")"
-      + " - (" + parameter + "*" + new_data_d + ")" + "+" + new_data_d
+      "(" + parameter_ + "*" + previous_data_d_ + ")" + " - (" + parameter_ + "*" + new_data_d_ + ")" + "+" + new_data_d_
     );
     case spike_function_p:
-      return previous_data_d + "+ (" + parameter + " * (" + new_data_d + "-" + previous_data_d + "))";
+    return "(" + parameter_ + "*" + new_data_d_ + ")" + " - ((" + parameter_ + "-1.0) * " + previous_data_d_ + ")";
     case spike_function_amplify_value:
-      return "(" + parameter + "*" + new_data_d + ")";
+      return "(" + parameter_ + "*" + new_data_d_ + ")";
     default: throw std::runtime_error("Unknown spike function requested for derivative calculation!");
   }
 }

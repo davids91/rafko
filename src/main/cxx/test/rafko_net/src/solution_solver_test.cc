@@ -68,14 +68,14 @@ void test_solution_solver_multithread(std::uint16_t threads){
 
   /* [0][0]: Whole of the input */
   rafko_test::manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(0), network_inputs.size(),0);
-  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(0));
+  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(0));
   temp_input_interval.set_interval_size(network_inputs.size());
   *solution.mutable_partial_solutions(0)->add_input_data() = temp_input_interval;
   rafko_net::PartialSolutionSolver partial_solution_solver_0_0 = rafko_net::PartialSolutionSolver(solution.partial_solutions(0), settings);
 
   /* [0][1]: Half of the input */
   rafko_test::manual_2_neuron_partial_solution(*solution.mutable_partial_solutions(1), network_inputs.size()/2,2);
-  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(network_inputs.size()/2));
+  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(network_inputs.size()/2));
   temp_input_interval.set_interval_size(network_inputs.size()/2);
   *solution.mutable_partial_solutions(1)->add_input_data() = temp_input_interval;
   rafko_net::PartialSolutionSolver partial_solution_solver_0_1 = rafko_net::PartialSolutionSolver(solution.partial_solutions(1), settings);
@@ -386,7 +386,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
                 ++solved_inputs_in_neuron;
               }
               if(rafko_net::SynapseIterator<>::is_index_input(input_index)){
-                input_index = rafko_net::SynapseIterator<>::input_index_from_synapse_index(input_index);
+                input_index = rafko_net::SynapseIterator<>::array_index_from_external_index(input_index);
                 neuron_data += net_input[input_index] * network->weight_table(weight_index);
               }else{
                 neuron_data += manual_neuron_values[input_index] * network->weight_table(weight_index);

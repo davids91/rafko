@@ -83,7 +83,6 @@ void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
       }
       /* approximize a single weight */
       used_gradients[chosen_weight_index] = get_single_weight_gradient(chosen_weight_index, *contexts[0]) * weight_filter[chosen_weight_index];
-      std::cout << ".." << used_gradients[chosen_weight_index];
       used_gradients[chosen_weight_index] = (
         ( used_gradients[chosen_weight_index] + gradient_overview ) / (std::abs(used_gradients[chosen_weight_index]) + std::abs(gradient_overview))
       ) * contexts[0]->expose_settings().get_learning_rate(iteration);

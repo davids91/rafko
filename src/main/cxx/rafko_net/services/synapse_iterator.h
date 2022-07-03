@@ -449,24 +449,28 @@ public:
   }
 
   /**
-   * @brief      Converts synapse input index to an index usable in an input array
+   * @brief      Converts synapse an array index[0..n] to an index usable inside synapses
+   *             where index values from two different sources are merged together into one number
+   *             and the external part is represented by index values [-n+1..-1]
    *
-   * @param[in]  index  Synapse index
+   * @param[in]  index    the index[0..n] to be converted to external array range
    *
-   * @return     Index in the input array based on the synapse input index
+   * @return     index[-n+1..-1] converted to external range
    */
-  static constexpr std::int32_t synapse_index_from_input_index(std::uint32_t index){
+  static constexpr std::int32_t external_index_from_array_index(std::uint32_t index){
     return (static_cast<std::int32_t>(index) * (-1) - 1);
   }
 
   /**
-   * @brief      Converts array indexes of an array to Synapse input indexes to be stored in messages
+   * @brief      Converts index values from array index to external index
+   *             where index values from two different sources are merged together into one number
+   *             and the external part is represented by index values [-n+1..-1]
    *
-   * @param[in]  index  The input array index
+   * @param[in]  index  index[-n+1..-1] converted to external range to be converted
    *
-   * @return     Synapse index
+   * @return     the index[0..n] converted to be in internal array range
    */
-  static constexpr std::uint32_t input_index_from_synapse_index(std::int32_t index){
+  static constexpr std::uint32_t array_index_from_external_index(std::int32_t index){
     if(0 > index) return (static_cast<std::uint32_t>(index) * (-1) - 1);
       else throw std::runtime_error("Synapse index is not negative, as it should be, when queried for input index! ");
   }

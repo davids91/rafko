@@ -34,14 +34,6 @@ RafkoBackpropNeuronInputOperation::RafkoBackpropNeuronInputOperation(
     inputs_iterator[neuron_input_index]
   )
 )
-, input_index_from_neuron_input_index(
-  (!is_network_input)?(inputs_iterator[neuron_input_index])
-  :(
-    rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>::synapse_index_from_input_index(
-      inputs_iterator[neuron_input_index]
-    )
-  )
-)
 , input_past_index(
   inputs_iterator.reach_past_loops<rafko_net::InputSynapseInterval>(neuron_input_index)
 )
@@ -56,13 +48,17 @@ DependencyRequest RafkoBackpropNeuronInputOperation::upload_dependencies_to_oper
     dependency_parameters.push_back({
       ad_operation_network_input_d,
       {
-        input_index_from_neuron_input_index, /*!Note: Network input dependency contains weight */
-        static_cast<std::uint32_t>(weights_iterator[1 + neuron_input_index]),
+        rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>::array_index_from_external_index(
+          inputs_iterator[neuron_input_index]
+        ), /* index inside the input array for the network */
+        static_cast<std::uint32_t>(weights_iterator[1 + neuron_input_index]), /* weight index to be used with the input */
         neuron_index /* debug information */
       }
     });
   }else{ /* if it's not an input, then it's an internal neuron value */
-    dependency_parameters.push_back({ad_operation_neuron_spike_d, {input_index_from_neuron_input_index}});
+    dependency_parameters.push_back({
+      ad_operation_neuron_spike_d, {static_cast<std::uint32_t>(inputs_iterator[neuron_input_index])}
+    });
   }
   if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){ /* this is not the last input */
     /* push in dependency u(x) = every input after this one */
@@ -299,48 +295,48 @@ std::string RafkoBackpropNeuronInputOperation::value_kernel_operation(
   );
 
   //Debug
-  std::string f_x_dependency;
-  if(is_network_input){
-    f_x_dependency = std::to_string(network_input_dependency->get_operation_index());
-  }else{
-    f_x_dependency = std::to_string(neuron_data_dependency->get_operation_index());
-  }
-  std::string u_x_dependency;
-  if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){
-    u_x_dependency = std::to_string(neuron_input_dependency->get_operation_index());
-  }else{ /* the last input starts to collect bias */
-    u_x_dependency = std::to_string(neuron_bias_dependency->get_operation_index());
-  }
-  // "operation[{}]: Neuron[{}] Input[{}] f_x = op[{}](past:{} = {}) * weight[{}]({}) = {}",
-  std::string debug_print;
-  debug_print = R"(
-    if(5 == ==op_index==){
-      if(==past_index== <= available_memory_slots)
-      printf(
-        "global[%d]: (past: ==past_index==/%d)operation[==op_index==]: ==input_function==(%f(==op_value_array==[(==f_x_dependency== - (==op_value_array_size== * ==past_index==)) = %d]),%f(==op_value_array==[%d])) ==> %f  \n",
-        (int)(get_global_id(0)), available_memory_slots,
-        f_x_value, (==f_x_dependency== - (==op_value_array_size== * ==past_index==)),
-        u_x_value, ==u_x_dependency==, ==op_value_array==[==op_index==]
-      );
-      else
-      printf(
-        "global[%d]: operation[==op_index==]: ==input_function==(%f(no available past value)),%f(==op_value_array==[%d])) ==> %f  \n",
-        (int)(get_global_id(0)),
-        f_x_value, u_x_value, ==u_x_dependency==, ==op_value_array==[==op_index==]
-      );
-    }
-  )";
-  debug_print = rafko_utilities::replace_all_in_string(
-    debug_print, std::regex("==f_x_dependency=="), f_x_dependency
-  );
-  debug_print = rafko_utilities::replace_all_in_string(
-    debug_print, std::regex("==u_x_dependency=="), u_x_dependency
-  );
-  debug_print = rafko_utilities::replace_all_in_string(
-    debug_print, std::regex("==input_function=="),
-    Input_functions_Name(network.neuron_array(neuron_index).input_function())
-  );
-  operations += debug_print;
+  // std::string f_x_dependency;
+  // if(is_network_input){
+  //   f_x_dependency = std::to_string(network_input_dependency->get_operation_index());
+  // }else{
+  //   f_x_dependency = std::to_string(neuron_data_dependency->get_operation_index());
+  // }
+  // std::string u_x_dependency;
+  // if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){
+  //   u_x_dependency = std::to_string(neuron_input_dependency->get_operation_index());
+  // }else{ /* the last input starts to collect bias */
+  //   u_x_dependency = std::to_string(neuron_bias_dependency->get_operation_index());
+  // }
+  // // "operation[{}]: Neuron[{}] Input[{}] f_x = op[{}](past:{} = {}) * weight[{}]({}) = {}",
+  // std::string debug_print;
+  // debug_print = R"(
+  //   if(5 == ==op_index==){
+  //     if(==past_index== <= available_memory_slots)
+  //     printf(
+  //       "global[%d]: (past: ==past_index==/%d)operation[==op_index==]: ==input_function==(%f(==op_value_array==[(==f_x_dependency== - (==op_value_array_size== * ==past_index==)) = %d]),%f(==op_value_array==[%d])) ==> %f  \n",
+  //       (int)(get_global_id(0)), available_memory_slots,
+  //       f_x_value, (==f_x_dependency== - (==op_value_array_size== * ==past_index==)),
+  //       u_x_value, ==u_x_dependency==, ==op_value_array==[==op_index==]
+  //     );
+  //     else
+  //     printf(
+  //       "global[%d]: operation[==op_index==]: ==input_function==(%f(no available past value)),%f(==op_value_array==[%d])) ==> %f  \n",
+  //       (int)(get_global_id(0)),
+  //       f_x_value, u_x_value, ==u_x_dependency==, ==op_value_array==[==op_index==]
+  //     );
+  //   }
+  // )";
+  // debug_print = rafko_utilities::replace_all_in_string(
+  //   debug_print, std::regex("==f_x_dependency=="), f_x_dependency
+  // );
+  // debug_print = rafko_utilities::replace_all_in_string(
+  //   debug_print, std::regex("==u_x_dependency=="), u_x_dependency
+  // );
+  // debug_print = rafko_utilities::replace_all_in_string(
+  //   debug_print, std::regex("==input_function=="),
+  //   Input_functions_Name(network.neuron_array(neuron_index).input_function())
+  // );
+  // operations += debug_print;
   //--Debug
 
   /* Replacing the tokens with actual kernel string values */

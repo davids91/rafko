@@ -31,8 +31,8 @@ std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_output_sha
     /* operation values */
     (environment->get_number_of_sequences() * network.memory_size() * number_of_operations),
     ( /* operation derivatives */
-      network.memory_size() * environment->get_number_of_sequences()
-      * number_of_operations * network.weight_table_size()
+      environment->get_number_of_sequences() * network.memory_size()
+      * network.weight_table_size() * number_of_operations
     ),
     /* Weight derivatives */
     static_cast<std::uint32_t>(network.weight_table_size())
@@ -41,8 +41,8 @@ std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_output_sha
     /* operation values */
     (environment->get_number_of_sequences() * network.memory_size() * number_of_operations),
     ( /* operation derivatives */
-      network.memory_size() * environment->get_number_of_sequences()
-      * number_of_operations * network.weight_table_size()
+      environment->get_number_of_sequences() * network.memory_size()
+      * network.weight_table_size() * number_of_operations
     ),
     /* Weight derivatives */
     static_cast<std::uint32_t>(network.weight_table_size())
@@ -134,26 +134,52 @@ void AutoDiffGPUStrategy::build(
       __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array
     ){
       ==operation_locals==
-      const int weights_in_one_thread = weight_table_size / get_local_size(0);
+      const int weights_in_one_thread = 1 + (weight_table_size / get_local_size(0));
       const int weights_index_start = weights_in_one_thread * get_local_id(0);
       const int weights_in_this_thread = min(
         weights_in_one_thread, max(0, (weight_table_size - weights_index_start))
       );
-      // for(int d_w_index = weights_index_start; d_w_index < (weights_index_start + weights_in_this_thread); ++d_w_index){
-        int d_w_index = 1;
-        //TODO: Re-structure so only 1 weight is calculated in one kernel run
+      // printf(
+      //   "global[%d], local[%d / %d]: weights_in_one_thread: %d; weights_index_start: %d/%d; weights_in_this_thread: %d   \n",
+      //   (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_local_size(0)),
+      //   weights_in_one_thread, weights_index_start, weight_table_size, weights_in_this_thread
+      // );
+
+      //TODO: index derivative arrays correctly : each weight to have their own array!
+      for(int d_w_index = weights_index_start; d_w_index < (weights_index_start + weights_in_this_thread); ++d_w_index){
+        const int operations_d_array_start = d_w_index * ==operation_count==;
+        __global double* operations_d_array_for_w = &operations_d_array[operations_d_array_start];
         ==derivative_operations==
+
+        // if(0 == get_local_id(0) && d_w_index == 6){
+        //   int operation_index = 36;
+        //   printf(
+        //     "global[%d], local[%d / %d], weight[%d]: operation_d[%d] = %f\n",
+        //     (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_local_size(0)), d_w_index,
+        //     operation_index, operations_d_array_for_w[operation_index]
+        //   );
+        // }
 
         if(save_to_output){
           double average_gradient = 0.0;
-          double relevant_operation_count = ==weight_relevant_operation_count==;
-          for(int operation_index = 0; operation_index < relevant_operation_count;++operation_index){
-            average_gradient += operations_d_array[(weight_table_size * d_w_index) + operation_index];
+          const double relevant_operation_count = ==weight_relevant_operation_count==;
+          for(int operation_index = 0; operation_index < relevant_operation_count; ++operation_index){
+            average_gradient += operations_d_array_for_w[operation_index];
           }
           average_gradient /= relevant_operation_count;
-          AtomicAvg(&d_w_array[d_w_index],average_gradient);
+          AtomicAvg(&d_w_array[d_w_index], average_gradient);
         }
-      // }/*for(all relevant weights)*/
+        // if(2 == get_local_id(0)){
+        //   printf(
+        //     "global[%d], local[%d / %d], weight[%d]: ",
+        //     (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_local_size(0)), d_w_index
+        //   );
+        //   for(int operation_index = 30; operation_index < 37; ++operation_index){
+        //     printf("[%f]", operations_d_array_for_w[d_w_index]);
+        //   }
+        //   printf("\n");
+        // }/*if(debug)*/
+      }/*for(all relevant weights)*/
     }/*execute_local_derivative_worker()*/
 
     void execute_local_value_worker(
@@ -184,9 +210,9 @@ void AutoDiffGPUStrategy::build(
       const int elements_in_this_worker = min(
         elements_per_worker, max((slot_size - start_index_in_slot), 0)
       );
-      if(0 == get_local_id(0)){
-        printf("Shifting back local buffers!\n");
-      }
+      // if(0 == get_local_id(0)){
+      //   printf("Shifting back local buffers!\n");
+      // }
       if(0 < elements_in_this_worker){
         for(int slot_index = 0; slot_index < (slot_number - 1); ++slot_number){
           for(int i = 0; i < elements_in_this_worker; ++i){
@@ -256,10 +282,10 @@ void AutoDiffGPUStrategy::build(
       /* In case there is no sequence truncation, all of the sequence elements will be considered when calculating the derivative */
       sequence_truncation = (sequence_truncation == 0)?(==sequence_size==):(sequence_truncation);
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
-        printf(
-          "global[%d], local[%d]: ======================= sequence: %d (%d %d %d work groups)\n",
-          (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index, get_num_groups(0), get_num_groups(1), get_num_groups(2)
-        );
+        // printf(
+        //   "global[%d], local[%d]: ======================= sequence: %d (%d %d %d work groups)\n",
+        //   (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index, get_num_groups(0), get_num_groups(1), get_num_groups(2)
+        // );
         int network_ran_count = 0;
         int available_memory_slots = 0;
         network_values_start_index = (sequence_index * network_memory_size * operation_count);
@@ -293,18 +319,23 @@ void AutoDiffGPUStrategy::build(
           max(1, (==sequence_size== - sequence_truncation)), &local_seed
         );
         for(int label_index = 0; label_index < ==sequence_size==; ++label_index){
-          printf(
-            "global[%d], local[%d]: available memory: %d; network_ran_count: %d; network_memory_size: %d; label_in_sequence: %d/%d\n",
-            (int)(get_global_id(0)), (int)(get_local_id(0)),
-            available_memory_slots, network_ran_count, network_memory_size,
-            label_index, ==sequence_size==
-          );
+          // printf(
+          //   "global[%d], local[%d]: available memory: %d; network_ran_count: %d; network_memory_size: %d; label_in_sequence: %d/%d\n",
+          //   (int)(get_global_id(0)), (int)(get_local_id(0)),
+          //   available_memory_slots, network_ran_count, network_memory_size,
+          //   label_index, ==sequence_size==
+          // );
           execute_local_value_worker(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,
             &inputs[network_inputs_start_index]/*network_inputs*/,
             &inputs[0]/*network_weights*/,
             &outputs[network_values_start_index]/*operation_values*/
           );
+          // printf(
+          //   "global[%d], local[%d]: label index: %d; seq_trun_start: %d; seq_trun_size: %d \n",
+          //   (int)(get_global_id(0)), (int)(get_local_id(0)),
+          //   label_index, sequence_truncation_start, sequence_truncation
+          // );
           execute_local_derivative_worker(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,
             (
@@ -366,7 +397,6 @@ void AutoDiffGPUStrategy::build(
     source_base, std::regex("==number_of_sequences=="),
     std::to_string(environment->get_number_of_sequences())
   );
-  std::cout << "number_of_sequences: " << environment->get_number_of_sequences() << std::endl;
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==minibatch_size=="), std::to_string( std::min(
       settings.get_minibatch_size(), environment->get_number_of_sequences()
@@ -403,9 +433,6 @@ void AutoDiffGPUStrategy::build(
       ==all_worker_cases==
       default:break;
     }
-    // if(0 == get_local_id(0)){
-    //   printf("op[25]: %f \n", operations_value_array[25]);
-    // }
     work_group_barrier(CLK_GLOBAL_MEM_FENCE);
   )";
   std::string worker_case_template = R"(
@@ -471,7 +498,7 @@ void AutoDiffGPUStrategy::build(
   for(std::int32_t operation_index = operations.size()-1; operation_index >= 0; --operation_index){
     derivative_operations += operations[operation_index]->derivative_kernel_operation(
       "network_inputs", "labels", "network_weights",
-      "operations_value_array", "operations_d_array",
+      "operations_value_array", "operations_d_array_for_w",
       std::to_string(operations.size()) /*operations_array_size*/
     );
   }

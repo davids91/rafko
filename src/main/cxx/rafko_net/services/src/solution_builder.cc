@@ -281,14 +281,14 @@ std::string SolutionBuilder::get_kernel_for_solution(
 
           bool index_points_to_input = false;
           if(SynapseIterator<>::is_index_input(input_index_start)){
-            input_index_start = SynapseIterator<>::input_index_from_synapse_index(input_index_start - input_offset_in_current_synapse);
+            input_index_start = SynapseIterator<>::array_index_from_external_index(input_index_start - input_offset_in_current_synapse);
             input_past_reach = partial_input_synapses.reach_past_loops<InputSynapseInterval>(input_index_start);
             weights_able_to_do = std::min(
               weights_able_to_do, partial_input_synapses.interval_size_of(input_index_start)
             );
             input_index_start = partial_input_synapses[input_index_start];
             if(SynapseIterator<>::is_index_input(input_index_start)){
-              input_index_start = SynapseIterator<>::input_index_from_synapse_index(input_index_start);
+              input_index_start = SynapseIterator<>::array_index_from_external_index(input_index_start);
               index_points_to_input = true;
             }
           }else input_index_start = input_index_start + input_offset_in_current_synapse;
