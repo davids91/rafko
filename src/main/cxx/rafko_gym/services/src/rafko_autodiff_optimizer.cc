@@ -46,8 +46,7 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
   /*!Note: other components depend on the output objectives being the first operations in the array. */
   for(std::uint32_t output_index = 0; output_index < network.output_neuron_number(); ++output_index){
     operations.push_back(std::make_shared<RafkoBackpropObjectiveOperation>(
-      data, network, *objective, operations.size(),
-      output_index, environment->get_number_of_label_samples()
+      data, network, *objective, operations.size(), output_index, environment->get_number_of_label_samples()
     ));
     RFASSERT_LOG(
       "operation[{}]: {} for output {} ",

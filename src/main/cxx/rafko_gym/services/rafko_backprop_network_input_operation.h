@@ -63,12 +63,12 @@ public:
   void calculate_value(const std::vector<double>& network_input){
     RFASSERT(input_index < network_input.size());
     set_value(network_input[input_index] * network.weight_table(weight_index));
-    set_value_processed();
     RFASSERT_LOG(
       "operation[{}]: Network Input[{}]({}) * weight[{}]({}) = {}", get_operation_index(),
       input_index, network_input[input_index], weight_index, network.weight_table(weight_index),
       ( network_input[input_index] * network.weight_table(weight_index) )
     );
+    set_value_processed();
   }
 
   void calculate_derivative(
@@ -77,6 +77,10 @@ public:
     parameter_not_used(label_data);
     RFASSERT(input_index < network_input.size());
     set_derivative( d_w_index, ((d_w_index == weight_index)?(network_input[input_index]):(0.0)) );
+    RFASSERT_LOG(
+      "derivative operation[{}](w[{}]): Network Input[{}]_d = {}", get_operation_index(),
+      d_w_index, input_index, get_derivative(0u/*past_index*/, d_w_index)
+    );
     set_derivative_processed();
   }
 
@@ -107,23 +111,31 @@ public:
   std::string derivative_kernel_operation(
     std::string network_input_array, std::string /*label_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string operations_derivative_array,
-    std::string /*operations_array_size*/
+    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
   ) const{
     std::string kernel_code = R"(
       if(d_w_index == ==this_op_weight_index==){
         ==op_derivative_array==[==op_index==] = (
-          ==network_input_array==
+          ==network_input_array==[==network_input_index==]
         );
       }else{
         ==op_derivative_array==[==op_index==] = 0.0;
       }
+      // if(30 == ==op_index== && d_w_index == 1){
+      //   printf(
+      //     "GPU deriv: d_w_index: %d; input_index: ==network_input_index==; input: %f; result: %f \n",
+      //     d_w_index, ==network_input_array==[==network_input_index==], ==op_derivative_array==[==op_index==]
+      //   );
+      // }
     )";
     kernel_code = rafko_utilities::replace_all_in_string(
       kernel_code, std::regex("==this_op_weight_index=="), std::to_string(weight_index)
     );
     kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, std::regex("==network_input_array=="),
-      network_input_array + "[" + std::to_string(input_index) + "]"
+      kernel_code, std::regex("==network_input_array=="), network_input_array
+    );
+    kernel_code = rafko_utilities::replace_all_in_string(
+      kernel_code, std::regex("==network_input_index=="), std::to_string(input_index)
     );
     kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_derivative_array=="), operations_derivative_array);
     kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_index=="), std::to_string(get_operation_index()));

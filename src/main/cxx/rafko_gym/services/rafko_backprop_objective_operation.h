@@ -86,6 +86,13 @@ public:
       label_data[output_index], feature_dependency->get_value(0u/*past_index*/),
       feature_dependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(sample_number)
     ));
+    RFASSERT_LOG(
+      "derivative operation[{}](w[{}]): Objective[{}]_d = {} = derivative({}(label[{}]),{}(op[{}]),{}(d_op),{}(samples))",
+      get_operation_index(), d_w_index, output_index, get_derivative(0u/*past_index*/, d_w_index),
+      label_data[output_index], output_index,
+      feature_dependency->get_value(0u/*past_index*/), feature_dependency->get_operation_index(),
+      feature_dependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(sample_number)
+    );
     set_derivative_processed();
   }
 
@@ -104,9 +111,31 @@ public:
   std::string derivative_kernel_operation(
     std::string /*network_input_array*/, std::string label_array, std::string /*weight_array*/,
     std::string operations_value_array, std::string operations_derivative_array,
-    std::string /*operations_array_size*/
+    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
   ) const{
     RFASSERT(static_cast<bool>(feature_dependency));
+    //debug
+    std::string debug_print;
+    // debug_print = "if(" + std::to_string(get_operation_index()) + " == 0 && d_w_index == 1){\n"
+    // + "printf(\""
+    //   + "label[%d] = %f; "
+    //   + "objective_d[0] = %f; "
+    //   + "values[%d]: %f; "
+    //   + "derivatives[%d]: %f; "
+    // + "\\n\", \n"
+    //   + std::to_string(output_index) + ","
+    //   + label_array + "[" + std::to_string(output_index) + "],"
+    //
+    //   + operations_derivative_array + "[" + std::to_string(get_operation_index()) + "],"
+    //
+    //   + std::to_string(feature_dependency->get_operation_index()) + ","
+    //   + operations_value_array + "[" + std::to_string(feature_dependency->get_operation_index()) + "],"
+    //
+    //   + std::to_string(feature_dependency->get_operation_index()) + ","
+    //   + operations_derivative_array + "[" + std::to_string(feature_dependency->get_operation_index()) + "]"
+    // + ");"
+    // + "}";
+    //--debug
     return (
       operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
       + objective.get_derivative_kernel_source(
@@ -115,6 +144,7 @@ public:
         operations_derivative_array + "[" + std::to_string(feature_dependency->get_operation_index()) + "]",
         std::to_string(sample_number)
       ) + ";"
+      + debug_print
     );
   }
   #endif/*(RAFKO_USES_OPENCL)*/

@@ -129,7 +129,7 @@ void AutoDiffGPUStrategy::build(
 ){
   std::string source_base = rafko_utilities::atomic_double_average_function + rafko_utilities::random_function + R"(
     void execute_local_derivative_worker(
-      int available_memory_slots, int weight_table_size, bool save_to_output,
+      int available_memory_slots, int weight_table_size, int derivative_operation_count, bool save_to_output,
       __constant double* network_inputs, __constant double* labels, __constant double* network_weights,
       __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array
     ){
@@ -147,8 +147,8 @@ void AutoDiffGPUStrategy::build(
 
       //TODO: index derivative arrays correctly : each weight to have their own array!
       for(int d_w_index = weights_index_start; d_w_index < (weights_index_start + weights_in_this_thread); ++d_w_index){
-        const int operations_d_array_start = d_w_index * ==operation_count==;
-        __global double* operations_d_array_for_w = &operations_d_array[operations_d_array_start];
+        __global double* operations_d_array_for_w = &operations_d_array[d_w_index * ==operation_count==];
+
         ==derivative_operations==
 
         // if(0 == get_local_id(0) && d_w_index == 6){
@@ -159,7 +159,18 @@ void AutoDiffGPUStrategy::build(
         //     operation_index, operations_d_array_for_w[operation_index]
         //   );
         // }
-
+        if(0 == d_w_index){
+          printf(
+            "global[%d], local[%d / %d], weight[%d] derivatives: (%f?!) ",
+            (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_local_size(0)), d_w_index,
+            operations_d_array_for_w[30]
+          );
+          for(int operation_index = 0; operation_index < 37; ++operation_index){
+            if(0 == (operation_index % 10))printf("\n");
+            printf("[%f]", operations_d_array_for_w[operation_index]);
+          }
+          printf("\n");
+        }/*if(debug)*/
         if(save_to_output){
           double average_gradient = 0.0;
           const double relevant_operation_count = ==weight_relevant_operation_count==;
@@ -169,16 +180,6 @@ void AutoDiffGPUStrategy::build(
           average_gradient /= relevant_operation_count;
           AtomicAvg(&d_w_array[d_w_index], average_gradient);
         }
-        // if(2 == get_local_id(0)){
-        //   printf(
-        //     "global[%d], local[%d / %d], weight[%d]: ",
-        //     (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_local_size(0)), d_w_index
-        //   );
-        //   for(int operation_index = 30; operation_index < 37; ++operation_index){
-        //     printf("[%f]", operations_d_array_for_w[d_w_index]);
-        //   }
-        //   printf("\n");
-        // }/*if(debug)*/
       }/*for(all relevant weights)*/
     }/*execute_local_derivative_worker()*/
 
@@ -237,8 +238,9 @@ void AutoDiffGPUStrategy::build(
       const int number_of_sequences = ==number_of_sequences==;
       const int minibatch_size = ==minibatch_size==;
       const int network_memory_size = ==network_memory_size==;
-      const int operation_count = ==operation_count==;
       const int neuron_count = ==neuron_count==;
+      const int operation_count = ==operation_count==;
+      const int derivative_operation_count = input_sizes[0]/*weight_table_size*/ * operation_count;
 
       /* deciding the sequence start index values for each workgroup */
       const int sequences_in_work_group = (number_of_sequences / get_num_groups(0)) + 1;
@@ -260,7 +262,7 @@ void AutoDiffGPUStrategy::build(
       int network_labels_start_index = (input_sizes[0]/*weight_table_size*/ + input_sizes[1]/*network_inputs*/ + sequence_start * ==one_label_size==);
       int network_values_start_index = (sequence_start * network_memory_size * operation_count);
       int network_derivatives_start_index = (
-        output_sizes[0] + sequence_start * network_memory_size * inputs[0]/*weight_table_size*/ * operation_count
+        output_sizes[0] + sequence_start * network_memory_size * derivative_operation_count
       );
 
       // printf(
@@ -280,7 +282,7 @@ void AutoDiffGPUStrategy::build(
       //   (int)(get_global_id(0)), (int)(get_local_id(0)), network_inputs_start_index
       // );
       /* In case there is no sequence truncation, all of the sequence elements will be considered when calculating the derivative */
-      sequence_truncation = (sequence_truncation == 0)?(==sequence_size==):(sequence_truncation);
+      sequence_truncation = (sequence_truncation == 0)?(==sequence_size==):(max(1, sequence_truncation));
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
         // printf(
         //   "global[%d], local[%d]: ======================= sequence: %d (%d %d %d work groups)\n",
@@ -290,7 +292,7 @@ void AutoDiffGPUStrategy::build(
         int available_memory_slots = 0;
         network_values_start_index = (sequence_index * network_memory_size * operation_count);
         network_derivatives_start_index = (
-          output_sizes[0] + sequence_index * network_memory_size * inputs[0]/*weight_table_size*/ * operation_count
+          output_sizes[0] + sequence_index * network_memory_size * derivative_operation_count
         );
         int network_derivatives_sequence_start_index = network_derivatives_start_index;
         int network_values_sequence_start_index = network_values_start_index;
@@ -310,7 +312,7 @@ void AutoDiffGPUStrategy::build(
             }else{
               shift_local_buffer_back(
                 &outputs[network_values_sequence_start_index]/*operation_values*/,
-                operation_count, available_memory_slots, false/*reset_last*/
+                operation_count, network_memory_size, false/*reset_last*/
               );
             }
           }
@@ -338,7 +340,7 @@ void AutoDiffGPUStrategy::build(
           // );
           execute_local_derivative_worker(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,
-            (
+            derivative_operation_count, (
               ( label_index >= sequence_truncation_start )
               &&( label_index < (sequence_truncation_start + sequence_truncation) )
             ),
@@ -356,16 +358,15 @@ void AutoDiffGPUStrategy::build(
             network_labels_start_index += ==one_label_size==;
             if(network_ran_count < network_memory_size){
               network_values_start_index += operation_count;
-              network_derivatives_start_index += operation_count * input_sizes[0]/*weight_table_size*/;
+              network_derivatives_start_index += derivative_operation_count;
             }else{
               shift_local_buffer_back(
                 &outputs[network_values_sequence_start_index]/*operation_values*/,
-                operation_count, available_memory_slots, false/*reset_last*/
+                operation_count, network_memory_size, false/*reset_last*/
               );
               shift_local_buffer_back(
                 &outputs[network_derivatives_sequence_start_index]/*operation_derivatives*/,
-                operation_count * input_sizes[0]/*weight_table_size*/,
-                available_memory_slots, false/*reset_last*/
+                derivative_operation_count, network_memory_size, false/*reset_last*/
               );
             }
           }
@@ -499,7 +500,8 @@ void AutoDiffGPUStrategy::build(
     derivative_operations += operations[operation_index]->derivative_kernel_operation(
       "network_inputs", "labels", "network_weights",
       "operations_value_array", "operations_d_array_for_w",
-      std::to_string(operations.size()) /*operations_array_size*/
+      std::to_string(operations.size()) /*operations_array_size*/,
+      "derivative_operation_count"
     );
   }
   source_base = rafko_utilities::replace_all_in_string(

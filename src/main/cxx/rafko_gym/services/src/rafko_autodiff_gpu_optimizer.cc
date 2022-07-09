@@ -120,7 +120,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   // );
   // assert(return_value == CL_SUCCESS);
   // std::cout << "GPU input values:";
-  // std::uint32_t i = 0;
+  std::uint32_t i = 0;
   // for(const double& d : input_buffer_values){
   //   if(0 == (i++ % 10))std::cout << std::endl;
   //   std::cout << "[" << d << "]";
@@ -138,7 +138,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   //   0/*offset*/
   // );
   //
-  // const std::uint32_t examined_operation = 5u;
+  const std::uint32_t examined_operation = 5u;
   // std::cout << "GPU output_values(op_size:" << operations.size() << "):";
   // i = 0;
   // for(const double& d : output_buffer_values){
@@ -153,7 +153,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   // }
   // std::cout << std::endl;
   //
-  // RafkoAutodiffOptimizer::iterate();
+  RafkoAutodiffOptimizer::iterate();
   // std::cout << "CPU output_values:\n";
   // i = 0;
   // std::cout << "past 1: ";
@@ -173,15 +173,32 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   //   ++i;
   // }
   // std::cout << std::endl;
-  // std::cout << "Weight derivatives:\n";
-  // for(const double& d : tmp_avg_derivatives){
-  //   std::cout << "[" << d << "]";
-  // }
-  // std::cout << std::endl;
+  std::cout << "Weight derivatives:\n";
+  for(const double& d : tmp_avg_derivatives){
+    std::cout << "[" << d << "]";
+  }
+  std::cout << std::endl;
+
+  std::uint32_t weight_index = 1;
+  i = 0;
+  std::cout << "CPU derivatives for weight[" << weight_index << "](past 1): \n";
+  for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
+    if(0 == (i++ % 10))std::cout << "\n";
+    std::cout << "[" << data.get_derivative(1/*past_index*/, operation_index, weight_index) << "]";
+  }
+  std::cout << std::endl;
+  i = 0;
+  std::cout << "CPU derivatives for weight[" << weight_index << "](past 0): \n";
+  for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
+    if(0 == (i++ % 10))std::cout << "\n";
+    std::cout << "[" << data.get_derivative(0/*past_index*/, operation_index, weight_index) << "]";
+  }
+  std::cout << std::endl;
   apply_weight_update(tmp_avg_derivatives);
   ++iteration;
 
   update_context_errors();
+  RFASSERT(0);
 }
 
 double RafkoAutodiffGPUOptimizer::get_neuron_data(

@@ -118,7 +118,7 @@ std::string RafkoBackpropNeuronBiasOperation::value_kernel_operation(
 std::string RafkoBackpropNeuronBiasOperation::derivative_kernel_operation(
   std::string /*network_input_array*/, std::string /*label_array*/, std::string weight_array,
   std::string operations_value_array, std::string operations_derivative_array,
-  std::string /*operations_array_size*/
+  std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
 ) const{
   RFASSERT(are_dependencies_registered());
   if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){ /* There is a next bias value! */
