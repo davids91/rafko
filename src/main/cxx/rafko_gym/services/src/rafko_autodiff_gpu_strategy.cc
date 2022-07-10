@@ -25,6 +25,23 @@
 
 namespace rafko_gym{
 
+std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_input_shapes() const{
+  RFASSERT(static_cast<bool>(environment));
+  RFASSERT_LOG(
+    "Autodiff strategy Input shape: {} + {} + {} + {}",
+    /* Weights */ (static_cast<std::uint32_t>(network.weight_table_size())),
+    /* Inputs */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
+    /* Labels */(environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
+    /* Sequence_truncation */ 1u
+  );
+  return{ rafko_mainframe::RafkoNBufShape{
+    /* Weights */ (static_cast<std::uint32_t>(network.weight_table_size())),
+    /* Inputs */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
+    /* Labels */(environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
+    /* Sequence_truncation */ 1u
+  } };
+}
+
 std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_output_shapes() const{
   RFASSERT_LOG(
     "Autdif GPU Strategy output buffer overall size: ({} + {} + {})",
@@ -127,7 +144,10 @@ void AutoDiffGPUStrategy::build(
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations,
   std::uint32_t weight_relevant_operation_count
 ){
-  std::string source_base = rafko_utilities::atomic_double_average_function + rafko_utilities::random_function + R"(
+  std::string source_base =
+    rafko_utilities::atomic_double_add_function
+    + rafko_utilities::atomic_double_average_function
+    + rafko_utilities::random_function + R"(
     void execute_local_derivative_worker(
       int available_memory_slots, int weight_table_size, int derivative_operation_count, bool save_to_output,
       __constant double* network_inputs, __constant double* labels, __constant double* network_weights,
@@ -139,48 +159,63 @@ void AutoDiffGPUStrategy::build(
       const int weights_in_this_thread = min(
         weights_in_one_thread, max(0, (weight_table_size - weights_index_start))
       );
+
+      __global static double divisor = 0.0;
       // printf(
       //   "global[%d], local[%d / %d]: weights_in_one_thread: %d; weights_index_start: %d/%d; weights_in_this_thread: %d   \n",
       //   (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_local_size(0)),
       //   weights_in_one_thread, weights_index_start, weight_table_size, weights_in_this_thread
       // );
 
-      //TODO: index derivative arrays correctly : each weight to have their own array!
       for(int d_w_index = weights_index_start; d_w_index < (weights_index_start + weights_in_this_thread); ++d_w_index){
         __global double* operations_d_array_for_w = &operations_d_array[d_w_index * ==operation_count==];
 
         ==derivative_operations==
 
         // if(0 == get_local_id(0) && d_w_index == 6){
-        //   int operation_index = 36;
+        //   int operation_index = 34;
         //   printf(
         //     "global[%d], local[%d / %d], weight[%d]: operation_d[%d] = %f\n",
         //     (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_local_size(0)), d_w_index,
         //     operation_index, operations_d_array_for_w[operation_index]
         //   );
         // }
-        if(0 == d_w_index){
-          printf(
-            "global[%d], local[%d / %d], weight[%d] derivatives: (%f?!) ",
-            (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_local_size(0)), d_w_index,
-            operations_d_array_for_w[30]
-          );
-          for(int operation_index = 0; operation_index < 37; ++operation_index){
-            if(0 == (operation_index % 10))printf("\n");
-            printf("[%f]", operations_d_array_for_w[operation_index]);
-          }
-          printf("\n");
-        }/*if(debug)*/
+        // if(2 == d_w_index){
+        //   printf(
+        //     "global[%d], local[%d / %d], weight[%d] derivatives:\n",
+        //     (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_local_size(0)), d_w_index
+        //   );
+        //   for(int operation_index = 0; operation_index < 37; ++operation_index){
+        //     if(0 == (operation_index % 10))printf("\n");
+        //     printf("[%10.10f]", operations_d_array_for_w[operation_index]);
+        //   }
+        //   printf("\n");
+        // }/*if(debug)*/
         if(save_to_output){
           double average_gradient = 0.0;
-          const double relevant_operation_count = ==weight_relevant_operation_count==;
-          for(int operation_index = 0; operation_index < relevant_operation_count; ++operation_index){
+          for(int operation_index = 0; operation_index < ==weight_relevant_operation_count==; ++operation_index){
             average_gradient += operations_d_array_for_w[operation_index];
           }
-          average_gradient /= relevant_operation_count;
-          AtomicAvg(&d_w_array[d_w_index], average_gradient);
+          // average_gradient /= ==weight_relevant_operation_count==.0;
+          AtomicAdd(&d_w_array[d_w_index], average_gradient);
+          AtomicAdd(&divisor, ==weight_relevant_operation_count==.0);
+          //TODO: set gradient collection precision to be adjustable:
+          //-->if big values are present in the gradients, then average of average;
+          //-->if not, then sum / overall_count
         }
       }/*for(all relevant weights)*/
+
+      work_group_barrier(CLK_GLOBAL_MEM_FENCE);
+      const int elements_per_worker = (weight_table_size / get_local_size(0)) + 1;
+      const int start_index = elements_per_worker * get_local_id(0);
+      const int elements_in_this_worker = min(
+        elements_per_worker, max((weight_table_size - start_index), 0)
+      );
+      for(int i = 0; i < elements_in_this_worker; ++i){
+        if((start_index + i) < weight_table_size)
+          d_w_array[start_index + i] /= divisor;
+      }/*for(all elements to do in this worker)*/
+      work_group_barrier(CLK_GLOBAL_MEM_FENCE);
     }/*execute_local_derivative_worker()*/
 
     void execute_local_value_worker(
@@ -473,10 +508,12 @@ void AutoDiffGPUStrategy::build(
       std::string one_worker_case = rafko_utilities::replace_all_in_string(
         worker_case_template, std::regex("==thread_index=="), std::to_string(worker_index)
       );
-      worker_case = rafko_utilities::replace_all_in_string(
-        one_worker_case, std::regex("==thread_contents=="), worker_case
-      );
-      all_worker_cases += worker_case;
+      if(0 < worker_case.size()){
+        worker_case = rafko_utilities::replace_all_in_string(
+          one_worker_case, std::regex("==thread_contents=="), worker_case
+        );
+        all_worker_cases += worker_case;
+      }
       ++worker_index;
     }
     all_switch_cases += rafko_utilities::replace_all_in_string(
@@ -507,7 +544,6 @@ void AutoDiffGPUStrategy::build(
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==derivative_operations=="), derivative_operations
   );
-
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==one_input_size=="), std::to_string(environment->get_input_size())
   );

@@ -77,23 +77,7 @@ public:
     return {"autodiff_iterate"};
   }
 
-  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
-    RFASSERT(static_cast<bool>(environment));
-    RFASSERT_LOG(
-      "Autodiff strategy Input shape: {} + {} + {} + {}",
-      /* Weights */ (static_cast<std::uint32_t>(network.weight_table_size())),
-      /* Inputs */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
-      /* Labels */(environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
-      /* Sequence_truncation */ 1u
-    );
-    return{ rafko_mainframe::RafkoNBufShape{
-      /* Weights */ (static_cast<std::uint32_t>(network.weight_table_size())),
-      /* Inputs */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
-      /* Labels */(environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
-      /* Sequence_truncation */ 1u
-    } };
-  }
-
+  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const;
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const;
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{

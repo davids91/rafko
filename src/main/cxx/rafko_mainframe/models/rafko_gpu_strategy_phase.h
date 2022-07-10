@@ -22,6 +22,7 @@
 
 #include <utility>
 #include <string>
+#include <numeric>
 #include <CL/opencl.hpp>
 
 #include "rafko_mainframe/models/rafko_nbuf_shape.h"
@@ -56,12 +57,41 @@ public:
   virtual std::vector<RafkoNBufShape> get_input_shapes() const = 0;
 
   /**
+   * @brief     Provides the overall size of every component of the input buffer
+   *
+   * @return    The number of Bytes the whole input buffer occupies
+   */
+  template<typename T>
+  std::uint32_t get_input_buffer_byte_size(){
+    std::vector<RafkoNBufShape> input_shapes = get_input_shapes();
+    return std::accumulate( input_shapes.begin(), input_shapes.end(), 0.0,
+      [](const double& sum, const RafkoNBufShape& object){
+        return sum + object.get_byte_size<double>();
+      }
+    );
+  }
+
+  /**
    * @brief      Provides the output dimensions of each step in the Strategy Phase
    *
    * @return     Vector of dimensions in order of @get_steps
    */
   virtual std::vector<RafkoNBufShape> get_output_shapes() const = 0;
 
+  /**
+   * @brief     Provides the overall size of every component of the output buffer
+   *
+   * @return    The number of Bytes the whole output buffer occupies
+   */
+  template<typename T>
+  std::uint32_t get_output_buffer_byte_size(){
+    std::vector<RafkoNBufShape> output_shapes = get_output_shapes();
+    return std::accumulate( output_shapes.begin(), output_shapes.end(), 0.0,
+      [](const double& sum, const RafkoNBufShape& object){
+        return sum + object.get_byte_size<T>();
+      }
+    );
+  }
   /**
    * @brief      Provides the required dimensions to solve the phase
    *

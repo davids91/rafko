@@ -83,9 +83,26 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
     refresh_GPU_environment();
   }
 
+  /* Reset GPU Derivatives */
+  cl::Event reset_event;
+  std::uint32_t output_buffer_byte_size = strategy->get_output_buffer_byte_size<double>();
+  std::uint32_t weight_derivatives_byte_size = strategy->get_output_shapes().back().get_byte_size<double>();
+  cl_int return_value = opencl_queue.enqueueFillBuffer<double>(
+    gpu_phase.get_output_buffer(), (0.0)/* the data(pattern) value */,
+    (output_buffer_byte_size - weight_derivatives_byte_size)/*offset*/,
+    weight_derivatives_byte_size/*size*/,
+    NULL/*events to wait for*/, &reset_event
+  );
+  RFASSERT( return_value == CL_SUCCESS );
+
   std::thread tmp_reset_thread([this](){
     std::fill(tmp_avg_derivatives.begin(), tmp_avg_derivatives.end(), 0.0);
   });
+
+  /* Wait for derivative reset to finish before starting derivative calculation */
+  return_value = reset_event.wait();
+  RFASSERT( return_value == CL_SUCCESS );
+
   //TODO: Run for all weights
   // std::cout << "======================" << std::endl;
   gpu_phase();
@@ -112,6 +129,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   );
 
   /*!Debug: See values output:*/
+  std::uint32_t i = 0;
   // std::vector<double> input_buffer_values(strategy->get_input_shapes()[0].get_number_of_elements());
   // cl_int return_value = opencl_queue.enqueueReadBuffer(
   //   gpu_phase.get_input_buffer(), CL_TRUE/*blocking*/,
@@ -120,25 +138,24 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   // );
   // assert(return_value == CL_SUCCESS);
   // std::cout << "GPU input values:";
-  std::uint32_t i = 0;
   // for(const double& d : input_buffer_values){
   //   if(0 == (i++ % 10))std::cout << std::endl;
   //   std::cout << "[" << d << "]";
   // }
   // std::cout << std::endl;
-  //
-  // std::vector<double> output_buffer_values(
-  //   environment->get_number_of_sequences()
-  //   * network.memory_size()
-  //   * operations.size()
-  // );
-  // gpu_phase.load_output(
-  //   output_buffer_values.data()/*target*/,
-  //   output_buffer_values.size()/*size*/,
-  //   0/*offset*/
-  // );
-  //
-  const std::uint32_t examined_operation = 5u;
+
+  std::vector<double> output_buffer_values(
+    environment->get_number_of_sequences()
+    * network.memory_size()
+    * operations.size()
+  );
+  gpu_phase.load_output(
+    output_buffer_values.data()/*target*/,
+    output_buffer_values.size()/*size*/,
+    0/*offset*/
+  );
+
+  const std::uint32_t examined_operation = 3u;
   // std::cout << "GPU output_values(op_size:" << operations.size() << "):";
   // i = 0;
   // for(const double& d : output_buffer_values){
@@ -173,32 +190,38 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   //   ++i;
   // }
   // std::cout << std::endl;
-  std::cout << "Weight derivatives:\n";
-  for(const double& d : tmp_avg_derivatives){
-    std::cout << "[" << d << "]";
-  }
-  std::cout << std::endl;
-
-  std::uint32_t weight_index = 1;
-  i = 0;
-  std::cout << "CPU derivatives for weight[" << weight_index << "](past 1): \n";
-  for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
-    if(0 == (i++ % 10))std::cout << "\n";
-    std::cout << "[" << data.get_derivative(1/*past_index*/, operation_index, weight_index) << "]";
-  }
-  std::cout << std::endl;
-  i = 0;
-  std::cout << "CPU derivatives for weight[" << weight_index << "](past 0): \n";
-  for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
-    if(0 == (i++ % 10))std::cout << "\n";
-    std::cout << "[" << data.get_derivative(0/*past_index*/, operation_index, weight_index) << "]";
-  }
-  std::cout << std::endl;
+  // std::cout << "Weight derivatives:\n";
+  // for(const double& d : tmp_avg_derivatives){
+  //   std::cout << "[" << d << "]";
+  // }
+  // std::cout << std::endl;
+  //
+  std::uint32_t weight_index = 2;
+  // i = 0;
+  // std::cout << "CPU derivatives for weight[" << weight_index << "](past 1): \n";
+  // for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
+  //   if(0 == (i++ % 10))std::cout << "\n";
+  //   std::cout << "[" << data.get_derivative(1/*past_index*/, operation_index, weight_index) << "]";
+  // }
+  // std::cout << std::endl;
+  // i = 0;
+  // std::cout << "CPU derivatives for weight[" << weight_index << "](past 0): \n";
+  // for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
+  //   if(0 == (i++ % 10))std::cout << "\n";
+  //   std::cout << "[" << data.get_derivative(0/*past_index*/, operation_index, weight_index) << "]";
+  // }
+  // std::cout << std::endl;
+  // i = 0;
+  // std::cout << "CPU derivatives for operation[" << examined_operation << "](past 0): \n";
+  // for(std::uint32_t d_w_index = 0; d_w_index < network.weight_table_size(); ++d_w_index){
+  //   if(0 == (i++ % 10))std::cout << "(" << i << ")\n";
+  //   std::cout << "[" << data.get_derivative(0/*past_index*/, 0/*operation_index*/, d_w_index) << "]";
+  // }
+  // std::cout << std::endl;
   apply_weight_update(tmp_avg_derivatives);
   ++iteration;
-
   update_context_errors();
-  RFASSERT(0);
+  // RFASSERT(0);
 }
 
 double RafkoAutodiffGPUOptimizer::get_neuron_data(

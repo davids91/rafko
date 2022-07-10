@@ -115,15 +115,13 @@ public:
   ) const{
     std::string kernel_code = R"(
       if(d_w_index == ==this_op_weight_index==){
-        ==op_derivative_array==[==op_index==] = (
-          ==network_input_array==[==network_input_index==]
-        );
+        ==op_derivative_array==[==op_index==] = ( ==network_input_array==[==network_input_index==] );
       }else{
         ==op_derivative_array==[==op_index==] = 0.0;
       }
       // if(30 == ==op_index== && d_w_index == 1){
       //   printf(
-      //     "GPU deriv: d_w_index: %d; input_index: ==network_input_index==; input: %f; result: %f \n",
+      //     "global[%d]: operation[==op_index==]: Network_input_d d_w_index: %d; input_index: ==network_input_index==; input: %f; result: %f \n",
       //     d_w_index, ==network_input_array==[==network_input_index==], ==op_derivative_array==[==op_index==]
       //   );
       // }

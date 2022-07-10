@@ -148,7 +148,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     .dense_layers({3,1});
 
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-    std::vector<std::vector<double>>{{1.0,1.0},{1.0,1.0}},
+    std::vector<std::vector<double>>{{0.666, 0.666},{0.666, 0.666}},
     std::vector<std::vector<double>>{{10.0},{20.0}},
     2 /*sequence_size*/
   );
@@ -211,7 +211,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
 
 #if(RAFKO_USES_OPENCL)
 TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU default optimizer", "[optimize][GPU][small]"){
-  //return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
+  // return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(0.0001).set_minibatch_size(64).set_memory_truncation(2)
@@ -224,7 +224,10 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
-    .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
+    .set_neuron_input_function(0u, 0u, rafko_net::input_function_add)
+    .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
+    .set_neuron_input_function(0u, 2u, rafko_net::input_function_add)
+    .set_neuron_input_function(1u, 0u, rafko_net::input_function_add)
     .allowed_transfer_functions_by_layer({
       // {rafko_net::transfer_function_selu},
       // {rafko_net::transfer_function_selu},
@@ -238,8 +241,10 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
     // .dense_layers({30,1});
     // .dense_layers({10,15,20,15,10,5,1});
 
+  // network->mutable_weight_table()->Set(22,0.777);
+
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-    std::vector<std::vector<double>>{{1.0,1.0},{1.0,1.0}},
+    std::vector<std::vector<double>>{{0.666, 0.666},{0.666, 0.666}},
     std::vector<std::vector<double>>{{10.0},{20.0}},
     2 /*sequence_size*/
   );
