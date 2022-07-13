@@ -14,9 +14,9 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/rafko_backprop_solution_feature_operation.h"
+#include "rafko_gym/services/rafko_backprop_solution_feature_operation.hpp"
 
-#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/services/synapse_iterator.hpp"
 
 namespace rafko_gym{
 

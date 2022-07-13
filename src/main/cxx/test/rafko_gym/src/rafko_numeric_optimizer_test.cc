@@ -29,22 +29,22 @@
 #include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_utilities/models/const_vector_subrange.h"
-#include "rafko_gym/services/cost_function_mse.h"
-#include "rafko_net/services/rafko_net_builder.h"
-#include "rafko_net/services/solution_builder.h"
-#include "rafko_gym/services/function_factory.h"
-#include "rafko_gym/models/rafko_cost.h"
-#include "rafko_gym/models/rafko_dataset_wrapper.h"
-#include "rafko_gym/services/rafko_numeric_optimizer.h"
-#include "rafko_mainframe/services/rafko_cpu_context.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_utilities/models/const_vector_subrange.hpp"
+#include "rafko_gym/services/cost_function_mse.hpp"
+#include "rafko_net/services/rafko_net_builder.hpp"
+#include "rafko_net/services/solution_builder.hpp"
+#include "rafko_gym/services/function_factory.hpp"
+#include "rafko_gym/models/rafko_cost.hpp"
+#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/services/rafko_numeric_optimizer.hpp"
+#include "rafko_mainframe/services/rafko_cpu_context.hpp"
 #if(RAFKO_USES_OPENCL)
-#include "rafko_mainframe/services/rafko_ocl_factory.h"
-#include "rafko_mainframe/services/rafko_gpu_context.h"
+#include "rafko_mainframe/services/rafko_ocl_factory.hpp"
+#include "rafko_mainframe/services/rafko_gpu_context.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_gym_test {
 

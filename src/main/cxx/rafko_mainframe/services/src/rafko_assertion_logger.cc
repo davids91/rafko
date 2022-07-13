@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 #if(RAFKO_USES_ASSERTLOGS)
 
@@ -23,7 +23,7 @@
 #include <chrono>
 #include <date/date.h>
 
-#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/basic_file_sink.hpp"
 
 namespace rafko_mainframe{
 

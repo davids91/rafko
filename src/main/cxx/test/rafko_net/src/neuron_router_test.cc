@@ -20,13 +20,13 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/rafko_net_builder.h"
-#include "rafko_net/services/solution_builder.h"
-#include "rafko_net/services/neuron_router.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_net/services/rafko_net_builder.hpp"
+#include "rafko_net/services/solution_builder.hpp"
+#include "rafko_net/services/neuron_router.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_net_test {
 

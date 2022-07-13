@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/models/rafko_settings.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
 
 
 namespace rafko_mainframe{

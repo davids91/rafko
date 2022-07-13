@@ -14,7 +14,7 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/rafko_backprop_spike_fn_operation.h"
+#include "rafko_gym/services/rafko_backprop_spike_fn_operation.hpp"
 
 namespace rafko_gym{
 

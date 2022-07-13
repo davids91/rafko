@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_utilities/services/thread_group.h"
+#include "rafko_utilities/services/thread_group.hpp"
 
 namespace rafko_utilities {
 

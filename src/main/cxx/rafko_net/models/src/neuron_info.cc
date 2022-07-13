@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/models/neuron_info.h"
+#include "rafko_net/models/neuron_info.hpp"
 
 namespace rafko_net{
 

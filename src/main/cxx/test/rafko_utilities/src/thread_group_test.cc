@@ -19,9 +19,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include "rafko_utilities/services/thread_group.h"
+#include "rafko_utilities/services/thread_group.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_utilities_test {
 

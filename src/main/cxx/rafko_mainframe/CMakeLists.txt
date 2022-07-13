@@ -5,8 +5,8 @@ if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
   target_link_libraries(rafko_mainframe PUBLIC rafko_protocol OpenCL::OpenCL)
   set(HEADERS_WITH_OCL
-    models/rafko_gpu_strategy_phase.h
-    services/rafko_ocl_factory.h
+    models/rafko_gpu_strategy_phase.hpp
+    services/rafko_ocl_factory.hpp
   )
   set(SOURCES_WITH_OCL
     models/src/rafko_gpu_strategy_phase.cc
@@ -29,13 +29,13 @@ endif()
 
 set( MAINFRAME_HEADERS
   ${HEADERS_WITH_OCL}
-  models/rafko_settings.h
-  models/rafko_nbuf_shape.h
-  services/rafko_dummies.h
-  services/rafko_context.h
-  services/rafko_cpu_context.h
-  services/rafko_training_logger.h
-  services/rafko_assertion_logger.h
+  models/rafko_settings.hpp
+  models/rafko_nbuf_shape.hpp
+  services/rafko_dummies.hpp
+  services/rafko_context.hpp
+  services/rafko_cpu_context.hpp
+  services/rafko_training_logger.hpp
+  services/rafko_assertion_logger.hpp
 )
 set( MAINFRAME_SOURCES
   ${SOURCES_WITH_OCL}

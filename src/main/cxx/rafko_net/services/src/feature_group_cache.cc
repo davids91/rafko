@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/feature_group_cache.h"
+#include "rafko_net/services/feature_group_cache.hpp"
 
 namespace rafko_net {
 

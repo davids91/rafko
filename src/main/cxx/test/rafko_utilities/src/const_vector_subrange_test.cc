@@ -19,9 +19,9 @@
 #include <iterator>
 #include <catch2/catch_test_macros.hpp>
 
-#include "rafko_utilities/models/const_vector_subrange.h"
+#include "rafko_utilities/models/const_vector_subrange.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_utilities_test {
 

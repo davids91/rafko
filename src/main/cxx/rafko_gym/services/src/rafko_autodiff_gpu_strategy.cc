@@ -14,17 +14,17 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/rafko_autodiff_gpu_strategy.h"
+#include "rafko_gym/services/rafko_autodiff_gpu_strategy.hpp"
 
 #include <set>
 #include <cmath>
 #include <memory>
 #include <atomic>
 
-#include "rafko_utilities/models/rafko_gpu_kernel_library.h"
-#include "rafko_utilities/services/rafko_string_utils.h"
-#include "rafko_utilities/services/thread_group.h"
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_utilities/models/rafko_gpu_kernel_library.hpp"
+#include "rafko_utilities/services/rafko_string_utils.hpp"
+#include "rafko_utilities/services/thread_group.hpp"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_gym{
 

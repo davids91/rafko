@@ -14,20 +14,20 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/rafko_autodiff_optimizer.h"
+#include "rafko_gym/services/rafko_autodiff_optimizer.hpp"
 
 #include <limits>
 #include <deque>
 
-#include "rafko_net/models/neuron_info.h"
-#include "rafko_net/services/neuron_router.h"
-#include "rafko_gym/services/rafko_backprop_network_input_operation.h"
-#include "rafko_gym/services/rafko_backprop_neuron_bias_operation.h"
-#include "rafko_gym/services/rafko_backprop_neuron_input_operation.h"
-#include "rafko_gym/services/rafko_backprop_transfer_fn_operation.h"
-#include "rafko_gym/services/rafko_backprop_objective_operation.h"
-#include "rafko_gym/services/rafko_backprop_weight_reg_operation.h"
-#include "rafko_gym/services/rafko_backprop_solution_feature_operation.h"
+#include "rafko_net/models/neuron_info.hpp"
+#include "rafko_net/services/neuron_router.hpp"
+#include "rafko_gym/services/rafko_backprop_network_input_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_neuron_bias_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_neuron_input_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_transfer_fn_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_objective_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_weight_reg_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_solution_feature_operation.hpp"
 
 namespace rafko_gym{
 

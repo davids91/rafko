@@ -23,18 +23,18 @@
 
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_utilities/models/const_vector_subrange.h"
-#include "rafko_utilities/services/thread_group.h"
-#include "rafko_net/models/transfer_function.h"
-#include "rafko_net/models/spike_function.h"
-#include "rafko_net/services/solution_solver.h"
-#include "rafko_net/services/partial_solution_solver.h"
-#include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/rafko_net_builder.h"
-#include "rafko_net/services/solution_builder.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_utilities/models/const_vector_subrange.hpp"
+#include "rafko_utilities/services/thread_group.hpp"
+#include "rafko_net/models/transfer_function.hpp"
+#include "rafko_net/models/spike_function.hpp"
+#include "rafko_net/services/solution_solver.hpp"
+#include "rafko_net/services/partial_solution_solver.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_net/services/rafko_net_builder.hpp"
+#include "rafko_net/services/solution_builder.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_net_test{
 

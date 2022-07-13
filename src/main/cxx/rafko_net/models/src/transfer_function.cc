@@ -15,16 +15,16 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/models/transfer_function.h"
+#include "rafko_net/models/transfer_function.hpp"
 
 #include <math.h>
 #include <stdexcept>
 #if(RAFKO_USES_OPENCL)
 #include <regex>
 
-#include "rafko_utilities/services/rafko_string_utils.h"
+#include "rafko_utilities/services/rafko_string_utils.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_net {
 

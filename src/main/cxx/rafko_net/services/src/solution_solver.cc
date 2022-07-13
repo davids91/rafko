@@ -15,14 +15,14 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/solution_solver.h"
+#include "rafko_net/services/solution_solver.hpp"
 
 #include <stdexcept>
 #include <mutex>
 
-#include "rafko_net/models/neuron_info.h"
-#include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/rafko_network_feature.h"
+#include "rafko_net/models/neuron_info.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_net/services/rafko_network_feature.hpp"
 
 namespace rafko_net{
 

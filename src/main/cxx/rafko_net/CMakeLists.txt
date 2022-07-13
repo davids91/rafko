@@ -2,24 +2,24 @@ add_library(rafko_net OBJECT)
 target_include_directories(rafko_net PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services)
 target_link_libraries(rafko_net PUBLIC rafko_mainframe rafko_protocol)
 set(NET_INTERFACE_SERVICES
-  services/synapse_iterator.h
+  services/synapse_iterator.hpp
 )
 set(NET_HEADER_SERVICES
-  services/neuron_router.h
-  services/partial_solution_builder.h
-  services/partial_solution_solver.h
-  services/solution_builder.h
-  services/solution_solver.h
-  services/rafko_net_builder.h
-  services/rafko_network_feature.h
+  services/neuron_router.hpp
+  services/partial_solution_builder.hpp
+  services/partial_solution_solver.hpp
+  services/solution_builder.hpp
+  services/solution_solver.hpp
+  services/rafko_net_builder.hpp
+  services/rafko_network_feature.hpp
 )
 set(NET_HEADER_MODELS
-  models/dense_net_weight_initializer.h
-  models/neuron_info.h
-  models/spike_function.h
-  models/transfer_function.h
-  models/input_function.h
-  models/weight_initializer.h
+  models/dense_net_weight_initializer.hpp
+  models/neuron_info.hpp
+  models/spike_function.hpp
+  models/transfer_function.hpp
+  models/input_function.hpp
+  models/weight_initializer.hpp
 )
 target_sources(rafko_net
   INTERFACE ${NET_INTERFACE_SERVICES}

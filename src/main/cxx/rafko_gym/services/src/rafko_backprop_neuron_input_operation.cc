@@ -14,9 +14,9 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/rafko_backprop_neuron_input_operation.h"
+#include "rafko_gym/services/rafko_backprop_neuron_input_operation.hpp"
 
-#include "rafko_utilities/services/rafko_string_utils.h"
+#include "rafko_utilities/services/rafko_string_utils.hpp"
 
 namespace rafko_gym{
 

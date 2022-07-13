@@ -15,16 +15,16 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/partial_solution_solver.h"
+#include "rafko_net/services/partial_solution_solver.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 #include <math.h>
 
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
-#include "rafko_net/models/input_function.h"
-#include "rafko_net/models/transfer_function.h"
-#include "rafko_net/models/spike_function.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
+#include "rafko_net/models/input_function.hpp"
+#include "rafko_net/models/transfer_function.hpp"
+#include "rafko_net/models/spike_function.hpp"
 
 namespace rafko_net {
 

@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/services/rafko_training_logger.h"
+#include "rafko_mainframe/services/rafko_training_logger.hpp"
 
 #include <iostream>
 #include <fstream>

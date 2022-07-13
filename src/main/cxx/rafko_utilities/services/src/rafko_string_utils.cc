@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_utilities/services/rafko_string_utils.h"
+#include "rafko_utilities/services/rafko_string_utils.hpp"
 
 namespace rafko_utilities {
 

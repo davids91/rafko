@@ -14,12 +14,12 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/rafko_backprop_neuron_bias_operation.h"
+#include "rafko_gym/services/rafko_backprop_neuron_bias_operation.hpp"
 
 #if(RAFKO_USES_OPENCL)
 #include <regex>
 
-#include "rafko_utilities/services/rafko_string_utils.h"
+#include "rafko_utilities/services/rafko_string_utils.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 namespace rafko_gym{

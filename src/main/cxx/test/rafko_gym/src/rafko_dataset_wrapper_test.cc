@@ -20,10 +20,10 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_gym/models/rafko_dataset_wrapper.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_gym_test {
 

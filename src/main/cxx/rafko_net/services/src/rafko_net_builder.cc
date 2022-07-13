@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/rafko_net_builder.h"
+#include "rafko_net/services/rafko_net_builder.hpp"
 
 #include <time.h>
 
@@ -24,9 +24,9 @@
 #include <stdexcept>
 #include <string>
 
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
-#include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/models/dense_net_weight_initializer.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_net/models/dense_net_weight_initializer.hpp"
 
 namespace rafko_net {
 

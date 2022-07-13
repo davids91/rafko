@@ -21,13 +21,13 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_net/models/transfer_function.h"
-#include "rafko_utilities/models/data_ringbuffer.h"
-#include "rafko_net/services/partial_solution_solver.h"
-#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_net/models/transfer_function.hpp"
+#include "rafko_utilities/models/data_ringbuffer.hpp"
+#include "rafko_net/services/partial_solution_solver.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_net_test {
 

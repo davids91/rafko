@@ -15,13 +15,13 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/services/rafko_gpu_phase.h"
+#include "rafko_mainframe/services/rafko_gpu_phase.hpp"
 
 #include <stdexcept>
 #include <iostream>
 
-#include "rafko_utilities/services/rafko_string_utils.h"
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_utilities/services/rafko_string_utils.hpp"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_mainframe{
 

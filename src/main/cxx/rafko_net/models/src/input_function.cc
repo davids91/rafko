@@ -15,13 +15,13 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/models/input_function.h"
+#include "rafko_net/models/input_function.hpp"
 
 #include <stdexcept>
 
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 #if(RAFKO_USES_OPENCL)
-#include "rafko_utilities/services/rafko_string_utils.h"
+#include "rafko_utilities/services/rafko_string_utils.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 namespace rafko_net {

@@ -73,7 +73,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   endif()
 endif()
 include(GenerateExportHeader)
-generate_export_header(rafko_full EXPORT_FILE_NAME rafko_export.h)
+generate_export_header(rafko_full EXPORT_FILE_NAME rafko_export.hpp)
 
 target_compile_features(rafko_full
   PRIVATE
@@ -107,7 +107,7 @@ if(MAKE_TESTS)
 endif()
 
 install(
-  FILES rafko_global.h ${CMAKE_CURRENT_BINARY_DIR}/rafko_export.h
+  FILES rafko_global.hpp ${CMAKE_CURRENT_BINARY_DIR}/rafko_export.hpp
   DESTINATION include/
 )
 

@@ -15,11 +15,11 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_gym/services/rafko_numeric_optimizer.h"
+#include "rafko_gym/services/rafko_numeric_optimizer.hpp"
 
 #include <algorithm>
 
-#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/services/synapse_iterator.hpp"
 
 namespace rafko_gym{
 

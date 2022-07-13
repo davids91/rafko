@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/rafko_network_feature.h"
+#include "rafko_net/services/rafko_network_feature.hpp"
 
 #include <limits>
 #include <math.h>
@@ -23,11 +23,11 @@
 #include <unordered_map>
 #endif/*(RAFKO_USES_OPENCL)*/
 
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
-#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
 #if(RAFKO_USES_OPENCL)
-#include "rafko_utilities/services/rafko_string_utils.h"
-#include "rafko_gym/services/rafko_weight_adapter.h"
+#include "rafko_utilities/services/rafko_string_utils.hpp"
+#include "rafko_gym/services/rafko_weight_adapter.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 

@@ -15,14 +15,14 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/services/rafko_gpu_context.h"
+#include "rafko_mainframe/services/rafko_gpu_context.hpp"
 
 #include <stdexcept>
 
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_net/services/solution_builder.h"
-#include "rafko_mainframe/services/rafko_dummies.h"
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_net/services/solution_builder.hpp"
+#include "rafko_mainframe/services/rafko_dummies.hpp"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_mainframe{
 

@@ -14,7 +14,7 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/models/rafko_dataset_wrapper.h"
+#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
 
 namespace rafko_gym{
 

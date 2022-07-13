@@ -3,22 +3,22 @@ target_include_directories(rafko_utilities PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_
 
 if(RAFKO_USES_OPENCL)
   set(RAFKO_GPU_LIBRARY_HEADERS
-    models/rafko_gpu_kernel_library.h
+    models/rafko_gpu_kernel_library.hpp
   )
 else()
   set(RAFKO_GPU_LIBRARY_HEADERS)
 endif()
 
 set(UTIL_INTERFACE_MODELS
-  models/data_pool.h
-  models/data_ringbuffer.h
-  models/const_vector_subrange.h
+  models/data_pool.hpp
+  models/data_ringbuffer.hpp
+  models/const_vector_subrange.hpp
   ${RAFKO_GPU_LIBRARY_HEADERS}
 )
 set(UTIL_INTERFACE_SERVICES
-  services/thread_group.h
-  services/rafko_string_utils.h
-  services/rafko_math_utils.h
+  services/thread_group.hpp
+  services/rafko_string_utils.hpp
+  services/rafko_math_utils.hpp
 )
 
 target_sources(rafko_utilities

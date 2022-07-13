@@ -15,15 +15,15 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/neuron_router.h"
+#include "rafko_net/services/neuron_router.hpp"
 
 #include <algorithm>
 #include <thread>
 
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
-#include "rafko_net/models/neuron_info.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
+#include "rafko_net/models/neuron_info.hpp"
 
-#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/services/synapse_iterator.hpp"
 
 namespace rafko_net{
 

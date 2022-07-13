@@ -14,13 +14,13 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/models/rafko_cost.h"
+#include "rafko_gym/models/rafko_cost.hpp"
 
 #include <math.h>
 #include <mutex>
 #include <functional>
 
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_gym{
 

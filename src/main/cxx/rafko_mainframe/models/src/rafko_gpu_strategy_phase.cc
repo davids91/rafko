@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.h"
+#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
 
 namespace rafko_mainframe{
 

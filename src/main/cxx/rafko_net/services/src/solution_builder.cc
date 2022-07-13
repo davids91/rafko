@@ -15,7 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/solution_builder.h"
+#include "rafko_net/services/solution_builder.hpp"
 
 #include <math.h>
 #include <memory>
@@ -27,19 +27,19 @@
 #include <regex>
 #include <functional>
 
-#include "rafko_utilities/models/rafko_gpu_kernel_library.h"
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_net/models/transfer_function.h"
-#include "rafko_net/models/spike_function.h"
+#include "rafko_utilities/models/rafko_gpu_kernel_library.hpp"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_net/models/transfer_function.hpp"
+#include "rafko_net/models/spike_function.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
-#include "rafko_net/models/input_function.h"
-#include "rafko_net/models/neuron_info.h"
-#include "rafko_net/services/neuron_router.h"
-#include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/rafko_network_feature.h"
+#include "rafko_net/models/input_function.hpp"
+#include "rafko_net/models/neuron_info.hpp"
+#include "rafko_net/services/neuron_router.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_net/services/rafko_network_feature.hpp"
 
-#include "rafko_net/services/partial_solution_builder.h"
+#include "rafko_net/services/partial_solution_builder.hpp"
 
 namespace rafko_net{
 

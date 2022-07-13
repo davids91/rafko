@@ -15,12 +15,12 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_gym/services/rafko_weight_updater.h"
+#include "rafko_gym/services/rafko_weight_updater.hpp"
 
 #include <set>
 
-#include "rafko_net/services/synapse_iterator.h"
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_gym {
 

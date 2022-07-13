@@ -15,18 +15,18 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/services/rafko_cpu_context.h"
+#include "rafko_mainframe/services/rafko_cpu_context.hpp"
 
 #include <math.h>
 
 #include "rafko_protocol/training.pb.h"
-#include "rafko_utilities/models/data_ringbuffer.h"
-#include "rafko_net/models/neuron_info.h"
-#include "rafko_net/services/solution_builder.h"
-#include "rafko_gym/models/rafko_dataset_wrapper.h"
-#include "rafko_gym/services/updater_factory.h"
+#include "rafko_utilities/models/data_ringbuffer.hpp"
+#include "rafko_net/models/neuron_info.hpp"
+#include "rafko_net/services/solution_builder.hpp"
+#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/services/updater_factory.hpp"
 
-#include "rafko_mainframe/services/rafko_dummies.h"
+#include "rafko_mainframe/services/rafko_dummies.hpp"
 
 namespace rafko_mainframe{
 

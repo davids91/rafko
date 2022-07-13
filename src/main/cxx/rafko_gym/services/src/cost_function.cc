@@ -14,15 +14,15 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/cost_function.h"
+#include "rafko_gym/services/cost_function.hpp"
 
 #include <math.h>
 #include <utility>
 
 #if(RAFKO_USES_OPENCL)
-#include "rafko_utilities/models/rafko_gpu_kernel_library.h"
+#include "rafko_utilities/models/rafko_gpu_kernel_library.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_gym {
 

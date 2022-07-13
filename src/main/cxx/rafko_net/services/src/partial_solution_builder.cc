@@ -15,12 +15,12 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/partial_solution_builder.h"
+#include "rafko_net/services/partial_solution_builder.hpp"
 
 #include <stdexcept>
 
-#include "rafko_utilities/services/rafko_math_utils.h"
-#include "rafko_net/models/input_function.h"
+#include "rafko_utilities/services/rafko_math_utils.hpp"
+#include "rafko_net/models/input_function.hpp"
 
 namespace rafko_net{
 
