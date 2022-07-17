@@ -149,7 +149,7 @@ public:
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
     RFASSERT(static_cast<bool>(feature_dependency));
     return {feature_dependency};
   }

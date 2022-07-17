@@ -409,7 +409,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     if(0 < partial.solved_features_size()){ /* if the partial solves any feature */
       for(const FeatureGroup& feature : partial.solved_features()){
         if(NeuronInfo::is_feature_relevant_to_solution(feature.feature())){
-          RafkoNetworkFeature::add_kernel_code_to(
+          RafkoNetworkFeature::add_default_kernel_code_to(
             neuron_operations, feature, settings, solution,
             ""/*input_array*/, ""/*input_start_index*/, "outputs", "output_start", !feature_locals_declared
           );
@@ -432,7 +432,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     bool declare_locals = ( /* if the locals have not been declared yet */
       already_declared_locals.end() == already_declared_locals.find(feature.feature())
     );
-    RafkoNetworkFeature::add_kernel_code_to(
+    RafkoNetworkFeature::add_default_kernel_code_to(
       performance_operations, feature, settings, solution,
       "inputs"/*input_array*/, "1u"/*input_start_index:weight table start*/,
       "outputs"/*output_array*/, "output_sizes[0]"/*output_start_index: last output*/,

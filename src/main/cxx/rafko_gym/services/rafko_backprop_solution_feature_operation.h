@@ -52,7 +52,7 @@ public:
     std::uint32_t operation_index,  const rafko_mainframe::RafkoSettings& settings_,
     const rafko_net::FeatureGroup& feature_group_,
     std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_,
-    std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary
+    std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary_
   );
   ~RafkoBackPropSolutionFeatureOperation() = default;
 
@@ -87,17 +87,9 @@ public:
 
 
   std::string value_kernel_operation(
-    std::string /*network_input_array*/, std::string /*weight_array*/,
+    std::string network_input_array, std::string /*weight_array*/,
     std::string operations_value_array, std::string /*operations_array_size*/
-  ) const{
-    RFASSERT(rafko_net::NeuronInfo::is_feature_relevant_to_solution(feature_group.feature()));
-    return rafko_net::RafkoNetworkFeature::generate_kernel_code(
-      settings, feature_group.feature(), relevant_index_values,
-      ""/*input_array*/, ""/*input_array_start*/, /*!Note: solution relevant features don't use any inputs as of now, please re-check */
-      operations_value_array/*output_array*/, "0"/*output_start_index*/,
-      true/*declare_locals*/
-    );
-  }
+  ) const;
 
   std::string derivative_kernel_operation(
     std::string /*network_input_array*/, std::string /*label_array*/, std::string /*weight_array*/,
@@ -108,7 +100,7 @@ public:
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
     return {};
   }
 
@@ -120,6 +112,9 @@ private:
   std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
   rafko_net::RafkoNetworkFeature feature_executor;
   std::vector<std::uint32_t> relevant_index_values;
+  #if(RAFKO_USES_OPENCL)
+  std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary;
+  #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<double> dummy_vector;
 };

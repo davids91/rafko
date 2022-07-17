@@ -41,9 +41,10 @@ namespace rafko_net{
 /**
  * @brief      A base class for all RafkoNeuralNetwork related features
  */
-using NeuronDataProxy = rafko_utilities::SubscriptProxy<std::vector<double>>;
 class RAFKO_FULL_EXPORT RafkoNetworkFeature{
 public:
+  using NeuronDataProxy = rafko_utilities::SubscriptProxy<std::vector<double>>;
+
   RafkoNetworkFeature(std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_)
   : execution_threads(execution_threads_)
   { }
@@ -77,7 +78,9 @@ public:
   #if(RAFKO_USES_OPENCL)
 
   /**
-   * @brief      Provide the calculations of the given feature group as GPU kernel code
+   * @brief      Provide the calculations of the given feature group as GPU kernel code.
+   *             Called 'default' because in terms of indexing neuron index means the index of its data.
+   *             The relevant index values are generated based on the index values of the provided @feature_group argument
    *
    * @param      operations           The string to append the relevant operations into
    * @param[in]  feature_group        The Neuron group feature to generate the kernel code for
@@ -89,7 +92,7 @@ public:
    * @param[in]  output_start_index   Index helper: Might mean the start of the neuron array, weight derivatives etc..
    * @param[in]  declare_locals       Decides whether local variables used by the kernel are to be declared or just updated
    */
-  static void add_kernel_code_to(
+  static void add_default_kernel_code_to(
     std::string& operations, const FeatureGroup& feature_group,
     const rafko_mainframe::RafkoSettings& settings, const Solution& solution,
     std::string input_array, std::string input_start_index,

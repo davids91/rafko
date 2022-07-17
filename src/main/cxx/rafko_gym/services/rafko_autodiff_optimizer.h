@@ -264,10 +264,13 @@ protected:
    *          it inserts it from there
    *
    * @param[in]   neuron_index    the index of the Neuron Spike to place
+   * @param[in]   dependencies    An array of dependencies the Neuron operation might have
    *
    * @return    A shared pointer of the placed operation
    */
-  std::shared_ptr<RafkoBackpropagationOperation> place_spike_to_operations(std::uint32_t neuron_index);
+  std::shared_ptr<RafkoBackpropagationOperation> place_spike_to_operations(
+    std::uint32_t neuron_index, std::vector<RafkoBackpropagationOperation::Dependency> dependencies = {}
+  );
 
   /**
    * @brief   Inserts the spike function operation into the unplaced map;
@@ -286,7 +289,9 @@ protected:
    *
    * @return    A shared pointer of the placed operation
    */
-  std::shared_ptr<RafkoBackpropagationOperation> push_dependency(DependencyParameter arguments);
+  std::shared_ptr<RafkoBackpropagationOperation> push_dependency(
+    RafkoBackpropagationOperation::DependencyParameter arguments
+  );
 };
 
 } /* namespace rafko_gym */

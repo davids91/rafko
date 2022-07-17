@@ -24,7 +24,6 @@ void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoObjective> objective)
   strategy->build(operations, asd);
   gpu_phase.set_strategy(strategy);
   data.build(operations.size(), asd, environment->get_sequence_size());
-  // RFASSERT(0);
   // RFASSERT_SCOPE(AUTODIFF_GPU_BUILD);
   // strategy->build(operations, build_without_data(objective));
   // gpu_phase.set_strategy(strategy);

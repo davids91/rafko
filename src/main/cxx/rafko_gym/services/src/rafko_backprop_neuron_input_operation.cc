@@ -41,8 +41,8 @@ RafkoBackpropNeuronInputOperation::RafkoBackpropNeuronInputOperation(
 {
 }
 
-DependencyRequest RafkoBackpropNeuronInputOperation::upload_dependencies_to_operations(){
-  DependencyParameters dependency_parameters;
+RafkoBackpropagationOperation::DependencyRequest RafkoBackpropNeuronInputOperation::upload_dependencies_to_operations(){
+  RafkoBackpropagationOperation::DependencyParameters dependency_parameters;
   if(is_network_input){ /* weighted pair from a Neuron or a Network input */
     RFASSERT(0u == input_past_index);
     dependency_parameters.push_back({
@@ -115,11 +115,11 @@ DependencyRequest RafkoBackpropNeuronInputOperation::upload_dependencies_to_oper
   }};
 }
 
-std::vector<std::shared_ptr<RafkoBackpropagationOperation>> RafkoBackpropNeuronInputOperation::get_dependencies(){
+std::vector<std::shared_ptr<RafkoBackpropagationOperation>> RafkoBackpropNeuronInputOperation::get_own_dependencies(){
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> dependencies;
   if(network_input_dependency)
     dependencies.push_back(network_input_dependency);
-  if(neuron_data_dependency)
+  if(neuron_data_dependency && (0 == input_past_index))
     dependencies.push_back(neuron_data_dependency);
   if(neuron_input_dependency)
     dependencies.push_back(neuron_input_dependency);

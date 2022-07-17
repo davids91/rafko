@@ -104,28 +104,36 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
     for(std::uint32_t neuron_index : *neuron_subsets.begin()){
       auto found_feature = spike_solves_feature_map.find(neuron_index);
       if(found_feature != spike_solves_feature_map.end()){
-        operations.push_back( std::make_shared<RafkoBackPropSolutionFeatureOperation>(
+        using FeaturePtr = std::shared_ptr<RafkoBackPropSolutionFeatureOperation>;
+        FeaturePtr feature_operation = std::make_shared<RafkoBackPropSolutionFeatureOperation>(
           data, network, operations.size(), settings, network.neuron_group_features(found_feature->second),
           execution_threads, neuron_spike_to_operation_map
-        ));
+        );
+        operations.push_back(feature_operation);
         RFASSERT_LOG(
-          "operation[{}]:  {} for feature_group[{}], triggered by Neuron[]",
-          operations.size(), Neuron_group_features_Name(network.neuron_group_features(found_feature->second).feature()),
+          "operation[{}]:  {} for feature_group[{}], triggered by Neuron[{}]",
+          operations.size() - 1u, Neuron_group_features_Name(network.neuron_group_features(found_feature->second).feature()),
           found_feature->second, found_feature->first
         );
-      }
-
-      place_spike_to_operations(neuron_index);
+        for(std::uint32_t operation_index = 0; operation_index < (operations.size() - 1); ++operation_index){
+          operations[operation_index]->insert_dependency(feature_operation);
+        }
+        feature_operation->insert_dependency(place_spike_to_operations(neuron_index));
+      } else place_spike_to_operations(neuron_index);
+      /*!Note: Since the order of execution is backwards; The feature is to be before the Spike operation.
+       * But apart from that, dependency needs to be added explicitly to make it available for further
+       * paralell ordering definition calculations
+       */
 
       /* Upload dependencies for every operation until every dependency is registered */
       while(done_index < operations.size()){
         if(!operations[done_index]->are_dependencies_registered()){
           RFASSERT_LOG("Registering dependencies for operation[{}]...", done_index);
-          DependencyRequest request = operations[done_index]->upload_dependencies_to_operations();
+          RafkoBackpropagationOperation::DependencyRequest request = operations[done_index]->upload_dependencies_to_operations();
           if(request.has_value()){
             auto& [parameters, dependency_register] = request.value();
             std::vector<std::shared_ptr<RafkoBackpropagationOperation>> new_dependencies;
-            for(const DependencyParameter& parameter : parameters){
+            for(const RafkoBackpropagationOperation::DependencyParameter& parameter : parameters){
               new_dependencies.push_back(push_dependency(parameter));
             }
             dependency_register(new_dependencies);
@@ -133,7 +141,7 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
         }
         ++done_index;
       }/*while(done_index < operations.size())*/
-    }/*for(every neuron_index in the collected subset begin)*/
+    }/*for(every neuron_index in the collected subset)*/
     neuron_subsets.erase(neuron_subsets.begin());
   }/*while(subsets remain)*/
 
@@ -267,7 +275,9 @@ double RafkoAutodiffOptimizer::get_avg_gradient(std::uint32_t d_w_index){
   return sum / count;
 }
 
-std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::place_spike_to_operations(std::uint32_t neuron_index){
+std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::place_spike_to_operations(
+  std::uint32_t neuron_index, std::vector<RafkoBackpropagationOperation::Dependency> dependencies
+){
   /* find the Spike index in the not yet placed Neuron spikes */
   auto found_element = unplaced_spikes.find(neuron_index);
   if(found_element != unplaced_spikes.end()){
@@ -288,6 +298,11 @@ std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::place_spi
     );
   }
   neuron_spike_to_operation_map->insert( {neuron_index, (operations.size() - 1u)} );
+
+  /* Insert provided dependencies */
+  for(RafkoBackpropagationOperation::Dependency& dep : dependencies){
+    operations.back()->insert_dependency(dep);
+  }
   return operations.back();
 }
 
@@ -318,7 +333,9 @@ std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::find_or_q
   return std::get<0>(insertion)->second;
 }
 
-std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_dependency(DependencyParameter arguments){
+std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_dependency(
+  RafkoBackpropagationOperation::DependencyParameter arguments
+){
   switch(std::get<0>(arguments)){
     case ad_operation_neuron_spike_d:
       RFASSERT(1u == std::get<1>(arguments).size());

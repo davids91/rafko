@@ -224,6 +224,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
+    // .add_feature_to_layer(1u, rafko_net::neuron_group_feature_softmax)
     .set_neuron_input_function(0u, 0u, rafko_net::input_function_add)
     .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
     .set_neuron_input_function(0u, 2u, rafko_net::input_function_add)
@@ -288,7 +289,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
       reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000001)
     );
-    CHECK( // REQUIRE
+    REQUIRE(
       reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
       == Catch::Approx(actual_value[0][0]).epsilon(0.0000000001)
     );

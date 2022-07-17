@@ -36,19 +36,20 @@ namespace rafko_gym{
 
 /**
  * @brief A class representing an operation inside the backpropagation logic of reverse mode autodiff.
- * each opeartion is collected with the help of the components of a Neuron ( input-, transfer- and spike function )
+ * each operation is collected with the help of the components of a Neuron ( input-, transfer- and spike function )
  * and objective in each of the classes that inherit from this class; While this class provides a common base
  * which aims to eliminate the stack restrictions present in recursive solutions, by storing every operation
  * in a vector, and providing the chance to upload the operation dependencies into the vector when prompted.
  */
 class RafkoBackpropagationOperation;
-using Dependency = std::shared_ptr<RafkoBackpropagationOperation>;
-using DependencyParameter = std::pair<Autodiff_operations,std::vector<std::uint32_t>>;
-using DependencyParameters = std::vector<DependencyParameter>;
-using DependencyRegister = std::function<void(std::vector<std::shared_ptr<RafkoBackpropagationOperation>>)>;
-using DependencyRequest = std::optional<std::pair<DependencyParameters,DependencyRegister>>;
 class RAFKO_FULL_EXPORT RafkoBackpropagationOperation{
 public:
+  using Dependency = std::shared_ptr<RafkoBackpropagationOperation>;
+  using DependencyParameter = std::pair<Autodiff_operations,std::vector<std::uint32_t>>;
+  using DependencyParameters = std::vector<DependencyParameter>;
+  using DependencyRegister = std::function<void(std::vector<std::shared_ptr<RafkoBackpropagationOperation>>)>;
+  using DependencyRequest = std::optional<std::pair<DependencyParameters,DependencyRegister>>;
+
   RafkoBackpropagationOperation(
     RafkoBackpropagationData& data_, const rafko_net::RafkoNet& network_,
     std::uint32_t operation_index_, Autodiff_operations type_
@@ -109,7 +110,6 @@ public:
     return type;
   }
 
-  virtual std::vector<Dependency> get_dependencies() = 0;
 
   constexpr bool operation_index_finalised(){
     return true; /*!Note: Descendants might want to have operation index set dynamically */
@@ -117,10 +117,23 @@ public:
 
   std::uint32_t get_max_dependency_index();
 
+  void insert_dependency(Dependency dep){
+    added_dependnecies.push_back(dep);
+  }
+
+  std::vector<Dependency> get_dependencies(){
+    std::vector<Dependency> deps(added_dependnecies);
+    std::vector<Dependency> own_deps(get_own_dependencies());
+    deps.insert(deps.begin(), own_deps.begin(), own_deps.end());
+    return deps;
+  }
+
 protected:
   RafkoBackpropagationData& data;
   const rafko_net::RafkoNet& network;
   const std::uint32_t operation_index;
+
+  virtual std::vector<Dependency> get_own_dependencies() = 0;
 
   void constexpr reset_processed(){
     value_processed = false;
@@ -157,6 +170,7 @@ private:
   bool value_processed = false;
   bool derivative_processed = false;
   bool dependencies_registered = false;
+  std::vector<Dependency> added_dependnecies;
 };
 
 } /* namespace rafko_gym */

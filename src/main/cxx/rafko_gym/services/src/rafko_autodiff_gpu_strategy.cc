@@ -18,9 +18,12 @@
 
 #include <set>
 #include <cmath>
+#include <memory>
+#include <atomic>
 
 #include "rafko_utilities/models/rafko_gpu_kernel_library.h"
 #include "rafko_utilities/services/rafko_string_utils.h"
+#include "rafko_utilities/services/thread_group.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_gym{
@@ -69,73 +72,50 @@ std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_output_sha
 std::vector<std::vector<std::uint32_t>> AutoDiffGPUStrategy::generate_operation_paralell_matrix(
   const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>& operations
 ){
-  std::uint32_t done_marker = 0u;
-  std::vector<bool> operation_included_mark(operations.size());
-  std::vector<std::vector<std::uint32_t>> operations_matrix(1);
+  using DepthMarker = std::unique_ptr<std::atomic<std::uint32_t>>;
 
-  /*!Note: the operations in each row can be executed in paralell;
-   * Meaning all operations who have 'done' dependencies in an iteration
-   * can be run in paralell in that iteration
-   */
-  std::vector<std::uint32_t> current_depth_dependencies;
-  std::vector<std::uint32_t> next_depth_dependencies;
-  std::uint32_t current_dependency_depth = 0u; /* 0 depth is in the last row of operations_matrix*/
-  while(done_marker < operations.size()){
-    RFASSERT(0u == next_depth_dependencies.size());
+  const std::uint32_t number_of_threads = 8; /* Educated guess based on the average available CPU cores */
+  rafko_utilities::ThreadGroup process_threads(number_of_threads);
+  std::vector<DepthMarker> operations_depth;
 
-    while((done_marker < operations.size())&&(operation_included_mark[done_marker]))
-      ++done_marker; /* Increase the number of done operations */
+  operations_depth.reserve(operations.size());
+  for(std::uint32_t operation_index = 0u; operation_index < operations.size(); ++operation_index){
+    operations_depth.emplace_back(std::make_unique<std::atomic<std::uint32_t>>());
+  }
 
-    RFASSERT_LOG("Done marker at: {}", done_marker);
-    RFASSERT_LOG("current depth dependencies size: {}", current_depth_dependencies.size());
-    if(0 == current_depth_dependencies.size()){ /* if no dependencies need to be extracted */
-      current_dependency_depth = 0u;
-      /* put the firstmost not yet included operation into the back of the matrix */
-      if( (done_marker < operations.size())&&(!operation_included_mark[done_marker]) ){
-        RFASSERT_LOG("Adding operation[{}] into current current_depth_dependencies", done_marker);
-        operations_matrix.back().push_back(done_marker);
-        current_depth_dependencies.push_back(done_marker);
-        operation_included_mark[done_marker] = true;
-      }
-    }
+  std::atomic<std::uint32_t> modified_operations{1}; /* not 0, to enter into the loop */
+  std::atomic<std::uint32_t> max_depth{0};
+  while(0 < modified_operations){
+    modified_operations = 0;
+    process_threads.start_and_block(
+    [number_of_threads, &operations, &operations_depth, &max_depth, &modified_operations](std::uint32_t thread_index){
+      const std::uint32_t operations_in_one_group = 1 + (operations.size() / number_of_threads);
+      const std::uint32_t operations_start_index = operations_in_one_group * thread_index;
+      const std::uint32_t operations_in_this_group = std::min(
+        operations_in_one_group, static_cast<std::uint32_t>(operations.size() - operations_start_index)
+      );
+      for(std::uint32_t operation_index = operations_start_index; operation_index < (operations_start_index + operations_in_this_group); ++operation_index){
+        for(RafkoBackpropagationOperation::Dependency& d : operations[operation_index]->get_dependencies()) {
+          if(*operations_depth[operation_index] <= *operations_depth[d->get_operation_index()]){
+            operations_depth[operation_index]->store(*operations_depth[d->get_operation_index()] + 1u);
+            modified_operations.fetch_add(1u);
+            max_depth.store( std::max(max_depth, *operations_depth[operation_index]) );
+          }
+        }/*for(every dependency in that operation)*/
+      }/*for(every operation)*/
+    });
+    // RFASSERT_LOGV(
+    //   operations_depth, "Modified operations: [{}]; operations depth(max:{}): ",
+    //   modified_operations, max_depth
+    // );
+  }/*while(there are modified operations)*/
 
-    /* until there are no more of them, collect current depth dependencies into the next depth */
-    RFASSERT_LOG("current depth dependencies grew to: {}", current_depth_dependencies.size());
-    while(0u < current_depth_dependencies.size()){
-      std::uint32_t dependencies_of = current_depth_dependencies.back();
-      for(auto& d : operations[dependencies_of]->get_dependencies() ){
-        std::uint32_t dependency_index = d->get_operation_index();
-        if(!operation_included_mark[dependency_index]){
-          RFASSERT_LOG("Pushing operation[{}] into next_depth_dependencies", dependency_index);
-          next_depth_dependencies.push_back(dependency_index);
-          operation_included_mark[dependency_index] = true;
-        }
-      }
-      current_depth_dependencies.pop_back();
-    }
+  //TODO: Multithread this ? maybe?
+  std::vector<std::vector<std::uint32_t>> operations_matrix(max_depth + 1);
+  for(std::uint32_t operation_index = 0u; operation_index < operations.size(); ++operation_index){
+    operations_matrix[*operations_depth[operation_index]].push_back(operation_index);
+  }
 
-    /* add additional layers into the operations_matrix if needed */
-    ++current_dependency_depth;
-    while(
-      (0u < next_depth_dependencies.size())
-      &&(operations_matrix.size() <= current_dependency_depth)
-    ){
-      RFASSERT_LOG("Adding depth {} to operations_matrix", current_dependency_depth);
-      operations_matrix.insert(operations_matrix.begin(), std::vector<std::uint32_t>());
-    }
-
-    /* insert the dependencies into the target depth */
-    RFASSERT_LOGV(next_depth_dependencies, "Adding operations to depth {}:", current_dependency_depth);
-    for(std::uint32_t dependency_index : next_depth_dependencies){
-      (operations_matrix.end() - current_dependency_depth - 1)->push_back(dependency_index);
-    }
-
-    /* The ol' switcheroo */
-    RFASSERT(0u == current_depth_dependencies.size());
-    current_depth_dependencies = next_depth_dependencies;
-    next_depth_dependencies.clear();
-    RFASSERT_LOGV(current_depth_dependencies,"current_depth_dependencies coming up:");
-  }/*while(there are operations to put into the matrix yet)*/
   RFASSERT_LOGV2(operations_matrix, "Operations matrix:");
   return operations_matrix;
 }

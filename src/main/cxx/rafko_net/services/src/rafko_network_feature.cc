@@ -161,7 +161,7 @@ double RafkoNetworkFeature::calculate_l2_regularization(
 }
 
 #if(RAFKO_USES_OPENCL)
-void RafkoNetworkFeature::add_kernel_code_to(
+void RafkoNetworkFeature::add_default_kernel_code_to(
   std::string& operations, const FeatureGroup& feature_group,
   const rafko_mainframe::RafkoSettings& settings, const Solution& solution,
   std::string input_array, std::string input_start_index,
