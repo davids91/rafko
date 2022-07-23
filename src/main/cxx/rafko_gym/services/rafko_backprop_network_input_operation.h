@@ -107,7 +107,7 @@ public:
       + " * " + weight_array + "[" + std::to_string(weight_index) + "];\n"
     );
   }
-  //TODO: available_memory_slots inside the kernels are hidden dependencies!
+  //TODO: available_memory_slots, evaluate_network, in the kernels are hidden dependencies!
   std::string derivative_kernel_operation(
     std::string network_input_array, std::string /*label_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string operations_derivative_array,

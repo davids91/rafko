@@ -225,10 +225,16 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
     // .add_feature_to_layer(1u, rafko_net::neuron_group_feature_softmax)
-    .set_neuron_input_function(0u, 0u, rafko_net::input_function_add)
-    .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
-    .set_neuron_input_function(0u, 2u, rafko_net::input_function_add)
-    .set_neuron_input_function(1u, 0u, rafko_net::input_function_add)
+    .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l1_regularization)
+    .add_feature_to_layer(1u, rafko_net::neuron_group_feature_l1_regularization)
+    .add_neuron_recurrence(0u/*layer_index*/, 0u/*layer_neuron_index*/, 1u/*past*/)
+    .add_neuron_recurrence(0u/*layer_index*/, 1u/*layer_neuron_index*/, 1u/*past*/)
+    .add_neuron_recurrence(0u/*layer_index*/, 2u/*layer_neuron_index*/, 1u/*past*/)
+    .add_neuron_recurrence(1u/*layer_index*/, 0u/*layer_neuron_index*/, 1u/*past*/)
+    // .set_neuron_input_function(0u, 0u, rafko_net::input_function_add)
+    // .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
+    // .set_neuron_input_function(0u, 2u, rafko_net::input_function_add)
+    // .set_neuron_input_function(1u, 0u, rafko_net::input_function_add)
     .allowed_transfer_functions_by_layer({
       // {rafko_net::transfer_function_selu},
       // {rafko_net::transfer_function_selu},

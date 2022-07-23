@@ -92,7 +92,7 @@ std::string RafkoBackPropSolutionFeatureOperation::value_kernel_operation(
     settings, feature_group.feature(), actual_operation_values_for_neurons,
     ""/*input_array*/, ""/*input_array_start*/, /*!Note: solution relevant features don't use any inputs as of now, please re-check */
     operations_value_array/*output_array*/, "0"/*output_start_index*/,
-    true/*declare_locals*/
+    false/*declare_locals*/
   );
 }
 

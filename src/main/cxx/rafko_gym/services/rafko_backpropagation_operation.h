@@ -80,7 +80,11 @@ public:
     std::string operations_value_array, std::string operations_derivative_array,
     std::string operations_array_size, std::string d_operations_array_size
   ) const = 0;
+  virtual bool is_multi_worker() const{
+    return false;
+  }
   #endif/*(RAFKO_USES_OPENCL)*/
+
 
   double get_derivative(std::uint32_t past_index, std::uint32_t d_w_index) const{
     return data.get_derivative(past_index, get_operation_index(), d_w_index);
@@ -118,11 +122,11 @@ public:
   std::uint32_t get_max_dependency_index();
 
   void insert_dependency(Dependency dep){
-    added_dependnecies.push_back(dep);
+    added_dependencies.push_back(dep);
   }
 
   std::vector<Dependency> get_dependencies(){
-    std::vector<Dependency> deps(added_dependnecies);
+    std::vector<Dependency> deps(added_dependencies);
     std::vector<Dependency> own_deps(get_own_dependencies());
     deps.insert(deps.begin(), own_deps.begin(), own_deps.end());
     return deps;
@@ -170,7 +174,7 @@ private:
   bool value_processed = false;
   bool derivative_processed = false;
   bool dependencies_registered = false;
-  std::vector<Dependency> added_dependnecies;
+  std::vector<Dependency> added_dependencies;
 };
 
 } /* namespace rafko_gym */

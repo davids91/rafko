@@ -92,7 +92,9 @@ std::vector<std::vector<std::uint32_t>> AutoDiffGPUStrategy::generate_operation_
       const std::uint32_t operations_in_one_group = 1 + (operations.size() / number_of_threads);
       const std::uint32_t operations_start_index = operations_in_one_group * thread_index;
       const std::uint32_t operations_in_this_group = std::min(
-        operations_in_one_group, static_cast<std::uint32_t>(operations.size() - operations_start_index)
+        operations_in_one_group, static_cast<std::uint32_t>(
+          std::max(0, static_cast<std::int32_t>(operations.size()) - static_cast<std::int32_t>(operations_start_index))
+        )
       );
       for(std::uint32_t operation_index = operations_start_index; operation_index < (operations_start_index + operations_in_this_group); ++operation_index){
         for(RafkoBackpropagationOperation::Dependency& d : operations[operation_index]->get_dependencies()) {
@@ -123,11 +125,18 @@ std::vector<std::vector<std::uint32_t>> AutoDiffGPUStrategy::generate_operation_
 void AutoDiffGPUStrategy::build(
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations,
   std::uint32_t weight_relevant_operation_count
-){
+){ //TODO: Include "evaluate_network" into kernels
   std::string source_base =
     rafko_utilities::atomic_double_add_function
     + rafko_utilities::atomic_double_average_function
     + rafko_utilities::random_function + R"(
+
+    __constant bool evaluate_network = true;
+    /*!Note: The only purpose of the autodiff operations is to train the network
+     * so evaluation is always true in this context; Simply solving the network
+     * is not strictly topic of it.
+     */
+
     void execute_local_derivative_worker(
       int available_memory_slots, int weight_table_size, int derivative_operation_count, bool save_to_output,
       __constant double* network_inputs, __constant double* labels, __constant double* network_weights,
@@ -428,7 +437,15 @@ void AutoDiffGPUStrategy::build(
   for(std::uint32_t operation_index = 0u; operation_index < operations.size(); ++operation_index){
     Autodiff_operations operation_type = operations[operation_index]->get_type();
     if(declared_operations.find(operation_type) == declared_operations.end()){
-      operation_locals += operations[operation_index]->local_declaration_operation();
+      if(( /* Only add the locals for this operation type once */
+        (operation_type != ad_operation_network_weight_regularization_feature)
+        ||(declared_operations.find(ad_operation_network_feature) == declared_operations.end())
+      )&&( /* Because the two operations types share local variables */
+        (operation_type != ad_operation_network_feature)
+        ||(declared_operations.find(ad_operation_network_weight_regularization_feature) == declared_operations.end())
+      )){
+        operation_locals += operations[operation_index]->local_declaration_operation();
+      }
       declared_operations.insert(operation_type);
     }
   }
@@ -445,6 +462,7 @@ void AutoDiffGPUStrategy::build(
 
   RFASSERT_LOG("Starting to split operations into workers..");
   std::string switch_case_template = R"(
+    ==multi_worker_operations==
     switch(get_local_id(0)){
       ==all_worker_cases==
       default:break;
@@ -462,6 +480,7 @@ void AutoDiffGPUStrategy::build(
   for(const std::vector<std::uint32_t>& current_row : operations_matrix){
     /*!Note: one row to be split up between the workers */
     std::vector<std::string> worker_operations(avg_row_size);
+    std::string multi_worker_operations = "";
     std::uint32_t placed_operation_count = 0u;
     while(placed_operation_count < current_row.size()){
       for(std::uint32_t worker_index = 0u; worker_index < avg_row_size; ++worker_index){
@@ -471,11 +490,19 @@ void AutoDiffGPUStrategy::build(
             "network_inputs", "network_weights", "operations_value_array",
             std::to_string(operations.size()) /*operations_array_size*/
           );
-          worker_operations[worker_index] += operation;
-          RFASSERT_LOG(
-            "Placing operation[current_row[{}] ==> {}] into worker[{}] phase[{}]",
-            (placed_operation_count + worker_index), operation_index, worker_index, operations_phase
-          );
+          if(operations[operation_index]->is_multi_worker()){
+            multi_worker_operations += operation;
+            RFASSERT_LOG(
+              "Placing operation[current_row[{}] ==> {}] before worker[{}] phase[{}](it's a multi-worker operation)",
+              (placed_operation_count + worker_index), operation_index, worker_index, operations_phase
+            );
+          }else{
+            worker_operations[worker_index] += operation;
+            RFASSERT_LOG(
+              "Placing operation[current_row[{}] ==> {}] into worker[{}] phase[{}]",
+              (placed_operation_count + worker_index), operation_index, worker_index, operations_phase
+            );
+          }
         }
       }/*for(every worker thread)*/
       placed_operation_count += avg_row_size;
@@ -496,9 +523,13 @@ void AutoDiffGPUStrategy::build(
       }
       ++worker_index;
     }
-    all_switch_cases += rafko_utilities::replace_all_in_string(
+    std::string one_switch_case = rafko_utilities::replace_all_in_string(
       switch_case_template, std::regex("==all_worker_cases=="), all_worker_cases
     );
+    one_switch_case = rafko_utilities::replace_all_in_string(
+      one_switch_case, std::regex("==multi_worker_operations=="), multi_worker_operations
+    );
+    all_switch_cases += one_switch_case;
     RFASSERT_LOGV(
       current_row, "Used every available worker, row(at index {}/{}):",
       placed_operation_count, current_row.size()

@@ -119,6 +119,16 @@ public:
     std::string output_array, std::string output_start_index,
     bool declare_locals = true
   );
+
+  static std::string get_kernel_locals(){
+    return R"(
+      double exp_sum = 0.0;
+      double l1_error = 0.0;
+      double l2_error = 0.0;
+      uint dropout_seed = 0;
+    )";
+  }
+
   #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
