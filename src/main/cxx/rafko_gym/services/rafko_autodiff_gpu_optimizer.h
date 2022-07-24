@@ -64,6 +64,10 @@ public:
 
   void build(std::shared_ptr<RafkoObjective> objective);
   using RafkoAutodiffOptimizer::set_weight_updater;
+  using RafkoAutodiffOptimizer::early_stopping_triggered;
+  using RafkoAutodiffOptimizer::get_last_training_error;
+  using RafkoAutodiffOptimizer::get_last_testing_error;
+  using RafkoAutodiffOptimizer::get_avg_gradient;
   void iterate(bool refresh_environment = false);
 
   //TODO: Documentation for these

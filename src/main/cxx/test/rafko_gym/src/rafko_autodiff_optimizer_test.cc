@@ -211,7 +211,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
 
 #if(RAFKO_USES_OPENCL)
 TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU default optimizer", "[optimize][GPU][small]"){
-  // return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
+  return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(0.0001).set_minibatch_size(64).set_memory_truncation(2)
@@ -251,8 +251,8 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
   // network->mutable_weight_table()->Set(22,0.777);
 
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-    std::vector<std::vector<double>>{{0.666, 0.666},{0.666, 0.666}},
-    std::vector<std::vector<double>>{{10.0},{20.0}},
+    std::vector<std::vector<double>>{{0.666, 0.666},{0.666, 0.666},  {0.777, 0.777},{0.777, 0.777}},
+    std::vector<std::vector<double>>{{10.0},{20.0},  {11.0},{21.0}},
     2 /*sequence_size*/
   );
 
@@ -318,13 +318,18 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
 #endif/*(RAFKO_USES_OPENCL)*/
 
 TEST_CASE("Testing if autodiff optimizer converges networks with a prepared environment", "[optimize]"){
-  return; //TODO: This is supposed to run
+  #if(RAFKO_USES_OPENCL)
+  std::uint32_t number_of_samples = 1024;
+  std::uint32_t minibatch_size = 256;
+  #else
   std::uint32_t number_of_samples = 64;
+  std::uint32_t minibatch_size = 32;
+  #endif/*(RAFKO_USES_OPENCL)*/
   std::uint32_t sequence_size = 4;
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
-    .set_learning_rate(1e-1).set_minibatch_size(64).set_memory_truncation(2)
-    .set_droput_probability(0.2)
+    .set_learning_rate(1e-1).set_minibatch_size(minibatch_size).set_memory_truncation(2)
+    .set_droput_probability(0.0)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero,true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping,false)
     .set_learning_rate_decay({{1000u,0.8}})
@@ -350,7 +355,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
     })
     .dense_layers({2,2,1});
 
-  #if (RAFKO_USES_OPENCL)
+  #if(RAFKO_USES_OPENCL)
   rafko_mainframe::RafkoOCLFactory factory;
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> context(
     factory.select_platform().select_device()
@@ -374,12 +379,33 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
     sequence_size
   );
 
+  std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp2 = (
+    rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size)
+  );
+  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> test_environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+    std::vector<std::vector<double>>(std::get<0>(tmp2)),
+    std::vector<std::vector<double>>(std::get<1>(tmp2)),
+    sequence_size
+  );
+
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     settings, rafko_gym::cost_function_squared_error
   );
-  rafko_gym::RafkoAutodiffOptimizer optimizer(settings, environment, *network, context, test_context);
-  optimizer.build(objective);
-  optimizer.set_weight_updater(rafko_gym::weight_updater_amsgrad);
+  test_context->set_environment(test_environment);
+
+  #if(RAFKO_USES_OPENCL)
+  std::unique_ptr<rafko_gym::RafkoAutodiffGPUOptimizer> optimizer = (
+    rafko_mainframe::RafkoOCLFactory()
+      .select_platform().select_device()
+      .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, environment, *network, context, test_context)
+  );
+  #else
+  std::unique_ptr<rafko_gym::RafkoAutodiffOptimizer> optimizer = std::make_unique<rafko_gym::RafkoAutodiffOptimizer>(
+    settings, environment, *network, context, test_context
+  );
+  #endif/*(RAFKO_USES_OPENCL)*/
+  optimizer->build(objective);
+  optimizer->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   double train_error;
   double test_error;
@@ -393,7 +419,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   avg_duration = 0;
   iteration = 0;
   minimum_error = std::numeric_limits<double>::max();
-  while(!optimizer.early_stopping_triggered()){
+  while(!optimizer->early_stopping_triggered()){
     /* Calculate reference data */
     std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
     std::unique_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Builder(
@@ -401,20 +427,20 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
     ).build();
 
     start = std::chrono::steady_clock::now();
-    optimizer.iterate();
+    optimizer->iterate();
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
     if(0.0 == avg_duration)avg_duration = current_duration;
     else avg_duration = (avg_duration + current_duration)/2.0;
 
-    train_error = optimizer.get_last_training_error();
-    test_error = optimizer.get_last_testing_error();
+    train_error = optimizer->get_last_training_error();
+    test_error = optimizer->get_last_testing_error();
     if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
 
     std::cout << "   Error:" << std::setprecision(9)
     << "Train:[" << train_error << "];"
     << "Test:[" << test_error << "];"
     << "min: ["<< minimum_error <<"];"
-    << "avg_d_w: [" << optimizer.get_avg_gradient() << "];"
+    << "avg_d_w: [" << optimizer->get_avg_gradient() << "];"
     << "it: ["<< iteration <<"];"
     << "dur: ["<< current_duration <<"ms/avg: " <<  avg_duration <<"ms];"
     << "             \r" << std::flush;//<< std::endl;

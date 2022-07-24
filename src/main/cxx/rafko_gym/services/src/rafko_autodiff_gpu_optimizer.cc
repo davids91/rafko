@@ -169,7 +169,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   // }
   // std::cout << std::endl;
   //
-  RafkoAutodiffOptimizer::iterate();
+  // RafkoAutodiffOptimizer::iterate();
   // std::cout << "CPU output_values:\n";
   // i = 0;
   // std::cout << "past 1: ";

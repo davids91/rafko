@@ -214,7 +214,7 @@ void AutoDiffGPUStrategy::build(
     ){
       ==operation_locals==
       ==operation_switches==
-    }
+    }/*execute_local_value_worker()*/
 
     void reset_buffer(__global double* buffer, int buffer_size){
       const int elements_per_worker = (buffer_size / get_local_size(0)) + 1;
@@ -235,16 +235,26 @@ void AutoDiffGPUStrategy::build(
       const int elements_in_this_worker = min(
         elements_per_worker, max((slot_size - start_index_in_slot), 0)
       );
-      // if(0 == get_local_id(0)){
-      //   printf("Shifting back local buffers!\n");
-      // }
       if(0 < elements_in_this_worker){
-        for(int slot_index = 0; slot_index < (slot_number - 1); ++slot_number){
+        for(int slot_index = 0; slot_index < (slot_number - 1); ++slot_index){
+          // if(0 == get_local_id(0))printf(
+          //   "global[%d], local[%d]: slot[%d / %d] --> element_count: %d \n",
+          //   (int)(get_global_id(0)), (int)(get_local_id(0)),
+          //   slot_index, slot_number, elements_in_this_worker
+          // );
+
           for(int i = 0; i < elements_in_this_worker; ++i){
-            if((start_index_in_slot + i) < slot_size)
+            if((start_index_in_slot + i) < slot_size){
+              // if(0 == get_local_id(0))printf(
+              //   "global[%d], local[%d]: buf[%d] = buf[%d] \n",
+              //   (int)(get_global_id(0)), (int)(get_local_id(0)),
+              //   (slot_index * slot_size) + (start_index_in_slot + i),
+              //   ((slot_index + 1) * slot_size) + (start_index_in_slot + i)
+              // );
               buffer[(slot_index * slot_size) + (start_index_in_slot + i)] = (
                 buffer[((slot_index + 1) * slot_size) + (start_index_in_slot + i)]
               );
+            }
           }/*for(all elements to do in this worker)*/
         }/*for(every slot in network memory)*/
 
@@ -307,6 +317,7 @@ void AutoDiffGPUStrategy::build(
       // );
       /* In case there is no sequence truncation, all of the sequence elements will be considered when calculating the derivative */
       sequence_truncation = (sequence_truncation == 0)?(==sequence_size==):(max(1, sequence_truncation));
+      #pragma unroll
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
         // printf(
         //   "global[%d], local[%d]: ======================= sequence: %d (%d %d %d work groups)\n",
@@ -320,6 +331,7 @@ void AutoDiffGPUStrategy::build(
         );
         int network_derivatives_sequence_start_index = network_derivatives_start_index;
         int network_values_sequence_start_index = network_values_start_index;
+        #pragma unroll
         for(int prefill_index = 0; prefill_index < ==prefill_num==; ++prefill_index){
           execute_local_value_worker(
             available_memory_slots, input_sizes[0]/*weight_table_size*/,
@@ -344,7 +356,20 @@ void AutoDiffGPUStrategy::build(
         uint sequence_truncation_start = get_random_number(
           max(1, (==sequence_size== - sequence_truncation)), &local_seed
         );
+        #pragma unroll
         for(int label_index = 0; label_index < ==sequence_size==; ++label_index){
+          // printf(
+          //   "global[%d], local[%d]: sequence[%d]; label[%d]; input_start: %d / %d; label_start %d / %d \n",
+          //   (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index, label_index,
+          //   network_inputs_start_index, (input_sizes[0] + input_sizes[1]),
+          //   network_labels_start_index, (input_sizes[0] + input_sizes[1] + input_sizes[2])
+          // );
+          // printf(
+          //   "global[%d], local[%d]: sequence[%d]; label[%d]; memory: %d; value_start(%d): %d (+%d)/ %d; d_start(%d): %d(+%d) / %d \n",
+          //   (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index, label_index, network_memory_size,
+          //   network_values_sequence_start_index, network_values_start_index, operation_count, output_sizes[0],
+          //   network_derivatives_sequence_start_index, network_derivatives_start_index, derivative_operation_count, (output_sizes[0] + output_sizes[1])
+          // );
           // printf(
           //   "global[%d], local[%d]: available memory: %d; network_ran_count: %d; network_memory_size: %d; label_in_sequence: %d/%d\n",
           //   (int)(get_global_id(0)), (int)(get_local_id(0)),

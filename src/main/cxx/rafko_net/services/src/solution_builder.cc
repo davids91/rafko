@@ -189,6 +189,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
           sequence_start = max(max(max_backreach,( sequence_size + prefill_input_num )), 1) - 1;
           sequence_max_index = sequence_start;
         }
+        #pragma unroll
         for(int label_index = sequence_start; label_index <= sequence_max_index; ++label_index){
           double neuron_partial_result;
           /* +++ GENERATED_NEURON_CODE +++ */
