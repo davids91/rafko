@@ -40,6 +40,7 @@ namespace rafko_gym{
 class AutoDiffGPUStrategy
 : public rafko_mainframe::RafkoGPUStrategyPhase
 {
+using OperationsType = std::shared_ptr<RafkoBackpropagationOperation>;
 public:
   AutoDiffGPUStrategy(const rafko_mainframe::RafkoSettings& settings_, rafko_net::RafkoNet& network_)
   : settings(settings_)
@@ -62,8 +63,14 @@ public:
     built = false;
   }
 
+  /**
+   * @brief     Constructs the strategy based on the provided parameters
+   *
+   * @param[in]   operations                        The array of operations to process
+   * @param[in]   weight_relevant_operation_count   The number of operations relevant to weights at the start of the opeartions array
+   */
   void build(
-    std::vector<std::shared_ptr<RafkoBackpropagationOperation>> operations,
+    const std::vector<OperationsType>& operations,
     std::uint32_t weight_relevant_operation_count
   );
 
@@ -102,6 +109,22 @@ public:
   static std::vector<std::vector<std::uint32_t>> generate_operation_paralell_matrix(
     const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>& operations
   );
+
+  /**
+   * @brief     Generates Kenel code from the operation matrix based on the provided generator
+   *
+   * @param[in]   operations            The array of operations to process
+   * @param[in]   operations_matrix     The ordering matrix of independent operations
+   * @param[in]   operation_generator   A function to generate commands
+   *
+   * @return    The generated kernel code from the operations
+   */
+  std::string generate_switch_case_kernels_from(
+    const std::vector<OperationsType>& operations,
+    const std::vector<std::vector<std::uint32_t>>& operations_matrix,
+    std::function<std::string(OperationsType)> operation_generator
+  );
+
 
 private:
   const rafko_mainframe::RafkoSettings& settings;

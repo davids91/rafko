@@ -82,48 +82,69 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
     refresh_GPU_environment();
   }
 
-  /* Reset GPU Derivatives */
+  /* Reset GPU Derivatives and triggered derivative operation count */
   cl::Event reset_event;
   std::uint32_t output_buffer_byte_size = strategy->get_output_buffer_byte_size<double>();
   std::uint32_t weight_derivatives_byte_size = strategy->get_output_shapes().back().get_byte_size<double>();
   cl_int return_value = opencl_queue.enqueueFillBuffer<double>(
     gpu_phase.get_output_buffer(), (0.0)/* the data(pattern) value */,
-    (output_buffer_byte_size - weight_derivatives_byte_size)/*offset*/,
-    weight_derivatives_byte_size/*size*/,
+    (output_buffer_byte_size - sizeof(double) - weight_derivatives_byte_size)/*offset*/,
+    (weight_derivatives_byte_size + sizeof(double))/*size*/,
     NULL/*events to wait for*/, &reset_event
   );
+  RFASSERT( return_value == CL_SUCCESS );
+
+  cl::Event truncation_event;
+  return_value = opencl_queue.enqueueFillBuffer<double>(
+    gpu_phase.get_input_buffer(), static_cast<double>(settings.get_memory_truncation())/*the data(pattern) value*/,
+    (strategy->get_input_buffer_byte_size<double>() - sizeof(double) - sizeof(double)),/*offset*/
+    sizeof(double)/*size*/, NULL/*events to wait for*/, &truncation_event
+  );
+  RFASSERT( return_value == CL_SUCCESS );
+
+  /* Wait for preparing operations to finish before starting derivative calculation */
+  return_value = reset_event.wait();
+  RFASSERT( return_value == CL_SUCCESS );
+
+  return_value = truncation_event.wait();
   RFASSERT( return_value == CL_SUCCESS );
 
   std::thread tmp_reset_thread([this](){
     std::fill(tmp_avg_derivatives.begin(), tmp_avg_derivatives.end(), 0.0);
   });
 
-  /* Wait for derivative reset to finish before starting derivative calculation */
-  return_value = reset_event.wait();
-  RFASSERT( return_value == CL_SUCCESS );
+  for(std::int32_t d_w_index = 0; d_w_index < network.weight_table_size(); ++d_w_index){
+    cl::Event d_w_index_event;
+    return_value = opencl_queue.enqueueFillBuffer<double>(
+      gpu_phase.get_input_buffer(), static_cast<double>(d_w_index)/*the data(pattern) value*/,
+      (strategy->get_input_buffer_byte_size<double>() - sizeof(double))/*offset*/,
+      sizeof(double)/*size*/, NULL/*events to wait for*/, &d_w_index_event
+    );
+    RFASSERT( return_value == CL_SUCCESS );
+    return_value = d_w_index_event.wait();
+    RFASSERT( return_value == CL_SUCCESS );
 
-  //TODO: Run for all weights
-  // std::cout << "======================" << std::endl;
-  gpu_phase();
-  // std::cout << "======================" << std::endl;
+    gpu_phase();
+  }
+
   tmp_reset_thread.join();
   RFASSERT_LOG("sequence count: {}", environment->get_number_of_sequences());
-  RFASSERT_LOG("network memory size: {}", network.memory_size());
+  RFASSERT_LOG("inputs in one sequence: {}", environment->get_inputs_in_one_sequence());
   RFASSERT_LOG("operations count: {}", operations.size());
   RFASSERT_LOG("weights count: {}", network.weight_table_size());
   RFASSERT_LOG(
     "Getting Autodiff Phase weight derivatives({} numbers) from: [{}]",
     tmp_avg_derivatives.size(),
     ( /* operation values + operation derivatives size */
-      (environment->get_number_of_sequences() * network.memory_size() * operations.size())
-      + ( network.memory_size() * environment->get_number_of_sequences() * operations.size() * network.weight_table_size() )
+      (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * operations.size())
+      + (environment->get_number_of_sequences() * environment->get_sequence_size() * operations.size())
     )/*offset*/
   );
   gpu_phase.load_output(
     tmp_avg_derivatives.data()/*target*/, tmp_avg_derivatives.size()/*size*/,
     ( /* operation values + operation derivatives size */
-      (environment->get_number_of_sequences() * network.memory_size() * operations.size())
-      + ( network.memory_size() * environment->get_number_of_sequences() * operations.size() * network.weight_table_size() )
+      (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * operations.size())
+      + (environment->get_number_of_sequences() * environment->get_sequence_size() * operations.size())
     )/*offset*/
   );
 
@@ -143,16 +164,21 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   // }
   // std::cout << std::endl;
 
-  std::vector<double> output_buffer_values(
-    environment->get_number_of_sequences()
-    * network.memory_size()
-    * operations.size()
-  );
-  gpu_phase.load_output(
-    output_buffer_values.data()/*target*/,
-    output_buffer_values.size()/*size*/,
-    0/*offset*/
-  );
+  // std::vector<double> output_buffer_values(
+  //   /* Values */
+  //   environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence()
+  //   * operations.size()
+  //   // /* Derivatives */
+  //   // + environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence()
+  //   // * operations.size()
+  //   // /* Derivatives triggered */
+  //   // + 1u
+  // );
+  // gpu_phase.load_output(
+  //   output_buffer_values.data()/*target*/,
+  //   output_buffer_values.size()/*size*/,
+  //   0/*offset*/
+  // );
 
   const std::uint32_t examined_operation = 3u;
   // std::cout << "GPU output_values(op_size:" << operations.size() << "):";
@@ -168,8 +194,8 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   //   ++i;
   // }
   // std::cout << std::endl;
-  //
-  // RafkoAutodiffOptimizer::iterate();
+
+  RafkoAutodiffOptimizer::iterate();
   // std::cout << "CPU output_values:\n";
   // i = 0;
   // std::cout << "past 1: ";
@@ -195,32 +221,27 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   // }
   // std::cout << std::endl;
   //
-  std::uint32_t weight_index = 2;
-  // i = 0;
-  // std::cout << "CPU derivatives for weight[" << weight_index << "](past 1): \n";
-  // for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
-  //   if(0 == (i++ % 10))std::cout << "\n";
-  //   std::cout << "[" << data.get_derivative(1/*past_index*/, operation_index, weight_index) << "]";
-  // }
-  // std::cout << std::endl;
-  // i = 0;
-  // std::cout << "CPU derivatives for weight[" << weight_index << "](past 0): \n";
-  // for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
-  //   if(0 == (i++ % 10))std::cout << "\n";
-  //   std::cout << "[" << data.get_derivative(0/*past_index*/, operation_index, weight_index) << "]";
-  // }
-  // std::cout << std::endl;
-  // i = 0;
-  // std::cout << "CPU derivatives for operation[" << examined_operation << "](past 0): \n";
-  // for(std::uint32_t d_w_index = 0; d_w_index < network.weight_table_size(); ++d_w_index){
-  //   if(0 == (i++ % 10))std::cout << "(" << i << ")\n";
-  //   std::cout << "[" << data.get_derivative(0/*past_index*/, 0/*operation_index*/, d_w_index) << "]";
-  // }
-  // std::cout << std::endl;
+  std::uint32_t weight_index = 3;
+  i = 0;
+  std::cout << "CPU derivatives for weight[" << weight_index << "](past 1): \n";
+  for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
+    if(0 == (i++ % 10))std::cout << "\n";
+    std::cout << "[" << data.get_derivative(1/*past_index*/, operation_index, weight_index) << "]";
+  }
+  std::cout << std::endl;
+  i = 0;
+  std::cout << "CPU derivatives for weight[" << weight_index << "](past 0): \n";
+  for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
+    if(0 == (i++ % 10))std::cout << "\n";
+    std::cout << "[" << data.get_derivative(0/*past_index*/, operation_index, weight_index) << "]";
+  }
+  std::cout << std::endl;
+
+  //TODO: check compare average derivative values: data.get_average_derivative()
   apply_weight_update(tmp_avg_derivatives);
   ++iteration;
   update_context_errors();
-  // RFASSERT(0);
+  RFASSERT(0);
 }
 
 double RafkoAutodiffGPUOptimizer::get_neuron_data(
@@ -229,24 +250,21 @@ double RafkoAutodiffGPUOptimizer::get_neuron_data(
   double ret = 0.0;
   RFASSERT(past_index < network.memory_size());
   RFASSERT_LOG(
-    "Loading Neuron data from GPU Phase: sequence[{}/{}], past[{}/{}], Neuron[{}/{}], operation[{}/{}] ==> offset: {}",
+    "Loading Neuron data from GPU Phase: sequence[{}/{}], past[{}], Neuron[{}/{}], operation[{}/{}] ==> offset: {}",
     sequence_index, environment->get_number_of_sequences(),
-    past_index, network.memory_size(),
-    neuron_index, network.neuron_array_size(),
+    past_index, neuron_index, network.neuron_array_size(),
     get_operation_index(neuron_index), operations.size(),
     (
-      (sequence_index * network.memory_size() * operations.size())
-      + ((network.memory_size() - past_index - 1) * operations.size())
+      (sequence_index * environment->get_inputs_in_one_sequence() * operations.size())
+      + ((environment->get_inputs_in_one_sequence() - 1 - past_index) * operations.size())
       + get_operation_index(neuron_index)
     )
   );
-  // sequence[0/1], past[1/2], Neuron[3/4], operation[1/37] ==> offset: 38
-  // sequence[0/1], past[0/2], Neuron[3/4], operation[1/37] ==> offset: 75
 
   gpu_phase.load_output(
     &ret/*target*/, 1u/*size*/, (
-      (sequence_index * network.memory_size() * operations.size())
-      + ((network.memory_size() - past_index - 1) * operations.size())
+      (sequence_index * environment->get_inputs_in_one_sequence() * operations.size())
+      + ((environment->get_inputs_in_one_sequence() - 1 - past_index) * operations.size())
       + get_operation_index(neuron_index)
     )/*offset*/
   );

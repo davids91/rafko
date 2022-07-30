@@ -128,6 +128,12 @@ public:
    */
   virtual std::uint32_t get_prefill_inputs_number() const = 0;
 
+  /**
+   * @brief     Tells the number of input values in one sequence, which might be
+   *            different from @get_sequence_size, because of the number of prefill inputs
+   *
+   * @return    the number of input values one sequence contains
+   */
   std::uint32_t get_inputs_in_one_sequence(){
     return get_prefill_inputs_number() + get_sequence_size();
   }
