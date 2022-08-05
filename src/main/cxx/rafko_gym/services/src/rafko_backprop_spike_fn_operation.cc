@@ -182,9 +182,9 @@ std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
   )";
   //++debug
   // kernel_code += R"(
-  //   if(1 == ==op_index== && d_w_index == 1){
+  //   if(30 == ==op_index== && d_w_index == 3){
   //     printf(
-  //       "(%d<>%d)_dw spike_fn(weight: %f, new_data: %f, new_data_d: %f, old_val: %f, old_d: %f) == %f \n",
+  //       "(%d<>%d)_spike_fn_dw(weight: %f, new_data: %f, new_data_d: %f, old_val: %f, old_d: %f) == %f \n",
   //       ==this_op_weight_index==, d_w_index, ==weight_array==[==this_op_weight_index==],
   //       ==op_value_array==[==value_dep_op_index==], ==op_derivative_array==[==value_dep_op_index==],
   //       past_value, past_derivative_value, ==op_derivative_array==[==op_index==]

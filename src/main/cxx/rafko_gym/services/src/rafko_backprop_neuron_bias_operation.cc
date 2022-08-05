@@ -50,6 +50,14 @@ void RafkoBackpropNeuronBiasOperation::calculate_derivative(
   if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
     RFASSERT(static_cast<bool>(next_bias_dependency));
     RFASSERT(next_bias_dependency->is_processed());
+    RFASSERT_LOG(
+      "derivative_operation[{}](w[{}]): Neuron[{}] bias_d = {}_d({}, {}, {}, {})",
+      get_operation_index(), d_w_index, neuron_index,
+      Input_functions_Name(network.neuron_array(neuron_index).input_function()),
+      network.weight_table(weight_index), ((d_w_index == weight_index)?(1.0):(0.0)),
+      next_bias_dependency->get_value(0u/*past_index*/),
+      next_bias_dependency->get_derivative(0u/*past_index*/, d_w_index)
+    );
     set_derivative(d_w_index, rafko_net::InputFunction::get_derivative(
       network.neuron_array(neuron_index).input_function(),
       network.weight_table(weight_index), ((d_w_index == weight_index)?(1.0):(0.0)),
@@ -57,6 +65,10 @@ void RafkoBackpropNeuronBiasOperation::calculate_derivative(
       next_bias_dependency->get_derivative(0u/*past_index*/, d_w_index)
     ));
   }else{ /* no additional bias values are present as dependencies */
+    RFASSERT_LOG(
+      "derivative_operation[{}](w[{}]): Neuron[{}] bias_d = {}",
+      get_operation_index(), d_w_index, neuron_index, ((d_w_index == weight_index)?(1.0):(0.0))
+    );
     set_derivative( d_w_index, ((d_w_index == weight_index)?(1.0):(0.0)) );
   }
   set_derivative_processed();

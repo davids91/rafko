@@ -228,7 +228,6 @@ private:
   std::unique_ptr<NetworkDerivativeBuffer> calculated_derivatives; /* {runs, operations, d_w values} */
   std::unique_ptr<NetworkValueBuffer> calculated_values; /* {runs, operations} */
   std::unique_ptr<SequenceDerivativeBuffer> sequence_derivatives; /* past_sequences_index, average d_w_values */
-  //TODO: Maybe don't store just averages of output objective operations?
   bool built = false;
   bool update_weight_derivative = true;
 };

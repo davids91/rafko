@@ -42,6 +42,9 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
   if(training_evaluator){
     training_evaluator->set_objective(objective);
   }
+  if(test_evaluator){
+    test_evaluator->set_objective(objective);
+  }
 
   /*!Note: other components depend on the output objectives being the first operations in the array. */
   for(std::uint32_t output_index = 0; output_index < network.output_neuron_number(); ++output_index){
@@ -198,7 +201,7 @@ void RafkoAutodiffOptimizer::update_context_errors(){
   if(
     (test_evaluator)
     &&(
-      (0 == (iteration%settings.get_tolerance_loop_value()))
+      (iteration > (last_tested_iteration + settings.get_tolerance_loop_value()))
       ||(
         (training_evaluator)
         &&((last_training_error * settings.get_delta()) < std::abs(last_training_error - last_testing_error))
@@ -207,9 +210,11 @@ void RafkoAutodiffOptimizer::update_context_errors(){
   ){
     test_evaluator->refresh_solution_weights();
     last_testing_error = test_evaluator->stochastic_evaluation();
+    last_tested_iteration = iteration;
   }
 }
 
+//TODO: There maybe data race problems with the underlying data access??
 void RafkoAutodiffOptimizer::iterate(){
   RFASSERT_SCOPE(AUTODIFF_ITERATE);
   RFASSERT(static_cast<bool>(environment));
@@ -361,8 +366,11 @@ std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_depe
     case ad_operation_neuron_bias_d:
       RFASSERT(2u == std::get<1>(arguments).size());
       RFASSERT_LOG(
-        "operation[{}]: {} for Neuron[{}] weight_input[{}] ( not weight index ) ",
-        operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
+        "operation[{}]: {} for Neuron[{}] weight_input[{}] ( weight[{}] ) ",
+        operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0],
+        std::get<1>(arguments)[1], rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval>(
+          network.neuron_array(std::get<1>(arguments)[0]).input_weights()
+        )[std::get<1>(arguments)[1]]
       );
       return operations.emplace_back(new RafkoBackpropNeuronBiasOperation(
         data, network, operations.size(), std::get<1>(arguments)[0], std::get<1>(arguments)[1]

@@ -76,10 +76,22 @@ public:
       ));
   }
 
-  bool early_stopping_triggered(){
+  /**
+   * @brief     Provides information on when to stop the training according to the strategies provided in the settings
+   *
+   * @return    True, if training can be stopped
+   */
+  bool stop_triggered(){
     return (
-      (training_evaluator && test_evaluator)
-      &&( last_training_error > ( last_testing_error * (1.0 + settings.get_delta()) ) )
+      (/* Early stopping */
+        (training_evaluator && test_evaluator) && (
+          (settings.get_training_strategy(Training_strategy::training_strategy_early_stopping))
+          &&(last_training_error > ( last_testing_error * (1.0 + settings.get_delta()) ))
+        )
+      )||(
+        (settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero))
+        &&(0.0 == last_training_error)
+      )
     );
   }
 
@@ -169,15 +181,6 @@ public:
       return last_testing_error;
   }
 
-  //TODO: delete this
-  void print_operation_values(){
-    std::cout << "Operation values:";
-    for(const auto& op : operations){
-      std::cout << "[" << op->get_value(0) << "]";
-    }
-    std::cout << std::endl;
-  }
-
 protected:
   const rafko_mainframe::RafkoSettings& settings;
   std::shared_ptr<RafkoEnvironment> environment;
@@ -196,6 +199,7 @@ protected:
   const std::uint32_t used_sequence_truncation;
   const std::uint32_t used_minibatch_size;
   std::uint32_t iteration = 0u;
+  std::uint32_t last_tested_iteration = 0u;
   double last_training_error = std::numeric_limits<double>::quiet_NaN();
   double last_testing_error = std::numeric_limits<double>::quiet_NaN();
   std::vector<double> tmp_avg_derivatives;

@@ -35,7 +35,7 @@
 namespace rafko_gym{
 
 /**
- * @brief
+ * @brief   A class implementing the underlying logic for an autodiff Backpropagation iteration step
  */
 class AutoDiffGPUStrategy
 : public rafko_mainframe::RafkoGPUStrategyPhase
@@ -91,7 +91,7 @@ public:
     RFASSERT(static_cast<bool>(environment));
     return {
       cl::NullRange/*offset*/,
-      cl::NDRange(environment->get_number_of_sequences() * maximum_local_workers)/*global*/,
+      cl::NDRange(settings.get_minibatch_size() * maximum_local_workers)/*global*/,
       cl::NDRange(maximum_local_workers)/*local*/
     };
   }

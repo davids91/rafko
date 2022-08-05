@@ -64,17 +64,37 @@ public:
 
   void build(std::shared_ptr<RafkoObjective> objective);
   using RafkoAutodiffOptimizer::set_weight_updater;
-  using RafkoAutodiffOptimizer::early_stopping_triggered;
+  using RafkoAutodiffOptimizer::stop_triggered;
   using RafkoAutodiffOptimizer::get_last_training_error;
   using RafkoAutodiffOptimizer::get_last_testing_error;
   using RafkoAutodiffOptimizer::get_avg_gradient;
   void iterate(bool refresh_environment = false);
 
-  //TODO: Documentation for these
+  /**
+   * @brief     Uploads the weight table from the network into its internal buffers
+   */
   void upload_weight_table();
+
+  /**
+   * @brief     Uploads the input data from the environment into its internal buffers
+   *
+   * @return    A vector of events signaling when the operations are ready
+   */
   std::vector<cl::Event> update_inputs();
+
+  /**
+   * @brief     Uploads the label data from the environment into its internal buffers
+   *
+   * @return    A vector of events signaling when the operations are ready
+   */
   std::vector<cl::Event> update_labels();
+
+  /**
+   * @brief     Refreshes buffer data based on its current status
+   */
   void refresh_GPU_environment();
+
+
   double get_neuron_data(
     std::uint32_t sequence_index, std::uint32_t past_index, std::uint32_t neuron_index
   );

@@ -174,26 +174,29 @@ TEST_CASE("Testing aproximization fragment handling","[numeric_optimization][fra
  * */
 TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward]"){
   google::protobuf::Arena arena;
+  #if (RAFKO_USES_OPENCL)
+  std::uint32_t number_of_samples = 1024;
+  std::uint32_t minibatch_size = 256;
+  #else
+  std::uint32_t number_of_samples = 128;
+  std::uint32_t minibatch_size = 32;
+  #endif/*(RAFKO_USES_OPENCL)*/
+
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
-    .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(2)
+    .set_learning_rate(8e-2).set_minibatch_size(minibatch_size).set_memory_truncation(2)
     .set_droput_probability(0.2)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero,true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping,false)
     .set_learning_rate_decay({{1000u,0.8}})
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
-  #if (RAFKO_USES_OPENCL)
-  std::uint32_t number_of_samples = 1024;
-  #else
-  std::uint32_t number_of_samples = 128;
-  #endif/*(RAFKO_USES_OPENCL)*/
 
   /* Create network */
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer(1, rafko_net::neuron_group_feature_boltzmann_knot)
     // .add_feature_to_layer(0, rafko_net::neuron_group_feature_l1_regularization)
-    .add_feature_to_layer(0, rafko_net::neuron_group_feature_l2_regularization)
-    // // .add_feature_to_layer(1, rafko_net::neuron_group_feature_l1_regularization)
+    // .add_feature_to_layer(0, rafko_net::neuron_group_feature_l2_regularization)
+    // .add_feature_to_layer(1, rafko_net::neuron_group_feature_l1_regularization)
     .add_feature_to_layer(1, rafko_net::neuron_group_feature_l2_regularization)
     // // .add_feature_to_layer(2, rafko_net::neuron_group_feature_l1_regularization)
     .add_feature_to_layer(2, rafko_net::neuron_group_feature_l2_regularization)
@@ -232,7 +235,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward]")
     1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 1 */
     1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 2 */
     1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 3 */
-    1.0, 1.0, 1.0, 1.0, 1.0  /* Neuron 4 */
+    // 1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 4 */
   });
 
   std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
@@ -308,7 +311,10 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward]")
     train_error = approximizer.get_error_estimation();
     test_context->refresh_solution_weights();
     test_error = -test_context->full_evaluation();
-    if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
+    if(abs(test_error) < minimum_error){
+      minimum_error = abs(test_error);
+      std::cout << std::endl;
+    }
     std::cout << "\tError:" << std::setprecision(9)
     << "Training:[" << train_error << "]; "
     << "Test:[" << test_error << "]; "
@@ -316,7 +322,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward]")
     << "Avg_gradient: [" << avg_gradient << "]; "
     << "Iteration: ["<< iteration <<"];   "
     << "Duration: ["<< current_duration <<"ms];   "
-    << std::endl;
+    << "\r" << std::flush;
     if(0 == (iteration % 100)){
       srand(iteration);
       approximizer.full_evaluation();

@@ -28,6 +28,7 @@ void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoObjective> objective)
   // strategy->build(operations, build_without_data(objective));
   // gpu_phase.set_strategy(strategy);
   refresh_GPU_environment();
+  // RFASSERT(0);
 }
 
 void RafkoAutodiffGPUOptimizer::upload_weight_table(){
@@ -88,16 +89,27 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   std::uint32_t weight_derivatives_byte_size = strategy->get_output_shapes().back().get_byte_size<double>();
   cl_int return_value = opencl_queue.enqueueFillBuffer<double>(
     gpu_phase.get_output_buffer(), (0.0)/* the data(pattern) value */,
-    (output_buffer_byte_size - sizeof(double) - weight_derivatives_byte_size)/*offset*/,
-    (weight_derivatives_byte_size + sizeof(double))/*size*/,
+    (output_buffer_byte_size - weight_derivatives_byte_size)/*offset*/,
+    (weight_derivatives_byte_size)/*size*/,
     NULL/*events to wait for*/, &reset_event
+  );
+  RFASSERT( return_value == CL_SUCCESS );
+
+  cl::Event sequence_start_index_event;
+  return_value = opencl_queue.enqueueFillBuffer<double>(
+    gpu_phase.get_input_buffer(), static_cast<double>(rand()%(std::max(1,
+      static_cast<std::int32_t>(environment->get_number_of_sequences())
+      - static_cast<std::int32_t>(settings.get_minibatch_size())
+    )))/*the data(pattern) value*/,
+    (strategy->get_input_buffer_byte_size<double>() - (sizeof(double) * 3)),/*offset*/
+    sizeof(double)/*size*/, NULL/*events to wait for*/, &sequence_start_index_event
   );
   RFASSERT( return_value == CL_SUCCESS );
 
   cl::Event truncation_event;
   return_value = opencl_queue.enqueueFillBuffer<double>(
     gpu_phase.get_input_buffer(), static_cast<double>(settings.get_memory_truncation())/*the data(pattern) value*/,
-    (strategy->get_input_buffer_byte_size<double>() - sizeof(double) - sizeof(double)),/*offset*/
+    (strategy->get_input_buffer_byte_size<double>() - (sizeof(double) * 2)),/*offset*/
     sizeof(double)/*size*/, NULL/*events to wait for*/, &truncation_event
   );
   RFASSERT( return_value == CL_SUCCESS );
@@ -195,7 +207,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   // }
   // std::cout << std::endl;
 
-  RafkoAutodiffOptimizer::iterate();
+  // RafkoAutodiffOptimizer::iterate();
   // std::cout << "CPU output_values:\n";
   // i = 0;
   // std::cout << "past 1: ";
@@ -221,27 +233,28 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   // }
   // std::cout << std::endl;
   //
-  std::uint32_t weight_index = 3;
-  i = 0;
-  std::cout << "CPU derivatives for weight[" << weight_index << "](past 1): \n";
-  for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
-    if(0 == (i++ % 10))std::cout << "\n";
-    std::cout << "[" << data.get_derivative(1/*past_index*/, operation_index, weight_index) << "]";
-  }
-  std::cout << std::endl;
-  i = 0;
-  std::cout << "CPU derivatives for weight[" << weight_index << "](past 0): \n";
-  for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
-    if(0 == (i++ % 10))std::cout << "\n";
-    std::cout << "[" << data.get_derivative(0/*past_index*/, operation_index, weight_index) << "]";
-  }
-  std::cout << std::endl;
+  // std::uint32_t weight_index = 3;
+  // i = 0;
+  // std::cout << "CPU derivatives for weight[" << weight_index << "](past 1): \n";
+  // for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
+  //   if(0 == (i++ % 10))std::cout << "\n";
+  //   std::cout << "[" << data.get_derivative(1/*past_index*/, operation_index, weight_index) << "]";
+  // }
+  // std::cout << std::endl;
+  // i = 0;
+  // std::cout << "CPU derivatives for weight[" << weight_index << "](past 0): \n";
+  // for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
+  //   if(0 == (i++ % 10))std::cout << "\n";
+  //   std::cout << "[" << data.get_derivative(0/*past_index*/, operation_index, weight_index) << "]";
+  // }
+  // std::cout << std::endl;
 
-  //TODO: check compare average derivative values: data.get_average_derivative()
-  apply_weight_update(tmp_avg_derivatives);
+  //TODO: Why are derivatives sometimes 0???
+  if(0 < std::accumulate(tmp_avg_derivatives.begin(),tmp_avg_derivatives.end(), 0.0))
+    apply_weight_update(tmp_avg_derivatives);
   ++iteration;
   update_context_errors();
-  RFASSERT(0);
+  // RFASSERT(0);
 }
 
 double RafkoAutodiffGPUOptimizer::get_neuron_data(

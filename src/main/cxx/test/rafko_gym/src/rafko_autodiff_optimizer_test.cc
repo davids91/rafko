@@ -211,7 +211,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
 
 #if(RAFKO_USES_OPENCL)
 TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU default optimizer", "[optimize][GPU][small]"){
-  // return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
+  return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(0.0001).set_minibatch_size(64).set_memory_truncation(2)
@@ -324,7 +324,6 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU defau
 #endif/*(RAFKO_USES_OPENCL)*/
 
 TEST_CASE("Testing if autodiff optimizer converges networks with a prepared environment", "[optimize]"){
-  return; //TODO: This shall run
   #if(RAFKO_USES_OPENCL)
   std::uint32_t number_of_samples = 1024;
   std::uint32_t minibatch_size = 256;
@@ -335,7 +334,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   std::uint32_t sequence_size = 4;
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
-    .set_learning_rate(1e-1).set_minibatch_size(minibatch_size).set_memory_truncation(2)
+    .set_learning_rate(1e-3).set_minibatch_size(minibatch_size).set_memory_truncation(2)
     .set_droput_probability(0.0)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero,true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping,false)
@@ -346,10 +345,11 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
+    .add_feature_to_layer(1u, rafko_net::neuron_group_feature_boltzmann_knot)
     // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l1_regularization)
     // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l2_regularization)
     // .add_neuron_recurrence(1u,0u,1u)
-    .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
+    // .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
     // .set_neuron_spike_function(0u, 0u, rafko_net::spike_function_none)
     // .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
     // .set_neuron_spike_function(0u, 1u, rafko_net::spike_function_none)
@@ -360,7 +360,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({2,2,1});
+    .dense_layers({10,5,1});
 
   #if(RAFKO_USES_OPENCL)
   rafko_mainframe::RafkoOCLFactory factory;
@@ -376,7 +376,9 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
   #endif/*(RAFKO_USES_OPENCL)*/
-
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+    settings, rafko_gym::cost_function_squared_error
+  );
   std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
     rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size)
   );
@@ -393,10 +395,6 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
     std::vector<std::vector<double>>(std::get<0>(tmp2)),
     std::vector<std::vector<double>>(std::get<1>(tmp2)),
     sequence_size
-  );
-
-  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
-    settings, rafko_gym::cost_function_squared_error
   );
   test_context->set_environment(test_environment);
 
@@ -426,7 +424,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   avg_duration = 0;
   iteration = 0;
   minimum_error = std::numeric_limits<double>::max();
-  while(!optimizer->early_stopping_triggered()){
+  while(!optimizer->stop_triggered()){
     /* Calculate reference data */
     std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
     std::unique_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Builder(
@@ -441,15 +439,18 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
 
     train_error = optimizer->get_last_training_error();
     test_error = optimizer->get_last_testing_error();
-    if(abs(test_error) < minimum_error)minimum_error = abs(test_error);
+    if(abs(test_error) < minimum_error){
+      minimum_error = abs(test_error);
+      std::cout << std::endl;
+    }
 
     std::cout << "   Error:" << std::setprecision(9)
-    << "Train:[" << train_error << "];"
-    << "Test:[" << test_error << "];"
-    << "min: ["<< minimum_error <<"];"
-    << "avg_d_w: [" << optimizer->get_avg_gradient() << "];"
-    << "it: ["<< iteration <<"];"
-    << "dur: ["<< current_duration <<"ms/avg: " <<  avg_duration <<"ms];"
+    << "Train:[" << train_error << "]; "
+    << "Test:[" << test_error << "]; "
+    << "min: ["<< minimum_error <<"]; "
+    << "avg_d_w: [" << optimizer->get_avg_gradient() << "]; "
+    << "it: ["<< iteration <<"]; "
+    << "dur: ["<< current_duration <<"ms/avg: " <<  avg_duration <<"ms]; "
     << "             \r" << std::flush;//<< std::endl;
     ++iteration;
   }
