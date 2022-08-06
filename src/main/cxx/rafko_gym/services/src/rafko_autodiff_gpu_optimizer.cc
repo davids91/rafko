@@ -20,15 +20,9 @@ namespace rafko_gym{
 
 void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoObjective> objective){
   RFASSERT_SCOPE(AUTODIFF_GPU_BUILD);
-  std::uint32_t asd = build_without_data(objective);
-  strategy->build(operations, asd);
+  strategy->build(operations, build_without_data(objective));
   gpu_phase.set_strategy(strategy);
-  data.build(operations.size(), asd, environment->get_sequence_size());
-  // RFASSERT_SCOPE(AUTODIFF_GPU_BUILD);
-  // strategy->build(operations, build_without_data(objective));
-  // gpu_phase.set_strategy(strategy);
   refresh_GPU_environment();
-  // RFASSERT(0);
 }
 
 void RafkoAutodiffGPUOptimizer::upload_weight_table(){
@@ -122,7 +116,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   RFASSERT( return_value == CL_SUCCESS );
 
   std::thread tmp_reset_thread([this](){
-    std::fill(tmp_avg_derivatives.begin(), tmp_avg_derivatives.end(), 0.0);
+    std::fill(tmp_avg_d.begin(), tmp_avg_d.end(), 0.0);
   });
 
   for(std::int32_t d_w_index = 0; d_w_index < network.weight_table_size(); ++d_w_index){
@@ -146,115 +140,25 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   RFASSERT_LOG("weights count: {}", network.weight_table_size());
   RFASSERT_LOG(
     "Getting Autodiff Phase weight derivatives({} numbers) from: [{}]",
-    tmp_avg_derivatives.size(),
+    tmp_avg_d.size(),
     ( /* operation values + operation derivatives size */
       (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * operations.size())
       + (environment->get_number_of_sequences() * environment->get_sequence_size() * operations.size())
     )/*offset*/
   );
   gpu_phase.load_output(
-    tmp_avg_derivatives.data()/*target*/, tmp_avg_derivatives.size()/*size*/,
+    tmp_avg_d.data()/*target*/, tmp_avg_d.size()/*size*/,
     ( /* operation values + operation derivatives size */
       (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * operations.size())
       + (environment->get_number_of_sequences() * environment->get_sequence_size() * operations.size())
     )/*offset*/
   );
 
-  /*!Debug: See values output:*/
-  std::uint32_t i = 0;
-  // std::vector<double> input_buffer_values(strategy->get_input_shapes()[0].get_number_of_elements());
-  // cl_int return_value = opencl_queue.enqueueReadBuffer(
-  //   gpu_phase.get_input_buffer(), CL_TRUE/*blocking*/,
-  //   0U/*offset*/, (strategy->get_input_shapes()[0].get_byte_size<double>())/*size*/,
-  //   input_buffer_values.data()
-  // );
-  // assert(return_value == CL_SUCCESS);
-  // std::cout << "GPU input values:";
-  // for(const double& d : input_buffer_values){
-  //   if(0 == (i++ % 10))std::cout << std::endl;
-  //   std::cout << "[" << d << "]";
-  // }
-  // std::cout << std::endl;
+  RFASSERT( static_cast<std::int32_t>(tmp_avg_d.size()) > std::count(tmp_avg_d.begin(),tmp_avg_d.end(), 0.0));
+  apply_weight_update(tmp_avg_d);
 
-  // std::vector<double> output_buffer_values(
-  //   /* Values */
-  //   environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence()
-  //   * operations.size()
-  //   // /* Derivatives */
-  //   // + environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence()
-  //   // * operations.size()
-  //   // /* Derivatives triggered */
-  //   // + 1u
-  // );
-  // gpu_phase.load_output(
-  //   output_buffer_values.data()/*target*/,
-  //   output_buffer_values.size()/*size*/,
-  //   0/*offset*/
-  // );
-
-  const std::uint32_t examined_operation = 3u;
-  // std::cout << "GPU output_values(op_size:" << operations.size() << "):";
-  // i = 0;
-  // for(const double& d : output_buffer_values){
-  //   if(0 == (i % operations.size())){
-  //     std::cout << std::endl << "past " << 1 - (i / operations.size()) << ":";
-  //     i = 0;
-  //   }
-  //   if(0 == (i % 10))std::cout << "\n";
-  //   if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
-  //     else std::cout << "[" << d << "]";
-  //   ++i;
-  // }
-  // std::cout << std::endl;
-
-  // RafkoAutodiffOptimizer::iterate();
-  // std::cout << "CPU output_values:\n";
-  // i = 0;
-  // std::cout << "past 1: ";
-  // for(const double& d : data.get_value().get_element(1u/*past_index*/)){
-  //   if(0 == (i % 10))std::cout << "\n";
-  //   if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
-  //     else std::cout << "[" << d << "]";
-  //   ++i;
-  // }
-  // std::cout << std::endl;
-  // i = 0;
-  // std::cout << "past 0: ";
-  // for(const double& d : data.get_value().get_element(0u/*past_index*/)){
-  //   if(0 == (i % 10))std::cout << "\n";
-  //   if(examined_operation == (i % operations.size())) std::cout << "[ x " << d << "]";
-  //     else std::cout << "[" << d << "]";
-  //   ++i;
-  // }
-  // std::cout << std::endl;
-  // std::cout << "Weight derivatives:\n";
-  // for(const double& d : tmp_avg_derivatives){
-  //   std::cout << "[" << d << "]";
-  // }
-  // std::cout << std::endl;
-  //
-  // std::uint32_t weight_index = 3;
-  // i = 0;
-  // std::cout << "CPU derivatives for weight[" << weight_index << "](past 1): \n";
-  // for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
-  //   if(0 == (i++ % 10))std::cout << "\n";
-  //   std::cout << "[" << data.get_derivative(1/*past_index*/, operation_index, weight_index) << "]";
-  // }
-  // std::cout << std::endl;
-  // i = 0;
-  // std::cout << "CPU derivatives for weight[" << weight_index << "](past 0): \n";
-  // for(std::uint32_t operation_index = 0; operation_index < operations.size(); ++operation_index){
-  //   if(0 == (i++ % 10))std::cout << "\n";
-  //   std::cout << "[" << data.get_derivative(0/*past_index*/, operation_index, weight_index) << "]";
-  // }
-  // std::cout << std::endl;
-
-  //TODO: Why are derivatives sometimes 0???
-  if(0 < std::accumulate(tmp_avg_derivatives.begin(),tmp_avg_derivatives.end(), 0.0))
-    apply_weight_update(tmp_avg_derivatives);
   ++iteration;
   update_context_errors();
-  // RFASSERT(0);
 }
 
 double RafkoAutodiffGPUOptimizer::get_neuron_data(
@@ -282,6 +186,19 @@ double RafkoAutodiffGPUOptimizer::get_neuron_data(
     )/*offset*/
   );
   return ret;
+}
+
+double RafkoAutodiffGPUOptimizer::get_avg_gradient(std::uint32_t d_w_index) const{
+  RFASSERT(static_cast<std::int32_t>(d_w_index) < network.weight_table_size());
+  double d_w_index_gradient;
+  gpu_phase.load_output(
+    &d_w_index_gradient/*target*/, 1/*size*/,
+    ( /* End of the buffer - number of weights + weight_index */
+      strategy->get_output_shapes().back().get_number_of_elements()
+       - network.weight_table_size() + d_w_index
+    )/*offset*/
+  );
+  return d_w_index_gradient;
 }
 
 } /* namespace rafko_gym */

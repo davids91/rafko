@@ -31,7 +31,7 @@ namespace rafko_gym{
 std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_input_shapes() const{
   RFASSERT(static_cast<bool>(environment));
   RFASSERT_LOG(
-    "Autodiff strategy Input shape: (weights: {} + inputs: {} + Labels: {} + sequence truncation: {}, d_w_index: {})",
+    "Autodiff strategy Input shape: (weights: {} + inputs: {} + Labels: {} + sequence start: + sequence truncation: {} + d_w_index: {})",
     /* Weights */ (static_cast<std::uint32_t>(network.weight_table_size())),
     /* Inputs */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
     /* Labels */(environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
@@ -47,7 +47,7 @@ std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_input_shap
 
 std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_output_shapes() const{
   RFASSERT_LOG(
-    "Autdiff GPU Strategy output buffer overall size: (op values: {} + op derivatives: {} + w derivatives: {} + triggered derivative count: {})",
+    "Autdiff GPU Strategy output buffer overall size: (op values: {} + op derivatives: {} + w derivatives: {})",
     /* operation values */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * number_of_operations ),
     /* operation derivatives */ (environment->get_number_of_sequences() * environment->get_sequence_size() * number_of_operations),
     /* Weight derivatives */ static_cast<std::uint32_t>(network.weight_table_size())
@@ -222,10 +222,6 @@ void AutoDiffGPUStrategy::build(
       if(0 == get_global_id(0))
         triggered_derivative_operations = 0.0;
 
-      //++debug
-      // int examined_weight_index = 3;
-      // if(d_w_index != examined_weight_index)return;
-      //--debug
       ==operation_locals==
       ==derivative_operations==
       work_group_barrier(CLK_GLOBAL_MEM_FENCE);
@@ -240,28 +236,9 @@ void AutoDiffGPUStrategy::build(
       }
       work_group_barrier(CLK_GLOBAL_MEM_FENCE);
 
-      if(0 == get_global_id(0)){
-        // printf("dividing weight by: %f", triggered_derivative_operations);
+      if(0 == get_global_id(0) && 0 < triggered_derivative_operations){
         d_w_array[d_w_index] /= triggered_derivative_operations;
       }
-
-      //++debug
-      // if(0 == get_local_id(0)){
-      //   // printf("Network values:");
-      //   // for(int operation_index = 0; operation_index < operation_count; ++operation_index){
-      //   //   if(0 == (operation_index % 10) ) printf("\n");
-      //   //   printf("[%10.10f]", operations_value_array[operation_index]);
-      //   // }
-      //   // printf("\n");
-      //
-      //   printf("GPU Weight derivatives for weight[%d]:", examined_weight_index);
-      //   for(int operation_index = 0; operation_index < operation_count; ++operation_index){
-      //     if(0 == (operation_index % 10) ) printf("\n");
-      //     printf("[%3.10f]", operations_d_array[operation_index]);
-      //   }
-      //   printf("\n");
-      // }
-      //--debug
     }/*execute_derivative_workers()*/
 
     void execute_value_workers(
@@ -297,7 +274,7 @@ void AutoDiffGPUStrategy::build(
         sequence_start = (int)(inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]]);
         sequence_start = max( 0, min(sequence_start, (number_of_sequences - minibatch_size)) );
         sequence_start = sequence_start + (get_group_id(0) * sequences_in_work_groups);
-        sequences_in_this_group = min( sequences_in_work_groups, (number_of_sequences - sequence_start + 1) );
+        sequences_in_this_group = min( sequences_in_work_groups, (number_of_sequences - sequence_start) );
 
         /* In case there is no sequence truncation, all of the sequence elements will be considered when calculating the derivative */
         sequence_truncation = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]];
@@ -309,48 +286,9 @@ void AutoDiffGPUStrategy::build(
       int network_labels_start_index = weight_table_size + input_sizes[1]/*network_inputs*/ + sequence_start * ==one_label_size==;
       int network_values_start_index = sequence_start * sequence_inputs_count * operation_count;
       int network_derivatives_start_index = output_sizes[0] + sequence_start * sequence_labels_count * operation_count;
-      // if(0 == sequences_in_this_group)
-      // printf(
-      //   "global[%d] local[%d] group[%d]: Sequence start: %d(orig: %f); Sequences in this group: %d; number of sequences: %d; minibatch_size: %d; \n",
-      //   (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_group_id(0)),
-      //   sequence_start, inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]],
-      //   sequences_in_this_group, number_of_sequences, minibatch_size
-      // );
-
-      // printf(
-      //   "global[%d], local[%d]: network_input initial start_index: %d(+%d?)/%d; label_num: %d \n",
-      //   (int)(get_global_id(0)), (int)(get_local_id(0)),
-      //   network_values_start_index, operation_count, output_sizes[0],
-      //   sequence_labels_count
-      // );
-      // return;
-
-      // printf(
-      //   "global[%d], local[%d]: weight_table_size: %d \n",
-      //   (int)(get_global_id(0)), (int)(get_local_id(0)), weight_table_size
-      // );
-      // printf(
-      //   "global[%d], local[%d]: sequence_start: %d \n",
-      //   (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_start
-      // );
-      // printf(
-      //   "global[%d], local[%d]: one_input_size: %d \n",
-      //   (int)(get_global_id(0)), (int)(get_local_id(0)), ==one_input_size==
-      // );
-      // printf(
-      //   "global[%d], local[%d]: network_input initial start_index: %d \n",
-      //   (int)(get_global_id(0)), (int)(get_local_id(0)), network_inputs_start_index
-      // );
 
       #pragma unroll
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
-        // printf(
-        //   "global[%d], local[%d], group[%d], sequence[%d]: in this group: %d; from: %d(orig: %f) --> %d; minibatch_size: %d; number of sequences: %d; %d %d %d work groups;  \n",
-        //   (int)(get_global_id(0)), (int)(get_local_id(0)), (int)(get_group_id(0)), sequence_index,
-        //   sequences_in_this_group, sequence_start, inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]],
-        //   sequences_in_this_group, minibatch_size, number_of_sequences,
-        //   get_num_groups(0), get_num_groups(1), get_num_groups(2)
-        // );
         int network_ran_count = 0;
         int available_memory_slots = 0;
         #pragma unroll
@@ -371,42 +309,12 @@ void AutoDiffGPUStrategy::build(
         );
         #pragma unroll
         for(int label_index = 0; label_index < sequence_labels_count; ++label_index){
-          // printf(
-          //   "global[%d], local[%d]: sequence[%d]; label[%d]; input_start: %d / %d; label_start %d / %d \n",
-          //   (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index, label_index,
-          //   network_inputs_start_index, (input_sizes[0] + input_sizes[1]),
-          //   network_labels_start_index, (input_sizes[0] + input_sizes[1] + input_sizes[2])
-          // );
-          // printf(
-          //   "global[%d], local[%d]: sequence[%d]; label[%d]; values_start: %d / %d \n",
-          //   (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index, label_index,
-          //   network_values_start_index, output_sizes[0]
-          // );
           if(calculate_value){
             execute_value_workers(
               available_memory_slots, weight_table_size, &inputs[network_inputs_start_index]/*network_inputs*/,
               &inputs[0]/*network_weights*/,&outputs[network_values_start_index]/*operation_values*/
             );
           }
-          // if(0 == get_local_id(0)){
-          //   printf("Network values in kernel:");
-          //   for(int operation_index = 0; operation_index < operation_count; ++operation_index){
-          //     if(0 == (operation_index % 10) ) printf("\n");
-          //     printf("[%f]", outputs[network_values_start_index + operation_index]);
-          //   }
-          //   printf("\n");
-          // }
-
-          // printf(
-          //   "global[%d], local[%d]: label index: %d; seq_trun_start: %d; seq_trun_size: %d \n",
-          //   (int)(get_global_id(0)), (int)(get_local_id(0)),
-          //   label_index, sequence_truncation_start, sequence_truncation
-          // );
-          // printf(
-          //   "global[%d], local[%d]: sequence[%d]; label[%d]; output sizes: %d %d %d \n",
-          //   (int)(get_global_id(0)), (int)(get_local_id(0)), sequence_index, label_index,
-          //   output_sizes[0], output_sizes[1], output_sizes[2]
-          // );
           /*Note: The available memory slots differ for derivatives becuase of the prefill,
            * and handling it is an open question: should the values be available despite the derivatives aren't?
            */
@@ -523,7 +431,7 @@ void AutoDiffGPUStrategy::build(
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==one_label_size=="), std::to_string(environment->get_feature_size())
   );
-  std::cout << "Optimizer source: " << source_base << std::endl;
+  RFASSERT_LOG("Optimizer source: {}", source_base);
   built_source = source_base;
   number_of_operations = operations.size();
   built = true;

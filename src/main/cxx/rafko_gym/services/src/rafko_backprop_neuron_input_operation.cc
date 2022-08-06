@@ -219,7 +219,7 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
       * network.weight_table(weight_index)
     );
     if(weight_index == d_w_index){
-      if(weight_index == d_w_index)f_x_derivative += f_x_value;
+      f_x_derivative += f_x_value;
       RFASSERT_LOG(
         "derivative_operation[{}](w[{}]): Neuron[{}] Input[{}]_d f_x = {}; f_x_d = {} = ({}(d_op[{}]) * {}(weight[{}])) + f_x",
         get_operation_index(), d_w_index, neuron_index, neuron_input_index,
@@ -340,51 +340,6 @@ std::string RafkoBackpropNeuronInputOperation::value_kernel_operation(
     ) + ";\n"
   );
 
-  //Debug
-  // std::string f_x_dependency;
-  // if(is_network_input){
-  //   f_x_dependency = std::to_string(network_input_dependency->get_operation_index());
-  // }else{
-  //   f_x_dependency = std::to_string(neuron_data_dependency->get_operation_index());
-  // }
-  // std::string u_x_dependency;
-  // if(neuron_input_index < (inputs_iterator.cached_size() - 1u)){
-  //   u_x_dependency = std::to_string(neuron_input_dependency->get_operation_index());
-  // }else{ /* the last input starts to collect bias */
-  //   u_x_dependency = std::to_string(neuron_bias_dependency->get_operation_index());
-  // }
-  // // "operation[{}]: Neuron[{}] Input[{}] f_x = op[{}](past:{} = {}) * weight[{}]({}) = {}",
-  // std::string debug_print;
-  // debug_print = R"(
-  //   if(5 == ==op_index==){
-  //     if(==past_index== <= available_memory_slots)
-  //     printf(
-  //       "global[%d]: (past: ==past_index==/%d)operation[==op_index==]: ==input_function==(%f(==op_value_array==[(==f_x_dependency== - (==op_value_array_size== * ==past_index==)) = %d]),%f(==op_value_array==[%d])) ==> %f  \n",
-  //       (int)(get_global_id(0)), available_memory_slots,
-  //       f_x_value, (==f_x_dependency== - (==op_value_array_size== * ==past_index==)),
-  //       u_x_value, ==u_x_dependency==, ==op_value_array==[==op_index==]
-  //     );
-  //     else
-  //     printf(
-  //       "global[%d]: operation[==op_index==]: ==input_function==(%f(no available past value)),%f(==op_value_array==[%d])) ==> %f  \n",
-  //       (int)(get_global_id(0)),
-  //       f_x_value, u_x_value, ==u_x_dependency==, ==op_value_array==[==op_index==]
-  //     );
-  //   }
-  // )";
-  // debug_print = rafko_utilities::replace_all_in_string(
-  //   debug_print, std::regex("==f_x_dependency=="), f_x_dependency
-  // );
-  // debug_print = rafko_utilities::replace_all_in_string(
-  //   debug_print, std::regex("==u_x_dependency=="), u_x_dependency
-  // );
-  // debug_print = rafko_utilities::replace_all_in_string(
-  //   debug_print, std::regex("==input_function=="),
-  //   Input_functions_Name(network.neuron_array(neuron_index).input_function())
-  // );
-  // operations += debug_print;
-  //--Debug
-
   /* Replacing the tokens with actual kernel string values */
   operations = rafko_utilities::replace_all_in_string(
     operations, std::regex("==op_value_array=="), operations_value_array
@@ -422,32 +377,8 @@ std::string RafkoBackpropNeuronInputOperation::derivative_kernel_operation(
     }
 
     ==op_derivative_array==[==op_index==] = ==input_kernel==;
-    //++debug
-    // if((36 == ==op_index==) && d_w_index == 3){
-    //   printf(
-    //     "global[%d]: operation[==op_index==]: f_x_d = %10.10f(==op_derivative_array==[%d] = %f) * %10.10f(w[==w_index==]);past: ==past_index==/%d;\n",
-    //     (int)(get_global_id(0)), f_x_derivative, ==f_x_op_index==,
-    //     ==op_derivative_array==[==f_x_op_index== - (==op_d_array_size== * ==past_index==)],
-    //     ==weight_array==[==f_x_w_index==], available_memory_slots
-    //   );
-    //   printf(
-    //     "global[%d]: operation[==op_index==]: u_x_d = %10.10f (==op_derivative_array==[%d]); past: ==past_index==/%d;\n",
-    //     (int)(get_global_id(0)), u_x_derivative , ==u_x_op_index==, available_memory_slots
-    //   );
-    //   printf(
-    //     "global[%d]: operation[==op_index==]: f_x = %10.10f(op[(==f_x_op_index== - (==op_array_size== * ==past_index==))]), u_x = %f(op[%d])) ==> %10.10f (==input_kernel==) \n",
-    //     (int)(get_global_id(0)), f_x_value, u_x_value, ==u_x_op_index==,
-    //      ==op_derivative_array==[==op_index==]
-    //   );
-    // }
-    //--debug
   )";
-  //++debug
-  kernel_code = rafko_utilities::replace_all_in_string(
-    kernel_code, std::regex("==weight_array=="), weight_array
-  );
-  //--debug
-
+  
   /* finish f_x_dependency */
   if(is_network_input){
     RFASSERT(0u == input_past_index);

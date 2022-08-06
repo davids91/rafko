@@ -67,8 +67,17 @@ public:
   using RafkoAutodiffOptimizer::stop_triggered;
   using RafkoAutodiffOptimizer::get_last_training_error;
   using RafkoAutodiffOptimizer::get_last_testing_error;
-  using RafkoAutodiffOptimizer::get_avg_gradient;
+  using RafkoAutodiffOptimizer::get_avg_of_abs_gradient;
+  using RafkoAutodiffOptimizer::apply_weight_update;
+
+  /**
+   * @brief   calculate the values and derivatives and update the weights based on them
+   *
+   * @param[in]   refresh_environment     if true, the GPU environment (meaning input values and labels) will be reuploaded based on the dependencies
+   */
   void iterate(bool refresh_environment = false);
+
+  double get_avg_gradient(std::uint32_t d_w_index) const;
 
   /**
    * @brief     Uploads the weight table from the network into its internal buffers
@@ -94,7 +103,16 @@ public:
    */
   void refresh_GPU_environment();
 
-
+  /**
+   * @brief     Downloads the activation value of a single neuron from the GPU.
+   *            The GPU has the whole environment stored in its buffers; So data is available
+   *            from when an iteration last calculated it. Because of this:
+   *            !!WARNING!! Neuron data may not be up-to-date
+   *
+   * @param[in]   sequence_index    The sequence index to take the value from
+   * @param[in]   past_index        The past index to take the value from
+   * @param[in]   neuron_index      The relevant neuron index
+   */
   double get_neuron_data(
     std::uint32_t sequence_index, std::uint32_t past_index, std::uint32_t neuron_index
   );

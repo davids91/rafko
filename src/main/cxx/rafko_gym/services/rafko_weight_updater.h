@@ -63,12 +63,7 @@ public:
    * @param      gradients           The gradients
    * @param      solution            The solution
    */
-  virtual void iterate(const std::vector<double>& gradients){
-    calculate_velocity(gradients);
-    update_weights_with_velocity();
-    iteration = (iteration + 1) % required_iterations_for_step;
-    finished = (0u == iteration);
-  }
+  virtual void iterate(const std::vector<double>& gradients);
 
   /**
    * @brief      Tells if an iteration is at its valid state or not based on

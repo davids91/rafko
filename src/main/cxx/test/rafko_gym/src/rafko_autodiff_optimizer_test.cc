@@ -17,6 +17,13 @@
 #include <iostream>
 #include <iomanip>
 
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
+
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
@@ -159,7 +166,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
 
   rafko_gym::RafkoAutodiffOptimizer optimizer(settings, environment, *network);
   optimizer.build(objective);
-  optimizer.set_weight_updater(rafko_gym::weight_updater_amsgrad);
+  optimizer.set_weight_updater(rafko_gym::weight_updater_default);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   std::uint32_t iteration = 0u;
   std::uint32_t avg_duration = 0.0;
@@ -252,11 +259,9 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
 
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::vector<std::vector<double>>{
-      // {0.777, 0.777},{0.777, 0.777},
       {0.666, 0.666},{0.666, 0.666}
     },
     std::vector<std::vector<double>>{
-      // {11.0},{21.0},
       {10.0},{20.0}
     },
     2 /*sequence_size*/
@@ -323,7 +328,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
 }
 #endif/*(RAFKO_USES_OPENCL)*/
 
-TEST_CASE("Testing if autodiff optimizer converges networks with a prepared environment", "[optimize]"){
+TEST_CASE("Testing if autodiff optimizer converges networks with a prepared environment", "[optimize][!benchmark]"){
   #if(RAFKO_USES_OPENCL)
   std::uint32_t number_of_samples = 1024;
   std::uint32_t minibatch_size = 256;
@@ -334,11 +339,11 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   std::uint32_t sequence_size = 4;
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
-    .set_learning_rate(1e-3).set_minibatch_size(minibatch_size).set_memory_truncation(2)
+    .set_learning_rate(2e-4).set_minibatch_size(minibatch_size).set_memory_truncation(2)
     .set_droput_probability(0.0)
-    .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero,true)
-    .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping,false)
-    .set_learning_rate_decay({{1000u,0.8}})
+    .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero, true)
+    .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping, false)
+    .set_learning_rate_decay({{100u,0.8}})
     .set_tolerance_loop_value(10)
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
 
@@ -360,7 +365,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({10,5,1});
+    .dense_layers({3,2,1});
 
   #if(RAFKO_USES_OPENCL)
   rafko_mainframe::RafkoOCLFactory factory;
@@ -410,11 +415,13 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   );
   #endif/*(RAFKO_USES_OPENCL)*/
   optimizer->build(objective);
-  optimizer->set_weight_updater(rafko_gym::weight_updater_amsgrad);
+  optimizer->set_weight_updater(rafko_gym::weight_updater_default);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   double train_error;
   double test_error;
   double minimum_error;
+  double low_error = 0.025;
+  std::uint32_t iteration_reached_low_error = std::numeric_limits<std::uint32_t>::max();
   std::uint32_t iteration;
   std::chrono::steady_clock::time_point start;
   std::uint32_t avg_duration;
@@ -424,6 +431,19 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   avg_duration = 0;
   iteration = 0;
   minimum_error = std::numeric_limits<double>::max();
+  std::uint32_t console_width;
+  #ifdef WIN32
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int columns, rows;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    console_width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+  #else
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    console_width = w.ws_col;
+  #endif
+  std::cout << "Optimizing network:" << std::endl;
+  std::cout << "Training Error; \t\tTesting Error; min; \t\t avg_d_w_abs; \t\t iteration; \t\t duration(ms); avg duration(ms)\t " << std::endl;
   while(!optimizer->stop_triggered()){
     /* Calculate reference data */
     std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(*network);
@@ -444,17 +464,30 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
       std::cout << std::endl;
     }
 
-    std::cout << "   Error:" << std::setprecision(9)
-    << "Train:[" << train_error << "]; "
-    << "Test:[" << test_error << "]; "
-    << "min: ["<< minimum_error <<"]; "
-    << "avg_d_w: [" << optimizer->get_avg_gradient() << "]; "
-    << "it: ["<< iteration <<"]; "
-    << "dur: ["<< current_duration <<"ms/avg: " <<  avg_duration <<"ms]; "
-    << "             \r" << std::flush;//<< std::endl;
+    std::cout << "\r";
+    for(std::uint32_t space_count = 0; space_count < console_width - 1; ++space_count)
+      std::cout << " ";
+    std::cout << "\r";
+    std::cout << std::setprecision(9)
+    << train_error << ";\t\t"
+    << test_error << "; "
+    << minimum_error <<";\t\t"
+    << optimizer->get_avg_of_abs_gradient() << ";\t\t"
+    << iteration <<";\t\t"
+    << current_duration <<"; "
+    << avg_duration <<"; "
+    << std::flush;
     ++iteration;
+    if(std::abs(test_error) <= low_error){
+      iteration_reached_low_error = std::min(iteration_reached_low_error, iteration);
+      if((iteration - iteration_reached_low_error) > 200){
+        std::cout << std::endl << "== good enough for a test ==" << std::endl;
+        break; /* End the loop if 200 loops spent below error threshold */
+      }
+    }
   }
-  std::cout << "\nTarget reached in " << iteration << " iterations!    " << std::endl;
+  std::cout << std::endl << "Optimum reached in " << (iteration + 1)
+  << " steps!(average runtime: "<< avg_duration << " ms)   " << std::endl;
 }
 
 } /* namespace rafko_gym_test */

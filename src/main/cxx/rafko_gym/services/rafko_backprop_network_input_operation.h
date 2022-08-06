@@ -95,19 +95,12 @@ public:
     std::string operations_value_array, std::string /*operations_array_size*/
   ) const{
     return (
-      // "if(28 == " + std::to_string(get_operation_index()) + "){ \n"
-      // + std::string("  printf(\"\\n[%d]network input[%d]: %f * %f\\n\", (int)(get_global_id(0)), " + std::to_string(input_index) + ",")
-      // + network_input_array + "[" + std::to_string(input_index) + "],"
-      // + weight_array + "[" + std::to_string(weight_index) + "]"
-      // + "  ); \n"
-      // + "} \n"
-      // +
       operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
       + network_input_array + "[" + std::to_string(input_index) + "]"
       + " * " + weight_array + "[" + std::to_string(weight_index) + "];\n"
     );
   }
-  //TODO: available_memory_slots, evaluate_network, in the kernels are hidden dependencies!
+
   std::string derivative_kernel_operation(
     std::string network_input_array, std::string /*label_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string operations_derivative_array,
@@ -119,12 +112,6 @@ public:
       }else{
         ==op_derivative_array==[==op_index==] = 0.0;
       }
-      // if(30 == ==op_index== && d_w_index == 1){
-      //   printf(
-      //     "global[%d]: operation[==op_index==]: Network_input_d d_w_index: %d; input_index: ==network_input_index==; input: %f; result: %f \n",
-      //     d_w_index, ==network_input_array==[==network_input_index==], ==op_derivative_array==[==op_index==]
-      //   );
-      // }
     )";
     kernel_code = rafko_utilities::replace_all_in_string(
       kernel_code, std::regex("==this_op_weight_index=="), std::to_string(weight_index)

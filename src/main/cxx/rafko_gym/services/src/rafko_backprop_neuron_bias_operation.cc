@@ -90,39 +90,10 @@ std::string RafkoBackpropNeuronBiasOperation::value_kernel_operation(
       )
     );
   }else{ /* no additional bias values are present as dependencies */
-    //debug
-    std::string printf_code;
-    // std::string printf_code = R"(
-    //   if(26 == ==op_index==){
-    //     printf(
-    //       "global[%d], local[%d %d %d], group[%d %d %d]: operation[26]: bias value: ==w_arr==[%d] = %f(%f?) \n",
-    //       (int)(get_global_id(0)), (int)(get_local_id(0)),(int)(get_local_id(1)),(int)(get_local_id(2)),
-    //       (int)(get_group_id(0)),          (int)(get_group_id(1)),          (int)(get_group_id(2)),
-    //       ==w_ind==, ==b_value==, ==v_arr==[26]
-    //     );
-    //   }
-    // )";
-    // printf_code = rafko_utilities::replace_all_in_string(
-    //   printf_code, std::regex("==op_index=="), std::to_string(get_operation_index())
-    // );
-    // printf_code = rafko_utilities::replace_all_in_string(
-    //   printf_code, std::regex("==b_value=="), weight_array + "[" + std::to_string(weight_index) + "]"
-    // );
-    // printf_code = rafko_utilities::replace_all_in_string(
-    //   printf_code, std::regex("==w_arr=="), weight_array
-    // );
-    // printf_code = rafko_utilities::replace_all_in_string(
-    //   printf_code, std::regex("==v_arr=="), operations_value_array
-    // );
-    // printf_code = rafko_utilities::replace_all_in_string(
-    //   printf_code, std::regex("==w_ind=="), std::to_string(weight_index)
-    // );
-    //--debug
-
     return (
       operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
       + weight_array + "[" + std::to_string(weight_index) + "];"
-      + "\n" + printf_code
+      + "\n"
     );
   }
 }

@@ -65,7 +65,7 @@ public:
   , test_evaluator(test_evaluator_)
   , used_sequence_truncation( std::min(settings.get_memory_truncation(), environment->get_sequence_size()) )
   , used_minibatch_size( std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) )
-  , tmp_avg_derivatives(network.weight_table_size())
+  , tmp_avg_d(network.weight_table_size())
   {
     if(training_evaluator){
       training_evaluator->set_environment(environment);
@@ -164,19 +164,43 @@ public:
     return operations[get_operation_index(neuron_index)];
   }
 
-  double get_avg_gradient(std::uint32_t d_w_index);
-  double get_avg_gradient(){
+  /**
+   * @brief     Calcualtes the average gradient for one weight from the last iteration
+   *
+   * @param[in]   d_w_index     the index of the weight to get the average gradient for
+   *
+   * @return    the average gradient for the weight under the given index
+   */
+  virtual double get_avg_gradient(std::uint32_t d_w_index) const;
+
+  /**
+   * @brief   Calculates the average of the absolute value of the
+   *          gradient for every weight, providing a blurry insight onto the training surface
+   *
+   * @return    the average of the weight gradient values
+   */
+  double get_avg_of_abs_gradient() const{
     double sum = 0.0;
     for(std::int32_t weight_index = 0; weight_index < network.weight_table_size(); ++weight_index){
-      sum += get_avg_gradient(weight_index);
+      sum += std::abs(get_avg_gradient(weight_index));
     }
     return sum / static_cast<double>(network.weight_table_size());
   }
 
+  /**
+   * @brief     provides the last measured training error from the testing evaluator provided at cunstruction
+   *
+   * @return    the error value
+   */
   constexpr double get_last_training_error() const{
       return last_training_error;
   }
 
+  /**
+   * @brief     provides the last measured testing error from the testing evaluator provided at cunstruction
+   *
+   * @return    the error value
+   */
   constexpr double get_last_testing_error() const{
       return last_testing_error;
   }
@@ -202,7 +226,7 @@ protected:
   std::uint32_t last_tested_iteration = 0u;
   double last_training_error = std::numeric_limits<double>::quiet_NaN();
   double last_testing_error = std::numeric_limits<double>::quiet_NaN();
-  std::vector<double> tmp_avg_derivatives;
+  std::vector<double> tmp_avg_d;
 
   /**
    * @brief     Queries the index of the output operation of the given neuron index
@@ -225,7 +249,7 @@ protected:
   /**
    * @brief   applies a weight update to the network
    *
-   * @param[in]   weight_delta    the weight delta to update
+   * @param[in]   weight_delta    the weight gradients to update it with
    */
   void apply_weight_update(const std::vector<double>& weight_delta){
     RFASSERT_LOGV(weight_delta, "Applying weight(autodiff optimizer) update! Delta:");

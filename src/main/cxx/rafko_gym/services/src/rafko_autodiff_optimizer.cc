@@ -196,7 +196,7 @@ void RafkoAutodiffOptimizer::calculate(BackpropDataBufferRange network_input, Ba
 void RafkoAutodiffOptimizer::update_context_errors(){
   if( (training_evaluator) && (0 == (iteration%settings.get_tolerance_loop_value())) ){
     training_evaluator->refresh_solution_weights();
-    last_training_error = training_evaluator->stochastic_evaluation();
+    last_training_error = -training_evaluator->stochastic_evaluation();
   }
   if(
     (test_evaluator)
@@ -204,17 +204,16 @@ void RafkoAutodiffOptimizer::update_context_errors(){
       (iteration > (last_tested_iteration + settings.get_tolerance_loop_value()))
       ||(
         (training_evaluator)
-        &&((last_training_error * settings.get_delta()) < std::abs(last_training_error - last_testing_error))
+        &&((last_testing_error * settings.get_delta()) < std::abs(last_training_error - last_testing_error))
       )
     )
   ){
     test_evaluator->refresh_solution_weights();
-    last_testing_error = test_evaluator->stochastic_evaluation();
+    last_testing_error = -test_evaluator->stochastic_evaluation();
     last_tested_iteration = iteration;
   }
 }
 
-//TODO: There maybe data race problems with the underlying data access??
 void RafkoAutodiffOptimizer::iterate(){
   RFASSERT_SCOPE(AUTODIFF_ITERATE);
   RFASSERT(static_cast<bool>(environment));
@@ -249,7 +248,7 @@ void RafkoAutodiffOptimizer::iterate(){
     }/*for(relevant sequences)*/
   }
 
-  std::fill(tmp_avg_derivatives.begin(), tmp_avg_derivatives.end(), 0.0);
+  std::fill(tmp_avg_d.begin(), tmp_avg_d.end(), 0.0);
   for(
     std::uint32_t past_sequence_index = start_index_inside_sequence;
     past_sequence_index < (start_index_inside_sequence + used_sequence_truncation);
@@ -259,22 +258,23 @@ void RafkoAutodiffOptimizer::iterate(){
       .get_element(past_sequence_index);
     std::transform(
       sequence_derivative.begin(), sequence_derivative.end(),
-      tmp_avg_derivatives.begin(), tmp_avg_derivatives.begin(),
+      tmp_avg_d.begin(), tmp_avg_d.begin(),
       [](const double& a, const double& b){ return (a+b)/2.0; }
     );
   }
 
-  apply_weight_update(tmp_avg_derivatives);
+  RFASSERT( static_cast<std::int32_t>(tmp_avg_d.size()) > std::count(tmp_avg_d.begin(),tmp_avg_d.end(), 0.0));
+  apply_weight_update(tmp_avg_d);
   ++iteration;
 
   update_context_errors();
 }
 
-double RafkoAutodiffOptimizer::get_avg_gradient(std::uint32_t d_w_index){
+double RafkoAutodiffOptimizer::get_avg_gradient(std::uint32_t d_w_index) const{
   double sum = 0.0;
   double count = 0.0;
   for(std::uint32_t past_index = 0u; past_index < network.memory_size(); ++past_index){
-    sum += data.get_average_derivative(past_index, d_w_index);
+    sum += std::abs(data.get_average_derivative(past_index, d_w_index));
     count += 1.0;
   }
   return sum / count;

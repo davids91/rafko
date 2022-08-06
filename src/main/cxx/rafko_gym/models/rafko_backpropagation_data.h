@@ -109,6 +109,11 @@ public:
     sequence_derivatives->clean_step(); /* ..and so the averages would start with 0.0 as initial value */
   }
 
+  /**
+   * @brief   sets the switch deciding whether or not sequence_derivatives are updated when setting derivatives
+   *
+   * @param[in]   update    true, if sequence_derivatives are to be updated when storing derivative calculations
+   */
   constexpr void set_weight_derivative_update(bool update){
     update_weight_derivative = update;
   }
@@ -145,13 +150,16 @@ public:
   }
 
   /**
-   * @brief provides access to the underlying buffer for the network operation values
+   * @brief provides const access to the underlying buffer for the network operation values
    */
   const NetworkValueBuffer& get_value(){
     RFASSERT(built);
     return *calculated_values;
   }
 
+  /**
+   * @brief provides non-const access to the underlying buffer for the network operation values
+   */
   NetworkValueBuffer& get_mutable_value(){
     return *calculated_values;
   }
@@ -193,7 +201,8 @@ public:
   }
 
   /**
-   * @brief provides access to the underlying buffer for the network operation derivatives
+   * @brief     provides access to the underlying buffer for the network operation derivatives
+   *            stored explicitly to base weight updates upon.
    */
   const NetworkDerivativeBuffer& get_sequence_derivative(){
     RFASSERT(built);
@@ -206,7 +215,7 @@ public:
    * @param[in]    past_sequence_index    The index of the previous loop to collect the derivative from
    * @param[in]    weight_index           The index of the weight the value is queried for
    */
-  double get_average_derivative(std::uint32_t past_sequence_index, std::uint32_t weight_index){
+  double get_average_derivative(std::uint32_t past_sequence_index, std::uint32_t weight_index) const{
     RFASSERT(built);
     if(sequence_derivatives->get_sequence_size() <= past_sequence_index) return 0.0;
     RFASSERT(weight_index < sequence_derivatives->get_element(past_sequence_index).size());

@@ -91,7 +91,9 @@ public:
     RFASSERT(static_cast<bool>(environment));
     return {
       cl::NullRange/*offset*/,
-      cl::NDRange(settings.get_minibatch_size() * maximum_local_workers)/*global*/,
+      cl::NDRange(
+        std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) * maximum_local_workers
+      )/*global*/,
       cl::NDRange(maximum_local_workers)/*local*/
     };
   }

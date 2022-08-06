@@ -24,6 +24,13 @@
 
 namespace rafko_gym {
 
+void RafkoWeightUpdater::iterate(const std::vector<double>& gradients){
+  calculate_velocity(gradients);
+  update_weights_with_velocity();
+  iteration = (iteration + 1) % required_iterations_for_step;
+  finished = (0u == iteration);
+}
+
 void RafkoWeightUpdater::update_weight_with_velocity(std::uint32_t weight_index, std::uint32_t weight_number){
   for(std::uint32_t weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
     network.set_weight_table( weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator) );
