@@ -159,6 +159,16 @@ public:
   }
 
   /**
+   * @brief     Function to set weight of all of the the networks weight for iterations;
+   *            Meaning: no modification | 0 --> 1 | gradient * 1.0
+   *
+   * @param[in]   filter    the filter to set for the whole weight filter array
+   */
+  void set_weight_filter(double filter){
+    std::fill(weight_filter.begin(),weight_filter.end(), filter);
+  }
+
+  /**
    * @brief   Function to set weight chance to be excluded in bulk for iterations;
    *          Filter vector must be equal in sze of the stored networks weight table
    *          Meaning: don't exclude weight: 0 --> 1 definitely exclude weight

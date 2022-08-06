@@ -25,7 +25,7 @@ namespace rafko_gym{
 
 void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
   if(exclude_chance_sum < weight_exclude_chance_filter.size()){
-    double greatest_gradient_value = 0.0;
+    double greatest_gradient_value = settings.get_sqrt_epsilon();
     double used_weight_filter_sum = 0.0;
     std::mutex weight_stats_mutex;
     std::vector<double>& used_gradients = tmp_data_pool.reserve_buffer(contexts[0]->expose_network().weight_table_size());

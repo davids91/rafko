@@ -210,7 +210,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
 }
 
 #if(RAFKO_USES_OPENCL)
-TEST_CASE("Testing if autodiff GPU optimizer converges networks as the CPU default optimizer", "[optimize][GPU][small]"){
+TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU optimizer", "[optimize][GPU][small]"){
   return; /*!Note: This testcase is for fallback only, in case the next one does not work properly */
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()

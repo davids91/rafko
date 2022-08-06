@@ -38,11 +38,11 @@ namespace rafko_gym {
 class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
   RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings_, std::uint32_t required_iterations_for_step_ = 1u)
-  : net(rafko_net)
+  : network(rafko_net)
   , settings(settings_)
   , required_iterations_for_step(required_iterations_for_step_)
-  , weights_to_do_in_one_thread(1u + static_cast<std::uint32_t>(net.weight_table_size()/settings.get_max_solve_threads()))
-  , current_velocity(rafko_net.weight_table_size(),(0.0))
+  , weights_to_do_in_one_thread(1u + static_cast<std::uint32_t>(network.weight_table_size()/settings.get_max_solve_threads()))
+  , current_velocity(network.weight_table_size(),(0.0))
   , execution_threads(settings.get_max_solve_threads())
   {
   }
@@ -63,7 +63,7 @@ public:
    * @param      gradients           The gradients
    * @param      solution            The solution
    */
-  void iterate(const std::vector<double>& gradients){
+  virtual void iterate(const std::vector<double>& gradients){
     calculate_velocity(gradients);
     update_weights_with_velocity();
     iteration = (iteration + 1) % required_iterations_for_step;
@@ -87,7 +87,7 @@ public:
    *
    * @return     The current velocity.
    */
-  double get_current_velocity(std::uint32_t weight_index) const{
+  virtual double get_current_velocity(std::uint32_t weight_index) const{
     return current_velocity[weight_index];
   }
 
@@ -96,14 +96,14 @@ public:
    *
    * @return     The current velocity.
    */
-  const std::vector<double>& get_current_velocity() const{
+  virtual const std::vector<double>& get_current_velocity() const{
     return current_velocity;
   }
 
   virtual ~RafkoWeightUpdater() = default;
 
 protected:
-  rafko_net::RafkoNet& net;
+  rafko_net::RafkoNet& network;
   const rafko_mainframe::RafkoSettings& settings;
   const std::uint32_t required_iterations_for_step;
   const std::uint32_t weights_to_do_in_one_thread;
@@ -118,8 +118,8 @@ protected:
    *
    * @return     The new weight.
    */
-  double get_new_weight(std::uint32_t weight_index) const{
-    return(net.weight_table(weight_index) + get_current_velocity(weight_index));
+  virtual double get_new_weight(std::uint32_t weight_index) const{
+    return(network.weight_table(weight_index) + get_current_velocity(weight_index));
   }
 
   /**
@@ -130,7 +130,7 @@ protected:
    *
    * @return     The new velocity.
    */
-  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const{
+  virtual double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const{
     return (-gradients[weight_index] * settings.get_learning_rate());
   }
 
