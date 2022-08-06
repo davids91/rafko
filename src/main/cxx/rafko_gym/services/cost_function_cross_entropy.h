@@ -53,9 +53,17 @@ protected:
   std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
     return "( " + label_value + " * log(max(0.0000000000000001," + feature_value + ")) )";
   }
+
   std::string get_post_process_kernel_source(std::string error_value) const{
     return "((" + error_value + ") / (double)(sample_number) )";
   }
+
+  std::string get_derivative_kernel_source(
+    std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
+  ) const{
+    return "- (" + label_value + " * " + feature_d + ") / (" + sample_number + " * " + feature_value + ")";
+  }
+
   #endif/*(RAFKO_USES_OPENCL)*/
 };
 

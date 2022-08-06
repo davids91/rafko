@@ -168,7 +168,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
         { /* Add the previous layer as an input */
           InputSynapseInterval& interval = *arg_neuron_array.back().add_input_indices();
           if(0 == layer_index){
-            interval.set_starts(SynapseIterator<>::synapse_index_from_input_index(0));
+            interval.set_starts(SynapseIterator<>::external_index_from_array_index(0));
           }else{
             interval.set_starts(layer_input_starts_at);
           }

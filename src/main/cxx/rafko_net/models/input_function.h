@@ -49,10 +49,21 @@ public:
    * @param[in]  a          A value to merge through the input function
    * @param[in]  b          THe other value to merge with the input function
    *
-   * @return     The result of data.
+   * @return     The result of the collection.
    */
   static double collect(Input_functions function, double a, double b);
 
+  /**
+   * @brief      Calculate the derivative value of the given input function and the given inputs
+   *
+   * @param[in]  function   The function to apply
+   * @param[in]  a          A value to merge through the input function
+   * @param[in]  a_w        The derivative value of @a
+   * @param[in]  b          The other value to merge with the input function
+   * @param[in]  b_w        The derivative value of @b
+   *
+   * @return     The result of the provided input function's derivative
+   */
   static double get_derivative(Input_functions function, double a, double a_dw, double b, double b_dw);
 
   #if(RAFKO_USES_OPENCL)
@@ -83,6 +94,20 @@ public:
    * @return    The generated Kernel code merging the parameters through the given input function
    */
   static std::string get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b);
+
+  /**
+   * @brief      Provide the kernel code for derivative of the given input function and the given inputs
+   *
+   * @param[in]  function   The function to apply
+   * @param[in]  a          A value to merge through the input function
+   * @param[in]  a_w        The derivative value of @a
+   * @param[in]  b          The other value to merge with the input function
+   * @param[in]  b_w        The derivative value of @b
+   *
+   * @return     The single operation representing the derivative of the input function step
+   */
+  static std::string derivative_kernel_for(Input_functions function, std::string a, std::string a_dw, std::string b, std::string b_dw);
+
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel

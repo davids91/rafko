@@ -65,6 +65,7 @@ public:
   , test_evaluator(test_evaluator_)
   , used_sequence_truncation( std::min(settings.get_memory_truncation(), environment->get_sequence_size()) )
   , used_minibatch_size( std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) )
+  , tmp_avg_d(network.weight_table_size())
   {
     if(training_evaluator){
       training_evaluator->set_environment(environment);
@@ -75,10 +76,22 @@ public:
       ));
   }
 
-  bool early_stopping_triggered(){
+  /**
+   * @brief     Provides information on when to stop the training according to the strategies provided in the settings
+   *
+   * @return    True, if training can be stopped
+   */
+  bool stop_triggered(){
     return (
-      (training_evaluator && test_evaluator)
-      &&( last_training_error > ( last_testing_error * (1.0 + settings.get_delta()) ) )
+      (/* Early stopping */
+        (training_evaluator && test_evaluator) && (
+          (settings.get_training_strategy(Training_strategy::training_strategy_early_stopping))
+          &&(last_training_error > ( last_testing_error * (1.0 + settings.get_delta()) ))
+        )
+      )||(
+        (settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero))
+        &&(0.0 == last_training_error)
+      )
     );
   }
 
@@ -98,7 +111,13 @@ public:
    *
    * @param   objective     The objective function evaluating the network output
    */
-  void build(std::shared_ptr<RafkoObjective> objective);
+  void build(std::shared_ptr<RafkoObjective> objective){
+    std::uint32_t weight_relevant_operation_count = build_without_data(objective);
+    data.build(
+      operations.size(), weight_relevant_operation_count,
+      environment->get_sequence_size()
+    );
+  }
 
   /**
    * @brief     calculates the values and derivatives from the provided inputs and the stored Network reference
@@ -135,41 +154,58 @@ public:
   }
 
   /**
-   * @brief Provides a const reference of the stored operations representing the objective comparison for a Neuron output
+   * @brief     Provides a const reference of the stored operations representing the objective comparison for a Neuron output
    *
    * @param[in]   neuron_index    the index of the Neuron to query
    *
-   * @return    const access to one of the underlying outputoperations
+   * @return    const access to one of the underlying output operations
    */
-  const std::shared_ptr<RafkoBackpropagationOperation>& get_neuron_operation(std::uint32_t neuron_index){
-    auto found_element = neuron_spike_to_operation_map->find(neuron_index);
-    RFASSERT(found_element != neuron_spike_to_operation_map->end());
-    return operations[found_element->second];
+  const std::shared_ptr<RafkoBackpropagationOperation>& get_neuron_operation(std::uint32_t neuron_index) const{
+    return operations[get_operation_index(neuron_index)];
   }
 
-  double get_avg_gradient(std::uint32_t d_w_index);
-  double get_avg_gradient(){
+  /**
+   * @brief     Calcualtes the average gradient for one weight from the last iteration
+   *
+   * @param[in]   d_w_index     the index of the weight to get the average gradient for
+   *
+   * @return    the average gradient for the weight under the given index
+   */
+  virtual double get_avg_gradient(std::uint32_t d_w_index) const;
+
+  /**
+   * @brief   Calculates the average of the absolute value of the
+   *          gradient for every weight, providing a blurry insight onto the training surface
+   *
+   * @return    the average of the weight gradient values
+   */
+  double get_avg_of_abs_gradient() const{
     double sum = 0.0;
     for(std::int32_t weight_index = 0; weight_index < network.weight_table_size(); ++weight_index){
-      sum += get_avg_gradient(weight_index);
+      sum += std::abs(get_avg_gradient(weight_index));
     }
     return sum / static_cast<double>(network.weight_table_size());
   }
 
-  constexpr double get_last_training_error(){
+  /**
+   * @brief     provides the last measured training error from the testing evaluator provided at cunstruction
+   *
+   * @return    the error value
+   */
+  constexpr double get_last_training_error() const{
       return last_training_error;
   }
 
-  constexpr double get_last_testing_error(){
+  /**
+   * @brief     provides the last measured testing error from the testing evaluator provided at cunstruction
+   *
+   * @return    the error value
+   */
+  constexpr double get_last_testing_error() const{
       return last_testing_error;
   }
 
-  #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function(std::uint32_t output_index) const;
-  std::string derivative_kernel_function() const;
-  #endif/*(RAFKO_USES_OPENCL)*/
-
-private:
+protected:
   const rafko_mainframe::RafkoSettings& settings;
   std::shared_ptr<RafkoEnvironment> environment;
   rafko_net::RafkoNet& network;
@@ -187,9 +223,34 @@ private:
   const std::uint32_t used_sequence_truncation;
   const std::uint32_t used_minibatch_size;
   std::uint32_t iteration = 0u;
+  std::uint32_t last_tested_iteration = 0u;
   double last_training_error = std::numeric_limits<double>::quiet_NaN();
   double last_testing_error = std::numeric_limits<double>::quiet_NaN();
+  std::vector<double> tmp_avg_d;
 
+  /**
+   * @brief     Queries the index of the output operation of the given neuron index
+   *
+   * @param[in]   neuron_index    the index of the Neuron to query
+   *
+   * @return    the operation index
+   */
+  std::uint32_t get_operation_index(std::uint32_t neuron_index) const{
+    auto found_element = neuron_spike_to_operation_map->find(neuron_index);
+    RFASSERT(found_element != neuron_spike_to_operation_map->end());
+    return found_element->second;
+  }
+
+  /**
+   * @brief   Calculates the training and test set values where appropriate
+   */
+  void update_context_errors();
+
+  /**
+   * @brief   applies a weight update to the network
+   *
+   * @param[in]   weight_delta    the weight gradients to update it with
+   */
   void apply_weight_update(const std::vector<double>& weight_delta){
     RFASSERT_LOGV(weight_delta, "Applying weight(autodiff optimizer) update! Delta:");
     RFASSERT( static_cast<std::int32_t>(weight_delta.size()) == network.weight_table_size() );
@@ -197,6 +258,16 @@ private:
       weight_updater->start();
     weight_updater->iterate(weight_delta);
   }
+
+  /**
+   * @brief   build or re-build the operateions based on the provided parameters
+   *
+   * @param   objective     The objective function evaluating the network output
+   *
+   * @return  The number of operations at the start of the array directly relevant to weight derivatives
+   */
+  std::uint32_t build_without_data(std::shared_ptr<RafkoObjective> objective);
+
 
   /**
    * @brief   calculate network value based on the given inputs
@@ -215,13 +286,40 @@ private:
     const std::vector<double>& network_input, const std::vector<double>& label_data
   );
 
-  std::shared_ptr<RafkoBackpropagationOperation> place_spike_to_operations(std::uint32_t neuron_index);
+  /**
+   * @brief   Inserts the spike function operation to teh operations map for the given Neuron index;
+   *          Looks into the unplaced map first, if there's already an unplaced spike
+   *          it inserts it from there
+   *
+   * @param[in]   neuron_index    the index of the Neuron Spike to place
+   * @param[in]   dependencies    An array of dependencies the Neuron operation might have
+   *
+   * @return    A shared pointer of the placed operation
+   */
+  std::shared_ptr<RafkoBackpropagationOperation> place_spike_to_operations(
+    std::uint32_t neuron_index, std::vector<RafkoBackpropagationOperation::Dependency> dependencies = {}
+  );
+
+  /**
+   * @brief   Inserts the spike function operation into the unplaced map;
+   *          Or finds the index in it and returns with the pointer to it
+   *
+   * @param[in]   neuron_index    the index of the Neuron Spike to place
+   *
+   * @return    A shared pointer of the operation
+   */
   std::shared_ptr<RafkoBackpropagationOperation> find_or_queue_spike(std::uint32_t neuron_index);
 
   /**
-   * @brief
+   * @brief   Places the dependency either into the operations array, or maybe the unplaced map;
+   *
+   * @param[in]   DependencyParameter   the parameters of the operation to place
+   *
+   * @return    A shared pointer of the placed operation
    */
-  std::shared_ptr<RafkoBackpropagationOperation> push_dependency(DependencyParameter arguments);
+  std::shared_ptr<RafkoBackpropagationOperation> push_dependency(
+    RafkoBackpropagationOperation::DependencyParameter arguments
+  );
 };
 
 } /* namespace rafko_gym */

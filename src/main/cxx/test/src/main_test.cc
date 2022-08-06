@@ -73,7 +73,7 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
 
   /* inputs go to neuron1 */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights */
-  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(0)); /* Input index synapse starts at the beginning of the data */
+  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(0)); /* Input index synapse starts at the beginning of the data */
   temp_input_interval.set_interval_size(number_of_inputs); /* Neuron 1 has an input index synapse of the inputs */
   *partial_solution.add_inside_indices() = temp_input_interval;
 
@@ -164,7 +164,7 @@ void manaual_fully_connected_network_result(
         if(static_cast<double>(input_synapse_index) < neuron.input_indices_size()){ /* Only get input from the net if it's explicitly defined */
           REQUIRE( 1 >= neuron.input_indices(input_synapse_index).reach_past_loops() ); /* Only the last loop and the current can be handled in this test yet */
           if(rafko_net::SynapseIterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
-            neuron_input_value = inputs[rafko_net::SynapseIterator<>::input_index_from_synapse_index(
+            neuron_input_value = inputs[rafko_net::SynapseIterator<>::array_index_from_external_index(
               neuron.input_indices(input_synapse_index).starts() - input_index_offset
             )];
           else if(1 == neuron.input_indices(input_synapse_index).reach_past_loops())
@@ -257,11 +257,11 @@ void check_if_the_same(const rafko_net::RafkoNet& net, const rafko_net::Solution
               );
             }else{ /* Inner Neuron takes its input from the partial solution input */
               REQUIRE( /* Input indices match */
-                partial_input_iterator[rafko_net::SynapseIterator<>::input_index_from_synapse_index(input_index)]
+                partial_input_iterator[rafko_net::SynapseIterator<>::array_index_from_external_index(input_index)]
                 == neuron_input_iterator[neuron_synapse_element_iterator]
               );
              REQUIRE( /* The time the neuron takes its input also match */
-                partial_input_iterator.synapse_under(rafko_net::SynapseIterator<>::input_index_from_synapse_index(input_index)).reach_past_loops()
+                partial_input_iterator.synapse_under(rafko_net::SynapseIterator<>::array_index_from_external_index(input_index)).reach_past_loops()
                 == neuron_input_iterator.synapse_under(neuron_synapse_element_iterator).reach_past_loops()
               );
             }

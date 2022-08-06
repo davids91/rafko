@@ -74,6 +74,7 @@ public:
   static void rafko_log_vector2(std::vector<std::vector<T>> vec, spdlog::format_string_t<Args...> fmt, Args &&... args){
     if(auto scope = current_scope.lock()){
       scope->log(spdlog::level::debug, fmt, args...);
+      scope->log(spdlog::level::debug, "=== VECTOR START ===");
       for(const std::vector<T>& v : vec){
         std::stringstream vector_string;
         for(const T& e : v){

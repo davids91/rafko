@@ -35,11 +35,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     OFF
   )
 
-  option(TEST_CONVERGENCE
-    "Makes the test builds examines convergence, instead of acceptance tests"
-    OFF
-  )
-
   option(STATIC_ANALYZERS
     "Enables CPPCheck diagnostics for the project"
     OFF

@@ -25,6 +25,7 @@
 #include <utility>
 #if(RAFKO_USES_OPENCL)
 #include <string>
+#include <regex>
 #endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_protocol/rafko_net.pb.h"
@@ -55,6 +56,7 @@ public:
   , weight_index(weights_iterator[neuron_weight_index])
   {
   }
+  ~RafkoBackpropNeuronBiasOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations(){
     if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){ /* more biases are present with the Neuron */
@@ -72,65 +74,32 @@ public:
     }
   }
 
-  void calculate_value(const std::vector<double>& network_input){
-    parameter_not_used(network_input);
-    RFASSERT(are_dependencies_registered());
-    if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
-      RFASSERT(static_cast<bool>(next_bias_dependency));
-      RFASSERT(next_bias_dependency->is_value_processed());
-      set_value(rafko_net::InputFunction::collect(
-        network.neuron_array(neuron_index).input_function(),
-        network.weight_table(weight_index), next_bias_dependency->get_value(0u/*past_index*/)
-      ));
-    }else{ /* no additional bias values are present as dependencies */
-      set_value(network.weight_table(weight_index));
-    }
-    set_value_processed();
-  }
+  void calculate_value(const std::vector<double>& network_input);
 
   void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
-  ){
-    parameter_not_used(network_input);
-    parameter_not_used(label_data);
-    RFASSERT(is_value_processed());
-    RFASSERT(are_dependencies_registered());
-    if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
-      RFASSERT(static_cast<bool>(next_bias_dependency));
-      RFASSERT(next_bias_dependency->is_processed());
-      set_derivative(d_w_index, rafko_net::InputFunction::get_derivative(
-        network.neuron_array(neuron_index).input_function(),
-        network.weight_table(weight_index), ((d_w_index == weight_index)?(1.0):(0.0)),
-        next_bias_dependency->get_value(0u/*past_index*/),
-        next_bias_dependency->get_derivative(0u/*past_index*/, d_w_index)
-      ));
-    }else{ /* no additional bias values are present as dependencies */
-      set_derivative( d_w_index, ((d_w_index == weight_index)?(1.0):(0.0)) );
-    }
-    set_derivative_processed();
-  }
+  );
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const{
-    std::string next_dependency_string = "";
-    if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
-      RFASSERT(static_cast<bool>(next_bias_dependency));
-      RFASSERT(next_bias_dependency->are_dependencies_registered());
-      next_dependency_string = " -+-> " + next_bias_dependency->value_kernel_function();
-    }
-    return (
-      "|| ---> bias weight[" + std::to_string(weight_index) + "]"
-      + "(" + std::to_string(network.weight_table(weight_index)) + ")"
-      + next_dependency_string
-    );
-  }
-  std::string derivative_kernel_function() const{
+  std::string local_declaration_operation() const{
     return "";
   }
+
+  std::string value_kernel_operation(
+    std::string network_input_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_array_size
+  ) const;
+
+  std::string derivative_kernel_operation(
+    std::string network_input_array, std::string label_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_derivative_array,
+    std::string operations_array_size, std::string d_operations_array_size
+  ) const;
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
     if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
+    RFASSERT(static_cast<bool>(next_bias_dependency));
       return {next_bias_dependency};
     }else return {};
   }

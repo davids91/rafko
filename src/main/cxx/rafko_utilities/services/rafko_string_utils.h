@@ -31,11 +31,22 @@ namespace rafko_utilities{
  * @param[in]  input_text         the text to replace the regex in
  * @param[in]  regex_to_replace   the regex to replace in the input string
  * @param[in]  substitute         the text to replace the regex matches to
+ *
+ * @return    The resulting string of the replaces
  */
 std::string replace_all_in_string(
   std::string input_text, std::regex regex_to_replace, std::string substitute
 );
 
+/**
+ * @brief      Replaces regex inside the source string with the substitution until there are no more matches
+ *
+ * @param[in]  characters_to_escape   a list of characters to escape
+ * @param[in]  s                      the string to escape the characters in
+ *
+ * @return    The resulting string of the replaces
+ */
+std::string escape_string(std::string characters_to_escape, std::string s);
 
 } /* namespace rafko_utilities */
 

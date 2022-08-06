@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <iostream>
 
+#include "rafko_utilities/services/rafko_string_utils.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.h"
 
 namespace rafko_mainframe{
@@ -50,7 +51,7 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
   return_value = program.build({opencl_device});
   if(return_value != CL_SUCCESS){
     std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(opencl_device);
-    RFASSERT_LOG(build_log);
+    RFASSERT_LOG("{}", build_log);
     throw std::runtime_error( "OpenCL Kernel compilation failed with error: \n" + build_log + "\n" );
   }
 
@@ -174,10 +175,10 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs enq){
   }
 }
 
-std::unique_ptr<double[]> RafkoGPUPhase::acquire_output(std::size_t size, std::size_t offset){
+std::unique_ptr<double[]> RafkoGPUPhase::acquire_output(std::size_t size, std::size_t offset) const{
   RafkoNBufShape output_shape = strategy->get_output_shapes().back();
 
-  RFASSERT_LOG("Acquiring output[{} + {}] / ", offset, size, output_shape.get_number_of_elements());
+  RFASSERT_LOG("Acquiring output[{} + {}]", offset, size, output_shape.get_number_of_elements());
   RFASSERT( (offset + size) <= output_shape.get_number_of_elements() );
 
   std::unique_ptr<double[]> output(new double[size]);
@@ -185,13 +186,12 @@ std::unique_ptr<double[]> RafkoGPUPhase::acquire_output(std::size_t size, std::s
   return output;
 }
 
-void RafkoGPUPhase::load_output(double* target, std::size_t size, std::size_t offset){
+void RafkoGPUPhase::load_output(double* target, std::size_t size, std::size_t offset) const{
   RafkoNBufShape output_shape = strategy->get_output_shapes().back();
-
-  RFASSERT_LOG("Loading output[{} + {}] / ", offset, size, output_shape.get_number_of_elements());
+  RFASSERT_LOG("Loading output[{} + {}]", offset, size, output_shape.get_number_of_elements());
   RFASSERT( (sizeof(double) * size) <= output_shape.get_byte_size<double>() );
 
-  cl::Buffer& output_buffer_cl = std::get<0>(kernel_args.back());
+  const cl::Buffer& output_buffer_cl = std::get<0>(kernel_args.back());
   cl_int return_value = opencl_device_queue.enqueueReadBuffer(
     output_buffer_cl, CL_TRUE/*blocking*/,
     (sizeof(double) * offset), (sizeof(double) * size),

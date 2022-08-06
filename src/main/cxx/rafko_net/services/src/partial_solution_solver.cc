@@ -41,8 +41,8 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
   input_iterator.skim([&](InputSynapseInterval input_synapse){
     if(SynapseIterator<>::is_index_input(input_synapse.starts())){ /* If @PartialSolution input is from the network input */
       std::copy(
-        input_data.begin() + SynapseIterator<>::input_index_from_synapse_index(input_synapse.starts()),
-        input_data.begin() + SynapseIterator<>::input_index_from_synapse_index(input_synapse.starts()) + input_synapse.interval_size(),
+        input_data.begin() + SynapseIterator<>::array_index_from_external_index(input_synapse.starts()),
+        input_data.begin() + SynapseIterator<>::array_index_from_external_index(input_synapse.starts()) + input_synapse.interval_size(),
         temp_data.begin() + input_index_offset
       );
     }else if(static_cast<std::int32_t>(output_neuron_data.buffer_size()) > input_synapse.starts()){  /* If @PartialSolution input is from the previous row */
@@ -71,7 +71,7 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
         if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
           input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
           if(SynapseIterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
-            input_index = SynapseIterator<>::input_index_from_synapse_index(input_index - input_index_offset);
+            input_index = SynapseIterator<>::array_index_from_external_index(input_index - input_index_offset);
             new_neuron_input = temp_data[input_index];
           }else{ /* Neuron gets its input internaly */
             input_index = detail.output_data().starts() + input_index + input_index_offset;

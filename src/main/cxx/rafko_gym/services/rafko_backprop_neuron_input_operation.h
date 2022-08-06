@@ -46,6 +46,7 @@ public:
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
     std::uint32_t operation_index, std::uint32_t neuron_index_, std::uint32_t neuron_input_index_
   );
+  ~RafkoBackpropNeuronInputOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations();
 
@@ -55,13 +56,20 @@ public:
   );
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const;
-  std::string derivative_kernel_function() const;
+  std::string local_declaration_operation() const;
+
+  std::string value_kernel_operation(
+    std::string network_input_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_array_size
+  ) const;
+  std::string derivative_kernel_operation(
+    std::string network_input_array, std::string label_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_derivative_array,
+    std::string operations_array_size, std::string d_operations_array_size
+  ) const;
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
-    return {network_input_dependency, neuron_data_dependency, neuron_input_dependency};
-  }
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies();
 
 private:
   const std::uint32_t neuron_index;
@@ -70,7 +78,6 @@ private:
   rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval> weights_iterator;
 
   const bool is_network_input;
-  const std::uint32_t input_index_from_neuron_input_index;
   const std::uint32_t input_past_index;
   const std::uint32_t weight_index;
 

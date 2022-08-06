@@ -80,14 +80,14 @@ public:
   /**
    * @brief      Gets the number of floating point values the evaluation accepts to produce the label values
    *
-   * @return     The feature size.
+   * @return     The size of one input inside the environment
    */
   virtual std::uint32_t get_input_size() const = 0;
 
   /**
    * @brief      Gets the number of values present in the output
    *
-   * @return     The feature size.
+   * @return     The feature array size(usually the number of output neurons inside the network).
    */
   virtual std::uint32_t get_feature_size() const = 0;
 
@@ -127,6 +127,16 @@ public:
    * @return     The number of inputs to be used for network initialization during training
    */
   virtual std::uint32_t get_prefill_inputs_number() const = 0;
+
+  /**
+   * @brief     Tells the number of input values in one sequence, which might be
+   *            different from @get_sequence_size, because of the number of prefill inputs
+   *
+   * @return    the number of input values one sequence contains
+   */
+  std::uint32_t get_inputs_in_one_sequence(){
+    return get_prefill_inputs_number() + get_sequence_size();
+  }
 
   virtual ~RafkoEnvironment() = default;
 

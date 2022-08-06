@@ -51,6 +51,20 @@ const std::string random_function = R"(
   }
 )";
 
+const std::string atomic_double_average_function = R"(
+  #pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable
+
+  inline void AtomicAvg(volatile __global double *source, const double operand) {
+    union { unsigned long intVal; double floatVal; } next, expected, current;
+    current.floatVal = *source;
+    do {
+      expected.floatVal = current.floatVal;
+      next.floatVal = (expected.floatVal + operand) / 2.0;
+      current.intVal = atom_cmpxchg((volatile __global unsigned long *)source, expected.intVal, next.intVal);
+    } while( current.intVal != expected.intVal );
+  }
+)";
+
 } /* namespace rafko_utilities */
 
 #endif /* RAFKO_GPU_KERNEL_LIBRARY */

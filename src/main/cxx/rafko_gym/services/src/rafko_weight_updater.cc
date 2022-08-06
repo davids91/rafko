@@ -24,9 +24,16 @@
 
 namespace rafko_gym {
 
+void RafkoWeightUpdater::iterate(const std::vector<double>& gradients){
+  calculate_velocity(gradients);
+  update_weights_with_velocity();
+  iteration = (iteration + 1) % required_iterations_for_step;
+  finished = (0u == iteration);
+}
+
 void RafkoWeightUpdater::update_weight_with_velocity(std::uint32_t weight_index, std::uint32_t weight_number){
   for(std::uint32_t weight_iterator = 0; weight_iterator < weight_number; ++weight_iterator){
-    net.set_weight_table( weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator) );
+    network.set_weight_table( weight_index + weight_iterator, get_new_weight(weight_index + weight_iterator) );
   }
 }
 
@@ -35,7 +42,7 @@ void RafkoWeightUpdater::calculate_velocity(const std::vector<double>& gradients
     const std::uint32_t weight_index_start = weights_to_do_in_one_thread * thread_index;
     const std::uint32_t weights_to_do_in_this_thread = std::min(
       weights_to_do_in_one_thread,
-      static_cast<std::uint32_t>(net.weight_table_size() - std::min(net.weight_table_size(), static_cast<std::int32_t>(weight_index_start)))
+      static_cast<std::uint32_t>(network.weight_table_size() - std::min(network.weight_table_size(), static_cast<std::int32_t>(weight_index_start)))
     );
     for(std::uint32_t weight_iterator = 0; weight_iterator < weights_to_do_in_this_thread; ++weight_iterator){
       current_velocity[weight_index_start + weight_iterator] = get_new_velocity(weight_index_start + weight_iterator, gradients);
@@ -47,10 +54,12 @@ void RafkoWeightUpdater::update_weights_with_velocity(){
   std::lock_guard<std::mutex> my_lock(reference_mutex);
   execution_threads.start_and_block([this](std::uint32_t thread_index){
     std::int32_t weight_index_start = weights_to_do_in_one_thread * thread_index;
-    if(weight_index_start < net.weight_table_size()){
+    if(weight_index_start < network.weight_table_size()){
       std::uint32_t weight_index = (weights_to_do_in_one_thread * thread_index);
-      update_weight_with_velocity(weight_index, std::min(weights_to_do_in_one_thread, (net.weight_table_size() - weight_index)));
+      update_weight_with_velocity(weight_index, std::min(weights_to_do_in_one_thread, (network.weight_table_size() - weight_index)));
     }
   });
+
 }
+
 } /* namespace rafko_gym */

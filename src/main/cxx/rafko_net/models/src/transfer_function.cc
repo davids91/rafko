@@ -59,7 +59,7 @@ double TransferFunction::get_derivative(Transfer_functions function, double inpu
   switch(function){
   case transfer_function_identity: return input_dw;
   case transfer_function_sigmoid:
-    return (input_dw * std::exp(input))/std::pow((std::exp(input) + 1.0),2.0);
+    return (input_dw * std::exp(input))/std::pow((std::exp(input) + 1.0), 2.0);
   case transfer_function_tanh: return input_dw / std::pow(std::cosh(input), 2.0);
   case transfer_function_elu:
     if(input <= 0.0) return settings.get_alpha() * std::exp(input) * input_dw;
@@ -75,28 +75,59 @@ double TransferFunction::get_derivative(Transfer_functions function, double inpu
 }
 
 #if(RAFKO_USES_OPENCL)
-std::string TransferFunction::get_kernel_function_for(Transfer_functions function, std::string x_){
+std::string TransferFunction::get_kernel_function_for(Transfer_functions function, std::string x_) const{
   std::string x = std::string("(") + x_ + ")";
   switch(function){
     case transfer_function_identity: return x;
     case transfer_function_sigmoid: return "( 1.0/(1.0 + exp( -" + x + ")) )";
     case transfer_function_tanh: return "(tanh(" + x + "))";
     case transfer_function_elu: return "( max(0.0," + x + ") + (" + std::to_string(settings.get_alpha()) + " * (exp(min(0.0, " + x + ")) - 1.0)) )";
-    case transfer_function_selu:
-    {
+    case transfer_function_selu: {
       std::string alpha = std::to_string(settings.get_alpha());
       std::string lambda = std::to_string(settings.get_lambda());
       std::string x_negative_component = "min(0.0, " + x + ")";
       std::string x_positive_component = "max(0.0, " + x + ")";
       std::string x_negative_scaled = "(" + alpha + " * (exp(" + x_negative_component + ") - 1.0) )";
       return "( " + lambda + " * (" + x_positive_component + " + " + x_negative_scaled + ") )";
-    }
+    }/*break; unneccesary */
     case transfer_function_relu: return "max(0.0," + x + ")";
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
 
-std::string TransferFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b){
+std::string TransferFunction::get_kernel_function_for_d(
+  Transfer_functions function, std::string input, std::string input_dw
+) const{
+  std::string input_ = "(" + input + ")";
+  std::string input_dw_ = "(" + input_dw + ")";
+  switch(function){
+    case transfer_function_identity: return input_dw_;
+    case transfer_function_sigmoid:
+      return "(" + input_dw_ + " * exp(" + input_ + "))/pow((exp(" + input_ + ") + 1.0), 2.0)";
+    case transfer_function_tanh: return input_dw_ + "/pow(cosh(" + input_ + "), 2.0)";
+    case transfer_function_elu:{
+      return (
+        "(" + input_ + " <= 0.0)"
+        + "?(" + std::to_string(settings.get_alpha()) + " * exp(" + input_ + ") * " + input_dw_ + ")"
+        + ":(" + input_dw_ + ")"
+      );
+    }
+    case transfer_function_selu:{
+      std::string constant_modifiers = std::to_string(settings.get_lambda()) + " * " + std::to_string(settings.get_alpha());
+      return (
+        "(" + input_ + " < 0.0)"
+        + "?(" + constant_modifiers + " * exp(" + input_ + ") * " + input_dw_ + ")"
+        + ":(" + std::to_string(settings.get_lambda()) + "*" + input_dw_ + ")"
+      );
+    }
+    case transfer_function_relu:{
+      return "(" + input_ + " <= 0.0)?(0.0):(" + input_dw_ + ")";
+    }
+    default: throw std::runtime_error("Unidentified transfer function queried for information!");
+  }
+}
+
+std::string TransferFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b) const{
   std::string code = R"(
     switch(==op==){
       case neuron_transfer_function_identity:

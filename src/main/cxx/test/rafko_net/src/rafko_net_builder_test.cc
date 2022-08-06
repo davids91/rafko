@@ -117,8 +117,8 @@ rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* a
   CHECK( 1 == network->neuron_array(1).input_weights_size() );
 
   /* Input Neurons should have their first synapse starting from the 0th input */
-  CHECK( rafko_net::SynapseIterator<>::synapse_index_from_input_index(0) == network->neuron_array(0).input_indices(0).starts() ); /* 0th Input, translated using SynapseIterator<> */
-  CHECK( rafko_net::SynapseIterator<>::synapse_index_from_input_index(0) == network->neuron_array(1).input_indices(0).starts() );
+  CHECK( rafko_net::SynapseIterator<>::external_index_from_array_index(0) == network->neuron_array(0).input_indices(0).starts() ); /* 0th Input, translated using SynapseIterator<> */
+  CHECK( rafko_net::SynapseIterator<>::external_index_from_array_index(0) == network->neuron_array(1).input_indices(0).starts() );
 
   /* The input Layer should have Identity transfer function according to configuration */
   CHECK( rafko_net::transfer_function_identity == network->neuron_array(0).transfer_function() );

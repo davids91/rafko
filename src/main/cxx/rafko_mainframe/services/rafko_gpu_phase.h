@@ -103,7 +103,7 @@ public:
    *
    * @return     The output data with ownership transferred to the caller
    */
-  std::unique_ptr<double[]> acquire_output(std::size_t size, std::size_t offset = 0u);
+  std::unique_ptr<double[]> acquire_output(std::size_t size, std::size_t offset = 0u) const;
 
   /**
    * @brief      Loads the output of the Phase into the supported pointer
@@ -112,7 +112,7 @@ public:
    * @param[in]  size     The number of elements to take from the output
    * @param[in]  offset   An offset inside the output buffer to get
    */
-  void load_output(double* target, std::size_t size, std::size_t offset = 0u);
+  void load_output(double* target, std::size_t size, std::size_t offset = 0u) const;
 
   /**
    * @brief      Provides the buffer containing the input data of the implemented

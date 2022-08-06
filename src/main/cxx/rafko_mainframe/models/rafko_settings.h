@@ -72,7 +72,7 @@ public:
     return hypers.memory_truncation();
   }
 
-  bool get_training_strategy(rafko_gym::Training_strategy strategy){
+  bool get_training_strategy(rafko_gym::Training_strategy strategy) const{
     return (0u < (static_cast<std::uint32_t>(hypers.training_strategies()) & static_cast<std::uint32_t>(strategy)));
   }
 

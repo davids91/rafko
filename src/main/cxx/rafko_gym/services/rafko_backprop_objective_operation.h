@@ -51,6 +51,7 @@ public:
   , sample_number(sample_number_)
   {
   }
+  ~RafkoBackpropObjectiveOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations(){
     return {{
@@ -68,12 +69,7 @@ public:
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(feature_dependency));
     RFASSERT(feature_dependency->is_value_processed());
-    set_value(feature_dependency->get_value(0u/*past_index*/));
-    /*!Note: Objective gets the value of it's input Neuron, so Neuron values can be queried at once;
-     * Because Neurons might be dependent of other Neurons, so order of them might change,
-     * but since nothing depends on  Objective operations, they can be added in any order,
-     * thus their value is being used in this instance to access the Network output in bulk
-     */
+    /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     set_value_processed();
   }
 
@@ -90,19 +86,48 @@ public:
       label_data[output_index], feature_dependency->get_value(0u/*past_index*/),
       feature_dependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(sample_number)
     ));
+    RFASSERT_LOG(
+      "derivative operation[{}](w[{}]): Objective[{}]_d = {} = derivative({}(label[{}]),{}(op[{}]),{}(d_op),{}(samples))",
+      get_operation_index(), d_w_index, output_index, get_derivative(0u/*past_index*/, d_w_index),
+      label_data[output_index], output_index,
+      feature_dependency->get_value(0u/*past_index*/), feature_dependency->get_operation_index(),
+      feature_dependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(sample_number)
+    );
     set_derivative_processed();
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const{
+  std::string local_declaration_operation() const{
     return "";
   }
-  std::string derivative_kernel_function() const{
+
+
+  std::string value_kernel_operation(
+    std::string /*network_input_array*/, std::string /*weight_array*/,
+    std::string /*operations_value_array*/, std::string /*operations_array_size*/
+  ) const{ /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     return "";
+  }
+  std::string derivative_kernel_operation(
+    std::string /*network_input_array*/, std::string label_array, std::string /*weight_array*/,
+    std::string operations_value_array, std::string operations_derivative_array,
+    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
+  ) const{
+    RFASSERT(static_cast<bool>(feature_dependency));
+    return (
+      operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
+      + objective.get_derivative_kernel_source(
+        label_array + "[" + std::to_string(output_index) + "]",
+        operations_value_array + "[" + std::to_string(feature_dependency->get_operation_index()) + "]",
+        operations_derivative_array + "[" + std::to_string(feature_dependency->get_operation_index()) + "]",
+        std::to_string(sample_number)
+      ) + ";"
+    );
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
+    RFASSERT(static_cast<bool>(feature_dependency));
     return {feature_dependency};
   }
 

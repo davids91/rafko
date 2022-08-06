@@ -51,6 +51,7 @@ public:
   , neuron_index(neuron_index_)
   {
   }
+  ~RafkoBackpropTransferFnOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations(){
     return {{
@@ -68,6 +69,11 @@ public:
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));
     RFASSERT(needed_input_dependency->is_value_processed());
+    RFASSERT_LOG(
+      "operation[{}]: Neuron[{}] Transfer function = {}({}(op[{}]))", get_operation_index(),
+      neuron_index, Transfer_functions_Name(network.neuron_array(neuron_index).transfer_function()),
+      needed_input_dependency->get_value(0u/*past_index*/), needed_input_dependency->get_operation_index()
+    );
     set_value(transfer_function.get_value(
       network.neuron_array(neuron_index).transfer_function(), needed_input_dependency->get_value(0u/*past_index*/)
     ));
@@ -92,21 +98,44 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const{
+  std::string local_declaration_operation() const{
+    return "";
+  }
+
+  std::string value_kernel_operation(
+    std::string /*network_input_array*/, std::string /*weight_array*/,
+    std::string operations_value_array, std::string /*operations_array_size*/
+  ) const{
     RFASSERT(static_cast<bool>(needed_input_dependency));
     RFASSERT(needed_input_dependency->are_dependencies_registered());
-    return (
-      "| \t transfer function[" + std::to_string(neuron_index) + "]: "
-      + rafko_net::Transfer_functions_Name(network.neuron_array(neuron_index).transfer_function()) + "\n"
-      + needed_input_dependency->value_kernel_function()
-    );
+    return ( operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
+      + transfer_function.get_kernel_function_for(
+        network.neuron_array(neuron_index).transfer_function(),
+        operations_value_array + "[" + std::to_string(needed_input_dependency->get_operation_index()) + "]"
+      )
+    ) + ";";
   }
-  std::string derivative_kernel_function() const{
-    return "";
+
+  std::string derivative_kernel_operation(
+    std::string /*network_input_array*/, std::string /*label_array*/, std::string /*weight_array*/,
+    std::string operations_value_array, std::string operations_derivative_array,
+    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
+  ) const{
+    RFASSERT(are_dependencies_registered());
+    RFASSERT(static_cast<bool>(needed_input_dependency));
+    return (
+      operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
+      + transfer_function.get_kernel_function_for_d(
+        network.neuron_array(neuron_index).transfer_function(),
+        operations_value_array + "[" + std::to_string(needed_input_dependency->get_operation_index()) + "]",
+        operations_derivative_array + "[" + std::to_string(needed_input_dependency->get_operation_index()) + "]"
+      )
+    ) + ";";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
+    RFASSERT(static_cast<bool>(needed_input_dependency));
     return {needed_input_dependency};
   }
 

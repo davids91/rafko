@@ -52,10 +52,17 @@ protected:
 
   #if(RAFKO_USES_OPENCL)
   std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
-    return "pow((" + label_value + " - " + feature_value + "),2.0)";
+    return "pow((" + label_value + " - " + feature_value + "), 2.0)";
   }
+
   std::string get_post_process_kernel_source(std::string error_value) const{
     return "((" + error_value + ") / 2.0 )";
+  }
+
+  std::string get_derivative_kernel_source(
+    std::string label_value, std::string feature_value, std::string feature_d, std::string
+  ) const{
+    return "(-(" + label_value + " - " + feature_value + ") * " + feature_d + ")";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 };

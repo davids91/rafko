@@ -59,7 +59,6 @@ public:
   , memMin(memRatioMin)
   , memMax(std::max(memMin,memRatioMax))
   {
-
   }
 
   DenseNetWeightInitializer(

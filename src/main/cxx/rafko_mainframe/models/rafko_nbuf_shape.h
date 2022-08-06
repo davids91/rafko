@@ -30,7 +30,7 @@ namespace rafko_mainframe{
  * @brief      A container class to store a shape for multiple consequitve
  *             buffers mapped onto one. The buffers are mapped into memory
  *             as if they were concatenated. Each buffer handles their own internal
- *             structure.
+ *             structure. Shape of the buffer is understood to be in elements, not bytes.
  */
 class RAFKO_FULL_EXPORT RafkoNBufShape : public std::vector<std::size_t>{
 public:
@@ -73,7 +73,7 @@ public:
 
   /**
    * @brief      Provides the shape of the Nbuffer in `cl_int` datatype.
-   *             The bytesize of std::size_t and cl_int might differ! 
+   *             The bytesize of std::size_t and cl_int might differ!
    *
    * @return     Allocated bytes representing the shape of the RafkoNDArray object
    */

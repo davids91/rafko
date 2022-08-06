@@ -42,15 +42,19 @@ class RAFKO_FULL_EXPORT RafkoBackpropWeightRegOperation
 {
 public:
   RafkoBackpropWeightRegOperation(
-    RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    std::uint32_t operation_index, const rafko_net::FeatureGroup& feature_group_
+    const rafko_mainframe::RafkoSettings& settings_, RafkoBackpropagationData& data,
+    const rafko_net::RafkoNet& network, std::uint32_t operation_index,
+    const rafko_net::FeatureGroup& feature_group_
   )
   : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_weight_regularization_feature)
+  , settings(settings_)
   , feature_group(feature_group_)
   , each_weight_derivative(network.weight_table_size())
   {
+    relevant_index_values.reserve(network.weight_table_size());
     refresh_weight_derivatives();
   }
+  ~RafkoBackpropWeightRegOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations(){
     set_registered();
@@ -83,35 +87,42 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string value_kernel_function() const{
+  std::string local_declaration_operation() const{
+    return rafko_net::RafkoNetworkFeature::get_kernel_locals();
+  }
+
+  std::string value_kernel_operation(
+    std::string /*network_input_array*/, std::string /*weight_array*/,
+    std::string /*operations_value_array*/, std::string /*operations_array_size*/
+  ) const{
+    /*!Note: No actual value is calculated for weight regularization */
     return "";
   }
-  std::string derivative_kernel_function() const{
-    return "";
+
+  std::string derivative_kernel_operation(
+    std::string /*network_input_array*/, std::string /*label_array*/, std::string weight_array,
+    std::string /*operations_value_array*/, std::string operations_derivative_array,
+    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
+  ) const{
+    return rafko_net::RafkoNetworkFeature::generate_kernel_code(
+      settings, feature_group.feature(), relevant_index_values,
+      weight_array, "0"/*input_start_index*/, operations_derivative_array/* output_array */,
+      std::to_string(get_operation_index())/*output_start_index*/, false/*declare_locals*/
+    );
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
     return {};
   }
 
 private:
+  const rafko_mainframe::RafkoSettings& settings;
   const rafko_net::FeatureGroup& feature_group;
   std::vector<double> each_weight_derivative;
+  std::vector<std::uint32_t> relevant_index_values;
 
-  void refresh_weight_derivatives(){
-    rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),
-    [this](std::uint32_t neuron_index){
-      rafko_net::SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
-      [this](std::uint32_t weight_index){
-        if(feature_group.feature() == rafko_net::neuron_group_feature_l1_regularization){
-          each_weight_derivative[weight_index] = 1.0;
-        }else if(feature_group.feature() == rafko_net::neuron_group_feature_l2_regularization){
-          each_weight_derivative[weight_index] = 2.0 * network.weight_table(weight_index);
-        }
-      });
-    });
-  }
+  void refresh_weight_derivatives();
 };
 
 } /* namespace rafko_gym */

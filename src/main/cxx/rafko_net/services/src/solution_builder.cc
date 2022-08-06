@@ -189,6 +189,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
           sequence_start = max(max(max_backreach,( sequence_size + prefill_input_num )), 1) - 1;
           sequence_max_index = sequence_start;
         }
+        #pragma unroll
         for(int label_index = sequence_start; label_index <= sequence_max_index; ++label_index){
           double neuron_partial_result;
           /* +++ GENERATED_NEURON_CODE +++ */
@@ -281,14 +282,14 @@ std::string SolutionBuilder::get_kernel_for_solution(
 
           bool index_points_to_input = false;
           if(SynapseIterator<>::is_index_input(input_index_start)){
-            input_index_start = SynapseIterator<>::input_index_from_synapse_index(input_index_start - input_offset_in_current_synapse);
+            input_index_start = SynapseIterator<>::array_index_from_external_index(input_index_start - input_offset_in_current_synapse);
             input_past_reach = partial_input_synapses.reach_past_loops<InputSynapseInterval>(input_index_start);
             weights_able_to_do = std::min(
               weights_able_to_do, partial_input_synapses.interval_size_of(input_index_start)
             );
             input_index_start = partial_input_synapses[input_index_start];
             if(SynapseIterator<>::is_index_input(input_index_start)){
-              input_index_start = SynapseIterator<>::input_index_from_synapse_index(input_index_start);
+              input_index_start = SynapseIterator<>::array_index_from_external_index(input_index_start);
               index_points_to_input = true;
             }
           }else input_index_start = input_index_start + input_offset_in_current_synapse;
@@ -409,7 +410,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     if(0 < partial.solved_features_size()){ /* if the partial solves any feature */
       for(const FeatureGroup& feature : partial.solved_features()){
         if(NeuronInfo::is_feature_relevant_to_solution(feature.feature())){
-          RafkoNetworkFeature::add_kernel_code_to(
+          RafkoNetworkFeature::add_default_kernel_code_to(
             neuron_operations, feature, settings, solution,
             ""/*input_array*/, ""/*input_start_index*/, "outputs", "output_start", !feature_locals_declared
           );
@@ -432,7 +433,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     bool declare_locals = ( /* if the locals have not been declared yet */
       already_declared_locals.end() == already_declared_locals.find(feature.feature())
     );
-    RafkoNetworkFeature::add_kernel_code_to(
+    RafkoNetworkFeature::add_default_kernel_code_to(
       performance_operations, feature, settings, solution,
       "inputs"/*input_array*/, "1u"/*input_start_index:weight table start*/,
       "outputs"/*output_array*/, "output_sizes[0]"/*output_start_index: last output*/,

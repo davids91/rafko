@@ -49,33 +49,51 @@ public:
   /**
    * @brief      Apply the given spike function to a neurons activation data
    *
-   * @param[in]   function         The function to apply
-   * @param[in]   parameter        The parameter supplied by a Neuron
-   * @param[in]   new_data         The data to apply it to
-   * @param[in]   previous_data    The data to apply it to
+   * @param[in]   function        The function to apply
+   * @param[in]   parameter       The parameter supplied by a Neuron
+   * @param[in]   new_data        The latest data as input to the spike function
+   * @param[in]   previous_data   The previously stored state of the Spike function
    */
   static double get_value(
     Spike_functions function, double parameter,
     double new_data, double previous_data
   );
 
+  /**
+   * @brief      Calculates the derivative of the spike function
+   *             in case the basis of the derivative is the relevant parameter
+   *
+   * @param[in]   function          The function to apply
+   * @param[in]   parameter         The parameter of the spike function
+   * @param[in]   new_data          The latest data as input to the spike function
+   * @param[in]   new_data_d        The derivative of the latest data
+   * @param[in]   previous_data     The previously stored state of the Spike function
+   * @param[in]   previous_data_d   The derivative of the previously stored state
+   */
   static double get_derivative_for_w(
     Spike_functions function, double parameter,
     double new_data, double new_data_d,
     double previous_data, double previous_data_d
   );
 
+  /**
+   * @brief      Calculates the derivative of the spike function
+   *             in case the basis of the derivative is not the relevant parameter
+   *
+   * @param[in]   function          The function to apply
+   * @param[in]   parameter         The parameter of the spike function
+   * @param[in]   new_data_d        The derivative of the latest data
+   * @param[in]   previous_data_d   The derivative of the previously stored state
+   */
   static double get_derivative_not_for_w(
-    Spike_functions function, double parameter,
-    double new_data, double new_data_d,
-    double previous_data, double previous_data_d
+    Spike_functions function, double parameter, double new_data_d, double previous_data_d
   );
 
   #if(RAFKO_USES_OPENCL)
   /**
    * @brief     Generates GPU kernel function code for the provided parameters
    *
-   * @param[in]   function         The function to apply
+   * @param[in]   function        The function to apply
    * @param[in]   parameter       The Spike function to base the generated kernel code on
    * @param[in]   new_data        The result of the newly collected inputs and transfer function
    * @param[in]   previous_data   The previous activation value of the neuron
@@ -96,6 +114,41 @@ public:
    * @return    The generated Kernel code merging the parameters through the given input function
    */
   static std::string get_all_kernel_functions_for(std::string operation_index, std::string parameter, std::string previous_data, std::string new_data);
+
+  /**
+   * @brief      Provides the derivative kernel for the derivative of the spike function
+   *             in case the basis of the derivative is the relevant parameter
+   *
+   * @param[in]   function          The function to apply
+   * @param[in]   parameter         The parameter of the spike function
+   * @param[in]   new_data          The latest data as input to the spike function
+   * @param[in]   new_data_d        The derivative of the latest data
+   * @param[in]   previous_data     The previously stored state of the Spike function
+   * @param[in]   previous_data_d   The derivative of the previously stored state
+   *
+   * @return    The single kernel operation representing the provided spike functions derivative function
+   */
+  static std::string get_derivative_kernel_for_w(
+    Spike_functions function, std::string parameter,
+    std::string new_data, std::string new_data_d,
+    std::string previous_data, std::string previous_data_d
+  );
+
+  /**
+   * @brief      Provides the derivative kernel for the derivative of the spike function
+   *             in case the basis of the derivative is not the relevant parameter
+   *
+   * @param[in]   function          The function to apply
+   * @param[in]   parameter         The parameter of the spike function
+   * @param[in]   new_data_d        The derivative of the latest data
+   * @param[in]   previous_data_d   The derivative of the previously stored state
+   *
+   * @return    The single kernel operation representing the provided spike functions derivative function
+   */
+  static std::string get_derivative_kernel_not_for_w(
+    Spike_functions function, std::string parameter,
+    std::string new_data_d, std::string previous_data_d
+);
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel

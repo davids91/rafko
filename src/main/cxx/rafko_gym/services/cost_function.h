@@ -144,14 +144,39 @@ public:
   }
 
   /**
-   * @brief   Provides the GPU kernel sources that implement the cost function
+   * @brief   Provides the GPU kernel sources that implements part of the cost function
    *
-   * @return    A vector of sources implementing the cost function in the GPU as Kernels
+   * @param[in]  label_value      The label value
+   * @param[in]  feature_value    The data to comapre to the label value
+   *
+   * @return    The source implementing this part of the cost function in the GPU as Kernels
    */
   virtual std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const = 0;
+
+  /**
+   * @brief   Provides the GPU kernel sources that implements part of the cost function
+   *
+   * @param[in]  error_value    The error value to post process
+   *
+   * @return    The source implementing this part of the cost function in the GPU as Kernels
+   */
   virtual std::string get_post_process_kernel_source(std::string error_value) const = 0;
 
-  /* +++ FUnctions taken from */
+  /**
+   * @brief      Provides the kernel function for the derivative of the objective
+   *
+   * @param[in]  label_value      The label value
+   * @param[in]  feature_value    The data to comapre to the label value
+   * @param[in]  feature_d        The derivative of the of the feature value
+   * @param[in]  sample_number    The number of sample values the objective is evaluated on at once
+   *
+   * @return     The source for implementing the kernel of the derivative of the cost function
+   */
+  virtual std::string get_derivative_kernel_source(
+    std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
+  ) const = 0;
+
+  /* +++ Functions taken from */
   cl::Program::Sources get_step_sources() const;
   std::vector<std::string> get_step_names() const;
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{

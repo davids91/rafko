@@ -14,24 +14,28 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/services/rafko_backprop_feature_operation.h"
+#include "rafko_gym/services/rafko_backpropagation_operation.h"
 
-#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.h"
+
+#include <limits>
 
 namespace rafko_gym{
 
-DependencyRequest RafkoBackpropFeatureOperation::upload_dependencies_to_operations(){
-  DependencyParameters dependency_parameters;
-  rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),
-  [&dependency_parameters](std::uint32_t neuron_index){
-    dependency_parameters.push_back({ ad_operation_neuron_spike_d, { neuron_index } });
-  });
-
-  set_registered();
-  return {{
-    dependency_parameters, [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>>){}
-  }};
+std::uint32_t RafkoBackpropagationOperation::get_max_dependency_index(){
+  RFASSERT(are_dependencies_registered());
+  std::vector<Dependency> dependencies = get_dependencies();
+  for(const Dependency& dep : dependencies)
+    RFASSERT(dep->operation_index_finalised());
+  auto found_element = std::max_element(
+    dependencies.begin(), dependencies.end(),
+    [](const Dependency& a, const Dependency& b){
+      return a->get_operation_index() < b->get_operation_index();
+    }
+  );
+  if(found_element == dependencies.end())
+    return std::numeric_limits<std::uint32_t>::max();
+    else return (*found_element)->get_operation_index();
 }
-
 
 } /* namespace rafko_gym */

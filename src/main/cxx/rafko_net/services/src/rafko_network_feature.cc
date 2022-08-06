@@ -161,7 +161,7 @@ double RafkoNetworkFeature::calculate_l2_regularization(
 }
 
 #if(RAFKO_USES_OPENCL)
-void RafkoNetworkFeature::add_kernel_code_to(
+void RafkoNetworkFeature::add_default_kernel_code_to(
   std::string& operations, const FeatureGroup& feature_group,
   const rafko_mainframe::RafkoSettings& settings, const Solution& solution,
   std::string input_array, std::string input_start_index,
@@ -299,6 +299,8 @@ void RafkoNetworkFeature::add_dropout_kernel_to(
       uint dropout_seed = 0;
       dropout_seed = ==neuron_data_array==[get_random_number(==range==, &dropout_seed)];
     )";
+  }else{
+    locals += "dropout_seed = ==neuron_data_array==[get_random_number(==range==, &dropout_seed)];\n";
   }
   std::uint32_t number_of_neurons = 0u;
   std::for_each(relevant_index_values.begin(), relevant_index_values.end(),
@@ -387,14 +389,17 @@ void RafkoNetworkFeature::add_lx_kernel_to(
   /* add feature calculations */
   std::string feature_calculations = feature_helpers + R"(
     if(evaluate_network && (get_global_id(0) <= ==feature_weight_number==)){
-      const int weights_in_thread = ( ==feature_weight_number==/(int)(get_global_size(0)) ) + 1;
-      const int execution_start_index = weights_in_thread * get_global_id(0);
+      const int weights_in_one_thread = 1 + ( ==feature_weight_number==/(int)(get_global_size(0)) );
+      const int execution_start_index = weights_in_one_thread * get_global_id(0);
+      const int weights_in_this_thread = min(
+        weights_in_one_thread, max(0, (==feature_weight_number== - execution_start_index))
+      );
 
       ==local_name== = 0.0;
       for(
         int w_i = 0;
         (
-          (w_i < weights_in_thread)
+          (w_i < weights_in_this_thread)
           &&((execution_start_index + w_i) < ==feature_weight_number==)
         );
         ++w_i

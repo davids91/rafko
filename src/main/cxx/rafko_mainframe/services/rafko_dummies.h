@@ -103,6 +103,11 @@ public:
     pairs_to_evaluate = pairs_to_evaluate_;
     feature_size = feature_size_;
   }
+  std::string get_derivative_kernel_source(
+    std::string, std::string, std::string, std::string
+  ) const{
+    return "";
+  }
   cl::Program::Sources get_step_sources() const{
     return{R"(
       void kernel dummy_objective(

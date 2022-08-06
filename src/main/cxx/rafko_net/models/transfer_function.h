@@ -91,22 +91,44 @@ public:
    * @param[in]  function  The function to apply
    * @param[in]  data      The data to apply it to
    *
-   * @return     The result of data.
+   * @return     The result of transfer_function(data).
    */
   double get_value(Transfer_functions function, double data) const;
 
+  /**
+   * @brief      Calculate the derivative of the given transfer function
+   *
+   * @param[in]  function   The function to apply
+   * @param[in]  input      The input of the transfer function
+   * @param[in]  input_dw   The derivative of the input of the transfer function
+   *
+   * @return     The derivative data
+   */
   double get_derivative(Transfer_functions function, double input, double input_dw) const;
 
   #if(RAFKO_USES_OPENCL)
+
   /**
-   * @brief     Generates GPU kernel function code for the provided parameters
+   * @brief     Generates GPU kernel function code for the value calculations based on the provided parameters
    *
    * @param[in]   function    The Transfer function to base the generated kernel code on
    * @param[in]   x           The value on which the transfer function is called upon
    *
-   * @return    The generated Kernel code calling the asked transfer function on the parameter
+   * @return    The generated Kernel code of the transfer function
    */
-  std::string get_kernel_function_for(Transfer_functions function, std::string x);
+  std::string get_kernel_function_for(Transfer_functions function, std::string x) const;
+
+  /**
+  * @brief     Generates GPU kernel function code for the derivative calculations based on the provided parameters
+   *
+   * @param[in]  function   The function to apply
+   * @param[in]  input      The input of the transfer function
+   * @param[in]  input_dw   The derivative of the input of the transfer function
+   *
+   * @return    The generated Kernel code of the transfer function derivative
+   */
+  std::string get_kernel_function_for_d(Transfer_functions function, std::string input, std::string input_dw) const;
+
 
   /**
    * @brief     Generates GPU kernel function code for the provided parameters
@@ -117,7 +139,7 @@ public:
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  std::string get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b);
+  std::string get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b) const;
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel
