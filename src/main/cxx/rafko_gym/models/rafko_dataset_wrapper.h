@@ -86,55 +86,55 @@ public:
     RFASSERT(input_samples.size() == label_samples.size());
   }
 
-  const std::vector<double>& get_input_sample(std::uint32_t raw_input_index) const{
+  const std::vector<double>& get_input_sample(std::uint32_t raw_input_index) const override{
     RFASSERT(input_samples.size() > raw_input_index);
     return input_samples[raw_input_index];
   }
 
-  constexpr const std::vector<std::vector<double>>& get_input_samples() const{
+  constexpr const std::vector<std::vector<double>>& get_input_samples() const override{
     return input_samples;
   }
 
-  const std::vector<double>& get_label_sample(std::uint32_t raw_label_index) const{
+  const std::vector<double>& get_label_sample(std::uint32_t raw_label_index) const override{
     RFASSERT(label_samples.size() > raw_label_index);
     return label_samples[raw_label_index];
   }
 
-  const std::vector<std::vector<double>>& get_label_samples() const{
+  const std::vector<std::vector<double>>& get_label_samples() const override{
     return label_samples;
   }
 
-  std::uint32_t get_feature_size() const{
+  std::uint32_t get_feature_size() const override{
     return label_samples[0].size();
   }
 
-  std::uint32_t get_input_size() const{
+  std::uint32_t get_input_size() const override{
     return input_samples[0].size();
   }
 
-  std::uint32_t get_number_of_input_samples() const{
+  std::uint32_t get_number_of_input_samples() const override{
     return input_samples.size();
   }
 
-  std::uint32_t get_number_of_label_samples() const{
+  std::uint32_t get_number_of_label_samples() const override{
     return label_samples.size();
   }
 
-  std::uint32_t get_number_of_sequences() const{
+  std::uint32_t get_number_of_sequences() const override{
     return (get_number_of_label_samples() / sequence_size);
   }
 
-  constexpr std::uint32_t get_sequence_size() const{
+  constexpr std::uint32_t get_sequence_size() const override{
     return sequence_size;
   }
 
-  constexpr std::uint32_t get_prefill_inputs_number() const{
+  constexpr std::uint32_t get_prefill_inputs_number() const override{
     return prefill_sequences;
   }
 
   /*!Note: There's no state to talk about with this specialization */
-  constexpr void push_state(){ }
-  constexpr void pop_state(){ }
+  constexpr void push_state() override{ }
+  constexpr void pop_state() override{ }
 
 private:
   const std::uint32_t sequence_size;

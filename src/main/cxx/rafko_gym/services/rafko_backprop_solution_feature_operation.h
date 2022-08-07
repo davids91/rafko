@@ -56,9 +56,9 @@ public:
   );
   ~RafkoBackPropSolutionFeatureOperation() = default;
 
-  DependencyRequest upload_dependencies_to_operations();
+  DependencyRequest upload_dependencies_to_operations() override;
 
-  void calculate_value(const std::vector<double>& network_input){
+  void calculate_value(const std::vector<double>& network_input) override{
     parameter_not_used(network_input);
     network_data_proxy.update(data.get_mutable_value().get_element(0));
     feature_executor.execute_solution_relevant(
@@ -69,7 +69,7 @@ public:
 
   void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
-  ){
+  ) override{
     parameter_not_used(d_w_index);
     parameter_not_used(network_input);
     parameter_not_used(label_data);
@@ -77,28 +77,28 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string local_declaration_operation() const{
+  std::string local_declaration_operation() const override{
     return rafko_net::RafkoNetworkFeature::get_kernel_locals();
   }
 
   std::string value_kernel_operation(
     std::string network_input_array, std::string /*weight_array*/,
     std::string operations_value_array, std::string /*operations_array_size*/
-  ) const;
+  ) const override;
 
   std::string derivative_kernel_operation(
     std::string /*network_input_array*/, std::string /*label_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string /*operations_derivative_array*/,
     std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
-  ) const{ /*!Note: solution features don't have any derivatives, so nothuing is here.. */
+  ) const override{ /*!Note: solution features don't have any derivatives, so nothuing is here.. */
     return "";
   }
-  bool is_multi_worker() const{
+  bool is_multi_worker() const override{
     return true;
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
     return {};
   }
 

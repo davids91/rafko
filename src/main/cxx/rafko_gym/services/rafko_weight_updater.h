@@ -71,7 +71,7 @@ public:
    *
    * @return     True if finished, False otherwise.
    */
-  constexpr bool is_finished() const{
+  virtual bool is_finished() const{
     return finished;
   }
 

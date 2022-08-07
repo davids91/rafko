@@ -32,14 +32,13 @@ public:
 
   ~RafkoWeightUpdaterAMSGrad() = default;
 
-  void iterate(const std::vector<double>& gradients);
+  void iterate(const std::vector<double>& gradients) override;
 
-private:
-
+protected:
   /**
    * @brief      Overridden member function from @RafkoWeightUpdater
    */
-  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients){
+  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const override{
     parameter_not_used(gradients); /* the variable moment contains the processed value of the gradients, so no need to use it here again. */
     return (
       settings.get_learning_rate() * moment[weight_index] / (
@@ -48,6 +47,7 @@ private:
     );
   }
 
+private:
   std::uint32_t iteration_count = 0u;
   std::vector<double> moment;
   std::vector<double> raw_moment_max;

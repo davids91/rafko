@@ -77,7 +77,7 @@ public:
    */
   void iterate(bool refresh_environment = false);
 
-  double get_avg_gradient(std::uint32_t d_w_index) const;
+  double get_avg_gradient(std::uint32_t d_w_index) const override;
 
   /**
    * @brief     Uploads the weight table from the network into its internal buffers

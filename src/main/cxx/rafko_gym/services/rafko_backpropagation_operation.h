@@ -115,7 +115,7 @@ public:
   }
 
 
-  constexpr bool operation_index_finalised(){
+  virtual bool operation_index_finalised(){
     return true; /*!Note: Descendants might want to have operation index set dynamically */
   }
 

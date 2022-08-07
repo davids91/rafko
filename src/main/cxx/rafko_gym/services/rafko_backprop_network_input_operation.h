@@ -54,13 +54,13 @@ public:
   }
   ~RafkoBackpropNetworkInputOperation() = default;
 
-  DependencyRequest upload_dependencies_to_operations(){
+  DependencyRequest upload_dependencies_to_operations() override{
     /*!Note: Network inputs have no dependencies! */
     set_registered();
     return {};
   }
 
-  void calculate_value(const std::vector<double>& network_input){
+  void calculate_value(const std::vector<double>& network_input) override{
     RFASSERT(input_index < network_input.size());
     set_value(network_input[input_index] * network.weight_table(weight_index));
     RFASSERT_LOG(
@@ -73,7 +73,7 @@ public:
 
   void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
-  ){
+  ) override{
     parameter_not_used(label_data);
     RFASSERT(input_index < network_input.size());
     set_derivative( d_w_index, ((d_w_index == weight_index)?(network_input[input_index]):(0.0)) );
@@ -85,7 +85,7 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string local_declaration_operation() const{
+  std::string local_declaration_operation() const override{
     return "";
   }
 
@@ -93,7 +93,7 @@ public:
   std::string value_kernel_operation(
     std::string network_input_array, std::string weight_array,
     std::string operations_value_array, std::string /*operations_array_size*/
-  ) const{
+  ) const override{
     return (
       operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
       + network_input_array + "[" + std::to_string(input_index) + "]"
@@ -105,7 +105,7 @@ public:
     std::string network_input_array, std::string /*label_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string operations_derivative_array,
     std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
-  ) const{
+  ) const override{
     std::string kernel_code = R"(
       if(d_w_index == ==this_op_weight_index==){
         ==op_derivative_array==[==op_index==] = ( ==network_input_array==[==network_input_index==] );
@@ -128,7 +128,7 @@ public:
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
     return {};
   }
 

@@ -40,8 +40,8 @@ public:
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity_at_start.begin());
   }
 
-private:
-  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients){
+protected:
+  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const override{
     if(!is_finished()) return (
       (previous_velocity[weight_index] * settings.get_gamma())
       + (gradients[weight_index] * settings.get_learning_rate())
@@ -52,6 +52,7 @@ private:
     );
   }
 
+private:
   std::vector<double> previous_velocity_at_start;
   std::vector<double> previous_velocity;
 };

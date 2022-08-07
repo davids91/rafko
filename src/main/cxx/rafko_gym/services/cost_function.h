@@ -176,22 +176,21 @@ public:
     std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
   ) const = 0;
 
-  /* +++ Functions taken from */
-  cl::Program::Sources get_step_sources() const;
-  std::vector<std::string> get_step_names() const;
-  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
+  /* +++ Functions taken from rafko_mainframe::RafkoGPUStrategyPhase */
+  cl::Program::Sources get_step_sources() const override;
+  std::vector<std::string> get_step_names() const override;
+  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override{
     return { rafko_mainframe::RafkoNBufShape{ /* inputs and labels */
       pairs_to_evaluate * feature_size,
       pairs_to_evaluate * feature_size
     } };
   }
-  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
+  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override{
     return { rafko_mainframe::RafkoNBufShape{ 1u } };
   }
-  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
     return std::make_tuple(cl::NullRange,cl::NDRange(pairs_to_evaluate),cl::NullRange);
   }
-
   #endif/*(RAFKO_USES_OPENCL)*/
 
 

@@ -53,7 +53,7 @@ public:
   }
   ~RafkoBackpropObjectiveOperation() = default;
 
-  DependencyRequest upload_dependencies_to_operations(){
+  DependencyRequest upload_dependencies_to_operations() override{
     return {{
       {{ad_operation_neuron_spike_d, {(network.neuron_array_size() - network.output_neuron_number() + output_index)}}},
       [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>> dependencies){
@@ -64,7 +64,7 @@ public:
     }};
   }
 
-  void calculate_value(const std::vector<double>& network_input){
+  void calculate_value(const std::vector<double>& network_input) override{
     parameter_not_used(network_input);
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(feature_dependency));
@@ -75,7 +75,7 @@ public:
 
   void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
-  ){
+  ) override{
     parameter_not_used(network_input);
     RFASSERT(is_value_processed());
     RFASSERT(are_dependencies_registered());
@@ -97,7 +97,7 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string local_declaration_operation() const{
+  std::string local_declaration_operation() const override{
     return "";
   }
 
@@ -105,14 +105,14 @@ public:
   std::string value_kernel_operation(
     std::string /*network_input_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string /*operations_array_size*/
-  ) const{ /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
+  ) const override{ /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     return "";
   }
   std::string derivative_kernel_operation(
     std::string /*network_input_array*/, std::string label_array, std::string /*weight_array*/,
     std::string operations_value_array, std::string operations_derivative_array,
     std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
-  ) const{
+  ) const override{
     RFASSERT(static_cast<bool>(feature_dependency));
     return (
       operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
@@ -126,7 +126,7 @@ public:
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
     RFASSERT(static_cast<bool>(feature_dependency));
     return {feature_dependency};
   }

@@ -31,19 +31,20 @@ public:
   ,  previous_velocity(rafko_net.weight_table_size(),(0.0))
   { }
 
-  void iterate(const std::vector<double>& gradients){
+  void iterate(const std::vector<double>& gradients) override{
     RafkoWeightUpdater::iterate(gradients);
     std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
   }
 
-private:
-  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients){
+protected:
+  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const override{
     return (
       (previous_velocity[weight_index] * settings.get_gamma())
       + (gradients[weight_index] * settings.get_learning_rate())
     );
   }
 
+private:
   std::vector<double> previous_velocity;
 };
 

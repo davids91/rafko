@@ -32,12 +32,12 @@ public:
   ,  raw_moment(rafko_net.weight_table_size(),(0.0))
   { }
 
-  void iterate(const std::vector<double>& gradients);
+  void iterate(const std::vector<double>& gradients) override;
+
+protected:
+  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const override;
 
 private:
-
-  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients);
-
   std::uint32_t iteration_count = 0u;
   std::vector<double> moment;
   std::vector<double> raw_moment;

@@ -164,7 +164,7 @@ public:
     prefill_inputs_per_sequence = prefill_inputs_per_sequence_;
   }
 
-  cl::Program::Sources get_step_sources() const{
+  cl::Program::Sources get_step_sources() const override{
     return { rafko_net::SolutionBuilder::get_kernel_for_solution(
       solution, "agent_solution",
       sequence_size, prefill_inputs_per_sequence,

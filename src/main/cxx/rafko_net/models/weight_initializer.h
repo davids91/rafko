@@ -66,7 +66,7 @@ public:
    * @param[in]  expected_input_number             The exponent input number
    * @param[in]  expected_input_maximum_value_     The exponent input maximum
    */
-  void set(std::uint32_t expected_input_number_, double expected_input_maximum_value_){
+  virtual void set(std::uint32_t expected_input_number_, double expected_input_maximum_value_){
     expected_input_number = std::max(1u,expected_input_number_);
     if( /* Primitive check if the given number causes overflow or not */
       (std::numeric_limits<double>::max() > (expected_input_number_ * std::abs(expected_input_maximum_value_)))
@@ -97,6 +97,7 @@ protected:
    * Number of estimated @Neuron inputs expected
    */
   std::uint32_t expected_input_number = 0;
+  
   /**
    * Estimated Maximum value of one @Neuron input
    */

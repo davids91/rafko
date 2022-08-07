@@ -74,7 +74,7 @@ public:
     std::uint32_t weight_relevant_operation_count
   );
 
-  cl::Program::Sources get_step_sources() const{
+  cl::Program::Sources get_step_sources() const override{
     RFASSERT(built);
     RFASSERT(static_cast<bool>(environment));
     return {built_source};

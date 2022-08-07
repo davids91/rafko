@@ -35,11 +35,11 @@ public:
   { };
 
 protected:
-  constexpr double error_post_process(double error_value, std::uint32_t sample_number) const{
+  constexpr double error_post_process(double error_value, std::uint32_t sample_number) const override{
     return ( error_value / static_cast<double>(sample_number) );
   }
 
-  constexpr double get_cell_error(double label_value, double feature_value) const{
+  constexpr double get_cell_error(double label_value, double feature_value) const override{
     return (
       label_value * std::log(std::max((0.0000000000000001), feature_value))
       +( ((1.0) - label_value) * std::log((1.0) - std::min((0.9999999999999999), feature_value)) )
@@ -48,13 +48,13 @@ protected:
 
   constexpr double get_derivative(
     double label_value, double feature_value, double feature_d, double sample_number
-  ) const{
+  ) const override{
     return ((label_value - feature_value) * feature_d) / (sample_number * (1.0 - feature_value) * feature_value);
   }
 
 
   #if(RAFKO_USES_OPENCL)
-  std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
+  std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const override{
     std::string one_minus_label_value = "(1.0 - " + label_value + ")";
     return (
       "( " + label_value + " * log(max(0.0000000000000001," + feature_value + ")) )"
@@ -63,13 +63,13 @@ protected:
     );
   }
 
-  std::string get_post_process_kernel_source(std::string error_value) const{
+  std::string get_post_process_kernel_source(std::string error_value) const override{
     return "((" + error_value + ") / (double)(sample_number) )";
   }
 
   std::string get_derivative_kernel_source(
     std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
-  ) const{
+  ) const override{
     return "- (" + label_value + " * " + feature_d + ") / (" + sample_number + " * (1.0 - " + feature_value + ")" + " * " + feature_value + ")";
   }
   #endif/*(RAFKO_USES_OPENCL)*/

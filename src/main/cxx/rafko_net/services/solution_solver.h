@@ -66,7 +66,7 @@ public:
   std::uint32_t get_output_data_size() const{
     return solution.output_neuron_number();
   }
-  void set_eval_mode(bool evaluation){
+  void set_eval_mode(bool evaluation) override{
     evaluating = evaluation;
   }
   using rafko_gym::RafkoAgent::solve;

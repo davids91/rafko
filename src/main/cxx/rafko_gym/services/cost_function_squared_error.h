@@ -34,34 +34,34 @@ public:
   { };
 
 protected:
-  constexpr double error_post_process(double error_value, std::uint32_t sample_number) const{
+  constexpr double error_post_process(double error_value, std::uint32_t sample_number) const override{
     parameter_not_used(sample_number);
     return error_value / 2.0;
   }
 
-  constexpr double get_cell_error(double label_value, double feature_value) const{
+  constexpr double get_cell_error(double label_value, double feature_value) const override{
     return pow((label_value - feature_value),2.0);
   }
 
   constexpr double get_derivative(
     double label_value, double feature_value, double feature_d, double sample_number
-  ) const{
+  ) const override{
     parameter_not_used(sample_number);
     return -(label_value - feature_value) * feature_d;
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const{
+  std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const override{
     return "pow((" + label_value + " - " + feature_value + "), 2.0)";
   }
 
-  std::string get_post_process_kernel_source(std::string error_value) const{
+  std::string get_post_process_kernel_source(std::string error_value) const override{
     return "((" + error_value + ") / 2.0 )";
   }
 
   std::string get_derivative_kernel_source(
     std::string label_value, std::string feature_value, std::string feature_d, std::string
-  ) const{
+  ) const override{
     return "(-(" + label_value + " - " + feature_value + ") * " + feature_d + ")";
   }
   #endif/*(RAFKO_USES_OPENCL)*/

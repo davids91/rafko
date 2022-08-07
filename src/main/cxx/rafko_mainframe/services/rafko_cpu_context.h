@@ -41,37 +41,40 @@ public:
   ~RafkoCPUContext() = default;
 
   /* +++ Methods taken from @RafkoContext +++ */
-  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
+  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_) override;
 
-  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_){
+  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_) override{
     RFASSERT_LOG("Setting objective in CPU Context");
     objective.reset();
     objective = objective_;
   }
 
-  void set_weight_updater(rafko_gym::Weight_updaters updater){
+  void set_weight_updater(rafko_gym::Weight_updaters updater) override{
     RFASSERT_LOG("Setting weight updater in CPU context to {}", rafko_gym::Weight_updaters_Name(updater));
     weight_updater.reset();
     weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, updater, settings);
   }
-  void refresh_solution_weights(){
+
+  void refresh_solution_weights() override{
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
     weight_adapter.update_solution_with_weights();
   }
+
   void set_network_weight(std::uint32_t weight_index, double weight_value){
     RFASSERT_LOG("Setting weight[{}] to {}(CPU Context)", weight_index, weight_value);
     RFASSERT( static_cast<std::int32_t>(weight_index) < network.weight_table_size() );
     network.set_weight_table(weight_index, weight_value);
     refresh_solution_weights();
   }
-  void set_network_weights(const std::vector<double>& weights){
+
+  void set_network_weights(const std::vector<double>& weights) override{
     RFASSERT_LOGV(weights, "Setting weights(CPU Context) to:");
     RFASSERT( static_cast<std::int32_t>(weights.size()) == network.weight_table_size() );
     *network.mutable_weight_table() = {weights.begin(), weights.end()};
     refresh_solution_weights();
   }
 
-  void apply_weight_update(const std::vector<double>& weight_delta){
+  void apply_weight_update(const std::vector<double>& weight_delta) override{
     RFASSERT_LOGV(weight_delta, "Applying weight(CPU context) update! Delta:");
     RFASSERT( static_cast<std::int32_t>(weight_delta.size()) == network.weight_table_size() );
     if(weight_updater->is_finished())
@@ -80,7 +83,7 @@ public:
     refresh_solution_weights();
   }
 
-  double full_evaluation(){
+  double full_evaluation() override{
     RFASSERT_SCOPE(CPU_FULL_EVALUATION);
     return evaluate(
       0u, environment->get_number_of_sequences(),
@@ -88,7 +91,7 @@ public:
     );
   }
 
-  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u){
+  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override{
     RFASSERT_SCOPE(CPU_STOCHASTIC_EVALUATION);
     if(to_seed)srand(seed_value);
     std::uint32_t sequence_start_index = (rand()%(environment->get_number_of_sequences() - used_minibatch_size + 1));
@@ -104,24 +107,24 @@ public:
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<double>& input,
     bool reset_neuron_data = false, std::uint32_t thread_index = 0
-  ){
+  ) override{
     RFASSERT_SCOPE(CPU_STANDALONE_SOLVE);
     return agent->solve(input, reset_neuron_data, thread_index);
   }
 
-  void push_state(){
+  void push_state() override{
     environment->push_state();
   }
 
-  void pop_state(){
+  void pop_state() override{
     environment->pop_state();
   }
 
-  constexpr rafko_mainframe::RafkoSettings& expose_settings(){
+  constexpr rafko_mainframe::RafkoSettings& expose_settings() override{
     return settings;
   }
 
-  constexpr rafko_net::RafkoNet& expose_network(){
+  constexpr rafko_net::RafkoNet& expose_network() override{
     return network;
   }
   /* --- Methods taken from @RafkoContext --- */

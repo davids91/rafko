@@ -61,46 +61,46 @@ public:
   double set_feature_for_label(
     const rafko_gym::RafkoEnvironment& environment, std::uint32_t sample_index,
     const std::vector<double>& neuron_data
-  ) const;
+  ) const override;
 
   double set_features_for_labels(
     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
     std::uint32_t neuron_buffer_index, std::uint32_t raw_start_index, std::uint32_t labels_to_evaluate
-  ) const;
+  ) const override;
 
   double set_features_for_sequences(
     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
     std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
     std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation
-  ) const;
+  ) const override;
 
   double set_features_for_sequences(
     const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
     std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
     std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation, std::vector<double>& tmp_data
-  ) const;
+  ) const override;
 
-  double get_derivative(double label_value, double feature_value, double feature_d, double sample_number) const{
+  double get_derivative(double label_value, double feature_value, double feature_d, double sample_number) const override{
     return cost_function->get_derivative(label_value, feature_value, feature_d, sample_number);
   }
 
   #if(RAFKO_USES_OPENCL)
-  void set_gpu_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_){
+  void set_gpu_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_) override{
     cost_function->set_parameters(pairs_to_evaluate_, feature_size_);
     pairs_to_evaluate = pairs_to_evaluate_;
   }
 
   std::string get_derivative_kernel_source(
     std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
-  ) const{
+  ) const override{
     return cost_function->get_derivative_kernel_source(label_value, feature_value, feature_d, sample_number);
   }
 
-  cl::Program::Sources get_step_sources() const{
+  cl::Program::Sources get_step_sources() const override{
     return cost_function->get_step_sources();
   }
 
-  std::vector<std::string> get_step_names() const{
+  std::vector<std::string> get_step_names() const override{
     return cost_function->get_step_names();
   }
 
@@ -112,7 +112,7 @@ public:
    *
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
+  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override{
     return cost_function->get_input_shapes();
   }
 
@@ -124,11 +124,11 @@ public:
    *
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
+  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override{
     return cost_function->get_output_shapes();
   }
 
-  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
     return cost_function->get_solution_space();
   }
   #endif/*(RAFKO_USES_OPENCL)*/

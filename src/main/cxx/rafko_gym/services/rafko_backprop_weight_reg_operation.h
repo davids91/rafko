@@ -56,12 +56,12 @@ public:
   }
   ~RafkoBackpropWeightRegOperation() = default;
 
-  DependencyRequest upload_dependencies_to_operations(){
+  DependencyRequest upload_dependencies_to_operations() override{
     set_registered();
     return {};
   }
 
-  void calculate_value(const std::vector<double>& network_input){
+  void calculate_value(const std::vector<double>& network_input) override{
     parameter_not_used(network_input);
     /*!Note: Calculated value is not exactly important here, but avg_derivatives
      * need only be calculated once for weight regularization logic, so they are calculated here
@@ -75,7 +75,7 @@ public:
 
   void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
-  ){
+  ) override{
     parameter_not_used(network_input);
     parameter_not_used(label_data);
     RFASSERT(is_value_processed());
@@ -87,14 +87,14 @@ public:
   }
 
   #if(RAFKO_USES_OPENCL)
-  std::string local_declaration_operation() const{
+  std::string local_declaration_operation() const override{
     return rafko_net::RafkoNetworkFeature::get_kernel_locals();
   }
 
   std::string value_kernel_operation(
     std::string /*network_input_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string /*operations_array_size*/
-  ) const{
+  ) const override{
     /*!Note: No actual value is calculated for weight regularization */
     return "";
   }
@@ -103,7 +103,7 @@ public:
     std::string /*network_input_array*/, std::string /*label_array*/, std::string weight_array,
     std::string /*operations_value_array*/, std::string operations_derivative_array,
     std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
-  ) const{
+  ) const override{
     return rafko_net::RafkoNetworkFeature::generate_kernel_code(
       settings, feature_group.feature(), relevant_index_values,
       weight_array, "0"/*input_start_index*/, operations_derivative_array/* output_array */,
@@ -112,7 +112,7 @@ public:
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies(){
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
     return {};
   }
 

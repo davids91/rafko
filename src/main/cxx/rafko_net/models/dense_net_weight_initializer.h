@@ -37,13 +37,12 @@ namespace rafko_net {
  */
 class RAFKO_FULL_EXPORT DenseNetWeightInitializer : public WeightInitializer{
 public:
-
   /**
    * @brief      Constructs the object and calls the srand function with the given arguments.
    *             To srand with time(nullptr), the constructor needs to be called with
    *             a true boolean argument or given a seed value.
    */
-  constexpr DenseNetWeightInitializer(
+  DenseNetWeightInitializer(
     bool to_seed, const rafko_mainframe::RafkoSettings& settings,
     double memRatioMin = 0.0, double memRatioMax = 1.0
   )
@@ -52,7 +51,7 @@ public:
     if(to_seed)srand(static_cast<std::uint32_t>(time(nullptr)));
   }
 
-  constexpr DenseNetWeightInitializer(
+  DenseNetWeightInitializer(
     const rafko_mainframe::RafkoSettings& settings,
     double memRatioMin = 0.0, double memRatioMax = 1.0
   ): WeightInitializer(settings)
@@ -69,17 +68,19 @@ public:
     srand(seed);
   }
 
+  ~DenseNetWeightInitializer() = default;
+
   /**
    * @brief      Configuration functions
    */
-  constexpr void set(std::uint32_t expected_input_number, double expected_input_maximum_value_);
-  double next_weight_for(Transfer_functions used_transfer_function) const{
+  using WeightInitializer::set;
+  double next_weight_for(Transfer_functions used_transfer_function) const override{
     return ((rand()%2 == 0)?-(1.0):(1.0)) * limit_weight(
       (static_cast<double>(rand())/(static_cast<double>(RAND_MAX/get_weight_amplitude(used_transfer_function))))
     );
   }
 
-  constexpr double next_memory_filter() const{
+  double next_memory_filter() const override{
     if(memMin <  memMax){
       double diff = memMax - memMin;
       return ((0.0) == diff)?0:(
@@ -88,7 +89,7 @@ public:
     } else return memMin;
   }
 
-  double next_bias() const{
+  double next_bias() const override{
     double amplitude = settings.get_zetta(); /* non-zero value to make ReLU and friends fire right away in training */
     return ( (amplitude / -2.0) + (static_cast<double>(rand()%101)/100.0) * amplitude );
   }

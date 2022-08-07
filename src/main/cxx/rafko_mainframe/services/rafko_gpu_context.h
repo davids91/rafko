@@ -46,41 +46,41 @@ public:
   );
 
   /* +++ Methods taken from @RafkoContext +++ */
-  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_);
-  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_);
-  void set_weight_updater(rafko_gym::Weight_updaters updater);
+  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_) override;
+  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_) override;
+  void set_weight_updater(rafko_gym::Weight_updaters updater) override;
 
-  void refresh_solution_weights(){
+  void refresh_solution_weights() override{
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
     weight_adapter.update_solution_with_weights();
     upload_weight_table_to_device();
   }
 
-  void set_network_weight(std::uint32_t weight_index, double weight_value);
-  void set_network_weights(const std::vector<double>& weights);
-  void apply_weight_update(const std::vector<double>& weight_delta);
-  double full_evaluation();
-  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u);
+  void set_network_weight(std::uint32_t weight_index, double weight_value) override;
+  void set_network_weights(const std::vector<double>& weights) override;
+  void apply_weight_update(const std::vector<double>& weight_delta) override;
+  double full_evaluation() override;
+  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override;
 
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<double>& input,
     bool reset_neuron_data = false, std::uint32_t thread_index = 0
-  );
+  ) override;
 
-  void push_state(){
+  void push_state() override{
     environment->push_state();
   }
 
-  void pop_state(){
+  void pop_state() override{
     environment->pop_state();
   }
 
-  constexpr rafko_mainframe::RafkoSettings& expose_settings(){
+  rafko_mainframe::RafkoSettings& expose_settings() override{
     last_ran_evaluation = not_eval_run; /* in case some training parameters changed buffers might need to be refreshed */
     return settings;
   }
 
-  constexpr rafko_net::RafkoNet& expose_network(){
+  rafko_net::RafkoNet& expose_network() override{
     return network;
   }
   /* --- Methods taken from @RafkoContext --- */
