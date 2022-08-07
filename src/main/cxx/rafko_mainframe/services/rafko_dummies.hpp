@@ -40,61 +40,33 @@ class RafkoDummyObjective : public rafko_gym::RafkoObjective{
 public:
   ~RafkoDummyObjective() = default;
   double set_feature_for_label(
-    const rafko_gym::RafkoEnvironment& dataset, std::uint32_t sample_index,
-    const std::vector<double>& neuron_data
+    const rafko_gym::RafkoEnvironment& /*dataset*/, std::uint32_t /*sample_index*/,
+    const std::vector<double>& /*neuron_data*/
   ) const override{
-    parameter_not_used(dataset);
-    parameter_not_used(sample_index);
-    parameter_not_used(neuron_data);
     return 0.0;
   }
   double set_features_for_labels(
-     const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<double>>& neuron_data,
-    std::uint32_t neuron_buffer_index, std::uint32_t raw_start_index, std::uint32_t labels_to_evaluate
+    const rafko_gym::RafkoEnvironment& /*dataset*/, const std::vector<std::vector<double>>& /*neuron_data*/,
+    std::uint32_t /*neuron_buffer_index*/, std::uint32_t /*raw_start_index*/, std::uint32_t /*labels_to_evaluate*/
   ) const override{
-    parameter_not_used(dataset);
-    parameter_not_used(neuron_data);
-    parameter_not_used(neuron_buffer_index);
-    parameter_not_used(neuron_buffer_index);
-    parameter_not_used(raw_start_index);
-    parameter_not_used(labels_to_evaluate);
     return 0.0;
   }
   double set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<double>>& neuron_data,
-    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
-    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation
+    const rafko_gym::RafkoEnvironment& /*dataset*/, const std::vector<std::vector<double>>& /*neuron_data*/,
+    std::uint32_t /*neuron_buffer_index*/, std::uint32_t /*sequence_start_index*/, std::uint32_t /*sequences_to_evaluate*/,
+    std::uint32_t /*start_index_in_sequence*/, std::uint32_t /*sequence_truncation*/
   ) const override{
-    parameter_not_used(dataset);
-    parameter_not_used(neuron_data);
-    parameter_not_used(neuron_buffer_index);
-    parameter_not_used(sequence_start_index);
-    parameter_not_used(sequences_to_evaluate);
-    parameter_not_used(start_index_in_sequence);
-    parameter_not_used(sequence_truncation);
     return 0.0;
   }
   double set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& dataset, const std::vector<std::vector<double>>& neuron_data,
-    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
-    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation,
-    std::vector<double>& tmp_data
+    const rafko_gym::RafkoEnvironment& /*dataset*/, const std::vector<std::vector<double>>& /*neuron_data*/,
+    std::uint32_t /*neuron_buffer_index*/, std::uint32_t /*sequence_start_index*/, std::uint32_t /*sequences_to_evaluate*/,
+    std::uint32_t /*start_index_in_sequence*/, std::uint32_t /*sequence_truncation*/,
+    std::vector<double>& /*tmp_data*/
   ) const override{
-    parameter_not_used(dataset);
-    parameter_not_used(neuron_data);
-    parameter_not_used(neuron_buffer_index);
-    parameter_not_used(sequence_start_index);
-    parameter_not_used(sequences_to_evaluate);
-    parameter_not_used(start_index_in_sequence);
-    parameter_not_used(sequence_truncation);
-    parameter_not_used(tmp_data);
     return 0.0;
   }
-  double get_derivative(double label_value, double feature_value, double feature_d, double sample_number) const override{
-    parameter_not_used(label_value);
-    parameter_not_used(feature_value);
-    parameter_not_used(feature_d);
-    parameter_not_used(sample_number);
+  double get_derivative(double /*label_value*/, double /*feature_value*/, double /*feature_d*/, double /*sample_number*/) const override{
     return 0.0;
   }
 
@@ -151,13 +123,11 @@ private:
 
    void push_state() override{ }
    void pop_state() override{ }
-   const std::vector<double>& get_input_sample(std::uint32_t raw_input_index)const override{
-     parameter_not_used(raw_input_index);
+   const std::vector<double>& get_input_sample(std::uint32_t /*raw_input_index*/)const override{
      return dummy_inputs[0];
    }
    const std::vector<std::vector<double>>& get_input_samples()const override{ return dummy_inputs; }
-   const std::vector<double>& get_label_sample(std::uint32_t raw_label_index)const override{
-     parameter_not_used(raw_label_index);
+   const std::vector<double>& get_label_sample(std::uint32_t /*raw_label_index*/)const override{
      return dummy_labels[0];
    }
    const std::vector<std::vector<double>>& get_label_samples()const override{ return dummy_labels; }

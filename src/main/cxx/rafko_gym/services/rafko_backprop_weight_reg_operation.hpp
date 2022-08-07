@@ -61,8 +61,7 @@ public:
     return {};
   }
 
-  void calculate_value(const std::vector<double>& network_input) override{
-    parameter_not_used(network_input);
+  void calculate_value(const std::vector<double>& /*network_input*/) override{
     /*!Note: Calculated value is not exactly important here, but avg_derivatives
      * need only be calculated once for weight regularization logic, so they are calculated here
      */
@@ -74,10 +73,8 @@ public:
   }
 
   void calculate_derivative(
-    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
+    std::uint32_t d_w_index, const std::vector<double>& /*network_input*/, const std::vector<double>& /*label_data*/
   ) override{
-    parameter_not_used(network_input);
-    parameter_not_used(label_data);
     RFASSERT(is_value_processed());
     RFASSERT(are_dependencies_registered());
     RFASSERT(d_w_index < each_weight_derivative.size());

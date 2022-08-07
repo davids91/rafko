@@ -20,6 +20,4 @@
 
 #include "rafko_export.hpp"
 
-#define parameter_not_used(param) ((void)param)
-
 #endif /* defined RAFKO_GLOBAL_H */

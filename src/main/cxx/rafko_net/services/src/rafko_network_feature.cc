@@ -64,10 +64,9 @@ void RafkoNetworkFeature::execute_solution_relevant(
 }
 
 double RafkoNetworkFeature::calculate_performance_relevant(
-  const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
+  const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& /*settings*/,
   const RafkoNet& network, std::uint32_t thread_index
 ) const{
-  parameter_not_used(settings);
   RFASSERT(thread_index < execution_threads.size());
 
   switch(feature.feature()){

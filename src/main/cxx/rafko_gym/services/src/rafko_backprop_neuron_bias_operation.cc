@@ -24,8 +24,7 @@
 
 namespace rafko_gym{
 
-void RafkoBackpropNeuronBiasOperation::calculate_value(const std::vector<double>& network_input){
-  parameter_not_used(network_input);
+void RafkoBackpropNeuronBiasOperation::calculate_value(const std::vector<double>& /*network_input*/){
   RFASSERT(are_dependencies_registered());
   if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
     RFASSERT(static_cast<bool>(next_bias_dependency));
@@ -41,10 +40,8 @@ void RafkoBackpropNeuronBiasOperation::calculate_value(const std::vector<double>
 }
 
 void RafkoBackpropNeuronBiasOperation::calculate_derivative(
-  std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
+  std::uint32_t d_w_index, const std::vector<double>& /*network_input*/, const std::vector<double>& /*label_data*/
 ){
-  parameter_not_used(network_input);
-  parameter_not_used(label_data);
   RFASSERT(is_value_processed());
   RFASSERT(are_dependencies_registered());
   if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){

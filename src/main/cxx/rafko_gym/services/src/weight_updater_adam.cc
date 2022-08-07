@@ -36,8 +36,8 @@ void RafkoWeightUpdaterAdam::iterate(const std::vector<double>& gradients){
   ++iteration_count;
 }
 
-double RafkoWeightUpdaterAdam::get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const{
-  parameter_not_used(gradients); /* the variable moment contains the processed value of the gradients, so no need to use it here again. */
+double RafkoWeightUpdaterAdam::get_new_velocity(std::uint32_t weight_index, const std::vector<double>& /*gradients*/) const{
+  /*!Note: the variable moment contains the processed value of the gradients, so no need to use it here again. */
   return (
     settings.get_learning_rate() / (
       std::sqrt(

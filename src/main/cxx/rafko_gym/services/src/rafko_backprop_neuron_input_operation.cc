@@ -128,8 +128,7 @@ std::vector<std::shared_ptr<RafkoBackpropagationOperation>> RafkoBackpropNeuronI
   return dependencies;
 }
 
-void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double>& network_input){
-  parameter_not_used(network_input);
+void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double>& /*network_input*/){
   RFASSERT(are_dependencies_registered());
   /* i(w) = w * f(w) ¤ u(w) | f(w) = network_input or input_from_internal_neuron */
   /* calculate f(x) part */
@@ -189,10 +188,8 @@ void RafkoBackpropNeuronInputOperation::calculate_value(const std::vector<double
 }
 
 void RafkoBackpropNeuronInputOperation::calculate_derivative(
-  std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
+  std::uint32_t d_w_index, const std::vector<double>& /*network_input*/, const std::vector<double>& /*label_data*/
 ){
-  parameter_not_used(network_input);
-  parameter_not_used(label_data);
   RFASSERT(is_value_processed());
   RFASSERT(are_dependencies_registered());
   /* i(w) = w * f(w) ¤ u(w) | f(w) = network_input or input_from_internal_neuron */
@@ -378,7 +375,7 @@ std::string RafkoBackpropNeuronInputOperation::derivative_kernel_operation(
 
     ==op_derivative_array==[==op_index==] = ==input_kernel==;
   )";
-  
+
   /* finish f_x_dependency */
   if(is_network_input){
     RFASSERT(0u == input_past_index);

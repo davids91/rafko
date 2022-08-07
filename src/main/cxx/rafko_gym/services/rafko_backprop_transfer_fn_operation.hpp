@@ -64,8 +64,7 @@ public:
     }};
   }
 
-  void calculate_value(const std::vector<double>& network_input) override{
-    parameter_not_used(network_input);
+  void calculate_value(const std::vector<double>& /*network_input*/) override{
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));
     RFASSERT(needed_input_dependency->is_value_processed());
@@ -81,10 +80,8 @@ public:
   }
 
   void calculate_derivative(
-    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
+    std::uint32_t d_w_index, const std::vector<double>& /*network_input*/, const std::vector<double>& /*label_data*/
   ) override{
-    parameter_not_used(network_input);
-    parameter_not_used(label_data);
     RFASSERT(is_value_processed());
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(needed_input_dependency));

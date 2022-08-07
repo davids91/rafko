@@ -209,8 +209,7 @@ public:
       iteration_helper = last_reached_index;
     }else last_reached_synapse = 0;
 
-    iterate_terminatable([&](Interval_type interval_synapse){
-      parameter_not_used(interval_synapse);
+    iterate_terminatable([&](Interval_type /*interval_synapse*/){
       ++last_reached_synapse;
       last_reached_index = iteration_helper;
       previous_last_reached_index = last_reached_index;
@@ -248,8 +247,7 @@ public:
       previous_last_reached_index = last_reached_index;
       result_size = interval_synapse.interval_size();
       return true;
-    },[&](std::int32_t synapse_index){
-      parameter_not_used(synapse_index);
+    },[&](std::int32_t /*synapse_index*/){
       if(iteration_helper < nth_element){
         ++iteration_helper;
         return true;
@@ -281,8 +279,7 @@ public:
       previous_last_reached_index = last_reached_index;
       synapse_reach = interval_synapse.reach_past_loops();
       return true;
-    },[&](std::int32_t synapse_index){
-      parameter_not_used(synapse_index);
+    },[&](std::int32_t /*synapse_index*/){
       if(iteration_helper < nth_element){
         ++iteration_helper;
         return true;
@@ -346,8 +343,7 @@ public:
     iterate_terminatable([&](Interval_type interval_synapse){
       result = interval_synapse;
       return true;
-    },[&](std::int32_t synapse_index){
-      parameter_not_used(synapse_index);
+    },[&](std::int32_t /*synapse_index*/){
       if(iteration_helper < index){
         ++iteration_helper;
         return true; /* Found the synapse we have been looking for */

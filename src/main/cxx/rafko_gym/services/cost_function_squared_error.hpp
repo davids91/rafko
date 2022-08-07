@@ -34,8 +34,7 @@ public:
   { };
 
 protected:
-  constexpr double error_post_process(double error_value, std::uint32_t sample_number) const override{
-    parameter_not_used(sample_number);
+  constexpr double error_post_process(double error_value, std::uint32_t /*sample_number*/) const override{
     return error_value / 2.0;
   }
 
@@ -44,9 +43,8 @@ protected:
   }
 
   constexpr double get_derivative(
-    double label_value, double feature_value, double feature_d, double sample_number
+    double label_value, double feature_value, double feature_d, double /*sample_number*/
   ) const override{
-    parameter_not_used(sample_number);
     return -(label_value - feature_value) * feature_d;
   }
 

@@ -38,8 +38,8 @@ protected:
   /**
    * @brief      Overridden member function from @RafkoWeightUpdater
    */
-  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const override{
-    parameter_not_used(gradients); /* the variable moment contains the processed value of the gradients, so no need to use it here again. */
+  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& /*gradients*/) const override{
+    /*!Note: the variable moment contains the processed value of the gradients, so no need to use it here again. */
     return (
       settings.get_learning_rate() * moment[weight_index] / (
         std::sqrt(raw_moment_max[weight_index]) + settings.get_epsilon()

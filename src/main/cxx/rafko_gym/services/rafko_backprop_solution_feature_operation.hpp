@@ -58,8 +58,7 @@ public:
 
   DependencyRequest upload_dependencies_to_operations() override;
 
-  void calculate_value(const std::vector<double>& network_input) override{
-    parameter_not_used(network_input);
+  void calculate_value(const std::vector<double>& /*network_input*/) override{
     network_data_proxy.update(data.get_mutable_value().get_element(0));
     feature_executor.execute_solution_relevant(
       feature_group, settings, network_data_proxy, 0u/*thread_index*/
@@ -68,11 +67,8 @@ public:
   }
 
   void calculate_derivative(
-    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
+    std::uint32_t /*d_w_index*/, const std::vector<double>& /*network_input*/, const std::vector<double>& /*label_data*/
   ) override{
-    parameter_not_used(d_w_index);
-    parameter_not_used(network_input);
-    parameter_not_used(label_data);
     set_derivative_processed();
   }
 

@@ -18,8 +18,7 @@
 
 namespace rafko_gym{
 
-void RafkoBackpropSpikeFnOperation::calculate_value(const std::vector<double>& network_input){
-  parameter_not_used(network_input);
+void RafkoBackpropSpikeFnOperation::calculate_value(const std::vector<double>& /*network_input*/){
   RFASSERT(are_dependencies_registered());
   RFASSERT(static_cast<bool>(present_value_dependency));
   RFASSERT(present_value_dependency->is_value_processed());
@@ -40,10 +39,8 @@ void RafkoBackpropSpikeFnOperation::calculate_value(const std::vector<double>& n
 
 void RafkoBackpropSpikeFnOperation::calculate_derivative(
   std::uint32_t d_w_index,
-  const std::vector<double>& network_input, const std::vector<double>& label_data
+  const std::vector<double>& /*network_input*/, const std::vector<double>& /*label_data*/
 ){
-  parameter_not_used(network_input);
-  parameter_not_used(label_data);
   RFASSERT(is_value_processed());
   RFASSERT(are_dependencies_registered());
   RFASSERT(static_cast<bool>(present_value_dependency));

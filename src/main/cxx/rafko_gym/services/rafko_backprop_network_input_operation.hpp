@@ -72,9 +72,8 @@ public:
   }
 
   void calculate_derivative(
-    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& label_data
+    std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& /*label_data*/
   ) override{
-    parameter_not_used(label_data);
     RFASSERT(input_index < network_input.size());
     set_derivative( d_w_index, ((d_w_index == weight_index)?(network_input[input_index]):(0.0)) );
     RFASSERT_LOG(
