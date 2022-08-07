@@ -204,7 +204,7 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
 std::vector<cl::Event> RafkoGPUContext::upload_agent_output(
   std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
 ){
-  cl_int return_value;
+  [[maybe_unused]]cl_int return_value;
   RFASSERT_LOG(
     "Uploading agent outputs:  sequences to upload: {}; start index inside sequence: {}; sequence truncation: {}",
     sequences_to_upload, start_index_inside_sequence, sequence_truncation
@@ -260,7 +260,7 @@ double RafkoGPUContext::error_post_process(double raw_error, std::uint32_t label
 }
 
 double RafkoGPUContext::full_evaluation(){
-  cl_int return_value;
+  [[maybe_unused]]cl_int return_value;
   std::vector<cl::Event> label_events;
   RFASSERT_SCOPE(GPU_FULL_EVALUATION);
 
@@ -333,7 +333,7 @@ double RafkoGPUContext::full_evaluation(){
 }
 
 double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_value){
-  cl_int return_value;
+  [[maybe_unused]]cl_int return_value;
   std::vector<cl::Event> input_events;
   std::vector<cl::Event> label_events;
   RFASSERT_SCOPE(GPU_STOCHASTIC_EVALUATION);
@@ -473,7 +473,7 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
   if(0u != thread_index)
     throw std::runtime_error("Multi-threaded openCL Environment not supported!");
 
-  cl_int return_value;
+  [[maybe_unused]]cl_int return_value;
   cl::Event fill_event;
   const std::uint32_t network_memory_slots = std::max(2u, (network_solution->network_memory_length() - 1u));
   const std::size_t network_used_bytes = sizeof(double) * network_memory_slots * network_solution->neuron_number();

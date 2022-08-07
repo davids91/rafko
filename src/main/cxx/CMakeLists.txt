@@ -90,6 +90,7 @@ target_compile_features(rafko_full
   cxx_static_assert
   cxx_variadic_macros #used in logged assertions
   cxx_variadic_templates # used in log assertions
+  #cxx_attribute_maybe_unused # Not in known features yet.. # mainly for GPU related OpenCL return value assertions to not throw warnings in Release bilds
 )
 
 add_subdirectory(rafko_protocol)

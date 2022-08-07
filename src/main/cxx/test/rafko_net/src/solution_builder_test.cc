@@ -47,11 +47,13 @@ std::unique_ptr<rafko_net::Solution> test_solution_builder_manually(
   if(recursion) builder.add_neuron_recurrence(layer_index, rand()%net_structure[layer_index], 1u);
   if(boltzman_knot) builder.add_feature_to_layer(layer_index, rafko_net::neuron_group_feature_boltzmann_knot);
 
-  rafko_net::RafkoNet* net;
+  rafko_net::RafkoNet* net = nullptr;
   REQUIRE_NOTHROW( net = builder.dense_layers(net_structure) );
 
   std::unique_ptr<rafko_net::Solution> solution;
   REQUIRE_NOTHROW( solution = rafko_net::SolutionBuilder(settings).build(*net) );
+
+  REQUIRE(net != nullptr);
 
   CHECK( net->input_data_size() ==   solution->network_input_size() );
 

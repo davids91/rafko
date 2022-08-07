@@ -23,7 +23,7 @@ std::vector<cl::Event> RafkoEnvironment::upload_inputs_to_buffer(
   std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
   std::uint32_t sequences_to_upload
 ){
-  cl_int return_value;
+  [[maybe_unused]]cl_int return_value;
   RFASSERT_LOG(
     "Uploading agent inputs: sequence start index: {}, sequence start index in buffer: {}, sequences to upload: {}",
     sequence_start_index, buffer_sequence_start_index, sequences_to_upload
@@ -65,7 +65,7 @@ std::vector<cl::Event> RafkoEnvironment::upload_labels_to_buffer(
   std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence,
   std::uint32_t sequence_truncation
 ){
-  cl_int return_value;
+  [[maybe_unused]]cl_int return_value;
   RFASSERT_LOG(
     "Uploading labels to evaluate: sequence start index: {}, sequence start index in buffer: {}, buffer labels byte offset: {} sequences to upload: {}; start index inside sequence: {}; sequence truncation: {}",
     sequence_start_index, buffer_sequence_start_index, buffer_start_byte_offset, sequences_to_upload, start_index_inside_sequence, sequence_truncation
