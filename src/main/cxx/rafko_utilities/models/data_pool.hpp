@@ -44,6 +44,11 @@ public:
 
   DataPool() = default;
 
+  /**
+   * @brief     Reserve a buffer to use for a given number of elements to be used
+   *
+   * @param[in]     number_of_elements    The number of elements to have in the reserved buffer
+   */
   std::vector<T>& reserve_buffer(std::uint32_t number_of_elements){
     std::lock_guard<std::mutex> my_lock(buffers_mutex);
   	for(std::uint32_t buffer_index = 0; buffer_index < buffer_pool.size();++buffer_index){
@@ -56,7 +61,13 @@ public:
   	return buffer_pool.back();
   }
 
+  /**
+   * @brief     Release the given reserved buffer
+   *
+   * @param     buffer    The reference to the reserved buffer to free up
+   */
   constexpr void release_buffer(std::vector<T>& buffer){
+    std::lock_guard<std::mutex> my_lock(buffers_mutex);
   	buffer.resize(0);
   }
 

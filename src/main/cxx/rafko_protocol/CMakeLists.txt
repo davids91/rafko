@@ -39,7 +39,7 @@ protobuf_generate(
   LANGUAGE
     cpp
   GENERATE_EXTENSIONS
-    .pb.cc .pb.hpp
+    .pb.cc .pb.h
   PROTOC_OUT_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol
   PROTOS
@@ -52,7 +52,7 @@ if(BUILD_MAINFRAME)
     LANGUAGE
       grpc
     GENERATE_EXTENSIONS
-      .grpc.pb.cc .grpc.pb.hpp
+      .grpc.pb.cc .grpc.pb.h
     PROTOC_OUT_DIR
       ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol
     PROTOS
@@ -65,5 +65,5 @@ endif()
 install(
   DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol
   DESTINATION include/
-  FILES_MATCHING PATTERN "*.hpp"
+  FILES_MATCHING PATTERN "*.h"
 )
