@@ -186,6 +186,71 @@ TEST_CASE( "Builder to construct Fully Connected Net correctly through the inter
   arena.Reset();
 }
 
+TEST_CASE( "Testing builder for adding different features to different layers", "[build][features]" ){
+  google::protobuf::Arena arena;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(&arena);
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
+    rafko_net::RafkoNetBuilder builder(settings);
+
+    std::vector<std::uint32_t> net_structure;
+    while((rand()%10 < 9)||(4 > net_structure.size()))
+      net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
+
+    builder.input_size(2)
+      .output_neuron_number(net_structure.back())
+      .expected_input_range((5.0));
+
+    std::unordered_map<std::uint32_t, std::set<rafko_net::Neuron_group_features>> map_layers_to_features;
+    for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+      for(std::uint32_t tries = 0; tries < 5u; ++tries){
+        rafko_net::Neuron_group_features random_feature = static_cast<rafko_net::Neuron_group_features>(
+          rand()%rafko_net::Neuron_group_features_ARRAYSIZE
+        );
+        while(
+          !Neuron_group_features_IsValid(random_feature)
+          ||(random_feature == rafko_net::neuron_group_feature_unknown)
+        )random_feature = static_cast<rafko_net::Neuron_group_features>(
+          rand()%rafko_net::Neuron_group_features_ARRAYSIZE
+        );
+
+        auto feature_set_in_layer_it = map_layers_to_features.find(layer_index);
+        if(
+          feature_set_in_layer_it != map_layers_to_features.end()
+          &&(0 == feature_set_in_layer_it->second.count(random_feature))
+        ){
+          feature_set_in_layer_it->second.insert(random_feature);
+          builder.add_feature_to_layer(layer_index, random_feature);
+        }
+      }/*for(5 tries)*/
+    }/*for(all layers)*/
+
+    rafko_net::RafkoNet& network(*builder.dense_layers(net_structure));
+    std::vector<std::uint32_t> layer_starts(net_structure.size());
+    std::uint32_t layer_start_iterator = 0u;
+    for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+      layer_starts[layer_index] = layer_start_iterator;
+      layer_start_iterator += net_structure[layer_index];
+    }
+
+    for(const auto& [layer_index, features_for_layer] : map_layers_to_features){
+      REQUIRE(
+        std::find_if( /* network feature groups should contain features_for_layer */
+        network.neuron_group_features().begin(), network.neuron_group_features().end(),
+        [&features_for_layer, &layer_starts, net_structure, layer_index](const rafko_net::FeatureGroup& feature_group){
+          if(0 < features_for_layer.count(feature_group.feature())){
+            return ( /* If the feature group is found in the original features for the layers.. */
+              (feature_group.relevant_neurons_size() == 1) /* the start and size value of it should match the layers' */
+              &&(feature_group.relevant_neurons(0).starts() == static_cast<std::int32_t>(layer_starts[layer_index]))
+              &&(feature_group.relevant_neurons(0).interval_size() == net_structure[layer_index])
+            );
+          }
+          return false;
+        }) != network.neuron_group_features().end()
+      );
+    }
+  }/*for(10 variants)*/
+}
+
 TEST_CASE( "Testing builder for setting Neuron input functions manually", "[build][input-function]" ) {
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(&arena);

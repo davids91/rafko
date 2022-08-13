@@ -27,6 +27,7 @@
 #include <tuple>
 #include <set>
 #include <optional>
+#include <unordered_map>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_net/models/input_function.hpp"
@@ -242,7 +243,7 @@ private:
    * @brief   Helper variables for features and optional Neuron parameters
    */
   std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
-  std::vector< std::pair<std::uint32_t,Neuron_group_features> > layer_features;
+  std::unordered_map<std::uint32_t, std::set<Neuron_group_features>> layer_features;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Input_functions> > arg_neuron_index_input_functions;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Spike_functions> > arg_neuron_index_spike_functions;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,std::uint32_t> > arg_neuron_index_recurrence;

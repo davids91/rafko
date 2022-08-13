@@ -28,20 +28,22 @@
 #include "rafko_net/services/synapse_iterator.hpp"
 #include "rafko_net/models/dense_net_weight_initializer.hpp"
 
+namespace {
+
+/* https://stackoverflow.com/questions/37563960/what-is-the-best-simplest-fastest-way-to-create-set-of-1-element-c */
+template<typename Tp> inline std::set<Tp> make_set(Tp const&x){
+  return {x};
+}
+
+} /* namespace */
+
 namespace rafko_net {
 
 RafkoNetBuilder& RafkoNetBuilder::add_feature_to_layer(std::uint32_t layer_index, Neuron_group_features feature){
-  std::vector<std::pair<std::uint32_t,Neuron_group_features>>::iterator it = std::find_if(
-    layer_features.begin(), layer_features.end(),
-    [layer_index, feature](const std::pair<std::uint32_t,Neuron_group_features>& element){
-      return( /* only add feature if it's not already inside the network */
-        (layer_index == std::get<0>(element))
-        &&(feature == std::get<1>(element))
-      );
-    }
-  );
-  if(it == layer_features.end()){ /* only append feature group if layer is not al */
-    layer_features.push_back(std::make_pair(layer_index, feature));
+  if(layer_features.find(layer_index) == layer_features.end()){
+    layer_features[layer_index] = make_set(feature);
+  }else{
+    layer_features[layer_index].insert(feature);
   }
   return *this;
 }
@@ -79,12 +81,6 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
     RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(settings.get_arena_ptr());
     double expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);
 
-    /* sort the requested features by layer */
-    std::sort(layer_features.begin(),layer_features.end(),
-    [](const std::pair<std::uint32_t,Neuron_group_features>& a, const std::pair<std::uint32_t,Neuron_group_features>& b){
-      return /* a less, than b */(std::get<0>(a) < std::get<0>(b));
-    });
-
     ret->set_input_data_size(arg_input_size);
     ret->set_output_neuron_number(layer_sizes.back());
 
@@ -112,22 +108,23 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
 
       /* Store the features for this layer */
       bool layer_is_boltzmann_knot = false;
-      while( (0u < layer_features.size())&&(std::get<0>(layer_features.front()) == layer_index) ){
-        layer_is_boltzmann_knot = (neuron_group_feature_boltzmann_knot == std::get<1>(layer_features.front()));
-        RFASSERT_LOG(
-          "Storing feature {} for the network starting from Neuron[{}]",
-          Neuron_group_features_Name(std::get<1>(layer_features.front())),
-          (0u < layer_index)?(layer_input_starts_at + layer_sizes[layer_index - 1]):(0u)
-        );
-        FeatureGroup& feature_to_add = *ret->add_neuron_group_features();
-        feature_to_add.set_feature(std::get<1>(layer_features.front()));
-        feature_to_add.add_relevant_neurons()->set_interval_size(layer_sizes[layer_index]);
+      if( layer_features.find(layer_index) != layer_features.end() ){
+        for(const Neuron_group_features& feature_of_layer : layer_features[layer_index]){
+          layer_is_boltzmann_knot = (neuron_group_feature_boltzmann_knot == feature_of_layer);
+          RFASSERT_LOG(
+            "Storing feature {} for the network starting from Neuron[{}]",
+            Neuron_group_features_Name(feature_of_layer),
+            (0u < layer_index)?(layer_input_starts_at + layer_sizes[layer_index - 1]):(0u)
+          );
+          FeatureGroup& feature_to_add = *ret->add_neuron_group_features();
+          feature_to_add.set_feature(feature_of_layer);
+          feature_to_add.add_relevant_neurons()->set_interval_size(layer_sizes[layer_index]);
 
-        if(0u < layer_index)
-          feature_to_add.mutable_relevant_neurons(0)->set_starts( layer_input_starts_at + layer_sizes[layer_index - 1] );
-          else feature_to_add.mutable_relevant_neurons(0)->set_starts(0u);
-
-        layer_features.erase(layer_features.begin());
+          if(0u < layer_index)
+            feature_to_add.mutable_relevant_neurons(0)->set_starts( layer_input_starts_at + layer_sizes[layer_index - 1] );
+            else feature_to_add.mutable_relevant_neurons(0)->set_starts(0u);
+        }
+        layer_features.erase(layer_index);
       }
 
       /* Sort the input function requests based on Neuron indices this time */
