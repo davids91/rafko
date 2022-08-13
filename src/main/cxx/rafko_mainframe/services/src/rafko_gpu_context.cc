@@ -28,7 +28,8 @@ namespace rafko_mainframe{
 
 RafkoGPUContext::RafkoGPUContext(
   cl::Context&& context_, cl::Device device_,
-  rafko_mainframe::RafkoSettings settings_, rafko_net::RafkoNet& neural_network_
+  rafko_mainframe::RafkoSettings settings_, rafko_net::RafkoNet& neural_network_,
+  std::shared_ptr<rafko_gym::RafkoObjective> objective_
 ):RafkoContext(settings_)
 , network(neural_network_)
 , network_solution(rafko_net::SolutionBuilder(settings).build(network))
@@ -37,7 +38,7 @@ RafkoGPUContext::RafkoGPUContext(
 , environment(std::make_unique<RafkoDummyEnvironment>(
   network.input_data_size(), network.output_neuron_number())
 )
-, objective(std::make_unique<RafkoDummyObjective>())
+, objective(objective_)
 , weight_updater(rafko_gym::UpdaterFactory::build_weight_updater(network, rafko_gym::weight_updater_default, settings))
 , neuron_outputs_to_evaluate( /* For every thread, 1 sequence is evaluated.. */
   (settings.get_max_processing_threads() * environment->get_sequence_size() + 1u),

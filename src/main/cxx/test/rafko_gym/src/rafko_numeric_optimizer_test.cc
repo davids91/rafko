@@ -59,6 +59,9 @@ TEST_CASE("Stress-testing big input takein", "[bigpic]"){
     .set_learning_rate_decay({{1000u,0.8}})
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
 
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+    settings, rafko_gym::cost_function_squared_error
+  );
   std::uint32_t avg_ms = 0;
   for(std::uint32_t i = 0; i < 6; ++i){
     avg_ms = 0;
@@ -78,7 +81,7 @@ TEST_CASE("Stress-testing big input takein", "[bigpic]"){
       start = std::chrono::steady_clock::now();
       std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
         rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
       );
       auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
       // std::uint32_t average_duration = 0;
@@ -115,8 +118,12 @@ TEST_CASE("Testing aproximization fragment handling","[numeric_optimization][fra
     .allowed_transfer_functions_by_layer({{rafko_net::transfer_function_selu}})
     .dense_layers({1});
 
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+    settings, rafko_gym::cost_function_squared_error
+  );
+
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_shared<rafko_mainframe::RafkoCPUContext>(
-    *network, settings
+    *network, objective, settings
   );
   rafko_gym::RafkoNumericOptimizer approximizer({context},settings);
 
@@ -227,22 +234,22 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
   #if (RAFKO_USES_OPENCL)
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
   );
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context2 = std::make_unique<rafko_mainframe::RafkoCPUContext>(
-    *network, settings.set_max_processing_threads(1u)
+    *network, objective, settings.set_max_processing_threads(1u)
   );
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context(
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
   );
   rafko_gym::RafkoNumericOptimizer approximizer({context1,context2},settings);
   context2->set_environment(environment);
   context2->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   context2->set_objective(objective);
   #else
-  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context1 = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
-  std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context1 = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, objective, settings);
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, objective, settings);
   rafko_gym::RafkoNumericOptimizer approximizer({context1},settings);
   #endif/*(RAFKO_USES_OPENCL)*/
   context1->set_environment(environment);
@@ -325,6 +332,12 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
     }).dense_layers({2,2,1});
 
   /* Create dataset, test set and optimizers; optimize nets */
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+    settings, rafko_gym::cost_function_squared_error
+  );
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context2 = std::make_unique<rafko_mainframe::RafkoCPUContext>(
+    *network, objective, settings.set_max_processing_threads(1u)
+  );
   std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
     rafko_test::create_sequenced_addition_dataset(number_of_samples, 4)
   );
@@ -336,21 +349,18 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
   #if (RAFKO_USES_OPENCL)
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
-  );
-  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context2 = std::make_unique<rafko_mainframe::RafkoCPUContext>(
-    *network, settings.set_max_processing_threads(1u)
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
   );
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context(
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
   );
   rafko_gym::RafkoNumericOptimizer approximizer({context1,context2},settings);
   context2->set_environment(environment);
   context2->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   #else
-  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context1 = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
-  std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context1 = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, objective, settings);
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, objective, settings);
   rafko_gym::RafkoNumericOptimizer approximizer({context1},settings);
   #endif/*(RAFKO_USES_OPENCL)*/
 
@@ -370,13 +380,6 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
     std::vector<std::vector<double>>(std::get<1>(tmp1)),
     /* Sequence size */4
   ));
-
-  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
-    settings, rafko_gym::cost_function_squared_error
-  );
-  context1->set_objective(objective);
-  context2->set_objective(objective);
-  test_context->set_objective(objective);
 
   tmp1 = rafko_test::create_sequenced_addition_dataset(number_of_samples * 2, 4);
   rafko_gym::RafkoDatasetWrapper* after_test_set =  google::protobuf::Arena::Create<rafko_gym::RafkoDatasetWrapper>(

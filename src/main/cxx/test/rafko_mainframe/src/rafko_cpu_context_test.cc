@@ -51,8 +51,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoCost reference_cost(settings, cost);
-  rafko_mainframe::RafkoCPUContext context(*network, settings);
-  context.set_objective(std::make_unique<rafko_gym::RafkoCost>(settings, cost));
+  rafko_mainframe::RafkoCPUContext context(*network, std::make_unique<rafko_gym::RafkoCost>(settings, cost), settings);
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
@@ -97,8 +96,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoCost reference_cost(settings, cost);
-  rafko_mainframe::RafkoCPUContext context(*network, settings);
-  context.set_objective(std::make_unique<rafko_gym::RafkoCost>(settings, cost));
+  rafko_mainframe::RafkoCPUContext context(*network, std::make_unique<rafko_gym::RafkoCost>(settings, cost), settings);
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
@@ -145,12 +143,11 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(settings);
   rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
   rafko_gym::RafkoCost reference_cost(settings, cost);
-  rafko_mainframe::RafkoCPUContext context(*network, settings);
+  rafko_mainframe::RafkoCPUContext context(*network, std::make_unique<rafko_gym::RafkoCost>(settings, cost), settings);
 
   (void)context.expose_settings().set_memory_truncation(dataset_wrap.get_sequence_size() / 2); /*!Note: So overall error value can just be halved because of this */
   settings = context.expose_settings();
 
-  context.set_objective(std::make_unique<rafko_gym::RafkoCost>(settings, cost));
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   double environment_error = context.stochastic_evaluation(true, seed);
@@ -213,7 +210,10 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
         {rafko_net::transfer_function_relu},
       }
     ).dense_layers({2,2,2,2,2,feature_size});
-  rafko_mainframe::RafkoCPUContext context(*network, settings);
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+    settings, rafko_gym::cost_function_squared_error
+  );
+  rafko_mainframe::RafkoCPUContext context(*network, objective, settings);
 
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){ /* modify single weight */
     std::uint32_t weight_index = rand()%(network->weight_table_size());
@@ -243,7 +243,10 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
         {rafko_net::transfer_function_relu},
       }
     ).dense_layers({2,2,2,2,2,feature_size});
-  rafko_mainframe::RafkoCPUContext context(*network, settings);
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+    settings, rafko_gym::cost_function_squared_error
+  );
+  rafko_mainframe::RafkoCPUContext context(*network, objective, settings);
 
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){ /* modify multiple weights */
     std::vector<double> weight_values(network->weight_table_size());

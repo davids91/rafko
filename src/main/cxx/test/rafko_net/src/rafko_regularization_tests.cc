@@ -240,11 +240,11 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
     }
 
     /* Create CPU contexts and an environment */
-    rafko_mainframe::RafkoCPUContext regulated_context(*network, settings);
-    rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, settings);
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       settings, rafko_gym::cost_function_squared_error
     );
+    rafko_mainframe::RafkoCPUContext regulated_context(*network, objective, settings);
+    rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, objective, settings);
     std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
       number_of_sequences, sequence_size, 2/*prefill_size*/,
@@ -259,8 +259,6 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
 
     regulated_context.set_environment(environment);
     unregulated_context.set_environment(environment);
-    regulated_context.set_objective(objective);
-    unregulated_context.set_objective(objective);
 
     REQUIRE(
       Catch::Approx(regulated_context.full_evaluation()).epsilon((0.00000000000001))
@@ -377,12 +375,12 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
     std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
 
     /* create GPU and CPU contexts */
-    rafko_mainframe::RafkoCPUContext cpu_context(network_copy, settings);
+    rafko_mainframe::RafkoCPUContext cpu_context(network_copy, objective, settings);
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> gpu_context;
     REQUIRE_NOTHROW(
       gpu_context = (
         rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-          .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
+          .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
       )
     );
 
@@ -393,8 +391,6 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
 
     cpu_context.set_environment(environment);
     gpu_context->set_environment(environment);
-    cpu_context.set_objective(objective);
-    gpu_context->set_objective(objective);
 
     REQUIRE(
       Catch::Approx(cpu_context.full_evaluation()).epsilon((0.00000000000001))

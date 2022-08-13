@@ -367,23 +367,23 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
     })
     .dense_layers({3,2,1});
 
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+    settings, rafko_gym::cost_function_squared_error
+  );
   #if(RAFKO_USES_OPENCL)
   rafko_mainframe::RafkoOCLFactory factory;
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> context(
     factory.select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
   );
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context(
     factory.select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(settings, *network)
+      .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
   );
   #else
-  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
-  std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, settings);
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, objective, settings);
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(*network, objective, settings);
   #endif/*(RAFKO_USES_OPENCL)*/
-  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
-    settings, rafko_gym::cost_function_squared_error
-  );
   std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
     rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size)
   );

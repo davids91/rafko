@@ -41,8 +41,8 @@ class RAFKO_FULL_EXPORT RafkoGPUContext : public RafkoContext{
 public:
   RafkoGPUContext(
     cl::Context&& context_, cl::Device device_,
-    rafko_mainframe::RafkoSettings settings_,
-    rafko_net::RafkoNet& neural_network_
+    rafko_mainframe::RafkoSettings settings_, rafko_net::RafkoNet& neural_network_,
+    std::shared_ptr<rafko_gym::RafkoObjective> objective_
   );
 
   /* +++ Methods taken from @RafkoContext +++ */
@@ -105,19 +105,32 @@ private:
   RafkoGPUPhase solution_phase;
   std::vector<double> standalone_solution_result;
   RafkoGPUPhase error_phase;
-
-  enum{
-    not_eval_run, full_eval_run, random_eval_run
-  }last_ran_evaluation = not_eval_run;
-
-  void upload_weight_table_to_device();
-  void upload_weight_to_device(std::uint32_t weight_index);
-  void refresh_objective();
   bool last_random_eval_was_seeded = false;
   std::uint32_t last_used_seed;
   /* Somebody tell me what is the least propable value of a random seed one can use,
    * so I could initialize this poor fella with it?!
    */
+
+  enum{
+    not_eval_run, full_eval_run, random_eval_run
+  }last_ran_evaluation = not_eval_run;
+
+  /**
+   * @brief   Uploads the weights from @network to the buffer on the GPU
+   */
+  void upload_weight_table_to_device();
+
+  /**
+   * @brief   Uploads the weights from @network to the buffer on the GPU for the given weight index
+   *
+   * @param[in]     weight_index    the index of the weight to upload
+   */
+  void upload_weight_to_device(std::uint32_t weight_index);
+
+  /**
+   * @brief     sets the paramterers of the objective based on the environment, re-generates its kernels and uploads them to GPU
+   */
+  void refresh_objective();
 
   /**
    * @brief     Upload inputs to the solution phase to be able to run the agent kernel code on the inputs
