@@ -33,6 +33,7 @@
 
 #include "rafko_net/services/partial_solution_solver.hpp"
 #include "rafko_net/services/rafko_network_feature.hpp"
+#include "rafko_gym/services/rafko_weight_adapter.hpp"
 
 namespace rafko_net{
 
@@ -89,6 +90,11 @@ public:
   class Builder{
   public:
     Builder(const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings);
+    /**
+     * @brief     Builds a SolutionSolver and produces a pointer to it, based on its stored members
+     *
+     * @return    Ownership and pointer of the built solver
+     */
     std::unique_ptr<SolutionSolver> build(){
       return std::unique_ptr<SolutionSolver>( new SolutionSolver(solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread) );
     }
@@ -98,6 +104,32 @@ public:
     std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
     std::uint32_t max_tmp_size_needed = 0u;
     std::uint32_t max_tmp_data_needed_per_thread = 0u;
+  };
+
+  class Factory{
+  public:
+    Factory(const RafkoNet& network_, const rafko_mainframe::RafkoSettings& settings_);
+
+    /**
+     * @brief     Updates the stored solution with the weights from the stored Neural Network reference
+     */
+    void refresh_solution_weights(){
+      weight_adapter->update_solution_with_weights();
+    }
+
+    /**
+     * @brief     Builds a SolutionSolver and produces a pointer to it, based on its stored members
+     *
+     * @return    Ownership and pointer of the built solver
+     */
+    std::unique_ptr<SolutionSolver> build(bool rebuild_solution = true);
+
+  private:
+    const RafkoNet& network;
+    const rafko_mainframe::RafkoSettings& settings;
+    std::unique_ptr<rafko_net::Solution> solution;
+    std::unique_ptr<rafko_gym::RafkoWeightAdapter> weight_adapter;
+
   };
 };
 

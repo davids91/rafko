@@ -22,6 +22,7 @@
 
 #include "rafko_net/models/neuron_info.hpp"
 #include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_net/services/solution_builder.hpp"
 #include "rafko_net/services/rafko_network_feature.hpp"
 
 namespace rafko_net{
@@ -44,6 +45,25 @@ SolutionSolver::Builder::Builder(const Solution& to_solve, const rafko_mainframe
     if(solution.cols(row_iterator) > max_tmp_data_needed_per_thread)
       max_tmp_data_needed_per_thread = solution.cols(row_iterator);
   } /* loop through every partial solution and initialize solvers and output maps for them */
+}
+
+SolutionSolver::Factory::Factory(const RafkoNet& network_, const rafko_mainframe::RafkoSettings& settings_)
+: network(network_)
+, settings(settings_)
+, solution(rafko_net::SolutionBuilder(settings).build(network))
+, weight_adapter(std::make_unique<rafko_gym::RafkoWeightAdapter>(network, *solution, settings))
+{ }
+
+std::unique_ptr<SolutionSolver> SolutionSolver::Factory::build(bool rebuild_solution){
+  if(rebuild_solution){
+    solution = SolutionBuilder(settings).build(network);
+    weight_adapter = std::make_unique<rafko_gym::RafkoWeightAdapter>(
+      network, *solution, settings
+    );
+  }
+
+  RFASSERT(static_cast<bool>(solution));
+  return Builder(*solution, settings).build();
 }
 
 SolutionSolver::SolutionSolver(

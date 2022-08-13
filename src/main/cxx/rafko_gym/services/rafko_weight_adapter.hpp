@@ -38,7 +38,7 @@ namespace rafko_gym {
 using PartialWeightPairs = const std::vector<std::pair<std::uint32_t,std::uint32_t>>;
 class RAFKO_FULL_EXPORT RafkoWeightAdapter{
 public:
-  RafkoWeightAdapter(rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_)
+  RafkoWeightAdapter(const rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_)
   : settings(settings_)
   , execution_threads(settings.get_max_solve_threads())
   , net(rafko_net)
@@ -135,7 +135,7 @@ public:
 private:
   const rafko_mainframe::RafkoSettings& settings;
   rafko_utilities::ThreadGroup execution_threads;
-  rafko_net::RafkoNet& net;
+  const rafko_net::RafkoNet& net;
   rafko_net::Solution& solution;
 
   mutable std::unordered_map<std::uint32_t,std::vector<std::pair<std::uint32_t,std::uint32_t>>> weights_in_partials; /* key: Weight index; {{partial_index, weight_index},...{..}} */
