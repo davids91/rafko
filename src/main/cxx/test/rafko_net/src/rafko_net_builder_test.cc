@@ -304,6 +304,77 @@ TEST_CASE( "Testing builder for setting Neuron input functions manually", "[buil
   }/*for(10 variants)*/
 }
 
+TEST_CASE( "Testing builder for setting Neuron transfer functions manually", "[build][transfer-function]" ) {
+  google::protobuf::Arena arena;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(&arena);
+  for(std::uint32_t variant = 0u; variant < 10u; ++variant){
+    rafko_net::RafkoNetBuilder builder(settings);
+
+    std::vector<std::uint32_t> net_structure;
+    while((rand()%10 < 9)||(4 > net_structure.size()))
+      net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
+
+    builder.input_size(2)
+      .output_neuron_number(net_structure.back())
+      .expected_input_range((5.0));
+
+    std::vector<std::tuple<std::uint32_t,std::uint32_t,rafko_net::Transfer_functions>> set_neuron_transfer_functions;
+    for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+      for(std::uint32_t tries = 0; tries < 5u; ++tries){
+        std::uint32_t layer_neuron_index = rand()%(net_structure[layer_index]);
+        std::tuple<std::uint32_t,std::uint32_t,rafko_net::Transfer_functions> new_item = std::make_tuple(
+          layer_index, layer_neuron_index,rafko_net::TransferFunction::next()
+        );
+        if( /* only add the the reference vector if its not present yet in the same layer_index/neuron_index */
+          std::find_if(
+            set_neuron_transfer_functions.begin(),set_neuron_transfer_functions.end(),
+            [&new_item](const std::tuple<std::uint32_t,std::uint32_t,rafko_net::Transfer_functions>& current_item){
+              return ( (std::get<0>(new_item) == std::get<0>(current_item))&&(std::get<1>(new_item) == std::get<1>(current_item)) );
+            }
+          ) == set_neuron_transfer_functions.end()
+        ){
+          builder.set_neuron_transfer_function(layer_index, layer_neuron_index, std::get<2>(new_item));
+          set_neuron_transfer_functions.push_back( std::move(new_item) );
+        }
+      }/*for(5 tries)*/
+    }
+
+    rafko_net::RafkoNet* network(builder.dense_layers(net_structure));
+    std::vector<std::uint32_t> layer_starts(net_structure.size());
+    std::uint32_t layer_start_iterator = 0u;
+    for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+      layer_starts[layer_index] = layer_start_iterator;
+      layer_start_iterator += net_structure[layer_index];
+    }
+    for(const auto& [layer_index, layer_neuron_index, transfer_function] : set_neuron_transfer_functions){
+      REQUIRE( layer_index < net_structure.size() );
+      REQUIRE( layer_neuron_index < net_structure[layer_index] );
+      std::uint32_t neuron_index = layer_starts[layer_index] + layer_neuron_index;
+      REQUIRE( network->neuron_array(neuron_index).transfer_function() == transfer_function );
+    }
+  }/*for(10 variants)*/
+}
+
+TEST_CASE( "Testing whether network builder throws an excpetion when conflicting transfer function parameters are set", "[build][transfer-function]" ){
+  google::protobuf::Arena arena;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4);
+  for(std::uint32_t trf = rafko_net::Transfer_functions_MIN + 1; trf < rafko_net::Transfer_functions_MAX; ++trf){
+    if(!rafko_net::Transfer_functions_IsValid(trf))continue;
+    rafko_net::Transfer_functions transfer_function = static_cast<rafko_net::Transfer_functions>(trf);
+    REQUIRE_NOTHROW(
+      rafko_net::RafkoNetBuilder(settings).input_size(1u).expected_input_range((1.0))
+      .set_neuron_transfer_function(0, 0, transfer_function)
+      .dense_layers({1})
+    );
+    REQUIRE_THROWS(
+      rafko_net::RafkoNetBuilder(settings).input_size(1u).expected_input_range((1.0))
+      .set_neuron_transfer_function(0, 0, transfer_function)
+      .dense_layers({1},{{rafko_net::transfer_function_unknown}})
+    );
+  }
+}
+
 TEST_CASE( "Testing builder for setting Neuron spike functions manually", "[build][spike-function]" ) {
   google::protobuf::Arena arena;
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(&arena);
