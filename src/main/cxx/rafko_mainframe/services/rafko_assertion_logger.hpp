@@ -122,7 +122,7 @@ private:
 #else
 #define RFASSERT(condition) ((void)(condition))
 #endif
-#define RFASSERT_SCOPE(name)
+#define RFASSERT_SCOPE(name) [[maybe_unused]]int DUMMY
 #define RFASSERT_LOG(...)
 #define RFASSERT_LOGV(vec, ...)
 #define RFASSERT_LOGV2(vec, ...)
