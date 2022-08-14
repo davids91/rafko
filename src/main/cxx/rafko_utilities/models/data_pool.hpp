@@ -49,7 +49,7 @@ public:
    *
    * @param[in]     number_of_elements    The number of elements to have in the reserved buffer
    */
-  std::vector<T>& reserve_buffer(std::uint32_t number_of_elements){
+  [[nodiscard]] std::vector<T>& reserve_buffer(std::uint32_t number_of_elements){
     std::lock_guard<std::mutex> my_lock(buffers_mutex);
   	for(std::uint32_t buffer_index = 0; buffer_index < buffer_pool.size();++buffer_index){
   		if(0u == buffer_pool[buffer_index].size()){ /* if the vector[buffer_index] has 0 elements --> the vector is free */

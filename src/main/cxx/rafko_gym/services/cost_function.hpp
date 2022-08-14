@@ -207,7 +207,7 @@ protected:
    *
    * @return     the final error value
    */
-  virtual double error_post_process(double error_value, std::uint32_t sample_number) const = 0;
+  [[nodiscard]] virtual double error_post_process(double error_value, std::uint32_t sample_number) const = 0;
 
   /**
    * @brief      Calculates the error for one number-pair inside the label-data pair

@@ -108,7 +108,7 @@ public:
    * @return    A 2D matrix of unsigned index values where each row can be run in paralell
    *            and the row ordering is ascending(i.e.: the last row depends on the previous rows)
    */
-  static std::vector<std::vector<std::uint32_t>> generate_operation_paralell_matrix(
+  [[nodiscard]] static std::vector<std::vector<std::uint32_t>> generate_operation_paralell_matrix(
     const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>& operations
   );
 

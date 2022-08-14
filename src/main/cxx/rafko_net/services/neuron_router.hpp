@@ -87,7 +87,7 @@ public:
    *
    * @return     Operation success
    */
-  bool get_first_neuron_index_from_subset(std::uint32_t& put_it_here) const{
+  [[nodiscard]] bool get_first_neuron_index_from_subset(std::uint32_t& put_it_here) const{
     if((!collection_running)&&(0 < net_subset.size())){
       put_it_here = net_subset.front();
       return true;
@@ -104,7 +104,7 @@ public:
    *
    * @return     List of @neuron_group_features indexes inside the @RafkoNet solved by processing this Neuron
    */
-  std::vector<std::uint32_t> confirm_first_subset_element_processed(std::uint32_t neuron_index);
+  [[nodiscard]] std::vector<std::uint32_t> confirm_first_subset_element_processed(std::uint32_t neuron_index);
 
   /**
    * @brief      If the index in the arguments matches the first index in the subset,
@@ -116,7 +116,7 @@ public:
    *
    * @return     Operation success
    */
-  bool confirm_first_subset_element_ommitted(std::uint32_t neuron_index){
+  [[nodiscard]] bool confirm_first_subset_element_ommitted(std::uint32_t neuron_index){
     if((0 < net_subset.size())&&(neuron_index == net_subset.front())){
       omit_from_subset(neuron_index);
       return true;
@@ -134,7 +134,7 @@ public:
    *
    * @return     { description_of_the_return_value }
    */
-  bool confirm_first_subset_element_ommitted(std::uint32_t neuron_index, std::deque<std::uint32_t>& paired_array){
+  [[nodiscard]] bool confirm_first_subset_element_ommitted(std::uint32_t neuron_index, std::deque<std::uint32_t>& paired_array){
     if(
       (0 < net_subset.size())&&(neuron_index == net_subset.front())
       &&(net_subset.size() == paired_array.size())
@@ -195,7 +195,7 @@ public:
    */
   void reset_remaining_subset(){
     while(0 < net_subset.size())
-      confirm_first_subset_element_ommitted(net_subset.front());
+      (void)confirm_first_subset_element_ommitted(net_subset.front());
     net_subset_size_bytes.store(0);
   }
 

@@ -44,7 +44,7 @@ public:
    *
    * @return     The cost function.
    */
-  static std::unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, const rafko_mainframe::RafkoSettings& settings){
+  [[nodiscard]] static std::unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, const rafko_mainframe::RafkoSettings& settings){
     switch(the_function){
       case cost_function_mse:                     return std::make_unique<CostFunctionMSE>(settings);
         case cost_function_squared_error:         return std::make_unique<CostFunctionSquaredError>(settings);

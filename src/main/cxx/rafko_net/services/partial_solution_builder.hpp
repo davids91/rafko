@@ -50,7 +50,7 @@ public:
    *
    * @return     returns the input parameters of the Neurons: {maximum reach back in Neural memory, maximum input index reached}
    */
-  std::pair<std::uint32_t,std::uint32_t> add_neuron_to_partial_solution(const RafkoNet& net, std::uint32_t neuron_index);
+  [[nodiscard]] std::pair<std::uint32_t,std::uint32_t> add_neuron_to_partial_solution(const RafkoNet& net, std::uint32_t neuron_index);
 
 private:
   PartialSolution& partial;

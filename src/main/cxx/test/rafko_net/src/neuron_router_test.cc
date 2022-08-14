@@ -62,7 +62,7 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
     std::vector<std::uint32_t> subset;
     while(net_iterator.get_first_neuron_index_from_subset(neuron_index)){
       subset.push_back(neuron_index);
-      net_iterator.confirm_first_subset_element_processed(neuron_index);
+      (void)net_iterator.confirm_first_subset_element_processed(neuron_index);
     }
     REQUIRE((
       (iteration <= layer_structure.size()) /* Has to finish sooner, than there are layers */
@@ -134,7 +134,7 @@ TEST_CASE( "Testing Neural Network router dependency interface", "[neuron-iterat
   /* Omit some Neurons from the previous layer */
   for(std::uint32_t i = 0; i < layer_structure[0]; ++i){
     if(0 == (i%2)){
-      net_iterator.confirm_first_subset_element_ommitted(i);
+      (void)net_iterator.confirm_first_subset_element_ommitted(i);
     }
   }
 

@@ -35,7 +35,7 @@ public:
   { };
 
 protected:
-  constexpr double error_post_process(double error_value, std::uint32_t sample_number) const override{
+  [[nodiscard]] constexpr double error_post_process(double error_value, std::uint32_t sample_number) const override{
     return ( error_value / static_cast<double>(sample_number) );
   }
 

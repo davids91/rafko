@@ -141,7 +141,7 @@ private:
    *
    * @return      A vector of events to wait for, signaling operation completion
    */
-  std::vector<cl::Event> upload_agent_output(
+  [[nodiscard]] std::vector<cl::Event> upload_agent_output(
     std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
   );
 
@@ -154,7 +154,7 @@ private:
    *
    * @return    The processed error
    */
-  double error_post_process(double raw_error, std::uint32_t labels_evaluated);
+  [[nodiscard]] double error_post_process(double raw_error, std::uint32_t labels_evaluated);
 };
 
 } /* namespace rafko_mainframe */

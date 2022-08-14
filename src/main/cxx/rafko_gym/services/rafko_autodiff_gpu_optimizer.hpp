@@ -89,14 +89,14 @@ public:
    *
    * @return    A vector of events signaling when the operations are ready
    */
-  std::vector<cl::Event> update_inputs();
+  [[nodiscard]] std::vector<cl::Event> update_inputs();
 
   /**
    * @brief     Uploads the label data from the environment into its internal buffers
    *
    * @return    A vector of events signaling when the operations are ready
    */
-  std::vector<cl::Event> update_labels();
+  [[nodiscard]] std::vector<cl::Event> update_labels();
 
   /**
    * @brief     Refreshes buffer data based on its current status
