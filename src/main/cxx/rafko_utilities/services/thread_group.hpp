@@ -57,6 +57,7 @@ private:
   mutable const std::function<void(std::uint32_t)>* worker_function; /* gets the thread index it is inside */
   mutable std::size_t threads_ready = 0;
   mutable std::atomic<state_t> state = {Idle};
+  mutable std::mutex function_mutex;
   mutable std::mutex state_mutex;
   mutable std::condition_variable synchroniser;
   std::vector<std::thread> threads;

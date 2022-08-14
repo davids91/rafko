@@ -40,6 +40,7 @@ ThreadGroup::~ThreadGroup(){
 }
 
 void ThreadGroup::start_and_block(const std::function<void(std::uint32_t)>& function) const{
+  std::lock_guard<std::mutex> function_lock(function_mutex);
   { /* initialize, start.. */
     std::unique_lock<std::mutex> my_lock(state_mutex);
     worker_function = &function;
