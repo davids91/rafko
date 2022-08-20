@@ -45,16 +45,18 @@ public:
    */
   RafkoNumericOptimizer(
     std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> contexts_,
+    std::shared_ptr<rafko_mainframe::RafkoContext> test_context_,
     rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings(),
     std::uint32_t stochastic_evaluation_loops_ = 1u
   ):settings(settings_)
-  , contexts(contexts_)
-  , weight_filter(contexts[0]->expose_network().weight_table_size(), 1.0)
+  , training_contexts(contexts_)
+  , test_context(test_context_)
+  , weight_filter(training_contexts[0]->expose_network().weight_table_size(), 1.0)
   , used_weight_filter(weight_filter)
-  , weight_exclude_chance_filter(contexts[0]->expose_network().weight_table_size(), 0.0)
+  , weight_exclude_chance_filter(training_contexts[0]->expose_network().weight_table_size(), 0.0)
   , stochastic_evaluation_loops(stochastic_evaluation_loops_)
-  , execution_threads(std::min(contexts.size(), static_cast<std::size_t>(settings.get_max_processing_threads())))
-  , tmp_data_pool(2u, contexts[0]->expose_network().weight_table_size())
+  , execution_threads(std::min(training_contexts.size(), static_cast<std::size_t>(settings.get_max_processing_threads())))
+  , tmp_data_pool(2u, training_contexts[0]->expose_network().weight_table_size())
   { }
 
   RafkoNumericOptimizer(const RafkoNumericOptimizer& other) = delete;/* Copy constructor */
@@ -216,7 +218,7 @@ public:
    * @brief      Evaluates the network in the given environment fully
    */
   void full_evaluation(){
-    double fitness = contexts[0]->full_evaluation();
+    double fitness = training_contexts[0]->full_evaluation();
     if(min_test_error > fitness){
       min_test_error = fitness;
       min_test_error_was_at_iteration = iteration;
@@ -243,6 +245,12 @@ public:
         )||(
           settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
           &&((0.0) ==  -min_test_error)
+        )||(
+          (training_contexts[0] && test_context)
+          &&(
+            (settings.get_training_strategy(Training_strategy::training_strategy_early_stopping))
+            &&(last_training_error > ( last_testing_error * (1.0 + settings.get_delta()) ))
+          )
         )
       ))
     );
@@ -250,7 +258,8 @@ public:
 
 private:
   rafko_mainframe::RafkoSettings settings;
-  std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> contexts;
+  std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> training_contexts;
+  std::shared_ptr<rafko_mainframe::RafkoContext> test_context;
   std::vector<double> weight_filter;
   std::vector<double> used_weight_filter;
   std::vector<double> weight_exclude_chance_filter;
@@ -263,9 +272,12 @@ private:
   rafko_utilities::DataPool<> tmp_data_pool;
   double epsilon_addition = 0.0;
   double min_test_error = std::numeric_limits<double>::max();
+  double last_training_error = std::numeric_limits<double>::quiet_NaN();
+  double last_testing_error = std::numeric_limits<double>::quiet_NaN();
   double error_estimation = 1.0;
   double exclude_chance_sum = 0.0;
   std::uint32_t min_test_error_was_at_iteration = 0u;
+  std::uint32_t last_tested_iteration = 0u;
 
   /**
    * @brief      Evaluates the network in a stochastic manner the number of configured times and return with the fittness/error value

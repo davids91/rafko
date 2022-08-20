@@ -28,7 +28,7 @@ void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
     double greatest_gradient_value = settings.get_sqrt_epsilon();
     double used_weight_filter_sum = 0.0;
     std::mutex weight_stats_mutex;
-    std::vector<double>& used_gradients = tmp_data_pool.reserve_buffer(contexts[0]->expose_network().weight_table_size());
+    std::vector<double>& used_gradients = tmp_data_pool.reserve_buffer(training_contexts[0]->expose_network().weight_table_size());
     used_weight_filter = weight_filter;
     for(std::uint32_t weight_index = 0; weight_index < used_gradients.size(); weight_index += execution_threads.get_number_of_threads()){
       execution_threads.start_and_block(
@@ -43,7 +43,7 @@ void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
           }
 
           if(0.0 != used_weight_filter[actual_weight_index]){
-            used_gradients[actual_weight_index] = get_single_weight_gradient(actual_weight_index, *contexts[thread_index]) * used_weight_filter[actual_weight_index];
+            used_gradients[actual_weight_index] = get_single_weight_gradient(actual_weight_index, *training_contexts[thread_index]) * used_weight_filter[actual_weight_index];
             if(greatest_gradient_value < std::abs(used_gradients[actual_weight_index])){
               std::lock_guard<std::mutex> my_lock(weight_stats_mutex);
               greatest_gradient_value = std::abs(used_gradients[actual_weight_index]);
@@ -62,7 +62,7 @@ void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
       weight_filter_accumulate = std::accumulate(weight_filter.begin(), weight_filter.end(), 0.0);
     }
     if((0 < used_weight_filter_sum)||(0 < weight_filter_accumulate)){
-      gradient_overview = get_gradient_for_all_weights() * contexts[0]->expose_settings().get_learning_rate(iteration);
+      gradient_overview = get_gradient_for_all_weights() * training_contexts[0]->expose_settings().get_learning_rate(iteration);
     }
     if(0 < used_weight_filter_sum){ /* if any weights are included */
       for(std::uint32_t weight_index = 0; weight_index < used_gradients.size(); ++weight_index){
@@ -72,7 +72,7 @@ void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
           ); /*!Note: the biggest value in the weight gradients should be at most 1.0 after normalization,
               * so dividing by 1.0 + gradient_overview should normalize the offseted gradients
               */
-          used_gradients[weight_index] *= contexts[0]->expose_settings().get_learning_rate(iteration);
+          used_gradients[weight_index] *= training_contexts[0]->expose_settings().get_learning_rate(iteration);
         }
       }
       convert_direction_to_gradient(used_gradients,true);
@@ -82,10 +82,10 @@ void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
         chosen_weight_index = rand()%weight_filter.size();
       }
       /* approximize a single weight */
-      used_gradients[chosen_weight_index] = get_single_weight_gradient(chosen_weight_index, *contexts[0]) * weight_filter[chosen_weight_index];
+      used_gradients[chosen_weight_index] = get_single_weight_gradient(chosen_weight_index, *training_contexts[0]) * weight_filter[chosen_weight_index];
       used_gradients[chosen_weight_index] = (
         ( used_gradients[chosen_weight_index] + gradient_overview ) / (std::abs(used_gradients[chosen_weight_index]) + std::abs(gradient_overview))
-      ) * contexts[0]->expose_settings().get_learning_rate(iteration);
+      ) * training_contexts[0]->expose_settings().get_learning_rate(iteration);
       convert_direction_to_gradient(used_gradients,true);
     }
     tmp_data_pool.release_buffer(used_gradients);
@@ -94,15 +94,15 @@ void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
 }
 
 void RafkoNumericOptimizer::convert_direction_to_gradient(std::vector<double>& direction, bool save_to_fragment){
-  RFASSERT(contexts[0]->expose_network().weight_table_size() == static_cast<std::int32_t>(direction.size()));
+  RFASSERT(training_contexts[0]->expose_network().weight_table_size() == static_cast<std::int32_t>(direction.size()));
   double error_negative_direction;
   double error_positive_direction;
-  std::vector<double>& network_original_weights = tmp_data_pool.reserve_buffer(contexts[0]->expose_network().weight_table_size());
+  std::vector<double>& network_original_weights = tmp_data_pool.reserve_buffer(training_contexts[0]->expose_network().weight_table_size());
   std::vector<double>& negative_direction = tmp_data_pool.reserve_buffer(network_original_weights.size());
   std::vector<double>& tmp_weight_gradients = tmp_data_pool.reserve_buffer(network_original_weights.size());
   network_original_weights = {
-    contexts[0]->expose_network().weight_table().begin(),
-    contexts[0]->expose_network().weight_table().end()
+    training_contexts[0]->expose_network().weight_table().begin(),
+    training_contexts[0]->expose_network().weight_table().end()
   };
 
   if(2 <= execution_threads.get_number_of_threads()){
@@ -123,16 +123,16 @@ void RafkoNumericOptimizer::convert_direction_to_gradient(std::vector<double>& d
       }
 
       if(thread_index < 2){
-        *dir_error = get_error_from_direction(*contexts[thread_index], network_original_weights, *used_direction);
+        *dir_error = get_error_from_direction(*training_contexts[thread_index], network_original_weights, *used_direction);
       }
     });
   }else{ /* Check directions sequentially */
-    error_positive_direction = get_error_from_direction(*contexts[0], network_original_weights, direction);
+    error_positive_direction = get_error_from_direction(*training_contexts[0], network_original_weights, direction);
     std::transform(direction.begin(),direction.end(), negative_direction.begin(),
     [](const double& direction_value){
       return -direction_value;
     });
-    error_negative_direction = get_error_from_direction(*contexts[0], network_original_weights, negative_direction);
+    error_negative_direction = get_error_from_direction(*training_contexts[0], network_original_weights, negative_direction);
   }
 
   /* collect the fragment */
@@ -248,11 +248,11 @@ double RafkoNumericOptimizer::get_error_from_direction(
 double RafkoNumericOptimizer::get_gradient_for_all_weights(){
   double error_negative_direction;
   double error_positive_direction;
-  const double current_epsilon = contexts[0]->expose_settings().get_sqrt_epsilon();
+  const double current_epsilon = training_contexts[0]->expose_settings().get_sqrt_epsilon();
   const double current_epsilon_double = current_epsilon * (2.0);
   const std::vector<double> network_original_weights = {
-    contexts[0]->expose_network().weight_table().begin(),
-    contexts[0]->expose_network().weight_table().end()
+    training_contexts[0]->expose_network().weight_table().begin(),
+    training_contexts[0]->expose_network().weight_table().end()
   };
 
   if(2 <= execution_threads.get_number_of_threads()){
@@ -269,12 +269,12 @@ double RafkoNumericOptimizer::get_gradient_for_all_weights(){
       }
 
       if(thread_index < 2){
-        *dir_error = get_error_from_direction(*contexts[thread_index], network_original_weights, weight_addition);
+        *dir_error = get_error_from_direction(*training_contexts[thread_index], network_original_weights, weight_addition);
       }
     });
   }else{ /* Calculate the gradient sequentially */
-    error_positive_direction = get_error_from_direction(*contexts[0], network_original_weights, current_epsilon);
-    error_negative_direction = get_error_from_direction(*contexts[0], network_original_weights, -current_epsilon);
+    error_positive_direction = get_error_from_direction(*training_contexts[0], network_original_weights, current_epsilon);
+    error_negative_direction = get_error_from_direction(*training_contexts[0], network_original_weights, -current_epsilon);
   }
   return -(error_positive_direction - error_negative_direction) * (current_epsilon_double);
 }
@@ -340,7 +340,7 @@ void RafkoNumericOptimizer::add_to_fragment(std::uint32_t weight_index, double g
 
 void RafkoNumericOptimizer::apply_weight_vector_delta(){
   std::uint32_t fragment_value_index = 0;
-  std::vector<double>& tmp_weight_table = tmp_data_pool.reserve_buffer(contexts[0]->expose_network().weight_table_size());
+  std::vector<double>& tmp_weight_table = tmp_data_pool.reserve_buffer(training_contexts[0]->expose_network().weight_table_size());
   std::fill(tmp_weight_table.begin(),tmp_weight_table.end(), (0.0));
 
   if(1 == gradient_fragment.weight_synapses_size()){
@@ -356,10 +356,27 @@ void RafkoNumericOptimizer::apply_weight_vector_delta(){
     });
   }
 
-  contexts[0]->apply_weight_update(tmp_weight_table);
+  training_contexts[0]->apply_weight_update(tmp_weight_table);
   tmp_data_pool.release_buffer(tmp_weight_table);
   gradient_fragment = NetworkWeightVectorDelta();
-  /*!Note: This should help, but doesn't ..  contexts[0]->full_evaluation(); */
+  /*!Note: This should help, but doesn't ..  training_contexts[0]->full_evaluation(); */
+
+  /* Update test and training errors */
+  if(0 == (iteration%settings.get_tolerance_loop_value())){
+    training_contexts[0]->refresh_solution_weights();
+    last_training_error = -training_contexts[0]->stochastic_evaluation();
+  }
+  if(
+    (test_context)
+    &&(
+      (iteration > (last_tested_iteration + settings.get_tolerance_loop_value()))
+      ||((last_testing_error * settings.get_delta()) < std::abs(last_training_error - last_testing_error))
+    )
+  ){
+    training_contexts[0]->refresh_solution_weights();
+    last_testing_error = -training_contexts[0]->stochastic_evaluation();
+    last_tested_iteration = iteration;
+  }
 }
 
 } /* namespace rafko_gym */

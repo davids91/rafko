@@ -125,7 +125,7 @@ TEST_CASE("Testing aproximization fragment handling","[numeric_optimization][fra
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_shared<rafko_mainframe::RafkoCPUContext>(
     *network, objective, settings
   );
-  rafko_gym::RafkoNumericOptimizer approximizer({context},settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context}, {}, settings);
 
   /* adding a simple-weight-gradient fragment */
   std::uint32_t weight_index = rand()%(network->weight_table_size());
@@ -243,7 +243,7 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
       .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
   );
-  rafko_gym::RafkoNumericOptimizer approximizer({context1,context2},settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context1,context2}, {}, settings);
   context2->set_environment(environment);
   context2->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   context2->set_objective(objective);
@@ -352,7 +352,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
       .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
   );
-  rafko_gym::RafkoNumericOptimizer approximizer({context1,context2},settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context1,context2}, {}, settings);
   context2->set_environment(environment);
   context2->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   #else
@@ -361,13 +361,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
   rafko_gym::RafkoNumericOptimizer approximizer({context1},settings);
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  approximizer.set_weight_filter({
-    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 0 */
-    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 1 */
-    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 2 */
-    1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 3 */
-    // 1.0, 1.0, 1.0, 1.0, 1.0,  /* Neuron 4 */
-  });
+  approximizer.set_weight_filter(1.0);
   context1->set_environment(environment);
   context1->set_weight_updater(rafko_gym::weight_updater_amsgrad);
 

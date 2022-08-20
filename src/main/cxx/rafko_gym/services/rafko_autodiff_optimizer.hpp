@@ -81,7 +81,7 @@ public:
    *
    * @return    True, if training can be stopped
    */
-  bool stop_triggered(){
+  bool stop_triggered() const{
     return (
       (/* Early stopping */
         (training_evaluator && test_evaluator) && (
