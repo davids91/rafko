@@ -48,34 +48,34 @@ class RAFKO_FULL_EXPORT RafkoBackpropSpikeFnOperation
 public:
   RafkoBackpropSpikeFnOperation(
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    std::uint32_t operation_index, std::uint32_t neuron_index_
+    std::uint32_t operation_index, std::uint32_t neuron_index
   )
   : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_neuron_spike_d)
-  , neuron_index(neuron_index_)
-  , actual_operation_index(operation_index)
+  , m_neuronIndex(neuron_index)
+  , m_actualOperationIndex(operation_index)
   {
   }
   ~RafkoBackpropSpikeFnOperation() = default;
 
   std::uint32_t get_operation_index() const override{
-    return actual_operation_index;
+    return m_actualOperationIndex;
   }
 
   void set_operation_index(std::uint32_t index){
-    RFASSERT(!operation_index_final);
-    actual_operation_index = index;
+    RFASSERT(!m_operationIndexFinal);
+    m_actualOperationIndex = index;
   }
 
   bool operation_index_finalised() override{
-    return operation_index_final;
+    return m_operationIndexFinal;
   }
 
   DependencyRequest upload_dependencies_to_operations() override{
     return {{
-      {{ad_operation_neuron_transfer_d, {neuron_index}}},
+      {{ad_operation_neuron_transfer_d, {m_neuronIndex}}},
       [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>> dependencies){
         RFASSERT(1 == dependencies.size());
-        present_value_dependency = dependencies[0];
+        m_presentValueDependency = dependencies[0];
         set_registered();
       }
     }};
@@ -102,15 +102,15 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
-    RFASSERT(static_cast<bool>(present_value_dependency));
-    return {present_value_dependency};
+    RFASSERT(static_cast<bool>(m_presentValueDependency));
+    return {m_presentValueDependency};
   }
 
 private:
-  const std::uint32_t neuron_index;
-  std::shared_ptr<RafkoBackpropagationOperation> present_value_dependency;
-  std::uint32_t actual_operation_index;
-  bool operation_index_final = false;
+  const std::uint32_t m_neuronIndex;
+  std::shared_ptr<RafkoBackpropagationOperation> m_presentValueDependency;
+  std::uint32_t m_actualOperationIndex;
+  bool m_operationIndexFinal = false;
 };
 
 } /* namespace rafko_gym */

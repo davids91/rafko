@@ -56,27 +56,27 @@ template<typename Interval_type = IndexSynapseInterval>
 class RAFKO_FULL_EXPORT SynapseIterator{
 public:
    constexpr SynapseIterator(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval)
-  : synapse_interval(arg_synapse_interval)
-  , cached_size_var(size())
+  : m_synapseInterval(arg_synapse_interval)
+  , m_cachedSizeVar(size())
   { };
 
   constexpr void iterate(std::function< void(std::int32_t) > do_for_each_index, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
-    iterate(synapse_interval, do_for_each_index, interval_start, interval_size_);
+    iterate(m_synapseInterval, do_for_each_index, interval_start, interval_size_);
   }
   constexpr void iterate(std::function< void(Interval_type) > do_for_each_synapse, std::function< void(std::int32_t) > do_for_each_index, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
-    iterate(synapse_interval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
+    iterate(m_synapseInterval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
   }
   constexpr void iterate_terminatable(std::function< bool(std::int32_t) > do_for_each_index, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
-    iterate_terminatable(synapse_interval, do_for_each_index, interval_start, interval_size_);
+    iterate_terminatable(m_synapseInterval, do_for_each_index, interval_start, interval_size_);
   }
   constexpr void iterate_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, std::function< bool(std::int32_t) > do_for_each_index, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
-    iterate_terminatable(synapse_interval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
+    iterate_terminatable(m_synapseInterval, do_for_each_synapse, do_for_each_index, interval_start, interval_size_);
   }
   constexpr void skim(std::function< void(Interval_type) > do_for_each_synapse, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
-    skim(synapse_interval, do_for_each_synapse, interval_start, interval_size_);
+    skim(m_synapseInterval, do_for_each_synapse, interval_start, interval_size_);
   }
   constexpr void skim_terminatable(std::function< bool(Interval_type) > do_for_each_synapse, std::uint32_t interval_start = 0, std::uint32_t interval_size_ = 0) const{
-    skim_terminatable(synapse_interval, do_for_each_synapse, interval_start, interval_size_);
+    skim_terminatable(m_synapseInterval, do_for_each_synapse, interval_start, interval_size_);
   }
 
   static void skim(
@@ -204,15 +204,15 @@ public:
     std::uint32_t iteration_helper = 0;
     std::uint32_t synapse_start = 0;
 
-    if(last_reached_index <= index){
-      synapse_start = last_reached_synapse;
-      iteration_helper = last_reached_index;
-    }else last_reached_synapse = 0;
+    if(m_lastReachedIndex <= index){
+      synapse_start = m_lastReachedSynapse;
+      iteration_helper = m_lastReachedIndex;
+    }else m_lastReachedSynapse = 0;
 
     iterate_terminatable([&](Interval_type /*interval_synapse*/){
-      ++last_reached_synapse;
-      last_reached_index = iteration_helper;
-      previous_last_reached_index = last_reached_index;
+      ++m_lastReachedSynapse;
+      m_lastReachedIndex = iteration_helper;
+      previous_last_reached_index = m_lastReachedIndex;
       return true;
     },[&](std::int32_t synapse_index){
       if(iteration_helper < index){
@@ -224,8 +224,8 @@ public:
       }
     },synapse_start);
     RFASSERT(iteration_helper == index);
-    --last_reached_synapse;
-    last_reached_index = previous_last_reached_index;
+    --m_lastReachedSynapse;
+    m_lastReachedIndex = previous_last_reached_index;
     return result_index;
   }
 
@@ -236,15 +236,15 @@ public:
     std::uint32_t iteration_helper = 0;
     std::uint32_t synapse_start = 0;
 
-    if(last_reached_index <= nth_element){
-      synapse_start = last_reached_synapse;
-      iteration_helper = last_reached_index;
-    }else last_reached_synapse = 0;
+    if(m_lastReachedIndex <= nth_element){
+      synapse_start = m_lastReachedSynapse;
+      iteration_helper = m_lastReachedIndex;
+    }else m_lastReachedSynapse = 0;
 
     iterate_terminatable([&](InputSynapseInterval interval_synapse){
-      ++last_reached_synapse;
-      last_reached_index = iteration_helper;
-      previous_last_reached_index = last_reached_index;
+      ++m_lastReachedSynapse;
+      m_lastReachedIndex = iteration_helper;
+      previous_last_reached_index = m_lastReachedIndex;
       result_size = interval_synapse.interval_size();
       return true;
     },[&](std::int32_t /*synapse_index*/){
@@ -254,8 +254,8 @@ public:
       }else return false; /* queired nth_element reached, no need to continue */
     },synapse_start);
     RFASSERT(iteration_helper == nth_element);
-    --last_reached_synapse;
-    last_reached_index = previous_last_reached_index;
+    --m_lastReachedSynapse;
+    m_lastReachedIndex = previous_last_reached_index;
     return result_size;
   }
 
@@ -267,16 +267,16 @@ public:
     std::uint32_t iteration_helper = 0;
     std::uint32_t synapse_start = 0;
 
-    if(last_reached_index <= nth_element){
-      synapse_start = last_reached_synapse;
-      iteration_helper = last_reached_index;
-    }else last_reached_synapse = 0;
+    if(m_lastReachedIndex <= nth_element){
+      synapse_start = m_lastReachedSynapse;
+      iteration_helper = m_lastReachedIndex;
+    }else m_lastReachedSynapse = 0;
 
     std::int32_t synapse_reach;
     iterate_terminatable([&](InputSynapseInterval interval_synapse){
-      ++last_reached_synapse;
-      last_reached_index = iteration_helper;
-      previous_last_reached_index = last_reached_index;
+      ++m_lastReachedSynapse;
+      m_lastReachedIndex = iteration_helper;
+      previous_last_reached_index = m_lastReachedIndex;
       synapse_reach = interval_synapse.reach_past_loops();
       return true;
     },[&](std::int32_t /*synapse_index*/){
@@ -289,8 +289,8 @@ public:
       }
     },synapse_start);
     RFASSERT(iteration_helper == nth_element);
-    --last_reached_synapse;
-    last_reached_index = previous_last_reached_index;
+    --m_lastReachedSynapse;
+    m_lastReachedIndex = previous_last_reached_index;
     return result_reach;
   }
 
@@ -372,8 +372,8 @@ public:
    *
    */
   void refresh_cached_size(){
-    cached_size_var = size();
-    RFASSERT_LOG("Refreshing caches size in synapse iterator to: {}", cached_size_var);
+    m_cachedSizeVar = size();
+    RFASSERT_LOG("Refreshing caches size in synapse iterator to: {}", m_cachedSizeVar);
   }
 
   /**
@@ -384,7 +384,7 @@ public:
    * @return     Size of the Repeatedfiled for the  synapse_intervals
    */
   constexpr std::uint32_t cached_size() const{
-    return cached_size_var;
+    return m_cachedSizeVar;
   }
 
   /**
@@ -393,7 +393,7 @@ public:
    * @return     Size of the Repeatedfiled for the  synapse_intervals
    */
   std::uint32_t number_of_synapses() const{
-    return synapse_interval.size();
+    return m_synapseInterval.size();
   }
 
   /**
@@ -402,10 +402,10 @@ public:
    * @return     the last index of the synapse
    */
   std::int32_t back() const{
-    if(0 < synapse_interval.size()){
-      std::int32_t last_index = synapse_interval[synapse_interval.size()-1].starts();
-      if(is_index_input(last_index)) last_index -= synapse_interval[synapse_interval.size()-1].interval_size() - 1;
-        else last_index += synapse_interval[synapse_interval.size()-1].interval_size() - 1;
+    if(0 < m_synapseInterval.size()){
+      std::int32_t last_index = m_synapseInterval[m_synapseInterval.size()-1].starts();
+      if(is_index_input(last_index)) last_index -= m_synapseInterval[m_synapseInterval.size()-1].interval_size() - 1;
+        else last_index += m_synapseInterval[m_synapseInterval.size()-1].interval_size() - 1;
       return last_index;
     }else throw std::runtime_error("Last index requested from empty synapse!");
   }
@@ -416,8 +416,8 @@ public:
    * @return     Synapse interval defined by template function
    */
   Interval_type last_synapse() const{
-    if(0 < synapse_interval.size()){
-      return synapse_interval[synapse_interval.size()-1];
+    if(0 < m_synapseInterval.size()){
+      return m_synapseInterval[m_synapseInterval.size()-1];
     }else throw std::runtime_error("Last item requested from empty synapse!");
   }
 
@@ -472,11 +472,11 @@ public:
   }
 
 private:
-  const google::protobuf::RepeatedPtrField<Interval_type>& synapse_interval;
-  mutable std::uint32_t last_reached_synapse = 0u;
-  mutable std::uint32_t last_reached_index = 0u;
-  static std::uint32_t interval_size; /* temporary variable */
-  std::uint32_t cached_size_var;
+  const google::protobuf::RepeatedPtrField<Interval_type>& m_synapseInterval;
+  mutable std::uint32_t m_lastReachedSynapse = 0u;
+  mutable std::uint32_t m_lastReachedIndex = 0u;
+  static std::uint32_t m_intervalSize; /* temporary variable */
+  std::uint32_t m_cachedSizeVar;
 
   /**
    * @brief      Gets the number of synapses to iterate based on the provided start and size values.

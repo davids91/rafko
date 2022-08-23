@@ -75,8 +75,8 @@ public:
    * @return     The neuron index from subset.
    */
   std::uint32_t get_neuron_index_from_subset(std::uint32_t subset_index) const{
-    if((!collection_running)&&(0 < net_subset.size())){
-      return net_subset[subset_index];
+    if((!m_collectionRunning)&&(0 < m_netSubset.size())){
+      return m_netSubset[subset_index];
     }else throw std::runtime_error("Invalid usage or Index out of bounds!");
   }
 
@@ -88,8 +88,8 @@ public:
    * @return     Operation success
    */
   [[nodiscard]] bool get_first_neuron_index_from_subset(std::uint32_t& put_it_here) const{
-    if((!collection_running)&&(0 < net_subset.size())){
-      put_it_here = net_subset.front();
+    if((!m_collectionRunning)&&(0 < m_netSubset.size())){
+      put_it_here = m_netSubset.front();
       return true;
     } else return false;
   }
@@ -117,7 +117,7 @@ public:
    * @return     Operation success
    */
   [[nodiscard]] bool confirm_first_subset_element_ommitted(std::uint32_t neuron_index){
-    if((0 < net_subset.size())&&(neuron_index == net_subset.front())){
+    if((0 < m_netSubset.size())&&(neuron_index == m_netSubset.front())){
       omit_from_subset(neuron_index);
       return true;
     } else return false;
@@ -136,8 +136,8 @@ public:
    */
   [[nodiscard]] bool confirm_first_subset_element_ommitted(std::uint32_t neuron_index, std::deque<std::uint32_t>& paired_array){
     if(
-      (0 < net_subset.size())&&(neuron_index == net_subset.front())
-      &&(net_subset.size() == paired_array.size())
+      (0 < m_netSubset.size())&&(neuron_index == m_netSubset.front())
+      &&(m_netSubset.size() == paired_array.size())
     ){
       omit_from_subset(neuron_index, paired_array);
       return true;
@@ -153,7 +153,7 @@ public:
    */
   void reset_all_except(std::vector<std::uint32_t> the_front){
     std::uint32_t front_index = 0;
-    for(std::uint32_t subset_index : net_subset){
+    for(std::uint32_t subset_index : m_netSubset){
       if(the_front.size() == front_index)
         break; /* Only go through the front, for checking. The remaining Neurons shall be resetted */
       if(subset_index != the_front[front_index]){ /* The indices have to match */
@@ -161,7 +161,7 @@ public:
       }else ++front_index;
     }
     /* This point is not reachable if there is a mismatch */
-    net_subset.resize(the_front.size()); /* This also means, that the front is an exact first part of the subset */
+    m_netSubset.resize(the_front.size()); /* This also means, that the front is an exact first part of the subset */
   }
 
   /**
@@ -170,15 +170,15 @@ public:
    * @return     The subset size.
    */
   std::uint32_t get_subset_size() const{
-    return net_subset.size();
+    return m_netSubset.size();
   }
 
   std::uint32_t get_subset_size_bytes() const{
-    return net_subset_size_bytes;
+    return m_netSubsetSizeBytes;
   }
 
   double get_subset_size_megabytes() const{
-    return( static_cast<double>(net_subset_size_bytes) / ((1024.0) * (1024.0)) );
+    return( static_cast<double>(m_netSubsetSizeBytes) / ((1024.0) * (1024.0)) );
   }
 
   /**
@@ -187,16 +187,16 @@ public:
    * @return     The subset.
    */
   constexpr const std::deque<std::uint32_t>& get_subset() const{
-    return net_subset;
+    return m_netSubset;
   }
 
   /**
    * @brief      Clears the subset and sets the neuron states of the items in it to be in progress.
    */
   void reset_remaining_subset(){
-    while(0 < net_subset.size())
-      (void)confirm_first_subset_element_ommitted(net_subset.front());
-    net_subset_size_bytes.store(0);
+    while(0 < m_netSubset.size())
+      (void)confirm_first_subset_element_ommitted(m_netSubset.front());
+    m_netSubsetSizeBytes.store(0);
   }
 
   /**
@@ -206,8 +206,8 @@ public:
    */
   bool finished() const{
     return (
-      (static_cast<int>(output_layer_iterator) == (net.neuron_array_size()-1))
-      &&(is_neuron_processed(output_layer_iterator))
+      (static_cast<int>(m_outputLayerIterator) == (m_net.neuron_array_size()-1))
+      &&(is_neuron_processed(m_outputLayerIterator))
     );
   }
 
@@ -223,30 +223,30 @@ public:
   bool is_neuron_without_dependency(std::uint32_t neuron_index);
 
   bool is_neuron_in_progress(std::uint32_t neuron_index) const{
-    return (neuron_number_of_inputs[neuron_index] > *neuron_states[neuron_index]);
+    return (m_neuronNumberOfInputs[neuron_index] > *m_neuronStates[neuron_index]);
   }
   bool is_neuron_reserved(std::uint32_t neuron_index) const{
-    return (neuron_state_reserved_value(neuron_index) == *neuron_states[neuron_index]);
+    return (neuron_state_reserved_value(neuron_index) == *m_neuronStates[neuron_index]);
   }
   bool is_neuron_solvable(std::uint32_t neuron_index) const{
-    return (neuron_number_of_inputs[neuron_index] == *neuron_states[neuron_index]);
+    return (m_neuronNumberOfInputs[neuron_index] == *m_neuronStates[neuron_index]);
   }
   bool is_neuron_processed(std::uint32_t neuron_index) const{
-    return (neuron_state_processed_value(neuron_index) == *neuron_states[neuron_index]);
+    return (neuron_state_processed_value(neuron_index) == *m_neuronStates[neuron_index]);
   }
 private:
-  const RafkoNet& net;
-  bool collection_running = false;
+  const RafkoNet& m_net;
+  bool m_collectionRunning = false;
 
   /**
    * helper variables representing the relevant features the router needs to consider
    */
-  std::vector<FeatureGroupCache> tracked_features;
+  std::vector<FeatureGroupCache> m_trackedFeatures;
 
   /**
    * Number of already processed output layer Neurons
    */
-  std::atomic<std::uint32_t> output_layer_iterator;
+  std::atomic<std::uint32_t> m_outputLayerIterator;
 
   /**
    * For each @Neuron in @RafkoNet stores the processed state. Values:
@@ -254,30 +254,30 @@ private:
    *  - Number of processed children + 1 in case the Neuron is reserved
    *  - Number of processed children + 2 in case the Neuron is processed
    */
-  std::vector<std::unique_ptr<std::atomic<std::uint32_t>>> neuron_states;
+  std::vector<std::unique_ptr<std::atomic<std::uint32_t>>> m_neuronStates;
 
   /**
    * Number of inputs a Neuron has, based on the input index synapse sizes
    */
-  std::vector<std::uint32_t> neuron_number_of_inputs;
+  std::vector<std::uint32_t> m_neuronNumberOfInputs;
 
   /**
    * A vector of index values which points to an element inside of the the tracked feature array
    */
-  std::vector<std::vector<std::uint32_t>> features_assigned_to_neurons;
+  std::vector<std::vector<std::uint32_t>> m_featuresAssignedToNeurons;
 
   /**
    * A subset of the net representing independent solutions
    */
-  std::mutex net_subset_mutex;
-  std::atomic<double> net_subset_size_bytes = (0.0); /* The size of the currently partial solution to be built in bytes */
-  std::deque<std::uint32_t> net_subset_index;
-  std::deque<std::uint32_t> net_subset;
+  std::mutex m_netSubsetMutex;
+  std::atomic<double> m_netSubsetSizeBytes = (0.0); /* The size of the currently partial solution to be built in bytes */
+  std::deque<std::uint32_t> m_netSubsetIndex;
+  std::deque<std::uint32_t> m_netSubset;
 
   /**
    * The number of times the algorithm ran to look for Neuron candidates, it is used to decide relevance to the currently finished subset.
    */
-  std::uint16_t iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
+  std::uint16_t m_iteration = 1; /* Has to start with 1, otherwise values mix with neuron processed value */
 
   /**
    * @brief      Called form inside @collect_subset; A thread to handle @collect_subset

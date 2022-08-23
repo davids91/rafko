@@ -42,16 +42,16 @@ class RAFKO_FULL_EXPORT RafkoBackpropWeightRegOperation
 {
 public:
   RafkoBackpropWeightRegOperation(
-    const rafko_mainframe::RafkoSettings& settings_, RafkoBackpropagationData& data,
+    const rafko_mainframe::RafkoSettings& settings, RafkoBackpropagationData& data,
     const rafko_net::RafkoNet& network, std::uint32_t operation_index,
-    const rafko_net::FeatureGroup& feature_group_
+    const rafko_net::FeatureGroup& feature_group
   )
   : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_weight_regularization_feature)
-  , settings(settings_)
-  , feature_group(feature_group_)
-  , each_weight_derivative(network.weight_table_size())
+  , m_settings(settings)
+  , m_featureGroup(feature_group)
+  , m_eachWeightDerivative(m_network.weight_table_size())
   {
-    relevant_index_values.reserve(network.weight_table_size());
+    m_relevantIndexValues.reserve(m_network.weight_table_size());
     refresh_weight_derivatives();
   }
   ~RafkoBackpropWeightRegOperation() = default;
@@ -65,7 +65,7 @@ public:
     /*!Note: Calculated value is not exactly important here, but avg_derivatives
      * need only be calculated once for weight regularization logic, so they are calculated here
      */
-    if(feature_group.feature() == rafko_net::neuron_group_feature_l2_regularization){
+    if(m_featureGroup.feature() == rafko_net::neuron_group_feature_l2_regularization){
       refresh_weight_derivatives();
     }
     /*!Note: l1 need not be refreshed, as structural changes are not yet present */
@@ -77,9 +77,9 @@ public:
   ) override{
     RFASSERT(is_value_processed());
     RFASSERT(are_dependencies_registered());
-    RFASSERT(d_w_index < each_weight_derivative.size());
-    RFASSERT(static_cast<std::int32_t>(d_w_index) < network.weight_table_size());
-    set_derivative(d_w_index, each_weight_derivative[d_w_index]);
+    RFASSERT(d_w_index < m_eachWeightDerivative.size());
+    RFASSERT(static_cast<std::int32_t>(d_w_index) < m_network.weight_table_size());
+    set_derivative(d_w_index, m_eachWeightDerivative[d_w_index]);
     set_derivative_processed();
   }
 
@@ -102,7 +102,7 @@ public:
     std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
   ) const override{
     return rafko_net::RafkoNetworkFeature::generate_kernel_code(
-      settings, feature_group.feature(), relevant_index_values,
+      m_settings, m_featureGroup.feature(), m_relevantIndexValues,
       weight_array, "0"/*input_start_index*/, operations_derivative_array/* output_array */,
       std::to_string(get_operation_index())/*output_start_index*/, false/*declare_locals*/
     );
@@ -114,10 +114,10 @@ public:
   }
 
 private:
-  const rafko_mainframe::RafkoSettings& settings;
-  const rafko_net::FeatureGroup& feature_group;
-  std::vector<double> each_weight_derivative;
-  std::vector<std::uint32_t> relevant_index_values;
+  const rafko_mainframe::RafkoSettings& m_settings;
+  const rafko_net::FeatureGroup& m_featureGroup;
+  std::vector<double> m_eachWeightDerivative;
+  std::vector<std::uint32_t> m_relevantIndexValues;
 
   void refresh_weight_derivatives();
 };

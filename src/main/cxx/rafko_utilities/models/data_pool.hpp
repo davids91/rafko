@@ -35,9 +35,9 @@ template<class T = double>
 class RAFKO_FULL_EXPORT DataPool{
 public:
   DataPool(std::uint32_t pool_size, std::uint32_t expected_buffer_size)
-  : buffer_pool(pool_size, std::vector<T>())
+  : m_bufferPool(pool_size, std::vector<T>())
   {
-    std::for_each(buffer_pool.begin(),buffer_pool.end(),[=](std::vector<T>& buf){
+    std::for_each(m_bufferPool.begin(),m_bufferPool.end(),[=](std::vector<T>& buf){
       buf.reserve(expected_buffer_size);
     });
   }
@@ -50,15 +50,15 @@ public:
    * @param[in]     number_of_elements    The number of elements to have in the reserved buffer
    */
   [[nodiscard]] std::vector<T>& reserve_buffer(std::uint32_t number_of_elements){
-    std::lock_guard<std::mutex> my_lock(buffers_mutex);
-  	for(std::uint32_t buffer_index = 0; buffer_index < buffer_pool.size();++buffer_index){
-  		if(0u == buffer_pool[buffer_index].size()){ /* if the vector[buffer_index] has 0 elements --> the vector is free */
-  			buffer_pool[buffer_index].resize(number_of_elements); /* reserve the vector */
-  			return buffer_pool[buffer_index]; /* and make it available */
+    std::lock_guard<std::mutex> my_lock(m_buffersMutex);
+  	for(std::uint32_t buffer_index = 0; buffer_index < m_bufferPool.size();++buffer_index){
+  		if(0u == m_bufferPool[buffer_index].size()){ /* if the vector[buffer_index] has 0 elements --> the vector is free */
+  			m_bufferPool[buffer_index].resize(number_of_elements); /* reserve the vector */
+  			return m_bufferPool[buffer_index]; /* and make it available */
   		}
   	}
-  	buffer_pool.push_back(std::vector<T>(number_of_elements));
-  	return buffer_pool.back();
+  	m_bufferPool.push_back(std::vector<T>(number_of_elements));
+  	return m_bufferPool.back();
   }
 
   /**
@@ -67,13 +67,13 @@ public:
    * @param     buffer    The reference to the reserved buffer to free up
    */
   constexpr void release_buffer(std::vector<T>& buffer){
-    std::lock_guard<std::mutex> my_lock(buffers_mutex);
+    std::lock_guard<std::mutex> my_lock(m_buffersMutex);
   	buffer.resize(0);
   }
 
 private:
-  std::deque<std::vector<T>> buffer_pool;
-  std::mutex buffers_mutex;
+  std::deque<std::vector<T>> m_bufferPool;
+  std::mutex m_buffersMutex;
 };
 
 } /* namespace rafko_utilities */

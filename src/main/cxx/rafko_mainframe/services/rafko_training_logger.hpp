@@ -35,19 +35,19 @@ namespace rafko_mainframe{
  */
 class RafkoTrainingLogger{
 public:
-  RafkoTrainingLogger(std::string id_, RafkoSettings& settings)
-  : id(id_)
-  , settings(settings)
+  RafkoTrainingLogger(std::string id, RafkoSettings& settings)
+  : m_id(id)
+  , m_settings(settings)
   { }
 
   void log(std::uint32_t iteration, const std::vector<std::uint32_t>& coordinates, const std::vector<std::string>& tags, const std::vector<double>& data);
   void flush();
 
 private:
-  std::string id;
-  RafkoSettings& settings;
-  Measurement measurement;
-  std::uint32_t changes_since = 0u;
+  std::string m_id;
+  RafkoSettings& m_settings;
+  Measurement m_measurement;
+  std::uint32_t m_changesSince = 0u;
 };
 
 } /* namespace rafko_mainframe */

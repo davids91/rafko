@@ -29,18 +29,18 @@
 namespace rafko_gym{
 
 std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_input_shapes() const{
-  RFASSERT(static_cast<bool>(environment));
+  RFASSERT(static_cast<bool>(m_environment));
   RFASSERT_LOG(
     "Autodiff strategy Input shape: (weights: {} + inputs: {} + Labels: {} + sequence start: + sequence truncation: {} + d_w_index: {})",
-    /* Weights */ (static_cast<std::uint32_t>(network.weight_table_size())),
-    /* Inputs */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
-    /* Labels */(environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
+    /* Weights */ (static_cast<std::uint32_t>(m_network.weight_table_size())),
+    /* Inputs */ (m_environment->get_number_of_sequences() * m_environment->get_inputs_in_one_sequence() * m_network.input_data_size()),
+    /* Labels */(m_environment->get_number_of_sequences() * m_environment->get_sequence_size() * m_network.output_neuron_number()),
     /* Sequence_start_index */ 1u, /* Sequence_truncation */ 1u, /* d_w_index */ 1u
   );
   return{ rafko_mainframe::RafkoNBufShape{
-    /* Weights */ (static_cast<std::uint32_t>(network.weight_table_size())),
-    /* Inputs */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * network.input_data_size()),
-    /* Labels */(environment->get_number_of_sequences() * environment->get_sequence_size() * network.output_neuron_number()),
+    /* Weights */ (static_cast<std::uint32_t>(m_network.weight_table_size())),
+    /* Inputs */ (m_environment->get_number_of_sequences() * m_environment->get_inputs_in_one_sequence() * m_network.input_data_size()),
+    /* Labels */(m_environment->get_number_of_sequences() * m_environment->get_sequence_size() * m_network.output_neuron_number()),
     /* Sequence_start_index */ 1u, /* Sequence_truncation */ 1u, /* d_w_index */ 1u
   } };
 }
@@ -48,18 +48,18 @@ std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_input_shap
 std::vector<rafko_mainframe::RafkoNBufShape> AutoDiffGPUStrategy::get_output_shapes() const{
   RFASSERT_LOG(
     "Autdiff GPU Strategy output buffer overall size: (op values: {} + op derivatives: {} + w derivatives: {})",
-    /* operation values */ (environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * number_of_operations ),
-    /* operation derivatives */ (environment->get_number_of_sequences() * environment->get_sequence_size() * number_of_operations),
-    /* Weight derivatives */ static_cast<std::uint32_t>(network.weight_table_size())
+    /* operation values */ (m_environment->get_number_of_sequences() * m_environment->get_inputs_in_one_sequence() * m_numberOfOperations ),
+    /* operation derivatives */ (m_environment->get_number_of_sequences() * m_environment->get_sequence_size() * m_numberOfOperations),
+    /* Weight derivatives */ static_cast<std::uint32_t>(m_network.weight_table_size())
   );
   return{ rafko_mainframe::RafkoNBufShape{
     ( /* operation values */
-      environment->get_number_of_sequences() * environment->get_inputs_in_one_sequence() * number_of_operations
+      m_environment->get_number_of_sequences() * m_environment->get_inputs_in_one_sequence() * m_numberOfOperations
     ),
     ( /* operation derivatives */
-      environment->get_number_of_sequences() * environment->get_sequence_size() * number_of_operations
+      m_environment->get_number_of_sequences() * m_environment->get_sequence_size() * m_numberOfOperations
     ),
-    /* Weight derivatives */ static_cast<std::uint32_t>(network.weight_table_size())
+    /* Weight derivatives */ static_cast<std::uint32_t>(m_network.weight_table_size())
   } };
 }
 
@@ -138,7 +138,7 @@ std::string AutoDiffGPUStrategy::generate_switch_case_kernels_from(
   avg_row_size = static_cast<std::uint32_t>( std::ceil(
     static_cast<double>(avg_row_size) / static_cast<double>(operations_matrix.size())
   ) );
-  maximum_local_workers = avg_row_size;
+  m_maximumLocalWorkers = avg_row_size;
 
   for(const std::vector<std::uint32_t>& current_row : operations_matrix){
     /*!Note: one row to be split up between the workers */
@@ -345,7 +345,7 @@ void AutoDiffGPUStrategy::build(
   )";
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==network_memory_size=="),
-    std::to_string(network.memory_size())
+    std::to_string(m_network.memory_size())
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==operation_count=="),
@@ -353,23 +353,23 @@ void AutoDiffGPUStrategy::build(
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==neuron_count=="),
-    std::to_string(network.neuron_array_size())
+    std::to_string(m_network.neuron_array_size())
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==sequence_size=="),
-    std::to_string(environment->get_sequence_size())
+    std::to_string(m_environment->get_sequence_size())
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==prefill_num=="),
-    std::to_string(environment->get_prefill_inputs_number())
+    std::to_string(m_environment->get_prefill_inputs_number())
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==number_of_sequences=="),
-    std::to_string(environment->get_number_of_sequences())
+    std::to_string(m_environment->get_number_of_sequences())
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==minibatch_size=="), std::to_string( std::min(
-      settings.get_minibatch_size(), environment->get_number_of_sequences()
+      m_settings.get_minibatch_size(), m_environment->get_number_of_sequences()
     ) )
   );
   source_base = rafko_utilities::replace_all_in_string(
@@ -426,15 +426,15 @@ void AutoDiffGPUStrategy::build(
     source_base, std::regex("==derivative_operations=="), derivative_operation_switch_cases
   );
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==one_input_size=="), std::to_string(environment->get_input_size())
+    source_base, std::regex("==one_input_size=="), std::to_string(m_environment->get_input_size())
   );
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==one_label_size=="), std::to_string(environment->get_feature_size())
+    source_base, std::regex("==one_label_size=="), std::to_string(m_environment->get_feature_size())
   );
   RFASSERT_LOG("Optimizer source: {}", source_base);
-  built_source = source_base;
-  number_of_operations = operations.size();
-  built = true;
+  m_builtSource = source_base;
+  m_numberOfOperations = operations.size();
+  m_built = true;
 }
 
 

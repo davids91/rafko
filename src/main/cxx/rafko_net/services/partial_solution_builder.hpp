@@ -36,9 +36,9 @@ namespace rafko_net{
  */
 class RAFKO_FULL_EXPORT PartialSolutionBuilder{
 public:
-  PartialSolutionBuilder(PartialSolution& partial_)
-  : partial(partial_)
-  , input_synapse(partial.input_data())
+  PartialSolutionBuilder(PartialSolution& partial)
+  : m_partial(partial)
+  , m_inputSynapse(m_partial.input_data())
   { }
 
   /**
@@ -53,21 +53,21 @@ public:
   [[nodiscard]] std::pair<std::uint32_t,std::uint32_t> add_neuron_to_partial_solution(const RafkoNet& net, std::uint32_t neuron_index);
 
 private:
-  PartialSolution& partial;
-  SynapseIterator<InputSynapseInterval> input_synapse;
-  std::unordered_map<std::uint64_t,std::uint32_t> found_network_input_in_partial_input;
+  PartialSolution& m_partial;
+  SynapseIterator<InputSynapseInterval> m_inputSynapse;
+  std::unordered_map<std::uint64_t,std::uint32_t> m_foundNetworkInputInPartialInput;
 
-  std::uint32_t neuron_synapse_count = 0u;
-  std::uint32_t partial_input_synapse_count = 0u;
-  std::int32_t previous_neuron_input_index;
-  std::uint8_t previous_neuron_input_source;
+  std::uint32_t m_neuronSynapseCount = 0u;
+  std::uint32_t m_partialInputSynapseCount = 0u;
+  std::int32_t m_previousNeuronInputIndex;
+  std::uint8_t m_previousNeuronInputSource;
 
   /**
    *  definitions to assign a source of a neurons input upon building up the partial solution
    */
-  static const std::uint8_t neuron_input_none = 0u;
-  static const std::uint8_t neuron_input_internal = 1u;
-  static const std::uint8_t neuron_input_external = 2u;
+  static const std::uint8_t m_neuronInputNone = 0u;
+  static const std::uint8_t m_neuronInputInternal = 1u;
+  static const std::uint8_t m_neuronInputExternal = 2u;
 
   /**
    * @brief      Looks for the given Neuron index in the @PartialSolution input,

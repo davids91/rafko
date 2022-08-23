@@ -60,76 +60,76 @@ namespace rafko_gym{
  */
 class RAFKO_FULL_EXPORT RafkoDatasetWrapper : public RafkoEnvironment{
 public:
-  explicit RafkoDatasetWrapper(const rafko_gym::DataSet& samples_)
-  : sequence_size(std::max(1u,samples_.sequence_size()))
-  , input_samples(samples_.inputs_size() / samples_.input_size())
-  , label_samples(samples_.labels_size() / samples_.feature_size())
-  , prefill_sequences( static_cast<std::uint32_t>((input_samples.size() - label_samples.size())) / (label_samples.size() / sequence_size) )
+  explicit RafkoDatasetWrapper(const rafko_gym::DataSet& samples)
+  : m_sequenceSize(std::max(1u,samples.sequence_size()))
+  , m_inputSamples(samples.inputs_size() / samples.input_size())
+  , m_labelSamples(samples.labels_size() / samples.feature_size())
+  , m_prefillSequences( static_cast<std::uint32_t>((m_inputSamples.size() - m_labelSamples.size())) / (m_labelSamples.size() / m_sequenceSize) )
   {
-    RFASSERT(0 == (label_samples.size()%sequence_size));
-    RFASSERT(0 < samples_.input_size());
-    RFASSERT(0 < samples_.feature_size());
-    RFASSERT(0 < samples_.sequence_size());
-    RFASSERT(0 < samples_.inputs_size());
-    RFASSERT(0 < samples_.labels_size());
-    fill(samples_);
+    RFASSERT(0 == (m_labelSamples.size()%m_sequenceSize));
+    RFASSERT(0 < samples.input_size());
+    RFASSERT(0 < samples.feature_size());
+    RFASSERT(0 < samples.sequence_size());
+    RFASSERT(0 < samples.inputs_size());
+    RFASSERT(0 < samples.labels_size());
+    fill(samples);
   }
 
-  RafkoDatasetWrapper(std::vector<std::vector<double>>&& input_samples_, std::vector<std::vector<double>>&& label_samples_, std::uint32_t sequence_size_ = 1u)
-  : sequence_size(std::max(1u,sequence_size_))
-  , input_samples(std::move(input_samples_))
-  , label_samples(std::move(label_samples_))
-  , prefill_sequences(static_cast<std::uint32_t>((input_samples.size() - label_samples.size()) / (label_samples.size() / sequence_size)))
+  RafkoDatasetWrapper(std::vector<std::vector<double>>&& input_samples, std::vector<std::vector<double>>&& label_samples, std::uint32_t sequence_size = 1u)
+  : m_sequenceSize(std::max(1u,sequence_size))
+  , m_inputSamples(std::move(input_samples))
+  , m_labelSamples(std::move(label_samples))
+  , m_prefillSequences(static_cast<std::uint32_t>((m_inputSamples.size() - m_labelSamples.size()) / (m_labelSamples.size() / m_sequenceSize)))
   {
-    RFASSERT(0 == (label_samples.size()%sequence_size));
-    RFASSERT(0 < input_samples.size());
-    RFASSERT(input_samples.size() == label_samples.size());
+    RFASSERT(0 == (m_labelSamples.size()%m_sequenceSize));
+    RFASSERT(0 < m_inputSamples.size());
+    RFASSERT(m_inputSamples.size() == m_labelSamples.size());
   }
 
   const std::vector<double>& get_input_sample(std::uint32_t raw_input_index) const override{
-    RFASSERT(input_samples.size() > raw_input_index);
-    return input_samples[raw_input_index];
+    RFASSERT(m_inputSamples.size() > raw_input_index);
+    return m_inputSamples[raw_input_index];
   }
 
   constexpr const std::vector<std::vector<double>>& get_input_samples() const override{
-    return input_samples;
+    return m_inputSamples;
   }
 
   const std::vector<double>& get_label_sample(std::uint32_t raw_label_index) const override{
-    RFASSERT(label_samples.size() > raw_label_index);
-    return label_samples[raw_label_index];
+    RFASSERT(m_labelSamples.size() > raw_label_index);
+    return m_labelSamples[raw_label_index];
   }
 
   const std::vector<std::vector<double>>& get_label_samples() const override{
-    return label_samples;
+    return m_labelSamples;
   }
 
   std::uint32_t get_feature_size() const override{
-    return label_samples[0].size();
+    return m_labelSamples[0].size();
   }
 
   std::uint32_t get_input_size() const override{
-    return input_samples[0].size();
+    return m_inputSamples[0].size();
   }
 
   std::uint32_t get_number_of_input_samples() const override{
-    return input_samples.size();
+    return m_inputSamples.size();
   }
 
   std::uint32_t get_number_of_label_samples() const override{
-    return label_samples.size();
+    return m_labelSamples.size();
   }
 
   std::uint32_t get_number_of_sequences() const override{
-    return (get_number_of_label_samples() / sequence_size);
+    return (get_number_of_label_samples() / m_sequenceSize);
   }
 
   constexpr std::uint32_t get_sequence_size() const override{
-    return sequence_size;
+    return m_sequenceSize;
   }
 
   constexpr std::uint32_t get_prefill_inputs_number() const override{
-    return prefill_sequences;
+    return m_prefillSequences;
   }
 
   /*!Note: There's no state to talk about with this specialization */
@@ -137,10 +137,10 @@ public:
   constexpr void pop_state() override{ }
 
 private:
-  const std::uint32_t sequence_size;
-  std::vector<std::vector<double>> input_samples;
-  std::vector<std::vector<double>> label_samples;
-  const std::uint32_t prefill_sequences; /* Number of input sequences used only to create an initial state for the Neural network */
+  const std::uint32_t m_sequenceSize;
+  std::vector<std::vector<double>> m_inputSamples;
+  std::vector<std::vector<double>> m_labelSamples;
+  const std::uint32_t m_prefillSequences; /* Number of input sequences used only to create an initial state for the Neural network */
 
   /**
    * @brief      Converting the @rafko_gym::DataSet message to vectors

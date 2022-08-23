@@ -50,9 +50,9 @@ public:
    * @param      output_neuron_data   The reference to transfer function output
    */
    void solve(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer<>& output_neuron_data) const{
-     std::vector<double>& used_buffer = common_data_pool.reserve_buffer(get_required_tmp_data_size());
+     std::vector<double>& used_buffer = m_commonDataPool.reserve_buffer(get_required_tmp_data_size());
      solve_internal(input_data, output_neuron_data, used_buffer);
-     common_data_pool.release_buffer(used_buffer);
+     m_commonDataPool.release_buffer(used_buffer);
    }
 
    /**
@@ -111,7 +111,7 @@ public:
   }
 
 private:
-  static rafko_utilities::DataPool<double> common_data_pool;
+  static rafko_utilities::DataPool<double> m_commonDataPool;
 
   /**
    * The Partial solution to solve

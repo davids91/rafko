@@ -45,16 +45,16 @@ namespace rafko_gym{
 class RAFKO_FULL_EXPORT RafkoCost : public RafkoObjective
 {
 public:
-  RafkoCost(rafko_mainframe::RafkoSettings& settings_, std::shared_ptr<rafko_gym::CostFunction> cost_function_)
-  : settings(settings_)
-  , cost_function(cost_function_)
-  , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
+  RafkoCost(rafko_mainframe::RafkoSettings& settings, std::shared_ptr<rafko_gym::CostFunction> cost_function)
+  : m_settings(settings)
+  , m_costFunction(cost_function)
+  , m_errorCalculationThreads(settings.get_sqrt_of_solve_threads())
   { }
 
-  RafkoCost(rafko_mainframe::RafkoSettings& settings_, rafko_gym::Cost_functions the_function)
-  : settings(settings_)
-  , cost_function(rafko_gym::FunctionFactory::build_cost_function(the_function, settings_))
-  , error_calculation_threads(settings_.get_sqrt_of_solve_threads())
+  RafkoCost(rafko_mainframe::RafkoSettings& settings, rafko_gym::Cost_functions the_function)
+  : m_settings(settings)
+  , m_costFunction(rafko_gym::FunctionFactory::build_cost_function(the_function, settings))
+  , m_errorCalculationThreads(settings.get_sqrt_of_solve_threads())
   { }
 
   /* +++ Methods taken from @RafkoObjective +++ */
@@ -81,27 +81,27 @@ public:
   ) const override;
 
   double get_derivative(double label_value, double feature_value, double feature_d, double sample_number) const override{
-    return cost_function->get_derivative(label_value, feature_value, feature_d, sample_number);
+    return m_costFunction->get_derivative(label_value, feature_value, feature_d, sample_number);
   }
 
   #if(RAFKO_USES_OPENCL)
-  void set_gpu_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_) override{
-    cost_function->set_parameters(pairs_to_evaluate_, feature_size_);
-    pairs_to_evaluate = pairs_to_evaluate_;
+  void set_gpu_parameters(std::uint32_t pairs_to_evaluate, std::uint32_t feature_size) override{
+    m_costFunction->set_parameters(pairs_to_evaluate, feature_size);
+    m_pairsToEvaluate = pairs_to_evaluate;
   }
 
   std::string get_derivative_kernel_source(
     std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
   ) const override{
-    return cost_function->get_derivative_kernel_source(label_value, feature_value, feature_d, sample_number);
+    return m_costFunction->get_derivative_kernel_source(label_value, feature_value, feature_d, sample_number);
   }
 
   cl::Program::Sources get_step_sources() const override{
-    return cost_function->get_step_sources();
+    return m_costFunction->get_step_sources();
   }
 
   std::vector<std::string> get_step_names() const override{
-    return cost_function->get_step_names();
+    return m_costFunction->get_step_names();
   }
 
   /**
@@ -113,7 +113,7 @@ public:
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override{
-    return cost_function->get_input_shapes();
+    return m_costFunction->get_input_shapes();
   }
 
   /**
@@ -125,24 +125,24 @@ public:
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override{
-    return cost_function->get_output_shapes();
+    return m_costFunction->get_output_shapes();
   }
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
-    return cost_function->get_solution_space();
+    return m_costFunction->get_solution_space();
   }
   #endif/*(RAFKO_USES_OPENCL)*/
   /* --- Methods taken from @RafkoObjective --- */
 
 
 private:
-  static rafko_utilities::DataPool<double> common_datapool;
+  static rafko_utilities::DataPool<double> m_commonDatapool;
 
-  rafko_mainframe::RafkoSettings& settings;
-  std::shared_ptr<rafko_gym::CostFunction> cost_function;
-  rafko_utilities::ThreadGroup error_calculation_threads;
+  rafko_mainframe::RafkoSettings& m_settings;
+  std::shared_ptr<rafko_gym::CostFunction> m_costFunction;
+  rafko_utilities::ThreadGroup m_errorCalculationThreads;
   #if(RAFKO_USES_OPENCL)
-  std::uint32_t pairs_to_evaluate = 1u;
+  std::uint32_t m_pairsToEvaluate = 1u;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   /**

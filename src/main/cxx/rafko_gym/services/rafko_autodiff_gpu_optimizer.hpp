@@ -41,19 +41,19 @@ class RAFKO_FULL_EXPORT RafkoAutodiffGPUOptimizer
 {
 public:
   RafkoAutodiffGPUOptimizer(
-    cl::Context&& context_, cl::Device device_,
-    const rafko_mainframe::RafkoSettings& settings_,
-    std::shared_ptr<RafkoEnvironment> environment_, rafko_net::RafkoNet& network_,
-    std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator_ = {},
-    std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator_ = {}
+    cl::Context&& context, cl::Device device,
+    const rafko_mainframe::RafkoSettings& settings,
+    std::shared_ptr<RafkoEnvironment> environment, rafko_net::RafkoNet& network,
+    std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator = {},
+    std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator = {}
   )
-  : RafkoAutodiffOptimizer(settings_, environment_, network_, training_evaluator_, test_evaluator_)
-  , opencl_context(context_)
-  , opencl_device(device_)
-  , opencl_queue(opencl_context, opencl_device)
-  , strategy(std::make_shared<AutoDiffGPUStrategy>(settings, network, environment))
-  , gpu_phase(
-    opencl_context, opencl_device, opencl_queue,
+  : RafkoAutodiffOptimizer(settings, environment, network, training_evaluator, test_evaluator)
+  , m_openclContext(context)
+  , m_openclDevice(device)
+  , m_openclQueue(m_openclContext, m_openclDevice)
+  , m_strategy(std::make_shared<AutoDiffGPUStrategy>(m_settings, m_network, m_environment))
+  , m_gpuPhase(
+    m_openclContext, m_openclDevice, m_openclQueue,
     std::make_shared<rafko_mainframe::RafkoDummyGPUStrategyPhase>(
       rafko_mainframe::RafkoNBufShape({0u})/*input_shape*/,
       rafko_mainframe::RafkoNBufShape({0u})/*output_shape*/
@@ -118,11 +118,11 @@ public:
   );
 
 private:
-  cl::Context opencl_context;
-  cl::Device opencl_device;
-  cl::CommandQueue opencl_queue;
-  std::shared_ptr<AutoDiffGPUStrategy> strategy;
-  rafko_mainframe::RafkoGPUPhase gpu_phase;
+  cl::Context m_openclContext;
+  cl::Device m_openclDevice;
+  cl::CommandQueue m_openclQueue;
+  std::shared_ptr<AutoDiffGPUStrategy> m_strategy;
+  rafko_mainframe::RafkoGPUPhase m_gpuPhase;
 
 };
 

@@ -45,8 +45,8 @@ class RAFKO_FULL_EXPORT RafkoNetworkFeature{
 public:
   using NeuronDataProxy = rafko_utilities::SubscriptProxy<std::vector<double>>;
 
-  RafkoNetworkFeature(std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_)
-  : execution_threads(execution_threads_)
+  RafkoNetworkFeature(std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads)
+  : m_executionThreads(execution_threads)
   { }
 
   /**
@@ -132,10 +132,10 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
-  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
+  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& m_executionThreads;
   #if(RAFKO_USES_OPENCL)
-  static inline std::mutex feature_cache_mutex;
-  static inline std::uint32_t lx_feature_called;
+  static inline std::mutex m_featureCacheMutex;
+  static inline std::uint32_t m_lxFeatureCalled;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   /**

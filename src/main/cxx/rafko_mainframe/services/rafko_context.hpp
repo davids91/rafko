@@ -43,8 +43,8 @@ namespace rafko_mainframe{
  */
 class RAFKO_FULL_EXPORT RafkoContext{
 public:
-  RafkoContext(rafko_mainframe::RafkoSettings settings_ = RafkoSettings())
-  : settings(settings_)
+  RafkoContext(rafko_mainframe::RafkoSettings settings = RafkoSettings())
+  : m_settings(settings)
   { }
 
   virtual ~RafkoContext() = default;
@@ -54,14 +54,14 @@ public:
    *
    * @param[in]      environment    An environment ready to be moved inside the context
    */
-  virtual void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_) = 0;
+  virtual void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment) = 0;
 
   /**
    * @brief          Accepts an objective function to base network evaluation on top of and takes ownership of it!
    *
    * @param[in]      objective    An objective function ready to be moved inside the context
    */
-  virtual void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_) = 0;
+  virtual void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) = 0;
 
   /**
    * @brief          Accepts a weight updater type to make handle the weight updates
@@ -151,7 +151,7 @@ public:
    */
   virtual rafko_net::RafkoNet& expose_network() = 0;
 protected:
-    rafko_mainframe::RafkoSettings settings;
+    rafko_mainframe::RafkoSettings m_settings;
 };
 
 } /* namespace rafko_mainframe */

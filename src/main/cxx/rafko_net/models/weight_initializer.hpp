@@ -33,7 +33,7 @@ public:
    * @brief      Constructs the object.
    */
   constexpr WeightInitializer(const rafko_mainframe::RafkoSettings& settings) noexcept
-  : settings(settings)
+  : m_settings(settings)
   { };
 
   /**
@@ -64,18 +64,18 @@ public:
    * @brief      Sets the functions expected parameters
    *
    * @param[in]  expected_input_number             The exponent input number
-   * @param[in]  expected_input_maximum_value_     The exponent input maximum
+   * @param[in]  expected_input_maximum_value     The exponent input maximum
    */
-  virtual void set(std::uint32_t expected_input_number_, double expected_input_maximum_value_){
-    expected_input_number = std::max(1u,expected_input_number_);
+  virtual void set(std::uint32_t expected_input_number, double expected_input_maximum_value){
+    m_expectedInputNumber = std::max(1u, expected_input_number);
     if( /* Primitive check if the given number causes overflow or not */
-      (std::numeric_limits<double>::max() > (expected_input_number_ * std::abs(expected_input_maximum_value_)))
+      (std::numeric_limits<double>::max() > (expected_input_number * std::abs(expected_input_maximum_value)))
     ){
-      expected_input_maximum_value = expected_input_maximum_value_;
-    }else if((0.0) == expected_input_maximum_value_){
-      expected_input_maximum_value = std::numeric_limits<double>::epsilon();
+      m_expectedInputMaximumValue = expected_input_maximum_value;
+    }else if((0.0) == expected_input_maximum_value){
+      m_expectedInputMaximumValue = std::numeric_limits<double>::epsilon();
     }else{ /* Overflow! Use maximum value */
-      expected_input_maximum_value = std::numeric_limits<double>::max() / expected_input_number_;
+      m_expectedInputMaximumValue = std::numeric_limits<double>::max() / expected_input_number;
     }
   }
 
@@ -92,16 +92,17 @@ public:
   virtual ~WeightInitializer() = default;
 
 protected:
-  const rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& m_settings;
+
   /**
    * Number of estimated @Neuron inputs expected
    */
-  std::uint32_t expected_input_number = 0;
+  std::uint32_t m_expectedInputNumber = 0;
 
   /**
    * Estimated Maximum value of one @Neuron input
    */
-  double expected_input_maximum_value = std::numeric_limits<double>::epsilon();
+  double m_expectedInputMaximumValue = std::numeric_limits<double>::epsilon();
 
   /**
    * @brief      Limits the given weight into the limits used in the Neural Network

@@ -40,19 +40,19 @@ namespace rafko_mainframe {
 class RAFKO_FULL_EXPORT RafkoGPUContext : public RafkoContext{
 public:
   RafkoGPUContext(
-    cl::Context&& context_, cl::Device device_,
-    rafko_mainframe::RafkoSettings settings_, rafko_net::RafkoNet& neural_network_,
-    std::shared_ptr<rafko_gym::RafkoObjective> objective_
+    cl::Context&& context, cl::Device device,
+    rafko_mainframe::RafkoSettings settings, rafko_net::RafkoNet& neural_network,
+    std::shared_ptr<rafko_gym::RafkoObjective> objective
   );
 
   /* +++ Methods taken from @RafkoContext +++ */
-  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_) override;
-  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_) override;
+  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment) override;
+  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override;
   void set_weight_updater(rafko_gym::Weight_updaters updater) override;
 
   void refresh_solution_weights() override{
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
-    weight_adapter.update_solution_with_weights();
+    m_weightAdapter.update_solution_with_weights();
     upload_weight_table_to_device();
   }
 
@@ -68,52 +68,52 @@ public:
   ) override;
 
   void push_state() override{
-    environment->push_state();
+    m_environment->push_state();
   }
 
   void pop_state() override{
-    environment->pop_state();
+    m_environment->pop_state();
   }
 
   rafko_mainframe::RafkoSettings& expose_settings() override{
-    last_ran_evaluation = not_eval_run; /* in case some training parameters changed buffers might need to be refreshed */
-    return settings;
+    m_lastRanEvaluation = not_eval_run; /* in case some training parameters changed buffers might need to be refreshed */
+    return m_settings;
   }
 
   rafko_net::RafkoNet& expose_network() override{
-    return network;
+    return m_network;
   }
   /* --- Methods taken from @RafkoContext --- */
 
   ~RafkoGPUContext() = default;
 
 private:
-  rafko_net::RafkoNet& network;
-  std::unique_ptr<rafko_net::Solution> network_solution;
-  rafko_gym::RafkoWeightAdapter weight_adapter;
-  std::shared_ptr<rafko_net::SolutionSolver> agent;
-  std::shared_ptr<rafko_gym::RafkoEnvironment> environment;
-  std::shared_ptr<rafko_gym::RafkoObjective> objective;
-  std::shared_ptr<rafko_gym::RafkoWeightUpdater> weight_updater;
-  std::vector<std::vector<double>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
-  rafko_utilities::ThreadGroup execution_threads;
+  rafko_net::RafkoNet& m_network;
+  std::unique_ptr<rafko_net::Solution> m_networkSolution;
+  rafko_gym::RafkoWeightAdapter m_weightAdapter;
+  std::shared_ptr<rafko_net::SolutionSolver> m_agent;
+  std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;
+  std::shared_ptr<rafko_gym::RafkoObjective> m_objective;
+  std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
+  std::vector<std::vector<double>> m_neuronOutputsToEvaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
+  rafko_utilities::ThreadGroup m_executionThreads;
 
-  cl::Context opencl_context;
-  cl::Device opencl_device;
-  cl::CommandQueue opencl_queue;
-  std::uint32_t device_weight_table_size;
-  RafkoGPUPhase solution_phase;
-  std::vector<double> standalone_solution_result;
-  RafkoGPUPhase error_phase;
-  bool last_random_eval_was_seeded = false;
-  std::uint32_t last_used_seed;
+  cl::Context m_openclContext;
+  cl::Device m_openclDevice;
+  cl::CommandQueue m_openclQueue;
+  std::uint32_t m_deviceWeightTableSize;
+  RafkoGPUPhase m_solutionPhase;
+  std::vector<double> m_standaloneSolutionResult;
+  RafkoGPUPhase m_errorPhase;
+  bool m_lastRandomEvalWasSeeded = false;
+  std::uint32_t m_lastUsedSeed;
   /* Somebody tell me what is the least propable value of a random seed one can use,
    * so I could initialize this poor fella with it?!
    */
 
   enum{
     not_eval_run, full_eval_run, random_eval_run
-  }last_ran_evaluation = not_eval_run;
+  }m_lastRanEvaluation = not_eval_run;
 
   /**
    * @brief   Uploads the weights from @network to the buffer on the GPU

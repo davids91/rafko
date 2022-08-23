@@ -45,12 +45,12 @@ class RAFKO_FULL_EXPORT RafkoBackpropagationData{
 
 public:
   RafkoBackpropagationData(const rafko_net::RafkoNet& network)
-  : memory_slots(network.memory_size() + 1u) /* The network always remembers the previous value because of the Spike function */
-  , weight_table_size(network.weight_table_size())
-  , weight_relevant_operation_count(0u)
-  , calculated_derivatives()
-  , calculated_values()
-  , sequence_derivatives()
+  : m_memorySlots(network.memory_size() + 1u) /* The network always remembers the previous value because of the Spike function */
+  , m_weightTableSize(network.weight_table_size())
+  , m_weightRelevantOperationCount(0u)
+  , m_calculatedDerivatives()
+  , m_calculatedValues()
+  , m_sequenceDerivatives()
   {
   }
 
@@ -62,25 +62,25 @@ public:
    * @param[in]     sequence_size               The size of a sequence the network is going to be running in
    */
   void build(std::uint32_t number_of_operations, std::uint32_t relevant_operation_count, std::uint32_t sequence_size){
-    calculated_values = std::make_unique<NetworkValueBuffer>(
-      memory_slots, [number_of_operations](std::vector<double>& element){
+    m_calculatedValues = std::make_unique<NetworkValueBuffer>(
+      m_memorySlots, [number_of_operations](std::vector<double>& element){
         element.resize(number_of_operations);
       }
     );
-    calculated_derivatives = std::make_unique<NetworkDerivativeBuffer>(
-      memory_slots, [this, number_of_operations](std::vector<std::vector<double>>& element){
+    m_calculatedDerivatives = std::make_unique<NetworkDerivativeBuffer>(
+      m_memorySlots, [this, number_of_operations](std::vector<std::vector<double>>& element){
         element = std::vector<std::vector<double>>(
-          number_of_operations, std::vector<double>(weight_table_size)
+          number_of_operations, std::vector<double>(m_weightTableSize)
         );
       }
     );
-    sequence_derivatives = std::make_unique<SequenceDerivativeBuffer>(
+    m_sequenceDerivatives = std::make_unique<SequenceDerivativeBuffer>(
       sequence_size, [this](std::vector<double>& element){
-        element.resize(weight_table_size);
+        element.resize(m_weightTableSize);
       }
     );
-    built = true;
-    weight_relevant_operation_count = relevant_operation_count;
+    m_built = true;
+    m_weightRelevantOperationCount = relevant_operation_count;
   }
 
 
@@ -88,10 +88,10 @@ public:
    * @brief Erases the data stored in the data buffers
    */
   void reset(){
-    if(built){
-      calculated_values->reset();
-      calculated_derivatives->reset();
-      sequence_derivatives->reset();
+    if(m_built){
+      m_calculatedValues->reset();
+      m_calculatedDerivatives->reset();
+      m_sequenceDerivatives->reset();
     }
   }
 
@@ -101,12 +101,12 @@ public:
    *          not supposed to remember now, while sequence derivatives are filled with zero values.
    */
   void step(){
-    RFASSERT(built);
+    RFASSERT(m_built);
     /*!Note: Not using @clean_step, here because the value will be overwritten anyway.. */
-    calculated_values->shallow_step();
+    m_calculatedValues->shallow_step();
     /* using clean step, because the at each step the values depend on being clean (0.0).. */
-    calculated_derivatives->clean_step(); /* ..so sequence truncation would have 0.0 if sequence is excluded and not calculated */
-    sequence_derivatives->clean_step(); /* ..and so the averages would start with 0.0 as initial value */
+    m_calculatedDerivatives->clean_step(); /* ..so sequence truncation would have 0.0 if sequence is excluded and not calculated */
+    m_sequenceDerivatives->clean_step(); /* ..and so the averages would start with 0.0 as initial value */
   }
 
   /**
@@ -115,7 +115,7 @@ public:
    * @param[in]   update    true, if sequence_derivatives are to be updated when storing derivative calculations
    */
   constexpr void set_weight_derivative_update(bool update){
-    update_weight_derivative = update;
+    m_updateWeightDerivative = update;
   }
 
   /**
@@ -125,9 +125,9 @@ public:
    * @param[in]    value             The value to store
    */
   void set_value(std::uint32_t operation_index, double value){
-    RFASSERT(built);
-    RFASSERT(operation_index < calculated_values->get_element(0).size());
-    calculated_values->get_element(0u/*past_index*/, operation_index) = value;
+    RFASSERT(m_built);
+    RFASSERT(operation_index < m_calculatedValues->get_element(0).size());
+    m_calculatedValues->get_element(0u/*past_index*/, operation_index) = value;
   }
 
   /**
@@ -138,13 +138,13 @@ public:
    * @param[in]    value             The derivative value to store
    */
   void set_derivative(std::uint32_t operation_index, std::uint32_t d_w_index, double value){
-    RFASSERT(built);
-    RFASSERT(operation_index < calculated_derivatives->get_element(0u/*past_index*/).size());
-    RFASSERT(d_w_index < calculated_derivatives->get_element(0u/*past_index*/, operation_index).size());
-    calculated_derivatives->get_element(0u/*past_index*/, operation_index)[d_w_index] = value;
-    if( (update_weight_derivative)&&(operation_index < weight_relevant_operation_count) ){
+    RFASSERT(m_built);
+    RFASSERT(operation_index < m_calculatedDerivatives->get_element(0u/*past_index*/).size());
+    RFASSERT(d_w_index < m_calculatedDerivatives->get_element(0u/*past_index*/, operation_index).size());
+    m_calculatedDerivatives->get_element(0u/*past_index*/, operation_index)[d_w_index] = value;
+    if( (m_updateWeightDerivative)&&(operation_index < m_weightRelevantOperationCount) ){
       /*!Note: The first operations are the objective operations for the outputs, only those matter in this case */
-      double& stored_avg = sequence_derivatives->get_element(0u/*past_index*/)[d_w_index];
+      double& stored_avg = m_sequenceDerivatives->get_element(0u/*past_index*/)[d_w_index];
       stored_avg = (stored_avg + value)/2.0;
     }
   }
@@ -153,15 +153,15 @@ public:
    * @brief provides const access to the underlying buffer for the network operation values
    */
   const NetworkValueBuffer& get_value(){
-    RFASSERT(built);
-    return *calculated_values;
+    RFASSERT(m_built);
+    return *m_calculatedValues;
   }
 
   /**
    * @brief provides non-const access to the underlying buffer for the network operation values
    */
   NetworkValueBuffer& get_mutable_value(){
-    return *calculated_values;
+    return *m_calculatedValues;
   }
 
   /**
@@ -171,18 +171,18 @@ public:
    * @param[in]    operation_index   The index of the operation the value is queried for
    */
   double get_value(std::uint32_t past_index, std::uint32_t operation_index){
-    RFASSERT(built);
-    if(calculated_values->get_sequence_size() <= past_index) return 0.0;
-    RFASSERT(operation_index < calculated_values->get_element(0).size());
-    return calculated_values->get_element(past_index, operation_index);
+    RFASSERT(m_built);
+    if(m_calculatedValues->get_sequence_size() <= past_index) return 0.0;
+    RFASSERT(operation_index < m_calculatedValues->get_element(0).size());
+    return m_calculatedValues->get_element(past_index, operation_index);
   }
 
   /**
    * @brief provides access to the underlying buffer for the network operation derivatives
    */
   const NetworkDerivativeBuffer& get_actual_derivative(){
-    RFASSERT(built);
-    return *calculated_derivatives;
+    RFASSERT(m_built);
+    return *m_calculatedDerivatives;
   }
 
   /**
@@ -193,11 +193,11 @@ public:
    * @param[in]    weight_index      The index of the weight the value is queried for
    */
   double get_derivative(std::uint32_t past_index, std::uint32_t operation_index, std::uint32_t weight_index){
-    RFASSERT(built);
-    if(calculated_derivatives->get_sequence_size() <= past_index) return 0.0;
-    RFASSERT(operation_index < calculated_derivatives->get_element(0).size());
-    RFASSERT(weight_index < calculated_derivatives->get_element(past_index, operation_index).size());
-    return calculated_derivatives->get_element(past_index, operation_index)[weight_index];
+    RFASSERT(m_built);
+    if(m_calculatedDerivatives->get_sequence_size() <= past_index) return 0.0;
+    RFASSERT(operation_index < m_calculatedDerivatives->get_element(0).size());
+    RFASSERT(weight_index < m_calculatedDerivatives->get_element(past_index, operation_index).size());
+    return m_calculatedDerivatives->get_element(past_index, operation_index)[weight_index];
   }
 
   /**
@@ -205,8 +205,8 @@ public:
    *            stored explicitly to base weight updates upon.
    */
   const NetworkDerivativeBuffer& get_sequence_derivative(){
-    RFASSERT(built);
-    return *calculated_derivatives;
+    RFASSERT(m_built);
+    return *m_calculatedDerivatives;
   }
 
   /**
@@ -216,29 +216,29 @@ public:
    * @param[in]    weight_index           The index of the weight the value is queried for
    */
   double get_average_derivative(std::uint32_t past_sequence_index, std::uint32_t weight_index) const{
-    RFASSERT(built);
-    if(sequence_derivatives->get_sequence_size() <= past_sequence_index) return 0.0;
-    RFASSERT(weight_index < sequence_derivatives->get_element(past_sequence_index).size());
-    return sequence_derivatives->get_element(past_sequence_index, weight_index);
+    RFASSERT(m_built);
+    if(m_sequenceDerivatives->get_sequence_size() <= past_sequence_index) return 0.0;
+    RFASSERT(weight_index < m_sequenceDerivatives->get_element(past_sequence_index).size());
+    return m_sequenceDerivatives->get_element(past_sequence_index, weight_index);
   }
 
   /**
    * @brief provides access to the underlying buffer for the weight derivative buffers
    */
   const SequenceDerivativeBuffer& get_average_derivative(){
-    RFASSERT(built);
-    return *sequence_derivatives;
+    RFASSERT(m_built);
+    return *m_sequenceDerivatives;
   }
 
 private:
-  const std::uint32_t memory_slots;
-  const std::uint32_t weight_table_size;
-  std::uint32_t weight_relevant_operation_count;
-  std::unique_ptr<NetworkDerivativeBuffer> calculated_derivatives; /* {runs, operations, d_w values} */
-  std::unique_ptr<NetworkValueBuffer> calculated_values; /* {runs, operations} */
-  std::unique_ptr<SequenceDerivativeBuffer> sequence_derivatives; /* past_sequences_index, average d_w_values */
-  bool built = false;
-  bool update_weight_derivative = true;
+  const std::uint32_t m_memorySlots;
+  const std::uint32_t m_weightTableSize;
+  std::uint32_t m_weightRelevantOperationCount;
+  std::unique_ptr<NetworkDerivativeBuffer> m_calculatedDerivatives; /* {runs, operations, d_w values} */
+  std::unique_ptr<NetworkValueBuffer> m_calculatedValues; /* {runs, operations} */
+  std::unique_ptr<SequenceDerivativeBuffer> m_sequenceDerivatives; /* past_sequences_index, average d_w_values */
+  bool m_built = false;
+  bool m_updateWeightDerivative = true;
 };
 
 } /* namespace rafko_gym */

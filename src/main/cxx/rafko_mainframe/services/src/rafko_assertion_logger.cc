@@ -27,10 +27,10 @@
 
 namespace rafko_mainframe{
 
-std::weak_ptr<spdlog::logger> RafkoAssertionLogger::current_scope;
-std::string RafkoAssertionLogger::current_scope_name;
-std::mutex RafkoAssertionLogger::scope_mutex;
-bool RafkoAssertionLogger::keep_log = false;
+std::weak_ptr<spdlog::logger> RafkoAssertionLogger::m_currentScope;
+std::string RafkoAssertionLogger::m_currentScopeName;
+std::mutex RafkoAssertionLogger::m_scopeMutex;
+bool RafkoAssertionLogger::m_keepLog = false;
 
 std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name){
   auto today = date::year_month_day{date::floor<date::days>(std::chrono::system_clock::now())};
@@ -42,7 +42,7 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
   );
   spdlog::file_event_handlers handlers;
   handlers.after_close = [](spdlog::filename_t filename) {
-    if(!keep_log) std::filesystem::remove(filename);
+    if(!m_keepLog) std::filesystem::remove(filename);
   };
 
   auto logger = spdlog::basic_logger_mt( scope_name, std::string(logs_folder) + "/" + scope_name + ".log", false, handlers);
@@ -51,15 +51,15 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
   logger->flush_on(spdlog::level::err);
   /*!Note: no need to call spdlog::register_logger(logger);, because access is only through the pointer anyway */
 
-  if(auto scope = current_scope.lock()){
+  if(auto scope = m_currentScope.lock()){
     scope->info("Scope snatched by " + scope_name + "..");
-    spdlog::drop(current_scope_name);
+    spdlog::drop(m_currentScopeName);
   }
 
   {
-    std::lock_guard<std::mutex> my_lock(scope_mutex);
-    current_scope_name = scope_name;
-    current_scope = logger;
+    std::lock_guard<std::mutex> my_lock(m_scopeMutex);
+    m_currentScopeName = scope_name;
+    m_currentScope = logger;
   }
 
   return logger;
@@ -67,8 +67,8 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
 
 void RafkoAssertionLogger::rafko_assert(bool condition, std::string file_name, std::uint32_t line_number){
   if(!condition){
-    keep_log = true;
-    if(auto scope = current_scope.lock()){ /* no need to use mutex here, since the underlying logger is thread-safe */
+    m_keepLog = true;
+    if(auto scope = m_currentScope.lock()){ /* no need to use mutex here, since the underlying logger is thread-safe */
       scope->error("Assertion failure in file {}; line {}!", file_name, line_number);
       scope->flush();
     }

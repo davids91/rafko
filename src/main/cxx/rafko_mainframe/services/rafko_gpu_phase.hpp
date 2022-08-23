@@ -36,21 +36,21 @@ namespace rafko_mainframe{
 class RAFKO_FULL_EXPORT RafkoGPUPhase{
 public:
   RafkoGPUPhase(
-    const cl::Context& context_, const cl::Device& device_, cl::CommandQueue& queue_,
-    std::shared_ptr<RafkoGPUStrategyPhase> strategy_
-  ):opencl_context(context_)
-  , opencl_device(device_)
-  , opencl_device_queue(queue_)
+    const cl::Context& context, const cl::Device& device, cl::CommandQueue& queue,
+    std::shared_ptr<RafkoGPUStrategyPhase> strategy
+  ):m_openclContext(context)
+  , m_openclDevice(device)
+  , m_openclDeviceQueue(queue)
   {
-    set_strategy(strategy_);
+    set_strategy(strategy);
   }
 
   /**
    * @brief      Implements a GPU Strategy phase provided in the argument
    *
-   * @param      strategy_ the strategy parts to implenet in this phase
+   * @param      strategy the strategy parts to implenet in this phase
    */
-  void set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy_);
+  void set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy);
 
   /**
    * @brief      Executes the implemented strategy phase
@@ -121,7 +121,7 @@ public:
    * @return     A buffer of the input data on the device
    */
   cl::Buffer& get_input_buffer(){
-    return std::get<0>(kernel_args.front());
+    return std::get<0>(m_kernelArgs.front());
   }
 
   /**
@@ -131,16 +131,16 @@ public:
    * @return     A buffer of the output data on the device
    */
   cl::Buffer& get_output_buffer(){
-    return std::get<0>(kernel_args.back());
+    return std::get<0>(m_kernelArgs.back());
   }
 
 private:
-  const cl::Context& opencl_context;
-  const cl::Device& opencl_device;
-  cl::CommandQueue& opencl_device_queue;
-  std::shared_ptr<RafkoGPUStrategyPhase> strategy;
-  std::vector<std::tuple<cl::Buffer, cl::Buffer, int>> kernel_args;
-  std::vector<cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>> steps;
+  const cl::Context& m_openclContext;
+  const cl::Device& m_openclDevice;
+  cl::CommandQueue& m_openclDeviceQueue;
+  std::shared_ptr<RafkoGPUStrategyPhase> m_strategy;
+  std::vector<std::tuple<cl::Buffer, cl::Buffer, int>> m_kernelArgs;
+  std::vector<cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>> m_steps;
 };
 
 } /* namespace rafko_mainframe */

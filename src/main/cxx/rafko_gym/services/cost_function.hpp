@@ -49,10 +49,10 @@ class RAFKO_FULL_EXPORT CostFunction
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
-  CostFunction(Cost_functions the_function_, const rafko_mainframe::RafkoSettings& settings)
+  CostFunction(Cost_functions the_function, const rafko_mainframe::RafkoSettings& settings)
   : settings(settings)
-  , the_function(the_function_)
-  , execution_threads(settings.get_sqrt_of_solve_threads())
+  , m_theFunction(the_function)
+  , m_executionThreads(settings.get_sqrt_of_solve_threads())
   {
     process_threads.reserve(settings.get_sqrt_of_solve_threads());
     for(std::uint32_t thread_index = 0; thread_index < settings.get_max_solve_threads(); ++thread_index){
@@ -116,7 +116,7 @@ public:
    * @return     The type.
    */
   constexpr Cost_functions get_type() const{
-    return the_function;
+    return m_theFunction;
   }
 
   /**
@@ -138,9 +138,9 @@ public:
 
   #if(RAFKO_USES_OPENCL)
 
-  constexpr void set_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_){
-    pairs_to_evaluate = pairs_to_evaluate_;
-    feature_size = feature_size_;
+  constexpr void set_parameters(std::uint32_t pairs_to_evaluate, std::uint32_t feature_size){
+    m_pairsToEvaluate = pairs_to_evaluate;
+    m_featureSize = feature_size;
   }
 
   /**
@@ -181,15 +181,15 @@ public:
   std::vector<std::string> get_step_names() const override;
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override{
     return { rafko_mainframe::RafkoNBufShape{ /* inputs and labels */
-      pairs_to_evaluate * feature_size,
-      pairs_to_evaluate * feature_size
+      m_pairsToEvaluate * m_featureSize,
+      m_pairsToEvaluate * m_featureSize
     } };
   }
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override{
     return { rafko_mainframe::RafkoNBufShape{ 1u } };
   }
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
-    return std::make_tuple(cl::NullRange,cl::NDRange(pairs_to_evaluate),cl::NullRange);
+    return std::make_tuple(cl::NullRange,cl::NDRange(m_pairsToEvaluate),cl::NullRange);
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
@@ -236,11 +236,11 @@ protected:
     std::uint32_t feature_start_index, std::uint32_t number_to_eval
   ) const;
 private:
-  Cost_functions the_function; /* cost function type */
-  rafko_utilities::ThreadGroup execution_threads;
+  Cost_functions m_theFunction; /* cost function type */
+  rafko_utilities::ThreadGroup m_executionThreads;
   #if(RAFKO_USES_OPENCL)
-  std::uint32_t pairs_to_evaluate = 1u;
-  std::uint32_t feature_size = 1u;
+  std::uint32_t m_pairsToEvaluate = 1u;
+  std::uint32_t m_featureSize = 1u;
   #endif/*(RAFKO_USES_OPENCL)*/
 
 

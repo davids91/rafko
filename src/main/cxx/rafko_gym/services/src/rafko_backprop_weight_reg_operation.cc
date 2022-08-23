@@ -19,16 +19,16 @@
 namespace rafko_gym{
 
 void RafkoBackpropWeightRegOperation::refresh_weight_derivatives(){
-  relevant_index_values.clear();
-  rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),
+  m_relevantIndexValues.clear();
+  rafko_net::SynapseIterator<>::iterate(m_featureGroup.relevant_neurons(),
   [this](std::uint32_t neuron_index){
-    rafko_net::SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
+    rafko_net::SynapseIterator<>::iterate(m_network.neuron_array(neuron_index).input_weights(),
     [this](std::uint32_t weight_index){
-      relevant_index_values.push_back(weight_index);
-      if(feature_group.feature() == rafko_net::neuron_group_feature_l1_regularization){
-        each_weight_derivative[weight_index] = 1.0;
-      }else if(feature_group.feature() == rafko_net::neuron_group_feature_l2_regularization){
-        each_weight_derivative[weight_index] = 2.0 * network.weight_table(weight_index);
+      m_relevantIndexValues.push_back(weight_index);
+      if(m_featureGroup.feature() == rafko_net::neuron_group_feature_l1_regularization){
+        m_eachWeightDerivative[weight_index] = 1.0;
+      }else if(m_featureGroup.feature() == rafko_net::neuron_group_feature_l2_regularization){
+        m_eachWeightDerivative[weight_index] = 2.0 * m_network.weight_table(weight_index);
       }
     });
   });

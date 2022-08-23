@@ -55,7 +55,7 @@ public:
    * @return    A const reference of the exposed feature executor
    */
   constexpr const RafkoNetworkFeature& expose_executor(){
-    return feature_executor;
+    return m_featureExecutor;
   }
 
   /* +++ Methods taken from @RafkoAgent +++ */
@@ -65,7 +65,7 @@ public:
     std::uint32_t used_data_pool_start = 0, std::uint32_t thread_index = 0
   ) const;
   std::uint32_t get_output_data_size() const{
-    return solution.output_neuron_number();
+    return m_solution.output_neuron_number();
   }
   void set_eval_mode(bool evaluation) override{
     evaluating = evaluation;
@@ -76,15 +76,14 @@ public:
 private:
   SolutionSolver(
     const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings,
-    std::vector<std::vector<PartialSolutionSolver>> partial_solvers_,
+    std::vector<std::vector<PartialSolutionSolver>> partial_solvers,
     std::uint32_t max_tmp_data_needed, std::uint32_t max_tmp_data_needed_per_thread
   );
 
   bool evaluating = true;
-  const rafko_mainframe::RafkoSettings& settings;
-  std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
-  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> execution_threads;
-  RafkoNetworkFeature feature_executor;
+  std::vector<std::vector<PartialSolutionSolver>> m_partialSolvers;
+  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> m_executionThreads;
+  RafkoNetworkFeature m_featureExecutor;
 
 public:
   class Builder{
@@ -96,25 +95,27 @@ public:
      * @return    Ownership and pointer of the built solver
      */
     std::unique_ptr<SolutionSolver> build(){
-      return std::unique_ptr<SolutionSolver>( new SolutionSolver(solution, settings, partial_solvers, max_tmp_size_needed, max_tmp_data_needed_per_thread) );
+      return std::unique_ptr<SolutionSolver>( new SolutionSolver(
+        m_solution, m_settings, m_partialSolvers, m_maxTmpSizeNeeded, m_maxTmpDataNeededPerThread
+      ) );
     }
   private:
-    const Solution& solution;
-    const rafko_mainframe::RafkoSettings& settings;
-    std::vector<std::vector<PartialSolutionSolver>> partial_solvers;
-    std::uint32_t max_tmp_size_needed = 0u;
-    std::uint32_t max_tmp_data_needed_per_thread = 0u;
+    const Solution& m_solution;
+    const rafko_mainframe::RafkoSettings& m_settings;
+    std::vector<std::vector<PartialSolutionSolver>> m_partialSolvers;
+    std::uint32_t m_maxTmpSizeNeeded = 0u;
+    std::uint32_t m_maxTmpDataNeededPerThread = 0u;
   };
 
   class Factory{
   public:
-    Factory(const RafkoNet& network_, const rafko_mainframe::RafkoSettings& settings_);
+    Factory(const RafkoNet& network, const rafko_mainframe::RafkoSettings& settings);
 
     /**
      * @brief     Updates the stored solution with the weights from the stored Neural Network reference
      */
     void refresh_solution_weights(){
-      weight_adapter->update_solution_with_weights();
+      m_weightAdapter->update_solution_with_weights();
     }
 
     /**
@@ -125,10 +126,10 @@ public:
     std::unique_ptr<SolutionSolver> build(bool rebuild_solution = true);
 
   private:
-    const RafkoNet& network;
-    const rafko_mainframe::RafkoSettings& settings;
-    std::unique_ptr<rafko_net::Solution> solution;
-    std::unique_ptr<rafko_gym::RafkoWeightAdapter> weight_adapter;
+    const RafkoNet& m_network;
+    const rafko_mainframe::RafkoSettings& m_settings;
+    std::unique_ptr<rafko_net::Solution> m_solution;
+    std::unique_ptr<rafko_gym::RafkoWeightAdapter> m_weightAdapter;
 
   };
 };

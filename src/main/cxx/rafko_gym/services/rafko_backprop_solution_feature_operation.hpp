@@ -49,23 +49,16 @@ class RAFKO_FULL_EXPORT RafkoBackPropSolutionFeatureOperation
 public:
   RafkoBackPropSolutionFeatureOperation(
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    std::uint32_t operation_index,  const rafko_mainframe::RafkoSettings& settings_,
-    const rafko_net::FeatureGroup& feature_group_,
-    std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_,
-    std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary_
+    std::uint32_t operation_index,  const rafko_mainframe::RafkoSettings& settings,
+    const rafko_net::FeatureGroup& feature_group,
+    std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads,
+    std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary
   );
   ~RafkoBackPropSolutionFeatureOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations() override;
 
-  void calculate_value(const std::vector<double>& /*network_input*/) override{
-    network_data_proxy.update(data.get_mutable_value().get_element(0));
-    feature_executor.execute_solution_relevant(
-      feature_group, settings, network_data_proxy, 0u/*thread_index*/
-    );
-    set_value_processed();
-  }
-
+  void calculate_value(const std::vector<double>& /*network_input*/) override;
   void calculate_derivative(
     std::uint32_t /*d_w_index*/, const std::vector<double>& /*network_input*/, const std::vector<double>& /*label_data*/
   ) override{
@@ -99,18 +92,17 @@ public:
   }
 
 private:
-  const rafko_mainframe::RafkoSettings& settings;
-  const rafko_net::RafkoNet& network;
-  const rafko_net::FeatureGroup& feature_group;
-  rafko_utilities::SubscriptProxy<> network_data_proxy;
-  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads;
-  rafko_net::RafkoNetworkFeature feature_executor;
-  std::vector<std::uint32_t> relevant_index_values;
+  const rafko_mainframe::RafkoSettings& m_settings;
+  const rafko_net::FeatureGroup& m_featureGroup;
+  rafko_utilities::SubscriptProxy<> m_networkDataProxy;
+  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& m_executionThreads;
+  rafko_net::RafkoNetworkFeature m_featureExecutor;
+  std::vector<std::uint32_t> m_relevantIndexValues;
   #if(RAFKO_USES_OPENCL)
-  std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary;
+  std::shared_ptr<rafko_utilities::SubscriptDictionary> m_neuronIndexDictionary;
   #endif/*(RAFKO_USES_OPENCL)*/
 
-  std::vector<double> dummy_vector;
+  std::vector<double> m_dummyVector;
 };
 
 } /* namespace rafko_gym */

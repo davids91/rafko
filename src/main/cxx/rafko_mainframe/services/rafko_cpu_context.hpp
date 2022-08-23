@@ -38,72 +38,72 @@ class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
 public:
 
   RafkoCPUContext(
-    rafko_net::RafkoNet& neural_network_, std::shared_ptr<rafko_gym::RafkoObjective> objective_,
-    rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings()
+    rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_gym::RafkoObjective> objective,
+    rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
   );
   ~RafkoCPUContext() = default;
 
   /* +++ Methods taken from @RafkoContext +++ */
-  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment_) override;
+  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment) override;
 
-  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective_) override{
+  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override{
     RFASSERT_LOG("Setting objective in CPU Context");
-    objective.reset();
-    objective = objective_;
+    m_objective.reset();
+    m_objective = objective;
   }
 
   void set_weight_updater(rafko_gym::Weight_updaters updater) override{
     RFASSERT_LOG("Setting weight updater in CPU context to {}", rafko_gym::Weight_updaters_Name(updater));
-    weight_updater.reset();
-    weight_updater = rafko_gym::UpdaterFactory::build_weight_updater(network, updater, settings);
+    m_weightUpdater.reset();
+    m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, m_settings);
   }
 
   void refresh_solution_weights() override{
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
-    weight_adapter.update_solution_with_weights();
+    m_weightAdapter.update_solution_with_weights();
   }
 
   void set_network_weight(std::uint32_t weight_index, double weight_value){
     RFASSERT_LOG("Setting weight[{}] to {}(CPU Context)", weight_index, weight_value);
-    RFASSERT( static_cast<std::int32_t>(weight_index) < network.weight_table_size() );
-    network.set_weight_table(weight_index, weight_value);
+    RFASSERT( static_cast<std::int32_t>(weight_index) < m_network.weight_table_size() );
+    m_network.set_weight_table(weight_index, weight_value);
     refresh_solution_weights();
   }
 
   void set_network_weights(const std::vector<double>& weights) override{
     RFASSERT_LOGV(weights, "Setting weights(CPU Context) to:");
-    RFASSERT( static_cast<std::int32_t>(weights.size()) == network.weight_table_size() );
-    *network.mutable_weight_table() = {weights.begin(), weights.end()};
+    RFASSERT( static_cast<std::int32_t>(weights.size()) == m_network.weight_table_size() );
+    *m_network.mutable_weight_table() = {weights.begin(), weights.end()};
     refresh_solution_weights();
   }
 
   void apply_weight_update(const std::vector<double>& weight_delta) override{
     RFASSERT_LOGV(weight_delta, "Applying weight(CPU context) update! Delta:");
-    RFASSERT( static_cast<std::int32_t>(weight_delta.size()) == network.weight_table_size() );
-    if(weight_updater->is_finished())
-      weight_updater->start();
-    weight_updater->iterate(weight_delta);
+    RFASSERT( static_cast<std::int32_t>(weight_delta.size()) == m_network.weight_table_size() );
+    if(m_weightUpdater->is_finished())
+      m_weightUpdater->start();
+    m_weightUpdater->iterate(weight_delta);
     refresh_solution_weights();
   }
 
   double full_evaluation() override{
     RFASSERT_SCOPE(CPU_FULL_EVALUATION);
     return evaluate(
-      0u, environment->get_number_of_sequences(),
-      0u, environment->get_sequence_size()
+      0u, m_environment->get_number_of_sequences(),
+      0u, m_environment->get_sequence_size()
     );
   }
 
   double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override{
     RFASSERT_SCOPE(CPU_STOCHASTIC_EVALUATION);
     if(to_seed)srand(seed_value);
-    std::uint32_t sequence_start_index = (rand()%(environment->get_number_of_sequences() - used_minibatch_size + 1));
+    std::uint32_t sequence_start_index = (rand()%(m_environment->get_number_of_sequences() - m_usedMinibatchSize + 1));
     std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
-      environment->get_sequence_size() - used_sequence_truncation + 1u /* ..not all result output values are evaluated.. */
+      m_environment->get_sequence_size() - m_usedSequenceTruncation + 1u /* ..not all result output values are evaluated.. */
     )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
     return evaluate(
-      sequence_start_index, used_minibatch_size,
-      start_index_inside_sequence, used_sequence_truncation
+      sequence_start_index, m_usedMinibatchSize,
+      start_index_inside_sequence, m_usedSequenceTruncation
     );
   }
 
@@ -112,40 +112,40 @@ public:
     bool reset_neuron_data = false, std::uint32_t thread_index = 0
   ) override{
     RFASSERT_SCOPE(CPU_STANDALONE_SOLVE);
-    return agent->solve(input, reset_neuron_data, thread_index);
+    return m_agent->solve(input, reset_neuron_data, thread_index);
   }
 
   void push_state() override{
-    environment->push_state();
+    m_environment->push_state();
   }
 
   void pop_state() override{
-    environment->pop_state();
+    m_environment->pop_state();
   }
 
   constexpr rafko_mainframe::RafkoSettings& expose_settings() override{
-    return settings;
+    return m_settings;
   }
 
   constexpr rafko_net::RafkoNet& expose_network() override{
-    return network;
+    return m_network;
   }
   /* --- Methods taken from @RafkoContext --- */
 
 private:
-  rafko_net::RafkoNet& network;
-  std::unique_ptr<rafko_net::Solution> network_solution;
-  rafko_gym::RafkoWeightAdapter weight_adapter;
-  std::unique_ptr<rafko_net::SolutionSolver> agent;
-  std::shared_ptr<rafko_gym::RafkoEnvironment> environment;
-  std::shared_ptr<rafko_gym::RafkoObjective> objective;
-  std::shared_ptr<rafko_gym::RafkoWeightUpdater> weight_updater;
+  rafko_net::RafkoNet& m_network;
+  std::unique_ptr<rafko_net::Solution> m_networkSolution;
+  rafko_gym::RafkoWeightAdapter m_weightAdapter;
+  std::unique_ptr<rafko_net::SolutionSolver> m_agent;
+  std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;
+  std::shared_ptr<rafko_gym::RafkoObjective> m_objective;
+  std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
 
-  std::vector<std::vector<double>> neuron_outputs_to_evaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
-  rafko_utilities::ThreadGroup execution_threads;
+  std::vector<std::vector<double>> m_neuronOutputsToEvaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
+  rafko_utilities::ThreadGroup m_executionThreads;
 
-  std::uint32_t used_sequence_truncation;
-  std::uint32_t used_minibatch_size;
+  std::uint32_t m_usedSequenceTruncation;
+  std::uint32_t m_usedMinibatchSize;
 
   /**
    * @brief      Evaluate the given data set with the given parameters

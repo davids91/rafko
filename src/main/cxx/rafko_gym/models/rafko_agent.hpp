@@ -52,34 +52,34 @@ class RAFKO_FULL_EXPORT RafkoAgent
 {
 public:
   RafkoAgent(
-    const rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_,
-    std::uint32_t required_temp_data_size_, std::uint32_t required_temp_data_number_per_thread_,
-    std::uint32_t max_threads_ = 1u
-  ):settings(settings_)
-  , solution(solution_)
-  , required_temp_data_number_per_thread(required_temp_data_number_per_thread_)
-  , required_temp_data_size(required_temp_data_size_)
-  , max_threads(max_threads_)
-  , common_data_pool((required_temp_data_number_per_thread * max_threads_), required_temp_data_size_)
-  , neuron_value_buffers(
-    max_threads, rafko_utilities::DataRingbuffer<>(
-      solution.network_memory_length(),
+    const rafko_net::Solution& solution, const rafko_mainframe::RafkoSettings& settings,
+    std::uint32_t required_temp_data_size, std::uint32_t required_temp_data_number_per_thread,
+    std::uint32_t max_threads = 1u
+  ):m_settings(settings)
+  , m_solution(solution)
+  , m_requiredTempDataNumberPerThread(required_temp_data_number_per_thread)
+  , m_requiredTempDataSize(required_temp_data_size)
+  , m_maxThreads(max_threads)
+  , m_commonDataPool((m_requiredTempDataNumberPerThread * m_maxThreads), m_requiredTempDataSize)
+  , m_neuronValueBuffers(
+    m_maxThreads, rafko_utilities::DataRingbuffer<>(
+      m_solution.network_memory_length(),
       [this](std::vector<double>& buffer){
-        buffer = std::vector<double>(solution.neuron_number(), 0.0);
+        buffer = std::vector<double>(m_solution.neuron_number(), 0.0);
       }
     )
   )
   #if(RAFKO_USES_OPENCL)
-  , device_weight_table_size( std::accumulate(
-    solution.partial_solutions().begin(), solution.partial_solutions().end(), 0u,
+  , m_deviceWeightTableSize( std::accumulate(
+    m_solution.partial_solutions().begin(), m_solution.partial_solutions().end(), 0u,
     [](const std::uint32_t& sum, const rafko_net::PartialSolution& partial){
       return ( sum + partial.weight_table_size() );
     }
   ) )
   #endif/*(RAFKO_USES_OPENCL)*/
   { /* A temporary buffer is allocated for every required future usage per thread */
-    for(std::uint32_t tmp_data_index = 0; tmp_data_index < (required_temp_data_number_per_thread * max_threads); ++tmp_data_index)
-      used_data_buffers.push_back(common_data_pool.reserve_buffer(required_temp_data_size));
+    for(std::uint32_t tmp_data_index = 0; tmp_data_index < (m_requiredTempDataNumberPerThread * m_maxThreads); ++tmp_data_index)
+      m_usedDataBuffers.push_back(m_commonDataPool.reserve_buffer(m_requiredTempDataSize));
   }
 
   /*
@@ -103,13 +103,13 @@ public:
     const std::vector<double>& input,
     bool reset_neuron_data = false, std::uint32_t thread_index = 0u
   ){
-    if(max_threads > thread_index){
-      RFASSERT( input.size() == solution.network_input_size() );
-      if(reset_neuron_data)neuron_value_buffers[thread_index].reset();
-      solve( input, neuron_value_buffers[thread_index], used_data_buffers, (thread_index * required_temp_data_number_per_thread), thread_index );
+    if(m_maxThreads > thread_index){
+      RFASSERT( input.size() == m_solution.network_input_size() );
+      if(reset_neuron_data)m_neuronValueBuffers[thread_index].reset();
+      solve( input, m_neuronValueBuffers[thread_index], m_usedDataBuffers, (thread_index * m_requiredTempDataNumberPerThread), thread_index );
       return { /* return with the range of the output Neurons */
-        neuron_value_buffers[thread_index].get_element(0).end() - solution.output_neuron_number(),
-        neuron_value_buffers[thread_index].get_element(0).end()
+        m_neuronValueBuffers[thread_index].get_element(0).end() - m_solution.output_neuron_number(),
+        m_neuronValueBuffers[thread_index].get_element(0).end()
       };
     } else throw std::runtime_error("Thread index out of bounds!");
   }
@@ -134,7 +134,7 @@ public:
    * @return     A const reference to the solution the agent is using to produce outputs to the given inputs
    */
   constexpr const rafko_net::Solution& get_solution() const{
-    return solution;
+    return m_solution;
   }
 
   /**
@@ -144,8 +144,8 @@ public:
    * @return         A const reference to the raw Neuron data
    */
   const rafko_utilities::DataRingbuffer<>& get_memory(std::uint32_t thread_index = 0) const{
-    RFASSERT(thread_index < neuron_value_buffers.size());
-    return neuron_value_buffers[thread_index];
+    RFASSERT(thread_index < m_neuronValueBuffers.size());
+    return m_neuronValueBuffers[thread_index];
   }
 
   virtual ~RafkoAgent() = default;
@@ -154,21 +154,21 @@ public:
    * @brief     Provides the size of the buffer it was declared with
    */
   constexpr std::uint32_t get_required_temp_data_size() const{
-    return required_temp_data_size;
+    return m_requiredTempDataSize;
   }
 
 #if(RAFKO_USES_OPENCL)
-  constexpr void set_sequence_params(std::uint32_t sequence_number_, std::uint32_t sequence_size_ = 1u, std::uint32_t prefill_inputs_per_sequence_ = 0u){
-    sequences_evaluating = sequence_number_;
-    sequence_size = sequence_size_;
-    prefill_inputs_per_sequence = prefill_inputs_per_sequence_;
+  constexpr void set_sequence_params(std::uint32_t sequence_number, std::uint32_t sequence_size = 1u, std::uint32_t prefill_inputs_per_sequence = 0u){
+    m_sequencesEvaluating = sequence_number;
+    m_sequenceSize = sequence_size;
+    m_prefillInputsPerSequence = prefill_inputs_per_sequence;
   }
 
   cl::Program::Sources get_step_sources() const override{
     return { rafko_net::SolutionBuilder::get_kernel_for_solution(
-      solution, "agent_solution",
-      sequence_size, prefill_inputs_per_sequence,
-      settings
+      m_solution, "agent_solution",
+      m_sequenceSize, m_prefillInputsPerSequence,
+      m_settings
     ) };
   }
   std::vector<std::string> get_step_names() const{
@@ -183,8 +183,8 @@ public:
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
     return{ rafko_mainframe::RafkoNBufShape{
-      1u, device_weight_table_size,
-      (sequences_evaluating * (sequence_size + prefill_inputs_per_sequence) * solution.network_input_size())
+      1u, m_deviceWeightTableSize,
+      (m_sequencesEvaluating * (m_sequenceSize + m_prefillInputsPerSequence) * m_solution.network_input_size())
     } };
   }
 
@@ -197,35 +197,35 @@ public:
    */
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
     const std::size_t bytes_used = (
-      std::max(sequences_evaluating, 1u) /* number of sequences to evaluate */
+      std::max(m_sequencesEvaluating, 1u) /* number of sequences to evaluate */
       * std::max(2u, std::max( /* number of labels per sequence */
-        solution.network_memory_length(), (sequence_size + prefill_inputs_per_sequence)
+        m_solution.network_memory_length(), (m_sequenceSize + m_prefillInputsPerSequence)
       ) )
-      * solution.neuron_number() /* number of numbers per label */
+      * m_solution.neuron_number() /* number of numbers per label */
     );
     return{ rafko_mainframe::RafkoNBufShape{bytes_used, 1u} };
   }
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
-    return std::make_tuple( cl::NullRange/*offset*/, cl::NDRange(sequences_evaluating)/*global*/, cl::NullRange/*local*/ );
+    return std::make_tuple( cl::NullRange/*offset*/, cl::NDRange(m_sequencesEvaluating)/*global*/, cl::NullRange/*local*/ );
   }
 #endif/*(RAFKO_USES_OPENCL)*/
 
 protected:
-  const rafko_mainframe::RafkoSettings& settings;
-  const rafko_net::Solution& solution;
-  std::uint32_t required_temp_data_number_per_thread;
-  std::uint32_t required_temp_data_size;
-  std::uint32_t max_threads;
+  const rafko_mainframe::RafkoSettings& m_settings;
+  const rafko_net::Solution& m_solution;
+  std::uint32_t m_requiredTempDataNumberPerThread;
+  std::uint32_t m_requiredTempDataSize;
+  std::uint32_t m_maxThreads;
 
 private:
-  mutable rafko_utilities::DataPool<double> common_data_pool;
-  std::vector<rafko_utilities::DataRingbuffer<>> neuron_value_buffers; /* One rafko_utilities::DataRingbuffer per thread */
-  std::vector<std::reference_wrapper<std::vector<double>>> used_data_buffers;
+  mutable rafko_utilities::DataPool<double> m_commonDataPool;
+  std::vector<rafko_utilities::DataRingbuffer<>> m_neuronValueBuffers; /* One rafko_utilities::DataRingbuffer per thread */
+  std::vector<std::reference_wrapper<std::vector<double>>> m_usedDataBuffers;
 #if(RAFKO_USES_OPENCL)
-  std::uint32_t sequences_evaluating = 1u;
-  std::uint32_t sequence_size = 1u;
-  std::uint32_t prefill_inputs_per_sequence = 0u;
-  std::uint32_t device_weight_table_size;
+  std::uint32_t m_sequencesEvaluating = 1u;
+  std::uint32_t m_sequenceSize = 1u;
+  std::uint32_t m_prefillInputsPerSequence = 0u;
+  std::uint32_t m_deviceWeightTableSize;
 #endif/*(RAFKO_USES_OPENCL)*/
 };
 

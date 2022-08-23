@@ -49,18 +49,18 @@ public:
    * @brief     Returns the number of worker threads handled in this group
    */
   std::uint32_t get_number_of_threads() const{
-    return threads.size();
+    return m_threads.size();
   }
 
 private:
   enum state_t{Idle, Start, End};
-  mutable const std::function<void(std::uint32_t)>* worker_function; /* gets the thread index it is inside */
-  mutable std::size_t threads_ready = 0;
-  mutable std::atomic<state_t> state = {Idle};
-  mutable std::mutex function_mutex;
-  mutable std::mutex state_mutex;
-  mutable std::condition_variable synchroniser;
-  std::vector<std::thread> threads;
+  mutable const std::function<void(std::uint32_t)>* m_workerFunction; /* gets the thread index it is inside */
+  mutable std::size_t m_threadsReady = 0;
+  mutable std::atomic<state_t> m_state = {Idle};
+  mutable std::mutex m_functionMutex;
+  mutable std::mutex m_stateMutex;
+  mutable std::condition_variable m_synchroniser;
+  std::vector<std::thread> m_threads;
 
   void worker(std::uint32_t thread_index);
 };

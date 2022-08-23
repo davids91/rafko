@@ -31,235 +31,235 @@ namespace rafko_mainframe{
 class RAFKO_FULL_EXPORT RafkoSettings{
 public:
   constexpr std::uint16_t get_max_solve_threads() const{
-    return max_solve_threads;
+    return m_maxSolveThreads;
   }
 
   constexpr std::uint16_t get_sqrt_of_solve_threads() const{
-    return sqrt_of_solve_threads;
+    return m_sqrtOfSolveThreads;
   }
 
   constexpr std::uint16_t get_max_processing_threads() const{
-    return max_processing_threads;
+    return m_maxProcessingThreads;
   }
 
   constexpr std::uint16_t get_sqrt_of_process_threads() const{
-    return sqrt_of_process_threads;
+    return m_sqrtOfProcessThreads;
   }
 
   constexpr std::uint32_t get_tolerance_loop_value() const{
-    return tolerance_loop_value;
+    return m_toleranceLoopValue;
   }
 
   constexpr double get_device_max_megabytes() const{
-    return device_max_megabytes;
+    return m_deviceMaxMegabytes;
   }
 
   constexpr google::protobuf::Arena* get_arena_ptr() const{
-    return arena_ptr;
+    return m_arenaPtr;
   }
 
   double get_learning_rate(std::uint32_t iteration = 0) const;
 
   constexpr double get_dropout_probability() const{
-    return droput_probability;
+    return m_droputProbability;
   }
 
   std::uint32_t get_minibatch_size() const{
-    return hypers.minibatch_size();
+    return m_hypers.minibatch_size();
   }
 
   std::uint32_t get_memory_truncation() const{
-    return hypers.memory_truncation();
+    return m_hypers.memory_truncation();
   }
 
   bool get_training_strategy(rafko_gym::Training_strategy strategy) const{
-    return (0u < (static_cast<std::uint32_t>(hypers.training_strategies()) & static_cast<std::uint32_t>(strategy)));
+    return (0u < (static_cast<std::uint32_t>(m_hypers.training_strategies()) & static_cast<std::uint32_t>(strategy)));
   }
 
   double get_alpha() const{
-    return hypers.alpha();
+    return m_hypers.alpha();
   }
 
   double get_beta() const{
-    return hypers.beta();
+    return m_hypers.beta();
   }
 
   double get_beta_2() const{
-    return hypers.beta();
+    return m_hypers.beta();
   }
 
   double get_gamma() const{
-    return hypers.gamma();
+    return m_hypers.gamma();
   }
 
   double get_delta() const{
-    return hypers.delta();
+    return m_hypers.delta();
   }
 
   double get_epsilon() const{
-    return hypers.epsilon();
+    return m_hypers.epsilon();
   }
 
   constexpr double get_sqrt_epsilon() const{
-    return sqrt_epsilon;
+    return m_sqrtEpsilon;
   }
 
   double get_zetta() const{
-    return hypers.zetta();
+    return m_hypers.zetta();
   }
 
   double get_lambda() const{
-    return hypers.lambda();
+    return m_hypers.lambda();
   }
 
-  RafkoSettings& set_learning_rate(double learning_rate_){
-    hypers.set_learning_rate(learning_rate_);
+  RafkoSettings& set_learning_rate(double learning_rate){
+    m_hypers.set_learning_rate(learning_rate);
     calculate_learning_rate_decay();
     return *this;
   }
 
-  RafkoSettings& set_minibatch_size(std::uint32_t minibatch_size_){
-    hypers.set_minibatch_size(minibatch_size_);
+  RafkoSettings& set_minibatch_size(std::uint32_t minibatch_size){
+    m_hypers.set_minibatch_size(minibatch_size);
     return *this;
   }
 
-  RafkoSettings& set_max_solve_threads(double max_solve_threads_){
-    max_solve_threads = max_solve_threads_;
-    sqrt_of_solve_threads = static_cast<std::uint16_t>(std::max(
-      (1.0), std::sqrt(static_cast<double>(max_solve_threads))
+  RafkoSettings& set_max_solve_threads(double max_solve_threads){
+    m_maxSolveThreads = max_solve_threads;
+    m_sqrtOfSolveThreads = static_cast<std::uint16_t>(std::max(
+      (1.0), std::sqrt(static_cast<double>(m_maxSolveThreads))
     ));
     return *this;
   }
 
-  RafkoSettings& set_max_processing_threads(std::uint16_t max_processing_threads_){
-    max_processing_threads = max_processing_threads_;
-    sqrt_of_process_threads = static_cast<std::uint16_t>(std::max(
-      (1.0), std::sqrt(static_cast<double>(max_processing_threads))
+  RafkoSettings& set_max_processing_threads(std::uint16_t max_processing_threads){
+    m_maxProcessingThreads = max_processing_threads;
+    m_sqrtOfProcessThreads = static_cast<std::uint16_t>(std::max(
+      (1.0), std::sqrt(static_cast<double>(m_maxProcessingThreads))
     ));
     return *this;
   }
 
-  constexpr RafkoSettings& set_tolerance_loop_value(std::uint32_t tolerance_loop_value_){
-    tolerance_loop_value = tolerance_loop_value_;
+  constexpr RafkoSettings& set_tolerance_loop_value(std::uint32_t tolerance_loop_value){
+    m_toleranceLoopValue = tolerance_loop_value;
     return *this;
   }
 
-  constexpr RafkoSettings& set_device_max_megabytes(double device_max_megabytes_){
-    device_max_megabytes = device_max_megabytes_;
+  constexpr RafkoSettings& set_device_max_megabytes(double device_max_megabytes){
+    m_deviceMaxMegabytes = device_max_megabytes;
     return *this;
   }
 
-  constexpr RafkoSettings& set_arena_ptr(google::protobuf::Arena* arena_ptr_){
-    arena_ptr = arena_ptr_;
+  constexpr RafkoSettings& set_arena_ptr(google::protobuf::Arena* arena_ptr){
+    m_arenaPtr = arena_ptr;
     return *this;
   }
 
-  RafkoSettings& set_memory_truncation(std::uint32_t memory_truncation_){
-    hypers.set_memory_truncation(memory_truncation_);
+  RafkoSettings& set_memory_truncation(std::uint32_t memory_truncation){
+    m_hypers.set_memory_truncation(memory_truncation);
     return *this;
   }
 
-  RafkoSettings& set_alpha(double alpha_){
-    hypers.set_epsilon(alpha_);
+  RafkoSettings& set_alpha(double alpha){
+    m_hypers.set_epsilon(alpha);
     return *this;
   }
 
-  RafkoSettings& set_beta(double beta_){
-    hypers.set_beta(beta_);
+  RafkoSettings& set_beta(double beta){
+    m_hypers.set_beta(beta);
     return *this;
   }
 
-  RafkoSettings& set_beta_2(double beta_){
-    hypers.set_beta(beta_);
+  RafkoSettings& set_beta_2(double beta){
+    m_hypers.set_beta(beta);
     return *this;
   }
 
-  RafkoSettings& set_gamma(double gamma_){
-    hypers.set_gamma(gamma_);
+  RafkoSettings& set_gamma(double gamma){
+    m_hypers.set_gamma(gamma);
     return *this;
   }
 
-  RafkoSettings& set_delta(double delta_){
-    hypers.set_delta(delta_);
+  RafkoSettings& set_delta(double delta){
+    m_hypers.set_delta(delta);
     return *this;
   }
 
-  RafkoSettings& set_epsilon(double epsilon_){
-    hypers.set_epsilon(epsilon_);
-    sqrt_epsilon = std::sqrt(epsilon_);
+  RafkoSettings& set_epsilon(double epsilon){
+    m_hypers.set_epsilon(epsilon);
+    m_sqrtEpsilon = std::sqrt(epsilon);
     return *this;
   }
 
-  RafkoSettings& set_zetta(double zetta_){
-    hypers.set_zetta(zetta_);
+  RafkoSettings& set_zetta(double zetta){
+    m_hypers.set_zetta(zetta);
     return *this;
   }
 
-  RafkoSettings& set_lambda(double lambda_){
-    hypers.set_lambda(lambda_);
+  RafkoSettings& set_lambda(double lambda){
+    m_hypers.set_lambda(lambda);
     return *this;
   }
 
-  RafkoSettings& set_hypers(rafko_gym::TrainingHyperparameters hypers_){
-    hypers.CopyFrom(hypers_);
+  RafkoSettings& set_hypers(rafko_gym::TrainingHyperparameters hypers){
+    m_hypers.CopyFrom(hypers);
     return *this;
   }
 
   RafkoSettings& set_training_strategy(rafko_gym::Training_strategy strategy, bool enable){
     if(enable){
-      hypers.set_training_strategies(
-        static_cast<rafko_gym::Training_strategy>(static_cast<std::uint32_t>(hypers.training_strategies()) | static_cast<std::uint32_t>(strategy))
+      m_hypers.set_training_strategies(
+        static_cast<rafko_gym::Training_strategy>(static_cast<std::uint32_t>(m_hypers.training_strategies()) | static_cast<std::uint32_t>(strategy))
       );
     }else{
-      hypers.set_training_strategies(
-        static_cast<rafko_gym::Training_strategy>(static_cast<std::uint32_t>(hypers.training_strategies()) & (~static_cast<std::uint32_t>(strategy)))
+      m_hypers.set_training_strategies(
+        static_cast<rafko_gym::Training_strategy>(static_cast<std::uint32_t>(m_hypers.training_strategies()) & (~static_cast<std::uint32_t>(strategy)))
       );
     }
     return *this;
   }
 
   RafkoSettings& set_learning_rate_decay(std::vector<std::pair<std::uint32_t,double>>&& iteration_with_value){
-    learning_rate_decay = std::move(iteration_with_value);
+    m_learningRateDecay = std::move(iteration_with_value);
     calculate_learning_rate_decay();
     return *this;
   }
 
-  constexpr RafkoSettings& set_droput_probability(double droput_probability_){
-    droput_probability = droput_probability_;
+  constexpr RafkoSettings& set_droput_probability(double droput_probability){
+    m_droputProbability = droput_probability;
     return *this;
   }
 
   RafkoSettings(){
-    hypers.set_learning_rate((1e-6));
-    hypers.set_minibatch_size(64);
-    hypers.set_memory_truncation(2);
+    m_hypers.set_learning_rate((1e-6));
+    m_hypers.set_minibatch_size(64);
+    m_hypers.set_memory_truncation(2);
 
-    hypers.set_alpha((1.6732));
-    hypers.set_beta((0.9));
-    hypers.set_beta_2((0.99));
-    hypers.set_gamma((0.9));
-    hypers.set_delta((0.03));
-    hypers.set_epsilon(1e-8); /* very small positive value almost greater, than (0.0) */
-    hypers.set_zetta((0.3));
-    hypers.set_lambda((1.0507));
-    hypers.set_training_strategies(rafko_gym::Training_strategy::training_strategy_unknown);
+    m_hypers.set_alpha((1.6732));
+    m_hypers.set_beta((0.9));
+    m_hypers.set_beta_2((0.99));
+    m_hypers.set_gamma((0.9));
+    m_hypers.set_delta((0.03));
+    m_hypers.set_epsilon(1e-8); /* very small positive value almost greater, than (0.0) */
+    m_hypers.set_zetta((0.3));
+    m_hypers.set_lambda((1.0507));
+    m_hypers.set_training_strategies(rafko_gym::Training_strategy::training_strategy_unknown);
   }
 
 private:
-  std::uint16_t max_solve_threads = 4u;
-  std::uint16_t sqrt_of_solve_threads = 2u;
-  std::uint16_t max_processing_threads = 4u;
-  std::uint16_t sqrt_of_process_threads = 2u;
-  std::uint32_t tolerance_loop_value = 100u;
-  double sqrt_epsilon = std::sqrt((1e-15));
-  double device_max_megabytes = (2048);
-  google::protobuf::Arena* arena_ptr = nullptr;
-  rafko_gym::TrainingHyperparameters hypers = rafko_gym::TrainingHyperparameters();
-  mutable std::uint32_t learning_rate_decay_iteration_cache = 0u;
-  mutable std::uint32_t learning_rate_decay_index_cache = 0u;
-  std::vector<std::pair<std::uint32_t, double>> learning_rate_with_decay;
-  std::vector<std::pair<std::uint32_t, double>> learning_rate_decay;
-  double droput_probability = (0.2);
+  std::uint16_t m_maxSolveThreads = 4u;
+  std::uint16_t m_sqrtOfSolveThreads = 2u;
+  std::uint16_t m_maxProcessingThreads = 4u;
+  std::uint16_t m_sqrtOfProcessThreads = 2u;
+  std::uint32_t m_toleranceLoopValue = 100u;
+  double m_sqrtEpsilon = std::sqrt((1e-15));
+  double m_deviceMaxMegabytes = (2048);
+  google::protobuf::Arena* m_arenaPtr = nullptr;
+  rafko_gym::TrainingHyperparameters m_hypers = rafko_gym::TrainingHyperparameters();
+  mutable std::uint32_t m_learningRateDecayIterationCache = 0u;
+  mutable std::uint32_t m_learningRateDecayIndexCache = 0u;
+  std::vector<std::pair<std::uint32_t, double>> m_learningRateWithDecay;
+  std::vector<std::pair<std::uint32_t, double>> m_learningRateDecay;
+  double m_droputProbability = (0.2);
 
   /**
    * @brief      Calculates the learning rates for different iteration indices
@@ -267,10 +267,10 @@ private:
    */
   void calculate_learning_rate_decay(){
     double learning_rate = get_learning_rate();
-    learning_rate_with_decay.clear();
-    for(std::pair<std::uint32_t, double> decay : learning_rate_decay){
+    m_learningRateWithDecay.clear();
+    for(std::pair<std::uint32_t, double> decay : m_learningRateDecay){
       learning_rate *= std::get<double>(decay);
-      learning_rate_with_decay.push_back({std::get<std::uint32_t>(decay), learning_rate});
+      m_learningRateWithDecay.push_back({std::get<std::uint32_t>(decay), learning_rate});
     }
   }
 };

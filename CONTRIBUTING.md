@@ -9,6 +9,7 @@ Rafko Style Guide
   - Naming best practices:
     - namespace names: `have_underscore_between_words`
     - entity names(classes, protobuf messages): `AreDoneWithCamelCase`
+    - class member variables: `m_prePendedAndCamelCase`
     - local variable names: `are_like_namespaces`
     - enumerations:
       - enumeration names: `Start_with_uppercase_but_theres_underscore`

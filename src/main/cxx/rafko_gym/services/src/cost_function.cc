@@ -37,7 +37,7 @@ void CostFunction::get_feature_errors(
     throw std::runtime_error("Can't evaluate more labels, than there is data provided!");
 
   const std::uint32_t labels_to_do_in_a_thread = 1u + static_cast<std::uint32_t>(labels_to_evaluate/settings.get_sqrt_of_solve_threads());
-  execution_threads.start_and_block( std::bind( &CostFunction::feature_errors_thread, this,
+  m_executionThreads.start_and_block( std::bind( &CostFunction::feature_errors_thread, this,
     std::ref(labels), std::ref(neuron_data), std::ref(errors_for_labels),
     label_start, error_start, neuron_start,
     labels_to_do_in_a_thread, labels_to_evaluate, sample_number, std::placeholders::_1
@@ -151,8 +151,8 @@ cl::Program::Sources CostFunction::get_step_sources()const {
     source_base, std::regex("\\$\\$post_process_source\\$\\$"),
     get_post_process_kernel_source("outputs[0]")
   );
-  source_base = std::regex_replace(source_base, std::regex("\\$\\$feature_size\\$\\$"), std::to_string(feature_size));
-  source_base = std::regex_replace(source_base, std::regex("\\$\\$sample_number\\$\\$"), std::to_string(pairs_to_evaluate));
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$feature_size\\$\\$"), std::to_string(m_featureSize));
+  source_base = std::regex_replace(source_base, std::regex("\\$\\$sample_number\\$\\$"), std::to_string(m_pairsToEvaluate));
   return{source_base};
 }
 #endif/*(RAFKO_USES_OPENCL)*/

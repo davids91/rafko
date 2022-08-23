@@ -42,25 +42,25 @@ class AutoDiffGPUStrategy
 {
 using OperationsType = std::shared_ptr<RafkoBackpropagationOperation>;
 public:
-  AutoDiffGPUStrategy(const rafko_mainframe::RafkoSettings& settings_, rafko_net::RafkoNet& network_)
-  : settings(settings_)
-  , network(network_)
+  AutoDiffGPUStrategy(const rafko_mainframe::RafkoSettings& settings, rafko_net::RafkoNet& network)
+  : m_settings(settings)
+  , m_network(network)
   {
   }
 
   AutoDiffGPUStrategy(
-    const rafko_mainframe::RafkoSettings& settings_, rafko_net::RafkoNet& network_,
-    std::shared_ptr<RafkoEnvironment> environment_
+    const rafko_mainframe::RafkoSettings& settings, rafko_net::RafkoNet& network,
+    std::shared_ptr<RafkoEnvironment> environment
   )
-  : AutoDiffGPUStrategy(settings_, network_)
+  : AutoDiffGPUStrategy(settings, network)
   {
-    set_environment(environment_);
+    set_environment(environment);
   }
 
-  void set_environment(std::shared_ptr<RafkoEnvironment> environment_){
-    environment = environment_;
-    RFASSERT(environment->get_input_size() == network.input_data_size());
-    built = false;
+  void set_environment(std::shared_ptr<RafkoEnvironment> environment){
+    m_environment = environment;
+    RFASSERT(m_environment->get_input_size() == m_network.input_data_size());
+    m_built = false;
   }
 
   /**
@@ -75,9 +75,9 @@ public:
   );
 
   cl::Program::Sources get_step_sources() const override{
-    RFASSERT(built);
-    RFASSERT(static_cast<bool>(environment));
-    return {built_source};
+    RFASSERT(m_built);
+    RFASSERT(static_cast<bool>(m_environment));
+    return {m_builtSource};
   }
 
   std::vector<std::string> get_step_names() const{
@@ -88,13 +88,13 @@ public:
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const;
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
-    RFASSERT(static_cast<bool>(environment));
+    RFASSERT(static_cast<bool>(m_environment));
     return {
       cl::NullRange/*offset*/,
       cl::NDRange(
-        std::min(settings.get_minibatch_size(), environment->get_number_of_sequences()) * maximum_local_workers
+        std::min(m_settings.get_minibatch_size(), m_environment->get_number_of_sequences()) * m_maximumLocalWorkers
       )/*global*/,
-      cl::NDRange(maximum_local_workers)/*local*/
+      cl::NDRange(m_maximumLocalWorkers)/*local*/
     };
   }
 
@@ -129,13 +129,13 @@ public:
 
 
 private:
-  const rafko_mainframe::RafkoSettings& settings;
-  rafko_net::RafkoNet& network;
-  std::shared_ptr<RafkoEnvironment> environment;
-  bool built = false;
-  std::string built_source;
-  std::uint32_t number_of_operations;
-  std::uint32_t maximum_local_workers;
+  const rafko_mainframe::RafkoSettings& m_settings;
+  rafko_net::RafkoNet& m_network;
+  std::shared_ptr<RafkoEnvironment> m_environment;
+  bool m_built = false;
+  std::string m_builtSource;
+  std::uint32_t m_numberOfOperations;
+  std::uint32_t m_maximumLocalWorkers;
 };
 
 } /* namespace rafko_gym */

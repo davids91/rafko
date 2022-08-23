@@ -38,23 +38,23 @@ namespace rafko_mainframe {
  */
 class RafkoDummyEnvironment : public rafko_gym::RafkoEnvironment{
   public:
-    RafkoDummyEnvironment(std::uint32_t input_size_ = 1u, std::uint32_t feature_size_ = 1u)
-    : dummy_inputs(1, std::vector<double>(input_size_))
-    , dummy_labels(1, std::vector<double>(feature_size_))
+    RafkoDummyEnvironment(std::uint32_t input_size = 1u, std::uint32_t feature_size = 1u)
+    : m_dummyInputs(1, std::vector<double>(input_size))
+    , m_dummyLabels(1, std::vector<double>(feature_size))
     { }
 
     void push_state() override{ }
     void pop_state() override{ }
     const std::vector<double>& get_input_sample(std::uint32_t /*raw_input_index*/)const override{
-      return dummy_inputs[0];
+      return m_dummyInputs[0];
     }
-    const std::vector<std::vector<double>>& get_input_samples()const override{ return dummy_inputs; }
+    const std::vector<std::vector<double>>& get_input_samples()const override{ return m_dummyInputs; }
     const std::vector<double>& get_label_sample(std::uint32_t /*raw_label_index*/)const override{
-      return dummy_labels[0];
+      return m_dummyLabels[0];
     }
-    const std::vector<std::vector<double>>& get_label_samples()const override{ return dummy_labels; }
-    std::uint32_t get_feature_size()const override{ return dummy_labels[0].size(); }
-    std::uint32_t get_input_size()const override{ return dummy_labels[0].size(); }
+    const std::vector<std::vector<double>>& get_label_samples()const override{ return m_dummyLabels; }
+    std::uint32_t get_feature_size()const override{ return m_dummyLabels[0].size(); }
+    std::uint32_t get_input_size()const override{ return m_dummyLabels[0].size(); }
     std::uint32_t get_number_of_input_samples()const override{ return 1; }
     std::uint32_t get_number_of_label_samples()const override{ return 1; }
     std::uint32_t get_number_of_sequences()const override{ return 1; }
@@ -62,16 +62,16 @@ class RafkoDummyEnvironment : public rafko_gym::RafkoEnvironment{
     std::uint32_t get_prefill_inputs_number()const override{ return 0; }
     ~RafkoDummyEnvironment() = default;
   private:
-    std::vector<std::vector<double>> dummy_inputs;
-    std::vector<std::vector<double>> dummy_labels;
+    std::vector<std::vector<double>> m_dummyInputs;
+    std::vector<std::vector<double>> m_dummyLabels;
 };
 
 #if(RAFKO_USES_OPENCL)
 class RafkoDummyGPUStrategyPhase : public RafkoGPUStrategyPhase{
 public:
-  RafkoDummyGPUStrategyPhase(RafkoNBufShape input_shape_, RafkoNBufShape output_shape_)
-  : input_shape(input_shape_)
-  , output_shape(output_shape_)
+  RafkoDummyGPUStrategyPhase(RafkoNBufShape input_shape, RafkoNBufShape output_shape)
+  : m_inputShape(input_shape)
+  , m_outputShape(output_shape)
   { }
 
   cl::Program::Sources get_step_sources() const override{
@@ -86,18 +86,18 @@ public:
     return {"dummy_kernel"};
   }
   std::vector<RafkoNBufShape> get_input_shapes() const override{
-    return {input_shape};
+    return {m_inputShape};
   }
   std::vector<RafkoNBufShape> get_output_shapes() const override{
-    return {output_shape};
+    return {m_outputShape};
   }
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
     return std::make_tuple(cl::NullRange,cl::NullRange,cl::NullRange);
   }
   ~RafkoDummyGPUStrategyPhase() = default;
 private:
-  const RafkoNBufShape input_shape;
-  const RafkoNBufShape output_shape;
+  const RafkoNBufShape m_inputShape;
+  const RafkoNBufShape m_outputShape;
 };
 #endif/*(RAFKO_USES_OPENCL)*/
 

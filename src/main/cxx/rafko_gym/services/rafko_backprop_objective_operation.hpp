@@ -42,23 +42,23 @@ class RAFKO_FULL_EXPORT RafkoBackpropObjectiveOperation
 public:
   RafkoBackpropObjectiveOperation(
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    const RafkoObjective& objective_, std::uint32_t operation_index,
-    std::uint32_t output_index_,  std::uint32_t sample_number_
+    const RafkoObjective& objective, std::uint32_t operation_index,
+    std::uint32_t output_index,  std::uint32_t sample_number
   )
   : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_objective_d)
-  , objective(objective_)
-  , output_index(output_index_)
-  , sample_number(sample_number_)
+  , m_objective(objective)
+  , m_outputIndex(output_index)
+  , m_sampleNumber(sample_number)
   {
   }
   ~RafkoBackpropObjectiveOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations() override{
     return {{
-      {{ad_operation_neuron_spike_d, {(network.neuron_array_size() - network.output_neuron_number() + output_index)}}},
+      {{ad_operation_neuron_spike_d, {(m_network.neuron_array_size() - m_network.output_neuron_number() + m_outputIndex)}}},
       [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>> dependencies){
         RFASSERT(1 == dependencies.size());
-        feature_dependency = dependencies[0];
+        m_featureDependency = dependencies[0];
         set_registered();
       }
     }};
@@ -66,8 +66,8 @@ public:
 
   void calculate_value(const std::vector<double>& /*network_input*/) override{
     RFASSERT(are_dependencies_registered());
-    RFASSERT(static_cast<bool>(feature_dependency));
-    RFASSERT(feature_dependency->is_value_processed());
+    RFASSERT(static_cast<bool>(m_featureDependency));
+    RFASSERT(m_featureDependency->is_value_processed());
     /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     set_value_processed();
   }
@@ -77,19 +77,19 @@ public:
   ) override{
     RFASSERT(is_value_processed());
     RFASSERT(are_dependencies_registered());
-    RFASSERT(output_index < label_data.size());
-    RFASSERT(static_cast<bool>(feature_dependency));
-    RFASSERT(feature_dependency->is_processed());
-    set_derivative(d_w_index, objective.get_derivative(
-      label_data[output_index], feature_dependency->get_value(0u/*past_index*/),
-      feature_dependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(sample_number)
+    RFASSERT(m_outputIndex < label_data.size());
+    RFASSERT(static_cast<bool>(m_featureDependency));
+    RFASSERT(m_featureDependency->is_processed());
+    set_derivative(d_w_index, m_objective.get_derivative(
+      label_data[m_outputIndex], m_featureDependency->get_value(0u/*past_index*/),
+      m_featureDependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(m_sampleNumber)
     ));
     RFASSERT_LOG(
       "derivative operation[{}](w[{}]): Objective[{}]_d = {} = derivative({}(label[{}]),{}(op[{}]),{}(d_op),{}(samples))",
-      get_operation_index(), d_w_index, output_index, get_derivative(0u/*past_index*/, d_w_index),
-      label_data[output_index], output_index,
-      feature_dependency->get_value(0u/*past_index*/), feature_dependency->get_operation_index(),
-      feature_dependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(sample_number)
+      get_operation_index(), d_w_index, m_outputIndex, get_derivative(0u/*past_index*/, d_w_index),
+      label_data[m_outputIndex], m_outputIndex,
+      m_featureDependency->get_value(0u/*past_index*/), m_featureDependency->get_operation_index(),
+      m_featureDependency->get_derivative(0u/*past_index*/, d_w_index), static_cast<double>(m_sampleNumber)
     );
     set_derivative_processed();
   }
@@ -111,29 +111,29 @@ public:
     std::string operations_value_array, std::string operations_derivative_array,
     std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
   ) const override{
-    RFASSERT(static_cast<bool>(feature_dependency));
+    RFASSERT(static_cast<bool>(m_featureDependency));
     return (
       operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
-      + objective.get_derivative_kernel_source(
-        label_array + "[" + std::to_string(output_index) + "]",
-        operations_value_array + "[" + std::to_string(feature_dependency->get_operation_index()) + "]",
-        operations_derivative_array + "[" + std::to_string(feature_dependency->get_operation_index()) + "]",
-        std::to_string(sample_number)
+      + m_objective.get_derivative_kernel_source(
+        label_array + "[" + std::to_string(m_outputIndex) + "]",
+        operations_value_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
+        operations_derivative_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
+        std::to_string(m_sampleNumber)
       ) + ";"
     );
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
-    RFASSERT(static_cast<bool>(feature_dependency));
-    return {feature_dependency};
+    RFASSERT(static_cast<bool>(m_featureDependency));
+    return {m_featureDependency};
   }
 
 private:
-  const RafkoObjective& objective;
-  const std::uint32_t output_index;
-  const std::uint32_t sample_number;
-  std::shared_ptr<RafkoBackpropagationOperation> feature_dependency;
+  const RafkoObjective& m_objective;
+  const std::uint32_t m_outputIndex;
+  const std::uint32_t m_sampleNumber;
+  std::shared_ptr<RafkoBackpropagationOperation> m_featureDependency;
 };
 
 } /* namespace rafko_gym */

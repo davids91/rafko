@@ -47,24 +47,24 @@ class RAFKO_FULL_EXPORT RafkoBackpropNeuronBiasOperation
 public:
   RafkoBackpropNeuronBiasOperation(
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    std::uint32_t operation_index, std::uint32_t neuron_index_, std::uint32_t neuron_weight_index_
+    std::uint32_t operation_index, std::uint32_t neuron_index, std::uint32_t neuron_weight_index
   )
   : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_neuron_bias_d)
-  , neuron_index(neuron_index_)
-  , neuron_weight_index(neuron_weight_index_)
-  , weights_iterator(network.neuron_array(neuron_index).input_weights())
-  , weight_index(weights_iterator[neuron_weight_index])
+  , m_neuronIndex(neuron_index)
+  , m_neuronWeightIndex(neuron_weight_index)
+  , m_weightsIterator(m_network.neuron_array(m_neuronIndex).input_weights())
+  , m_weightIndex(m_weightsIterator[m_neuronWeightIndex])
   {
   }
   ~RafkoBackpropNeuronBiasOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations() override{
-    if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){ /* more biases are present with the Neuron */
+    if(m_neuronWeightIndex < (m_weightsIterator.cached_size() - 1u)){ /* more biases are present with the Neuron */
       return {{
-        {{ad_operation_neuron_bias_d,{neuron_index, (neuron_weight_index + 1u)}}},
+        {{ad_operation_neuron_bias_d,{m_neuronIndex, (m_neuronWeightIndex + 1u)}}},
         [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>> dependencies){
           RFASSERT(1u == dependencies.size());
-          next_bias_dependency = dependencies[0];
+          m_nextBiasDependency = dependencies[0];
           set_registered();
         }
       }};
@@ -98,19 +98,19 @@ public:
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
-    if(neuron_weight_index < (weights_iterator.cached_size() - 1u)){
-    RFASSERT(static_cast<bool>(next_bias_dependency));
-      return {next_bias_dependency};
+    if(m_neuronWeightIndex < (m_weightsIterator.cached_size() - 1u)){
+    RFASSERT(static_cast<bool>(m_nextBiasDependency));
+      return {m_nextBiasDependency};
     }else return {};
   }
 
 private:
-  const std::uint32_t neuron_index;
-  const std::uint32_t neuron_weight_index;
-  rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval> weights_iterator;
-  const std::uint32_t weight_index;
+  const std::uint32_t m_neuronIndex;
+  const std::uint32_t m_neuronWeightIndex;
+  rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval> m_weightsIterator;
+  const std::uint32_t m_weightIndex;
 
-  std::shared_ptr<RafkoBackpropagationOperation> next_bias_dependency;
+  std::shared_ptr<RafkoBackpropagationOperation> m_nextBiasDependency;
 };
 
 } /* namespace rafko_gym */

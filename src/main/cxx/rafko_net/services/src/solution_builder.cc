@@ -58,15 +58,15 @@ std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optim
   if(0 == net.output_neuron_number()) throw std::runtime_error("Can't build a solution with 0 output Neurons!");
   while(!neuron_router.finished()){ /* Until the whole network is processed */
     if( (!optimize_to_gpu)&&(0 == solution->cols_size()) )
-      neuron_router.collect_subset(settings.get_max_solve_threads(), settings.get_device_max_megabytes(), false);
-    else neuron_router.collect_subset(settings.get_max_solve_threads(),settings.get_device_max_megabytes(), true);
+      neuron_router.collect_subset(m_settings.get_max_solve_threads(), m_settings.get_device_max_megabytes(), false);
+    else neuron_router.collect_subset(m_settings.get_max_solve_threads(),m_settings.get_device_max_megabytes(), true);
 
-    remaining_megabytes_in_row = settings.get_device_max_megabytes();
-    const double max_megabytes_in_one_partial = ( remaining_megabytes_in_row / static_cast<double>(settings.get_max_solve_threads()) );
+    remaining_megabytes_in_row = m_settings.get_device_max_megabytes();
+    const double max_megabytes_in_one_partial = ( remaining_megabytes_in_row / static_cast<double>(m_settings.get_max_solve_threads()) );
     overall_partial_solution_count = solution->partial_solutions_size();
 
     if(0u < neuron_router.get_subset_size()){
-      for(std::uint32_t partial_index_in_row = 0; partial_index_in_row < settings.get_max_solve_threads(); ++partial_index_in_row){
+      for(std::uint32_t partial_index_in_row = 0; partial_index_in_row < m_settings.get_max_solve_threads(); ++partial_index_in_row){
         /* Add a partial solution and fill it up with Neurons */
         PartialSolution& this_partial = *solution->add_partial_solutions();
         PartialSolutionBuilder partial_builder(this_partial);

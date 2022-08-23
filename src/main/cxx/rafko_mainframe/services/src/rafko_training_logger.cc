@@ -28,18 +28,18 @@ void RafkoTrainingLogger::log(std::uint32_t iteration, const std::vector<std::ui
   for(const std::uint32_t& coordinate : coordinates) measured.add_coordinates(coordinate);
   for(const std::string& tag : tags) measured.add_tags(tag);
   for(const double& data_element : data) measured.add_data(data_element);
-  *measurement.add_packs() = measured;
-  ++changes_since;
-  if(settings.get_tolerance_loop_value() < changes_since)
+  *m_measurement.add_packs() = measured;
+  ++m_changesSince;
+  if(m_settings.get_tolerance_loop_value() < m_changesSince)
     flush();
 }
 
 void RafkoTrainingLogger::flush(){
   std::filebuf logfile;
-  logfile.open(id+".log", std::ios::out | std::ios::binary | std::ios::trunc);
+  logfile.open(m_id+".log", std::ios::out | std::ios::binary | std::ios::trunc);
   std::ostream log_stream(&logfile);
-  measurement.SerializeToOstream(&log_stream);
-  changes_since = 0;
+  m_measurement.SerializeToOstream(&log_stream);
+  m_changesSince = 0;
   logfile.close();
 }
 

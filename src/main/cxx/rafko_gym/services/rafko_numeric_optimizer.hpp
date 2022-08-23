@@ -40,23 +40,23 @@ public:
   /**
    * @brief      Class Constructor
    *
-   * @param      contexts_                     An array of service contexts to use for training the network
-   * @param[in]  stochastic_evaluation_loops_  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
+   * @param      contexts                     An array of service contexts to use for training the network
+   * @param[in]  stochastic_evaluation_loops  Decideshow many stochastic evaluations of the @neural_network shall count as one evaluation during gradient approximation
    */
   RafkoNumericOptimizer(
-    std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> contexts_,
-    std::shared_ptr<rafko_mainframe::RafkoContext> test_context_,
-    rafko_mainframe::RafkoSettings settings_ = rafko_mainframe::RafkoSettings(),
-    std::uint32_t stochastic_evaluation_loops_ = 1u
-  ):settings(settings_)
-  , training_contexts(contexts_)
-  , test_context(test_context_)
+    std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> contexts,
+    std::shared_ptr<rafko_mainframe::RafkoContext> test_context,
+    rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings(),
+    std::uint32_t stochastic_evaluation_loops = 1u
+  ):settings(settings)
+  , training_contexts(contexts)
+  , test_context(test_context)
   , weight_filter(training_contexts[0]->expose_network().weight_table_size(), 1.0)
   , used_weight_filter(weight_filter)
   , weight_exclude_chance_filter(training_contexts[0]->expose_network().weight_table_size(), 0.0)
-  , stochastic_evaluation_loops(stochastic_evaluation_loops_)
+  , stochastic_evaluation_loops(stochastic_evaluation_loops)
   , execution_threads(std::min(training_contexts.size(), static_cast<std::size_t>(settings.get_max_processing_threads())))
-  , tmp_data_pool(2u, training_contexts[0]->expose_network().weight_table_size())
+  , m_tmpDataPool(2u, training_contexts[0]->expose_network().weight_table_size())
   { }
 
   RafkoNumericOptimizer(const RafkoNumericOptimizer& other) = delete;/* Copy constructor */
@@ -180,7 +180,7 @@ public:
   void set_weight_exclude_chance_filter(std::vector<double>&& filter){
     RFASSERT( filter.size() == weight_exclude_chance_filter.size());
     weight_exclude_chance_filter = filter;
-    exclude_chance_sum = std::accumulate(
+    m_excludeChanceSum = std::accumulate(
       weight_exclude_chance_filter.begin(),weight_exclude_chance_filter.end(), 0.0
     );
   }
@@ -194,7 +194,7 @@ public:
    */
   void set_weight_exclude_chance_filter(double filter){
     std::fill(weight_exclude_chance_filter.begin(),weight_exclude_chance_filter.end(), filter);
-    exclude_chance_sum = filter * static_cast<double>(weight_exclude_chance_filter.size());
+    m_excludeChanceSum = filter * static_cast<double>(weight_exclude_chance_filter.size());
   }
 
   /**
@@ -208,7 +208,7 @@ public:
   void modify_weight_exclude_chance_filter(std::uint32_t weight_index, double filter){
     RFASSERT( weight_index < weight_exclude_chance_filter.size());
     weight_exclude_chance_filter[weight_index] = filter;
-    exclude_chance_sum = std::accumulate(
+    m_excludeChanceSum = std::accumulate(
       weight_exclude_chance_filter.begin(),weight_exclude_chance_filter.end(), 0.0
     );
   }
@@ -219,15 +219,15 @@ public:
    */
   void full_evaluation(){
     double fitness = training_contexts[0]->full_evaluation();
-    if(min_test_error > fitness){
-      min_test_error = fitness;
-      min_test_error_was_at_iteration = iteration;
+    if(m_minTestError > fitness){
+      m_minTestError = fitness;
+      m_minTestErrorWasAtIteration = m_iteration;
     }
-    error_estimation = -fitness;
+    m_errorEstimation = -fitness;
   }
 
   constexpr double get_error_estimation() const{
-    return error_estimation;
+    return m_errorEstimation;
   }
 
   /**
@@ -237,19 +237,19 @@ public:
    */
   bool stop_training(){
     return(
-      (1u < iteration)
+      (1u < m_iteration)
       &&((
         (
           settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
-          &&(settings.get_learning_rate() >= -min_test_error)
+          &&(settings.get_learning_rate() >= -m_minTestError)
         )||(
           settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
-          &&((0.0) ==  -min_test_error)
+          &&((0.0) ==  -m_minTestError)
         )||(
           (training_contexts[0] && test_context)
           &&(
             (settings.get_training_strategy(Training_strategy::training_strategy_early_stopping))
-            &&(last_training_error > ( last_testing_error * (1.0 + settings.get_delta()) ))
+            &&(m_lastTrainingError > ( m_lastTestingError * (1.0 + settings.get_delta()) ))
           )
         )
       ))
@@ -267,17 +267,17 @@ private:
   std::uint32_t stochastic_evaluation_loops;
   rafko_utilities::ThreadGroup execution_threads;
 
-  std::mutex network_mutex;
-  std::uint32_t iteration = 1u;
-  rafko_utilities::DataPool<> tmp_data_pool;
-  double epsilon_addition = 0.0;
-  double min_test_error = std::numeric_limits<double>::max();
-  double last_training_error = std::numeric_limits<double>::quiet_NaN();
-  double last_testing_error = std::numeric_limits<double>::quiet_NaN();
-  double error_estimation = 1.0;
-  double exclude_chance_sum = 0.0;
-  std::uint32_t min_test_error_was_at_iteration = 0u;
-  std::uint32_t last_tested_iteration = 0u;
+  std::mutex m_networkMutex;
+  std::uint32_t m_iteration = 1u;
+  rafko_utilities::DataPool<> m_tmpDataPool;
+  double m_epsilonAddition = 0.0;
+  double m_minTestError = std::numeric_limits<double>::max();
+  double m_lastTrainingError = std::numeric_limits<double>::quiet_NaN();
+  double m_lastTestingError = std::numeric_limits<double>::quiet_NaN();
+  double m_errorEstimation = 1.0;
+  double m_excludeChanceSum = 0.0;
+  std::uint32_t m_minTestErrorWasAtIteration = 0u;
+  std::uint32_t m_lastTestedIteration = 0u;
 
   /**
    * @brief      Evaluates the network in a stochastic manner the number of configured times and return with the fittness/error value
@@ -287,9 +287,9 @@ private:
   double stochastic_evaluation(rafko_mainframe::RafkoContext& context){
     double fitness = (0.0);
     for(std::uint32_t i = 0; i < stochastic_evaluation_loops; ++i)
-      fitness += context.stochastic_evaluation(iteration);
+      fitness += context.stochastic_evaluation(m_iteration);
     double result_fitness = fitness / static_cast<double>(stochastic_evaluation_loops);
-    error_estimation = (error_estimation + -result_fitness)/(2.0);
+    m_errorEstimation = (m_errorEstimation + -result_fitness)/(2.0);
     return result_fitness;
   }
 

@@ -37,13 +37,13 @@ namespace rafko_gym {
  */
 class RAFKO_FULL_EXPORT RafkoWeightUpdater{
 public:
-  RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings_, std::uint32_t required_iterations_for_step_ = 1u)
-  : network(rafko_net)
-  , settings(settings_)
-  , required_iterations_for_step(required_iterations_for_step_)
-  , weights_to_do_in_one_thread(1u + static_cast<std::uint32_t>(network.weight_table_size()/settings.get_max_solve_threads()))
-  , current_velocity(network.weight_table_size(),(0.0))
-  , execution_threads(settings.get_max_solve_threads())
+  RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings, std::uint32_t required_iterations_for_step = 1u)
+  : m_network(rafko_net)
+  , m_settings(settings)
+  , m_requiredIterationsForStep(required_iterations_for_step)
+  , m_weightsToDoInOneThread(1u + static_cast<std::uint32_t>(m_network.weight_table_size()/m_settings.get_max_solve_threads()))
+  , m_currentVelocity(m_network.weight_table_size(),(0.0))
+  , execution_threads(m_settings.get_max_solve_threads())
   {
   }
 
@@ -52,8 +52,8 @@ public:
    * @brief      The function to signal the weight updater that an iteration have started
    */
   constexpr void start(){
-    iteration = 0;
-    finished = false;
+    m_iteration = 0;
+    m_finished = false;
   }
 
   /**
@@ -72,7 +72,7 @@ public:
    * @return     True if finished, False otherwise.
    */
   virtual bool is_finished() const{
-    return finished;
+    return m_finished;
   }
 
   /**
@@ -83,7 +83,7 @@ public:
    * @return     The current velocity.
    */
   virtual double get_current_velocity(std::uint32_t weight_index) const{
-    return current_velocity[weight_index];
+    return m_currentVelocity[weight_index];
   }
 
   /**
@@ -92,19 +92,19 @@ public:
    * @return     The current velocity.
    */
   virtual const std::vector<double>& get_current_velocity() const{
-    return current_velocity;
+    return m_currentVelocity;
   }
 
   virtual ~RafkoWeightUpdater() = default;
 
 protected:
-  rafko_net::RafkoNet& network;
-  const rafko_mainframe::RafkoSettings& settings;
-  const std::uint32_t required_iterations_for_step;
-  const std::uint32_t weights_to_do_in_one_thread;
-  std::uint32_t iteration = 0u;
-  bool finished = false;
-  std::vector<double> current_velocity;
+  rafko_net::RafkoNet& m_network;
+  const rafko_mainframe::RafkoSettings& m_settings;
+  const std::uint32_t m_requiredIterationsForStep;
+  const std::uint32_t m_weightsToDoInOneThread;
+  std::uint32_t m_iteration = 0u;
+  bool m_finished = false;
+  std::vector<double> m_currentVelocity;
 
   /**
    * @brief      Gets the new value for one weight based on the velocity.
@@ -114,7 +114,7 @@ protected:
    * @return     The new weight.
    */
   virtual double get_new_weight(std::uint32_t weight_index) const{
-    return(network.weight_table(weight_index) + get_current_velocity(weight_index));
+    return(m_network.weight_table(weight_index) + get_current_velocity(weight_index));
   }
 
   /**
@@ -126,7 +126,7 @@ protected:
    * @return     The new velocity.
    */
   virtual double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const{
-    return (-gradients[weight_index] * settings.get_learning_rate());
+    return (-gradients[weight_index] * m_settings.get_learning_rate());
   }
 
 private:

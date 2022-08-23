@@ -46,8 +46,8 @@ namespace rafko_net {
  */
 class RAFKO_FULL_EXPORT RafkoNetBuilder{
 public:
-  RafkoNetBuilder(const rafko_mainframe::RafkoSettings& settings_)
-  :  settings(settings_)
+  RafkoNetBuilder(const rafko_mainframe::RafkoSettings& settings)
+  :  m_settings(settings)
   { }
 
   /**
@@ -58,8 +58,8 @@ public:
    * @return     builder reference for chaining
    */
   constexpr RafkoNetBuilder& input_size(std::uint32_t size){
-    arg_input_size = size;
-    is_input_size_set = true;
+    m_argInputSize = size;
+    m_isInputSizeSet = true;
     return *this;
   }
 
@@ -71,8 +71,8 @@ public:
    * @return     builder reference for chaining
    */
   constexpr RafkoNetBuilder& output_neuron_number(std::uint32_t size){
-    arg_output_neuron_number = size;
-    is_output_neuron_number_set = true;
+    m_argOutputNeuronNumber = size;
+    m_isOutputNeuronNumberSet = true;
     return *this;
   }
 
@@ -84,8 +84,8 @@ public:
    * @return
    */
   constexpr RafkoNetBuilder& expected_input_range(double range){
-    arg_expected_input_range = range;
-    is_expected_input_range_set = true;
+    m_argExpectedInputRange = range;
+    m_isExpectedInputRangeSet = true;
     return *this;
   }
 
@@ -99,9 +99,9 @@ public:
    */
   RafkoNetBuilder& weight_initializer(std::shared_ptr<WeightInitializer> initializer){
     if(nullptr != initializer){
-      arg_weight_initer = initializer;
-      is_weight_initializer_set = true;
-    }else is_weight_initializer_set = false;
+      m_argWeightIniter = initializer;
+      m_isWeightInitializerSet = true;
+    }else m_isWeightInitializerSet = false;
     return *this;
   }
 
@@ -114,9 +114,9 @@ public:
    */
   RafkoNetBuilder& neuron_array(std::vector<Neuron> arr){
     if((0 < arr.size())&&(NeuronInfo::is_neuron_valid(arr.back()))){
-      arg_neuron_array = arr;
-      is_neuron_array_set = true;
-    }else is_neuron_array_set = false;
+      m_argNeuronArray = arr;
+      m_isNeuronArraySet = true;
+    }else m_isNeuronArraySet = false;
     return *this;
   }
 
@@ -129,9 +129,9 @@ public:
    */
   RafkoNetBuilder& weight_table(std::vector<double> table){
     if(0 < table.size()){
-      arg_weight_table = table;
-      is_weight_table_set = true;
-    }else is_weight_table_set = false;
+      m_argWeightTable = table;
+      m_isWeightTableSet = true;
+    }else m_isWeightTableSet = false;
     return *this;
   }
 
@@ -143,8 +143,8 @@ public:
    * @return     builder reference for chaining
    */
   RafkoNetBuilder& allowed_transfer_functions_by_layer(std::vector<std::set<Transfer_functions> > filter){
-    arg_allowed_transfer_functions_by_layer = filter;
-    is_allowed_transfer_functions_by_layer_set = true;
+    m_argAllowedTransferFunctionsByLayer = filter;
+    m_isAllowedTransferFunctionsByLayerSet = true;
     return *this;
   }
 
@@ -201,7 +201,7 @@ public:
    * @return     builder reference for chaining
    */
   RafkoNetBuilder& add_neuron_recurrence(std::uint32_t layer_index, std::uint32_t layer_neuron_index, std::uint32_t past){
-    arg_neuron_index_recurrence.push_back({layer_index, layer_neuron_index, past});
+    m_argNeuronIndexRecurrence.push_back({layer_index, layer_neuron_index, past});
     return *this;
   }
 
@@ -231,58 +231,58 @@ public:
   RafkoNet* dense_layers(std::vector<std::uint32_t> layer_sizes);
 
 private:
-  const rafko_mainframe::RafkoSettings& settings;
+  const rafko_mainframe::RafkoSettings& m_settings;
 
   /**
    * @brief   Helper variables to see if different required arguments are set inside the builder
    */
-  bool is_input_size_set = false;
-  bool is_output_neuron_number_set = false;
-  bool is_expected_input_range_set = false;
-  bool is_weight_table_set = false;
-  bool is_weight_initializer_set = false;
-  bool is_neuron_array_set = false;
-  bool is_allowed_transfer_functions_by_layer_set = false;
+  bool m_isInputSizeSet = false;
+  bool m_isOutputNeuronNumberSet = false;
+  bool m_isExpectedInputRangeSet = false;
+  bool m_isWeightTableSet = false;
+  bool m_isWeightInitializerSet = false;
+  bool m_isNeuronArraySet = false;
+  bool m_isAllowedTransferFunctionsByLayerSet = false;
 
   /**
    * @brief   Helper variables for features and optional Neuron parameters
    */
-  std::vector< std::set<Transfer_functions> > arg_allowed_transfer_functions_by_layer;
-  std::unordered_map<std::uint32_t, std::set<Neuron_group_features>> layer_features;
-  std::vector< std::tuple<std::uint32_t,std::uint32_t,Input_functions> > arg_neuron_index_input_functions;
-  std::vector< std::tuple<std::uint32_t,std::uint32_t,Transfer_functions> > arg_neuron_index_transfer_functions;
-  std::vector< std::tuple<std::uint32_t,std::uint32_t,Spike_functions> > arg_neuron_index_spike_functions;
-  std::vector< std::tuple<std::uint32_t,std::uint32_t,std::uint32_t> > arg_neuron_index_recurrence;
+  std::vector< std::set<Transfer_functions> > m_argAllowedTransferFunctionsByLayer;
+  std::unordered_map<std::uint32_t, std::set<Neuron_group_features>> m_layerFeatures;
+  std::vector< std::tuple<std::uint32_t,std::uint32_t,Input_functions> > m_argNeuronIndexInputFunctions;
+  std::vector< std::tuple<std::uint32_t,std::uint32_t,Transfer_functions> > m_argNeuronIndexTransferFunctions;
+  std::vector< std::tuple<std::uint32_t,std::uint32_t,Spike_functions> > m_argNeuronIndexSpikeFunctions;
+  std::vector< std::tuple<std::uint32_t,std::uint32_t,std::uint32_t> > m_argNeuronIndexRecurrence;
 
   /**
    * The absolute value of the amplitude of one average input datapoint. It supports weight initialization.
    */
-  double arg_expected_input_range = TransferFunction::get_average_output_range(transfer_function_identity);
+  double m_argExpectedInputRange = TransferFunction::get_average_output_range(transfer_function_identity);
 
   /**
    * The array containing the neurons while RafkoNetBuilder::build is used
    */
-  std::vector<Neuron> arg_neuron_array;
+  std::vector<Neuron> m_argNeuronArray;
 
   /**
    * The array containing the used weights in the network while RafkoNetBuilder::build is used
    */
-  std::vector<double> arg_weight_table;
+  std::vector<double> m_argWeightTable;
 
   /**
    * Weight Initializer argument, which guides the initial net Weights
    */
-  std::shared_ptr<WeightInitializer> arg_weight_initer;
+  std::shared_ptr<WeightInitializer> m_argWeightIniter;
 
   /**
    * Number of inputs the net-to-be-built shall accept
    */
-  std::uint32_t arg_input_size = 0;
+  std::uint32_t m_argInputSize = 0;
 
   /**
    * Number of Neurons the net-to-be-built shall have as output
    */
-  std::uint32_t arg_output_neuron_number = 0;
+  std::uint32_t m_argOutputNeuronNumber = 0;
 
 };
 

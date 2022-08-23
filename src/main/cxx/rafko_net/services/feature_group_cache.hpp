@@ -37,12 +37,12 @@ private:
 public:
   const std::uint32_t checksum;
 
-  FeatureGroupCache(const rafko_net::RafkoNet& network, std::uint32_t feature_group_index_)
-  : feature_group_index(feature_group_index_)
+  FeatureGroupCache(const rafko_net::RafkoNet& network, std::uint32_t feature_group_index)
+  : feature_group_index(feature_group_index)
   , num_of_neurons_needed(
-    SynapseIterator<>(network.neuron_group_features(feature_group_index_).relevant_neurons()).size()
+    SynapseIterator<>(network.neuron_group_features(feature_group_index).relevant_neurons()).size()
   )
-  , checksum(construct(network.neuron_group_features(feature_group_index_)))
+  , checksum(construct(network.neuron_group_features(feature_group_index)))
   {
   }
 

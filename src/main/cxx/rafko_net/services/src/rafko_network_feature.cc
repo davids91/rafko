@@ -37,9 +37,9 @@ void RafkoNetworkFeature::execute_in_paralell_for(
   const google::protobuf::RepeatedPtrField<IndexSynapseInterval>& relevant_neurons,
   std::function<void(std::uint32_t)>&& fun, std::uint32_t thread_index
 ) const{
-  execution_threads[thread_index]->start_and_block([this, &relevant_neurons, &fun](std::uint32_t thread_index){
+  m_executionThreads[thread_index]->start_and_block([this, &relevant_neurons, &fun](std::uint32_t thread_index){
     SynapseIterator<> relevant_neuron_iterator(relevant_neurons);
-    std::uint32_t neurons_to_do_in_one_thread = 1u + (relevant_neuron_iterator.size()/execution_threads[0]->get_number_of_threads());
+    std::uint32_t neurons_to_do_in_one_thread = 1u + (relevant_neuron_iterator.size()/m_executionThreads[0]->get_number_of_threads());
     std::uint32_t start_index = std::min( relevant_neuron_iterator.size(), (neurons_to_do_in_one_thread * thread_index) );
     std::uint32_t neurons_to_do_in_this_thread = std::min(neurons_to_do_in_one_thread, (relevant_neuron_iterator.size() - start_index));
     for(std::uint32_t synapse_index = 0; synapse_index < neurons_to_do_in_this_thread; synapse_index++){
@@ -52,7 +52,7 @@ void RafkoNetworkFeature::execute_solution_relevant(
   const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& settings,
   NeuronDataProxy neuron_data, std::uint32_t thread_index
 ) const{
-  RFASSERT(thread_index < execution_threads.size());
+  RFASSERT(thread_index < m_executionThreads.size());
 
   switch(feature.feature()){
     case neuron_group_feature_softmax: execute_softmax(neuron_data, feature.relevant_neurons(), thread_index);
@@ -67,7 +67,7 @@ double RafkoNetworkFeature::calculate_performance_relevant(
   const FeatureGroup& feature, const rafko_mainframe::RafkoSettings& /*settings*/,
   const RafkoNet& network, std::uint32_t thread_index
 ) const{
-  RFASSERT(thread_index < execution_threads.size());
+  RFASSERT(thread_index < m_executionThreads.size());
 
   switch(feature.feature()){
     case neuron_group_feature_l1_regularization: return calculate_l1_regularization(network, feature.relevant_neurons(), thread_index);
@@ -357,8 +357,8 @@ void RafkoNetworkFeature::add_lx_kernel_to(
   bool declare_locals
 ){
   {
-    std::lock_guard<std::mutex> my_lock(feature_cache_mutex);
-    ++lx_feature_called;
+    std::lock_guard<std::mutex> my_lock(m_featureCacheMutex);
+    ++m_lxFeatureCalled;
     /*!Note: if the function were to be called after the start of the function, the index 0
      * would not be wasted, but this way the function is also thread-safe
      */
@@ -382,8 +382,8 @@ void RafkoNetworkFeature::add_lx_kernel_to(
     index_list += "(" + weight_start_index + "+" + std::to_string(relevant_index_value) + "),";
   });
   index_list.pop_back();
-  std::string index_size_variable = "feature_lx_" + std::to_string(lx_feature_called) + "_index_values";
-  std::string index_variable = "feature_lx_" + std::to_string(lx_feature_called) + "_index_values";
+  std::string index_size_variable = "feature_lx_" + std::to_string(m_lxFeatureCalled) + "_index_values";
+  std::string index_variable = "feature_lx_" + std::to_string(m_lxFeatureCalled) + "_index_values";
 
   /* add feature calculations */
   std::string feature_calculations = feature_helpers + R"(

@@ -45,11 +45,11 @@ class RAFKO_FULL_EXPORT RafkoBackpropNetworkInputOperation
 public:
   RafkoBackpropNetworkInputOperation(
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    std::uint32_t operation_index, std::uint32_t input_index_, std::uint32_t weight_index_
+    std::uint32_t operation_index, std::uint32_t input_index, std::uint32_t weight_index
   )
   : RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_input_d)
-  , input_index(input_index_)
-  , weight_index(weight_index_)
+  , m_inputIndex(input_index)
+  , m_weightIndex(weight_index)
   {
   }
   ~RafkoBackpropNetworkInputOperation() = default;
@@ -61,12 +61,12 @@ public:
   }
 
   void calculate_value(const std::vector<double>& network_input) override{
-    RFASSERT(input_index < network_input.size());
-    set_value(network_input[input_index] * network.weight_table(weight_index));
+    RFASSERT(m_inputIndex < network_input.size());
+    set_value(network_input[m_inputIndex] * m_network.weight_table(m_weightIndex));
     RFASSERT_LOG(
       "operation[{}]: Network Input[{}]({}) * weight[{}]({}) = {}", get_operation_index(),
-      input_index, network_input[input_index], weight_index, network.weight_table(weight_index),
-      ( network_input[input_index] * network.weight_table(weight_index) )
+      m_inputIndex, network_input[m_inputIndex], m_weightIndex, m_network.weight_table(m_weightIndex),
+      ( network_input[m_inputIndex] * m_network.weight_table(m_weightIndex) )
     );
     set_value_processed();
   }
@@ -74,11 +74,11 @@ public:
   void calculate_derivative(
     std::uint32_t d_w_index, const std::vector<double>& network_input, const std::vector<double>& /*label_data*/
   ) override{
-    RFASSERT(input_index < network_input.size());
-    set_derivative( d_w_index, ((d_w_index == weight_index)?(network_input[input_index]):(0.0)) );
+    RFASSERT(m_inputIndex < network_input.size());
+    set_derivative( d_w_index, ((d_w_index == m_weightIndex)?(network_input[m_inputIndex]):(0.0)) );
     RFASSERT_LOG(
       "derivative operation[{}](w[{}]): Network Input[{}]_d = {}", get_operation_index(),
-      d_w_index, input_index, get_derivative(0u/*past_index*/, d_w_index)
+      d_w_index, m_inputIndex, get_derivative(0u/*past_index*/, d_w_index)
     );
     set_derivative_processed();
   }
@@ -95,8 +95,8 @@ public:
   ) const override{
     return (
       operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
-      + network_input_array + "[" + std::to_string(input_index) + "]"
-      + " * " + weight_array + "[" + std::to_string(weight_index) + "];\n"
+      + network_input_array + "[" + std::to_string(m_inputIndex) + "]"
+      + " * " + weight_array + "[" + std::to_string(m_weightIndex) + "];\n"
     );
   }
 
@@ -113,13 +113,13 @@ public:
       }
     )";
     kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, std::regex("==this_op_weight_index=="), std::to_string(weight_index)
+      kernel_code, std::regex("==this_op_weight_index=="), std::to_string(m_weightIndex)
     );
     kernel_code = rafko_utilities::replace_all_in_string(
       kernel_code, std::regex("==network_input_array=="), network_input_array
     );
     kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, std::regex("==network_input_index=="), std::to_string(input_index)
+      kernel_code, std::regex("==network_input_index=="), std::to_string(m_inputIndex)
     );
     kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_derivative_array=="), operations_derivative_array);
     kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_index=="), std::to_string(get_operation_index()));
@@ -132,8 +132,8 @@ public:
   }
 
 private:
-  const std::uint32_t input_index;
-  const std::uint32_t weight_index;
+  const std::uint32_t m_inputIndex;
+  const std::uint32_t m_weightIndex;
 };
 
 } /* namespace rafko_gym */

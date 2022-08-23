@@ -22,83 +22,83 @@ namespace rafko_utilities {
 ThreadGroup::ThreadGroup(std::uint32_t number_of_threads){
   assert(0u < number_of_threads);
   for(std::uint32_t i = 0; i < number_of_threads; ++i)
-   threads.emplace_back(std::thread(&ThreadGroup::worker, this, i));
+   m_threads.emplace_back(std::thread(&ThreadGroup::worker, this, i));
 }
 
 ThreadGroup::~ThreadGroup(){
   { /* Signal to the worker threads that the show is over */
-   std::lock_guard<std::mutex> my_lock(state_mutex);
-   state.store(End);
+   std::lock_guard<std::mutex> my_lock(m_stateMutex);
+   m_state.store(End);
   }
-  while(0 < threads.size()){
-    synchroniser.notify_all();
-    if(threads.back().joinable()){
-      threads.back().join();
-      threads.pop_back();
+  while(0 < m_threads.size()){
+    m_synchroniser.notify_all();
+    if(m_threads.back().joinable()){
+      m_threads.back().join();
+      m_threads.pop_back();
     }
   }
 }
 
 void ThreadGroup::start_and_block(const std::function<void(std::uint32_t)>& function) const{
-  std::lock_guard<std::mutex> function_lock(function_mutex);
+  std::lock_guard<std::mutex> function_lock(m_functionMutex);
   { /* initialize, start.. */
-    std::unique_lock<std::mutex> my_lock(state_mutex);
-    worker_function = &function;
-    state.store(Start);
+    std::unique_lock<std::mutex> my_lock(m_stateMutex);
+    m_workerFunction = &function;
+    m_state.store(Start);
   }
-  synchroniser.notify_all(); /* Whip the peons */
+  m_synchroniser.notify_all(); /* Whip the peons */
 
   { /* wait until the work is done */
-    std::unique_lock<std::mutex> my_lock(state_mutex);
-    synchroniser.wait(my_lock,[this](){
-      return (threads.size() <= threads_ready);
+    std::unique_lock<std::mutex> my_lock(m_stateMutex);
+    m_synchroniser.wait(my_lock,[this](){
+      return (m_threads.size() <= m_threadsReady);
     });
   }
   { /* set appropriate state */
-    std::unique_lock<std::mutex> my_lock(state_mutex);
-    state.store(Idle);
+    std::unique_lock<std::mutex> my_lock(m_stateMutex);
+    m_state.store(Idle);
   }
-  synchroniser.notify_all(); /* Notify worker threads that the main thread is finished */
+  m_synchroniser.notify_all(); /* Notify worker threads that the main thread is finished */
 
   { /* wait until all threads are notified */
-    std::unique_lock<std::mutex> my_lock(state_mutex);
-    synchroniser.wait(my_lock,[this](){
-      return (0u == threads_ready); /* All threads are notified once the @threads_ready variable is zero again */
+    std::unique_lock<std::mutex> my_lock(m_stateMutex);
+    m_synchroniser.wait(my_lock,[this](){
+      return (0u == m_threadsReady); /* All threads are notified once the @threads_ready variable is zero again */
     });
   }
 }
 
 void ThreadGroup::worker(std::uint32_t thread_index){
-  while(End != state.load()){ /* Until the pool is stopped */
+  while(End != m_state.load()){ /* Until the pool is stopped */
     { /* Wait until main thread triggers a task */
-      std::unique_lock<std::mutex> my_lock(state_mutex);
-      synchroniser.wait(my_lock,[this](){
-        return (Idle != state.load());
+      std::unique_lock<std::mutex> my_lock(m_stateMutex);
+      m_synchroniser.wait(my_lock,[this](){
+        return (Idle != m_state.load());
       });
     }
-    if(End != state.load()){ /* In case there are still tasks to execute.. */
+    if(End != m_state.load()){ /* In case there are still tasks to execute.. */
       { /* signal that work is done! */
-        std::unique_lock<std::mutex> my_lock(state_mutex);
+        std::unique_lock<std::mutex> my_lock(m_stateMutex);
       }
-      (*worker_function)(thread_index);/* do the work */
+      (*m_workerFunction)(thread_index);/* do the work */
       { /* signal that work is done! */
-        std::unique_lock<std::mutex> my_lock(state_mutex);
-        ++threads_ready; /* increase "done counter" */
+        std::unique_lock<std::mutex> my_lock(m_stateMutex);
+        ++m_threadsReady; /* increase "done counter" */
       }
-      synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
+      m_synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
 
       { /* Wait until main thread is closing the iteration */
-        std::unique_lock<std::mutex> my_lock(state_mutex);
-        synchroniser.wait(my_lock,[this](){
-          return (Start != state.load());
+        std::unique_lock<std::mutex> my_lock(m_stateMutex);
+        m_synchroniser.wait(my_lock,[this](){
+          return (Start != m_state.load());
         });
       }
 
       { /* signal that this thread is notified! */
-      std::unique_lock<std::mutex> my_lock(state_mutex);
-        --threads_ready; /* decrease the "done counter" to do so */
+      std::unique_lock<std::mutex> my_lock(m_stateMutex);
+        --m_threadsReady; /* decrease the "done counter" to do so */
       }
-      synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
+      m_synchroniser.notify_all(); /* Notify main thread that this thread  is finsished */
     }
   } /*while(END_VALUE != state)*/
 }

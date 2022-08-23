@@ -49,16 +49,16 @@ std::uint32_t RafkoWeightAdapter::get_relevant_partial_index_for(
 }
 
 PartialWeightPairs& RafkoWeightAdapter::get_relevant_partial_weight_indices_for(std::uint32_t network_weight_index) const{
-  std::unordered_map<std::uint32_t, std::vector<std::pair<std::uint32_t,std::uint32_t>>>::iterator iter = weights_in_partials.find(network_weight_index);
-  if(iter != weights_in_partials.end())
+  std::unordered_map<std::uint32_t, std::vector<std::pair<std::uint32_t,std::uint32_t>>>::iterator iter = m_weightsInPartials.find(network_weight_index);
+  if(iter != m_weightsInPartials.end())
     return iter->second;
 
   /* Find relevant Neurons for the weight, and their relative offset inside the Neuron structure */
   std::vector<std::pair<std::uint32_t,std::uint32_t>> relevant_neuron_weights; /* {Neuron index, relative_weight_index} */
-  for(std::uint32_t neuron_index = 0; static_cast<std::int32_t>(neuron_index) < net.neuron_array_size(); ++neuron_index){
+  for(std::uint32_t neuron_index = 0; static_cast<std::int32_t>(neuron_index) < m_net.neuron_array_size(); ++neuron_index){
     std::uint32_t weight_relative_index = 0u;
     /* iterate through the weights of the current neuron */
-    rafko_net::SynapseIterator<>::iterate_terminatable(net.neuron_array(neuron_index).input_weights(),
+    rafko_net::SynapseIterator<>::iterate_terminatable(m_net.neuron_array(neuron_index).input_weights(),
     [&relevant_neuron_weights, network_weight_index, neuron_index, &weight_relative_index](std::uint32_t weight_index){
       if(weight_index == network_weight_index){
         relevant_neuron_weights.push_back({neuron_index, weight_relative_index});
@@ -74,10 +74,10 @@ PartialWeightPairs& RafkoWeightAdapter::get_relevant_partial_weight_indices_for(
   std::set<std::uint32_t> found_partials;
   for(std::pair<std::uint32_t,std::uint32_t>& relevant_neural_data : relevant_neuron_weights){
     std::uint32_t partial_index = get_relevant_partial_index_for(std::get<0>(relevant_neural_data));
-    if(static_cast<std::int32_t>(partial_index) < solution.partial_solutions_size()){ /* found a partial for the neuron! */
+    if(static_cast<std::int32_t>(partial_index) < m_solution.partial_solutions_size()){ /* found a partial for the neuron! */
       if(0 == found_partials.count(partial_index)){ /* only add a partial index one time */
         found_partials.insert(partial_index);
-        rafko_net::PartialSolution& partial = *solution.mutable_partial_solutions(partial_index);
+        rafko_net::PartialSolution& partial = *m_solution.mutable_partial_solutions(partial_index);
         std::uint32_t inner_neuron_weight_synapse_starts = 0;
         std::uint32_t inner_neuron_weight_index_starts = 0;
         for(std::uint32_t inner_neuron_index = 0; inner_neuron_index < partial.output_data().interval_size(); ++inner_neuron_index){
@@ -106,8 +106,8 @@ PartialWeightPairs& RafkoWeightAdapter::get_relevant_partial_weight_indices_for(
   std::sort(relevant_partials.begin(),relevant_partials.end(),[](std::pair<std::uint32_t,std::uint32_t>& a, std::pair<std::uint32_t,std::uint32_t>& b){
     return (std::get<0>(a) > std::get<0>(b));
   });
-  weights_in_partials.insert({network_weight_index, std::move(relevant_partials)});
-  return weights_in_partials.find(network_weight_index)->second;
+  m_weightsInPartials.insert({network_weight_index, std::move(relevant_partials)});
+  return m_weightsInPartials.find(network_weight_index)->second;
 }
 
 #if(RAFKO_USES_OPENCL)
@@ -155,56 +155,56 @@ std::uint32_t RafkoWeightAdapter::get_weight_synapse_start_index_in_partial(
 }
 
 void RafkoWeightAdapter::update_solution_with_weight(std::uint32_t weight_index) const{
-  std::lock_guard<std::mutex> my_lock(reference_mutex);
-  RFASSERT(static_cast<std::int32_t>(weight_index) < net.weight_table_size());
+  std::lock_guard<std::mutex> my_lock(m_referenceMutex);
+  RFASSERT(static_cast<std::int32_t>(weight_index) < m_net.weight_table_size());
   const std::vector<std::pair<std::uint32_t, std::uint32_t>>& relevant_partial_weights = get_relevant_partial_weight_indices_for(weight_index);
   for(const std::pair<std::uint32_t,std::uint32_t>& relevant_partial_weight : relevant_partial_weights){
-    solution.mutable_partial_solutions(std::get<0>(relevant_partial_weight))->set_weight_table(
-      std::get<1>(relevant_partial_weight), net.weight_table(weight_index)
+    m_solution.mutable_partial_solutions(std::get<0>(relevant_partial_weight))->set_weight_table(
+      std::get<1>(relevant_partial_weight), m_net.weight_table(weight_index)
     );
   }
 }
 
 void RafkoWeightAdapter::update_solution_with_weights() const{
-  std::lock_guard<std::mutex> my_lock(reference_mutex);
+  std::lock_guard<std::mutex> my_lock(m_referenceMutex);
   std::int32_t partial_start_index = 0;
-  while(partial_start_index < solution.partial_solutions_size()){
+  while(partial_start_index < m_solution.partial_solutions_size()){
     if(
-      (static_cast<std::uint32_t>(solution.partial_solutions_size()) < (settings.get_max_solve_threads()/2))
-      ||(solution.partial_solutions_size() < 2)
+      (static_cast<std::uint32_t>(m_solution.partial_solutions_size()) < (m_settings.get_max_solve_threads()/2))
+      ||(m_solution.partial_solutions_size() < 2)
     ){
-      for(std::int32_t partial_index = 0; partial_index < solution.partial_solutions_size(); ++partial_index){
+      for(std::int32_t partial_index = 0; partial_index < m_solution.partial_solutions_size(); ++partial_index){
         std::uint32_t neuron_weight_synapse_starts = 0;
         std::uint32_t inner_neuron_weight_index_starts = 0;
-        for(std::uint32_t inner_neuron_index = 0; inner_neuron_index < solution.partial_solutions(partial_index).output_data().interval_size(); ++inner_neuron_index){
-          const std::uint32_t neuron_index = solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_index;
+        for(std::uint32_t inner_neuron_index = 0; inner_neuron_index < m_solution.partial_solutions(partial_index).output_data().interval_size(); ++inner_neuron_index){
+          const std::uint32_t neuron_index = m_solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_index;
           copy_weights_of_neuron_to_partial_solution( /* Take over a weight from one Neuron */
-            neuron_index, *solution.mutable_partial_solutions(partial_index), inner_neuron_weight_index_starts
+            neuron_index, *m_solution.mutable_partial_solutions(partial_index), inner_neuron_weight_index_starts
           );
-          for(std::uint32_t i = 0; i < solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index); ++i)
-            inner_neuron_weight_index_starts += solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
-          neuron_weight_synapse_starts += solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index);
+          for(std::uint32_t i = 0; i < m_solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index); ++i)
+            inner_neuron_weight_index_starts += m_solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
+          neuron_weight_synapse_starts += m_solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index);
         }
       }
     }else{ /* It is efficient to use multithreading */
-      execution_threads.start_and_block([this, partial_start_index](std::uint32_t thread_index){
+      m_executionThreads.start_and_block([this, partial_start_index](std::uint32_t thread_index){
         const std::int32_t partial_index = partial_start_index + thread_index;
-        if(partial_index < solution.partial_solutions_size()){
+        if(partial_index < m_solution.partial_solutions_size()){
           std::uint32_t neuron_weight_synapse_starts = 0;
           std::uint32_t inner_neuron_weight_index_starts = 0;
-          for(std::uint32_t inner_neuron_index = 0; inner_neuron_index < solution.partial_solutions(partial_index).output_data().interval_size(); ++inner_neuron_index){
-            const std::uint32_t neuron_index = solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_index;
+          for(std::uint32_t inner_neuron_index = 0; inner_neuron_index < m_solution.partial_solutions(partial_index).output_data().interval_size(); ++inner_neuron_index){
+            const std::uint32_t neuron_index = m_solution.partial_solutions(partial_index).output_data().starts() + inner_neuron_index;
             copy_weights_of_neuron_to_partial_solution( /* Take over a weight from one Neuron */
-              neuron_index, *solution.mutable_partial_solutions(partial_index), inner_neuron_weight_index_starts
+              neuron_index, *m_solution.mutable_partial_solutions(partial_index), inner_neuron_weight_index_starts
             );
-            for(std::uint32_t i = 0; i < solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index); ++i)
-              inner_neuron_weight_index_starts += solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
-            neuron_weight_synapse_starts += solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index);
+            for(std::uint32_t i = 0; i < m_solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index); ++i)
+              inner_neuron_weight_index_starts += m_solution.partial_solutions(partial_index).weight_indices(neuron_weight_synapse_starts + i).interval_size();
+            neuron_weight_synapse_starts += m_solution.partial_solutions(partial_index).weight_synapse_number(inner_neuron_index);
           }
         }
       });
     }
-    partial_start_index += execution_threads.get_number_of_threads();
+    partial_start_index += m_executionThreads.get_number_of_threads();
   } /* while(partial_start_index < solution.partial_solutions_size()) */
 }
 
@@ -212,9 +212,9 @@ void RafkoWeightAdapter::copy_weights_of_neuron_to_partial_solution(
   std::uint32_t neuron_index, rafko_net::PartialSolution& partial, std::uint32_t inner_neuron_weight_index_starts
 ) const{ /*!Note: After shared weight optimization, this part is to be re-worked */
   std::uint32_t weights_copied = 0;
-  rafko_net::SynapseIterator<>::iterate(net.neuron_array(neuron_index).input_weights(),[&](std::int32_t network_weight_index){
+  rafko_net::SynapseIterator<>::iterate(m_net.neuron_array(neuron_index).input_weights(),[&](std::int32_t network_weight_index){
     partial.set_weight_table(
-      (inner_neuron_weight_index_starts + weights_copied), net.weight_table(network_weight_index)
+      (inner_neuron_weight_index_starts + weights_copied), m_net.weight_table(network_weight_index)
     );
     ++weights_copied;
   });

@@ -26,10 +26,10 @@ namespace rafko_gym {
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterAdam : public RafkoWeightUpdater{
 public:
-  RafkoWeightUpdaterAdam(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings_)
-  :  RafkoWeightUpdater(rafko_net, settings_)
-  ,  moment(rafko_net.weight_table_size(),(0.0))
-  ,  raw_moment(rafko_net.weight_table_size(),(0.0))
+  RafkoWeightUpdaterAdam(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings)
+  :  RafkoWeightUpdater(rafko_net, settings)
+  ,  m_moment(rafko_net.weight_table_size(),(0.0))
+  ,  m_rawMoment(rafko_net.weight_table_size(),(0.0))
   { }
 
   void iterate(const std::vector<double>& gradients) override;
@@ -38,9 +38,9 @@ protected:
   double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const override;
 
 private:
-  std::uint32_t iteration_count = 0u;
-  std::vector<double> moment;
-  std::vector<double> raw_moment;
+  std::uint32_t m_iterationCount = 0u;
+  std::vector<double> m_moment;
+  std::vector<double> m_rawMoment;
 };
 
 } /* namespace rafko_gym */

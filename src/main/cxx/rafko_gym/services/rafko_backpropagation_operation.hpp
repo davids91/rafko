@@ -51,13 +51,13 @@ public:
   using DependencyRequest = std::optional<std::pair<DependencyParameters,DependencyRegister>>;
 
   RafkoBackpropagationOperation(
-    RafkoBackpropagationData& data_, const rafko_net::RafkoNet& network_,
-    std::uint32_t operation_index_, Autodiff_operations type_
+    RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
+    std::uint32_t operation_index, Autodiff_operations type
   )
-  : data(data_)
-  , network(network_)
-  , operation_index(operation_index_)
-  , type(type_)
+  : m_data(data)
+  , m_network(network)
+  , m_operationIndex(operation_index)
+  , m_type(type)
   {
   }
 
@@ -87,31 +87,31 @@ public:
 
 
   double get_derivative(std::uint32_t past_index, std::uint32_t d_w_index) const{
-    return data.get_derivative(past_index, get_operation_index(), d_w_index);
+    return m_data.get_derivative(past_index, get_operation_index(), d_w_index);
   }
 
   double get_value(std::uint32_t past_index) const{
-    return data.get_value(past_index, get_operation_index());
+    return m_data.get_value(past_index, get_operation_index());
   }
 
   bool constexpr are_dependencies_registered() const{
-    return dependencies_registered;
+    return m_dependenciesRegistered;
   }
 
   bool constexpr is_value_processed() const{
-    return value_processed;
+    return m_valueProcessed;
   }
 
   bool constexpr is_processed() const{
-    return (value_processed && derivative_processed);
+    return (m_valueProcessed && m_derivativeProcessed);
   }
 
   virtual std::uint32_t get_operation_index() const{
-    return operation_index;
+    return m_operationIndex;
   }
 
   constexpr Autodiff_operations get_type() const{
-    return type;
+    return m_type;
   }
 
 
@@ -122,59 +122,59 @@ public:
   std::uint32_t get_max_dependency_index();
 
   void insert_dependency(Dependency dep){
-    added_dependencies.push_back(dep);
+    m_addedDependencies.push_back(dep);
   }
 
   std::vector<Dependency> get_dependencies(){
-    std::vector<Dependency> deps(added_dependencies);
+    std::vector<Dependency> deps(m_addedDependencies);
     std::vector<Dependency> own_deps(get_own_dependencies());
     deps.insert(deps.begin(), own_deps.begin(), own_deps.end());
     return deps;
   }
 
 protected:
-  RafkoBackpropagationData& data;
-  const rafko_net::RafkoNet& network;
-  const std::uint32_t operation_index;
+  RafkoBackpropagationData& m_data;
+  const rafko_net::RafkoNet& m_network;
+  const std::uint32_t m_operationIndex;
 
   virtual std::vector<Dependency> get_own_dependencies() = 0;
 
   void constexpr reset_processed(){
-    value_processed = false;
-    derivative_processed = false;
+    m_valueProcessed = false;
+    m_derivativeProcessed = false;
   }
 
   void constexpr set_value_processed(){
-    value_processed = true;
+    m_valueProcessed = true;
   }
 
   void constexpr set_derivative_processed(){
-    derivative_processed = true;
+    m_derivativeProcessed = true;
   }
 
   void constexpr set_processed(){
-    value_processed = true;
-    derivative_processed = true;
+    m_valueProcessed = true;
+    m_derivativeProcessed = true;
   }
 
   void constexpr set_registered(){
-    dependencies_registered = true;
+    m_dependenciesRegistered = true;
   }
 
   void set_derivative(std::uint32_t d_w_index, double value){
-    data.set_derivative(get_operation_index(), d_w_index, value);
+    m_data.set_derivative(get_operation_index(), d_w_index, value);
   }
 
   void set_value(double value){
-    data.set_value(get_operation_index(), value);
+    m_data.set_value(get_operation_index(), value);
   }
 
 private:
-  const Autodiff_operations type;
-  bool value_processed = false;
-  bool derivative_processed = false;
-  bool dependencies_registered = false;
-  std::vector<Dependency> added_dependencies;
+  const Autodiff_operations m_type;
+  bool m_valueProcessed = false;
+  bool m_derivativeProcessed = false;
+  bool m_dependenciesRegistered = false;
+  std::vector<Dependency> m_addedDependencies;
 };
 
 } /* namespace rafko_gym */

@@ -123,9 +123,9 @@ public:
   /**
    * @brief   Updates GPU relevant parameters deciding the size of the buffer and the global dimensions to solve the objective in
    *
-   * @param[in]   pairs_to_evaluate_
+   * @param[in]   pairs_to_evaluate
    */
-  virtual void set_gpu_parameters(std::uint32_t pairs_to_evaluate_, std::uint32_t feature_size_) = 0;
+  virtual void set_gpu_parameters(std::uint32_t pairs_to_evaluate, std::uint32_t feature_size) = 0;
 
   /**
    * @brief      Provides the kernel function for the derivative of the objective

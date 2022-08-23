@@ -30,19 +30,19 @@ class RAFKO_FULL_EXPORT ConstVectorSubrange{
 public:
   using T = typename Iterator::value_type;
 
-  constexpr ConstVectorSubrange(Iterator start_, std::size_t size_)
-  : start(start_)
-  , range_size(size_)
+  constexpr ConstVectorSubrange(Iterator start, std::size_t size)
+  : m_start(start)
+  , m_rangeSize(size)
   { }
 
-  constexpr ConstVectorSubrange(Iterator begin_, Iterator end_)
-  : start(begin_)
-  , range_size(std::distance(start, end_))
+  constexpr ConstVectorSubrange(Iterator begin, Iterator end)
+  : m_start(begin)
+  , m_rangeSize(std::distance(m_start, end))
   { }
 
   const T& operator[](std::size_t index) const{
-    assert(index < range_size);
-    return *std::next(start, index);
+    assert(index < m_rangeSize);
+    return *std::next(m_start, index);
   }
   constexpr const T& front() const{
     return *begin();
@@ -51,13 +51,13 @@ public:
     return *std::next(end(), -1);
   }
   constexpr std::size_t size() const{
-    return range_size;
+    return m_rangeSize;
   }
   constexpr Iterator begin() const{
-    return start;
+    return m_start;
   }
   constexpr Iterator end() const{
-    return std::next(start, range_size);
+    return std::next(m_start, m_rangeSize);
   }
 
   constexpr std::vector<typename std::iterator_traits<Iterator>::value_type> as_vector(){
@@ -65,8 +65,8 @@ public:
   }
 
 private:
-  const Iterator start;
-  const std::size_t range_size;
+  const Iterator m_start;
+  const std::size_t m_rangeSize;
 };
 
 } /* namespace rafko_utilities */

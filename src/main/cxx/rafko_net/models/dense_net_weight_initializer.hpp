@@ -55,8 +55,8 @@ public:
     const rafko_mainframe::RafkoSettings& settings,
     double memRatioMin = 0.0, double memRatioMax = 1.0
   ): WeightInitializer(settings)
-  , memMin(memRatioMin)
-  , memMax(std::max(memMin,memRatioMax))
+  , m_memMin(memRatioMin)
+  , m_memMax(std::max(m_memMin,memRatioMax))
   {
   }
 
@@ -81,22 +81,22 @@ public:
   }
 
   double next_memory_filter() const override{
-    if(memMin <  memMax){
-      double diff = memMax - memMin;
+    if(m_memMin < m_memMax){
+      double diff = m_memMax - m_memMin;
       return ((0.0) == diff)?0:(
-         memMin + (static_cast<double>(rand())/(static_cast<double>(RAND_MAX/diff)))
+         m_memMin + (static_cast<double>(rand())/(static_cast<double>(RAND_MAX/diff)))
       );
-    } else return memMin;
+    } else return m_memMin;
   }
 
   double next_bias() const override{
-    double amplitude = settings.get_zetta(); /* non-zero value to make ReLU and friends fire right away in training */
+    double amplitude = m_settings.get_zetta(); /* non-zero value to make ReLU and friends fire right away in training */
     return ( (amplitude / -2.0) + (static_cast<double>(rand()%101)/100.0) * amplitude );
   }
 
 private:
-  double memMin;
-  double memMax;
+  double m_memMin;
+  double m_memMax;
 
   /**
    * @brief      Gets the expected amplitude for a weight with the given transfer function
@@ -113,13 +113,13 @@ private:
     case transfer_function_elu:
     case transfer_function_relu:
     case transfer_function_selu:
-      amplitude = (sqrt(2 / (expected_input_number))); /* Kaiming initialization */
+      amplitude = (sqrt(2 / (m_expectedInputNumber))); /* Kaiming initialization */
       break;
     default:
-      amplitude = (sqrt(2 / (expected_input_number * expected_input_maximum_value)));
+      amplitude = (sqrt(2 / (m_expectedInputNumber * m_expectedInputMaximumValue)));
       break;
     }
-    return std::max(settings.get_epsilon(),amplitude);
+    return std::max(m_settings.get_epsilon(),amplitude);
   }
 };
 

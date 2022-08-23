@@ -38,13 +38,13 @@ namespace rafko_gym {
 using PartialWeightPairs = const std::vector<std::pair<std::uint32_t,std::uint32_t>>;
 class RAFKO_FULL_EXPORT RafkoWeightAdapter{
 public:
-  RafkoWeightAdapter(const rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution_, const rafko_mainframe::RafkoSettings& settings_)
-  : settings(settings_)
-  , execution_threads(settings.get_max_solve_threads())
-  , net(rafko_net)
-  , solution(solution_)
-  , weights_in_partials(rafko_net.weight_table_size())
-  , neurons_in_partials(solution.partial_solutions_size())
+  RafkoWeightAdapter(const rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution, const rafko_mainframe::RafkoSettings& settings)
+  : m_settings(settings)
+  , m_executionThreads(m_settings.get_max_solve_threads())
+  , m_net(rafko_net)
+  , m_solution(solution)
+  , m_weightsInPartials(rafko_net.weight_table_size())
+  , m_neuronsInPartials(m_solution.partial_solutions_size())
   {
   }
 
@@ -84,7 +84,7 @@ public:
    * @return     The index of the partial solution the Neuron belongs to
    */
   std::uint32_t get_relevant_partial_index_for(std::uint32_t neuron_index) const{
-    return get_relevant_partial_index_for(neuron_index, solution, neurons_in_partials);
+    return get_relevant_partial_index_for(neuron_index, m_solution, m_neuronsInPartials);
   }
 
   /**
@@ -133,14 +133,14 @@ public:
 #endif/*(RAFKO_USES_OPENCL)*/
 
 private:
-  const rafko_mainframe::RafkoSettings& settings;
-  rafko_utilities::ThreadGroup execution_threads;
-  const rafko_net::RafkoNet& net;
-  rafko_net::Solution& solution;
+  const rafko_mainframe::RafkoSettings& m_settings;
+  rafko_utilities::ThreadGroup m_executionThreads;
+  const rafko_net::RafkoNet& m_net;
+  rafko_net::Solution& m_solution;
 
-  mutable std::unordered_map<std::uint32_t,std::vector<std::pair<std::uint32_t,std::uint32_t>>> weights_in_partials; /* key: Weight index; {{partial_index, weight_index},...{..}} */
-  mutable std::unordered_map<std::uint32_t, std::uint32_t> neurons_in_partials; /* key: Neuron index; value :Partial index */
-  mutable std::mutex reference_mutex;
+  mutable std::unordered_map<std::uint32_t,std::vector<std::pair<std::uint32_t,std::uint32_t>>> m_weightsInPartials; /* key: Weight index; {{partial_index, weight_index},...{..}} */
+  mutable std::unordered_map<std::uint32_t, std::uint32_t> m_neuronsInPartials; /* key: Neuron index; value :Partial index */
+  mutable std::mutex m_referenceMutex;
 
   /**
    * @brief      Copies the weights of a Neuron from the referenced @RafkoNet

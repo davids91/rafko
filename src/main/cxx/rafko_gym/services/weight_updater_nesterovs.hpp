@@ -26,35 +26,35 @@ namespace rafko_gym{
 
 class RAFKO_FULL_EXPORT RafkoWeightUpdaterNesterovs : public RafkoWeightUpdater{
 public:
-  RafkoWeightUpdaterNesterovs(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings_)
-  :  RafkoWeightUpdater(rafko_net, settings_, 2u)
+  RafkoWeightUpdaterNesterovs(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings)
+  :  RafkoWeightUpdater(rafko_net, settings, 2u)
   { }
 
   void iterate(const std::vector<double>& gradients){
     RafkoWeightUpdater::iterate(gradients);
-    std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity.begin());
+    std::copy(get_current_velocity().begin(),get_current_velocity().end(),m_previousVelocity.begin());
   }
 
   void start(){
     RafkoWeightUpdater::start();
-    std::copy(get_current_velocity().begin(),get_current_velocity().end(),previous_velocity_at_start.begin());
+    std::copy(get_current_velocity().begin(),get_current_velocity().end(),m_previousVelocityAtStart.begin());
   }
 
 protected:
   double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const override{
     if(!is_finished()) return (
-      (previous_velocity[weight_index] * settings.get_gamma())
-      + (gradients[weight_index] * settings.get_learning_rate())
+      (m_previousVelocity[weight_index] * m_settings.get_gamma())
+      + (gradients[weight_index] * m_settings.get_learning_rate())
     );
     else return(
-      (previous_velocity_at_start[weight_index] * settings.get_gamma())
-      + (gradients[weight_index] * settings.get_learning_rate())
+      (m_previousVelocityAtStart[weight_index] * m_settings.get_gamma())
+      + (gradients[weight_index] * m_settings.get_learning_rate())
     );
   }
 
 private:
-  std::vector<double> previous_velocity_at_start;
-  std::vector<double> previous_velocity;
+  std::vector<double> m_previousVelocityAtStart;
+  std::vector<double> m_previousVelocity;
 };
 
 } /* namespace rafko_gym */

@@ -44,7 +44,7 @@ class RAFKO_FULL_EXPORT RafkoBackpropNeuronInputOperation
 public:
   RafkoBackpropNeuronInputOperation(
     RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
-    std::uint32_t operation_index, std::uint32_t neuron_index_, std::uint32_t neuron_input_index_
+    std::uint32_t operation_index, std::uint32_t neuron_index, std::uint32_t neuron_input_index
   );
   ~RafkoBackpropNeuronInputOperation() = default;
 
@@ -72,19 +72,19 @@ public:
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override;
 
 private:
-  const std::uint32_t neuron_index;
-  const std::uint32_t neuron_input_index;
-  rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> inputs_iterator;
-  rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval> weights_iterator;
+  const std::uint32_t m_neuronIndex;
+  const std::uint32_t m_neuronInputIndex;
+  rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> m_inputsIterator;
+  rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval> m_weightsIterator;
 
-  const bool is_network_input;
-  const std::uint32_t input_past_index;
-  const std::uint32_t weight_index;
+  const bool m_isNetworkInput;
+  const std::uint32_t m_inputPastIndex;
+  const std::uint32_t m_weightIndex;
 
-  std::shared_ptr<RafkoBackpropagationOperation> network_input_dependency;
-  std::shared_ptr<RafkoBackpropagationOperation> neuron_data_dependency;
-  std::shared_ptr<RafkoBackpropagationOperation> neuron_input_dependency;
-  std::shared_ptr<RafkoBackpropagationOperation> neuron_bias_dependency;
+  std::shared_ptr<RafkoBackpropagationOperation> m_networkInputDependency;
+  std::shared_ptr<RafkoBackpropagationOperation> m_neuronDataDependency;
+  std::shared_ptr<RafkoBackpropagationOperation> m_neuronInputDependency;
+  std::shared_ptr<RafkoBackpropagationOperation> m_neuronBiasDependency;
 };
 
 } /* namespace rafko_gym */

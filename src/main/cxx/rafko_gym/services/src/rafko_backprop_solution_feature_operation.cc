@@ -21,39 +21,38 @@
 namespace rafko_gym{
 
 RafkoBackPropSolutionFeatureOperation::RafkoBackPropSolutionFeatureOperation(
-  RafkoBackpropagationData& data, const rafko_net::RafkoNet& network_,
-  std::uint32_t operation_index,  const rafko_mainframe::RafkoSettings& settings_,
-  const rafko_net::FeatureGroup& feature_group_,
-  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads_,
-  std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary_
+  RafkoBackpropagationData& data, const rafko_net::RafkoNet& network,
+  std::uint32_t operation_index,  const rafko_mainframe::RafkoSettings& settings,
+  const rafko_net::FeatureGroup& feature_group,
+  std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>& execution_threads,
+  std::shared_ptr<rafko_utilities::SubscriptDictionary> neuron_index_dictionary
 )
-: RafkoBackpropagationOperation(data, network_, operation_index, ad_operation_network_feature)
-, settings(settings_)
-, network(network_)
-, feature_group(feature_group_)
-, network_data_proxy(dummy_vector, neuron_index_dictionary)
-, execution_threads(execution_threads_)
-, feature_executor(execution_threads)
+: RafkoBackpropagationOperation(data, network, operation_index, ad_operation_network_feature)
+, m_settings(settings)
+, m_featureGroup(feature_group)
+, m_networkDataProxy(m_dummyVector, neuron_index_dictionary)
+, m_executionThreads(execution_threads)
+, m_featureExecutor(m_executionThreads)
 #if(RAFKO_USES_OPENCL)
-, neuron_index_dictionary(neuron_index_dictionary_)
+, m_neuronIndexDictionary(neuron_index_dictionary)
 #endif/*(RAFKO_USES_OPENCL)*/
 
 {
   #if(RAFKO_USES_OPENCL)
   /* Calculate relevant index values */
-  switch(feature_group.feature()){
+  switch(m_featureGroup.feature()){
     case rafko_net::neuron_group_feature_softmax:
     case rafko_net::neuron_group_feature_dropout_regularization:{
       rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),[this](std::uint32_t index){
-        relevant_index_values.push_back(index);
+        m_relevantIndexValues.push_back(index);
       });
     } break;
     case rafko_net::neuron_group_feature_l1_regularization:
     case rafko_net::neuron_group_feature_l2_regularization: {
       rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(), [this](std::uint32_t neuron_index){
-        rafko_net::SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
+        rafko_net::SynapseIterator<>::iterate(m_network.neuron_array(neuron_index).input_weights(),
         [this](std::uint32_t weight_index){
-          relevant_index_values.push_back(weight_index);
+          m_relevantIndexValues.push_back(weight_index);
         });
       });
     } break;
@@ -62,9 +61,17 @@ RafkoBackPropSolutionFeatureOperation::RafkoBackPropSolutionFeatureOperation(
   #endif/*(RAFKO_USES_OPENCL)*/
 }
 
+void RafkoBackPropSolutionFeatureOperation::calculate_value(const std::vector<double>& /*network_input*/){
+  m_networkDataProxy.update(m_data.get_mutable_value().get_element(0));
+  m_featureExecutor.execute_solution_relevant(
+    m_featureGroup, m_settings, m_networkDataProxy, 0u/*thread_index*/
+  );
+  set_value_processed();
+}
+
 RafkoBackpropagationOperation::DependencyRequest RafkoBackPropSolutionFeatureOperation::upload_dependencies_to_operations(){
   RafkoBackpropagationOperation::DependencyParameters dependency_parameters;
-  rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),
+  rafko_net::SynapseIterator<>::iterate(m_featureGroup.relevant_neurons(),
   [&dependency_parameters](std::uint32_t neuron_index){
     dependency_parameters.push_back({ ad_operation_neuron_spike_d, { neuron_index } });
   });
@@ -74,26 +81,27 @@ RafkoBackpropagationOperation::DependencyRequest RafkoBackPropSolutionFeatureOpe
     dependency_parameters, [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>>){}
   }};
 }
-
+#if(RAFKO_USES_OPENCL)
 std::string RafkoBackPropSolutionFeatureOperation::value_kernel_operation(
   std::string /*network_input_array*/, std::string /*weight_array*/,
   std::string operations_value_array, std::string /*operations_array_size*/
 ) const{
   std::vector<std::uint32_t> actual_operation_values_for_neurons;
-  rafko_net::SynapseIterator<>::iterate(feature_group.relevant_neurons(),
+  rafko_net::SynapseIterator<>::iterate(m_featureGroup.relevant_neurons(),
   [this, &actual_operation_values_for_neurons](std::uint32_t index){
-    rafko_utilities::SubscriptDictionary& dictionary = *neuron_index_dictionary;
+    rafko_utilities::SubscriptDictionary& dictionary = *m_neuronIndexDictionary;
     if(dictionary.find(index) != dictionary.end())
       actual_operation_values_for_neurons.push_back(dictionary[index]);
       else actual_operation_values_for_neurons.push_back(index);
   });
-  RFASSERT(rafko_net::NeuronInfo::is_feature_relevant_to_solution(feature_group.feature()));
+  RFASSERT(rafko_net::NeuronInfo::is_feature_relevant_to_solution(m_featureGroup.feature()));
   return rafko_net::RafkoNetworkFeature::generate_kernel_code(
-    settings, feature_group.feature(), actual_operation_values_for_neurons,
+    m_settings, m_featureGroup.feature(), actual_operation_values_for_neurons,
     ""/*input_array*/, ""/*input_array_start*/, /*!Note: solution relevant features don't use any inputs as of now, please re-check */
     operations_value_array/*output_array*/, "0"/*output_start_index*/,
     false/*declare_locals*/
   );
 }
+#endif/*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_gym */

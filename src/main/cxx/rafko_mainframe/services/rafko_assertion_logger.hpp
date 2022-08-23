@@ -53,14 +53,14 @@ public:
 
   template<typename... Args>
   static void rafko_log(spdlog::format_string_t<Args...> fmt, Args &&... args){
-    if(auto scope = current_scope.lock()){
+    if(auto scope = m_currentScope.lock()){
       scope->log(spdlog::level::debug, fmt, args...);
     }
   }
 
   template<typename T, typename... Args>
   static void rafko_log_vector(std::vector<T> vec, spdlog::format_string_t<Args...> fmt, Args &&... args){
-    if(auto scope = current_scope.lock()){
+    if(auto scope = m_currentScope.lock()){
       scope->log(spdlog::level::debug, fmt, args...);
       std::stringstream vector_string;
       for(const T& e : vec){
@@ -72,7 +72,7 @@ public:
 
   template<typename T, typename... Args>
   static void rafko_log_vector2(std::vector<std::vector<T>> vec, spdlog::format_string_t<Args...> fmt, Args &&... args){
-    if(auto scope = current_scope.lock()){
+    if(auto scope = m_currentScope.lock()){
       scope->log(spdlog::level::debug, fmt, args...);
       scope->log(spdlog::level::debug, "=== VECTOR START ===");
       for(const std::vector<T>& v : vec){
@@ -88,7 +88,7 @@ public:
 
   template<typename T, typename... Args>
   static void rafko_log_vector2(std::vector<std::deque<T>> vec, spdlog::format_string_t<Args...> fmt, Args &&... args){
-    if(auto scope = current_scope.lock()){
+    if(auto scope = m_currentScope.lock()){
       scope->log(spdlog::level::debug, fmt, args...);
       for(const std::deque<T>& v : vec){
         std::stringstream vector_string;
@@ -102,19 +102,19 @@ public:
   }
 
   static std::string get_current_scope_name(){
-    return current_scope_name;
+    return m_currentScopeName;
   }
 
   static void set_keep_log(bool keep){
-    keep_log = keep;
+    m_keepLog = keep;
   }
 
   static void rafko_assert(bool condition, std::string file_name, std::uint32_t line_number);
 private:
-  static std::weak_ptr<spdlog::logger> current_scope;
-  static std::string current_scope_name;
-  static std::mutex scope_mutex;
-  static bool keep_log;
+  static std::weak_ptr<spdlog::logger> m_currentScope;
+  static std::string m_currentScopeName;
+  static std::mutex m_scopeMutex;
+  static bool m_keepLog;
 };
 #else
 #ifndef NDEBUG

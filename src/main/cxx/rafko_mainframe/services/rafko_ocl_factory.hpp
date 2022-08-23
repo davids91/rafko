@@ -40,50 +40,50 @@ namespace rafko_mainframe {
 class RAFKO_FULL_EXPORT RafkoOCLFactory{
 public:
   RafkoOCLFactory(){
-    cl::Platform::get(&platforms);
-    RFASSERT_LOG("Number of GPU Platforms: {}", platforms.size());
-    RFASSERT( 0 < platforms.size() );
+    cl::Platform::get(&m_platforms);
+    RFASSERT_LOG("Number of GPU Platforms: {}", m_platforms.size());
+    RFASSERT( 0 < m_platforms.size() );
   }
 
   RafkoOCLFactory& select_platform(std::uint32_t platform_index = 0u){
     RFASSERT_LOG("Selected platform[{}]..", platform_index);
-    RFASSERT( platform_index < platforms.size() );
-    RFASSERT_LOG("Platform name: {}", platforms[selected_platform].getInfo<CL_PLATFORM_NAME>());
-    RFASSERT_LOG("Platform version: {}", platforms[selected_platform].getInfo<CL_PLATFORM_VERSION>());
-    RFASSERT_LOG("Platform vendor: {}", platforms[selected_platform].getInfo<CL_PLATFORM_VENDOR>());
-    selected_platform = platform_index;
+    RFASSERT( platform_index < m_platforms.size() );
+    RFASSERT_LOG("Platform name: {}", m_platforms[m_selectedPlatform].getInfo<CL_PLATFORM_NAME>());
+    RFASSERT_LOG("Platform version: {}", m_platforms[m_selectedPlatform].getInfo<CL_PLATFORM_VERSION>());
+    RFASSERT_LOG("Platform vendor: {}", m_platforms[m_selectedPlatform].getInfo<CL_PLATFORM_VENDOR>());
+    m_selectedPlatform = platform_index;
     return *this;
   }
 
   RafkoOCLFactory& select_device(cl_device_type type = CL_DEVICE_TYPE_GPU, std::uint32_t device_index = 0u){
     RFASSERT_LOG("Selected device[{}]..", device_index);
-    platforms[selected_platform].getDevices(type, &devices);
-    RFASSERT( device_index < devices.size() );
+    m_platforms[m_selectedPlatform].getDevices(type, &m_devices);
+    RFASSERT( device_index < m_devices.size() );
     RFASSERT_LOG(
       "Device: {} --> OCL {}",
-      devices[device_index].getInfo<CL_DEVICE_NAME>(),
-      devices[device_index].getInfo<CL_DEVICE_OPENCL_C_VERSION>()
+      m_devices[device_index].getInfo<CL_DEVICE_NAME>(),
+      m_devices[device_index].getInfo<CL_DEVICE_OPENCL_C_VERSION>()
     );
-    selected_device = device_index;
+    m_selectedDevice = device_index;
     return *this;
   }
 
   template<class C, typename... Args>
   std::unique_ptr<C> build(Args && ... args){
-    RFASSERT( 0 < platforms.size() );
-    RFASSERT( 0 < devices.size() );
-    cl::Context context({devices[selected_device]});
+    RFASSERT( 0 < m_platforms.size() );
+    RFASSERT( 0 < m_devices.size() );
+    cl::Context context({m_devices[m_selectedDevice]});
     return std::make_unique<C>(
-      std::move(context), devices[selected_device],
+      std::move(context), m_devices[m_selectedDevice],
       std::forward<Args>(args)...
     );
   }
 
 private:
-  std::vector<cl::Platform> platforms;
-  std::vector<cl::Device> devices;
-  std::uint32_t selected_platform = 0u;
-  std::uint32_t selected_device = 0u;
+  std::vector<cl::Platform> m_platforms;
+  std::vector<cl::Device> m_devices;
+  std::uint32_t m_selectedPlatform = 0u;
+  std::uint32_t m_selectedDevice = 0u;
   RFASSERT_SCOPE(RAFKO_GPU_BUILD);
 };
 

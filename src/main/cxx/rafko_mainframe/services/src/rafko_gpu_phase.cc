@@ -25,18 +25,18 @@
 
 namespace rafko_mainframe{
 
-void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy_){
+void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy){
   RFASSERT_LOG("Setting GPU Strategy phase..");
-  RFASSERT( strategy_->isValid() );
-  strategy = strategy_;
-  kernel_args.clear();
-  steps.clear();
+  RFASSERT( strategy->isValid() );
+  m_strategy = strategy;
+  m_kernelArgs.clear();
+  m_steps.clear();
 
   cl_int return_value;
-  std::vector<std::string> names = strategy->get_step_names();
-  cl::Program::Sources sources = strategy->get_step_sources();
-  std::vector<RafkoNBufShape> input_shapes = strategy->get_input_shapes();
-  std::vector<RafkoNBufShape> output_shapes = strategy->get_output_shapes();
+  std::vector<std::string> names = m_strategy->get_step_names();
+  cl::Program::Sources sources = m_strategy->get_step_sources();
+  std::vector<RafkoNBufShape> input_shapes = m_strategy->get_input_shapes();
+  std::vector<RafkoNBufShape> output_shapes = m_strategy->get_output_shapes();
   std::vector<cl::Event> dimension_write_events(names.size() + 1u);
   /*!Note: Since steps in the phase share buffers, where one steps input is the
    * preceeding steps output, overall to write the dimensions @names.size() + 1 events
@@ -47,10 +47,10 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
    */
 
   /* Compile Kernel program */
-  cl::Program program(opencl_context, sources);
-  return_value = program.build({opencl_device});
+  cl::Program program(m_openclContext, sources);
+  return_value = program.build({m_openclDevice});
   if(return_value != CL_SUCCESS){
-    std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(opencl_device);
+    std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_openclDevice);
     RFASSERT_LOG("{}", build_log);
     throw std::runtime_error( "OpenCL Kernel compilation failed with error: \n" + build_log + "\n" );
   }
@@ -62,20 +62,20 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
       "Assembling step {} of strategy phase: input bytesize: {}; input dimensions byte size: {}",
       step_index, input_shapes[step_index].get_byte_size<double>(), input_shapes[step_index].get_shape_buffer_byte_size()
     );
-    kernel_args.push_back(std::make_tuple( /* push in each step input */
-      cl::Buffer(opencl_context, CL_MEM_READ_WRITE, input_shapes[step_index].get_byte_size<double>()),
-      cl::Buffer(opencl_context, CL_MEM_READ_ONLY, input_shapes[step_index].get_shape_buffer_byte_size()),
+    m_kernelArgs.push_back(std::make_tuple( /* push in each step input */
+      cl::Buffer(m_openclContext, CL_MEM_READ_WRITE, input_shapes[step_index].get_byte_size<double>()),
+      cl::Buffer(m_openclContext, CL_MEM_READ_ONLY, input_shapes[step_index].get_shape_buffer_byte_size()),
       input_shapes[step_index].size()
     ));
     RFASSERT_LOGV(input_shapes[step_index], "Uploading buffer dimensions: ");
-    return_value = opencl_device_queue.enqueueWriteBuffer( /* upload buffer dimensions */
-      std::get<1>(kernel_args.back()), CL_FALSE, 0u/*offset*/,
+    return_value = m_openclDeviceQueue.enqueueWriteBuffer( /* upload buffer dimensions */
+      std::get<1>(m_kernelArgs.back()), CL_FALSE, 0u/*offset*/,
       input_shapes[step_index].get_shape_buffer_byte_size(),
       input_shapes[step_index].acquire_shape_buffer().get(),
       NULL/*events(to wait for)*/, &(*(dimension_write_events.begin() + step_index))
     );
     RFASSERT( return_value == CL_SUCCESS );
-    steps.push_back(cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>(
+    m_steps.push_back(cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>(
       program, step_name
     ));
     ++step_index;
@@ -84,13 +84,13 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
     "Assembling output buffer of strategy phase: bytesize: {}",
     output_shapes.back().get_byte_size<double>()
   );
-  kernel_args.push_back(std::make_tuple(
-    cl::Buffer(opencl_context, CL_MEM_READ_WRITE, output_shapes.back().get_byte_size<double>()),
-    cl::Buffer(opencl_context, CL_MEM_READ_ONLY, output_shapes.back().get_shape_buffer_byte_size()),
+  m_kernelArgs.push_back(std::make_tuple(
+    cl::Buffer(m_openclContext, CL_MEM_READ_WRITE, output_shapes.back().get_byte_size<double>()),
+    cl::Buffer(m_openclContext, CL_MEM_READ_ONLY, output_shapes.back().get_shape_buffer_byte_size()),
     output_shapes.back().size()
   ));
-  return_value = opencl_device_queue.enqueueWriteBuffer( /* upload buffer dimensions */
-    std::get<1>(kernel_args.back()), CL_FALSE, 0u/*offset*/,
+  return_value = m_openclDeviceQueue.enqueueWriteBuffer( /* upload buffer dimensions */
+    std::get<1>(m_kernelArgs.back()), CL_FALSE, 0u/*offset*/,
     output_shapes.back().get_shape_buffer_byte_size(),
     output_shapes.back().acquire_shape_buffer().get(),
     NULL/*events(to wait for)*/, &(*(dimension_write_events.begin() + names.size()))
@@ -107,7 +107,7 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
 void RafkoGPUPhase::operator()(const std::vector<double>& input){
   (*this)(
     std::make_from_tuple<cl::EnqueueArgs>(
-      std::tuple_cat(std::tie(opencl_device_queue), strategy->get_solution_space())
+      std::tuple_cat(std::tie(m_openclDeviceQueue), m_strategy->get_solution_space())
     ), input
   );
 }
@@ -115,7 +115,7 @@ void RafkoGPUPhase::operator()(const std::vector<double>& input){
 void RafkoGPUPhase::operator()(cl::Buffer& input){
   (*this)(
     std::make_from_tuple<cl::EnqueueArgs>(
-      std::tuple_cat(std::tie(opencl_device_queue), strategy->get_solution_space())
+      std::tuple_cat(std::tie(m_openclDeviceQueue), m_strategy->get_solution_space())
     ), input
   );
 }
@@ -123,21 +123,21 @@ void RafkoGPUPhase::operator()(cl::Buffer& input){
 void RafkoGPUPhase::operator()(){
   (*this)(
     std::make_from_tuple<cl::EnqueueArgs>(
-      std::tuple_cat(std::tie(opencl_device_queue), strategy->get_solution_space())
+      std::tuple_cat(std::tie(m_openclDeviceQueue), m_strategy->get_solution_space())
     )
   );
 }
 
 void RafkoGPUPhase::operator()(cl::EnqueueArgs enq, const std::vector<double>& input){
-  RafkoNBufShape input_shape = strategy->get_input_shapes()[0];
+  RafkoNBufShape input_shape = m_strategy->get_input_shapes()[0];
   RFASSERT_LOG(
     "Number of inputs: {} vs. {}",
     input_shape.get_number_of_elements(), input.size()
   );
   RFASSERT( input_shape.get_number_of_elements() == input.size() );
 
-  cl::Buffer input_buf_cl( opencl_context, CL_MEM_READ_ONLY, input_shape.get_byte_size<double>() );
-  cl_int return_value = opencl_device_queue.enqueueWriteBuffer( /* upload input to device memory */
+  cl::Buffer input_buf_cl( m_openclContext, CL_MEM_READ_ONLY, input_shape.get_byte_size<double>() );
+  cl_int return_value = m_openclDeviceQueue.enqueueWriteBuffer( /* upload input to device memory */
     input_buf_cl, CL_TRUE/*blocking*/,
     0/*offset*/, input_shape.get_byte_size<double>()/*size*/,
     input.data()
@@ -148,35 +148,35 @@ void RafkoGPUPhase::operator()(cl::EnqueueArgs enq, const std::vector<double>& i
 }
 
 void RafkoGPUPhase::operator()(cl::EnqueueArgs enq, cl::Buffer& input){
-  steps[0](enq,
-    input, std::get<1>(kernel_args[0]), std::get<2>(kernel_args[0]),
-    std::get<0>(kernel_args[1]), std::get<1>(kernel_args[1]), std::get<2>(kernel_args[1])
+  m_steps[0](enq,
+    input, std::get<1>(m_kernelArgs[0]), std::get<2>(m_kernelArgs[0]),
+    std::get<0>(m_kernelArgs[1]), std::get<1>(m_kernelArgs[1]), std::get<2>(m_kernelArgs[1])
   ).wait();
-  for(std::uint32_t step_index = 1; step_index < steps.size(); ++step_index){
-    steps[step_index](enq,
-      std::get<0>(kernel_args[step_index - 1]), std::get<1>(kernel_args[step_index - 1]), std::get<2>(kernel_args[step_index - 1]),
-      std::get<0>(kernel_args[step_index]), std::get<1>(kernel_args[step_index]), std::get<2>(kernel_args[step_index])
+  for(std::uint32_t step_index = 1; step_index < m_steps.size(); ++step_index){
+    m_steps[step_index](enq,
+      std::get<0>(m_kernelArgs[step_index - 1]), std::get<1>(m_kernelArgs[step_index - 1]), std::get<2>(m_kernelArgs[step_index - 1]),
+      std::get<0>(m_kernelArgs[step_index]), std::get<1>(m_kernelArgs[step_index]), std::get<2>(m_kernelArgs[step_index])
     ).wait();
     ++step_index;
   }
 }
 
 void RafkoGPUPhase::operator()(cl::EnqueueArgs enq){
-  steps[0](enq,
-    std::get<0>(kernel_args[0]), std::get<1>(kernel_args[0]), std::get<2>(kernel_args[0]),
-    std::get<0>(kernel_args[1]), std::get<1>(kernel_args[1]), std::get<2>(kernel_args[1])
+  m_steps[0](enq,
+    std::get<0>(m_kernelArgs[0]), std::get<1>(m_kernelArgs[0]), std::get<2>(m_kernelArgs[0]),
+    std::get<0>(m_kernelArgs[1]), std::get<1>(m_kernelArgs[1]), std::get<2>(m_kernelArgs[1])
   ).wait();
-  for(std::uint32_t step_index = 1; step_index < steps.size(); ++step_index){
-    steps[step_index](enq,
-      std::get<0>(kernel_args[step_index - 1]), std::get<1>(kernel_args[step_index - 1]), std::get<2>(kernel_args[step_index - 1]),
-      std::get<0>(kernel_args[step_index]), std::get<1>(kernel_args[step_index]), std::get<2>(kernel_args[step_index])
+  for(std::uint32_t step_index = 1; step_index < m_steps.size(); ++step_index){
+    m_steps[step_index](enq,
+      std::get<0>(m_kernelArgs[step_index - 1]), std::get<1>(m_kernelArgs[step_index - 1]), std::get<2>(m_kernelArgs[step_index - 1]),
+      std::get<0>(m_kernelArgs[step_index]), std::get<1>(m_kernelArgs[step_index]), std::get<2>(m_kernelArgs[step_index])
     ).wait();
     ++step_index;
   }
 }
 
 std::unique_ptr<double[]> RafkoGPUPhase::acquire_output(std::size_t size, std::size_t offset) const{
-  RafkoNBufShape output_shape = strategy->get_output_shapes().back();
+  RafkoNBufShape output_shape = m_strategy->get_output_shapes().back();
 
   RFASSERT_LOG("Acquiring output[{} + {}]", offset, size, output_shape.get_number_of_elements());
   RFASSERT( (offset + size) <= output_shape.get_number_of_elements() );
@@ -187,12 +187,12 @@ std::unique_ptr<double[]> RafkoGPUPhase::acquire_output(std::size_t size, std::s
 }
 
 void RafkoGPUPhase::load_output(double* target, std::size_t size, std::size_t offset) const{
-  RafkoNBufShape output_shape = strategy->get_output_shapes().back();
+  RafkoNBufShape output_shape = m_strategy->get_output_shapes().back();
   RFASSERT_LOG("Loading output[{} + {}]", offset, size, output_shape.get_number_of_elements());
   RFASSERT( (sizeof(double) * size) <= output_shape.get_byte_size<double>() );
 
-  const cl::Buffer& output_buffer_cl = std::get<0>(kernel_args.back());
-  cl_int return_value = opencl_device_queue.enqueueReadBuffer(
+  const cl::Buffer& output_buffer_cl = std::get<0>(m_kernelArgs.back());
+  cl_int return_value = m_openclDeviceQueue.enqueueReadBuffer(
     output_buffer_cl, CL_TRUE/*blocking*/,
     (sizeof(double) * offset), (sizeof(double) * size),
     target
