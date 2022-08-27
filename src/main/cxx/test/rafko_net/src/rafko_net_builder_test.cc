@@ -287,7 +287,7 @@ TEST_CASE( "Testing builder for setting Neuron input functions manually", "[buil
       }/*for(5 tries)*/
     }
 
-    rafko_net::RafkoNet* network(builder.dense_layers(net_structure));
+    rafko_net::RafkoNet& network(*builder.dense_layers(net_structure));
     std::vector<std::uint32_t> layer_starts(net_structure.size());
     std::uint32_t layer_start_iterator = 0u;
     for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
@@ -299,7 +299,7 @@ TEST_CASE( "Testing builder for setting Neuron input functions manually", "[buil
       REQUIRE( std::get<1>(element) < net_structure[std::get<0>(element)] );
       std::uint32_t neuron_index = layer_starts[std::get<0>(element)] + std::get<1>(element);
 
-      REQUIRE( network->neuron_array(neuron_index).input_function() == std::get<2>(element) );
+      REQUIRE( network.neuron_array(neuron_index).input_function() == std::get<2>(element) );
     }
   }/*for(10 variants)*/
 }
@@ -339,7 +339,7 @@ TEST_CASE( "Testing builder for setting Neuron transfer functions manually", "[b
       }/*for(5 tries)*/
     }
 
-    rafko_net::RafkoNet* network(builder.dense_layers(net_structure));
+    rafko_net::RafkoNet& network(*builder.dense_layers(net_structure));
     std::vector<std::uint32_t> layer_starts(net_structure.size());
     std::uint32_t layer_start_iterator = 0u;
     for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
@@ -350,7 +350,7 @@ TEST_CASE( "Testing builder for setting Neuron transfer functions manually", "[b
       REQUIRE( layer_index < net_structure.size() );
       REQUIRE( layer_neuron_index < net_structure[layer_index] );
       std::uint32_t neuron_index = layer_starts[layer_index] + layer_neuron_index;
-      REQUIRE( network->neuron_array(neuron_index).transfer_function() == transfer_function );
+      REQUIRE( network.neuron_array(neuron_index).transfer_function() == transfer_function );
     }
   }/*for(10 variants)*/
 }
@@ -411,7 +411,7 @@ TEST_CASE( "Testing builder for setting Neuron spike functions manually", "[buil
       }/*for(5 tries)*/
     }
 
-    rafko_net::RafkoNet* network(builder.dense_layers(net_structure));
+    rafko_net::RafkoNet& network(*builder.dense_layers(net_structure));
     std::vector<std::uint32_t> layer_starts(net_structure.size());
     std::uint32_t layer_start_iterator = 0u;
     for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
@@ -423,7 +423,7 @@ TEST_CASE( "Testing builder for setting Neuron spike functions manually", "[buil
       REQUIRE( std::get<1>(element) < net_structure[std::get<0>(element)] );
       std::uint32_t neuron_index = layer_starts[std::get<0>(element)] + std::get<1>(element);
 
-      REQUIRE( network->neuron_array(neuron_index).spike_function() == std::get<2>(element) );
+      REQUIRE( network.neuron_array(neuron_index).spike_function() == std::get<2>(element) );
     }
   }/*for(10 variants)*/
 }

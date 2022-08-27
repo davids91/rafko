@@ -67,7 +67,7 @@ TEST_CASE("Test if L1 regularization calculates the expected error", "[L1][regul
       static_cast<std::uint32_t>(rand()%3) + 1u,
       2
     };
-    rafko_net::RafkoNet* network = builder.dense_layers(layer_sizes);
+    rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
 
     /* store which Neuron index belongs to which layer index */
     std::map<std::uint32_t,std::uint32_t> layer_index_values;
@@ -89,9 +89,9 @@ TEST_CASE("Test if L1 regularization calculates the expected error", "[L1][regul
       layer_start = std::accumulate(layer_sizes.begin(), layer_sizes.begin() + layer_index, (0.0));
       double layer_error = (0.0);
       for(std::uint32_t neuron_index = layer_start; neuron_index < (layer_start + layer_sizes[layer_index]); ++neuron_index){
-        rafko_net::SynapseIterator<>::iterate(network->neuron_array(neuron_index).input_weights(),
+        rafko_net::SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
         [&network, &layer_error](std::uint32_t weight_index){
-          layer_error += std::abs(network->weight_table(weight_index));
+          layer_error += std::abs(network.weight_table(weight_index));
         });
       }/*for(neurons in the affected layer)*/
       sum_error += layer_error;
@@ -103,12 +103,12 @@ TEST_CASE("Test if L1 regularization calculates the expected error", "[L1][regul
     exec_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_processing_threads()));
     rafko_net::RafkoNetworkFeature features(exec_threads);
 
-    for(const rafko_net::FeatureGroup& group : network->neuron_group_features()){
+    for(const rafko_net::FeatureGroup& group : network.neuron_group_features()){
       if(group.feature() == rafko_net::neuron_group_feature_l1_regularization){
         double reference_error = layer_errors[layer_index_values[group.relevant_neurons(0).starts()]];
         CHECK(
           Catch::Approx(reference_error).epsilon((0.00000000000001))
-          == features.calculate_performance_relevant(group, settings, *network)
+          == features.calculate_performance_relevant(group, settings, network)
         );
       }/*if(feature is l1 regularization)*/
     }/*for(all feature groups in network)*/
@@ -140,7 +140,7 @@ TEST_CASE("Test if L2 regularization calculates the expected error", "[L2][regul
       static_cast<std::uint32_t>(rand()%3) + 1u,
       2
     };
-    rafko_net::RafkoNet* network = builder.dense_layers(layer_sizes);
+    rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
 
     /* store which Neuron index belongs to which layer index */
     std::map<std::uint32_t,std::uint32_t> layer_index_values;
@@ -162,9 +162,9 @@ TEST_CASE("Test if L2 regularization calculates the expected error", "[L2][regul
       layer_start = std::accumulate(layer_sizes.begin(), layer_sizes.begin() + layer_index, (0.0));
       double layer_error = (0.0);
       for(std::uint32_t neuron_index = layer_start; neuron_index < (layer_start + layer_sizes[layer_index]); ++neuron_index){
-        rafko_net::SynapseIterator<>::iterate(network->neuron_array(neuron_index).input_weights(),
+        rafko_net::SynapseIterator<>::iterate(network.neuron_array(neuron_index).input_weights(),
         [&network, &layer_error](std::uint32_t weight_index){
-          layer_error += std::pow(network->weight_table(weight_index),(2.0));
+          layer_error += std::pow(network.weight_table(weight_index),(2.0));
         });
       }/*for(neurons in the affected layer)*/
       sum_error += layer_error;
@@ -176,12 +176,12 @@ TEST_CASE("Test if L2 regularization calculates the expected error", "[L2][regul
     exec_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_processing_threads()));
     rafko_net::RafkoNetworkFeature features(exec_threads);
 
-    for(const rafko_net::FeatureGroup& group : network->neuron_group_features()){
+    for(const rafko_net::FeatureGroup& group : network.neuron_group_features()){
       if(group.feature() == rafko_net::neuron_group_feature_l2_regularization){
         double reference_error = layer_errors[layer_index_values[group.relevant_neurons(0).starts()]];
         CHECK(
           Catch::Approx(reference_error).epsilon((0.00000000000001))
-          == features.calculate_performance_relevant(group, settings, *network)
+          == features.calculate_performance_relevant(group, settings, network)
         );
       }/*if(feature is l1 regularization)*/
     }/*for(all feature groups in network)*/
@@ -215,8 +215,8 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
       static_cast<std::uint32_t>(rand()%3) + 1u,
       feature_size
     };
-    rafko_net::RafkoNet* network = builder.dense_layers(layer_sizes);
-    rafko_net::RafkoNet unregulated_network = rafko_net::RafkoNet(*network);
+    rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
+    rafko_net::RafkoNet unregulated_network = rafko_net::RafkoNet(network);
 
     /* declare an executor */
     std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> exec_threads;
@@ -226,7 +226,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
     /* Remove weight regularization from a copy network, and calculate the error difference */
     unregulated_network.mutable_neuron_group_features()->Clear();
     double error_difference = (0.0);
-    for(const rafko_net::FeatureGroup& feature : network->neuron_group_features()){
+    for(const rafko_net::FeatureGroup& feature : network.neuron_group_features()){
       if( /* Add back all the irrelevant features */
         (feature.feature() != rafko_net::neuron_group_feature_l1_regularization)
         &&(feature.feature() != rafko_net::neuron_group_feature_l2_regularization)
@@ -243,7 +243,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       settings, rafko_gym::cost_function_squared_error
     );
-    rafko_mainframe::RafkoCPUContext regulated_context(*network, objective, settings);
+    rafko_mainframe::RafkoCPUContext regulated_context(network, objective, settings);
     rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, objective, settings);
     std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
@@ -281,20 +281,20 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
     static_cast<std::uint32_t>(rand()%5) + 1u,
     feature_size
   };
-  rafko_net::RafkoNet* network = rafko_net::RafkoNetBuilder(settings)
+  rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range((1.0))
     .add_feature_to_layer( (layer_sizes.size() - 2u), rafko_net::neuron_group_feature_dropout_regularization )
     .dense_layers(layer_sizes); /* Building a network with dropout as the output_feature */
-  rafko_net::RafkoNet unregulated_network = rafko_net::RafkoNet(*network);
+  rafko_net::RafkoNet unregulated_network = rafko_net::RafkoNet(network);
   unregulated_network.mutable_neuron_group_features()->Clear(); /* remove droput regularaziation from network */
 
-  std::unique_ptr<rafko_net::Solution> regulated_solution = rafko_net::SolutionBuilder(settings).build(*network);
+  std::unique_ptr<rafko_net::Solution> regulated_solution = rafko_net::SolutionBuilder(settings).build(network);
   std::unique_ptr<rafko_net::SolutionSolver> regulated_agent = rafko_net::SolutionSolver::Builder(*regulated_solution, settings).build();
 
   std::unique_ptr<rafko_net::Solution> unregulated_solution = rafko_net::SolutionBuilder(settings).build(unregulated_network);
   std::unique_ptr<rafko_net::SolutionSolver> unregulated_agent = rafko_net::SolutionSolver::Builder(*unregulated_solution, settings).build();
 
-  std::vector<double> network_input(network->input_data_size(), (rand()%10));
+  std::vector<double> network_input(network.input_data_size(), (rand()%10));
   (void)regulated_agent->solve(network_input);
   (void)unregulated_agent->solve(network_input);
   const std::vector<double>& regulated_neuron_data = regulated_agent->get_memory().get_element(0);
@@ -360,8 +360,8 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
       builder.add_feature_to_layer( (rand()%layer_sizes.size()), rafko_net::neuron_group_feature_l2_regularization );
     }
 
-    rafko_net::RafkoNet* network = builder.dense_layers(layer_sizes);
-    rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(*network);
+    rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
+    rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(network);
 
     /* Create environments */
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
@@ -380,7 +380,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
     REQUIRE_NOTHROW(
       gpu_context = (
         rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-          .build<rafko_mainframe::RafkoGPUContext>(settings, *network, objective)
+          .build<rafko_mainframe::RafkoGPUContext>(settings, network, objective)
       )
     );
 
