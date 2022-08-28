@@ -67,7 +67,7 @@ public:
    *
    * @return     Builder reference for chaining
    */
-  std::unique_ptr<Solution> build(const RafkoNet& net, bool optimize_to_gpu = false);
+  Solution* build(const RafkoNet& net, bool optimize_to_gpu = false);
 
   #if(RAFKO_USES_OPENCL)
   static std::string get_kernel_for_solution(

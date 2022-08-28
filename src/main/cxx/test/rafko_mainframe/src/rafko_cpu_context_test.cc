@@ -55,8 +55,8 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
-  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(*solution, settings).build());
+  rafko_net::Solution& solution = *rafko_net::SolutionBuilder(settings).build(network);
+  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(solution, settings).build());
 
   double error_sum = (0.0);
   std::uint32_t raw_inputs_index = 0;
@@ -100,8 +100,8 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
-  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(*solution, settings).build());
+  rafko_net::Solution& solution = *rafko_net::SolutionBuilder(settings).build(network);
+  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(solution, settings).build());
 
   double error_sum = (0.0);
   std::uint32_t raw_inputs_index = 0;
@@ -152,8 +152,8 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
 
   double environment_error = context.stochastic_evaluation(true, seed);
 
-  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(*solution, settings).build());
+  rafko_net::Solution& solution = *rafko_net::SolutionBuilder(settings).build(network);
+  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(solution, settings).build());
 
   srand(seed);
   double error_sum = (0.0);

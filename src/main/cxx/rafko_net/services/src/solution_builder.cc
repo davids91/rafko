@@ -43,10 +43,10 @@
 
 namespace rafko_net{
 
-std::unique_ptr<Solution> SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
+Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
   RFASSERT_SCOPE(SOLUTION_BUILD);
   NeuronRouter neuron_router(net);
-  std::unique_ptr<Solution> solution = std::make_unique<Solution>();
+  Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(m_settings.get_arena_ptr());;
   std::uint32_t overall_partial_solution_count = 0u;
   double remaining_megabytes_in_row = 0;
   double current_neuron_megabyte_size;

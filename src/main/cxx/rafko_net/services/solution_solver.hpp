@@ -128,7 +128,7 @@ public:
   private:
     const RafkoNet& m_network;
     const rafko_mainframe::RafkoSettings& m_settings;
-    std::unique_ptr<rafko_net::Solution> m_solution;
+    rafko_net::Solution* m_solution;
     std::unique_ptr<rafko_gym::RafkoWeightAdapter> m_weightAdapter;
 
   };

@@ -31,7 +31,7 @@
 namespace rafko_mainframe{
 
 RafkoCPUContext::RafkoCPUContext(
-  rafko_net::RafkoNet& neural_network,std::shared_ptr<rafko_gym::RafkoObjective> objective,
+  rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_gym::RafkoObjective> objective,
   rafko_mainframe::RafkoSettings settings
 )
 : RafkoContext(settings)

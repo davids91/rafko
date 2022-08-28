@@ -42,10 +42,27 @@ namespace rafko_mainframe{
  *             point, and provides methods to refine it and solve it.
  */
 class RAFKO_FULL_EXPORT RafkoContext{
+
+  /**
+   * @brief     Constructs an arena in case the provided settings doesn't contain any
+   *
+   * @param     settings    The @RafkoSettings instance to check for an existing arena implementation
+   *
+   * @return    The pointer to the arena should the @RafkoSettings instance not contain it.
+   */
+  static std::unique_ptr<google::protobuf::Arena> initialize_arena(rafko_mainframe::RafkoSettings& settings){
+    if(nullptr == settings.get_arena_ptr())
+      return std::make_unique<google::protobuf::Arena>();
+      else return {};
+  }
+
 public:
   RafkoContext(rafko_mainframe::RafkoSettings settings = RafkoSettings())
-  : m_settings(settings)
-  { }
+  : arena(initialize_arena(settings))
+  , m_settings(settings)
+  {
+    if(arena)m_settings.set_arena_ptr(arena.get());
+  }
 
   virtual ~RafkoContext() = default;
 
@@ -151,6 +168,7 @@ public:
    */
   virtual rafko_net::RafkoNet& expose_network() = 0;
 protected:
+    std::unique_ptr<google::protobuf::Arena> arena;
     rafko_mainframe::RafkoSettings m_settings;
 };
 

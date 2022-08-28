@@ -476,8 +476,8 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
 
   [[maybe_unused]]cl_int return_value;
   cl::Event fill_event;
-  const std::uint32_t network_memory_slots = std::max(2u, (m_networkSolution->network_memory_length() - 1u));
-  const std::size_t network_used_bytes = sizeof(double) * network_memory_slots * m_networkSolution->neuron_number();
+  const std::uint32_t network_memory_slots = std::max(2u, (m_network.memory_size() - 1u));
+  const std::size_t network_used_bytes = sizeof(double) * network_memory_slots * m_network.neuron_array_size();
 
   if(reset_neuron_data || (m_lastRanEvaluation != not_eval_run) ){
     RFASSERT_LOG("Not resetting agent data..");
@@ -491,7 +491,7 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
     return_value = fill_event.wait();
     RFASSERT( return_value == CL_SUCCESS );
   }else{ /* Neuron memory not resetted, keep network memory consistent */
-    const std::uint32_t network_memory_span_bytes = m_networkSolution->neuron_number() * sizeof(double);
+    const std::uint32_t network_memory_span_bytes = m_network.neuron_array_size() * sizeof(double);
     RFASSERT_LOG(
       "Resetting agent data; Memory slots: {}; Memory size in bytes: {}",
       network_memory_slots, network_memory_span_bytes
