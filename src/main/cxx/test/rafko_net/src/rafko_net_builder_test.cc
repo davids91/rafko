@@ -15,7 +15,6 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include <memory>
 #include <tuple>
 #include <vector>
 #include <algorithm>
@@ -42,13 +41,10 @@ namespace rafko_net_test {
  */
 rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* arena){
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(arena);
-  std::unique_ptr<rafko_net::RafkoNetBuilder> builder = std::make_unique<rafko_net::RafkoNetBuilder>(settings);
-  builder->input_size(5)
+  rafko_net::RafkoNet* network(rafko_net::RafkoNetBuilder(settings).input_size(5)
     .output_neuron_number(2)
-    .expected_input_range((5.0));
-
-  rafko_net::RafkoNet* network(builder->dense_layers(
-    {2,3,2},{
+    .expected_input_range(5.0)
+    .dense_layers( {2,3,2},{
       {rafko_net::transfer_function_identity},
       {rafko_net::transfer_function_selu,rafko_net::transfer_function_relu},
       {rafko_net::transfer_function_tanh,rafko_net::transfer_function_sigmoid}
@@ -363,12 +359,12 @@ TEST_CASE( "Testing whether network builder throws an excpetion when conflicting
     if(!rafko_net::Transfer_functions_IsValid(trf))continue;
     rafko_net::Transfer_functions transfer_function = static_cast<rafko_net::Transfer_functions>(trf);
     REQUIRE_NOTHROW(
-      rafko_net::RafkoNetBuilder(settings).input_size(1u).expected_input_range((1.0))
+      rafko_net::RafkoNetBuilder(settings).input_size(1u).expected_input_range(1.0)
       .set_neuron_transfer_function(0, 0, transfer_function)
       .dense_layers({1})
     );
     REQUIRE_THROWS(
-      rafko_net::RafkoNetBuilder(settings).input_size(1u).expected_input_range((1.0))
+      rafko_net::RafkoNetBuilder(settings).input_size(1u).expected_input_range(1.0)
       .set_neuron_transfer_function(0, 0, transfer_function)
       .dense_layers({1},{{rafko_net::transfer_function_unknown}})
     );

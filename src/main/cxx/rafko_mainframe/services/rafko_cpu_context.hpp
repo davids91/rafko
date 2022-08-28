@@ -39,7 +39,7 @@ public:
 
   RafkoCPUContext(
     rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_gym::RafkoObjective> objective,
-    rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    std::shared_ptr<rafko_mainframe::RafkoSettings> = {}
   );
   ~RafkoCPUContext() = default;
 
@@ -55,7 +55,7 @@ public:
   void set_weight_updater(rafko_gym::Weight_updaters updater) override{
     RFASSERT_LOG("Setting weight updater in CPU context to {}", rafko_gym::Weight_updaters_Name(updater));
     m_weightUpdater.reset();
-    m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, m_settings);
+    m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, *m_settings);
   }
 
   void refresh_solution_weights() override{
@@ -123,8 +123,8 @@ public:
     m_environment->pop_state();
   }
 
-  constexpr rafko_mainframe::RafkoSettings& expose_settings() override{
-    return m_settings;
+  rafko_mainframe::RafkoSettings& expose_settings() override{
+    return *m_settings;
   }
 
   constexpr rafko_net::RafkoNet& expose_network() override{

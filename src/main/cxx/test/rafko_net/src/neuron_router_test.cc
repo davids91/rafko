@@ -40,10 +40,10 @@ TEST_CASE( "Testing Neural Network Iteration Routing", "[neuron-iteration][small
   rafko_mainframe::RafkoSettings settings;
   /* Build a net and router */
   std::vector<std::uint32_t> layer_structure = {2,3,3,5};
-  std::unique_ptr<rafko_net::RafkoNetBuilder> net_builder = std::make_unique<rafko_net::RafkoNetBuilder>(settings);
-  net_builder->input_size(5).output_neuron_number(5).expected_input_range((5.0));
-  std::unique_ptr<rafko_net::RafkoNet> net = std::unique_ptr<rafko_net::RafkoNet>(net_builder->dense_layers(layer_structure));
-  net_builder.reset();
+  std::unique_ptr<rafko_net::RafkoNet> net = std::unique_ptr<rafko_net::RafkoNet>(
+    rafko_net::RafkoNetBuilder(settings).input_size(5).output_neuron_number(5).expected_input_range(5.0)
+    .dense_layers(layer_structure)
+  );
   rafko_net::NeuronRouter net_iterator(*net);
 
   /* Testing the collected subset in each iteration in the net */

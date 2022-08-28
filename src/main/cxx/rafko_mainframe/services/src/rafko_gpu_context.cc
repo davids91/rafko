@@ -28,23 +28,23 @@ namespace rafko_mainframe{
 
 RafkoGPUContext::RafkoGPUContext(
   cl::Context&& context, cl::Device device,
-  rafko_mainframe::RafkoSettings settings, rafko_net::RafkoNet& neural_network,
-  std::shared_ptr<rafko_gym::RafkoObjective> objective
+  rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_gym::RafkoObjective> objective,
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings
 ):RafkoContext(settings)
 , m_network(neural_network)
-, m_networkSolution(rafko_net::SolutionBuilder(m_settings).build(m_network))
-, m_weightAdapter(m_network, *m_networkSolution, settings)
-, m_agent(rafko_net::SolutionSolver::Builder(*m_networkSolution, m_settings).build())
+, m_networkSolution(rafko_net::SolutionBuilder(*m_settings).build(m_network))
+, m_weightAdapter(m_network, *m_networkSolution, *m_settings)
+, m_agent(rafko_net::SolutionSolver::Builder(*m_networkSolution, *m_settings).build())
 , m_environment(std::make_unique<RafkoDummyEnvironment>(
   m_network.input_data_size(), m_network.output_neuron_number())
 )
 , m_objective(objective)
-, m_weightUpdater(rafko_gym::UpdaterFactory::build_weight_updater(m_network, rafko_gym::weight_updater_default, m_settings))
+, m_weightUpdater(rafko_gym::UpdaterFactory::build_weight_updater(m_network, rafko_gym::weight_updater_default, *m_settings))
 , m_neuronOutputsToEvaluate( /* For every thread, 1 sequence is evaluated.. */
-  (m_settings.get_max_processing_threads() * m_environment->get_sequence_size() + 1u),
+  (m_settings->get_max_processing_threads() * m_environment->get_sequence_size() + 1u),
   std::vector<double>(m_network.output_neuron_number()) /* ..plus for the label errors one additional vector is needed */
 )
-, m_executionThreads(m_settings.get_max_processing_threads())
+, m_executionThreads(m_settings->get_max_processing_threads())
 , m_openclContext(context)
 , m_openclDevice(device)
 , m_openclQueue(m_openclContext, m_openclDevice)
@@ -164,7 +164,7 @@ void RafkoGPUContext::set_objective(std::shared_ptr<rafko_gym::RafkoObjective> o
 void RafkoGPUContext::set_weight_updater(rafko_gym::Weight_updaters updater){
   RFASSERT_LOG("Setting weight updater in GPU context to {}", rafko_gym::Weight_updaters_Name(updater));
   m_weightUpdater.reset();
-  m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, m_settings);
+  m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, *m_settings);
 }
 
 void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment){
@@ -176,7 +176,7 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
   m_environment.reset();
   m_environment = environment;
   std::uint32_t old_output_buffer_num = m_neuronOutputsToEvaluate.size();
-  std::uint32_t new_output_buffer_num = m_settings.get_max_processing_threads() * m_environment->get_sequence_size() + 1u;
+  std::uint32_t new_output_buffer_num = m_settings->get_max_processing_threads() * m_environment->get_sequence_size() + 1u;
   m_neuronOutputsToEvaluate.resize(new_output_buffer_num);
   if(old_output_buffer_num < new_output_buffer_num){
     for(std::uint32_t buffer_index = old_output_buffer_num-1; buffer_index < new_output_buffer_num; ++buffer_index){
@@ -343,8 +343,8 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
     srand(seed_value);
     RFASSERT_LOG("Seeded run: last used seed: {}; current seed: {}", m_lastUsedSeed, seed_value);
   }
-  const std::uint32_t used_minibatch_size = std::min(m_settings.get_minibatch_size(), m_environment->get_number_of_sequences());
-  const std::uint32_t used_sequence_truncation = std::min( m_settings.get_memory_truncation(), m_environment->get_sequence_size() );
+  const std::uint32_t used_minibatch_size = std::min(m_settings->get_minibatch_size(), m_environment->get_number_of_sequences());
+  const std::uint32_t used_sequence_truncation = std::min( m_settings->get_memory_truncation(), m_environment->get_sequence_size() );
   const std::uint32_t start_index_inside_sequence = ( rand()%(m_environment->get_sequence_size() - used_sequence_truncation + 1) );
   RFASSERT_LOG(
     "Used minibatch size: {}; sequence_truncation: {}; start index inside sequence: {}",

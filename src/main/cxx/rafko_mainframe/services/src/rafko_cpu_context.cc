@@ -32,23 +32,23 @@ namespace rafko_mainframe{
 
 RafkoCPUContext::RafkoCPUContext(
   rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_gym::RafkoObjective> objective,
-  rafko_mainframe::RafkoSettings settings
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings
 )
 : RafkoContext(settings)
 , m_network(neural_network)
-, m_networkSolution(rafko_net::SolutionBuilder(m_settings).build(m_network))
-, m_weightAdapter(m_network, *m_networkSolution, m_settings)
-, m_agent(rafko_net::SolutionSolver::Builder(*m_networkSolution, m_settings).build())
+, m_networkSolution(rafko_net::SolutionBuilder(*m_settings).build(m_network))
+, m_weightAdapter(m_network, *m_networkSolution, *m_settings)
+, m_agent(rafko_net::SolutionSolver::Builder(*m_networkSolution, *m_settings).build())
 , m_environment(std::make_unique<RafkoDummyEnvironment>(m_network.input_data_size(), m_network.output_neuron_number()))
 , m_objective(objective)
-, m_weightUpdater(rafko_gym::UpdaterFactory::build_weight_updater(m_network, rafko_gym::weight_updater_default, m_settings))
+, m_weightUpdater(rafko_gym::UpdaterFactory::build_weight_updater(m_network, rafko_gym::weight_updater_default, *m_settings))
 , m_neuronOutputsToEvaluate( /* For every thread, 1 sequence is evaluated.. */
-  (m_settings.get_max_processing_threads() * m_environment->get_sequence_size() + 1u),
+  (m_settings->get_max_processing_threads() * m_environment->get_sequence_size() + 1u),
   std::vector<double>(m_network.output_neuron_number()) /* ..plus for the label errors one additional vector is needed */
 )
-, m_executionThreads(m_settings.get_max_processing_threads())
-, m_usedSequenceTruncation( std::min(m_settings.get_memory_truncation(), m_environment->get_sequence_size()) )
-, m_usedMinibatchSize( std::min(m_settings.get_minibatch_size(), m_environment->get_number_of_sequences()) )
+, m_executionThreads(m_settings->get_max_processing_threads())
+, m_usedSequenceTruncation( std::min(m_settings->get_memory_truncation(), m_environment->get_sequence_size()) )
+, m_usedMinibatchSize( std::min(m_settings->get_minibatch_size(), m_environment->get_number_of_sequences()) )
 {
   m_neuronOutputsToEvaluate.back().resize(m_environment->get_number_of_label_samples());
 }
@@ -62,7 +62,7 @@ void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
   m_environment.reset();
   m_environment = environment;
   std::uint32_t old_output_buffer_num = m_neuronOutputsToEvaluate.size();
-  std::uint32_t new_output_buffer_num = m_settings.get_max_processing_threads() * m_environment->get_sequence_size() + 1u;
+  std::uint32_t new_output_buffer_num = m_settings->get_max_processing_threads() * m_environment->get_sequence_size() + 1u;
   m_neuronOutputsToEvaluate.resize(new_output_buffer_num);
   if(old_output_buffer_num < new_output_buffer_num){
     for(std::uint32_t buffer_index = old_output_buffer_num-1; buffer_index < new_output_buffer_num; ++buffer_index){
@@ -70,8 +70,8 @@ void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
     }
   }
   m_neuronOutputsToEvaluate.back().resize(m_environment->get_number_of_label_samples());
-  m_usedSequenceTruncation = std::min(m_settings.get_memory_truncation(), m_environment->get_sequence_size());
-  m_usedMinibatchSize = std::min(m_settings.get_minibatch_size(), m_environment->get_number_of_sequences());
+  m_usedSequenceTruncation = std::min(m_settings->get_memory_truncation(), m_environment->get_sequence_size());
+  m_usedMinibatchSize = std::min(m_settings->get_minibatch_size(), m_environment->get_number_of_sequences());
 }
 
 double RafkoCPUContext::error_post_process(double raw_error, std::uint32_t labels_evaluated){
@@ -80,7 +80,7 @@ double RafkoCPUContext::error_post_process(double raw_error, std::uint32_t label
   for(const rafko_net::FeatureGroup& feature : m_network.neuron_group_features()){
     if(rafko_net::NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
       result_error += m_agent->expose_executor().calculate_performance_relevant(
-        feature, m_settings, m_network
+        feature, *m_settings, m_network
       );
     }
   }
@@ -102,7 +102,7 @@ double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t seq
 
   double error_sum = (0.0);
   m_agent->set_eval_mode(true);
-  for(std::uint32_t sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += m_settings.get_max_processing_threads()){
+  for(std::uint32_t sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += m_settings->get_max_processing_threads()){
     m_executionThreads.start_and_block([this, sequence_index](std::uint32_t thread_index){
       if(m_environment->get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */
         /*!Note: This might happen because of the number of used threads might point to a grater index, than the number of sequences;
@@ -139,7 +139,7 @@ double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t seq
       *m_environment, m_neuronOutputsToEvaluate,
       0u/* neuron_buffer_index */, sequence_index, std::min(
         ((sequence_start + sequences_to_evaluate) - (sequence_index)),
-        static_cast<std::uint32_t>(m_settings.get_max_processing_threads())
+        static_cast<std::uint32_t>(m_settings->get_max_processing_threads())
       )/* sequences_to_evaluate */,
       start_index_in_sequence, sequence_truncation, m_neuronOutputsToEvaluate.back()
     );

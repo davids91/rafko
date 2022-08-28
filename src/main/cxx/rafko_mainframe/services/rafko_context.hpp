@@ -56,12 +56,18 @@ class RAFKO_FULL_EXPORT RafkoContext{
       else return {};
   }
 
+  static std::shared_ptr<rafko_mainframe::RafkoSettings> initialize_settings(std::shared_ptr<rafko_mainframe::RafkoSettings> candidate){
+    if(candidate)
+      return candidate;
+      else return std::make_shared<rafko_mainframe::RafkoSettings>();
+  }
+
 public:
-  RafkoContext(rafko_mainframe::RafkoSettings settings = RafkoSettings())
-  : arena(initialize_arena(settings))
-  , m_settings(settings)
+  RafkoContext(std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {})
+  : m_settings(initialize_settings(settings))
+  , m_arena(initialize_arena(*settings))
   {
-    if(arena)m_settings.set_arena_ptr(arena.get());
+    if(m_arena)m_settings->set_arena_ptr(m_arena.get());
   }
 
   virtual ~RafkoContext() = default;
@@ -168,8 +174,8 @@ public:
    */
   virtual rafko_net::RafkoNet& expose_network() = 0;
 protected:
-    std::unique_ptr<google::protobuf::Arena> arena;
-    rafko_mainframe::RafkoSettings m_settings;
+  std::shared_ptr<rafko_mainframe::RafkoSettings> m_settings;
+  std::unique_ptr<google::protobuf::Arena> m_arena;
 };
 
 } /* namespace rafko_mainframe */
