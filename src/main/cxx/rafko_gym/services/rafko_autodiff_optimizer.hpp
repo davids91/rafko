@@ -31,6 +31,7 @@
 #include "rafko_utilities/models/const_vector_subrange.hpp"
 #include "rafko_utilities/models/subscript_proxy.hpp"
 #include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_mainframe/models/rafko_autonomous_entity.hpp"
 #include "rafko_mainframe/services/rafko_context.hpp"
 #include "rafko_gym/models/rafko_environment.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
@@ -45,34 +46,34 @@ namespace rafko_gym{
 /**
  * @brief A class to calculate the values and derivatives of a Network, and update its weights based on it
  */
-class RAFKO_FULL_EXPORT RafkoAutodiffOptimizer{
+class RAFKO_FULL_EXPORT RafkoAutodiffOptimizer : public rafko_mainframe::RafkoAutonomousEntity{
   using BackpropDataBufferRange = rafko_utilities::ConstVectorSubrange<std::vector<std::vector<double>>::const_iterator>;
 public:
   RafkoAutodiffOptimizer(
-    const rafko_mainframe::RafkoSettings& settings,
+    std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
     std::shared_ptr<RafkoEnvironment> environment, rafko_net::RafkoNet& network,
     std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator = {},
     std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator = {}
   )
-  : m_settings(settings)
+  : rafko_mainframe::RafkoAutonomousEntity(settings)
   , m_environment(environment)
   , m_network(network)
   , m_data(network)
-  , m_weightUpdater(UpdaterFactory::build_weight_updater(m_network, weight_updater_default, m_settings))
+  , m_weightUpdater(UpdaterFactory::build_weight_updater(m_network, weight_updater_default, *m_settings))
   , m_neuronSpikeToOperationMap(std::make_shared<rafko_utilities::SubscriptDictionary>())
   , m_executionThreads()
   , m_trainingEvaluator(training_evaluator)
   , m_testEvaluator(test_evaluator)
-  , m_usedSequenceTruncation( std::min(m_settings.get_memory_truncation(), m_environment->get_sequence_size()) )
-  , m_usedMinibatchSize( std::min(m_settings.get_minibatch_size(), m_environment->get_number_of_sequences()) )
+  , m_usedSequenceTruncation( std::min(m_settings->get_memory_truncation(), m_environment->get_sequence_size()) )
+  , m_usedMinibatchSize( std::min(m_settings->get_minibatch_size(), m_environment->get_number_of_sequences()) )
   , m_tmpAvgD(m_network.weight_table_size())
   {
     if(m_trainingEvaluator){
       m_trainingEvaluator->set_environment(m_environment);
     }
-    for(std::uint32_t thread_index = 0; thread_index < m_settings.get_max_processing_threads(); ++thread_index)
+    for(std::uint32_t thread_index = 0; thread_index < m_settings->get_max_processing_threads(); ++thread_index)
       m_executionThreads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(
-        settings.get_max_solve_threads()
+        m_settings->get_max_solve_threads()
       ));
   }
 
@@ -85,11 +86,11 @@ public:
     return (
       (/* Early stopping */
         (m_trainingEvaluator && m_testEvaluator) && (
-          (m_settings.get_training_strategy(Training_strategy::training_strategy_early_stopping))
-          &&(m_lastTrainingError > ( m_lastTestingError * (1.0 + m_settings.get_delta()) ))
+          (m_settings->get_training_strategy(Training_strategy::training_strategy_early_stopping))
+          &&(m_lastTrainingError > ( m_lastTestingError * (1.0 + m_settings->get_delta()) ))
         )
       )||(
-        (m_settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero))
+        (m_settings->get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero))
         &&(0.0 == m_lastTrainingError)
       )
     );
@@ -103,7 +104,7 @@ public:
   void set_weight_updater(rafko_gym::Weight_updaters updater){
     RFASSERT_LOG("Setting weight updater in Autodiff optimizer to {}", rafko_gym::Weight_updaters_Name(updater));
     m_weightUpdater.reset();
-    m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, m_settings);
+    m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, *m_settings);
   }
 
   /**
@@ -206,7 +207,6 @@ public:
   }
 
 protected:
-  const rafko_mainframe::RafkoSettings& m_settings;
   std::shared_ptr<RafkoEnvironment> m_environment;
   rafko_net::RafkoNet& m_network;
   RafkoBackpropagationData m_data;

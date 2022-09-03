@@ -31,14 +31,14 @@
 namespace rafko_mainframe{
 
 RafkoCPUContext::RafkoCPUContext(
-  rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_gym::RafkoObjective> objective,
-  std::shared_ptr<rafko_mainframe::RafkoSettings> settings
+  rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
+  std::shared_ptr<rafko_gym::RafkoObjective> objective
 )
 : RafkoContext(settings)
 , m_network(neural_network)
-, m_networkSolution(rafko_net::SolutionBuilder(*m_settings).build(m_network))
-, m_weightAdapter(m_network, *m_networkSolution, *m_settings)
-, m_agent(rafko_net::SolutionSolver::Builder(*m_networkSolution, *m_settings).build())
+, m_networkSolution(*rafko_net::SolutionBuilder(*m_settings).build(m_network))
+, m_weightAdapter(m_network, m_networkSolution, *m_settings)
+, m_agent(rafko_net::SolutionSolver::Builder(m_networkSolution, *m_settings).build())
 , m_environment(std::make_unique<RafkoDummyEnvironment>(m_network.input_data_size(), m_network.output_neuron_number()))
 , m_objective(objective)
 , m_weightUpdater(rafko_gym::UpdaterFactory::build_weight_updater(m_network, rafko_gym::weight_updater_default, *m_settings))
@@ -99,6 +99,7 @@ double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t seq
     sequence_start, sequences_to_evaluate, m_environment->get_number_of_sequences(), start_index_in_sequence, sequence_truncation
   );
   RFASSERT(m_environment->get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
+  RFASSERT(static_cast<bool>(m_objective));
 
   double error_sum = (0.0);
   m_agent->set_eval_mode(true);

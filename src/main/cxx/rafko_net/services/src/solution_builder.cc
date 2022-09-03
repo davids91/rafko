@@ -43,10 +43,11 @@
 
 namespace rafko_net{
 
-void SolutionBuilder::build_and_swap(Solution* with, const RafkoNet& network, bool optimize_to_gpu){
-  RFASSERT(nullptr != with);
+void SolutionBuilder::update(Solution* previous, const RafkoNet& network, bool optimize_to_gpu){
+  RFASSERT(nullptr != previous);
   Solution* solution = build(network, nullptr, optimize_to_gpu);
-  solution->Swap(with);
+  solution->Swap(previous);
+  delete solution;
 }
 
 Solution* SolutionBuilder::build(const RafkoNet& net, google::protobuf::Arena* arena_ptr, bool optimize_to_gpu){

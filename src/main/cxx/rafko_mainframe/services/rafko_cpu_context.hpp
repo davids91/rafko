@@ -38,8 +38,9 @@ class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
 public:
 
   RafkoCPUContext(
-    rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_gym::RafkoObjective> objective,
-    std::shared_ptr<rafko_mainframe::RafkoSettings> = {}
+    rafko_net::RafkoNet& neural_network,
+    std::shared_ptr<rafko_mainframe::RafkoSettings> = {},
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = {}
   );
   ~RafkoCPUContext() = default;
 
@@ -48,7 +49,6 @@ public:
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override{
     RFASSERT_LOG("Setting objective in CPU Context");
-    m_objective.reset();
     m_objective = objective;
   }
 
@@ -134,7 +134,7 @@ public:
 
 private:
   rafko_net::RafkoNet& m_network;
-  rafko_net::Solution* m_networkSolution;
+  rafko_net::Solution& m_networkSolution;
   rafko_gym::RafkoWeightAdapter m_weightAdapter;
   std::unique_ptr<rafko_net::SolutionSolver> m_agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;

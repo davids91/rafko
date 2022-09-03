@@ -93,7 +93,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   return_value = m_openclQueue.enqueueFillBuffer<double>(
     m_gpuPhase.get_input_buffer(), static_cast<double>(rand()%(std::max(1,
       static_cast<std::int32_t>(m_environment->get_number_of_sequences())
-      - static_cast<std::int32_t>(m_settings.get_minibatch_size())
+      - static_cast<std::int32_t>(m_settings->get_minibatch_size())
     )))/*the data(pattern) value*/,
     (m_strategy->get_input_buffer_byte_size<double>() - (sizeof(double) * 3)),/*offset*/
     sizeof(double)/*size*/, NULL/*events to wait for*/, &sequence_start_index_event
@@ -102,7 +102,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
 
   cl::Event truncation_event;
   return_value = m_openclQueue.enqueueFillBuffer<double>(
-    m_gpuPhase.get_input_buffer(), static_cast<double>(m_settings.get_memory_truncation())/*the data(pattern) value*/,
+    m_gpuPhase.get_input_buffer(), static_cast<double>(m_settings->get_memory_truncation())/*the data(pattern) value*/,
     (m_strategy->get_input_buffer_byte_size<double>() - (sizeof(double) * 2)),/*offset*/
     sizeof(double)/*size*/, NULL/*events to wait for*/, &truncation_event
   );

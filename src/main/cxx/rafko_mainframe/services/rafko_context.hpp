@@ -34,6 +34,7 @@
 #include "rafko_gym/models/rafko_agent.hpp"
 #include "rafko_gym/services/rafko_weight_updater.hpp"
 #include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_mainframe/models/rafko_autonomous_entity.hpp"
 
 namespace rafko_mainframe{
 
@@ -41,27 +42,11 @@ namespace rafko_mainframe{
  * @brief      The interface for the main context of the Rafko Deep learning service. It encapsulates a Network as its central
  *             point, and provides methods to refine it and solve it.
  */
-class RAFKO_FULL_EXPORT RafkoContext{
-
-  /**
-   * @brief     Constructs an arena in case the provided settings doesn't contain any
-   *
-   * @param     settings    The @RafkoSettings instance to check for an existing arena implementation
-   *
-   * @return    The pointer to the arena should the @RafkoSettings instance not contain it.
-   */
-  static std::unique_ptr<google::protobuf::Arena> initialize_arena(rafko_mainframe::RafkoSettings& settings){
-    if(nullptr == settings.get_arena_ptr())
-      return std::make_unique<google::protobuf::Arena>();
-      else return {};
-  }
-
+class RAFKO_FULL_EXPORT RafkoContext : public RafkoAutonomousEntity{
 public:
   RafkoContext(std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {})
-  : m_settings(settings?settings:std::make_shared<rafko_mainframe::RafkoSettings>())
-  , m_arena(initialize_arena(*settings))
+  : RafkoAutonomousEntity(settings)
   {
-    if(m_arena)m_settings->set_arena_ptr(m_arena.get());
   }
 
   virtual ~RafkoContext() = default;
@@ -167,9 +152,6 @@ public:
    * @return      a reference of the referenced network
    */
   virtual rafko_net::RafkoNet& expose_network() = 0;
-protected:
-  std::shared_ptr<rafko_mainframe::RafkoSettings> m_settings;
-  std::unique_ptr<google::protobuf::Arena> m_arena;
 };
 
 } /* namespace rafko_mainframe */

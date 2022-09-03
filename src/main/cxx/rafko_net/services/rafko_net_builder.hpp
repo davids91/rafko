@@ -241,15 +241,15 @@ public:
    *             argument, where the neurons of a layer is after in the previous layers, and before
    *             the succeeding layer Neurons.
    *
-   * @param      with                       A pointer to the @RafkoNet object to swap the newly generated network with.
+   * @param      previous                   A pointer to the @RafkoNet object to swap the newly generated network with.
    *                                        The provided pointer is advised to be pointing to an object allocated on a protobuf Arena
    * @param[in]  layerSizes                 how many layers will there be in the result and how big are those layers going to be
    * @param[in]  transfer_function_filter   The allowed transfer functions per layer
    *
    * @return   the built neural network
    */
-  void build_dense_layers_and_swap(
-    RafkoNet* with, std::vector<std::uint32_t> layer_sizes,
+  void build_dense_layers_and_update(
+    RafkoNet* previous, std::vector<std::uint32_t> layer_sizes,
     std::vector<std::set<Transfer_functions>> transfer_function_filter = {}
   );
 

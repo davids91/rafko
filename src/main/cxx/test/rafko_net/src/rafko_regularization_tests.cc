@@ -244,8 +244,8 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
     );
-    rafko_mainframe::RafkoCPUContext regulated_context(network, objective, settings);
-    rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, objective, settings);
+    rafko_mainframe::RafkoCPUContext regulated_context(network, settings, objective);
+    rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, settings, objective);
     std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
       number_of_sequences, sequence_size, 2/*prefill_size*/,
@@ -378,12 +378,12 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
     std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
 
     /* create GPU and CPU contexts */
-    rafko_mainframe::RafkoCPUContext cpu_context(network_copy, objective, settings);
+    rafko_mainframe::RafkoCPUContext cpu_context(network_copy, settings, objective);
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> gpu_context;
     REQUIRE_NOTHROW(
       gpu_context = (
         rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-          .build<rafko_mainframe::RafkoGPUContext>(network, objective, settings)
+          .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
       )
     );
 

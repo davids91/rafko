@@ -50,21 +50,14 @@ SolutionSolver::Builder::Builder(const Solution& to_solve, const rafko_mainframe
 SolutionSolver::Factory::Factory(const RafkoNet& network, std::shared_ptr<const rafko_mainframe::RafkoSettings> settings)
 : m_network(network)
 , m_settings(settings)
-, m_solution(rafko_net::SolutionBuilder(*m_settings).build(m_network))
+, m_solution(SolutionBuilder(*m_settings).build(m_network))
 , m_weightAdapter(std::make_unique<rafko_gym::RafkoWeightAdapter>(m_network, *m_solution, *m_settings))
 { }
 
 std::unique_ptr<SolutionSolver> SolutionSolver::Factory::build(bool rebuild_solution){
   if(rebuild_solution){
-    if(nullptr == m_settings->get_arena_ptr()){
-      delete m_solution;
-      m_solution = SolutionBuilder(*m_settings).build(m_network);
-    }else{
-      SolutionBuilder(*m_settings).build_and_swap(m_solution, m_network);
-    }
-    m_weightAdapter = std::make_unique<rafko_gym::RafkoWeightAdapter>(
-      m_network, *m_solution, *m_settings
-    );
+    SolutionBuilder(*m_settings).update(m_solution, m_network);
+    m_weightAdapter = std::make_unique<rafko_gym::RafkoWeightAdapter>(m_network, *m_solution, *m_settings);
   }
 
   RFASSERT(static_cast<bool>(m_solution));

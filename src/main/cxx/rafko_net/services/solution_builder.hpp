@@ -88,12 +88,12 @@ public:
    *            an Arena endlessly ( Should there be any stored in the given settings instance ) by
    *            swapping the newly generated with the previous one.
    *
-   * @param         with                A pointer to the @Solution object to swap the newly generated solution with.
+   * @param         previous            A pointer to the @Solution object to swap the newly generated solution with.
    *                                    The provided pointer is advised to be pointing to an object allocated on a protobuf Arena
    * @param[in]     network             The network to build the generated solution from
    * @param[in]     optimize_to_gpu     True, Should the resulting solution be optimized for large amount of threads
    */
-  void build_and_swap(Solution* with, const RafkoNet& network, bool optimize_to_gpu = false);
+  void update(Solution* previous, const RafkoNet& network, bool optimize_to_gpu = false);
 
   #if(RAFKO_USES_OPENCL)
   /**

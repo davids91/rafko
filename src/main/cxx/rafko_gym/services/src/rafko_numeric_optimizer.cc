@@ -25,7 +25,7 @@ namespace rafko_gym{
 
 void RafkoNumericOptimizer::collect_approximates_from_weight_gradients(){
   if(m_excludeChanceSum < weight_exclude_chance_filter.size()){
-    double greatest_gradient_value = settings.get_sqrt_epsilon();
+    double greatest_gradient_value = m_settings->get_sqrt_epsilon();
     double used_weight_filter_sum = 0.0;
     std::mutex weight_stats_mutex;
     std::vector<double>& used_gradients = m_tmpDataPool.reserve_buffer(training_contexts[0]->expose_network().weight_table_size());
@@ -362,15 +362,15 @@ void RafkoNumericOptimizer::apply_weight_vector_delta(){
   /*!Note: This should help, but doesn't ..  training_contexts[0]->full_evaluation(); */
 
   /* Update test and training errors */
-  if(0 == (m_iteration%settings.get_tolerance_loop_value())){
+  if(0 == (m_iteration%m_settings->get_tolerance_loop_value())){
     training_contexts[0]->refresh_solution_weights();
     m_lastTrainingError = -training_contexts[0]->stochastic_evaluation();
   }
   if(
     (test_context)
     &&(
-      (m_iteration > (m_lastTestedIteration + settings.get_tolerance_loop_value()))
-      ||((m_lastTestingError * settings.get_delta()) < std::abs(m_lastTrainingError - m_lastTestingError))
+      (m_iteration > (m_lastTestedIteration + m_settings->get_tolerance_loop_value()))
+      ||((m_lastTestingError * m_settings->get_delta()) < std::abs(m_lastTrainingError - m_lastTestingError))
     )
   ){
     training_contexts[0]->refresh_solution_weights();

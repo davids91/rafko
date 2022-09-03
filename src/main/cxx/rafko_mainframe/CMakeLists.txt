@@ -31,6 +31,7 @@ set( MAINFRAME_HEADERS
   ${HEADERS_WITH_OCL}
   models/rafko_settings.hpp
   models/rafko_nbuf_shape.hpp
+  models/rafko_autonomous_entity.hpp
   services/rafko_dummies.hpp
   services/rafko_context.hpp
   services/rafko_cpu_context.hpp
