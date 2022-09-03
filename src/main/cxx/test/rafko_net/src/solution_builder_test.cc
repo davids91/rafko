@@ -31,7 +31,7 @@ namespace rafko_net_test {
 /*###############################################################################################
  * Testing Solution generation using the @RafkoNetBuilder and the @SolutionBuilder
  * */
-std::unique_ptr<rafko_net::Solution> test_solution_builder_manually(
+rafko_net::Solution* test_solution_builder_manually(
   google::protobuf::Arena* arena, double device_max_megabytes,
   std::vector<std::uint32_t> net_structure, bool recursion, bool boltzman_knot
 ){
@@ -49,11 +49,11 @@ std::unique_ptr<rafko_net::Solution> test_solution_builder_manually(
 
   rafko_net::RafkoNet* net = nullptr;
   REQUIRE_NOTHROW( net = builder.dense_layers(net_structure) );
-
-  std::unique_ptr<rafko_net::Solution> solution;
-  REQUIRE_NOTHROW( solution = rafko_net::SolutionBuilder(settings).build(*net) );
-
   REQUIRE(net != nullptr);
+
+  rafko_net::Solution* solution;
+  REQUIRE_NOTHROW( solution = rafko_net::SolutionBuilder(settings).build(*net) );
+  REQUIRE(solution != nullptr);
 
   CHECK( net->input_data_size() ==   solution->network_input_size() );
 

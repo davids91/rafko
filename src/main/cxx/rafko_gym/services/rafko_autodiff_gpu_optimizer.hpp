@@ -36,13 +36,12 @@ namespace rafko_gym{
 /**
  * @brief
  */
-class RAFKO_FULL_EXPORT RafkoAutodiffGPUOptimizer
-: private RafkoAutodiffOptimizer
+class RAFKO_FULL_EXPORT RafkoAutodiffGPUOptimizer : private RafkoAutodiffOptimizer
 {
 public:
   RafkoAutodiffGPUOptimizer(
     cl::Context&& context, cl::Device device,
-    const rafko_mainframe::RafkoSettings& settings,
+    std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
     std::shared_ptr<RafkoEnvironment> environment, rafko_net::RafkoNet& network,
     std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator = {},
     std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator = {}
@@ -51,7 +50,7 @@ public:
   , m_openclContext(context)
   , m_openclDevice(device)
   , m_openclQueue(m_openclContext, m_openclDevice)
-  , m_strategy(std::make_shared<AutoDiffGPUStrategy>(m_settings, m_network, m_environment))
+  , m_strategy(std::make_shared<AutoDiffGPUStrategy>(*m_settings, m_network, m_environment))
   , m_gpuPhase(
     m_openclContext, m_openclDevice, m_openclQueue,
     std::make_shared<rafko_mainframe::RafkoDummyGPUStrategyPhase>(

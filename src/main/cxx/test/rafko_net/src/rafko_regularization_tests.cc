@@ -193,12 +193,13 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
   std::uint32_t feature_size = 2u;
   std::uint32_t sequence_size = 6u;
   std::uint32_t number_of_sequences = rand()%10 + 1;
-  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
-    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>();
+  settings->set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
     .set_minibatch_size(10);
+
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
-    rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
+    rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(*settings)
       .input_size(2).expected_input_range((1.0));
 
     std::set<std::uint32_t> affected_layers;
@@ -220,7 +221,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
 
     /* declare an executor */
     std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>> exec_threads;
-    exec_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_processing_threads()));
+    exec_threads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(settings->get_max_processing_threads()));
     rafko_net::RafkoNetworkFeature features(exec_threads);
 
     /* Remove weight regularization from a copy network, and calculate the error difference */
@@ -234,17 +235,17 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
         *unregulated_network.add_neuron_group_features() = feature;
       }else{
         error_difference += features.calculate_performance_relevant(
-          feature, settings, unregulated_network
+          feature, *settings, unregulated_network
         );
       }
     }
 
     /* Create CPU contexts and an environment */
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
-      settings, rafko_gym::cost_function_squared_error
+      *settings, rafko_gym::cost_function_squared_error
     );
-    rafko_mainframe::RafkoCPUContext regulated_context(network, objective, settings);
-    rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, objective, settings);
+    rafko_mainframe::RafkoCPUContext regulated_context(network, settings, objective);
+    rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, settings, objective);
     std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
       number_of_sequences, sequence_size, 2/*prefill_size*/,
@@ -288,11 +289,11 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
   rafko_net::RafkoNet unregulated_network = rafko_net::RafkoNet(network);
   unregulated_network.mutable_neuron_group_features()->Clear(); /* remove droput regularaziation from network */
 
-  std::unique_ptr<rafko_net::Solution> regulated_solution = rafko_net::SolutionBuilder(settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> regulated_agent = rafko_net::SolutionSolver::Builder(*regulated_solution, settings).build();
+  rafko_net::Solution& regulated_solution = *rafko_net::SolutionBuilder(settings).build(network);
+  std::unique_ptr<rafko_net::SolutionSolver> regulated_agent = rafko_net::SolutionSolver::Builder(regulated_solution, settings).build();
 
-  std::unique_ptr<rafko_net::Solution> unregulated_solution = rafko_net::SolutionBuilder(settings).build(unregulated_network);
-  std::unique_ptr<rafko_net::SolutionSolver> unregulated_agent = rafko_net::SolutionSolver::Builder(*unregulated_solution, settings).build();
+  rafko_net::Solution& unregulated_solution = *rafko_net::SolutionBuilder(settings).build(unregulated_network);
+  std::unique_ptr<rafko_net::SolutionSolver> unregulated_agent = rafko_net::SolutionSolver::Builder(unregulated_solution, settings).build();
 
   std::vector<double> network_input(network.input_data_size(), (rand()%10));
   (void)regulated_agent->solve(network_input);
@@ -339,12 +340,14 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
   std::uint32_t feature_size = 2u;
   std::uint32_t sequence_size = 3u;
   std::uint32_t number_of_sequences = rand()%10 + 1;
-  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
+    rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
-    .set_minibatch_size(10);
+    .set_minibatch_size(10)
+  );
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
-    rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
+    rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(*settings)
       .input_size(2).expected_input_range((1.0));
 
     std::vector<std::uint32_t> layer_sizes = {
@@ -365,7 +368,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
 
     /* Create environments */
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
-      settings, rafko_gym::cost_function_squared_error
+      *settings, rafko_gym::cost_function_squared_error
     );
     std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
@@ -375,12 +378,12 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
     std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
 
     /* create GPU and CPU contexts */
-    rafko_mainframe::RafkoCPUContext cpu_context(network_copy, objective, settings);
+    rafko_mainframe::RafkoCPUContext cpu_context(network_copy, settings, objective);
     std::unique_ptr<rafko_mainframe::RafkoGPUContext> gpu_context;
     REQUIRE_NOTHROW(
       gpu_context = (
         rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-          .build<rafko_mainframe::RafkoGPUContext>(settings, network, objective)
+          .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
       )
     );
 

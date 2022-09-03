@@ -28,23 +28,23 @@ namespace rafko_mainframe{
 
 RafkoGPUContext::RafkoGPUContext(
   cl::Context&& context, cl::Device device,
-  rafko_mainframe::RafkoSettings settings, rafko_net::RafkoNet& neural_network,
+  rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
   std::shared_ptr<rafko_gym::RafkoObjective> objective
 ):RafkoContext(settings)
 , m_network(neural_network)
-, m_networkSolution(rafko_net::SolutionBuilder(m_settings).build(m_network))
-, m_weightAdapter(m_network, *m_networkSolution, settings)
-, m_agent(rafko_net::SolutionSolver::Builder(*m_networkSolution, m_settings).build())
+, m_networkSolution(*rafko_net::SolutionBuilder(*m_settings).build(m_network))
+, m_weightAdapter(m_network, m_networkSolution, *m_settings)
+, m_agent(rafko_net::SolutionSolver::Builder(m_networkSolution, *m_settings).build())
 , m_environment(std::make_unique<RafkoDummyEnvironment>(
   m_network.input_data_size(), m_network.output_neuron_number())
 )
 , m_objective(objective)
-, m_weightUpdater(rafko_gym::UpdaterFactory::build_weight_updater(m_network, rafko_gym::weight_updater_default, m_settings))
+, m_weightUpdater(rafko_gym::UpdaterFactory::build_weight_updater(m_network, rafko_gym::weight_updater_default, *m_settings))
 , m_neuronOutputsToEvaluate( /* For every thread, 1 sequence is evaluated.. */
-  (m_settings.get_max_processing_threads() * m_environment->get_sequence_size() + 1u),
+  (m_settings->get_max_processing_threads() * m_environment->get_sequence_size() + 1u),
   std::vector<double>(m_network.output_neuron_number()) /* ..plus for the label errors one additional vector is needed */
 )
-, m_executionThreads(m_settings.get_max_processing_threads())
+, m_executionThreads(m_settings->get_max_processing_threads())
 , m_openclContext(context)
 , m_openclDevice(device)
 , m_openclQueue(m_openclContext, m_openclDevice)
@@ -71,11 +71,11 @@ void RafkoGPUContext::upload_weight_to_device(std::uint32_t weight_index){
   RFASSERT_LOG("Starting to upload a single weight to device..");
   for(const std::pair<std::uint32_t,std::uint32_t>& index_pair : relevant_partial_weights){
     while(partial_index < std::get<0>(index_pair)){
-      weight_table_offset += m_networkSolution->partial_solutions(partial_index).weight_table_size();
+      weight_table_offset += m_networkSolution.partial_solutions(partial_index).weight_table_size();
       ++partial_index;
     }
     std::uint32_t weight_index_in_partial = std::get<1>(index_pair);
-    double weight_value = m_networkSolution->partial_solutions(partial_index).weight_table(weight_index_in_partial);
+    double weight_value = m_networkSolution.partial_solutions(partial_index).weight_table(weight_index_in_partial);
     RFASSERT_LOG("Weight index in partial[{}]: {}", partial_index, weight_index_in_partial);
 
     /* Update weight at weight_table_offset + std::get<1>(index_pair) */
@@ -123,7 +123,7 @@ void RafkoGPUContext::upload_weight_table_to_device(){
   RFASSERT_LOG("Uploading weight table to device..");
   std::vector<double> device_weight_table;
   std::uint32_t overall_number_of_weights = 0u;
-  for(const rafko_net::PartialSolution& partial : m_networkSolution->partial_solutions()){
+  for(const rafko_net::PartialSolution& partial : m_networkSolution.partial_solutions()){
     device_weight_table.insert(
       device_weight_table.end(),
       partial.weight_table().begin(), partial.weight_table().end()
@@ -145,6 +145,7 @@ void RafkoGPUContext::upload_weight_table_to_device(){
 
 void RafkoGPUContext::refresh_objective(){
   RFASSERT_LOG("Refreshing objective in GPU context..");
+  RFASSERT(static_cast<bool>(m_objective));
   m_objective->set_gpu_parameters(
     m_environment->get_number_of_label_samples(),
     m_environment->get_feature_size()
@@ -154,7 +155,6 @@ void RafkoGPUContext::refresh_objective(){
 
 void RafkoGPUContext::set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective){
   RFASSERT_LOG("Setting a new objective in GPU context");
-  m_objective.reset();
   m_objective = objective;
   refresh_objective();
   RFASSERT_LOG("Last ran evaluation set to `Not evaluation run`");
@@ -164,7 +164,7 @@ void RafkoGPUContext::set_objective(std::shared_ptr<rafko_gym::RafkoObjective> o
 void RafkoGPUContext::set_weight_updater(rafko_gym::Weight_updaters updater){
   RFASSERT_LOG("Setting weight updater in GPU context to {}", rafko_gym::Weight_updaters_Name(updater));
   m_weightUpdater.reset();
-  m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, m_settings);
+  m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, *m_settings);
 }
 
 void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment){
@@ -173,10 +173,12 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
   RFASSERT(environment->get_feature_size() == m_network.output_neuron_number());
   RFASSERT_LOG("Environment input size: {} vs. Network input size: {}", environment->get_input_size(), m_network.input_data_size());
   RFASSERT(environment->get_input_size() == m_network.input_data_size());
+  RFASSERT(static_cast<bool>(m_objective));
+
   m_environment.reset();
   m_environment = environment;
   std::uint32_t old_output_buffer_num = m_neuronOutputsToEvaluate.size();
-  std::uint32_t new_output_buffer_num = m_settings.get_max_processing_threads() * m_environment->get_sequence_size() + 1u;
+  std::uint32_t new_output_buffer_num = m_settings->get_max_processing_threads() * m_environment->get_sequence_size() + 1u;
   m_neuronOutputsToEvaluate.resize(new_output_buffer_num);
   if(old_output_buffer_num < new_output_buffer_num){
     for(std::uint32_t buffer_index = old_output_buffer_num-1; buffer_index < new_output_buffer_num; ++buffer_index){
@@ -264,6 +266,9 @@ double RafkoGPUContext::full_evaluation(){
   [[maybe_unused]]cl_int return_value;
   std::vector<cl::Event> label_events;
   RFASSERT_SCOPE(GPU_FULL_EVALUATION);
+  RFASSERT_LOG("Full evaluation in GPU Context..");
+  RFASSERT(static_cast<bool>(m_objective));
+
 
   if(m_lastRanEvaluation != full_eval_run){
     /* upload mode info */
@@ -338,13 +343,14 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
   std::vector<cl::Event> input_events;
   std::vector<cl::Event> label_events;
   RFASSERT_SCOPE(GPU_STOCHASTIC_EVALUATION);
+  RFASSERT_LOG("Stochastic evaluation in GPU Context..");
 
   if(to_seed){
     srand(seed_value);
     RFASSERT_LOG("Seeded run: last used seed: {}; current seed: {}", m_lastUsedSeed, seed_value);
   }
-  const std::uint32_t used_minibatch_size = std::min(m_settings.get_minibatch_size(), m_environment->get_number_of_sequences());
-  const std::uint32_t used_sequence_truncation = std::min( m_settings.get_memory_truncation(), m_environment->get_sequence_size() );
+  const std::uint32_t used_minibatch_size = std::min(m_settings->get_minibatch_size(), m_environment->get_number_of_sequences());
+  const std::uint32_t used_sequence_truncation = std::min( m_settings->get_memory_truncation(), m_environment->get_sequence_size() );
   const std::uint32_t start_index_inside_sequence = ( rand()%(m_environment->get_sequence_size() - used_sequence_truncation + 1) );
   RFASSERT_LOG(
     "Used minibatch size: {}; sequence_truncation: {}; start index inside sequence: {}",
@@ -469,6 +475,7 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
   bool reset_neuron_data, std::uint32_t thread_index
 ){
   RFASSERT_SCOPE(GPU_STANDALONE_SOLVE);
+  RFASSERT_LOG("Solving network in GPU Context..");
   RFASSERT_LOG("Thread index in solve: {}", thread_index);
   RFASSERT(0 == thread_index);
   if(0u != thread_index)
@@ -476,8 +483,8 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
 
   [[maybe_unused]]cl_int return_value;
   cl::Event fill_event;
-  const std::uint32_t network_memory_slots = std::max(2u, (m_networkSolution->network_memory_length() - 1u));
-  const std::size_t network_used_bytes = sizeof(double) * network_memory_slots * m_networkSolution->neuron_number();
+  const std::uint32_t network_memory_slots = std::max(2u, (m_network.memory_size() - 1u));
+  const std::size_t network_used_bytes = sizeof(double) * network_memory_slots * m_network.neuron_array_size();
 
   if(reset_neuron_data || (m_lastRanEvaluation != not_eval_run) ){
     RFASSERT_LOG("Not resetting agent data..");
@@ -491,7 +498,7 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
     return_value = fill_event.wait();
     RFASSERT( return_value == CL_SUCCESS );
   }else{ /* Neuron memory not resetted, keep network memory consistent */
-    const std::uint32_t network_memory_span_bytes = m_networkSolution->neuron_number() * sizeof(double);
+    const std::uint32_t network_memory_span_bytes = m_network.neuron_array_size() * sizeof(double);
     RFASSERT_LOG(
       "Resetting agent data; Memory slots: {}; Memory size in bytes: {}",
       network_memory_slots, network_memory_span_bytes
@@ -534,7 +541,7 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
   m_solutionPhase( enq );
 
   std::uint32_t output_array_start = ( /* the end of the last memory slot contains the network data */
-    (std::max(2u, m_networkSolution->network_memory_length()) * m_network.neuron_array_size()) - m_network.output_neuron_number()
+    (std::max(2u, m_network.memory_size()) * m_network.neuron_array_size()) - m_network.output_neuron_number()
   );
   RFASSERT_LOG("Output array start: {}", output_array_start);
   if(static_cast<std::int32_t>(m_standaloneSolutionResult.size()) == m_network.neuron_array_size()){

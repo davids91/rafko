@@ -170,8 +170,6 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
   CHECK( 1 == net->neuron_group_features(0).relevant_neurons_size() );
   CHECK( 60 == net->neuron_group_features(1).relevant_neurons(0).starts() );
   CHECK( 30 == net->neuron_group_features(1).relevant_neurons(0).interval_size() );
-
-  net.reset();
 }
 
 TEST_CASE("Checking if the network builder is correctly placing the softmax feature into the built network", "[features][build]"){

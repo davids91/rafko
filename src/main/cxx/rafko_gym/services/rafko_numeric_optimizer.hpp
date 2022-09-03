@@ -25,6 +25,7 @@
 #include <limits>
 #include <mutex>
 
+#include "rafko_mainframe/models/rafko_autonomous_entity.hpp"
 #include "rafko_mainframe/models/rafko_settings.hpp"
 #include "rafko_mainframe/services/rafko_context.hpp"
 
@@ -34,7 +35,7 @@ namespace rafko_gym{
  * @brief      This class approximates gradients for a @Dataset and @RafkoNet.
  *             The approximated gradients are collected into one gradient fragment.
  */
-class RAFKO_FULL_EXPORT RafkoNumericOptimizer{
+class RAFKO_FULL_EXPORT RafkoNumericOptimizer : public rafko_mainframe::RafkoAutonomousEntity{
 public:
 
   /**
@@ -46,16 +47,17 @@ public:
   RafkoNumericOptimizer(
     std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> contexts,
     std::shared_ptr<rafko_mainframe::RafkoContext> test_context,
-    rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings(),
+    std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {},
     std::uint32_t stochastic_evaluation_loops = 1u
-  ):settings(settings)
+  )
+  : rafko_mainframe::RafkoAutonomousEntity(settings)
   , training_contexts(contexts)
   , test_context(test_context)
   , weight_filter(training_contexts[0]->expose_network().weight_table_size(), 1.0)
   , used_weight_filter(weight_filter)
   , weight_exclude_chance_filter(training_contexts[0]->expose_network().weight_table_size(), 0.0)
   , stochastic_evaluation_loops(stochastic_evaluation_loops)
-  , execution_threads(std::min(training_contexts.size(), static_cast<std::size_t>(settings.get_max_processing_threads())))
+  , execution_threads(std::min(training_contexts.size(), static_cast<std::size_t>(m_settings->get_max_processing_threads())))
   , m_tmpDataPool(2u, training_contexts[0]->expose_network().weight_table_size())
   { }
 
@@ -240,16 +242,16 @@ public:
       (1u < m_iteration)
       &&((
         (
-          settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
-          &&(settings.get_learning_rate() >= -m_minTestError)
+          m_settings->get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_below_learning_rate)
+          &&(m_settings->get_learning_rate() >= -m_minTestError)
         )||(
-          settings.get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
+          m_settings->get_training_strategy(Training_strategy::training_strategy_stop_if_training_error_zero)
           &&((0.0) ==  -m_minTestError)
         )||(
           (training_contexts[0] && test_context)
           &&(
-            (settings.get_training_strategy(Training_strategy::training_strategy_early_stopping))
-            &&(m_lastTrainingError > ( m_lastTestingError * (1.0 + settings.get_delta()) ))
+            (m_settings->get_training_strategy(Training_strategy::training_strategy_early_stopping))
+            &&(m_lastTrainingError > ( m_lastTestingError * (1.0 + m_settings->get_delta()) ))
           )
         )
       ))
@@ -257,7 +259,6 @@ public:
   }
 
 private:
-  rafko_mainframe::RafkoSettings settings;
   std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> training_contexts;
   std::shared_ptr<rafko_mainframe::RafkoContext> test_context;
   std::vector<double> weight_filter;

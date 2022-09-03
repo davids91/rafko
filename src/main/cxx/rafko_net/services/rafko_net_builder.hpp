@@ -211,24 +211,47 @@ public:
    *             argument, where the neurons of a layer is after in the previous layers, and before
    *             the succeeding layer Neurons.
    *
+   * @param[in]  arena_ptr                  The pointer to the arena to allocate the resulting network in.
+   *                                        In case of nullptr the result shall be on the heap and ownership is of the caller of the function
    * @param[in]  layerSizes                 how many layers will there be in the result and how big are those layers going to be
    * @param[in]  transfer_function_filter   The allowed transfer functions per layer
    *
    * @return   the built neural network
    */
-  RafkoNet* dense_layers(std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter){
-    (void)allowed_transfer_functions_by_layer(transfer_function_filter);
-    return dense_layers(layer_sizes);
+  RafkoNet* dense_layers(google::protobuf::Arena* arena_ptr, std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter = {});
+
+  /**
+   * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
+   *             and function arguments. The structure is according to the provided layer sizes
+   *             argument, where the neurons of a layer is after in the previous layers, and before
+   *             the succeeding layer Neurons.
+   *
+   * @param[in]  layerSizes                 how many layers will there be in the result and how big are those layers going to be
+   * @param[in]  transfer_function_filter   The allowed transfer functions per layer
+   *
+   * @return   the built neural network
+   */
+  RafkoNet* dense_layers(std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter = {}){
+    return dense_layers(m_settings.get_arena_ptr(), layer_sizes, transfer_function_filter);
   }
 
   /**
-   * @brief      Same as above, but without any Transfer function restrictions
+   * @brief     creates a Fully connected feedforward neural network based on the IO arguments and
+   *             and function arguments. The structure is according to the provided layer sizes
+   *             argument, where the neurons of a layer is after in the previous layers, and before
+   *             the succeeding layer Neurons.
    *
-   * @param[in]  layer_sizes  The layer sizes
+   * @param      previous                   A pointer to the @RafkoNet object to swap the newly generated network with.
+   *                                        The provided pointer is advised to be pointing to an object allocated on a protobuf Arena
+   * @param[in]  layerSizes                 how many layers will there be in the result and how big are those layers going to be
+   * @param[in]  transfer_function_filter   The allowed transfer functions per layer
    *
-   * @return     the built neural network
+   * @return   the built neural network
    */
-  RafkoNet* dense_layers(std::vector<std::uint32_t> layer_sizes);
+  void build_dense_layers_and_update(
+    RafkoNet* previous, std::vector<std::uint32_t> layer_sizes,
+    std::vector<std::set<Transfer_functions>> transfer_function_filter = {}
+  );
 
 private:
   const rafko_mainframe::RafkoSettings& m_settings;

@@ -34,6 +34,7 @@
 #include "rafko_gym/models/rafko_agent.hpp"
 #include "rafko_gym/services/rafko_weight_updater.hpp"
 #include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_mainframe/models/rafko_autonomous_entity.hpp"
 
 namespace rafko_mainframe{
 
@@ -41,11 +42,12 @@ namespace rafko_mainframe{
  * @brief      The interface for the main context of the Rafko Deep learning service. It encapsulates a Network as its central
  *             point, and provides methods to refine it and solve it.
  */
-class RAFKO_FULL_EXPORT RafkoContext{
+class RAFKO_FULL_EXPORT RafkoContext : public RafkoAutonomousEntity{
 public:
-  RafkoContext(rafko_mainframe::RafkoSettings settings = RafkoSettings())
-  : m_settings(settings)
-  { }
+  RafkoContext(std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {})
+  : RafkoAutonomousEntity(settings)
+  {
+  }
 
   virtual ~RafkoContext() = default;
 
@@ -150,8 +152,6 @@ public:
    * @return      a reference of the referenced network
    */
   virtual rafko_net::RafkoNet& expose_network() = 0;
-protected:
-    rafko_mainframe::RafkoSettings m_settings;
 };
 
 } /* namespace rafko_mainframe */

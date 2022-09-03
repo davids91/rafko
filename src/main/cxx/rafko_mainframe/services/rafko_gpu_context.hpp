@@ -41,8 +41,9 @@ class RAFKO_FULL_EXPORT RafkoGPUContext : public RafkoContext{
 public:
   RafkoGPUContext(
     cl::Context&& context, cl::Device device,
-    rafko_mainframe::RafkoSettings settings, rafko_net::RafkoNet& neural_network,
-    std::shared_ptr<rafko_gym::RafkoObjective> objective
+    rafko_net::RafkoNet& neural_network,
+    std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {},
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = {}
   );
 
   /* +++ Methods taken from @RafkoContext +++ */
@@ -77,7 +78,7 @@ public:
 
   rafko_mainframe::RafkoSettings& expose_settings() override{
     m_lastRanEvaluation = not_eval_run; /* in case some training parameters changed buffers might need to be refreshed */
-    return m_settings;
+    return *m_settings;
   }
 
   rafko_net::RafkoNet& expose_network() override{
@@ -89,7 +90,7 @@ public:
 
 private:
   rafko_net::RafkoNet& m_network;
-  std::unique_ptr<rafko_net::Solution> m_networkSolution;
+  rafko_net::Solution& m_networkSolution;
   rafko_gym::RafkoWeightAdapter m_weightAdapter;
   std::shared_ptr<rafko_net::SolutionSolver> m_agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;

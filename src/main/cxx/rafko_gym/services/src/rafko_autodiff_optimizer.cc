@@ -62,7 +62,7 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
   for(const rafko_net::FeatureGroup& feature_group : m_network.neuron_group_features()){
     if(rafko_net::NeuronInfo::is_feature_relevant_to_performance(feature_group.feature()) ){
       m_operations.push_back(std::make_shared<RafkoBackpropWeightRegOperation>(
-        m_settings, m_data, m_network, m_operations.size(), feature_group
+        *m_settings, m_data, m_network, m_operations.size(), feature_group
       ));
       /*!Note: weight_relevant_operation_count counts on the placed items into the operation array here */
       RFASSERT_LOG(
@@ -80,7 +80,7 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
   std::vector<std::deque<std::uint32_t>> neuron_subsets;
   bool strict_mode = false;
   while(!neuron_router.finished()){
-    neuron_router.collect_subset(m_settings.get_max_solve_threads(), m_settings.get_device_max_megabytes(), strict_mode);
+    neuron_router.collect_subset(m_settings->get_max_solve_threads(), m_settings->get_device_max_megabytes(), strict_mode);
     neuron_subsets.insert( neuron_subsets.begin(),  {neuron_router.get_subset().rbegin(), neuron_router.get_subset().rend()} );
     /*!Note: new subsets are inserted into the beginning of the array, so that the Neurons depending on everything
      * will be place to the beginning of the operations array, as it is being executed from the end towards the beginning.
@@ -109,7 +109,7 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
       if(found_feature != m_spikeSolvesFeatureMap.end()){
         using FeaturePtr = std::shared_ptr<RafkoBackPropSolutionFeatureOperation>;
         FeaturePtr feature_operation = std::make_shared<RafkoBackPropSolutionFeatureOperation>(
-          m_data, m_network, m_operations.size(), m_settings, m_network.neuron_group_features(found_feature->second),
+          m_data, m_network, m_operations.size(), *m_settings, m_network.neuron_group_features(found_feature->second),
           m_executionThreads, m_neuronSpikeToOperationMap
         );
         m_operations.push_back(feature_operation);
@@ -194,17 +194,17 @@ void RafkoAutodiffOptimizer::calculate(BackpropDataBufferRange network_input, Ba
 }
 
 void RafkoAutodiffOptimizer::update_context_errors(){
-  if( (m_trainingEvaluator) && (0 == (m_iteration%m_settings.get_tolerance_loop_value())) ){
+  if( (m_trainingEvaluator) && (0 == (m_iteration%m_settings->get_tolerance_loop_value())) ){
     m_trainingEvaluator->refresh_solution_weights();
     m_lastTrainingError = -m_trainingEvaluator->stochastic_evaluation();
   }
   if(
     (m_testEvaluator)
     &&(
-      (m_iteration > (m_lastTestedIteration + m_settings.get_tolerance_loop_value()))
+      (m_iteration > (m_lastTestedIteration + m_settings->get_tolerance_loop_value()))
       ||(
         (m_trainingEvaluator)
-        &&((m_lastTestingError * m_settings.get_delta()) < std::abs(m_lastTrainingError - m_lastTestingError))
+        &&((m_lastTestingError * m_settings->get_delta()) < std::abs(m_lastTrainingError - m_lastTestingError))
       )
     )
   ){
@@ -352,7 +352,7 @@ std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_depe
         m_operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0]
       );
       return m_operations.emplace_back(new RafkoBackpropTransferFnOperation(
-        m_data, m_network, m_operations.size(), std::get<1>(arguments)[0], m_settings
+        m_data, m_network, m_operations.size(), std::get<1>(arguments)[0], *m_settings
       ));
     case ad_operation_neuron_input_d:
       RFASSERT(2u == std::get<1>(arguments).size());

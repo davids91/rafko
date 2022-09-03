@@ -109,7 +109,7 @@ public:
 
   class Factory{
   public:
-    Factory(const RafkoNet& network, const rafko_mainframe::RafkoSettings& settings);
+    Factory(const RafkoNet& network, std::shared_ptr<const rafko_mainframe::RafkoSettings> settings);
 
     /**
      * @brief     Updates the stored solution with the weights from the stored Neural Network reference
@@ -127,8 +127,8 @@ public:
 
   private:
     const RafkoNet& m_network;
-    const rafko_mainframe::RafkoSettings& m_settings;
-    std::unique_ptr<rafko_net::Solution> m_solution;
+    std::shared_ptr<const rafko_mainframe::RafkoSettings> m_settings;
+    rafko_net::Solution* m_solution;
     std::unique_ptr<rafko_gym::RafkoWeightAdapter> m_weightAdapter;
 
   };

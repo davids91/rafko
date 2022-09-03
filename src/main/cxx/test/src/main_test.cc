@@ -298,7 +298,7 @@ void print_training_sample(
   std::uint32_t sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
   const rafko_net::RafkoNet& net, const rafko_mainframe::RafkoSettings& settings
 ){
-  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(net);
+  rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(net);
   std::unique_ptr<rafko_net::SolutionSolver> sample_solver(
     rafko_net::SolutionSolver::Builder(*solution, settings).build()
   );
@@ -359,6 +359,10 @@ void print_training_sample(
     std::cout << "[" << net.weight_table(i) << "]";
   }
   std::cout << std::endl;
+  
+  if(nullptr == settings.get_arena_ptr()){
+    delete solution;
+  }
 }
 
 std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> create_addition_dataset(std::uint32_t number_of_samples){

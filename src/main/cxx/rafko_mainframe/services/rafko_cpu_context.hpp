@@ -38,8 +38,9 @@ class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
 public:
 
   RafkoCPUContext(
-    rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_gym::RafkoObjective> objective,
-    rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    rafko_net::RafkoNet& neural_network,
+    std::shared_ptr<rafko_mainframe::RafkoSettings> = {},
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = {}
   );
   ~RafkoCPUContext() = default;
 
@@ -48,14 +49,13 @@ public:
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override{
     RFASSERT_LOG("Setting objective in CPU Context");
-    m_objective.reset();
     m_objective = objective;
   }
 
   void set_weight_updater(rafko_gym::Weight_updaters updater) override{
     RFASSERT_LOG("Setting weight updater in CPU context to {}", rafko_gym::Weight_updaters_Name(updater));
     m_weightUpdater.reset();
-    m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, m_settings);
+    m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, *m_settings);
   }
 
   void refresh_solution_weights() override{
@@ -123,8 +123,8 @@ public:
     m_environment->pop_state();
   }
 
-  constexpr rafko_mainframe::RafkoSettings& expose_settings() override{
-    return m_settings;
+  rafko_mainframe::RafkoSettings& expose_settings() override{
+    return *m_settings;
   }
 
   constexpr rafko_net::RafkoNet& expose_network() override{
@@ -134,7 +134,7 @@ public:
 
 private:
   rafko_net::RafkoNet& m_network;
-  std::unique_ptr<rafko_net::Solution> m_networkSolution;
+  rafko_net::Solution& m_networkSolution;
   rafko_gym::RafkoWeightAdapter m_weightAdapter;
   std::unique_ptr<rafko_net::SolutionSolver> m_agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;
