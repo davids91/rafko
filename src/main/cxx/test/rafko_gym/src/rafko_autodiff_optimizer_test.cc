@@ -87,7 +87,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
   optimizer.build(objective);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   std::uint32_t iteration = 0u;
-  rafko_net::SolutionSolver::Factory reference_solver_factory(network, *settings);
+  rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   while(
     (
       std::abs(actual_value[1][0] - environment->get_label_sample(0u)[0])
@@ -169,7 +169,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
   std::uint32_t iteration = 0u;
   std::uint32_t avg_duration = 0.0;
   std::chrono::steady_clock::time_point start;
-  rafko_net::SolutionSolver::Factory reference_solver_factory(network, *settings);
+  rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   while(
     (
       std::abs(actual_value[1][0] - environment->get_label_sample(0u)[0])
@@ -278,7 +278,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
   std::uint32_t iteration = 0u;
   std::uint32_t avg_duration = 0.0;
   std::chrono::steady_clock::time_point start;
-  rafko_net::SolutionSolver::Factory reference_solver_factory(network, *settings);
+  rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   while(
     (
       std::abs(actual_value[1][0] - environment->get_label_sample(0u)[0])
@@ -436,7 +436,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     console_width = w.ws_col;
   #endif
-  rafko_net::SolutionSolver::Factory reference_solver_factory(network, *settings);
+  rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   std::cout << "Optimizing network:" << std::endl;
   std::cout << "Training Error; \t\tTesting Error; min; \t\t avg_d_w_abs; \t\t iteration; \t\t duration(ms); avg duration(ms)\t " << std::endl;
   while(!optimizer->stop_triggered()){

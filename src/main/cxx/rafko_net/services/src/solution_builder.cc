@@ -43,10 +43,16 @@
 
 namespace rafko_net{
 
-Solution* SolutionBuilder::build(const RafkoNet& net, bool optimize_to_gpu){
+void SolutionBuilder::build_and_swap(Solution* with, const RafkoNet& network, bool optimize_to_gpu){
+  RFASSERT(nullptr != with);
+  Solution* solution = build(network, nullptr, optimize_to_gpu);
+  solution->Swap(with);
+}
+
+Solution* SolutionBuilder::build(const RafkoNet& net, google::protobuf::Arena* arena_ptr, bool optimize_to_gpu){
   RFASSERT_SCOPE(SOLUTION_BUILD);
   NeuronRouter neuron_router(net);
-  Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(m_settings.get_arena_ptr());;
+  Solution* solution = google::protobuf::Arena::CreateMessage<Solution>(arena_ptr);
   std::uint32_t overall_partial_solution_count = 0u;
   double remaining_megabytes_in_row = 0;
   double current_neuron_megabyte_size;

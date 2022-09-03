@@ -179,7 +179,6 @@ TEST_CASE( "Builder to construct Fully Connected Net correctly through the inter
   google::protobuf::Arena arena;
   rafko_net::RafkoNet* network(test_net_builder_fully_connected(&arena));
   REQUIRE( nullptr != network);
-  arena.Reset();
 }
 
 TEST_CASE( "Testing builder for adding different features to different layers", "[build][features]" ){

@@ -176,10 +176,23 @@ RafkoNetBuilder& RafkoNetBuilder::set_neuron_spike_function(std::uint32_t layer_
   return *this;
 }
 
+void RafkoNetBuilder::build_dense_layers_and_swap(
+  RafkoNet* with, std::vector<std::uint32_t> layer_sizes,
+  std::vector<std::set<Transfer_functions>> transfer_function_filter
+){
+  RFASSERT(nullptr != with);
+  RafkoNet* built_network = dense_layers(nullptr, layer_sizes, transfer_function_filter);
+  built_network->Swap(with);
+}
 
-RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
+
+RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter){
   std::uint32_t previous_size = 0;
   std::uint32_t reach_back_max = 0;
+
+  if(transfer_function_filter.size() == layer_sizes.size()){
+    (void)allowed_transfer_functions_by_layer(transfer_function_filter);
+  }
 
   std::sort(m_argNeuronIndexInputFunctions.begin(),m_argNeuronIndexInputFunctions.end(),
   [](const std::tuple<std::uint32_t,std::uint32_t,Input_functions>& a, std::tuple<std::uint32_t,std::uint32_t,Input_functions>& b){
@@ -207,7 +220,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(std::vector<std::uint32_t> layer_sizes){
     )
   ){
     std::uint32_t layer_input_starts_at = 0;
-    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(m_settings.get_arena_ptr());
+    RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(arena_ptr);
     double expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);
 
     ret->set_input_data_size(m_argInputSize);

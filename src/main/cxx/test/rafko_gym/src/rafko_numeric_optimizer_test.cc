@@ -267,7 +267,7 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
   std::uint32_t iteration = 0u;
   std::uint32_t avg_duration = 0.0;
   std::chrono::steady_clock::time_point start;
-  rafko_net::SolutionSolver::Factory reference_solver_factory(network, *settings);
+  rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   while(
     (
       std::abs(actual_value[1][0] - environment->get_label_sample(0u)[0])

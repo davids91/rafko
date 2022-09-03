@@ -56,15 +56,9 @@ class RAFKO_FULL_EXPORT RafkoContext{
       else return {};
   }
 
-  static std::shared_ptr<rafko_mainframe::RafkoSettings> initialize_settings(std::shared_ptr<rafko_mainframe::RafkoSettings> candidate){
-    if(candidate)
-      return candidate;
-      else return std::make_shared<rafko_mainframe::RafkoSettings>();
-  }
-
 public:
   RafkoContext(std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {})
-  : m_settings(initialize_settings(settings))
+  : m_settings(settings?settings:std::make_shared<rafko_mainframe::RafkoSettings>())
   , m_arena(initialize_arena(*settings))
   {
     if(m_arena)m_settings->set_arena_ptr(m_arena.get());
