@@ -22,10 +22,10 @@
 #include <vector>
 
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_net/models/transfer_function.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_net/models/transfer_function.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_net_test {
 

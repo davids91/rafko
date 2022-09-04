@@ -23,17 +23,17 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_gym/models/rafko_cost.h"
-#include "rafko_utilities/models/data_ringbuffer.h"
-#include "rafko_utilities/models/const_vector_subrange.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_net/models/transfer_function.h"
-#include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/rafko_net_builder.h"
-#include "rafko_net/services/solution_builder.h"
-#include "rafko_net/services/solution_solver.h"
+#include "rafko_gym/models/rafko_cost.hpp"
+#include "rafko_utilities/models/data_ringbuffer.hpp"
+#include "rafko_utilities/models/const_vector_subrange.hpp"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_net/models/transfer_function.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_net/services/rafko_net_builder.hpp"
+#include "rafko_net/services/solution_builder.hpp"
+#include "rafko_net/services/solution_solver.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 int main( int argc, char* argv[] ) {
   int result = Catch::Session().run( argc, argv );
@@ -73,7 +73,7 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
 
   /* inputs go to neuron1 */
   partial_solution.add_index_synapse_number(1u); /* 1 synapse for indexes and 1 for weights */
-  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(0)); /* Input index synapse starts at the beginning of the data */
+  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(0)); /* Input index synapse starts at the beginning of the data */
   temp_input_interval.set_interval_size(number_of_inputs); /* Neuron 1 has an input index synapse of the inputs */
   *partial_solution.add_inside_indices() = temp_input_interval;
 
@@ -164,7 +164,7 @@ void manaual_fully_connected_network_result(
         if(static_cast<double>(input_synapse_index) < neuron.input_indices_size()){ /* Only get input from the net if it's explicitly defined */
           REQUIRE( 1 >= neuron.input_indices(input_synapse_index).reach_past_loops() ); /* Only the last loop and the current can be handled in this test yet */
           if(rafko_net::SynapseIterator<>::is_index_input(neuron.input_indices(input_synapse_index).starts()))
-            neuron_input_value = inputs[rafko_net::SynapseIterator<>::input_index_from_synapse_index(
+            neuron_input_value = inputs[rafko_net::SynapseIterator<>::array_index_from_external_index(
               neuron.input_indices(input_synapse_index).starts() - input_index_offset
             )];
           else if(1 == neuron.input_indices(input_synapse_index).reach_past_loops())
@@ -257,11 +257,11 @@ void check_if_the_same(const rafko_net::RafkoNet& net, const rafko_net::Solution
               );
             }else{ /* Inner Neuron takes its input from the partial solution input */
               REQUIRE( /* Input indices match */
-                partial_input_iterator[rafko_net::SynapseIterator<>::input_index_from_synapse_index(input_index)]
+                partial_input_iterator[rafko_net::SynapseIterator<>::array_index_from_external_index(input_index)]
                 == neuron_input_iterator[neuron_synapse_element_iterator]
               );
              REQUIRE( /* The time the neuron takes its input also match */
-                partial_input_iterator.synapse_under(rafko_net::SynapseIterator<>::input_index_from_synapse_index(input_index)).reach_past_loops()
+                partial_input_iterator.synapse_under(rafko_net::SynapseIterator<>::array_index_from_external_index(input_index)).reach_past_loops()
                 == neuron_input_iterator.synapse_under(neuron_synapse_element_iterator).reach_past_loops()
               );
             }
@@ -298,7 +298,7 @@ void print_training_sample(
   std::uint32_t sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
   const rafko_net::RafkoNet& net, const rafko_mainframe::RafkoSettings& settings
 ){
-  std::unique_ptr<rafko_net::Solution> solution = rafko_net::SolutionBuilder(settings).build(net);
+  rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(net);
   std::unique_ptr<rafko_net::SolutionSolver> sample_solver(
     rafko_net::SolutionSolver::Builder(*solution, settings).build()
   );
@@ -327,7 +327,7 @@ void print_training_sample(
   std::cout << std::endl;
   std::cout << "--------------expected:" << std::endl;
   std::cout.precision(2);
-  rafko_utilities::DataRingbuffer output_data_copy(0,0);
+  rafko_utilities::DataRingbuffer<> output_data_copy(0,0);
   for(std::uint32_t j = 0;j < data_set.get_sequence_size();++j){
     std::cout << "\t\t["<< data_set.get_label_sample(raw_label_index)[0] <<"]";
     rafko_utilities::ConstVectorSubrange output_data = sample_solver->solve(
@@ -359,6 +359,10 @@ void print_training_sample(
     std::cout << "[" << net.weight_table(i) << "]";
   }
   std::cout << std::endl;
+  
+  if(nullptr == settings.get_arena_ptr()){
+    delete solution;
+  }
 }
 
 std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> create_addition_dataset(std::uint32_t number_of_samples){
@@ -445,6 +449,40 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features(std::uint32_t inp
   rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
     .input_size(input_size)
     .expected_input_range((5.0));
+
+  std::uint8_t layer_of_feature_index = 0;
+  std::uint32_t layer_start_index = 0;
+  std::uint8_t feature_index;
+  for(feature_index = 0u; feature_index < num_of_features; feature_index++){
+    if(layer_of_feature_index >= net_structure.size())break;
+    std::uint8_t layer_diff = 1u + ((rand()%(net_structure.size() - layer_of_feature_index)) / 2);
+    for(std::uint8_t i = 0; i < layer_diff; ++i){
+      layer_start_index += net_structure[layer_of_feature_index + i];
+    }
+    layer_of_feature_index += layer_diff;
+    builder.add_feature_to_layer(layer_of_feature_index, rafko_net::neuron_group_feature_softmax);
+  }
+
+  return builder.dense_layers(net_structure);
+}
+
+rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings){
+  std::vector<std::uint32_t> net_structure;
+  while((rand()%10 < 9)||(4 > net_structure.size()))
+    net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
+
+  std::uint8_t num_of_features = rand()%(net_structure.size()/2) + 1u;
+  rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
+    .input_size(input_size)
+    .expected_input_range((5.0));
+
+  for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
+    if(0 == (rand()%2)) /* Add Neuron recurrence by chance */
+      for(std::uint32_t layer_neuron_index = 0u; layer_neuron_index < net_structure[layer_index]; ++layer_neuron_index)
+        if(0 == (rand()%2)) builder.add_neuron_recurrence(layer_index, layer_neuron_index, rand()%5);
+    if(0 == (rand()%2)) /* Add boltzmann knot feature by chance */
+      builder.add_feature_to_layer(layer_index, rafko_net::neuron_group_feature_boltzmann_knot);
+  }
 
   std::uint8_t layer_of_feature_index = 0;
   std::uint32_t layer_start_index = 0;

@@ -42,7 +42,6 @@ enum Input_functions{
   input_function_unknown = 0;
   input_function_add = 1;
   input_function_multiply = 2;
-  input_function_analog_xor = 3;
   input_function_end = 512;
 }
 
@@ -56,18 +55,7 @@ enum Spike_functions{
   spike_function_memory = 2; /* default; 1.0: previous neuron value only, 0.0: current neuron value only */
   spike_function_p = 3; /* from pid controller `p` part: adds the weighted delta to the current value (between the previous and current values) */
   spike_function_amplify_value = 4; /* multiple new value by the weight value */
-  spike_function_end= 512;
-}
-
-/** @brief      Network basically describes the connections a recurrent network has
- *              with the past runs. This enumeration is for a utility which is for
- *              testing purposes only. Recurrences described here affect
- *              only the rpc @build_network in the service @RafkoDeepLearning
- */
-enum Network_recurrence{
-  network_recurrence_unknown = 0;
-  network_recurrence_to_self = 1;
-  network_recurrence_to_layer = 2;
+  spike_function_end = 512;
 }
 
 /** @brief      Different features a group of Neurons(may even the whole network) might have.
@@ -87,7 +75,8 @@ enum Neuron_group_features{
   neuron_group_feature_disentanglement = 225;
   neuron_group_feature_l1_regularization = 275;
   neuron_group_feature_l2_regularization = 276;
-  /* Currently unused: 300 - 399 */
+  /* Structural features: 300 - 399 */
+  neuron_group_feature_boltzmann_knot = 350;
   neuron_group_feature_end = 400;
 } /*!Note: I hope I reserved room for enough features... */
 
@@ -152,14 +141,18 @@ message FeatureGroup{
   repeated IndexSynapseInterval relevant_neurons = 10;
 }
 
-/** @brief      A sparse net implementation containing the
- *              Neurons and optimization cache files
+/** @brief      A sparse net implementation containing the Neurons and weights
+ *              Please do not: Add Neuron or dependent Neuron as present input for itself.
+ *              (It is OK to add as "past" inputs)
+ *
  */
 message RafkoNet{
   uint32 input_data_size = 10; /* Number of inputs (floating point numbers) accepted by the Neural network */
   uint32 output_neuron_number = 11; /* Number of outputs the Neural network has */
-  repeated FeatureGroup neuron_group_features = 12; /* Neurons grouped together for features. The same features may be repeated with different neuron indices */
+  uint32 memory_size = 12;
 
-  repeated Neuron neuron_array = 20; /* Array of Neurons the network has */
-  repeated double weight_table = 21; /* Stores individual weights used by the Neurons */
+  repeated FeatureGroup neuron_group_features = 20; /* Neurons grouped together for features. The same features may be repeated with different neuron indices */
+
+  repeated Neuron neuron_array = 30; /* Array of Neurons the network has */
+  repeated double weight_table = 31; /* Stores individual weights used by the Neurons */
 }

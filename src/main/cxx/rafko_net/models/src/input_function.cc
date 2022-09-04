@@ -15,13 +15,13 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/models/input_function.h"
+#include "rafko_net/models/input_function.hpp"
 
 #include <stdexcept>
 
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 #if(RAFKO_USES_OPENCL)
-#include "rafko_utilities/services/rafko_string_utils.h"
+#include "rafko_utilities/services/rafko_string_utils.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 namespace rafko_net {
@@ -41,21 +41,27 @@ double InputFunction::collect(Input_functions function, double a, double b){
   switch(function){
     case input_function_add: return a + b;
     case input_function_multiply: return a * b;
-    case input_function_analog_xor: return std::abs(a - b) * (a + b);
     /*!Note: This solution for a number sequence of indefinite size might leave some mathematicians very furious, and rightly so.. '^^ */
     default: throw std::runtime_error("Unidentified Input function called!");
   };
 }
 
+double InputFunction::get_derivative(Input_functions function, double a, double a_dw, double b, double b_dw){
+  switch(function){
+    case input_function_add: return a_dw + b_dw;
+    case input_function_multiply: return (a * b_dw) + (a_dw * b);
+    default: throw std::runtime_error("Unidentified Input function called!");
+  };
+}
+
+
 #if(RAFKO_USES_OPENCL)
-std::string InputFunction::get_kernel_function_for(std::string operation_index, std::string a, std::string b){
+std::string InputFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b){
   std::string code = R"(
     switch(==op==){
-      case neuron_input_function_add: ==a== = (==a== + ==b==); break;
-      case neuron_input_function_multiply: ==a== = (==a== * ==b==); break;
-      case neuron_input_function_analog_xor:
-        ==a== = fabs(==a== - ==b==) * (==a== + ==b==);
-        break;
+      case neuron_input_function_add: ==a== = ((==a==) + (==b==)); break;
+      case neuron_input_function_multiply: ==a== = ((==a==) * (==b==)); break;
+      default: break;
     }
   )";
   code = rafko_utilities::replace_all_in_string(code, std::regex("==a=="), a);
@@ -63,6 +69,15 @@ std::string InputFunction::get_kernel_function_for(std::string operation_index, 
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
   return code;
 }
+
+std::string InputFunction::derivative_kernel_for(Input_functions function, std::string a, std::string a_dw, std::string b, std::string b_dw){
+  switch(function){
+    case input_function_add: return "((" + a_dw + ")+(" + b_dw + "))";
+    case input_function_multiply: return "((" + a + ")*(" + b_dw + ")) + ((" + a_dw + ")*(" + b + "))";
+    default: throw std::runtime_error("Unidentified Input function called!");
+  };
+}
+
 #endif/*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_net */

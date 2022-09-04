@@ -17,9 +17,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "rafko_mainframe/models/rafko_settings.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_mainframe_test {
 

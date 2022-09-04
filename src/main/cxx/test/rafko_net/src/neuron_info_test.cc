@@ -18,10 +18,10 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
-#include "rafko_net/models/neuron_info.h"
-#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_net/models/neuron_info.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_net_test {
 

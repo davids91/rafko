@@ -64,7 +64,8 @@ message PartialSolution{
    * - Negative intervals are mapped to the Partial solution input
    * - Reachback value shall be always 0 inside the partial solution for internal inputs
    * - Since solving the detail is incremental, the start of each Neuron's input synapse index
-   *   is determined at runtime, so it doesn't need to be stored    */
+   *   is determined at runtime, so it doesn't need to be stored
+   */
   repeated InputSynapseInterval inside_indices = 20;
 
   /**

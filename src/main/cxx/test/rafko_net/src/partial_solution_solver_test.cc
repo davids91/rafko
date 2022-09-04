@@ -21,13 +21,13 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_net/models/transfer_function.h"
-#include "rafko_utilities/models/data_ringbuffer.h"
-#include "rafko_net/services/partial_solution_solver.h"
-#include "rafko_net/services/synapse_iterator.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_net/models/transfer_function.hpp"
+#include "rafko_utilities/models/data_ringbuffer.hpp"
+#include "rafko_net/services/partial_solution_solver.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_net_test {
 
@@ -45,7 +45,9 @@ namespace rafko_net_test {
 
 TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-solution][manual]" ){
   rafko_mainframe::RafkoSettings settings;
-  rafko_utilities::DataRingbuffer neuron_data(1,2);
+  rafko_utilities::DataRingbuffer<> neuron_data(1u, [](std::vector<double>& element){
+    element.resize(2u);
+  });
   rafko_net::PartialSolution partial_solution;
   std::vector<std::uint32_t> helper_vector_uint;
   std::vector<double> expected_neuron_output;
@@ -56,7 +58,7 @@ TEST_CASE( "Solving an artificial partial_solution detail", "[solve][partial-sol
   rafko_test::manual_2_neuron_partial_solution(partial_solution, network_inputs.size());
 
   /* Add relevant Partial solution input (the input of the first @Neuron) */
-  temp_synapse_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(0));
+  temp_synapse_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(0));
   temp_synapse_interval.set_interval_size(network_inputs.size());
   *partial_solution.add_input_data() = temp_synapse_interval;
 
@@ -107,7 +109,9 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
   std::vector<double> network_inputs = {(1.9),(2.8),(3.7),(4.6),(5.5),(6.4),(7.3),(8.2),(9.1),(10.0)};
   rafko_net::IndexSynapseInterval temp_index_interval;
   rafko_net::InputSynapseInterval temp_input_interval;
-  rafko_utilities::DataRingbuffer neuron_data(1, network_inputs.size());
+  rafko_utilities::DataRingbuffer<> neuron_data(1u,[&network_inputs](std::vector<double>& element){
+    element.resize(network_inputs.size());
+  });
 
   temp_index_interval.set_starts(0);
   temp_index_interval.set_interval_size(network_inputs.size());
@@ -120,7 +124,7 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
     partial_solution.add_neuron_spike_functions(rafko_net::spike_function_memory);
 
     partial_solution.add_index_synapse_number(1); /* 1 synapse for indexes and 1 for weights */
-    temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(i));
+    temp_input_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(i));
     temp_input_interval.set_interval_size(1u); /* Input index synapse starts at the beginning of the data and goes on for an interval of 1 */
     *partial_solution.add_inside_indices() = temp_input_interval;
 
@@ -134,22 +138,22 @@ TEST_CASE("Test Partial solution input collection","[solve][partial-solution][in
    * Add the partial solution inputs
    */
   /* First 3 elements */
-  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(0));
+  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(0));
   temp_input_interval.set_interval_size(3);
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Elements from 3 to 5 */
-  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(3));
+  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(3));
   temp_input_interval.set_interval_size(3);
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Elements from 6 to 8 */
-  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(6));
+  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(6));
   temp_input_interval.set_interval_size(2);
   *partial_solution.add_input_data() = temp_input_interval;
 
   /* Elements from 8 to 9 ( to the end ) */
-  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::synapse_index_from_input_index(8));
+  temp_input_interval.set_starts(rafko_net::SynapseIterator<>::external_index_from_array_index(8));
   temp_input_interval.set_interval_size(2);
   *partial_solution.add_input_data() = temp_input_interval;
 

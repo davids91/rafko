@@ -20,18 +20,18 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include "rafko_utilities/models/data_ringbuffer.h"
-#include "rafko_utilities/services/thread_group.h"
+#include "rafko_utilities/models/data_ringbuffer.hpp"
+#include "rafko_utilities/services/thread_group.hpp"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_net/services/rafko_network_feature.h"
-#include "rafko_net/services/synapse_iterator.h"
-#include "rafko_net/services/rafko_net_builder.h"
-#include "rafko_net/services/solution_builder.h"
-#include "rafko_net/services/solution_solver.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_net/services/rafko_network_feature.hpp"
+#include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_net/services/rafko_net_builder.hpp"
+#include "rafko_net/services/solution_builder.hpp"
+#include "rafko_net/services/solution_solver.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_net_test {
 
@@ -170,8 +170,6 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
   CHECK( 1 == net->neuron_group_features(0).relevant_neurons_size() );
   CHECK( 60 == net->neuron_group_features(1).relevant_neurons(0).starts() );
   CHECK( 30 == net->neuron_group_features(1).relevant_neurons(0).interval_size() );
-
-  net.reset();
 }
 
 TEST_CASE("Checking if the network builder is correctly placing the softmax feature into the built network", "[features][build]"){
@@ -256,7 +254,7 @@ TEST_CASE("Checking if the network solver is correctly producing the softmax fea
     solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(*solution, settings).build());
 
     (void)solver->solve({(0),(6),(5)});
-    rafko_utilities::DataRingbuffer neuron_data = solver->get_memory();
+    rafko_utilities::DataRingbuffer<> neuron_data = solver->get_memory();
     for(const rafko_net::FeatureGroup& feature : net->neuron_group_features()){ /* check if all the features point to the correct neuron indices */
       double sum = (0.0);
       rafko_net::SynapseIterator<>::iterate(feature.relevant_neurons(),[&sum, neuron_data](std::int32_t neuron_index){

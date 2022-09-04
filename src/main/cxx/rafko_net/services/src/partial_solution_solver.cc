@@ -15,21 +15,22 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_net/services/partial_solution_solver.h"
+#include "rafko_net/services/partial_solution_solver.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 #include <math.h>
 
-#include "rafko_net/models/input_function.h"
-#include "rafko_net/models/transfer_function.h"
-#include "rafko_net/models/spike_function.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
+#include "rafko_net/models/input_function.hpp"
+#include "rafko_net/models/transfer_function.hpp"
+#include "rafko_net/models/spike_function.hpp"
 
 namespace rafko_net {
 
-rafko_utilities::DataPool<double> PartialSolutionSolver::common_data_pool;
+rafko_utilities::DataPool<double> PartialSolutionSolver::m_commonDataPool;
 
-void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer& output_neuron_data,  std::vector<double>& temp_data) const{
+void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer<>& output_neuron_data,  std::vector<double>& temp_data) const{
   std::uint32_t weight_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   std::uint32_t input_synapse_iterator_start = 0; /* Which is the first synapse belonging to the neuron under @neuron_iterator */
   std::uint32_t input_synapse_index = 0; /* Which synapse is being processed inside the Neuron */
@@ -40,8 +41,8 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
   input_iterator.skim([&](InputSynapseInterval input_synapse){
     if(SynapseIterator<>::is_index_input(input_synapse.starts())){ /* If @PartialSolution input is from the network input */
       std::copy(
-        input_data.begin() + SynapseIterator<>::input_index_from_synapse_index(input_synapse.starts()),
-        input_data.begin() + SynapseIterator<>::input_index_from_synapse_index(input_synapse.starts()) + input_synapse.interval_size(),
+        input_data.begin() + SynapseIterator<>::array_index_from_external_index(input_synapse.starts()),
+        input_data.begin() + SynapseIterator<>::array_index_from_external_index(input_synapse.starts()) + input_synapse.interval_size(),
         temp_data.begin() + input_index_offset
       );
     }else if(static_cast<std::int32_t>(output_neuron_data.buffer_size()) > input_synapse.starts()){  /* If @PartialSolution input is from the previous row */
@@ -70,7 +71,7 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
         if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
           input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
           if(SynapseIterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
-            input_index = SynapseIterator<>::input_index_from_synapse_index(input_index - input_index_offset);
+            input_index = SynapseIterator<>::array_index_from_external_index(input_index - input_index_offset);
             new_neuron_input = temp_data[input_index];
           }else{ /* Neuron gets its input internaly */
             input_index = detail.output_data().starts() + input_index + input_index_offset;
@@ -83,7 +84,6 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
           }
         }else /* Any additional weight shall count as biases, so the input value is set to 1.0 */
           new_neuron_input = (1.0);
-
         /* The weighted input shall be added to the calculated value */
         if(true == first_input_in_neuron){
           new_neuron_data = new_neuron_input * detail.weight_table(weight_index);

@@ -19,9 +19,9 @@
 
 #include <fstream>
 
-#include "rafko_mainframe/services/rafko_assertion_logger.h"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_mainframe_test {
 

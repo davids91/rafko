@@ -20,11 +20,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include "rafko_mainframe/models/rafko_settings.h"
-#include "rafko_gym/services/cost_function.h"
-#include "rafko_gym/services/cost_function_binary_cross_entropy.h"
+#include "rafko_mainframe/models/rafko_settings.hpp"
+#include "rafko_gym/services/cost_function.hpp"
+#include "rafko_gym/services/cost_function_binary_cross_entropy.hpp"
 
-#include "test/test_utility.h"
+#include "test/test_utility.hpp"
 
 namespace rafko_net_test {
 

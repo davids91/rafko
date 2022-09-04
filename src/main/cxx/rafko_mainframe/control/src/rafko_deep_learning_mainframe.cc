@@ -1,9 +1,7 @@
 
-#include "rafko_global.h"
+#include "rafko_global.hpp"
 
-int main(int argc, char *argv[]){
-  parameter_not_used(argc);
-  parameter_not_used(argv);
-
+int main(){
+  /* ___SOON___ */
   return 0;
 }

@@ -7,7 +7,7 @@ providing services for:
  - Neural network creation:
   - For testing the library throughly a simple Neural Network builder is provided, 
     which provides interfaces to build Neural networks from raw Neuron arrays, and a
-    builder to produce Fully connected feedforward layers, with the possibility of a recurrent netwrok. Unfortunately LSTM and GRU and such is not supported due to the structure of the Network.
+    builder to produce Fully connected feedforward layers, with the possibility of a recurrent network. Unfortunately LSTM and GRU and such is not supported due to the structure of the Network.
  - Neural network solution
   - From a Neural network definition (@RafkoNet) a matrix of partial solutions is generated, which is composed into a Solution object, which is solvable effectively for CPUs and GPUS as well. GPU support is planned through OpenCL, but currently it's not in focus.
  - Neural network optimization

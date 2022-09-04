@@ -58,6 +58,20 @@ enum Training_strategy{
   training_strategy_end = 1048576;
 }
 
+enum Autodiff_operations{
+  ad_operation_unknown = 0;
+  ad_operation_objective_d = 1;
+  ad_operation_neuron_spike_d = 2;
+  ad_operation_neuron_transfer_d = 3;
+  ad_operation_neuron_input_d = 4;
+  ad_operation_neuron_bias_d = 5;
+  ad_operation_network_input_d = 6;
+
+  /* Feature operations are indirectly modifying derivatives */
+  ad_operation_network_weight_regularization_feature = 20;
+  ad_operation_network_feature = 21;
+}
+
 /**
  * @brief      Service hyperparameters describe the context in which deep learning services
  *             operate. It contains all the neccessary set of variables to function in the
