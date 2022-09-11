@@ -42,7 +42,7 @@ namespace rafko_gym{
 /**
  * @brief      Implementation of an objective based on a @CostFunction
  */
-class RAFKO_FULL_EXPORT RafkoCost : public RafkoObjective
+class RAFKO_EXPORT RafkoCost : public RafkoObjective
 {
 public:
   RafkoCost(rafko_mainframe::RafkoSettings& settings, std::shared_ptr<rafko_gym::CostFunction> cost_function)

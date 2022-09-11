@@ -251,7 +251,7 @@ TEST_CASE("Checking if the network solver is correctly producing the softmax fea
   for(std::uint32_t variant = 0; variant < 10u; ++variant){
     net = std::unique_ptr<rafko_net::RafkoNet>(rafko_test::generate_random_net_with_softmax_features(3, settings));
     solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(settings).build(*net));
-    solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(*solution, settings).build());
+    solver = std::unique_ptr<rafko_net::SolutionSolver>(rafko_net::SolutionSolver::Builder(solution.get(), settings).build());
 
     (void)solver->solve({(0),(6),(5)});
     rafko_utilities::DataRingbuffer<> neuron_data = solver->get_memory();

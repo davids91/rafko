@@ -23,7 +23,7 @@
 
 namespace rafko_net{
 
-class RAFKO_FULL_EXPORT NeuronInfo{
+class RAFKO_EXPORT NeuronInfo{
 public:
 
   /**

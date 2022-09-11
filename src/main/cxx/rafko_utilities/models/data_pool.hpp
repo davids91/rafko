@@ -32,7 +32,7 @@ namespace rafko_utilities{
  *              data acess. The container is thread-safe.
  */
 template<class T = double>
-class RAFKO_FULL_EXPORT DataPool{
+class RAFKO_EXPORT DataPool{
 public:
   DataPool(std::uint32_t pool_size, std::uint32_t expected_buffer_size)
   : m_bufferPool(pool_size, std::vector<T>())

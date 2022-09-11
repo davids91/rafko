@@ -32,7 +32,7 @@ namespace rafko_mainframe{
  *             as if they were concatenated. Each buffer handles their own internal
  *             structure. Shape of the buffer is understood to be in elements, not bytes.
  */
-class RAFKO_FULL_EXPORT RafkoNBufShape : public std::vector<std::size_t>{
+class RAFKO_EXPORT RafkoNBufShape : public std::vector<std::size_t>{
 public:
   RafkoNBufShape(std::initializer_list<std::size_t> list){
     for(const std::size_t& s : list)push_back(s);

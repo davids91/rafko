@@ -58,7 +58,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4)
   );
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
     .add_neuron_recurrence(1u,0u,1u)
     .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
@@ -139,7 +139,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
   );
 
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
     .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
     .set_neuron_spike_function(1u, 0u, rafko_net::spike_function_p)
@@ -225,7 +225,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
   );
 
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
     // .add_feature_to_layer(1u, rafko_net::neuron_group_feature_softmax)
     // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l1_regularization)
@@ -342,7 +342,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   );
 
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
     .add_feature_to_layer(1u, rafko_net::neuron_group_feature_boltzmann_knot)
     // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l1_regularization)

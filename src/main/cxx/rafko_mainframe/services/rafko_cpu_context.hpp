@@ -34,7 +34,7 @@
 
 namespace rafko_mainframe {
 
-class RAFKO_FULL_EXPORT RafkoCPUContext : public RafkoContext{
+class RAFKO_EXPORT RafkoCPUContext : public RafkoContext{
 public:
 
   RafkoCPUContext(
@@ -134,7 +134,7 @@ public:
 
 private:
   rafko_net::RafkoNet& m_network;
-  rafko_net::Solution& m_networkSolution;
+  rafko_net::Solution* m_networkSolution;
   rafko_gym::RafkoWeightAdapter m_weightAdapter;
   std::unique_ptr<rafko_net::SolutionSolver> m_agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;

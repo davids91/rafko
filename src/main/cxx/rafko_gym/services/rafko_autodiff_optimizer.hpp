@@ -46,7 +46,7 @@ namespace rafko_gym{
 /**
  * @brief A class to calculate the values and derivatives of a Network, and update its weights based on it
  */
-class RAFKO_FULL_EXPORT RafkoAutodiffOptimizer : public rafko_mainframe::RafkoAutonomousEntity{
+class RAFKO_EXPORT RafkoAutodiffOptimizer : public rafko_mainframe::RafkoAutonomousEntity{
   using BackpropDataBufferRange = rafko_utilities::ConstVectorSubrange<std::vector<std::vector<double>>::const_iterator>;
 public:
   RafkoAutodiffOptimizer(
@@ -204,6 +204,13 @@ public:
    */
   constexpr double get_last_testing_error() const{
       return m_lastTestingError;
+  }
+
+  /**
+   * @brief     Resets the iteration count to zero
+   */
+  void reset_epoch(){
+    m_iteration = 1;
   }
 
 protected:

@@ -45,7 +45,7 @@ set(GYM_HEADER_SERVICES
   services/rafko_weight_updater.hpp
   services/rafko_autodiff_optimizer.hpp
   services/rafko_backpropagation_operation.hpp
-  services/rafko_backrpop_solution_feature_operation.hpp
+  services/rafko_backprop_solution_feature_operation.hpp
   services/rafko_backprop_weight_reg_operation.hpp
   services/rafko_backprop_network_input_operation.hpp
   services/rafko_backprop_neuron_bias_operation.hpp

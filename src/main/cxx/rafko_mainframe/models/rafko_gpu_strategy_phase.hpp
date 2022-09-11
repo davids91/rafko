@@ -32,7 +32,7 @@ namespace rafko_mainframe{
 /**
  * @brief      A phase of the Deep learning GPU pipeline strategy describing
  */
-class RAFKO_FULL_EXPORT RafkoGPUStrategyPhase{
+class RAFKO_EXPORT RafkoGPUStrategyPhase{
 public:
 
   /**

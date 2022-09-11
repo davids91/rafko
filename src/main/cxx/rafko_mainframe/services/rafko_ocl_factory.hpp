@@ -37,7 +37,7 @@
 
 namespace rafko_mainframe {
 
-class RAFKO_FULL_EXPORT RafkoOCLFactory{
+class RAFKO_EXPORT RafkoOCLFactory{
 public:
   RafkoOCLFactory(){
     cl::Platform::get(&m_platforms);

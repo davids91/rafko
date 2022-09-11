@@ -57,7 +57,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
-  rafko_net::Solution& solution = *rafko_net::SolutionBuilder(*settings).build(network);
+  rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
   std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(solution, *settings).build());
 
   double error_sum = (0.0);
@@ -104,7 +104,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
-  rafko_net::Solution& solution = *rafko_net::SolutionBuilder(*settings).build(network);
+  rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
   std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(solution, *settings).build());
 
   double error_sum = (0.0);
@@ -157,7 +157,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
 
   double environment_error = context.stochastic_evaluation(true, seed);
 
-  rafko_net::Solution& solution = *rafko_net::SolutionBuilder(*settings).build(network);
+  rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
   std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(solution, *settings).build());
 
   srand(seed);
@@ -206,7 +206,7 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
     .set_minibatch_size(10)
   );
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .allowed_transfer_functions_by_layer(
       {
         {rafko_net::transfer_function_identity},
@@ -241,7 +241,7 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
     .set_minibatch_size(10)
   );
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .allowed_transfer_functions_by_layer(
       {
         {rafko_net::transfer_function_identity},

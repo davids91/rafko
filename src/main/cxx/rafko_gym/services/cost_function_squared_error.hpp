@@ -27,7 +27,7 @@ namespace rafko_gym{
 /**
  * @brief      Error function handling and utilities for Squared Error: C0 = ((y-y')^2)/2
  */
-class RAFKO_FULL_EXPORT CostFunctionSquaredError : public CostFunction{
+class RAFKO_EXPORT CostFunctionSquaredError : public CostFunction{
 public:
   CostFunctionSquaredError(const rafko_mainframe::RafkoSettings& settings)
   : CostFunction(cost_function_squared_error, settings)

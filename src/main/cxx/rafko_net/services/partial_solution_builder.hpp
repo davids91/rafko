@@ -34,7 +34,7 @@ namespace rafko_net{
  * @brief      Front-end to create partial solution objects by adding Neurons into them.
  *             Weights of a Neuron consists of: {memory_ratio, w1..wn, bias1..biasn}
  */
-class RAFKO_FULL_EXPORT PartialSolutionBuilder{
+class RAFKO_EXPORT PartialSolutionBuilder{
 public:
   PartialSolutionBuilder(PartialSolution& partial)
   : m_partial(partial)

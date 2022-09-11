@@ -13,6 +13,7 @@ set(UTIL_INTERFACE_MODELS
   models/data_pool.hpp
   models/data_ringbuffer.hpp
   models/const_vector_subrange.hpp
+  models/subscript_proxy.hpp
   ${RAFKO_GPU_LIBRARY_HEADERS}
 )
 set(UTIL_INTERFACE_SERVICES

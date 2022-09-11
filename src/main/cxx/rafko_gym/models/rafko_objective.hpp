@@ -32,7 +32,7 @@ namespace rafko_gym{
 /**
  * @brief      This class
  */
-class RAFKO_FULL_EXPORT RafkoObjective
+class RAFKO_EXPORT RafkoObjective
 #if(RAFKO_USES_OPENCL)
 : public rafko_mainframe::RafkoGPUStrategyPhase
 #endif/*(RAFKO_USES_OPENCL)*/

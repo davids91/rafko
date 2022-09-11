@@ -38,7 +38,7 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackpropTransferFnOperation
+class RAFKO_EXPORT RafkoBackpropTransferFnOperation
 : public RafkoBackpropagationOperation
 {
 public:

@@ -32,8 +32,8 @@ RafkoGPUContext::RafkoGPUContext(
   std::shared_ptr<rafko_gym::RafkoObjective> objective
 ):RafkoContext(settings)
 , m_network(neural_network)
-, m_networkSolution(*rafko_net::SolutionBuilder(*m_settings).build(m_network))
-, m_weightAdapter(m_network, m_networkSolution, *m_settings)
+, m_networkSolution(rafko_net::SolutionBuilder(*m_settings).build(m_network))
+, m_weightAdapter(m_network, *m_networkSolution, *m_settings)
 , m_agent(rafko_net::SolutionSolver::Builder(m_networkSolution, *m_settings).build())
 , m_environment(std::make_unique<RafkoDummyEnvironment>(
   m_network.input_data_size(), m_network.output_neuron_number())
@@ -71,11 +71,11 @@ void RafkoGPUContext::upload_weight_to_device(std::uint32_t weight_index){
   RFASSERT_LOG("Starting to upload a single weight to device..");
   for(const std::pair<std::uint32_t,std::uint32_t>& index_pair : relevant_partial_weights){
     while(partial_index < std::get<0>(index_pair)){
-      weight_table_offset += m_networkSolution.partial_solutions(partial_index).weight_table_size();
+      weight_table_offset += m_networkSolution->partial_solutions(partial_index).weight_table_size();
       ++partial_index;
     }
     std::uint32_t weight_index_in_partial = std::get<1>(index_pair);
-    double weight_value = m_networkSolution.partial_solutions(partial_index).weight_table(weight_index_in_partial);
+    double weight_value = m_networkSolution->partial_solutions(partial_index).weight_table(weight_index_in_partial);
     RFASSERT_LOG("Weight index in partial[{}]: {}", partial_index, weight_index_in_partial);
 
     /* Update weight at weight_table_offset + std::get<1>(index_pair) */
@@ -123,7 +123,7 @@ void RafkoGPUContext::upload_weight_table_to_device(){
   RFASSERT_LOG("Uploading weight table to device..");
   std::vector<double> device_weight_table;
   std::uint32_t overall_number_of_weights = 0u;
-  for(const rafko_net::PartialSolution& partial : m_networkSolution.partial_solutions()){
+  for(const rafko_net::PartialSolution& partial : m_networkSolution->partial_solutions()){
     device_weight_table.insert(
       device_weight_table.end(),
       partial.weight_table().begin(), partial.weight_table().end()

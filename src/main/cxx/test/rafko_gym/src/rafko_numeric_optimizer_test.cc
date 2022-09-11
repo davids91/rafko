@@ -72,7 +72,7 @@ TEST_CASE("Stress-testing big input takein", "[bigpic]"){
       std::uint32_t input_size = std::pow(2, ( i))/*w*/* std::pow(2, ( i))/*h*/* 3/*rgb*/* 3/*pictures*/;
       std::vector<double> input(input_size, 5.0);
       rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-        .input_size(input_size).expected_input_range((1.0))
+        .input_size(input_size).expected_input_range(1.0)
         .allowed_transfer_functions_by_layer({
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_selu},
@@ -118,7 +118,7 @@ TEST_CASE("Testing aproximization fragment handling","[numeric_optimization][fra
     * The builder automatically uses the arena pointer provided in the settings.
     */
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .allowed_transfer_functions_by_layer({{rafko_net::transfer_function_selu}})
     .dense_layers({1});
 
@@ -194,7 +194,7 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
   );
 
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
     // .add_feature_to_layer(1u, rafko_net::neuron_group_feature_softmax)
     // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l1_regularization)
@@ -322,7 +322,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
 
   /* Create network */
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .add_feature_to_layer(1, rafko_net::neuron_group_feature_boltzmann_knot)
     // .add_feature_to_layer(0, rafko_net::neuron_group_feature_l1_regularization)
     // .add_feature_to_layer(0, rafko_net::neuron_group_feature_l2_regularization)

@@ -213,13 +213,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std:
     + std::string(" vs ") + std::to_string(m_argAllowedTransferFunctionsByLayer.size())
   );
 
-  if( /* Required arguments are set */
-    (m_isInputSizeSet && m_isExpectedInputRangeSet)
-    &&(
-      (!m_isOutputNeuronNumberSet) /* Output size is either not set */
-      ||(m_argOutputNeuronNumber == layer_sizes.back()) /* Or compliant to the Dense layer */
-    )
-  ){
+  if((m_isInputSizeSet)&&( (!m_isOutputNeuronNumberSet)||(m_argOutputNeuronNumber == layer_sizes.back()) ) ){
     std::uint32_t layer_input_starts_at = 0;
     RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(arena_ptr);
     double expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);

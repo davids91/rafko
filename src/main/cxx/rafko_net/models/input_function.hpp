@@ -29,7 +29,7 @@
 
 namespace rafko_net{
 
-class RAFKO_FULL_EXPORT InputFunction{
+class RAFKO_EXPORT InputFunction{
 public:
   static inline const std::set<Input_functions> all_input_functions = {
     input_function_add, input_function_multiply

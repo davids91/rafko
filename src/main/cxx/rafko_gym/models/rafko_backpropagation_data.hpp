@@ -32,7 +32,7 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackpropagationData{
+class RAFKO_EXPORT RafkoBackpropagationData{
 
   /* For every run the network remembers the calcuated result is stored in a type like this */
   using NetworkValueBuffer = rafko_utilities::DataRingbuffer<>;

@@ -35,7 +35,7 @@ namespace rafko_gym {
 /**
  * @brief      Base implementation for updating weights for netowrks based on weight gradients
  */
-class RAFKO_FULL_EXPORT RafkoWeightUpdater{
+class RAFKO_EXPORT RafkoWeightUpdater{
 public:
   RafkoWeightUpdater(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings, std::uint32_t required_iterations_for_step = 1u)
   : m_network(rafko_net)

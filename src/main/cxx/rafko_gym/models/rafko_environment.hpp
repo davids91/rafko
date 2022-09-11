@@ -26,13 +26,13 @@
 
 #include "rafko_gym/models/rafko_agent.hpp"
 
-namespace RAFKO_FULL_EXPORT rafko_gym {
+namespace RAFKO_EXPORT rafko_gym {
 
 /**
  * @brief      A class representing an environment, producing fitness/error value. Error values are negative, while fittness
  *             values are positive
  */
-class RAFKO_FULL_EXPORT RafkoEnvironment{
+class RAFKO_EXPORT RafkoEnvironment{
 public:
 
   /**

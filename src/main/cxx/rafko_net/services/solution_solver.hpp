@@ -41,7 +41,7 @@ namespace rafko_net{
  * @brief      This class Processes a @Solution given in its constructor and handles
  *             the distribution of the needed resources for it.
  */
-class RAFKO_FULL_EXPORT SolutionSolver : public rafko_gym::RafkoAgent{
+class RAFKO_EXPORT SolutionSolver : public rafko_gym::RafkoAgent{
 public:
   SolutionSolver(const SolutionSolver& other) = delete; /* Copy constructor */
   SolutionSolver(SolutionSolver&& other) = delete; /* Move constructor */
@@ -63,10 +63,7 @@ public:
     const std::vector<double>& input, rafko_utilities::DataRingbuffer<>& output,
     const std::vector<std::reference_wrapper<std::vector<double>>>& tmp_data_pool,
     std::uint32_t used_data_pool_start = 0, std::uint32_t thread_index = 0
-  ) const;
-  std::uint32_t get_output_data_size() const{
-    return m_solution.output_neuron_number();
-  }
+  ) const override;
   void set_eval_mode(bool evaluation) override{
     evaluating = evaluation;
   }
@@ -75,7 +72,7 @@ public:
 
 private:
   SolutionSolver(
-    const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings,
+    const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings,
     std::vector<std::vector<PartialSolutionSolver>> partial_solvers,
     std::uint32_t max_tmp_data_needed, std::uint32_t max_tmp_data_needed_per_thread
   );
@@ -86,9 +83,9 @@ private:
   RafkoNetworkFeature m_featureExecutor;
 
 public:
-  class Builder{
+  class RAFKO_EXPORT Builder{
   public:
-    Builder(const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings);
+    Builder(const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings);
     /**
      * @brief     Builds a SolutionSolver and produces a pointer to it, based on its stored members
      *
@@ -100,14 +97,14 @@ public:
       ) );
     }
   private:
-    const Solution& m_solution;
+    const Solution* m_solution;
     const rafko_mainframe::RafkoSettings& m_settings;
     std::vector<std::vector<PartialSolutionSolver>> m_partialSolvers;
     std::uint32_t m_maxTmpSizeNeeded = 0u;
     std::uint32_t m_maxTmpDataNeededPerThread = 0u;
-  };
+  }/*SolutionSolver::Builder*/;
 
-  class Factory{
+  class RAFKO_EXPORT Factory{
   public:
     Factory(const RafkoNet& network, std::shared_ptr<const rafko_mainframe::RafkoSettings> settings);
 
@@ -121,17 +118,19 @@ public:
     /**
      * @brief     Builds a SolutionSolver and produces a pointer to it, based on its stored members
      *
+     * param[in]    rebuild_solution    Creates a new @Solution object and stores it as reference
+     * param[in]    update_stored       Updates the currently stored object with the newly generated one, if one is built
+     *
      * @return    Ownership and pointer of the built solver
      */
-    std::unique_ptr<SolutionSolver> build(bool rebuild_solution = true);
+    std::unique_ptr<SolutionSolver> build(bool rebuild_solution = false);
 
   private:
     const RafkoNet& m_network;
     std::shared_ptr<const rafko_mainframe::RafkoSettings> m_settings;
     rafko_net::Solution* m_solution;
     std::unique_ptr<rafko_gym::RafkoWeightAdapter> m_weightAdapter;
-
-  };
+  }/*SolutionSolver::Factory*/;
 };
 
 } /* namespace rafko_net */

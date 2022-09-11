@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18.4) #Lower Version might be supported...
 
 project(
-  rafko
+  rafko_project
   VERSION 0.0.0 #Have not started versioning yet
   DESCRIPTION "A deep learning Framework extended wtih per Neuron memory capabilities with focus on architecture search through training"
   LANGUAGES CXX
@@ -45,11 +45,12 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     OFF
   )
 
-  add_library(rafko_full STATIC)
-  add_compile_options(-Wall -Wextra -Wpedantic)
-  set_target_properties(rafko_full PROPERTIES LINKER_LANGUAGE CXX)
+  add_library(rafko STATIC)
+  add_compile_options(-Wall -Wextra -Wpedantic -fPIC)
+  set_target_properties(rafko PROPERTIES LINKER_LANGUAGE CXX)
 
   if(USE_OPENCL)
+    find_package(OpenCL REQUIRED)
     set(OPENCL_TARGET 120)
     add_compile_definitions(CL_HPP_MINIMUM_OPENCL_VERSION=120)
     add_compile_definitions(CL_HPP_TARGET_OPENCL_VERSION=${OPENCL_TARGET})
@@ -73,9 +74,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   endif()
 endif()
 include(GenerateExportHeader)
-generate_export_header(rafko_full EXPORT_FILE_NAME rafko_export.hpp)
+generate_export_header(rafko EXPORT_FILE_NAME rafko_export.hpp)
 
-target_compile_features(rafko_full
+target_compile_features(rafko
   PRIVATE
   cxx_constexpr
   cxx_auto_type
@@ -98,7 +99,8 @@ add_subdirectory(rafko_utilities)
 add_subdirectory(rafko_net)
 add_subdirectory(rafko_gym)
 add_subdirectory(rafko_mainframe)
-target_link_libraries(rafko_full
+
+target_link_libraries(rafko
   PUBLIC rafko_protocol rafko_utilities rafko_net rafko_gym rafko_mainframe
 )
 
@@ -112,8 +114,7 @@ install(
   DESTINATION include/
 )
 
-set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/lib")
-install( TARGETS rafko_full
+install( TARGETS rafko
   EXPORT rafko_export
   LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
   ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"

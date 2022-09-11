@@ -41,7 +41,7 @@ namespace rafko_net{
 /**
  * @brief      A base class for all RafkoNeuralNetwork related features
  */
-class RAFKO_FULL_EXPORT RafkoNetworkFeature{
+class RAFKO_EXPORT RafkoNetworkFeature{
 public:
   using NeuronDataProxy = rafko_utilities::SubscriptProxy<std::vector<double>>;
 

@@ -32,7 +32,7 @@
 
 namespace rafko_net {
 
-class RAFKO_FULL_EXPORT PartialSolutionSolver{
+class RAFKO_EXPORT PartialSolutionSolver{
 
 public:
   PartialSolutionSolver(const PartialSolution& partial_solution, const rafko_mainframe::RafkoSettings& settings)
@@ -115,7 +115,7 @@ private:
 
   /**
    * The Partial solution to solve
-   */
+   */ //TODO: Partial solution reference can't stay, as swapping should be possible
   const PartialSolution& detail;
 
   /**

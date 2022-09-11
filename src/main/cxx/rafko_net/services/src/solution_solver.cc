@@ -27,23 +27,23 @@
 
 namespace rafko_net{
 
-SolutionSolver::Builder::Builder(const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings)
+SolutionSolver::Builder::Builder(const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings)
 :  m_solution(to_solve)
 ,  m_settings(settings)
 {
   std::uint32_t partial_index_at_row_start = 0;
-  for(std::int32_t row_iterator = 0; row_iterator < m_solution.cols_size(); ++row_iterator){
+  for(std::int32_t row_iterator = 0; row_iterator < m_solution->cols_size(); ++row_iterator){
     m_partialSolvers.push_back(std::vector<PartialSolutionSolver>());
-    for(std::uint32_t column_index = 0; column_index < m_solution.cols(row_iterator); ++column_index){
+    for(std::uint32_t column_index = 0; column_index < m_solution->cols(row_iterator); ++column_index){
       m_partialSolvers[row_iterator].push_back( PartialSolutionSolver(
-        m_solution.partial_solutions(partial_index_at_row_start + column_index), settings
+        m_solution->partial_solutions(partial_index_at_row_start + column_index), settings
       )); /* Initialize a solver for this partial solution element */
       if(m_partialSolvers[row_iterator][column_index].get_required_tmp_data_size() > m_maxTmpSizeNeeded)
         m_maxTmpSizeNeeded = m_partialSolvers[row_iterator][column_index].get_required_tmp_data_size();
     }
-    partial_index_at_row_start += m_solution.cols(row_iterator);
-    if(m_solution.cols(row_iterator) > m_maxTmpDataNeededPerThread)
-      m_maxTmpDataNeededPerThread = m_solution.cols(row_iterator);
+    partial_index_at_row_start += m_solution->cols(row_iterator);
+    if(m_solution->cols(row_iterator) > m_maxTmpDataNeededPerThread)
+      m_maxTmpDataNeededPerThread = m_solution->cols(row_iterator);
   } /* loop through every partial solution and initialize solvers and output maps for them */
 }
 
@@ -61,11 +61,11 @@ std::unique_ptr<SolutionSolver> SolutionSolver::Factory::build(bool rebuild_solu
   }
 
   RFASSERT(static_cast<bool>(m_solution));
-  return Builder(*m_solution, *m_settings).build();
+  return Builder(m_solution, *m_settings).build();
 }
 
 SolutionSolver::SolutionSolver(
-  const Solution& to_solve, const rafko_mainframe::RafkoSettings& settings,
+  const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings,
   std::vector<std::vector<PartialSolutionSolver>> partial_solvers,
   std::uint32_t max_tmp_data_needed, std::uint32_t max_tmp_data_needed_per_thread
 ): rafko_gym::RafkoAgent(to_solve, settings, max_tmp_data_needed, max_tmp_data_needed_per_thread, settings.get_max_processing_threads())
@@ -81,22 +81,22 @@ void SolutionSolver::solve(
   const std::vector<std::reference_wrapper<std::vector<double>>>& tmp_data_pool,
   std::uint32_t used_data_pool_start, std::uint32_t thread_index
 ) const{
-  if(0 < m_solution.cols_size()){
+  if(0 < m_solution->cols_size()){
     std::uint32_t col_iterator;
     std::mutex solved_features_mutex;
     std::vector<std::reference_wrapper<const FeatureGroup>> solved_features;
 
     output.copy_step(); /* move the iterator forward to the next slot and store the current data */
-    for(std::int32_t row_iterator = 0; row_iterator < m_solution.cols_size(); ++row_iterator){
-      if(0 == m_solution.cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
+    for(std::int32_t row_iterator = 0; row_iterator < m_solution->cols_size(); ++row_iterator){
+      if(0 == m_solution->cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
       col_iterator = 0;
       if( /* Don't use the threadgroup if there is no need for multiple threads.. */
-        (m_solution.cols(row_iterator) < m_settings.get_max_solve_threads()/2u)
-        ||(m_solution.cols(row_iterator) < 2u) /* ..since the number of partial solutions depend on the available device size */
+        (m_solution->cols(row_iterator) < m_settings.get_max_solve_threads()/2u)
+        ||(m_solution->cols(row_iterator) < 2u) /* ..since the number of partial solutions depend on the available device size */
       ){ /* having fewer partial solutions in a row usually implies whether or not multiple threads are needed */
-        while(col_iterator < m_solution.cols(row_iterator)){
+        while(col_iterator < m_solution->cols(row_iterator)){
           for(std::uint16_t inner_thread_index = 0; inner_thread_index < m_settings.get_max_solve_threads(); ++inner_thread_index){
-            if(col_iterator < m_solution.cols(row_iterator)){
+            if(col_iterator < m_solution->cols(row_iterator)){
               m_partialSolvers[row_iterator][col_iterator].solve(
                 std::ref(input), std::ref(output), std::ref(tmp_data_pool[used_data_pool_start + inner_thread_index].get())
               );
@@ -108,11 +108,11 @@ void SolutionSolver::solve(
           }
         }/* while(col_iterator < solution.cols(row_iterator)) */
       }else{
-        while(col_iterator < m_solution.cols(row_iterator)){
+        while(col_iterator < m_solution->cols(row_iterator)){
           { /* To make the Solver itself thread-safe; the sub-threads need to be guarded with a lock */
             m_executionThreads[thread_index]->start_and_block(
             [this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator, &solved_features_mutex, &solved_features](std::uint32_t inner_thread_index){
-              if((col_iterator + inner_thread_index) < m_solution.cols(row_iterator)){
+              if((col_iterator + inner_thread_index) < m_solution->cols(row_iterator)){
                 m_partialSolvers[row_iterator][(col_iterator + inner_thread_index)].solve(
                   input,output,tmp_data_pool[used_data_pool_start + inner_thread_index].get()
                 );

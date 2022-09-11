@@ -57,11 +57,11 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
 
   partial_solution.add_weight_table((0.0)); /* spike function weight for first neuron */
   for(std::uint32_t i = 0; i < number_of_inputs; ++i){
-    partial_solution.add_weight_table((1.0)); /* weight for the inputs coming to the first Neuron */
+    partial_solution.add_weight_table(1.0); /* weight for the inputs coming to the first Neuron */
   } /* Every weight shall be modified in this example, so they'll all have thir own weight table entry */
   partial_solution.add_weight_table((50.0)); /* first neuron bias value */
   partial_solution.add_weight_table((0.0)); /* spike function weight for second neuron */
-  partial_solution.add_weight_table((1.0)); /* Weight for the first Neuron */
+  partial_solution.add_weight_table(1.0); /* Weight for the first Neuron */
   partial_solution.add_weight_table((10.0)); /* 2nd neuron bias value */
 
   /**###################################################################################################
@@ -300,7 +300,7 @@ void print_training_sample(
 ){
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(net);
   std::unique_ptr<rafko_net::SolutionSolver> sample_solver(
-    rafko_net::SolutionSolver::Builder(*solution, settings).build()
+    rafko_net::SolutionSolver::Builder(solution, settings).build()
   );
   std::vector<double> neuron_data(data_set.get_sequence_size());
   std::uint32_t raw_label_index = sample_sequence_index;
@@ -359,7 +359,7 @@ void print_training_sample(
     std::cout << "[" << net.weight_table(i) << "]";
   }
   std::cout << std::endl;
-  
+
   if(nullptr == settings.get_arena_ptr()){
     delete solution;
   }

@@ -36,7 +36,7 @@ namespace rafko_gym {
  * @brief      Base implementation for updating weights for netowrks based on weight gradients
  */
 using PartialWeightPairs = const std::vector<std::pair<std::uint32_t,std::uint32_t>>;
-class RAFKO_FULL_EXPORT RafkoWeightAdapter{
+class RAFKO_EXPORT RafkoWeightAdapter{
 public:
   RafkoWeightAdapter(const rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution, const rafko_mainframe::RafkoSettings& settings)
   : m_settings(settings)
