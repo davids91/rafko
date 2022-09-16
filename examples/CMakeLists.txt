@@ -11,13 +11,23 @@ set_target_properties(rafko PROPERTIES
 
 find_package(Protobuf REQUIRED)
 set(USED_EXTRA_LIBRARIES ${Protobuf_LIBRARIES})
+
 if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
   list(APPEND USED_EXTRA_LIBRARIES OpenCL::OpenCL)
 endif()
 
+# Address sanitizer
+# add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+# add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+add_compile_options(-fsanitize=address)
+add_link_options(-fsanitize=address)
+
 add_executable(create_network create_network.cpp)
 target_link_libraries(create_network rafko ${USED_EXTRA_LIBRARIES})
+
+add_executable(execute_network execute_network.cpp)
+target_link_libraries(execute_network rafko ${USED_EXTRA_LIBRARIES})
 
 add_executable(optimize_network optimize_network.cpp)
 target_link_libraries(optimize_network rafko ${USED_EXTRA_LIBRARIES})

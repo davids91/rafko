@@ -8,7 +8,7 @@
  *    Rafko is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ *    GNU General Public License for more m_details.
  *
  *    You should have received a copy of the GNU General Public License
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
@@ -38,7 +38,7 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
   std::int32_t input_index;
 
   /* Collect the input data to solve the partial solution */
-  input_iterator.skim([&](InputSynapseInterval input_synapse){
+  m_input_iterator.skim([&](InputSynapseInterval input_synapse){
     if(SynapseIterator<>::is_index_input(input_synapse.starts())){ /* If @PartialSolution input is from the network input */
       std::copy(
         input_data.begin() + SynapseIterator<>::array_index_from_external_index(input_synapse.starts()),
@@ -57,28 +57,28 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
 
   /* Solve the Partial Solution based on the collected input data and stored operations */
   input_index_offset = 0;
-  for(std::uint16_t neuron_iterator = 0; neuron_iterator < detail.output_data().interval_size(); ++neuron_iterator){
+  for(std::uint16_t neuron_iterator = 0; neuron_iterator < m_detail.output_data().interval_size(); ++neuron_iterator){
     double new_neuron_data;
     double spike_function_weight = (0.0);
     bool first_weight_in_neuron = true;
     bool first_input_in_neuron = true;
-    internal_weight_iterator.iterate([&](std::int32_t weight_index){
+    m_internal_weight_iterator.iterate([&](std::int32_t weight_index){
       if(true == first_weight_in_neuron){ /* as per structure, the first weight is for the spike function */
         first_weight_in_neuron = false;
-        spike_function_weight = detail.weight_table(weight_index);
+        spike_function_weight = m_detail.weight_table(weight_index);
       }else{ /* the next weights are for inputs and biases */
         double new_neuron_input;
-        if(detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
-          input_index = detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
+        if(m_detail.index_synapse_number(neuron_iterator) > input_synapse_index){ /* Collect input only as long as there is any in the current inner neuron */
+          input_index = m_detail.inside_indices(input_synapse_iterator_start + input_synapse_index).starts();
           if(SynapseIterator<>::is_index_input(input_index)){ /* Neuron gets its input from the partial solution input */
             input_index = SynapseIterator<>::array_index_from_external_index(input_index - input_index_offset);
             new_neuron_input = temp_data[input_index];
           }else{ /* Neuron gets its input internaly */
-            input_index = detail.output_data().starts() + input_index + input_index_offset;
+            input_index = m_detail.output_data().starts() + input_index + input_index_offset;
             new_neuron_input = output_neuron_data.get_element(0,input_index);
           }
           ++input_index_offset; /* Step the input index to the next input */
-          if(input_index_offset >= detail.inside_indices(input_synapse_iterator_start + input_synapse_index).interval_size()){
+          if(input_index_offset >= m_detail.inside_indices(input_synapse_iterator_start + input_synapse_index).interval_size()){
             input_index_offset = 0; /* In case the next input would ascend above the current patition, go to next one */
             ++input_synapse_index;
           }
@@ -86,49 +86,49 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
           new_neuron_input = (1.0);
         /* The weighted input shall be added to the calculated value */
         if(true == first_input_in_neuron){
-          new_neuron_data = new_neuron_input * detail.weight_table(weight_index);
+          new_neuron_data = new_neuron_input * m_detail.weight_table(weight_index);
           first_input_in_neuron = false;
         }else{
           new_neuron_data = InputFunction::collect(
-            detail.neuron_input_functions(neuron_iterator),
-            new_neuron_data, (new_neuron_input * detail.weight_table(weight_index))
+            m_detail.neuron_input_functions(neuron_iterator),
+            new_neuron_data, (new_neuron_input * m_detail.weight_table(weight_index))
           );
         }
       }
-    },weight_synapse_iterator_start, detail.weight_synapse_number(neuron_iterator));
-    weight_synapse_iterator_start += detail.weight_synapse_number(neuron_iterator);
+    },weight_synapse_iterator_start, m_detail.weight_synapse_number(neuron_iterator));
+    weight_synapse_iterator_start += m_detail.weight_synapse_number(neuron_iterator);
     input_synapse_iterator_start += input_synapse_index;
     input_index_offset = 0;
     input_synapse_index = 0;
 
-    new_neuron_data = transfer_function.get_value( /* apply transfer function */
-      detail.neuron_transfer_functions(neuron_iterator), new_neuron_data
+    new_neuron_data = m_transfer_function.get_value( /* apply transfer function */
+      m_detail.neuron_transfer_functions(neuron_iterator), new_neuron_data
     );
 
     new_neuron_data = SpikeFunction::get_value( /* apply spike function */
-      detail.neuron_spike_functions(neuron_iterator), spike_function_weight, new_neuron_data,
-      output_neuron_data.get_element(0, (detail.output_data().starts() + neuron_iterator))
+      m_detail.neuron_spike_functions(neuron_iterator), spike_function_weight, new_neuron_data,
+      output_neuron_data.get_element(0, (m_detail.output_data().starts() + neuron_iterator))
     );
 
     output_neuron_data.set_element( /* Store the resulting Neuron value */
-      0, detail.output_data().starts() + neuron_iterator, new_neuron_data
+      0, m_detail.output_data().starts() + neuron_iterator, new_neuron_data
     );
   } /*for(neuron_iterator --> every Neuron)*/
 }
 
 bool PartialSolutionSolver::is_valid() const{
   if(
-    (0u < detail.output_data().interval_size())
-    &&(static_cast<int>(detail.output_data().interval_size()) == detail.index_synapse_number_size())
-    &&(static_cast<int>(detail.output_data().interval_size()) == detail.weight_synapse_number_size())
-    &&(static_cast<int>(detail.output_data().interval_size()) == detail.neuron_transfer_functions_size())
+    (0u < m_detail.output_data().interval_size())
+    &&(static_cast<int>(m_detail.output_data().interval_size()) == m_detail.index_synapse_number_size())
+    &&(static_cast<int>(m_detail.output_data().interval_size()) == m_detail.weight_synapse_number_size())
+    &&(static_cast<int>(m_detail.output_data().interval_size()) == m_detail.neuron_transfer_functions_size())
   ){
     std::uint32_t weight_synapse_number = 0;
     std::uint32_t index_synapse_number = 0;
 
-    for(std::uint16_t neuron_iterator = 0u; neuron_iterator < detail.output_data().interval_size(); ++neuron_iterator){
-      weight_synapse_number += detail.weight_synapse_number(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
-      index_synapse_number += detail.index_synapse_number(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
+    for(std::uint16_t neuron_iterator = 0u; neuron_iterator < m_detail.output_data().interval_size(); ++neuron_iterator){
+      weight_synapse_number += m_detail.weight_synapse_number(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
+      index_synapse_number += m_detail.index_synapse_number(neuron_iterator); /* Calculate how many inputs the neuron shall have altogether */
     }
 
     if((0 < index_synapse_number)&&(0 < weight_synapse_number)){
@@ -139,24 +139,24 @@ bool PartialSolutionSolver::is_valid() const{
       std::uint32_t count_of_input_indexes = 0;
       std::uint32_t weight_synapse_iterator_start = 0;
       std::uint32_t count_of_input_weights = 0;
-      for(std::uint32_t neuron_iterator = 0; neuron_iterator < detail.output_data().interval_size(); neuron_iterator++){
+      for(std::uint32_t neuron_iterator = 0; neuron_iterator < m_detail.output_data().interval_size(); neuron_iterator++){
         count_of_input_indexes = 0;
         count_of_input_weights = 0;
-        for(std::uint32_t input_iterator = 0; input_iterator < detail.index_synapse_number(neuron_iterator); ++input_iterator){
-          count_of_input_indexes += detail.inside_indices(index_synapse_iterator_start + input_iterator).interval_size();
+        for(std::uint32_t input_iterator = 0; input_iterator < m_detail.index_synapse_number(neuron_iterator); ++input_iterator){
+          count_of_input_indexes += m_detail.inside_indices(index_synapse_iterator_start + input_iterator).interval_size();
           if( /* If a synapse input in a Neuron points after the neurons index */
-            (detail.inside_indices(index_synapse_iterator_start + input_iterator).starts()
-             + detail.inside_indices(index_synapse_iterator_start + input_iterator).interval_size() ) >= neuron_iterator
-          ){ /* Self-recurrence is simulated by adding the current data of a neuron as an input into the solution detail */
+            (m_detail.inside_indices(index_synapse_iterator_start + input_iterator).starts()
+             + m_detail.inside_indices(index_synapse_iterator_start + input_iterator).interval_size() ) >= neuron_iterator
+          ){ /* Self-recurrence is simulated by adding the current data of a neuron as an input into the solution m_detail */
             return false;
           }
 
           /* Check if the number of weights match the number of input indexes for every Neuron */
-          for(std::uint32_t input_iterator = 0; input_iterator < detail.weight_synapse_number(neuron_iterator); ++input_iterator){
-            count_of_input_weights +=  detail.weight_indices(weight_synapse_iterator_start + input_iterator).interval_size();
+          for(std::uint32_t input_iterator = 0; input_iterator < m_detail.weight_synapse_number(neuron_iterator); ++input_iterator){
+            count_of_input_weights +=  m_detail.weight_indices(weight_synapse_iterator_start + input_iterator).interval_size();
           }
-          weight_synapse_iterator_start += detail.weight_synapse_number(neuron_iterator);
-          index_synapse_iterator_start += detail.index_synapse_number(neuron_iterator);
+          weight_synapse_iterator_start += m_detail.weight_synapse_number(neuron_iterator);
+          index_synapse_iterator_start += m_detail.index_synapse_number(neuron_iterator);
 
           if(count_of_input_indexes == count_of_input_weights){
             return false;
@@ -166,8 +166,8 @@ bool PartialSolutionSolver::is_valid() const{
     }else return false;
 
     return(
-      (static_cast<std::int32_t>(index_synapse_number) == detail.inside_indices_size())
-      &&(static_cast<std::int32_t>(weight_synapse_number) == detail.weight_indices_size())
+      (static_cast<std::int32_t>(index_synapse_number) == m_detail.inside_indices_size())
+      &&(static_cast<std::int32_t>(weight_synapse_number) == m_detail.weight_indices_size())
     );
   }else return false;
 }

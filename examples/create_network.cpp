@@ -55,158 +55,104 @@ int main(int argc, char* argv[]){
   /*!Note: Rafko May also use Protocol Buffers Arena implementation, which means that the object returned by the builder is owned by it.
    * Because of this, it is perfectly acceptable to build a Netwrok like in the below example, because the declared arena will have ownership of it.
    */
-  // google::protobuf::Arena everything_storage;
-  // settings->set_arena_ptr(&everything_storage);
-  // RafkoNet& first_network_on_arena = *rafko_net::RafkoNetBuilder(*settings).input_size(2).dense_layers({3, 3, 1});
-  //
-  // /*!Note: Because of this, every new Network is placed into the arena; The below will be the second instance of a network.
-  //  * Replacing an already allocated Network inside the arena with a newly built one is demonstrated below.
-  //  */
-  // RafkoNet* additional_network_on_arena = rafko_net::RafkoNetBuilder(*settings).input_size(2).dense_layers({3, 5, 1});
-  //
-  // /* Swap the network with a bigger one*/
-  // rafko_net::RafkoNetBuilder(*settings)
-  // .input_size(2) /* The number of values the network reads as its input vector */
-  // .build_dense_layers_and_update(additional_network_on_arena, {5, 5, 1});
-  //
-  // /*!Note: Even with an existing Arena updated in settings, it is possible to create objects on the Heap.
-  //  * The below function call returns ownership to the caller
-  //  */
-  // std::unique_ptr<RafkoNet> another_managed_network = std::unique_ptr<RafkoNet>(
-  //   rafko_net::RafkoNetBuilder(*settings).input_size(2).dense_layers(nullptr, {2, 3, 1})
-  // );
-  //
-  // /*!Note: It is possible to manually modify a network, build connections and Add/Remove Neurons.
-  //  * below a two Neuron network is compiled, the first accepts the input, and the last (the output Neuron)
-  //  * accepts the output of the first Neuron as well as the value of itself in the previous 3rd run of the network.
-  //  */
-  // first_network_on_arena.set_memory_size(4u); /* Network memory size needs to be +1 to account for the actual loop in progress */
-  // first_network_on_arena.set_input_data_size(2u);
-  // first_network_on_arena.set_output_neuron_number(1u);
-  // first_network_on_arena.mutable_neuron_group_features()->Clear();
-  // first_network_on_arena.mutable_neuron_array()->Clear();
-  // first_network_on_arena.mutable_weight_table()->Clear();
-  //
-  // /* +++ set the data of the first Neuron +++ */
-  // rafko_net::Neuron& first_neuron = *first_network_on_arena.add_neuron_array();
-  // first_neuron.set_input_function(rafko_net::input_function_multiply);
-  // first_neuron.set_transfer_function(rafko_net::transfer_function_elu);
-  // first_neuron.set_spike_function(rafko_net::spike_function_none);
-  //
-  // /*!Note: rafko_net::Neuron::input_weights sets the number of weights attached to the Neuron, while
-  //  * rafko_net::Neuron::input_indices determines the input values a Neuron takes. the latter must always be
-  //  * less or equal, than the former. If there are more input weights, than inputs for a given Neuron, the
-  //  * remaining weights behave as bias values. There can be multiple bias values assigned to one Neuron,
-  //  * their values are collected by the Neurons input function.
-  //  */
-  // rafko_net::InputSynapseInterval& first_neuron_inputs = *first_neuron.add_input_indices();
-  // first_neuron_inputs.set_starts(-1); /* negative numbers mean the input synapse takes its value externally. In this case, from outside the network. */
-  // first_neuron_inputs.set_interval_size(2); /* equals the number of inputs the network has, based on the network structure */
-  // rafko_net::IndexSynapseInterval& first_neuron_weights = *first_neuron.add_input_weights();
-  // first_neuron_weights.set_starts(0u); /* there are no negative start numbers in rafko_net::IndexSynapseInterval */
-  // first_neuron_weights.set_interval_size(1 + 2 + 1); /* 1 weight for the spike function, 2 for the inputs and 1 for the bias value */
-  // for(std::uint32_t weight_count = 0; weight_count < 4; ++weight_count){
-  //   first_network_on_arena.add_weight_table(rand()%10 * 0.1);
-  // }
-  //
-  // /* +++ set the data of the second Neuron +++ */
-  // rafko_net::Neuron& second_neuron = *first_network_on_arena.add_neuron_array();
-  // second_neuron.set_input_function(rafko_net::input_function_multiply);
-  // second_neuron.set_transfer_function(rafko_net::transfer_function_elu);
-  // second_neuron.set_spike_function(rafko_net::spike_function_none);
-  //
-  // rafko_net::InputSynapseInterval& second_neuron_present_input = *second_neuron.add_input_indices();
-  // second_neuron_present_input.set_starts(0); /* positive numbers mean the input synapse takes its value internally. In this case, from inside the network's Neuron values. */
-  // second_neuron_present_input.set_interval_size(1); /* this input synapse spans only one Neuron */
-  //
-  // /*!Note: Each Neuron can have multiple synapses. As a kind of compression, the ranges are stored, so it is optimal to have
-  //  * as few "fragmentations" as possible with connections, to spare the number of synapse elements to store inside the network.
-  //  */
-  // rafko_net::InputSynapseInterval& second_neuron_past_input = *second_neuron.add_input_indices();
-  // second_neuron_past_input.set_starts(1);   /* Neuron[1] --> meaning itself */
-  // second_neuron_past_input.set_interval_size(1);
-  // second_neuron_past_input.set_reach_past_loops(3);/* meaning: from the 3rd past run of the Neuron */
-  //
-  // rafko_net::IndexSynapseInterval& second_neuron_weights_0 = *second_neuron.add_input_weights();
-  // second_neuron_weights_0.set_starts(4u); /* The first weight after the previously added weights */
-  // second_neuron_weights_0.set_interval_size(1u + 2u); /* this weight synapse spans through the spike function and inputs */
-  //
-  // rafko_net::IndexSynapseInterval& second_neuron_weights_1 = *second_neuron.add_input_weights();
-  // second_neuron_weights_1.set_starts(3u); /* this synapse points to the previous Neurons bias value. Meaning weights can be shared this way */
-  // second_neuron_weights_1.set_interval_size(1u);
-  //
-  // for(std::uint32_t weight_count = 0; weight_count < 3; ++weight_count){ /*!Note: only 3 weights need to be added */
-  //   first_network_on_arena.add_weight_table(rand()%10 * 0.1);
-  // }
-  // /*!Note: There's a reason rafko_net::RafkoNetBuilder was implemented for the creation of networks.. :)
-  //  * However, tinkering is good and encouraged! Make sure to catch any exceptions the library might throw!
-  //  */
+  google::protobuf::Arena everything_storage;
+  settings->set_arena_ptr(&everything_storage);
+  RafkoNet& first_network_on_arena = *rafko_net::RafkoNetBuilder(*settings).input_size(2).dense_layers({3, 3, 1});
 
-  /*!Note: To solve any network with Rafko on CPU Rafko implements the below class and Factories */
-  rafko_net::SolutionSolver::Factory solverFactory(*network, settings);
-  std::unique_ptr<rafko_net::SolutionSolver> solver = solverFactory.build();
-  // std::unique_ptr<rafko_net::SolutionSolver> tinkered_network_solver = rafko_net::SolutionSolver::Factory(first_network_on_arena, settings).build();
+  /*!Note: Because of this, every new Network is placed into the arena; The below will be the second instance of a network.
+   * Replacing an already allocated Network inside the arena with a newly built one is demonstrated below.
+   */
+  RafkoNet* additional_network_on_arena = rafko_net::RafkoNetBuilder(*settings).input_size(2).dense_layers({3, 5, 1});
 
-  solver->solve({1.0, 2.0});
-  solver->solve({1.0, 2.0});
+  /* Swap the network with a bigger one*/
+  rafko_net::RafkoNetBuilder(*settings)
+  .input_size(2) /* The number of values the network reads as its input vector */
+  .build_dense_layers_and_swap(additional_network_on_arena, {5, 5, 1});
 
-  // /*!Note: Solving the network gives const access to its internal buffer through the returned result.
-  //  * It's a rough equivalent of a C++20 std::span; So it can be iterated and read as a std::vector would be.
-  //  * The size of it is the output of the network, which is the size of the éast layer,
-  //  * or set by @output_neuron_number in @rafko_net::RafkoNetBuilder
-  //  */
-  // rafko_utilities::ConstVectorSubrange<> original_result = solver->solve({1.0, 2.0});
-  // for(const double& output : original_result){ /*...*/ }
-  // assert(!std::isnan(original_result[0]));
-  //
-  // /*!Note: since Neuron data might be stored in a buffer as long as the network memory buffer permits it,
-  //  * So it might be accessed later by the network. This essentially means multiple run produces different results
-  //  * whenever neuron recurrence is used (@add_neuron_recurrence) or a layer has the feature rafko_net::neuron_group_feature_boltzmann_knot
-  //  * activated. To Reset the internal Neuron buffers, an optional argument may be passed to @solve. By default the bufers are not
-  //  * resetted before every run.
-  //  */
-  // auto second_result = solver->solve({1.0, 2.0}/*input*/, false/*reset_neuron_data*/);
-  // assert(second_result[0] != original_result[0]);
-  // assert(original_result[0] != solver->solve({1.0, 2.0}, true)[0]); /*!Note: This call resets Neuron buffers */
-  //
-  // /*!Note: rafko_net::SolutionSolver is thread-safe, usable up to the number of threads
-  //  * set by @get_max_processing_threads in @rafko_mainframe::RafkoSettings.
-  //  * Each thread has their own buffer for Neuron values.
-  //  */
-  // double paralell_result;
-  // std::thread paralell_solve_thread = std::thread([&paralell_result, &solver](){
-  //   paralell_result = solver->solve({1.0, 2.0}, false, 1u/*thread_index*/)[0];
-  // });
-  // double another_result = solver->solve({1.0, 2.0})[0];
-  // paralell_solve_thread.join();
-  //
-  // assert(original_result[0] == paralell_result);
-  // assert(second_result[0] == another_result);
-  //
-  // /*!Note: Other Solvers can be built with the Factory interface for the same network. */
-  // std::unique_ptr<rafko_net::SolutionSolver> another_solver = solverFactory.build();
-  //
-  // /*!Note: Changing the network structure or weights, even in non-quantitative ways makes the solvers obsolete,
-  //  * because they store intermediate representations(@Solution) internally. New Solvers can be constructed
-  //  * through the factory interface. Setting the @refresh_solution parameter to true makes the factory follow
-  //  * structural changes as well; Depending on network size it might consume a significant amount of runtime.
-  //  */
-  // network->set_weight_table(0, 0.5);
-  // network->mutable_neuron_array(0)->set_transfer_function(rafko_net::transfer_function_sigmoid);
-  // another_solver.reset();
-  // solver = solverFactory.build(true/*refresh_solution*/);
-  //
-  // /*!Note: To save a network to a file, or any stream std C++ functionality is available */
-  // std::filebuf file_buffer;
-  // file_buffer.open("network.rfnet", std::ios::out);
-  // std::ostream os(&file_buffer);
-  // network->SerializeToOstream(&os);
-  // file_buffer.close();
-  //
-  // file_buffer.open("network.rfnet", std::ios::in);
-  // std::istream is(&file_buffer);
-  // network->ParseFromIstream(&is);
-  // file_buffer.close();
+  /*!Note: Even with an existing Arena updated in settings, it is possible to create objects on the Heap.
+   * The below function call returns ownership to the caller
+   */
+  std::unique_ptr<RafkoNet> another_managed_network = std::unique_ptr<RafkoNet>(
+    rafko_net::RafkoNetBuilder(*settings).input_size(2).dense_layers(nullptr, {2, 3, 1})
+  );
+
+  /*!Note: It is possible to manually modify a network, build connections and Add/Remove Neurons.
+   * below a two Neuron network is compiled, the first accepts the input, and the last (the output Neuron)
+   * accepts the output of the first Neuron as well as the value of itself in the previous 3rd run of the network.
+   */
+  first_network_on_arena.set_memory_size(4u); /* Network memory size needs to be +1 to account for the actual loop in progress */
+  first_network_on_arena.set_input_data_size(2u);
+  first_network_on_arena.set_output_neuron_number(1u);
+  first_network_on_arena.mutable_neuron_group_features()->Clear();
+  first_network_on_arena.mutable_neuron_array()->Clear();
+  first_network_on_arena.mutable_weight_table()->Clear();
+
+  /* +++ set the data of the first Neuron +++ */
+  rafko_net::Neuron& first_neuron = *first_network_on_arena.add_neuron_array();
+  first_neuron.set_input_function(rafko_net::input_function_multiply);
+  first_neuron.set_transfer_function(rafko_net::transfer_function_elu);
+  first_neuron.set_spike_function(rafko_net::spike_function_none);
+
+  /*!Note: rafko_net::Neuron::input_weights sets the number of weights attached to the Neuron, while
+   * rafko_net::Neuron::input_indices determines the input values a Neuron takes. the latter must always be
+   * less or equal, than the former. If there are more input weights, than inputs for a given Neuron, the
+   * remaining weights behave as bias values. There can be multiple bias values assigned to one Neuron,
+   * their values are collected by the Neurons input function.
+   */
+  rafko_net::InputSynapseInterval& first_neuron_inputs = *first_neuron.add_input_indices();
+  first_neuron_inputs.set_starts(-1); /* negative numbers mean the input synapse takes its value externally. In this case, from outside the network. */
+  first_neuron_inputs.set_interval_size(2); /* equals the number of inputs the network has, based on the network structure */
+  rafko_net::IndexSynapseInterval& first_neuron_weights = *first_neuron.add_input_weights();
+  first_neuron_weights.set_starts(0u); /* there are no negative start numbers in rafko_net::IndexSynapseInterval */
+  first_neuron_weights.set_interval_size(1 + 2 + 1); /* 1 weight for the spike function, 2 for the inputs and 1 for the bias value */
+  for(std::uint32_t weight_count = 0; weight_count < 4; ++weight_count){
+    first_network_on_arena.add_weight_table(rand()%10 * 0.1);
+  }
+
+  /* +++ set the data of the second Neuron +++ */
+  rafko_net::Neuron& second_neuron = *first_network_on_arena.add_neuron_array();
+  second_neuron.set_input_function(rafko_net::input_function_multiply);
+  second_neuron.set_transfer_function(rafko_net::transfer_function_elu);
+  second_neuron.set_spike_function(rafko_net::spike_function_none);
+
+  rafko_net::InputSynapseInterval& second_neuron_present_input = *second_neuron.add_input_indices();
+  second_neuron_present_input.set_starts(0); /* positive numbers mean the input synapse takes its value internally. In this case, from inside the network's Neuron values. */
+  second_neuron_present_input.set_interval_size(1); /* this input synapse spans only one Neuron */
+
+  /*!Note: Each Neuron can have multiple synapses. As a kind of compression, the ranges are stored, so it is optimal to have
+   * as few "fragmentations" as possible with connections, to spare the number of synapse elements to store inside the network.
+   */
+  rafko_net::InputSynapseInterval& second_neuron_past_input = *second_neuron.add_input_indices();
+  second_neuron_past_input.set_starts(1);   /* Neuron[1] --> meaning itself */
+  second_neuron_past_input.set_interval_size(1);
+  second_neuron_past_input.set_reach_past_loops(3);/* meaning: from the 3rd past run of the Neuron */
+
+  rafko_net::IndexSynapseInterval& second_neuron_weights_0 = *second_neuron.add_input_weights();
+  second_neuron_weights_0.set_starts(4u); /* The first weight after the previously added weights */
+  second_neuron_weights_0.set_interval_size(1u + 2u); /* this weight synapse spans through the spike function and inputs */
+
+  rafko_net::IndexSynapseInterval& second_neuron_weights_1 = *second_neuron.add_input_weights();
+  second_neuron_weights_1.set_starts(3u); /* this synapse points to the previous Neurons bias value. Meaning weights can be shared this way */
+  second_neuron_weights_1.set_interval_size(1u);
+
+  for(std::uint32_t weight_count = 0; weight_count < 3; ++weight_count){ /*!Note: only 3 weights need to be added */
+    first_network_on_arena.add_weight_table(rand()%10 * 0.1);
+  }
+  /*!Note: There's a reason rafko_net::RafkoNetBuilder was implemented for the creation of networks.. :)
+   * However, tinkering is good and encouraged! Make sure to catch any exceptions the library might throw!
+   */
+
+  /*!Note: To save a network to a file, or any stream std C++ functionality is available */
+  std::filebuf file_buffer;
+  file_buffer.open("network.rfnet", std::ios::out);
+  std::ostream os(&file_buffer);
+  network->SerializeToOstream(&os);
+  file_buffer.close();
+
+  file_buffer.open("network.rfnet", std::ios::in);
+  std::istream is(&file_buffer);
+  network->ParseFromIstream(&is);
+  file_buffer.close();
 
   google::protobuf::ShutdownProtobufLibrary(); /* This is only needed to avoid false positive memory leak reports in memory leak analyzers */
   return 0;

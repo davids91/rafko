@@ -67,6 +67,7 @@ public:
   void set_eval_mode(bool evaluation) override{
     evaluating = evaluation;
   }
+
   using rafko_gym::RafkoAgent::solve;
   /* --- Methods taken from @RafkoAgent --- */
 
@@ -86,6 +87,7 @@ public:
   class RAFKO_EXPORT Builder{
   public:
     Builder(const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings);
+
     /**
      * @brief     Builds a SolutionSolver and produces a pointer to it, based on its stored members
      *
@@ -102,7 +104,7 @@ public:
     std::vector<std::vector<PartialSolutionSolver>> m_partialSolvers;
     std::uint32_t m_maxTmpSizeNeeded = 0u;
     std::uint32_t m_maxTmpDataNeededPerThread = 0u;
-  }/*SolutionSolver::Builder*/;
+  }/*class SolutionSolver::Builder*/;
 
   class RAFKO_EXPORT Factory{
   public:
@@ -111,7 +113,7 @@ public:
     /**
      * @brief     Updates the stored solution with the weights from the stored Neural Network reference
      */
-    void refresh_solution_weights(){
+    void refresh_actual_solution_weights(){
       m_weightAdapter->update_solution_with_weights();
     }
 
@@ -119,7 +121,6 @@ public:
      * @brief     Builds a SolutionSolver and produces a pointer to it, based on its stored members
      *
      * param[in]    rebuild_solution    Creates a new @Solution object and stores it as reference
-     * param[in]    update_stored       Updates the currently stored object with the newly generated one, if one is built
      *
      * @return    Ownership and pointer of the built solver
      */
@@ -128,9 +129,10 @@ public:
   private:
     const RafkoNet& m_network;
     std::shared_ptr<const rafko_mainframe::RafkoSettings> m_settings;
-    rafko_net::Solution* m_solution;
+    rafko_net::Solution* m_actualSolution;
     std::unique_ptr<rafko_gym::RafkoWeightAdapter> m_weightAdapter;
-  }/*SolutionSolver::Factory*/;
+    std::vector<std::unique_ptr<rafko_net::Solution>> m_ownedSolutions;
+  }/*class SolutionSolver::Factory*/;
 };
 
 } /* namespace rafko_net */

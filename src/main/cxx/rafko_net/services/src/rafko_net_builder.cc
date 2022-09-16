@@ -176,7 +176,7 @@ RafkoNetBuilder& RafkoNetBuilder::set_neuron_spike_function(std::uint32_t layer_
   return *this;
 }
 
-void RafkoNetBuilder::build_dense_layers_and_update(
+void RafkoNetBuilder::build_dense_layers_and_swap(
   RafkoNet* previous, std::vector<std::uint32_t> layer_sizes,
   std::vector<std::set<Transfer_functions>> transfer_function_filter
 ){

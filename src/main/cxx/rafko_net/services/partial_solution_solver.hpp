@@ -36,10 +36,10 @@ class RAFKO_EXPORT PartialSolutionSolver{
 
 public:
   PartialSolutionSolver(const PartialSolution& partial_solution, const rafko_mainframe::RafkoSettings& settings)
-  :  detail(partial_solution)
-  ,  internal_weight_iterator(detail.weight_indices())
-  ,  input_iterator(detail.input_data())
-  ,  transfer_function(settings)
+  :  m_detail(partial_solution)
+  ,  m_internal_weight_iterator(m_detail.weight_indices())
+  ,  m_input_iterator(m_detail.input_data())
+  ,  m_transfer_function(settings)
   { }
 
   /**
@@ -90,7 +90,7 @@ public:
     * @return     True if detail is valid, False otherwise.
     */
    std::uint32_t get_required_tmp_data_size() const{
-     return input_iterator.size();
+     return m_input_iterator.size();
    }
 
   /**
@@ -107,7 +107,7 @@ public:
    * @return     const reference to the encapsulated @PartialSolution
    */
   constexpr const PartialSolution& get_partial() const{
-    return detail;
+    return m_detail;
   }
 
 private:
@@ -116,22 +116,22 @@ private:
   /**
    * The Partial solution to solve
    */ //TODO: Partial solution reference can't stay, as swapping should be possible
-  const PartialSolution& detail;
+  const PartialSolution& m_detail;
 
   /**
    * The iterator to go through the Neuron weights while solving the detail
    */
-  SynapseIterator<> internal_weight_iterator;
+  SynapseIterator<> m_internal_weight_iterator;
 
   /**
    * The iterator to go through the I/O of the detail
    */
-  SynapseIterator<InputSynapseInterval> input_iterator;
+  SynapseIterator<InputSynapseInterval> m_input_iterator;
 
   /**
    * The transfer function set configured for the current session
    */
-  TransferFunction transfer_function;
+  TransferFunction m_transfer_function;
 
   /**
    * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference

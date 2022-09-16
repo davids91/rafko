@@ -55,32 +55,8 @@ public:
     const rafko_net::Solution* solution, const rafko_mainframe::RafkoSettings& settings,
     std::uint32_t required_temp_data_size, std::uint32_t required_temp_data_number_per_thread,
     std::uint32_t max_threads = 1u
-  ):m_settings(settings)
-  , m_solution(solution)
-  , m_requiredTempDataNumberPerThread(required_temp_data_number_per_thread)
-  , m_requiredTempDataSize(required_temp_data_size)
-  , m_maxThreads(max_threads)
-  , m_commonDataPool((m_requiredTempDataNumberPerThread * m_maxThreads), m_requiredTempDataSize)
-  , m_neuronValueBuffers(
-    m_maxThreads, rafko_utilities::DataRingbuffer<>(
-      m_solution->network_memory_length(),
-      [this](std::vector<double>& buffer){
-        buffer = std::vector<double>(m_solution->neuron_number(), 0.0);
-      }
-    )
-  )
-  #if(RAFKO_USES_OPENCL)
-  , m_deviceWeightTableSize( std::accumulate(
-    m_solution->partial_solutions().begin(), m_solution->partial_solutions().end(), 0u,
-    [](const std::uint32_t& sum, const rafko_net::PartialSolution& partial){
-      return ( sum + partial.weight_table_size() );
-    }
-  ) )
-  #endif/*(RAFKO_USES_OPENCL)*/
-  { /* A temporary buffer is allocated for every required future usage per thread */
-    for(std::uint32_t tmp_data_index = 0; tmp_data_index < (m_requiredTempDataNumberPerThread * m_maxThreads); ++tmp_data_index)
-      m_usedDataBuffers.push_back(m_commonDataPool.reserve_buffer(m_requiredTempDataSize));
-  }
+  );
+  virtual ~RafkoAgent() = default;
 
   /*
    * @brief   Sets evaluation mode for agent, which signals whether or not training relevant Neural features(e.g. dropout) are to be executed.
@@ -101,22 +77,7 @@ public:
    */
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<double>& input, bool reset_neuron_data = false, std::uint32_t thread_index = 0u
-  ){
-    if(m_maxThreads > thread_index){
-      if( input.size() != m_solution->network_input_size() )
-        throw std::runtime_error(
-          "Input size(" + std::to_string(input.size()) + ") doesn't match "
-          + std::string("networks input size(") + std::to_string(m_solution->network_input_size()) + ")!"
-        );
-
-      if(reset_neuron_data)m_neuronValueBuffers[thread_index].reset();
-      solve( input, m_neuronValueBuffers[thread_index], m_usedDataBuffers, (thread_index * m_requiredTempDataNumberPerThread), thread_index );
-      return { /* return with the range of the output Neurons */
-        m_neuronValueBuffers[thread_index].get_element(0).end() - m_solution->output_neuron_number(),
-        m_neuronValueBuffers[thread_index].get_element(0).end()
-      };
-    } else throw std::runtime_error("Thread index out of bounds!");
-  }
+  );
 
   /**
    * @brief      Solves the rafko_net::Solution provided in the constructor, previous neural information is supposedly available in @output buffer
@@ -143,8 +104,6 @@ public:
     return m_neuronValueBuffers[thread_index];
   }
 
-  virtual ~RafkoAgent() = default;
-
   /**
    * @brief     Provides the size of the buffer it was declared with
    */
@@ -166,7 +125,8 @@ public:
       m_settings
     ) };
   }
-  std::vector<std::string> get_step_names() const{
+
+  std::vector<std::string> get_step_names() const override{
     return {"agent_solution"};
   }
 
@@ -176,7 +136,7 @@ public:
    *
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const{
+  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override{
     return{ rafko_mainframe::RafkoNBufShape{
       1u, m_deviceWeightTableSize,
       (m_sequencesEvaluating * (m_sequenceSize + m_prefillInputsPerSequence) * m_solution->network_input_size())
@@ -190,19 +150,12 @@ public:
    * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
    *             Agent output structure: {{ used bytes for execution, used bytes for performance feature error summary }}
    */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const{
-    const std::size_t bytes_used = (
-      std::max(m_sequencesEvaluating, 1u) /* number of sequences to evaluate */
-      * std::max(2u, std::max( /* number of labels per sequence */
-        m_solution->network_memory_length(), (m_sequenceSize + m_prefillInputsPerSequence)
-      ) )
-      * m_solution->neuron_number() /* number of numbers per label */
-    );
-    return{ rafko_mainframe::RafkoNBufShape{bytes_used, 1u} };
+  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override;
+
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
+    return {cl::NullRange,cl::NDRange(m_sequencesEvaluating),cl::NullRange};
   }
-  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
-    return std::make_tuple( cl::NullRange/*offset*/, cl::NDRange(m_sequencesEvaluating)/*global*/, cl::NullRange/*local*/ );
-  }
+
 #endif/*(RAFKO_USES_OPENCL)*/
 
 protected:

@@ -471,8 +471,7 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
 }
 
 rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
-  const std::vector<double>& input,
-  bool reset_neuron_data, std::uint32_t thread_index
+  const std::vector<double>& input, bool reset_neuron_data, std::uint32_t thread_index
 ){
   RFASSERT_SCOPE(GPU_STANDALONE_SOLVE);
   RFASSERT_LOG("Solving network in GPU Context..");

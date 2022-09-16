@@ -50,18 +50,25 @@ SolutionSolver::Builder::Builder(const Solution* to_solve, const rafko_mainframe
 SolutionSolver::Factory::Factory(const RafkoNet& network, std::shared_ptr<const rafko_mainframe::RafkoSettings> settings)
 : m_network(network)
 , m_settings(settings)
-, m_solution(SolutionBuilder(*m_settings).build(m_network))
-, m_weightAdapter(std::make_unique<rafko_gym::RafkoWeightAdapter>(m_network, *m_solution, *m_settings))
-{ }
+, m_actualSolution(SolutionBuilder(*m_settings).build(m_network))
+, m_weightAdapter(std::make_unique<rafko_gym::RafkoWeightAdapter>(m_network, *m_actualSolution, *m_settings))
+{
+  if(nullptr == m_settings->get_arena_ptr()){
+    m_ownedSolutions.emplace_back(m_actualSolution);
+  }
+}
 
 std::unique_ptr<SolutionSolver> SolutionSolver::Factory::build(bool rebuild_solution){
   if(rebuild_solution){
-    SolutionBuilder(*m_settings).update(m_solution, m_network);
-    m_weightAdapter = std::make_unique<rafko_gym::RafkoWeightAdapter>(m_network, *m_solution, *m_settings);
+    m_actualSolution = SolutionBuilder(*m_settings).build(m_network);
+    if(nullptr == m_settings->get_arena_ptr()){
+      m_ownedSolutions.emplace_back(m_actualSolution);
+    }
+    m_weightAdapter = std::make_unique<rafko_gym::RafkoWeightAdapter>(m_network, *m_actualSolution, *m_settings);
   }
 
-  RFASSERT(static_cast<bool>(m_solution));
-  return Builder(m_solution, *m_settings).build();
+  RFASSERT(static_cast<bool>(m_actualSolution));
+  return Builder(m_actualSolution, *m_settings).build();
 }
 
 SolutionSolver::SolutionSolver(
@@ -73,7 +80,7 @@ SolutionSolver::SolutionSolver(
 ,  m_featureExecutor(m_executionThreads)
 {
   for(std::uint32_t thread_index = 0; thread_index < m_settings.get_max_processing_threads(); ++ thread_index)
-    m_executionThreads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_solve_threads()));
+    m_executionThreads.emplace_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_solve_threads()));
 }
 
 void SolutionSolver::solve(

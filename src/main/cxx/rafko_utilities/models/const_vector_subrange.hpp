@@ -60,8 +60,9 @@ public:
     return std::next(m_start, m_rangeSize);
   }
 
-  constexpr std::vector<typename std::iterator_traits<Iterator>::value_type> as_vector(){
-    return {begin(),end()};
+  template <typename V = std::vector<typename std::iterator_traits<Iterator>::value_type>>
+  constexpr V acquire(){
+    return { begin(), end() };
   }
 
 private:
