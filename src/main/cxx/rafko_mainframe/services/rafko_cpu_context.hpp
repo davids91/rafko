@@ -26,7 +26,6 @@
 #include "rafko_gym/models/rafko_environment.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
 #include "rafko_gym/models/rafko_agent.hpp"
-#include "rafko_gym/services/rafko_weight_adapter.hpp"
 #include "rafko_gym/services/updater_factory.hpp"
 
 #include "rafko_mainframe/services/rafko_context.hpp"
@@ -60,10 +59,10 @@ public:
 
   void refresh_solution_weights() override{
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
-    m_weightAdapter.update_solution_with_weights();
+    m_solverFactory.refresh_actual_solution_weights();
   }
 
-  void set_network_weight(std::uint32_t weight_index, double weight_value){
+  void set_network_weight(std::uint32_t weight_index, double weight_value) override{
     RFASSERT_LOG("Setting weight[{}] to {}(CPU Context)", weight_index, weight_value);
     RFASSERT( static_cast<std::int32_t>(weight_index) < m_network.weight_table_size() );
     m_network.set_weight_table(weight_index, weight_value);
@@ -134,8 +133,7 @@ public:
 
 private:
   rafko_net::RafkoNet& m_network;
-  rafko_net::Solution* m_networkSolution;
-  rafko_gym::RafkoWeightAdapter m_weightAdapter;
+  rafko_net::SolutionSolver::Factory m_solverFactory;
   std::unique_ptr<rafko_net::SolutionSolver> m_agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;
   std::shared_ptr<rafko_gym::RafkoObjective> m_objective;

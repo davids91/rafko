@@ -32,9 +32,8 @@ RafkoGPUContext::RafkoGPUContext(
   std::shared_ptr<rafko_gym::RafkoObjective> objective
 ):RafkoContext(settings)
 , m_network(neural_network)
-, m_networkSolution(rafko_net::SolutionBuilder(*m_settings).build(m_network))
-, m_weightAdapter(m_network, *m_networkSolution, *m_settings)
-, m_agent(rafko_net::SolutionSolver::Builder(m_networkSolution, *m_settings).build())
+, m_solverFactory(m_network, m_settings)
+, m_agent(m_solverFactory.build())
 , m_environment(std::make_unique<RafkoDummyEnvironment>(
   m_network.input_data_size(), m_network.output_neuron_number())
 )
@@ -63,19 +62,19 @@ RafkoGPUContext::RafkoGPUContext(
 }
 
 void RafkoGPUContext::upload_weight_to_device(std::uint32_t weight_index){
-  std::vector<std::pair<std::uint32_t,std::uint32_t>> relevant_partial_weights = m_weightAdapter.get_relevant_partial_weight_indices_for(
-    weight_index
+  const std::vector<std::pair<std::uint32_t,std::uint32_t>>& relevant_partial_weights = (
+    m_solverFactory.expose_weight_adapter().get_relevant_partial_weight_indices_for(weight_index)
   );
   std::uint32_t weight_table_offset = 0u;
   std::uint32_t partial_index = 0u;
   RFASSERT_LOG("Starting to upload a single weight to device..");
   for(const std::pair<std::uint32_t,std::uint32_t>& index_pair : relevant_partial_weights){
     while(partial_index < std::get<0>(index_pair)){
-      weight_table_offset += m_networkSolution->partial_solutions(partial_index).weight_table_size();
+      weight_table_offset += m_solverFactory.actual_solution()->partial_solutions(partial_index).weight_table_size();
       ++partial_index;
     }
     std::uint32_t weight_index_in_partial = std::get<1>(index_pair);
-    double weight_value = m_networkSolution->partial_solutions(partial_index).weight_table(weight_index_in_partial);
+    double weight_value = m_solverFactory.actual_solution()->partial_solutions(partial_index).weight_table(weight_index_in_partial);
     RFASSERT_LOG("Weight index in partial[{}]: {}", partial_index, weight_index_in_partial);
 
     /* Update weight at weight_table_offset + std::get<1>(index_pair) */
@@ -97,7 +96,7 @@ void RafkoGPUContext::set_network_weight(std::uint32_t weight_index, double weig
   RFASSERT_LOG("Setting weight[{}] to {}", weight_index, weight_value);
   RFASSERT( static_cast<std::int32_t>(weight_index) < m_network.weight_table_size() );
   m_network.set_weight_table(weight_index, weight_value);
-  m_weightAdapter.update_solution_with_weight(weight_index);
+  m_solverFactory.refresh_actual_solution_weights();
   upload_weight_to_device(weight_index);
 }
 
@@ -105,7 +104,7 @@ void RafkoGPUContext::set_network_weights(const std::vector<double>& weights){
   RFASSERT_LOGV(weights, "Setting weights to:");
   RFASSERT( static_cast<std::int32_t>(weights.size()) == m_network.weight_table_size() );
   *m_network.mutable_weight_table() = {weights.begin(), weights.end()};
-  m_weightAdapter.update_solution_with_weights();
+  m_solverFactory.refresh_actual_solution_weights();
   upload_weight_table_to_device();
 }
 
@@ -115,7 +114,7 @@ void RafkoGPUContext::apply_weight_update(const std::vector<double>& weight_delt
   if(m_weightUpdater->is_finished())
     m_weightUpdater->start();
   m_weightUpdater->iterate(weight_delta);
-  m_weightAdapter.update_solution_with_weights();
+  m_solverFactory.refresh_actual_solution_weights();
   upload_weight_table_to_device();
 }
 
@@ -123,7 +122,7 @@ void RafkoGPUContext::upload_weight_table_to_device(){
   RFASSERT_LOG("Uploading weight table to device..");
   std::vector<double> device_weight_table;
   std::uint32_t overall_number_of_weights = 0u;
-  for(const rafko_net::PartialSolution& partial : m_networkSolution->partial_solutions()){
+  for(const rafko_net::PartialSolution& partial : m_solverFactory.actual_solution()->partial_solutions()){
     device_weight_table.insert(
       device_weight_table.end(),
       partial.weight_table().begin(), partial.weight_table().end()

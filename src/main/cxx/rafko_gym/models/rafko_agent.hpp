@@ -51,11 +51,7 @@ class RAFKO_EXPORT RafkoAgent
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
-  RafkoAgent(
-    const rafko_net::Solution* solution, const rafko_mainframe::RafkoSettings& settings,
-    std::uint32_t required_temp_data_size, std::uint32_t required_temp_data_number_per_thread,
-    std::uint32_t max_threads = 1u
-  );
+  RafkoAgent(const rafko_net::Solution* solution, const rafko_mainframe::RafkoSettings& settings);
   virtual ~RafkoAgent() = default;
 
   /*
@@ -75,23 +71,10 @@ public:
    *
    * @return         The output values of the network result
    */
-  rafko_utilities::ConstVectorSubrange<> solve(
+  virtual rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<double>& input, bool reset_neuron_data = false, std::uint32_t thread_index = 0u
-  );
+  ) = 0;
 
-  /**
-   * @brief      Solves the rafko_net::Solution provided in the constructor, previous neural information is supposedly available in @output buffer
-   *
-   * @param[in]      input                    The input data to be taken
-   * @param          output                   The used Output data to write the results to
-   * @param[in]      tmp_data_pool            The already allocated data pool to be used to store intermediate data
-   * @param[in]      used_data_pool_start     The first index inside @tmp_data_pool to be used
-   */
-  virtual void solve(
-    const std::vector<double>& input, rafko_utilities::DataRingbuffer<>& output,
-    const std::vector<std::reference_wrapper<std::vector<double>>>& tmp_data_pool,
-    std::uint32_t used_data_pool_start = 0, std::uint32_t thread_index = 0
-  ) const = 0;
 
   /**
    * @brief      Provide the raw Neural data
@@ -104,15 +87,17 @@ public:
     return m_neuronValueBuffers[thread_index];
   }
 
-  /**
-   * @brief     Provides the size of the buffer it was declared with
-   */
-  constexpr std::uint32_t get_required_temp_data_size() const{
-    return m_requiredTempDataSize;
-  }
-
 #if(RAFKO_USES_OPENCL)
-  constexpr void set_sequence_params(std::uint32_t sequence_number, std::uint32_t sequence_size = 1u, std::uint32_t prefill_inputs_per_sequence = 0u){
+  /**
+   * @brief     Sets the parameters the generated kernel code will be based on. These parameters usually come from an environment
+   *
+   * @param[in]     sequence_number                 How many sequences are there?
+   * @param[in]     sequence_size                   How many feature-label pairs are in a sequence?
+   * @param[in]     prefill_inputs_per_sequence     How many prefill inputs are there before a sequence?
+   */
+  constexpr void set_sequence_params(
+    std::uint32_t sequence_number, std::uint32_t sequence_size = 1u, std::uint32_t prefill_inputs_per_sequence = 0u
+  ){
     m_sequencesEvaluating = sequence_number;
     m_sequenceSize = sequence_size;
     m_prefillInputsPerSequence = prefill_inputs_per_sequence;
@@ -161,14 +146,12 @@ public:
 protected:
   const rafko_mainframe::RafkoSettings& m_settings;
   const rafko_net::Solution* m_solution;
-  std::uint32_t m_requiredTempDataNumberPerThread;
-  std::uint32_t m_requiredTempDataSize;
-  std::uint32_t m_maxThreads;
-
-private:
-  mutable rafko_utilities::DataPool<double> m_commonDataPool;
+  std::uint32_t m_maxThreadNumber;
+  rafko_utilities::DataPool<double> m_commonDataPool;
   std::vector<rafko_utilities::DataRingbuffer<>> m_neuronValueBuffers; /* One rafko_utilities::DataRingbuffer per thread */
   std::vector<std::reference_wrapper<std::vector<double>>> m_usedDataBuffers;
+
+private:
 #if(RAFKO_USES_OPENCL)
   std::uint32_t m_sequencesEvaluating = 1u;
   std::uint32_t m_sequenceSize = 1u;

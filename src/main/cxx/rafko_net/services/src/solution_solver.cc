@@ -27,26 +27,6 @@
 
 namespace rafko_net{
 
-SolutionSolver::Builder::Builder(const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings)
-:  m_solution(to_solve)
-,  m_settings(settings)
-{
-  std::uint32_t partial_index_at_row_start = 0;
-  for(std::int32_t row_iterator = 0; row_iterator < m_solution->cols_size(); ++row_iterator){
-    m_partialSolvers.push_back(std::vector<PartialSolutionSolver>());
-    for(std::uint32_t column_index = 0; column_index < m_solution->cols(row_iterator); ++column_index){
-      m_partialSolvers[row_iterator].push_back( PartialSolutionSolver(
-        m_solution->partial_solutions(partial_index_at_row_start + column_index), settings
-      )); /* Initialize a solver for this partial solution element */
-      if(m_partialSolvers[row_iterator][column_index].get_required_tmp_data_size() > m_maxTmpSizeNeeded)
-        m_maxTmpSizeNeeded = m_partialSolvers[row_iterator][column_index].get_required_tmp_data_size();
-    }
-    partial_index_at_row_start += m_solution->cols(row_iterator);
-    if(m_solution->cols(row_iterator) > m_maxTmpDataNeededPerThread)
-      m_maxTmpDataNeededPerThread = m_solution->cols(row_iterator);
-  } /* loop through every partial solution and initialize solvers and output maps for them */
-}
-
 SolutionSolver::Factory::Factory(const RafkoNet& network, std::shared_ptr<const rafko_mainframe::RafkoSettings> settings)
 : m_network(network)
 , m_settings(settings)
@@ -68,93 +48,134 @@ std::unique_ptr<SolutionSolver> SolutionSolver::Factory::build(bool rebuild_solu
   }
 
   RFASSERT(static_cast<bool>(m_actualSolution));
-  return Builder(m_actualSolution, *m_settings).build();
+  return std::unique_ptr<SolutionSolver>(new SolutionSolver(m_actualSolution, *m_settings));
 }
 
-SolutionSolver::SolutionSolver(
-  const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings,
-  std::vector<std::vector<PartialSolutionSolver>> partial_solvers,
-  std::uint32_t max_tmp_data_needed, std::uint32_t max_tmp_data_needed_per_thread
-): rafko_gym::RafkoAgent(to_solve, settings, max_tmp_data_needed, max_tmp_data_needed_per_thread, settings.get_max_processing_threads())
-,  m_partialSolvers(partial_solvers)
-,  m_featureExecutor(m_executionThreads)
+SolutionSolver::SolutionSolver(const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings)
+: rafko_gym::RafkoAgent(to_solve, settings)
+, m_featureExecutor(m_executionThreads)
 {
+  RFASSERT(m_solution);
+  rebuild(m_solution);
   for(std::uint32_t thread_index = 0; thread_index < m_settings.get_max_processing_threads(); ++ thread_index)
     m_executionThreads.emplace_back(std::make_unique<rafko_utilities::ThreadGroup>(settings.get_max_solve_threads()));
 }
 
-void SolutionSolver::solve(
-  const std::vector<double>& input, rafko_utilities::DataRingbuffer<>& output,
-  const std::vector<std::reference_wrapper<std::vector<double>>>& tmp_data_pool,
-  std::uint32_t used_data_pool_start, std::uint32_t thread_index
-) const{
-  if(0 < m_solution->cols_size()){
-    std::uint32_t col_iterator;
-    std::mutex solved_features_mutex;
-    std::vector<std::reference_wrapper<const FeatureGroup>> solved_features;
+void SolutionSolver::rebuild(const Solution* to_solve){
+  m_maxTmpSizeNeeded = 0u;
+  m_maxTmpDataNeededPerThread = 0u;
+  m_partialSolvers.clear();
+  m_solution = to_solve;
 
-    output.copy_step(); /* move the iterator forward to the next slot and store the current data */
-    for(std::int32_t row_iterator = 0; row_iterator < m_solution->cols_size(); ++row_iterator){
-      if(0 == m_solution->cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
-      col_iterator = 0;
-      if( /* Don't use the threadgroup if there is no need for multiple threads.. */
-        (m_solution->cols(row_iterator) < m_settings.get_max_solve_threads()/2u)
-        ||(m_solution->cols(row_iterator) < 2u) /* ..since the number of partial solutions depend on the available device size */
-      ){ /* having fewer partial solutions in a row usually implies whether or not multiple threads are needed */
-        while(col_iterator < m_solution->cols(row_iterator)){
-          for(std::uint16_t inner_thread_index = 0; inner_thread_index < m_settings.get_max_solve_threads(); ++inner_thread_index){
-            if(col_iterator < m_solution->cols(row_iterator)){
-              m_partialSolvers[row_iterator][col_iterator].solve(
-                std::ref(input), std::ref(output), std::ref(tmp_data_pool[used_data_pool_start + inner_thread_index].get())
-              );
-              const PartialSolution& partial = m_partialSolvers[row_iterator][col_iterator].get_partial();
-              for(std::int32_t feature_index = 0; feature_index < partial.solved_features_size(); feature_index++)
-                solved_features.push_back( partial.solved_features(feature_index) );
-              ++col_iterator;
-            }else break;
-          }
-        }/* while(col_iterator < solution.cols(row_iterator)) */
-      }else{
-        while(col_iterator < m_solution->cols(row_iterator)){
-          { /* To make the Solver itself thread-safe; the sub-threads need to be guarded with a lock */
-            m_executionThreads[thread_index]->start_and_block(
-            [this, &input, &output, &tmp_data_pool, used_data_pool_start, row_iterator, col_iterator, &solved_features_mutex, &solved_features](std::uint32_t inner_thread_index){
-              if((col_iterator + inner_thread_index) < m_solution->cols(row_iterator)){
-                m_partialSolvers[row_iterator][(col_iterator + inner_thread_index)].solve(
-                  input,output,tmp_data_pool[used_data_pool_start + inner_thread_index].get()
+  std::uint32_t partial_index_at_row_start = 0u;
+  for(std::int32_t row_iterator = 0; row_iterator < m_solution->cols_size(); ++row_iterator){
+    m_partialSolvers.push_back(std::vector<PartialSolutionSolver>());
+    for(std::uint32_t column_index = 0; column_index < m_solution->cols(row_iterator); ++column_index){
+      m_partialSolvers[row_iterator].emplace_back(
+        m_solution->partial_solutions(partial_index_at_row_start + column_index), m_settings
+      ); /* Initialize a solver for this partial solution element */
+      if(m_partialSolvers[row_iterator][column_index].get_required_tmp_data_size() > m_maxTmpSizeNeeded)
+        m_maxTmpSizeNeeded = m_partialSolvers[row_iterator][column_index].get_required_tmp_data_size();
+    }
+    partial_index_at_row_start += m_solution->cols(row_iterator);
+    if(m_solution->cols(row_iterator) > m_maxTmpDataNeededPerThread)
+      m_maxTmpDataNeededPerThread = m_solution->cols(row_iterator);
+  } /* loop through every partial solution and initialize solvers and output maps for them */
+
+  /* Actualize buffers and buffer sizes: A temporary buffer is allocated for future usage per thread */
+  while(m_usedDataBuffers.size() < (m_maxThreadNumber * m_maxTmpDataNeededPerThread))
+    m_usedDataBuffers.push_back(m_commonDataPool.reserve_buffer(m_maxTmpSizeNeeded));
+  for(std::vector<double>& buffer : m_usedDataBuffers)buffer.resize(m_maxTmpSizeNeeded);
+}
+
+rafko_utilities::ConstVectorSubrange<> SolutionSolver::solve(
+  const std::vector<double>& input, bool reset_neuron_data, std::uint32_t thread_index
+){
+  if(m_maxThreadNumber > thread_index){
+    if( input.size() != m_solution->network_input_size() )
+      throw std::runtime_error("Input size(" + std::to_string(input.size()) + ") doesn't match "
+        + std::string("networks input size(") + std::to_string(m_solution->network_input_size()) + ")!"
+      );
+
+    if(reset_neuron_data)m_neuronValueBuffers[thread_index].reset();
+    const std::uint32_t used_data_pool_start = thread_index * m_maxTmpDataNeededPerThread;
+    if(0 < m_solution->cols_size()){
+      std::uint32_t partial_index = 0;
+      std::uint32_t col_iterator;
+      std::mutex solved_features_mutex;
+      std::vector<std::reference_wrapper<const FeatureGroup>> solved_features;
+
+      m_neuronValueBuffers[thread_index].copy_step(); /* move the iterator forward to the next slot and store the current data */
+      for(std::int32_t row_iterator = 0; row_iterator < m_solution->cols_size(); ++row_iterator){
+        if(0 == m_solution->cols(row_iterator)) throw std::runtime_error("A solution row of 0 columns!");
+        col_iterator = 0;
+        if( /* Don't use the threadgroup if there is no need for multiple threads.. */
+          (m_solution->cols(row_iterator) < m_settings.get_max_solve_threads()/2u)
+          ||(m_solution->cols(row_iterator) < 2u) /* ..since the number of partial solutions depend on the available device size */
+        ){ /* having fewer partial solutions in a row usually implies whether or not multiple threads are needed */
+          while(col_iterator < m_solution->cols(row_iterator)){
+            for(std::uint16_t inner_thread_index = 0; inner_thread_index < m_settings.get_max_solve_threads(); ++inner_thread_index){
+              if(col_iterator < m_solution->cols(row_iterator)){
+                m_partialSolvers[row_iterator][col_iterator].solve(
+                  std::ref(input), std::ref(m_neuronValueBuffers[thread_index]), std::ref(m_usedDataBuffers[used_data_pool_start + inner_thread_index].get())
                 );
-                const PartialSolution& partial = m_partialSolvers[row_iterator][col_iterator].get_partial();
-                for(std::int32_t feature_index = 0; feature_index < partial.solved_features_size(); feature_index++){
-                  std::lock_guard<std::mutex> my_lock(solved_features_mutex);
+                const PartialSolution& partial = m_solution->partial_solutions(partial_index);
+                for(std::int32_t feature_index = 0; feature_index < partial.solved_features_size(); feature_index++)
                   solved_features.push_back( partial.solved_features(feature_index) );
-                  /*!Note: multiple features might be solved at the same time, but theoretically they shouldn't clash
-                   * because of the Neuron router filtering.
-                   */
+                ++col_iterator;
+                ++partial_index;
+              }else break;
+            }
+          }/* while(col_iterator < solution.cols(row_iterator)) */
+        }else{
+          while(col_iterator < m_solution->cols(row_iterator)){
+            { /* To make the Solver itself thread-safe; the sub-threads need to be guarded with a lock */
+              m_executionThreads[thread_index]->start_and_block(
+              [this, &input, used_data_pool_start, row_iterator, col_iterator, partial_index, &solved_features_mutex, &solved_features, thread_index](std::uint32_t inner_thread_index){
+                if((col_iterator + inner_thread_index) < m_solution->cols(row_iterator)){
+                  m_partialSolvers[row_iterator][(col_iterator + inner_thread_index)].solve(
+                    input, m_neuronValueBuffers[thread_index], m_usedDataBuffers[used_data_pool_start + inner_thread_index].get()
+                  );
+                  const PartialSolution& partial = m_solution->partial_solutions(partial_index + inner_thread_index);
+                  for(std::int32_t feature_index = 0; feature_index < partial.solved_features_size(); feature_index++){
+                    std::lock_guard<std::mutex> my_lock(solved_features_mutex);
+                    solved_features.push_back( partial.solved_features(feature_index) );
+                    /*!Note: multiple features might be solved at the same time, but theoretically they shouldn't clash
+                     * because of the Neuron router filtering.
+                     */
+                  }
                 }
-              }
-            });
-          }
-          col_iterator += m_settings.get_max_solve_threads();
-        } /* while(col_iterator < solution.cols(row_iterator)) */
-      }
-      /*!Note: Triggered feature groups are only solved after the row for consistency, since columns inside rows are solved in paralell,
-       * and each column may contain feature relevant to any @Neuron inside the the current row.
-       */
-      for(std::uint32_t feature_index = 0; feature_index < solved_features.size(); feature_index++){
-        if(
-          (evaluating)
-          || NeuronInfo::is_feature_relevant_to_training( solved_features[feature_index].get().feature() )
-        ){
-          /*!Note: training relevant features only need to be run during evaluation */
-          m_featureExecutor.execute_solution_relevant(
-            solved_features[feature_index], m_settings,
-            {output.get_element(0u)}, thread_index
-          );
+              });
+            }
+            partial_index += m_settings.get_max_solve_threads();
+            col_iterator += m_settings.get_max_solve_threads();
+          } /* while(col_iterator < solution.cols(row_iterator)) */
         }
-      }
-      solved_features.clear();
-    } /* for(every row in the @Solution) */
-  }else throw std::runtime_error("A solution of 0 rows!");
+        /*!Note: Triggered feature groups are only solved after the row for consistency, since columns inside rows are solved in paralell,
+         * and each column may contain feature relevant to any @Neuron inside the the current row.
+         */
+        for(std::uint32_t feature_index = 0; feature_index < solved_features.size(); feature_index++){
+          if(
+            (evaluating)
+            || NeuronInfo::is_feature_relevant_to_training( solved_features[feature_index].get().feature() )
+          ){
+            /*!Note: training relevant features only need to be run during evaluation */
+            m_featureExecutor.execute_solution_relevant(
+              solved_features[feature_index], m_settings,
+              {m_neuronValueBuffers[thread_index].get_element(0u)}, thread_index
+            );
+          }
+        }
+        solved_features.clear();
+      } /* for(every row in the @Solution) */
+
+      return { /* return with the range of the output Neurons */
+        m_neuronValueBuffers[thread_index].get_element(0).end() - m_solution->output_neuron_number(),
+        m_neuronValueBuffers[thread_index].get_element(0).end()
+      };
+    }else throw std::runtime_error("A solution of 0 rows!");
+  }else throw std::runtime_error("Thread index out of bounds!");
+
 }
 
 } /* namespace rafko_net */

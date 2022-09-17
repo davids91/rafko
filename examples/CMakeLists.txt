@@ -20,14 +20,14 @@ endif()
 # Address sanitizer
 # add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
 # add_link_options(-fsanitize=address -fno-omit-frame-pointer)
-add_compile_options(-fsanitize=address)
-add_link_options(-fsanitize=address)
+# add_compile_options(-fsanitize=address)
+# add_link_options(-fsanitize=address)
 
-add_executable(create_network create_network.cpp)
+add_executable(create_network create_network.cc)
 target_link_libraries(create_network rafko ${USED_EXTRA_LIBRARIES})
 
-add_executable(execute_network execute_network.cpp)
+add_executable(execute_network execute_network.cc)
 target_link_libraries(execute_network rafko ${USED_EXTRA_LIBRARIES})
 
-add_executable(optimize_network optimize_network.cpp)
+add_executable(optimize_network optimize_network.cc)
 target_link_libraries(optimize_network rafko ${USED_EXTRA_LIBRARIES})

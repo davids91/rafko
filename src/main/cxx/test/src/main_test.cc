@@ -296,11 +296,11 @@ void print_weights(const rafko_net::RafkoNet& net, const rafko_net::Solution& so
 
 void print_training_sample(
   std::uint32_t sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
-  const rafko_net::RafkoNet& net, const rafko_mainframe::RafkoSettings& settings
+  const rafko_net::RafkoNet& net, std::shared_ptr<const rafko_mainframe::RafkoSettings> settings
 ){
-  rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(net);
+  rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(net);
   std::unique_ptr<rafko_net::SolutionSolver> sample_solver(
-    rafko_net::SolutionSolver::Builder(solution, settings).build()
+    rafko_net::SolutionSolver::Factory(net, settings).build()
   );
   std::vector<double> neuron_data(data_set.get_sequence_size());
   std::uint32_t raw_label_index = sample_sequence_index;
@@ -360,7 +360,7 @@ void print_training_sample(
   }
   std::cout << std::endl;
 
-  if(nullptr == settings.get_arena_ptr()){
+  if(nullptr == settings->get_arena_ptr()){
     delete solution;
   }
 }

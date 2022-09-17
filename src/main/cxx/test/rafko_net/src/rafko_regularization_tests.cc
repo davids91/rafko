@@ -290,10 +290,10 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
   unregulated_network.mutable_neuron_group_features()->Clear(); /* remove droput regularaziation from network */
 
   rafko_net::Solution* regulated_solution = rafko_net::SolutionBuilder(settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> regulated_agent = rafko_net::SolutionSolver::Builder(regulated_solution, settings).build();
+  std::unique_ptr<rafko_net::SolutionSolver> regulated_agent = std::make_unique<rafko_net::SolutionSolver>(regulated_solution, settings);
 
   rafko_net::Solution* unregulated_solution = rafko_net::SolutionBuilder(settings).build(unregulated_network);
-  std::unique_ptr<rafko_net::SolutionSolver> unregulated_agent = rafko_net::SolutionSolver::Builder(unregulated_solution, settings).build();
+  std::unique_ptr<rafko_net::SolutionSolver> unregulated_agent = std::make_unique<rafko_net::SolutionSolver>(unregulated_solution, settings);
 
   std::vector<double> network_input(network.input_data_size(), (rand()%10));
   (void)regulated_agent->solve(network_input);

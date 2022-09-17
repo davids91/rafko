@@ -58,7 +58,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
 
   /* Set some error and see if the environment produces the expected */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(solution, *settings).build());
+  std::unique_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
   double error_sum = (0.0);
   std::uint32_t raw_inputs_index = 0;
@@ -105,7 +105,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
 
   /* Set some error and see if the environment produces the expected */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(solution, *settings).build());
+  std::unique_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
   double error_sum = (0.0);
   std::uint32_t raw_inputs_index = 0;
@@ -158,7 +158,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   double environment_error = context.stochastic_evaluation(true, seed);
 
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_solver(rafko_net::SolutionSolver::Builder(solution, *settings).build());
+  std::unique_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
   srand(seed);
   double error_sum = (0.0);
@@ -221,12 +221,20 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
     *settings, rafko_gym::cost_function_squared_error
   );
   rafko_mainframe::RafkoCPUContext context(network, settings, objective);
+  rafko_net::SolutionSolver::Factory referenceSolverFactory(network, settings);
 
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){ /* modify single weight */
     std::uint32_t weight_index = rand()%(network.weight_table_size());
     double weight_value = static_cast<double>(rand()%20) / (15.0);
     context.set_network_weight(weight_index, weight_value);
     REQUIRE( network.weight_table(weight_index) == Catch::Approx(weight_value).epsilon(0.0000000001) );
+
+    referenceSolverFactory.refresh_actual_solution_weights();
+    std::unique_ptr<rafko_net::SolutionSolver> referenceSolver = referenceSolverFactory.build(true);
+    std::vector<double> referenceResult = referenceSolver->solve({1.0, 1.0}).acquire();
+    std::vector<double> result = context.solve({1.0, 1.0}, true).acquire(); /* need to reset the Neuron data to have a fair comparison */
+    REQUIRE( referenceResult[0] == result[0] );
+    REQUIRE( referenceResult[1] == result[1] );
   }/*for(10 variants)*/
 }
 
@@ -256,6 +264,7 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
     *settings, rafko_gym::cost_function_squared_error
   );
   rafko_mainframe::RafkoCPUContext context(network, settings, objective);
+  rafko_net::SolutionSolver::Factory referenceSolverFactory(network, settings);
 
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){ /* modify multiple weights */
     std::vector<double> weight_values(network.weight_table_size());
@@ -281,6 +290,12 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
       weight_values[weight_index] -= weight_deltas[weight_index] * settings->get_learning_rate();
       REQUIRE( network.weight_table(weight_index) == Catch::Approx(weight_values[weight_index]).epsilon(0.0000000001) );
     }
+
+    std::unique_ptr<rafko_net::SolutionSolver> referenceSolver = referenceSolverFactory.build(true);
+    std::vector<double> referenceResult = referenceSolver->solve({1.0, 1.0}).acquire();
+    std::vector<double> result = context.solve({1.0, 1.0}, true).acquire(); /* need to reset the Neuron data to have a fair comparison */
+    REQUIRE( referenceResult[0] == result[0] );
+    REQUIRE( referenceResult[1] == result[1] );
   }/*for(10 variants)*/
 }
 

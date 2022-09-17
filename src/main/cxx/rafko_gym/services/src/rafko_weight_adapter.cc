@@ -48,7 +48,7 @@ std::uint32_t RafkoWeightAdapter::get_relevant_partial_index_for(
   return static_cast<std::uint32_t>(-1); /* not found! */
 }
 
-PartialWeightPairs& RafkoWeightAdapter::get_relevant_partial_weight_indices_for(std::uint32_t network_weight_index) const{
+const PartialWeightPairs& RafkoWeightAdapter::get_relevant_partial_weight_indices_for(std::uint32_t network_weight_index) const{
   std::unordered_map<std::uint32_t, std::vector<std::pair<std::uint32_t,std::uint32_t>>>::iterator iter = m_weightsInPartials.find(network_weight_index);
   if(iter != m_weightsInPartials.end())
     return iter->second;
@@ -154,7 +154,7 @@ std::uint32_t RafkoWeightAdapter::get_weight_synapse_start_index_in_partial(
   return (weight_synapse_start - partial.weight_synapse_number(inner_neuron_index));
 }
 
-void RafkoWeightAdapter::update_solution_with_weight(std::uint32_t weight_index) const{
+void RafkoWeightAdapter::update_solution_with_weight(std::uint32_t weight_index){
   std::lock_guard<std::mutex> my_lock(m_referenceMutex);
   RFASSERT(static_cast<std::int32_t>(weight_index) < m_net.weight_table_size());
   const std::vector<std::pair<std::uint32_t, std::uint32_t>>& relevant_partial_weights = get_relevant_partial_weight_indices_for(weight_index);
@@ -165,7 +165,7 @@ void RafkoWeightAdapter::update_solution_with_weight(std::uint32_t weight_index)
   }
 }
 
-void RafkoWeightAdapter::update_solution_with_weights() const{
+void RafkoWeightAdapter::update_solution_with_weights(){
   std::lock_guard<std::mutex> my_lock(m_referenceMutex);
   std::int32_t partial_start_index = 0;
   while(partial_start_index < m_solution.partial_solutions_size()){

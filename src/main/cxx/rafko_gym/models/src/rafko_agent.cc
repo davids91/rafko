@@ -18,19 +18,13 @@
 
 namespace rafko_gym{
 
-RafkoAgent::RafkoAgent(
-  const rafko_net::Solution* solution, const rafko_mainframe::RafkoSettings& settings,
-  std::uint32_t required_temp_data_size, std::uint32_t required_temp_data_number_per_thread,
-  std::uint32_t max_threads
-)
+RafkoAgent::RafkoAgent(const rafko_net::Solution* solution, const rafko_mainframe::RafkoSettings& settings)
 : m_settings(settings)
 , m_solution(solution)
-, m_requiredTempDataNumberPerThread(required_temp_data_number_per_thread)
-, m_requiredTempDataSize(required_temp_data_size)
-, m_maxThreads(max_threads)
-, m_commonDataPool((m_requiredTempDataNumberPerThread * m_maxThreads), m_requiredTempDataSize)
+, m_maxThreadNumber(settings.get_max_processing_threads())
+, m_commonDataPool()
 , m_neuronValueBuffers(
-  m_maxThreads, rafko_utilities::DataRingbuffer<>(
+  m_maxThreadNumber, rafko_utilities::DataRingbuffer<>(
     m_solution->network_memory_length(),
     [this](std::vector<double>& buffer){
       buffer = std::vector<double>(m_solution->neuron_number(), 0.0);
@@ -45,28 +39,7 @@ RafkoAgent::RafkoAgent(
   }
 ) )
 #endif/*(RAFKO_USES_OPENCL)*/
-{ /* A temporary buffer is allocated for every required future usage per thread */
-  for(std::uint32_t tmp_data_index = 0; tmp_data_index < (m_requiredTempDataNumberPerThread * m_maxThreads); ++tmp_data_index)
-    m_usedDataBuffers.push_back(m_commonDataPool.reserve_buffer(m_requiredTempDataSize));
-}
-
-rafko_utilities::ConstVectorSubrange<> RafkoAgent::solve(
-  const std::vector<double>& input, bool reset_neuron_data, std::uint32_t thread_index
-){
-  if(m_maxThreads > thread_index){
-    if( input.size() != m_solution->network_input_size() )
-      throw std::runtime_error(
-        "Input size(" + std::to_string(input.size()) + ") doesn't match "
-        + std::string("networks input size(") + std::to_string(m_solution->network_input_size()) + ")!"
-      );
-
-    if(reset_neuron_data)m_neuronValueBuffers[thread_index].reset();
-    solve( input, m_neuronValueBuffers[thread_index], m_usedDataBuffers, (thread_index * m_requiredTempDataNumberPerThread), thread_index );
-    return { /* return with the range of the output Neurons */
-      m_neuronValueBuffers[thread_index].get_element(0).end() - m_solution->output_neuron_number(),
-      m_neuronValueBuffers[thread_index].get_element(0).end()
-    };
-  } else throw std::runtime_error("Thread index out of bounds!");
+{
 }
 
 #if(RAFKO_USES_OPENCL)
