@@ -18,8 +18,9 @@ if(USE_OPENCL)
 endif()
 
 # Address sanitizer
-# add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-# add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+add_compile_options(-Wall -Wextra -Wpedantic)
+add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+add_link_options(-fsanitize=address -fno-omit-frame-pointer)
 # add_compile_options(-fsanitize=address)
 # add_link_options(-fsanitize=address)
 

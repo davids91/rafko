@@ -11,7 +11,7 @@
 #include <rafko_net/services/rafko_net_builder.hpp>
 #include <rafko_net/services/solution_solver.hpp>
 
-int main(int argc, char* argv[]){
+int main(){
   /* Create a Settings Object. This stores to essential parameters for almost everything inside the Rafko Framework */
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>();
 

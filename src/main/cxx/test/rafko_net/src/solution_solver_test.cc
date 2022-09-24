@@ -96,7 +96,7 @@ void test_solution_solver_multithread(std::uint16_t threads){
 
   /* Solve the compiled Solution */
   srand (time(nullptr));
-  std::unique_ptr<rafko_net::SolutionSolver> solution_solver = std::make_unique<rafko_net::SolutionSolver>(&solution, settings);
+  std::shared_ptr<rafko_net::SolutionSolver> solution_solver = std::make_unique<rafko_net::SolutionSolver>(&solution, settings);
   std::vector<double> expected_neuron_data = std::vector<double>(solution.neuron_number());
   std::vector<double> network_output_vector;
   rafko_utilities::DataRingbuffer<> neuron_data_partials(1u, [](std::vector<double>& element){
@@ -182,7 +182,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(*net);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
-  std::unique_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
+  std::shared_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
   rafko_utilities::ConstVectorSubrange<> neuron_data = solver->solve(net_input, true);
   REQUIRE(neuron_data.size() >= solution->output_neuron_number());
   std::vector<double> result = {neuron_data.end() - solution->output_neuron_number(), neuron_data.end()};
@@ -201,7 +201,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   (void)settings.set_device_max_megabytes(solution_size_mb/4.0);
   rafko_net::Solution* solution2 = rafko_net::SolutionBuilder(settings).build(*net);
 
-  std::unique_ptr<rafko_net::SolutionSolver> solver2 = std::make_unique<rafko_net::SolutionSolver>(solution2, settings);
+  std::shared_ptr<rafko_net::SolutionSolver> solver2 = std::make_unique<rafko_net::SolutionSolver>(solution2, settings);
   rafko_utilities::ConstVectorSubrange<> neuron_data2 = solver2->solve(net_input, true);
   REQUIRE(neuron_data2.size() >= solution2->output_neuron_number());
   result = { neuron_data2.end() - solution2->output_neuron_number(), neuron_data2.end() };
@@ -248,7 +248,7 @@ double testing_nets_with_memory_manually(
 
   /* Generate solution from Net */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(*net);
-  std::unique_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
+  std::shared_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   rafko_utilities::ConstVectorSubrange<> neuron_data = solver->solve(net_input, true);
@@ -337,7 +337,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
   REQUIRE_NOTHROW(solution = rafko_net::SolutionBuilder(settings).build(*network));
 
   /* Solve the generated solution */
-  std::unique_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
+  std::shared_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
   rafko_utilities::ConstVectorSubrange<> network_output = solver->solve(net_input, true);
@@ -449,7 +449,7 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
     .input_size(5).expected_input_range((5.0))
     .dense_layers(net_structure);
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
+  std::shared_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
 
   /* solve in a single thread */
   rafko_utilities::ConstVectorSubrange<> single_thread_output_buffer = solver->solve(net_input, true);
@@ -497,7 +497,7 @@ TEST_CASE("Solution Solver memory test", "[solve][memory]"){
   }
 
   rafko_net::Solution* solution(rafko_net::SolutionBuilder(settings).build(net));
-  std::unique_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
+  std::shared_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
 
   double expected_result = (1.0);
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){

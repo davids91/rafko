@@ -134,7 +134,7 @@ public:
 private:
   rafko_net::RafkoNet& m_network;
   rafko_net::SolutionSolver::Factory m_solverFactory;
-  std::unique_ptr<rafko_net::SolutionSolver> m_agent;
+  std::shared_ptr<rafko_net::SolutionSolver> m_agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;
   std::shared_ptr<rafko_gym::RafkoObjective> m_objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;

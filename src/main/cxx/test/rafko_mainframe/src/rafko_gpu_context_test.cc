@@ -86,7 +86,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
     );
 
     rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
-    std::unique_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
+    std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
     std::vector<double> network_input(network.input_data_size(), (rand()%10));
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
@@ -136,7 +136,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
     );
 
     rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
-    std::unique_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
+    std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
     std::vector<double> network_input(network.input_data_size(), (rand()%10));
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
@@ -185,7 +185,7 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
     );
 
     rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
-    std::unique_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
+    std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
     std::vector<double> network_input(network.input_data_size(), (rand()%10));
 
     reference_agent->set_eval_mode(false);
@@ -648,7 +648,7 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
     )
   );
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network_copy);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
+  std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     objective = std::make_shared<rafko_gym::RafkoCost>(

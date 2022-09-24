@@ -38,22 +38,41 @@ SolutionSolver::Factory::Factory(const RafkoNet& network, std::shared_ptr<const 
   }
 }
 
-std::unique_ptr<SolutionSolver> SolutionSolver::Factory::build(bool rebuild_solution){
+std::shared_ptr<SolutionSolver> SolutionSolver::Factory::build(bool rebuild_solution, bool swap_solution){
   if(rebuild_solution){
-    m_actualSolution = SolutionBuilder(*m_settings).build(m_network);
-    if(nullptr == m_settings->get_arena_ptr()){
-      m_ownedSolutions.emplace_back(m_actualSolution);
+    if(swap_solution){
+      SolutionBuilder(*m_settings).update(m_actualSolution, m_network);
+      for(std::shared_ptr<SolutionSolver>& solver : m_ownedSolvers)
+        solver->rebuild(m_actualSolution);
+    }else{
+      m_actualSolution = SolutionBuilder(*m_settings).build(m_network);
+      m_ownedSolvers.clear(); /* A new Solution object is built, so previously built solvers are not handled within this factory anymore */
+      if(nullptr == m_settings->get_arena_ptr()){
+        m_ownedSolutions.emplace_back(m_actualSolution);
+      }
     }
     m_weightAdapter = std::make_unique<rafko_gym::RafkoWeightAdapter>(m_network, *m_actualSolution, *m_settings);
-  }
+  }else if(swap_solution)
+    throw std::runtime_error("Error: Nothing to swap the actual Solution with!");
 
   RFASSERT(static_cast<bool>(m_actualSolution));
-  return std::unique_ptr<SolutionSolver>(new SolutionSolver(m_actualSolution, *m_settings));
+  m_ownedSolvers.push_back(std::make_shared<SolutionSolver>(m_actualSolution, *m_settings));
+  return m_ownedSolvers.back();
 }
 
 SolutionSolver::SolutionSolver(const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings)
-: rafko_gym::RafkoAgent(to_solve, settings)
+: rafko_gym::RafkoAgent(settings)
+, m_solution(to_solve)
+, m_maxThreadNumber(settings.get_max_processing_threads())
 , m_featureExecutor(m_executionThreads)
+#if(RAFKO_USES_OPENCL)
+, m_deviceWeightTableSize( std::accumulate(
+  m_solution->partial_solutions().begin(), m_solution->partial_solutions().end(), 0u,
+  [](const std::uint32_t& sum, const rafko_net::PartialSolution& partial){
+    return ( sum + partial.weight_table_size() );
+  }
+) )
+#endif/*(RAFKO_USES_OPENCL)*/
 {
   RFASSERT(m_solution);
   rebuild(m_solution);
@@ -62,10 +81,12 @@ SolutionSolver::SolutionSolver(const Solution* to_solve, const rafko_mainframe::
 }
 
 void SolutionSolver::rebuild(const Solution* to_solve){
+  std::lock_guard<std::mutex> my_lock(m_structureMutex);
   m_maxTmpSizeNeeded = 0u;
   m_maxTmpDataNeededPerThread = 0u;
   m_partialSolvers.clear();
   m_solution = to_solve;
+  m_neuronValueBuffers.clear();
 
   std::uint32_t partial_index_at_row_start = 0u;
   for(std::int32_t row_iterator = 0; row_iterator < m_solution->cols_size(); ++row_iterator){
@@ -86,6 +107,13 @@ void SolutionSolver::rebuild(const Solution* to_solve){
   while(m_usedDataBuffers.size() < (m_maxThreadNumber * m_maxTmpDataNeededPerThread))
     m_usedDataBuffers.push_back(m_commonDataPool.reserve_buffer(m_maxTmpSizeNeeded));
   for(std::vector<double>& buffer : m_usedDataBuffers)buffer.resize(m_maxTmpSizeNeeded);
+  for(std::uint32_t thread_index = 0; thread_index < m_maxThreadNumber; ++ thread_index){
+    m_neuronValueBuffers.emplace_back( m_solution->network_memory_length(),
+      [this](std::vector<double>& buffer){
+        buffer = std::vector<double>(m_solution->neuron_number(), 0.0);
+      }
+    );
+  }
 }
 
 rafko_utilities::ConstVectorSubrange<> SolutionSolver::solve(

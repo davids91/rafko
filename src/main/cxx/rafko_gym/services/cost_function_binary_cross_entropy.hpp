@@ -28,11 +28,12 @@ namespace rafko_gym{
  * @brief      Error function handling and utilities for Binary Cross entropy sum
  *             as described in https://datascience.stackexchange.com/questions/9302/the-cross-entropy-error-function-in-neural-networks
  */
-class RAFKO_EXPORT CostFunctionBinaryCrossEntropy : public CostFunction{
+class RAFKO_EXPORT CostFunctionBinaryCrossEntropy : public virtual CostFunction{
 public:
   CostFunctionBinaryCrossEntropy(const rafko_mainframe::RafkoSettings& settings)
   : CostFunction(cost_function_binary_cross_entropy, settings)
   { };
+  ~CostFunctionBinaryCrossEntropy() = default;
 
 protected:
   [[nodiscard]] constexpr double error_post_process(double error_value, std::uint32_t sample_number) const override{

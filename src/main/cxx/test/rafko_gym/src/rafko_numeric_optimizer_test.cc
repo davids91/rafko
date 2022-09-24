@@ -280,7 +280,7 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
     if(0.0 == avg_duration)avg_duration = current_duration;
     else avg_duration = (avg_duration + current_duration)/2.0;
     approximizer.apply_weight_vector_delta();
-    std::unique_ptr<rafko_net::SolutionSolver> reference_solver = reference_solver_factory.build();
+    std::shared_ptr<rafko_net::SolutionSolver> reference_solver = reference_solver_factory.build();
     actual_value[1][0] = reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0];
     actual_value[0][0] = reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0];
 

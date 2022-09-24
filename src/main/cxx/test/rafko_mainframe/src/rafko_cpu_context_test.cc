@@ -58,7 +58,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
 
   /* Set some error and see if the environment produces the expected */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
+  std::shared_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
   double error_sum = (0.0);
   std::uint32_t raw_inputs_index = 0;
@@ -105,7 +105,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
 
   /* Set some error and see if the environment produces the expected */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
+  std::shared_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
   double error_sum = (0.0);
   std::uint32_t raw_inputs_index = 0;
@@ -158,7 +158,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   double environment_error = context.stochastic_evaluation(true, seed);
 
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
+  std::shared_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
   srand(seed);
   double error_sum = (0.0);
@@ -230,7 +230,7 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
     REQUIRE( network.weight_table(weight_index) == Catch::Approx(weight_value).epsilon(0.0000000001) );
 
     referenceSolverFactory.refresh_actual_solution_weights();
-    std::unique_ptr<rafko_net::SolutionSolver> referenceSolver = referenceSolverFactory.build(true);
+    std::shared_ptr<rafko_net::SolutionSolver> referenceSolver = referenceSolverFactory.build(true);
     std::vector<double> referenceResult = referenceSolver->solve({1.0, 1.0}).acquire();
     std::vector<double> result = context.solve({1.0, 1.0}, true).acquire(); /* need to reset the Neuron data to have a fair comparison */
     REQUIRE( referenceResult[0] == result[0] );
@@ -291,7 +291,7 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
       REQUIRE( network.weight_table(weight_index) == Catch::Approx(weight_values[weight_index]).epsilon(0.0000000001) );
     }
 
-    std::unique_ptr<rafko_net::SolutionSolver> referenceSolver = referenceSolverFactory.build(true);
+    std::shared_ptr<rafko_net::SolutionSolver> referenceSolver = referenceSolverFactory.build(true);
     std::vector<double> referenceResult = referenceSolver->solve({1.0, 1.0}).acquire();
     std::vector<double> result = context.solve({1.0, 1.0}, true).acquire(); /* need to reset the Neuron data to have a fair comparison */
     REQUIRE( referenceResult[0] == result[0] );

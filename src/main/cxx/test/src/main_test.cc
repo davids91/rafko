@@ -299,7 +299,7 @@ void print_training_sample(
   const rafko_net::RafkoNet& net, std::shared_ptr<const rafko_mainframe::RafkoSettings> settings
 ){
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(net);
-  std::unique_ptr<rafko_net::SolutionSolver> sample_solver(
+  std::shared_ptr<rafko_net::SolutionSolver> sample_solver(
     rafko_net::SolutionSolver::Factory(net, settings).build()
   );
   std::vector<double> neuron_data(data_set.get_sequence_size());

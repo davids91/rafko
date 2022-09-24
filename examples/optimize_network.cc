@@ -6,7 +6,7 @@
 #include <rafko_mainframe/models/rafko_settings.hpp>
 #include <rafko_net/services/rafko_net_builder.hpp>
 
-int main(int argc, char* argv[]){
+int main(){
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     /* +++ Standard Training settings +++ */

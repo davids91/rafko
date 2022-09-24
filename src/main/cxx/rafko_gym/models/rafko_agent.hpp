@@ -51,7 +51,11 @@ class RAFKO_EXPORT RafkoAgent
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
-  RafkoAgent(const rafko_net::Solution* solution, const rafko_mainframe::RafkoSettings& settings);
+  RafkoAgent(const rafko_mainframe::RafkoSettings& settings)
+  : m_settings(settings)
+  {
+  }
+
   virtual ~RafkoAgent() = default;
 
   /*
@@ -75,89 +79,16 @@ public:
     const std::vector<double>& input, bool reset_neuron_data = false, std::uint32_t thread_index = 0u
   ) = 0;
 
-
-  /**
-   * @brief      Provide the raw Neural data
-   *
-   * @param[in]      thread_index     The index of the target thread
-   * @return         A const reference to the raw Neuron data
-   */
-  const rafko_utilities::DataRingbuffer<>& get_memory(std::uint32_t thread_index = 0) const{
-    RFASSERT(thread_index < m_neuronValueBuffers.size());
-    return m_neuronValueBuffers[thread_index];
-  }
-
-#if(RAFKO_USES_OPENCL)
-  /**
-   * @brief     Sets the parameters the generated kernel code will be based on. These parameters usually come from an environment
-   *
-   * @param[in]     sequence_number                 How many sequences are there?
-   * @param[in]     sequence_size                   How many feature-label pairs are in a sequence?
-   * @param[in]     prefill_inputs_per_sequence     How many prefill inputs are there before a sequence?
-   */
-  constexpr void set_sequence_params(
-    std::uint32_t sequence_number, std::uint32_t sequence_size = 1u, std::uint32_t prefill_inputs_per_sequence = 0u
-  ){
-    m_sequencesEvaluating = sequence_number;
-    m_sequenceSize = sequence_size;
-    m_prefillInputsPerSequence = prefill_inputs_per_sequence;
-  }
-
-  cl::Program::Sources get_step_sources() const override{
-    return { rafko_net::SolutionBuilder::get_kernel_for_solution(
-      *m_solution, "agent_solution",
-      m_sequenceSize, m_prefillInputsPerSequence,
-      m_settings
-    ) };
-  }
-
-  std::vector<std::string> get_step_names() const override{
-    return {"agent_solution"};
-  }
-
-  /**
-   * @brief      Provides the input dimension of the agent, which consist of
-   *             3 buffers: mode, weights, and (inputs + prefill) for each evaluated sequence
-   *
-   * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
-   */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override{
-    return{ rafko_mainframe::RafkoNBufShape{
-      1u, m_deviceWeightTableSize,
-      (m_sequencesEvaluating * (m_sequenceSize + m_prefillInputsPerSequence) * m_solution->network_input_size())
-    } };
-  }
-
-  /**
-   * @brief      Provides the output dimension of the agent, which consist of
-   *             1 buffer: Neuron outputs for each evaluated sequence or network memory
-   *
-   * @return     Vector of dimensions in order of @get_step_sources and @get_step_names
-   *             Agent output structure: {{ used bytes for execution, used bytes for performance feature error summary }}
-   */
-  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override;
-
-  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
-    return {cl::NullRange,cl::NDRange(m_sequencesEvaluating),cl::NullRange};
-  }
-
-#endif/*(RAFKO_USES_OPENCL)*/
+  #if(RAFKO_USES_OPENCL)
+  virtual cl::Program::Sources get_step_sources() const override = 0;
+  virtual std::vector<std::string> get_step_names() const override = 0;
+  virtual std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override = 0;
+  virtual std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override = 0;
+  virtual std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override = 0;
+  #endif/*(RAFKO_USES_OPENCL)*/
 
 protected:
   const rafko_mainframe::RafkoSettings& m_settings;
-  const rafko_net::Solution* m_solution;
-  std::uint32_t m_maxThreadNumber;
-  rafko_utilities::DataPool<double> m_commonDataPool;
-  std::vector<rafko_utilities::DataRingbuffer<>> m_neuronValueBuffers; /* One rafko_utilities::DataRingbuffer per thread */
-  std::vector<std::reference_wrapper<std::vector<double>>> m_usedDataBuffers;
-
-private:
-#if(RAFKO_USES_OPENCL)
-  std::uint32_t m_sequencesEvaluating = 1u;
-  std::uint32_t m_sequenceSize = 1u;
-  std::uint32_t m_prefillInputsPerSequence = 0u;
-  std::uint32_t m_deviceWeightTableSize;
-#endif/*(RAFKO_USES_OPENCL)*/
 };
 
 } /* namespace rafko_gym */

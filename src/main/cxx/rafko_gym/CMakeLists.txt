@@ -59,7 +59,6 @@ target_sources(rafko_gym
   PUBLIC ${GYM_HEADERS}
   PRIVATE
   ${GYM_SOURCES_WITH_OCL}
-  models/src/rafko_agent.cc
   models/src/rafko_cost.cc
   models/src/rafko_environment.cc
   models/src/rafko_dataset_wrapper.cc

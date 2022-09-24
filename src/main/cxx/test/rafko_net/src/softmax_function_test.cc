@@ -247,7 +247,7 @@ TEST_CASE("Checking if the network solver is correctly producing the softmax fea
   rafko_mainframe::RafkoSettings settings;
   std::unique_ptr<rafko_net::RafkoNet> net;
   std::unique_ptr<rafko_net::Solution> solution;
-  std::unique_ptr<rafko_net::SolutionSolver> solver;
+  std::shared_ptr<rafko_net::SolutionSolver> solver;
   for(std::uint32_t variant = 0; variant < 10u; ++variant){
     net = std::unique_ptr<rafko_net::RafkoNet>(rafko_test::generate_random_net_with_softmax_features(3, settings));
     solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(settings).build(*net));
