@@ -28,7 +28,7 @@ namespace rafko_gym{
  * @brief      Error function handling and utilities for Cross Entropy
  *             as described in https://datascience.stackexchange.com/questions/9302/the-cross-entropy-error-function-in-neural-networks
  */
-class RAFKO_EXPORT CostFunctionCrossEntropy : public virtual CostFunction{
+class RAFKO_EXPORT CostFunctionCrossEntropy : public CostFunction{
 public:
   CostFunctionCrossEntropy(const rafko_mainframe::RafkoSettings& settings)
   : CostFunction(cost_function_cross_entropy, settings)

@@ -42,7 +42,7 @@ namespace rafko_gym{
 /**
  * @brief      Implementation of an objective based on a @CostFunction
  */
-class RAFKO_EXPORT RafkoCost : public RafkoObjective
+class RAFKO_EXPORT RafkoCost : public virtual RafkoObjective
 {
 public:
   RafkoCost(rafko_mainframe::RafkoSettings& settings, std::shared_ptr<rafko_gym::CostFunction> cost_function)
@@ -56,6 +56,8 @@ public:
   , m_costFunction(rafko_gym::FunctionFactory::build_cost_function(the_function, settings))
   , m_errorCalculationThreads(settings.get_sqrt_of_solve_threads())
   { }
+
+  ~RafkoCost() = default;
 
   /* +++ Methods taken from @RafkoObjective +++ */
   double set_feature_for_label(

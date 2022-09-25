@@ -97,7 +97,7 @@ public:
   }
 
   /**
-   * @brief          Accepts a weight updater type to make handle the weight updates
+   * @brief          Accepts a weight updater type to handle the weight updates
    *
    * @param[in]      objective    An objective function ready to be moved inside the context
    */
@@ -105,6 +105,24 @@ public:
     RFASSERT_LOG("Setting weight updater in Autodiff optimizer to {}", rafko_gym::Weight_updaters_Name(updater));
     m_weightUpdater.reset();
     m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, *m_settings);
+  }
+
+  /**
+   * @brief          Accepts a RafkoContext shared pointer to use to produce the training error values
+   *
+   * @param[in]      context    A RafkoContext shared pointer
+   */
+  void set_training_context(std::shared_ptr<rafko_mainframe::RafkoContext> context){
+    m_trainingEvaluator = context;
+  }
+
+  /**
+   * @brief          Accepts a RafkoContext shared pointer to use to produce the testing error values
+   *
+   * @param[in]      context    A RafkoContext shared pointer
+   */
+  void set_testing_context(std::shared_ptr<rafko_mainframe::RafkoContext> context){
+    m_testEvaluator = context;
   }
 
   /**

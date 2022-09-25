@@ -1,6 +1,6 @@
 add_library(rafko_utilities OBJECT)
 target_include_directories(rafko_utilities PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}  models services)
-
+add_dependencies(rafko_utilities rafko_lib_config)
 if(RAFKO_USES_OPENCL)
   set(RAFKO_GPU_LIBRARY_HEADERS
     models/rafko_gpu_kernel_library.hpp

@@ -1,5 +1,6 @@
 add_library(rafko_mainframe OBJECT)
 target_include_directories(rafko_mainframe PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services control)
+add_dependencies(rafko_mainframe rafko_lib_config)
 
 if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
@@ -9,6 +10,8 @@ if(USE_OPENCL)
   )
   set(HEADERS_SERVICES_WITH_OCL
     services/rafko_ocl_factory.hpp
+    services/rafko_gpu_context.hpp
+    services/rafko_gpu_phase.hpp
   )
   set(SOURCES_WITH_OCL
     models/src/rafko_gpu_strategy_phase.cc

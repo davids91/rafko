@@ -79,7 +79,7 @@ public:
     const std::vector<double>& input, bool reset_neuron_data = false, std::uint32_t thread_index = 0u
   ) = 0;
 
-  #if(RAFKO_USES_OPENCL)
+  #if(RAFKO_USES_OPENCL) /* Methods forwarding from rafko_mainframe::RafkoGPUStrategyPhase */
   virtual cl::Program::Sources get_step_sources() const override = 0;
   virtual std::vector<std::string> get_step_names() const override = 0;
   virtual std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override = 0;

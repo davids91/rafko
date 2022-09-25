@@ -51,16 +51,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
   if(USE_OPENCL)
     find_package(OpenCL REQUIRED)
-    set(OPENCL_TARGET 120)
-    add_compile_definitions(CL_HPP_MINIMUM_OPENCL_VERSION=120)
-    add_compile_definitions(CL_HPP_TARGET_OPENCL_VERSION=${OPENCL_TARGET})
-    add_compile_definitions(RAFKO_USES_OPENCL=1)
-  endif()
-
-  if(ASSERTLOGS)
-    add_compile_definitions(RAFKO_USES_ASSERTLOGS=1)
-  else()
-    add_compile_definitions(RAFKO_USES_ASSERTLOGS=0)
   endif()
 
   if(SANITIZE)
@@ -73,8 +63,14 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(CMAKE_CXX_CPPCHECK "cppcheck")
   endif()
 endif()
+
 include(GenerateExportHeader)
 generate_export_header(rafko EXPORT_FILE_NAME rafko_export.hpp)
+add_custom_target(rafko_lib_config
+  COMMAND
+  ${CMAKE_COMMAND} -D ASSERTLOGS=${ASSERTLOGS} -D USE_OPENCL=${USE_OPENCL} -D LIB_EXPORT_CONSTANTS=${LIB_EXPORT_CONSTANTS} -P ${CMAKE_SOURCE_DIR}/rafko_lib_config.cmake
+  COMMENT "Generating Configuration for Library.."
+)
 
 target_compile_features(rafko
   PRIVATE
@@ -110,7 +106,10 @@ if(MAKE_TESTS)
 endif()
 
 install(
-  FILES rafko_global.hpp ${CMAKE_CURRENT_BINARY_DIR}/rafko_export.hpp
+  FILES
+  rafko_global.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/rafko_export.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/rafko_config.hpp
   DESTINATION include/
 )
 

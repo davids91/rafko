@@ -19,16 +19,21 @@ endif()
 
 # Address sanitizer
 add_compile_options(-Wall -Wextra -Wpedantic)
-add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-add_link_options(-fsanitize=address -fno-omit-frame-pointer)
-# add_compile_options(-fsanitize=address)
-# add_link_options(-fsanitize=address)
+if(NOT USE_OPENCL) # The below messes with OpenCL
+  add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+endif()
+
+message("libs: ${USED_EXTRA_LIBRARIES}")
 
 add_executable(create_network create_network.cc)
 target_link_libraries(create_network rafko ${USED_EXTRA_LIBRARIES})
 
 add_executable(execute_network execute_network.cc)
 target_link_libraries(execute_network rafko ${USED_EXTRA_LIBRARIES})
+
+add_executable(evaluate_network evaluate_network.cc)
+target_link_libraries(evaluate_network rafko ${USED_EXTRA_LIBRARIES})
 
 add_executable(optimize_network optimize_network.cc)
 target_link_libraries(optimize_network rafko ${USED_EXTRA_LIBRARIES})
