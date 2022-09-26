@@ -32,14 +32,14 @@
 
 namespace rafko_net {
 
-class RAFKO_FULL_EXPORT PartialSolutionSolver{
+class RAFKO_EXPORT PartialSolutionSolver{
 
 public:
   PartialSolutionSolver(const PartialSolution& partial_solution, const rafko_mainframe::RafkoSettings& settings)
-  :  detail(partial_solution)
-  ,  internal_weight_iterator(detail.weight_indices())
-  ,  input_iterator(detail.input_data())
-  ,  transfer_function(settings)
+  :  m_partialSolution(partial_solution)
+  ,  m_internal_weight_iterator(m_partialSolution.weight_indices())
+  ,  m_input_iterator(m_partialSolution.input_data())
+  ,  m_transfer_function(settings)
   { }
 
   /**
@@ -90,7 +90,7 @@ public:
     * @return     True if detail is valid, False otherwise.
     */
    std::uint32_t get_required_tmp_data_size() const{
-     return input_iterator.size();
+     return m_input_iterator.size();
    }
 
   /**
@@ -101,37 +101,12 @@ public:
    */
   bool is_valid() const;
 
-  /**
-   * @brief      Provides the partial solution the solver is calculating
-   *
-   * @return     const reference to the encapsulated @PartialSolution
-   */
-  constexpr const PartialSolution& get_partial() const{
-    return detail;
-  }
-
 private:
   static rafko_utilities::DataPool<double> m_commonDataPool;
-
-  /**
-   * The Partial solution to solve
-   */
-  const PartialSolution& detail;
-
-  /**
-   * The iterator to go through the Neuron weights while solving the detail
-   */
-  SynapseIterator<> internal_weight_iterator;
-
-  /**
-   * The iterator to go through the I/O of the detail
-   */
-  SynapseIterator<InputSynapseInterval> input_iterator;
-
-  /**
-   * The transfer function set configured for the current session
-   */
-  TransferFunction transfer_function;
+  const PartialSolution& m_partialSolution;
+  SynapseIterator<> m_internal_weight_iterator;
+  SynapseIterator<InputSynapseInterval> m_input_iterator;
+  TransferFunction m_transfer_function;
 
   /**
    * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference

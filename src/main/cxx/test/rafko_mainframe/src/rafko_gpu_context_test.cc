@@ -63,7 +63,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
   );
   for(std::uint32_t variant = 0u; variant < 50u; ++variant){
     rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0))
+      .input_size(2).expected_input_range(1.0)
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -85,8 +85,8 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
       )
     );
 
-    rafko_net::Solution& reference_solution = *rafko_net::SolutionBuilder(*settings).build(network);
-    std::unique_ptr<rafko_net::SolutionSolver> reference_agent = rafko_net::SolutionSolver::Builder(reference_solution, *settings).build();
+    rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
+    std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
     std::vector<double> network_input(network.input_data_size(), (rand()%10));
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
@@ -109,7 +109,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
   );
   for(std::uint32_t variant = 0u; variant < 50u; ++variant){
     rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0))
+      .input_size(2).expected_input_range(1.0)
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -135,8 +135,8 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
       )
     );
 
-    rafko_net::Solution& reference_solution = *rafko_net::SolutionBuilder(*settings).build(network);
-    std::unique_ptr<rafko_net::SolutionSolver> reference_agent = rafko_net::SolutionSolver::Builder(reference_solution, *settings).build();
+    rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
+    std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
     std::vector<double> network_input(network.input_data_size(), (rand()%10));
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
@@ -159,7 +159,7 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
   );
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0))
+      .input_size(2).expected_input_range(1.0)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
@@ -184,8 +184,8 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
       )
     );
 
-    rafko_net::Solution& reference_solution = *rafko_net::SolutionBuilder(*settings).build(network);
-    std::unique_ptr<rafko_net::SolutionSolver> reference_agent = rafko_net::SolutionSolver::Builder(reference_solution, *settings).build();
+    rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
+    std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
     std::vector<double> network_input(network.input_data_size(), (rand()%10));
 
     reference_agent->set_eval_mode(false);
@@ -211,7 +211,7 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
   );
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0))
+      .input_size(2).expected_input_range(1.0)
       .allowed_transfer_functions_by_layer(
         {
           {rafko_net::transfer_function_identity},
@@ -267,7 +267,7 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
   );
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0))
+      .input_size(2).expected_input_range(1.0)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
@@ -329,7 +329,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
   );
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0))
+      .input_size(2).expected_input_range(1.0)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
@@ -395,7 +395,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
   );
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0))
+      .input_size(2).expected_input_range(1.0)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
@@ -461,7 +461,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
   );
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0))
+      .input_size(2).expected_input_range(1.0)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
       .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
@@ -621,7 +621,7 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
     .set_minibatch_size(10)
   );
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
     .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
     .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
@@ -647,8 +647,8 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
         .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
     )
   );
-  rafko_net::Solution& solution = *rafko_net::SolutionBuilder(*settings).build(network_copy);
-  std::unique_ptr<rafko_net::SolutionSolver> reference_agent(rafko_net::SolutionSolver::Builder(solution, *settings).build());
+  rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network_copy);
+  std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     objective = std::make_shared<rafko_gym::RafkoCost>(
@@ -742,7 +742,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     .set_minibatch_size(10)
   );
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .allowed_transfer_functions_by_layer({
       {rafko_net::transfer_function_identity},
       {rafko_net::transfer_function_sigmoid},
@@ -806,7 +806,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     .set_minibatch_size(10)
   );
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .allowed_transfer_functions_by_layer(
       {
         {rafko_net::transfer_function_identity},
@@ -831,7 +831,6 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
   rafko_net::RafkoNet network_copy;
   network_copy.CopyFrom(network);
   rafko_mainframe::RafkoCPUContext reference_context(network_copy, settings, objective);
-
 
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     number_of_sequences = rand()%10 + 1;

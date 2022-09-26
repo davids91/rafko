@@ -4,7 +4,7 @@ if(MAKE_TESTS)
   set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/test/external/Catch2/extras" ${CMAKE_MODULE_PATH})
 
   target_include_directories(rafko_test PRIVATE ${PROJECT_SOURCE_DIR})
-  target_link_libraries(rafko_test PRIVATE rafko_full Catch2::Catch2)
+  target_link_libraries(rafko_test PRIVATE rafko Catch2::Catch2)
 
   include(CTest)
   include(Catch)

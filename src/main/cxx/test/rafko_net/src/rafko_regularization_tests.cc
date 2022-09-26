@@ -51,7 +51,7 @@ TEST_CASE("Test if L1 regularization calculates the expected error", "[L1][regul
     .set_minibatch_size(10);
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range((1.0));
+      .input_size(2).expected_input_range(1.0);
 
     std::set<std::uint32_t> affected_layers;
     for(std::uint32_t try_add = 0; try_add < 10; ++try_add){
@@ -124,7 +124,7 @@ TEST_CASE("Test if L2 regularization calculates the expected error", "[L2][regul
     .set_minibatch_size(10);
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
-      .input_size(2).expected_input_range((1.0));
+      .input_size(2).expected_input_range(1.0);
 
     std::set<std::uint32_t> affected_layers;
     for(std::uint32_t try_add = 0; try_add < 10; ++try_add){
@@ -200,7 +200,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
 
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0));
+      .input_size(2).expected_input_range(1.0);
 
     std::set<std::uint32_t> affected_layers;
     for(std::uint32_t try_add = 0; try_add < 10; ++try_add){
@@ -283,17 +283,17 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
     feature_size
   };
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(settings)
-    .input_size(2).expected_input_range((1.0))
+    .input_size(2).expected_input_range(1.0)
     .add_feature_to_layer( (layer_sizes.size() - 2u), rafko_net::neuron_group_feature_dropout_regularization )
     .dense_layers(layer_sizes); /* Building a network with dropout as the output_feature */
   rafko_net::RafkoNet unregulated_network = rafko_net::RafkoNet(network);
   unregulated_network.mutable_neuron_group_features()->Clear(); /* remove droput regularaziation from network */
 
-  rafko_net::Solution& regulated_solution = *rafko_net::SolutionBuilder(settings).build(network);
-  std::unique_ptr<rafko_net::SolutionSolver> regulated_agent = rafko_net::SolutionSolver::Builder(regulated_solution, settings).build();
+  rafko_net::Solution* regulated_solution = rafko_net::SolutionBuilder(settings).build(network);
+  std::shared_ptr<rafko_net::SolutionSolver> regulated_agent = std::make_unique<rafko_net::SolutionSolver>(regulated_solution, settings);
 
-  rafko_net::Solution& unregulated_solution = *rafko_net::SolutionBuilder(settings).build(unregulated_network);
-  std::unique_ptr<rafko_net::SolutionSolver> unregulated_agent = rafko_net::SolutionSolver::Builder(unregulated_solution, settings).build();
+  rafko_net::Solution* unregulated_solution = rafko_net::SolutionBuilder(settings).build(unregulated_network);
+  std::shared_ptr<rafko_net::SolutionSolver> unregulated_agent = std::make_unique<rafko_net::SolutionSolver>(unregulated_solution, settings);
 
   std::vector<double> network_input(network.input_data_size(), (rand()%10));
   (void)regulated_agent->solve(network_input);
@@ -310,7 +310,7 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
     ));
   }
 
-  (void)settings.set_droput_probability((1.0));
+  (void)settings.set_droput_probability(1.0);
   (void)regulated_agent->solve(network_input);
   const std::vector<double>& regulated_neuron_data_2 = regulated_agent->get_memory().get_element(0);
 
@@ -348,7 +348,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
   );
   for(std::uint32_t variant = 0u; variant < 10u; ++variant){
     rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(*settings)
-      .input_size(2).expected_input_range((1.0));
+      .input_size(2).expected_input_range(1.0);
 
     std::vector<std::uint32_t> layer_sizes = {
       static_cast<std::uint32_t>(rand()%5) + 1u,

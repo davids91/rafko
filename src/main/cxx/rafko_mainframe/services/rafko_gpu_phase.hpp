@@ -33,7 +33,7 @@ namespace rafko_mainframe{
 /**
  * @brief      A phase of the Deep learning GPU pipeline consisting of several ordered GPU Kernels.
  */
-class RAFKO_FULL_EXPORT RafkoGPUPhase{
+class RAFKO_EXPORT RafkoGPUPhase{
 public:
   RafkoGPUPhase(
     const cl::Context& context, const cl::Device& device, cl::CommandQueue& queue,

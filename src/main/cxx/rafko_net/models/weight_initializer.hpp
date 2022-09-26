@@ -27,7 +27,7 @@
 
 namespace rafko_net {
 
-class RAFKO_FULL_EXPORT WeightInitializer{
+class RAFKO_EXPORT WeightInitializer{
 public:
   /**
    * @brief      Constructs the object.

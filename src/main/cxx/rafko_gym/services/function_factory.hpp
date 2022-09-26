@@ -32,7 +32,7 @@
 
 namespace rafko_gym{
 
-class RAFKO_FULL_EXPORT FunctionFactory{
+class RAFKO_EXPORT FunctionFactory{
 public:
 
   /**

@@ -36,7 +36,7 @@ namespace rafko_gym{
 /**
  * @brief
  */
-class RAFKO_FULL_EXPORT RafkoAutodiffGPUOptimizer : private RafkoAutodiffOptimizer
+class RAFKO_EXPORT RafkoAutodiffGPUOptimizer : private RafkoAutodiffOptimizer
 {
 public:
   RafkoAutodiffGPUOptimizer(

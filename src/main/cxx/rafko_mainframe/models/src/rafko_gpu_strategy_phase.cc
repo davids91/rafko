@@ -19,7 +19,7 @@
 
 namespace rafko_mainframe{
 
-bool RafkoGPUStrategyPhase::isValid(){
+bool RafkoGPUStrategyPhase::isValid() const{
   std::vector<std::string> step_names = get_step_names();
   std::vector<RafkoNBufShape> input_shapes = get_input_shapes();
   std::vector<RafkoNBufShape> output_shapes = get_output_shapes();

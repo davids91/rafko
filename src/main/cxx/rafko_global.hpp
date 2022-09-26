@@ -19,5 +19,6 @@
 #define RAFKO_GLOBAL_H
 
 #include "rafko_export.hpp"
+#include "rafko_config.hpp"
 
 #endif /* defined RAFKO_GLOBAL_H */

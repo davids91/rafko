@@ -1,9 +1,10 @@
-add_library(rafko_protocol STATIC)
+find_package(Protobuf REQUIRED)
+
+add_library(rafko_protocol OBJECT)
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol)
 target_include_directories(rafko_protocol
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gen
 )
-find_package(Protobuf REQUIRED)
 if(BUILD_MAINFRAME)
   include(FetchContent)
   FetchContent_Declare(

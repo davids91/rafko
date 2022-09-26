@@ -29,7 +29,7 @@ namespace rafko_utilities{
 
 using SubscriptDictionary = std::unordered_map<std::size_t, std::size_t>;
 template <typename Proxee = std::vector<double>>
-class RAFKO_FULL_EXPORT SubscriptProxy{
+class RAFKO_EXPORT SubscriptProxy{
 public:
   SubscriptProxy(Proxee& object, std::shared_ptr<SubscriptDictionary> dictionart = {})
   : m_object(&object)

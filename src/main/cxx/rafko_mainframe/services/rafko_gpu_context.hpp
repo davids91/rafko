@@ -29,7 +29,6 @@
 #include "rafko_gym/models/rafko_environment.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
 #include "rafko_gym/models/rafko_agent.hpp"
-#include "rafko_gym/services/rafko_weight_adapter.hpp"
 #include "rafko_gym/services/updater_factory.hpp"
 
 #include "rafko_mainframe/services/rafko_gpu_phase.hpp"
@@ -37,7 +36,7 @@
 
 namespace rafko_mainframe {
 
-class RAFKO_FULL_EXPORT RafkoGPUContext : public RafkoContext{
+class RAFKO_EXPORT RafkoGPUContext : public RafkoContext{
 public:
   RafkoGPUContext(
     cl::Context&& context, cl::Device device,
@@ -50,18 +49,17 @@ public:
   void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment) override;
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override;
   void set_weight_updater(rafko_gym::Weight_updaters updater) override;
-
-  void refresh_solution_weights() override{
-    RFASSERT_LOG("Refreshing Solution weights in CPU context..");
-    m_weightAdapter.update_solution_with_weights();
-    upload_weight_table_to_device();
-  }
-
   void set_network_weight(std::uint32_t weight_index, double weight_value) override;
   void set_network_weights(const std::vector<double>& weights) override;
   void apply_weight_update(const std::vector<double>& weight_delta) override;
   double full_evaluation() override;
   double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override;
+
+  void refresh_solution_weights() override{
+    RFASSERT_LOG("Refreshing Solution weights in CPU context..");
+    m_solverFactory.refresh_actual_solution_weights();
+    upload_weight_table_to_device();
+  }
 
   rafko_utilities::ConstVectorSubrange<> solve(
     const std::vector<double>& input,
@@ -90,8 +88,7 @@ public:
 
 private:
   rafko_net::RafkoNet& m_network;
-  rafko_net::Solution& m_networkSolution;
-  rafko_gym::RafkoWeightAdapter m_weightAdapter;
+  rafko_net::SolutionSolver::Factory m_solverFactory;
   std::shared_ptr<rafko_net::SolutionSolver> m_agent;
   std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;
   std::shared_ptr<rafko_gym::RafkoObjective> m_objective;

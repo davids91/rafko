@@ -53,7 +53,7 @@ namespace rafko_net{
  *             syn_iter.iterate([&](int synapse_start){},[&](int index){});
  */
 template<typename Interval_type = IndexSynapseInterval>
-class RAFKO_FULL_EXPORT SynapseIterator{
+class RAFKO_EXPORT SynapseIterator{
 public:
    constexpr SynapseIterator(const google::protobuf::RepeatedPtrField<Interval_type>& arg_synapse_interval)
   : m_synapseInterval(arg_synapse_interval)

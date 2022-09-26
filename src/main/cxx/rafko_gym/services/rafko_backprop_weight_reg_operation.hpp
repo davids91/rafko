@@ -37,7 +37,7 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackpropWeightRegOperation
+class RAFKO_EXPORT RafkoBackpropWeightRegOperation
 : public RafkoBackpropagationOperation
 {
 public:

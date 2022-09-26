@@ -38,7 +38,7 @@ namespace rafko_utilities{
  *             needs to keep its contents, while the data from previous loops also need to be stored.
  */
 template <typename Content = std::vector<double>>
-class RAFKO_FULL_EXPORT DataRingbuffer{
+class RAFKO_EXPORT DataRingbuffer{
 public:
   DataRingbuffer(std::uint32_t buffer_number, std::function<void(Content&)> initer)
   :  m_data(buffer_number)

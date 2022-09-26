@@ -58,7 +58,7 @@ namespace rafko_gym{
  *             Despite the above structure, for eligibility of paralellism, the inputs and labels are in a separate,
  *             contigous array.
  */
-class RAFKO_FULL_EXPORT RafkoDatasetWrapper : public RafkoEnvironment{
+class RAFKO_EXPORT RafkoDatasetWrapper : public RafkoEnvironment{
 public:
   explicit RafkoDatasetWrapper(const rafko_gym::DataSet& samples)
   : m_sequenceSize(std::max(1u,samples.sequence_size()))

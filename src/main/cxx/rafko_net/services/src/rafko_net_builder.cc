@@ -176,7 +176,7 @@ RafkoNetBuilder& RafkoNetBuilder::set_neuron_spike_function(std::uint32_t layer_
   return *this;
 }
 
-void RafkoNetBuilder::build_dense_layers_and_update(
+void RafkoNetBuilder::build_dense_layers_and_swap(
   RafkoNet* previous, std::vector<std::uint32_t> layer_sizes,
   std::vector<std::set<Transfer_functions>> transfer_function_filter
 ){
@@ -213,13 +213,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std:
     + std::string(" vs ") + std::to_string(m_argAllowedTransferFunctionsByLayer.size())
   );
 
-  if( /* Required arguments are set */
-    (m_isInputSizeSet && m_isExpectedInputRangeSet)
-    &&(
-      (!m_isOutputNeuronNumberSet) /* Output size is either not set */
-      ||(m_argOutputNeuronNumber == layer_sizes.back()) /* Or compliant to the Dense layer */
-    )
-  ){
+  if((m_isInputSizeSet)&&( (!m_isOutputNeuronNumberSet)||(m_argOutputNeuronNumber == layer_sizes.back()) ) ){
     std::uint32_t layer_input_starts_at = 0;
     RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(arena_ptr);
     double expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);

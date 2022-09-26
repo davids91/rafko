@@ -43,7 +43,7 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackPropSolutionFeatureOperation
+class RAFKO_EXPORT RafkoBackPropSolutionFeatureOperation
 : public RafkoBackpropagationOperation
 {
 public:

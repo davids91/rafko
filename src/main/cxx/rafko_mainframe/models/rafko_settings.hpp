@@ -28,7 +28,7 @@
 
 namespace rafko_mainframe{
 
-class RAFKO_FULL_EXPORT RafkoSettings{
+class RAFKO_EXPORT RafkoSettings{
 public:
   constexpr std::uint16_t get_max_solve_threads() const{
     return m_maxSolveThreads;

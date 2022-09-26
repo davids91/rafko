@@ -35,7 +35,7 @@ namespace rafko_utilities{
  *          defined in the constructor of the template object. The class itself is not thread safe! Use a mutex
  *          to run the same instance from multiple threads.
  */
-class RAFKO_FULL_EXPORT ThreadGroup{
+class RAFKO_EXPORT ThreadGroup{
 public:
   ThreadGroup(std::uint32_t number_of_threads);
   ~ThreadGroup();

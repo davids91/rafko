@@ -43,7 +43,7 @@ namespace rafko_gym{
  * @brief      Error function handling and utilities, provides a hook for a computation
  *             function to be run on every sample by feature.
  */
-class RAFKO_FULL_EXPORT CostFunction
+class RAFKO_EXPORT CostFunction
 #if(RAFKO_USES_OPENCL)
 : public rafko_mainframe::RafkoGPUStrategyPhase
 #endif/*(RAFKO_USES_OPENCL)*/

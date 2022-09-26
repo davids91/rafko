@@ -32,12 +32,13 @@ namespace rafko_gym{
 /**
  * @brief      This class
  */
-class RAFKO_FULL_EXPORT RafkoObjective
+class RAFKO_EXPORT RafkoObjective
 #if(RAFKO_USES_OPENCL)
 : public rafko_mainframe::RafkoGPUStrategyPhase
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
+  virtual ~RafkoObjective() = default;
 
   /**
    * @brief      Sets the approximated value for an observed value and provides the calculated fitness.
@@ -142,10 +143,15 @@ public:
     std::string feature_d, std::string sample_number
   ) const = 0;
 
+  /* +++ Methods forwarding from rafko_mainframe::RafkoGPUStrategyPhase +++ */
+  virtual cl::Program::Sources get_step_sources() const override = 0;
+  virtual std::vector<std::string> get_step_names() const override = 0;
+  virtual std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override = 0;
+  virtual std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override = 0;
+  virtual std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override = 0;
+  /* --- Methods forwarding from rafko_mainframe::RafkoGPUStrategyPhase --- */
+
   #endif/*(RAFKO_USES_OPENCL)*/
-
-
-  virtual ~RafkoObjective() = default;
 };
 
 } /* namespace rafko_gym */

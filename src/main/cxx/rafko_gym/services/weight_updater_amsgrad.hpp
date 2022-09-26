@@ -22,7 +22,7 @@
 
 namespace rafko_gym{
 
-class RAFKO_FULL_EXPORT RafkoWeightUpdaterAMSGrad : public RafkoWeightUpdater{
+class RAFKO_EXPORT RafkoWeightUpdaterAMSGrad : public RafkoWeightUpdater{
 public:
   RafkoWeightUpdaterAMSGrad(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings)
   :  RafkoWeightUpdater(rafko_net, settings)

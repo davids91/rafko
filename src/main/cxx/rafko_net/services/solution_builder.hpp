@@ -25,7 +25,6 @@
 #include <string>
 #endif/*(RAFKO_USES_OPENCL)*/
 
-
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_settings.hpp"
@@ -47,7 +46,7 @@ namespace rafko_net {
  *             can be solved in an independent manner. Dependencies inside the Neural network are represented
  *             in the order of the elements in a @solution_chain.
  */
-class RAFKO_FULL_EXPORT SolutionBuilder{
+class RAFKO_EXPORT SolutionBuilder{
 public:
 
   /**
