@@ -17,11 +17,11 @@
 #include <rafko_net/services/rafko_net_builder.hpp>
 #include <rafko_mainframe/services/rafko_cpu_context.hpp>
 #include <rafko_gym/services/rafko_autodiff_optimizer.hpp>
-#if(RAFKO_USES_OPENCL)
+#if(USE_OPENCL)
 #include <rafko_mainframe/services/rafko_ocl_factory.hpp>
 #include <rafko_mainframe/services/rafko_gpu_context.hpp>
 #include <rafko_gym/services/rafko_autodiff_gpu_optimizer.hpp>
-#endif/*(RAFKO_USES_OPENCL)*/
+#endif/*(USE_OPENCL)*/
 
 
 int main(){
@@ -59,8 +59,8 @@ int main(){
   for(std::uint32_t sequence_index = 0; sequence_index < settings->get_minibatch_size() * 3; ++sequence_index){
     /*!Note: For this example, since the values don't matter full zero content is fine */
     for(std::uint32_t datapoint_index = 0; datapoint_index < sequence_size; ++datapoint_index){
-      environment_inputs.push_back(std::vector<double>(network.input_data_size(), 1.0));
-      environment_labels.push_back(std::vector<double>(network.output_neuron_number(), 5.0));
+      environment_inputs.push_back(std::vector<double>(network.input_data_size(), rand()%10));
+      environment_labels.push_back(std::vector<double>(network.output_neuron_number(), rand()%10));
       /*!Note: It is possible to add more inputs, than the networks input size here and still have a valid environment
        * Inside each sequence, the number of labels are compared to the size of the sequence, and surplus inputs
        * at the beginning of each sequence are counted as "prefill". Their only purpose is to initialize
@@ -74,7 +74,7 @@ int main(){
   /* --- Generating sample environment Data set --- */
 
   /*!Note: To optimize a network to an environment, the optimizers can be used as follows */
-  #if(RAFKO_USES_OPENCL)
+  #if(!USE_OPENCL)
   std::unique_ptr<rafko_gym::RafkoAutodiffOptimizer> optimizer = std::make_unique<rafko_gym::RafkoAutodiffOptimizer>(
     settings, environment, network
   );
@@ -84,14 +84,14 @@ int main(){
       .select_platform().select_device()
       .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, environment, network)
   );
-  #endif/*(RAFKO_USES_OPENCL)*/
+  #endif/*(USE_OPENCL)*/
 
   /*!Note: In order to construct the backpropagation structure of the network
    * the @rafko_gym::RafkoAutodiffOptimizer::build need be called. It needs an objective to finalise the math formula.
    * This step is required before the training iterations can take place.
    */
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
-    *settings, rafko_gym::cost_function_mse
+    *settings, rafko_gym::cost_function_squared_error
   );
   optimizer->build(objective);
 
@@ -99,25 +99,25 @@ int main(){
    * such as rafko_gym::Training_strategy::training_strategy_early_stopping, @RafkoCOntext objects need to be set
    * either in the constructor of the optimizer, or (in this example) set explicitly by modifiers.
    */
-  #if(RAFKO_USES_OPENCL)
+  #if(!USE_OPENCL)
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> training_context = std::make_shared<rafko_mainframe::RafkoCPUContext>(
-    network, settings
+    network, settings, objective
   );
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_shared<rafko_mainframe::RafkoCPUContext>(
-    network, settings
+    network, settings, objective
   );
   #else /* If OpenCL is supported, the below factory can be used */
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> training_context = std::make_shared<rafko_mainframe::RafkoGPUContext>(
     rafko_mainframe::RafkoOCLFactory()
       .select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(network, settings)
+      .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
   );
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context = std::make_shared<rafko_mainframe::RafkoGPUContext>(
     rafko_mainframe::RafkoOCLFactory()
       .select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(network, settings)
+      .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
   );
-  #endif/*(RAFKO_USES_OPENCL)*/
+  #endif/*(USE_OPENCL)*/
 
   optimizer->set_training_context(training_context);
   optimizer->set_testing_context(test_context);

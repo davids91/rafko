@@ -15,6 +15,9 @@ set(USED_EXTRA_LIBRARIES ${Protobuf_LIBRARIES})
 if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
   list(APPEND USED_EXTRA_LIBRARIES OpenCL::OpenCL)
+  add_compile_definitions(USE_OPENCL=1)
+else()
+  add_compile_definitions(USE_OPENCL=0)
 endif()
 
 # Address sanitizer

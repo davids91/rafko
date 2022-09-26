@@ -405,7 +405,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   );
   #else
   std::unique_ptr<rafko_gym::RafkoAutodiffOptimizer> optimizer = std::make_unique<rafko_gym::RafkoAutodiffOptimizer>(
-    *settings, environment, network, context, test_context
+    settings, environment, network, context, test_context
   );
   #endif/*(RAFKO_USES_OPENCL)*/
   optimizer->build(objective);

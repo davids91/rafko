@@ -18,6 +18,7 @@
 
 namespace rafko_gym{
 
+#if(RAFKO_USES_OPENCL)
 std::vector<cl::Event> RafkoEnvironment::upload_inputs_to_buffer(
   cl::CommandQueue opencl_queue, cl::Buffer buffer, std::uint32_t buffer_start_byte_offset,
   std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
@@ -111,6 +112,6 @@ std::vector<cl::Event> RafkoEnvironment::upload_labels_to_buffer(
 
   return events;
 }
-
+#endif/*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_gym */

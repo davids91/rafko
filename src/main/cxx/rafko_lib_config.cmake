@@ -18,10 +18,7 @@ if(USE_OPENCL)
 else()
   set(LIB_EXPORT_CONSTANTS
     "${LIB_EXPORT_CONSTANTS}\
-    #ifndef RAFKO_LIB_EXPORT_CONSTANTS_H\n\
-    #define RAFKO_LIB_EXPORT_CONSTANTS_H\n\
     #define RAFKO_USES_OPENCL 0\n\
-    #endif /*RAFKO_LIB_EXPORT_CONSTANTS_H*/\n\
     "
   )
 endif()

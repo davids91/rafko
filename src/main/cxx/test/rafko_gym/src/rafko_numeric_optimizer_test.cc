@@ -48,8 +48,7 @@
 
 namespace rafko_gym_test {
 
-TEST_CASE("Stress-testing big input takein", "[bigpic]"){
-  return; /*!Note: This test should be disabled by default */
+TEST_CASE("Stress-testing big input takein", "[bigpic][.][!benchmark]"){
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
@@ -81,20 +80,26 @@ TEST_CASE("Stress-testing big input takein", "[bigpic]"){
       std::chrono::steady_clock::time_point start;
 
       start = std::chrono::steady_clock::now();
-      std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
+
+      #if(RAFKO_USES_OPENCL)
+      std::shared_ptr<rafko_mainframe::RafkoContext> context1(
         rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
           .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
       );
+      #else
+      std::shared_ptr<rafko_mainframe::RafkoContext> context1 = std::make_shared<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
+      #endif/*(RAFKO_USES_OPENCL)*/
+
       auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-      // std::uint32_t average_duration = 0;
-      // for(std::uint32_t j = 0; j < 500; ++j){
-      //   start = std::chrono::steady_clock::now();
-      //   (void)context1->solve(input,false);
-      //   auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-      //   if(0 == average_duration)average_duration = current_duration;
-      //     else average_duration = (average_duration + current_duration) / 2;
-      //   std::cout << "\rrun duration: " << current_duration << "ms; \t\tavg:" <<  average_duration << "ms      ";
-      // }
+      std::uint32_t average_duration = 0;
+      for(std::uint32_t j = 0; j < 500; ++j){
+        start = std::chrono::steady_clock::now();
+        (void)context1->solve(input,false);
+        auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+        if(0 == average_duration)average_duration = current_duration;
+          else average_duration = (average_duration + current_duration) / 2;
+        std::cout << "\rrun duration: " << current_duration << "ms; \t\tavg:" <<  average_duration << "ms      ";
+      }
       std::cout << "-" << std::flush;
       avg_ms += current_duration;
     }/*for(runs)*/
@@ -129,7 +134,7 @@ TEST_CASE("Testing aproximization fragment handling","[numeric_optimization][fra
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_shared<rafko_mainframe::RafkoCPUContext>(
     network, settings, objective
   );
-  rafko_gym::RafkoNumericOptimizer approximizer({context}, {}, settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context}, {}/*test_context*/, settings);
 
   /* adding a simple-weight-gradient fragment */
   std::uint32_t weight_index = rand()%(network.weight_table_size());
@@ -250,14 +255,14 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
       .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
   );
-  rafko_gym::RafkoNumericOptimizer approximizer({context1,context2}, {}, settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context1,context2}, {}/*test_context*/, settings);
   context2->set_environment(environment);
   context2->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   context2->set_objective(objective);
   #else
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context1 = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
-  rafko_gym::RafkoNumericOptimizer approximizer({context1}, settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context1}, {}/*test_context*/, settings);
   #endif/*(RAFKO_USES_OPENCL)*/
   context1->set_environment(environment);
   context1->set_weight_updater(rafko_gym::weight_updater_amsgrad);
@@ -362,13 +367,13 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
       .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
   );
-  rafko_gym::RafkoNumericOptimizer approximizer({context1,context2}, {}, settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context1,context2}, {}/*test_context*/, settings);
   context2->set_environment(environment);
   context2->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   #else
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context1 = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
-  rafko_gym::RafkoNumericOptimizer approximizer({context1}, settings);
+  rafko_gym::RafkoNumericOptimizer approximizer({context1}, {}/*test_context*/, settings);
   #endif/*(RAFKO_USES_OPENCL)*/
 
   approximizer.set_weight_filter(1.0);
