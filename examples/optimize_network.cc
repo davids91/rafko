@@ -11,18 +11,8 @@
 #include <unistd.h>
 #endif
 
-#include <google/protobuf/arena.h>
 #include <rafko_protocol/rafko_net.pb.h>
-#include <rafko_mainframe/models/rafko_settings.hpp>
-#include <rafko_net/services/rafko_net_builder.hpp>
-#include <rafko_mainframe/services/rafko_cpu_context.hpp>
-#include <rafko_gym/services/rafko_autodiff_optimizer.hpp>
-#if(USE_OPENCL)
-#include <rafko_mainframe/services/rafko_ocl_factory.hpp>
-#include <rafko_mainframe/services/rafko_gpu_context.hpp>
-#include <rafko_gym/services/rafko_autodiff_gpu_optimizer.hpp>
-#endif/*(USE_OPENCL)*/
-
+#include <rafko.hpp>
 
 int main(){
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
@@ -30,7 +20,7 @@ int main(){
     .set_max_solve_threads(2).set_max_processing_threads(4)
 
     /* +++ Standard Training settings +++ */
-    .set_learning_rate(2e-4)
+    .set_learning_rate(2e-7)
     .set_learning_rate_decay({{100u,0.8},{500u,0.5}}) /* multiplier applied at the given training iterations */
     .set_minibatch_size(64)
     .set_memory_truncation(2) /* limit gradient calculation in case of sequential data */
@@ -107,12 +97,12 @@ int main(){
     network, settings, objective
   );
   #else /* If OpenCL is supported, the below factory can be used */
-  std::shared_ptr<rafko_mainframe::RafkoGPUContext> training_context = std::make_shared<rafko_mainframe::RafkoGPUContext>(
+  std::shared_ptr<rafko_mainframe::RafkoGPUContext> training_context = (
     rafko_mainframe::RafkoOCLFactory()
       .select_platform().select_device()
       .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
   );
-  std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context = std::make_shared<rafko_mainframe::RafkoGPUContext>(
+  std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context = (
     rafko_mainframe::RafkoOCLFactory()
       .select_platform().select_device()
       .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)

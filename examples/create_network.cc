@@ -5,11 +5,8 @@
 #include <iostream>
 #include <fstream>
 
-#include <google/protobuf/arena.h>
 #include <rafko_protocol/rafko_net.pb.h>
-#include <rafko_mainframe/models/rafko_settings.hpp>
-#include <rafko_net/services/rafko_net_builder.hpp>
-#include <rafko_net/services/solution_solver.hpp>
+#include <rafko.hpp>
 
 int main(){
   /* Create a Settings Object. This stores to essential parameters for almost everything inside the Rafko Framework */

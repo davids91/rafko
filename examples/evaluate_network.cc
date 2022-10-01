@@ -4,16 +4,7 @@
 
 #include <google/protobuf/arena.h>
 #include <rafko_protocol/rafko_net.pb.h>
-#include <rafko_net/services/rafko_net_builder.hpp>
-#include <rafko_gym/models/rafko_cost.hpp>
-#include <rafko_gym/models/rafko_dataset_wrapper.hpp>
-#include <rafko_mainframe/models/rafko_settings.hpp>
-#include <rafko_mainframe/services/rafko_cpu_context.hpp>
-
-#if(RAFKO_USES_OPENCL)
-#include <rafko_mainframe/services/rafko_ocl_factory.hpp>
-#include <rafko_mainframe/services/rafko_gpu_context.hpp>
-#endif/*(RAFKO_USES_OPENCL)*/
+#include <rafko.hpp>
 
 int main(){
   google::protobuf::Arena arena;

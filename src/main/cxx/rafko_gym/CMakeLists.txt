@@ -1,6 +1,6 @@
 add_library(rafko_gym OBJECT)
 target_include_directories(rafko_gym PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services)
-add_dependencies(rafko_gym rafko_lib_config)
+add_dependencies(rafko_gym rafko_config)
 
 if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
@@ -58,7 +58,7 @@ set(GYM_HEADER_SERVICES
 )
 target_sources(rafko_gym
   INTERFACE ${GYM_INTERFACE_SERVICES}
-  PUBLIC ${GYM_HEADERS}
+  PUBLIC ${GYM_HEADER_SERVICES} ${GYM_HEADER_MODELS}
   PRIVATE
   ${GYM_SOURCES_WITH_OCL}
   models/src/rafko_cost.cc
@@ -79,6 +79,13 @@ target_sources(rafko_gym
   services/src/weight_updater_amsgrad.cc
 )
 
+# generate convenience header part for current module
+set(MODULE_HEADER_LIST)
+generate_sum_include("rafko_gym" "${GYM_INTERFACE_SERVICES};${GYM_HEADER_SERVICES};${GYM_HEADER_MODELS}" MODULE_HEADER_LIST)
+list(APPEND MODULE_HEADER_LIST ${SUM_HEADER_FILES})
+set(SUM_HEADER_FILES ${MODULE_HEADER_LIST} PARENT_SCOPE)
+
+# install rules
 install(
   FILES ${GYM_INTERFACE_SERVICES} ${GYM_HEADER_SERVICES}
   DESTINATION include/rafko_gym/services

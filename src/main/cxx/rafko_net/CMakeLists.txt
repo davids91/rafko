@@ -1,7 +1,7 @@
 add_library(rafko_net OBJECT)
 target_include_directories(rafko_net PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services)
 target_link_libraries(rafko_net PUBLIC rafko_mainframe rafko_protocol)
-add_dependencies(rafko_net rafko_lib_config)
+add_dependencies(rafko_net rafko_config)
 set(NET_INTERFACE_SERVICES
   services/synapse_iterator.hpp
 )
@@ -13,6 +13,7 @@ set(NET_HEADER_SERVICES
   services/solution_solver.hpp
   services/rafko_net_builder.hpp
   services/rafko_network_feature.hpp
+  services/feature_group_cache.hpp
 )
 set(NET_HEADER_MODELS
   models/dense_net_weight_initializer.hpp
@@ -40,6 +41,13 @@ target_sources(rafko_net
   services/src/rafko_network_feature.cc
 )
 
+# generate convenience header part for current module
+set(MODULE_HEADER_LIST)
+generate_sum_include("rafko_net" "${NET_HEADER_MODELS};${NET_HEADER_SERVICES};${NET_INTERFACE_SERVICES}" MODULE_HEADER_LIST)
+list(APPEND MODULE_HEADER_LIST ${SUM_HEADER_FILES})
+set(SUM_HEADER_FILES ${MODULE_HEADER_LIST} PARENT_SCOPE)
+
+# install current module headers to target library
 install(
   FILES ${NET_HEADER_MODELS}
   DESTINATION include/rafko_net/models

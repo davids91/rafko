@@ -1,6 +1,6 @@
 add_library(rafko_mainframe OBJECT)
 target_include_directories(rafko_mainframe PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services control)
-add_dependencies(rafko_mainframe rafko_lib_config)
+add_dependencies(rafko_mainframe rafko_config)
 
 if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
@@ -54,6 +54,7 @@ set(MAINFRAME_SOURCES
   services/src/rafko_training_logger.cc
   services/src/rafko_assertion_logger.cc
 )
+
 if(BUILD_MAINFRAME)
   target_sources(rafko_mainframe
     INTERFACE
@@ -74,6 +75,13 @@ else()
   )
 endif()
 
+# generate convenience header part for current module
+set(MODULE_HEADER_LIST)
+generate_sum_include("rafko_mainframe" "${MAINFRAME_MODELS_HEADERS};${MAINFRAME_SERVICES_HEADERS}" MODULE_HEADER_LIST)
+list(APPEND MODULE_HEADER_LIST ${SUM_HEADER_FILES})
+set(SUM_HEADER_FILES ${MODULE_HEADER_LIST} PARENT_SCOPE)
+
+# install rules
 install(
   FILES ${MAINFRAME_MODELS_HEADERS}
   DESTINATION include/rafko_mainframe/models

@@ -1,6 +1,6 @@
 add_library(rafko_utilities OBJECT)
 target_include_directories(rafko_utilities PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}  models services)
-add_dependencies(rafko_utilities rafko_lib_config)
+add_dependencies(rafko_utilities rafko_config)
 if(RAFKO_USES_OPENCL)
   set(RAFKO_GPU_LIBRARY_HEADERS
     models/rafko_gpu_kernel_library.hpp
@@ -28,6 +28,13 @@ target_sources(rafko_utilities
   services/src/thread_group.cc
 )
 
+# generate convenience header part for current module
+set(MODULE_HEADER_LIST)
+generate_sum_include("rafko_utilities" "${UTIL_INTERFACE_MODELS};${UTIL_INTERFACE_SERVICES}" MODULE_HEADER_LIST)
+list(APPEND MODULE_HEADER_LIST ${SUM_HEADER_FILES})
+set(SUM_HEADER_FILES ${MODULE_HEADER_LIST} PARENT_SCOPE)
+
+# install rules
 install(
   FILES ${UTIL_INTERFACE_MODELS}
   DESTINATION include/rafko_utilities/models

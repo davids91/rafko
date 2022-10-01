@@ -68,6 +68,9 @@ public:
   using RafkoAutodiffOptimizer::get_last_testing_error;
   using RafkoAutodiffOptimizer::get_avg_of_abs_gradient;
   using RafkoAutodiffOptimizer::apply_weight_update;
+  using RafkoAutodiffOptimizer::set_training_context;
+  using RafkoAutodiffOptimizer::set_testing_context;
+
 
   /**
    * @brief   calculate the values and derivatives and update the weights based on them

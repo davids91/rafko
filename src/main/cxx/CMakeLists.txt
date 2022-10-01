@@ -66,9 +66,13 @@ endif()
 
 include(GenerateExportHeader)
 generate_export_header(rafko EXPORT_FILE_NAME rafko_export.hpp)
-add_custom_target(rafko_lib_config
-  COMMAND
-  ${CMAKE_COMMAND} -D ASSERTLOGS=${ASSERTLOGS} -D USE_OPENCL=${USE_OPENCL} -D LIB_EXPORT_CONSTANTS=${LIB_EXPORT_CONSTANTS} -P ${CMAKE_SOURCE_DIR}/rafko_lib_config.cmake
+
+add_custom_target(rafko_config
+  COMMAND ${CMAKE_COMMAND}
+  # Config variables
+  -D ASSERTLOGS=${ASSERTLOGS} -D USE_OPENCL=${USE_OPENCL}
+  # Calling the config script
+  -P ${CMAKE_SOURCE_DIR}/rafko_config.cmake
   COMMENT "Generating Configuration for Library.."
 )
 
@@ -90,6 +94,14 @@ target_compile_features(rafko
   #cxx_attribute_maybe_unused # Not in known features yet.. # mainly for GPU related OpenCL return value assertions to not throw warnings in Release bilds
 )
 
+# Generate a header to include all Rafko Headers, for convenience
+set(SUM_HEADER_FILES)
+macro(generate_sum_include SOURCE_MODULE HEADERS MODULE_HEADER_LIST)
+  foreach(HEADER ${HEADERS})
+    list(APPEND ${MODULE_HEADER_LIST} "${SOURCE_MODULE}/${HEADER}")
+  endforeach()
+endmacro()
+
 add_subdirectory(rafko_protocol)
 add_subdirectory(rafko_utilities)
 add_subdirectory(rafko_net)
@@ -105,9 +117,17 @@ if(MAKE_TESTS)
   add_subdirectory(test)
 endif()
 
+add_custom_target(rafko_convenience_header
+  COMMAND ${CMAKE_COMMAND}
+  -D SUM_HEADER_FILES="${SUM_HEADER_FILES}"
+  -P ${CMAKE_SOURCE_DIR}/rafko_convenience_header.cmake
+  COMMENT "Generating Convenience Header.."
+)
+add_dependencies(rafko rafko_convenience_header)
 install(
   FILES
   rafko_global.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/rafko.hpp
   ${CMAKE_CURRENT_BINARY_DIR}/rafko_export.hpp
   ${CMAKE_CURRENT_BINARY_DIR}/rafko_config.hpp
   DESTINATION include/
