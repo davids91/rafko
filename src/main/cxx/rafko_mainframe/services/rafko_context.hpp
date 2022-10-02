@@ -130,6 +130,13 @@ public:
   ) = 0;
 
   /**
+   * @brief     Solves the enclosed network for the whole of the included environment.
+   *
+   * @param     output    The buffer to store the data in. Sizes must be set to fit the output exactly
+   */
+  virtual void solve_environment(std::vector<std::vector<double>>& output) = 0;
+
+  /**
    * @brief      Saves the context state
    */
   virtual void push_state() = 0;

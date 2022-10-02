@@ -350,14 +350,11 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context2 = std::make_unique<rafko_mainframe::RafkoCPUContext>(
     network, settings, objective
   );
-  std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
-    rafko_test::create_sequenced_addition_dataset(number_of_samples, 4)
-  );
+  auto [inputs1, labels1] = rafko_test::create_sequenced_addition_dataset(number_of_samples, /*sequence_size*/4);
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-    std::vector<std::vector<double>>(std::get<0>(tmp1)),
-    std::vector<std::vector<double>>(std::get<1>(tmp1)),
-    /* Sequence size */4
+    std::move(inputs1), std::move(labels1), /* Sequence size */4
   );
+
   #if (RAFKO_USES_OPENCL)
   std::shared_ptr<rafko_mainframe::RafkoGPUContext> context1(
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
@@ -380,19 +377,14 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
   context1->set_environment(environment);
   context1->set_weight_updater(rafko_gym::weight_updater_amsgrad);
 
-  tmp1 = ( rafko_test::create_sequenced_addition_dataset(number_of_samples, 4) );
+  auto [inputs2, labels2] = rafko_test::create_sequenced_addition_dataset(number_of_samples, 4);
   test_context->set_environment(std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-    std::vector<std::vector<double>>(std::get<0>(tmp1)),
-    std::vector<std::vector<double>>(std::get<1>(tmp1)),
-    /* Sequence size */4
+    std::move(inputs2), std::move(labels2), /* Sequence size */4
   ));
 
-  tmp1 = rafko_test::create_sequenced_addition_dataset(number_of_samples * 2, 4);
+  auto [inputs3, labels3] = rafko_test::create_sequenced_addition_dataset(number_of_samples * 2, 4);
   rafko_gym::RafkoDatasetWrapper* after_test_set =  google::protobuf::Arena::Create<rafko_gym::RafkoDatasetWrapper>(
-    settings->get_arena_ptr(),
-    std::vector<std::vector<double>>(std::get<0>(tmp1)),
-    std::vector<std::vector<double>>(std::get<1>(tmp1)),
-    /* Sequence size */4
+    settings->get_arena_ptr(), std::move(inputs3), std::move(labels3), /* Sequence size */4
   );
   settings->get_arena_ptr()->Own(after_test_set);
 

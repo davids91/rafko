@@ -133,21 +133,29 @@ extern void check_data_match(std::vector<double>& sample_data, std::vector<doubl
  *
  * @param[in]  input_size       The size of the input vector accepted by the produces network
  * @param      settings         Contextual information
+ * @param[in]  output_size      The size of the networks expected output. It is decided randomly, when the given value is 0.
  *
  * @return     the generated network to be owned by the caller
  */
-extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings);
+extern rafko_net::RafkoNet* generate_random_net_with_softmax_features(
+  std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings,
+  std::uint32_t output_size = 0
+);
 
 /**
  * @brief      Generates a random Fully connected Dense network with some Layers set to have the softmax feature;
  *             And some Neurons + Layers having inputs from the past
  *
  * @param[in]  input_size       The size of the input vector accepted by the produces network
- * @param      settings         Contextual information
+ * @param[in]  settings         Contextual information
+ * @param[in]  output_size      The size of the networks expected output. It is decided randomly, when the given value is 0.
  *
  * @return     the generated network to be owned by the caller
  */
-extern rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings);
+extern rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(
+  std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings,
+  std::uint32_t output_size = 0
+);
 
 /**
  * @brief      Creates a random dataset based on the given parameters

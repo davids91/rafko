@@ -378,23 +378,16 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
   #endif/*(RAFKO_USES_OPENCL)*/
-  std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
-    rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size)
-  );
+  auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size);
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-    std::vector<std::vector<double>>(std::get<0>(tmp1)),
-    std::vector<std::vector<double>>(std::get<1>(tmp1)),
-    sequence_size
+    std::move(inputs), std::move(labels), sequence_size
   );
 
-  std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp2 = (
-    rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size)
-  );
+  auto [inputs2, labels2] = rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size);
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> test_environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-    std::vector<std::vector<double>>(std::get<0>(tmp2)),
-    std::vector<std::vector<double>>(std::get<1>(tmp2)),
-    sequence_size
+    std::move(inputs2), std::move(labels2), sequence_size
   );
+
   test_context->set_environment(test_environment);
 
   #if(RAFKO_USES_OPENCL)

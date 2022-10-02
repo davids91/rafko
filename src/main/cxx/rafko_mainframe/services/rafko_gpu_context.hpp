@@ -23,6 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <functional>
 #include <CL/opencl.hpp>
 
 #include "rafko_net/services/solution_solver.hpp"
@@ -61,11 +62,6 @@ public:
     upload_weight_table_to_device();
   }
 
-  rafko_utilities::ConstVectorSubrange<> solve(
-    const std::vector<double>& input,
-    bool reset_neuron_data = false, std::uint32_t thread_index = 0
-  ) override;
-
   void push_state() override{
     m_environment->push_state();
   }
@@ -73,6 +69,13 @@ public:
   void pop_state() override{
     m_environment->pop_state();
   }
+
+  rafko_utilities::ConstVectorSubrange<> solve(
+    const std::vector<double>& input,
+    bool reset_neuron_data = false, std::uint32_t thread_index = 0
+  ) override;
+
+  void solve_environment(std::vector<std::vector<double>>& output) override;
 
   rafko_mainframe::RafkoSettings& expose_settings() override{
     m_lastRanEvaluation = not_eval_run; /* in case some training parameters changed buffers might need to be refreshed */
@@ -109,9 +112,9 @@ private:
    * so I could initialize this poor fella with it?!
    */
 
-  enum{
-    not_eval_run, full_eval_run, random_eval_run
-  }m_lastRanEvaluation = not_eval_run;
+ enum{
+   not_eval_run, full_eval_run, random_eval_run
+ }m_lastRanEvaluation = not_eval_run;
 
   /**
    * @brief   Uploads the weights from @network to the buffer on the GPU
@@ -136,11 +139,11 @@ private:
    * @param[in]   sequence_start_index          The index of the first sequence in the environment to upload the inputs from
    * @param[in]   buffer_sequence_start_index   Start index of a sequence to start uploading inputs from in the global buffer
    * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
-   *
-   * @return      A vector of events to wait for, signaling operation completion
+   * @param[in]   data_handler                  The funciton accepting the CL Buffer, byte offset, and data size(bytes) for each feature for one sequence
    */
-  [[nodiscard]] std::vector<cl::Event> upload_agent_output(
-    std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
+  void upload_agent_output(
+    std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation,
+    std::function<void(cl::Buffer, std::uint32_t, std::uint32_t)> data_handler
   );
 
   /**
