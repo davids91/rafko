@@ -51,6 +51,16 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
   if(USE_OPENCL)
     find_package(OpenCL REQUIRED)
+    set(OPENCL_TARGET 120)
+    set(CL_HPP_MINIMUM_OPENCL_VERSION 120)
+    set(CL_HPP_TARGET_OPENCL_VERSION ${OPENCL_TARGET})
+    set(RAFKO_USES_OPENCL 1)
+  endif()
+
+  if(ASSERTLOGS)
+    set(RAFKO_USES_ASSERTLOGS 1)
+  else()
+    set(RAFKO_USES_ASSERTLOGS 0)
   endif()
 
   if(SANITIZE)
@@ -64,17 +74,10 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   endif()
 endif()
 
+# Library configuration
 include(GenerateExportHeader)
 generate_export_header(rafko EXPORT_FILE_NAME rafko_export.hpp)
-
-add_custom_target(rafko_config
-  COMMAND ${CMAKE_COMMAND}
-  # Config variables
-  -D ASSERTLOGS=${ASSERTLOGS} -D USE_OPENCL=${USE_OPENCL}
-  # Calling the config script
-  -P ${CMAKE_SOURCE_DIR}/rafko_config.cmake
-  COMMENT "Generating Configuration for Library.."
-)
+configure_file(rafko_config_template.hpp ${CMAKE_BINARY_DIR}/rafko_config.hpp @ONLY)
 
 target_compile_features(rafko
   PRIVATE
@@ -123,6 +126,7 @@ add_custom_target(rafko_convenience_header
   -P ${CMAKE_SOURCE_DIR}/rafko_convenience_header.cmake
   COMMENT "Generating Convenience Header.."
 )
+
 add_dependencies(rafko rafko_convenience_header)
 install(
   FILES

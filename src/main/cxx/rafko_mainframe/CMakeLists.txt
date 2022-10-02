@@ -1,6 +1,5 @@
 add_library(rafko_mainframe OBJECT)
 target_include_directories(rafko_mainframe PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services control)
-add_dependencies(rafko_mainframe rafko_config)
 
 if(USE_OPENCL)
   find_package(OpenCL REQUIRED)

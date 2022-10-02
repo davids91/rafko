@@ -1,6 +1,5 @@
 add_library(rafko_gym OBJECT)
 target_include_directories(rafko_gym PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services)
-add_dependencies(rafko_gym rafko_config)
 
 if(USE_OPENCL)
   find_package(OpenCL REQUIRED)

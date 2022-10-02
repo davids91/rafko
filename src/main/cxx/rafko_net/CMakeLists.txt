@@ -1,7 +1,7 @@
 add_library(rafko_net OBJECT)
 target_include_directories(rafko_net PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services)
 target_link_libraries(rafko_net PUBLIC rafko_mainframe rafko_protocol)
-add_dependencies(rafko_net rafko_config)
+
 set(NET_INTERFACE_SERVICES
   services/synapse_iterator.hpp
 )
