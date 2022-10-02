@@ -58,7 +58,7 @@ RafkoGPUContext::RafkoGPUContext(
 {
   m_neuronOutputsToEvaluate.back().resize(m_environment->get_number_of_label_samples());
   upload_weight_table_to_device(); /*!Note: Also sets device_weight_table_size*/
-  refresh_objective();
+  if(m_objective)refresh_objective();
 }
 
 void RafkoGPUContext::upload_weight_to_device(std::uint32_t weight_index){
@@ -172,7 +172,6 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
   RFASSERT(environment->get_feature_size() == m_network.output_neuron_number());
   RFASSERT_LOG("Environment input size: {} vs. Network input size: {}", environment->get_input_size(), m_network.input_data_size());
   RFASSERT(environment->get_input_size() == m_network.input_data_size());
-  RFASSERT(static_cast<bool>(m_objective));
 
   m_environment.reset();
   m_environment = environment;
@@ -185,6 +184,9 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
     }
   }
   m_neuronOutputsToEvaluate.back().resize(m_environment->get_number_of_label_samples());
+  m_numOutputsInOneSequence = std::max(m_network.memory_size() + 1u, m_environment->get_inputs_in_one_sequence());
+  m_evalStartInSequence = m_numOutputsInOneSequence - m_environment->get_inputs_in_one_sequence();
+  /*!Note: Network memory is not counting the "current" run; which is by definition is not from memory */
   RFASSERT_LOG(
     "Agent sequence parameters: {} sequences; {} sequence_size; {} prefill inputs",
     m_environment->get_number_of_sequences(),
@@ -198,7 +200,7 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
   );
   m_solutionPhase.set_strategy(m_agent);
   upload_weight_table_to_device();
-  refresh_objective();
+  if(m_objective)refresh_objective();
   RFASSERT_LOG("Last ran evaluation set to `Not evaluation run`");
   m_lastRanEvaluation = not_eval_run;
 }
@@ -211,15 +213,18 @@ void RafkoGPUContext::upload_agent_output(
     "Uploading agent outputs:  sequences to upload: {}; start index inside sequence: {}; sequence truncation: {}",
     sequences_to_upload, start_index_inside_sequence, sequence_truncation
   );
-  RFASSERT( (start_index_inside_sequence + sequence_truncation) <= m_environment->get_sequence_size() );
+  RFASSERT(
+    (start_index_inside_sequence + sequence_truncation) <= std::max(
+      m_environment->get_sequence_size(), m_network.memory_size() + 1u
+    )
+  );
   RFASSERT( 0u < sequence_truncation );
 
   std::uint32_t src_byte_offset = 0u;
   const std::uint32_t truncation_starts_in_sequence = (m_environment->get_prefill_inputs_number() + start_index_inside_sequence);
   const std::uint32_t network_output_size = (m_network.output_neuron_number() * sizeof(double));
   for(std::uint32_t sequence_index = 0; sequence_index < sequences_to_upload; ++sequence_index){
-    for(std::uint32_t label_index = 0; label_index < (m_environment->get_sequence_size() + m_environment->get_prefill_inputs_number()); ++label_index){
-      /* add neuron_array_offset */
+    for(std::uint32_t label_index = 0; label_index < m_numOutputsInOneSequence; ++label_index){
       src_byte_offset += ( (m_network.neuron_array_size() - m_network.output_neuron_number()) * sizeof(double) );
       if((truncation_starts_in_sequence <= label_index)&&(label_index < (truncation_starts_in_sequence + sequence_truncation))){
         data_handler(m_solutionPhase.get_output_buffer(), src_byte_offset, network_output_size);
@@ -249,18 +254,18 @@ double RafkoGPUContext::full_evaluation(){
   RFASSERT_LOG("Full evaluation in GPU Context..");
   RFASSERT(static_cast<bool>(m_objective));
 
-  if(m_lastRanEvaluation != full_eval_run){
-    /* upload mode info */
-    cl::Event fill_event;
-    return_value = m_openclQueue.enqueueFillBuffer<double>(
-      m_solutionPhase.get_input_buffer(), (0.0)/*the double value*/,
-      0u /*offset*/, sizeof(double)/*size(bytes)*/,
-      NULL/*events to wit for*/, &fill_event
-    );
-    RFASSERT( return_value == CL_SUCCESS );
-    return_value = fill_event.wait();
-    RFASSERT( return_value == CL_SUCCESS );
+  /* upload mode info */
+  cl::Event fill_event;
+  return_value = m_openclQueue.enqueueFillBuffer<double>(
+    m_solutionPhase.get_input_buffer(), (0.0)/*the double value*/,
+    0u /*offset*/, sizeof(double)/*size(bytes)*/,
+    NULL/*events to wit for*/, &fill_event
+  );
+  RFASSERT( return_value == CL_SUCCESS );
+  return_value = fill_event.wait();
+  RFASSERT( return_value == CL_SUCCESS );
 
+  if(m_lastRanEvaluation != full_eval_run){
     std::vector<cl::Event> input_events = m_environment->upload_inputs_to_buffer(
       m_openclQueue, m_solutionPhase.get_input_buffer(),
       sizeof(double) * (m_deviceWeightTableSize + m_agent->get_input_shapes()[0][0])/*buffer_start_byte_offset*/,
@@ -292,23 +297,29 @@ double RafkoGPUContext::full_evaluation(){
   /* upload agent output into error phase inputs */
   std::vector<cl::Event> features_events;
   std::uint32_t dst_byte_offset = 0u;
+  std::uint32_t label_index = 0u;
   upload_agent_output(
-    m_environment->get_number_of_sequences(), 0u/*start_index_inside_sequence*/, m_environment->get_sequence_size()/*sequence_truncation*/,
-    [this, &features_events, &dst_byte_offset, &return_value](cl::Buffer source_buffer, std::uint32_t buffer_byte_offset, std::uint32_t data_byte_size){
-      RFASSERT_LOG(
-        "copying from agent[{}] to objective[{} + {}] / {} bytes..",
-        buffer_byte_offset, dst_byte_offset, data_byte_size,
-        m_objective->get_input_shapes()[0].get_byte_size<double>()
-        /*!Note: m_errorPhase is based on m_objective */
-      );
-      features_events.emplace_back();
-      return_value = m_openclQueue.enqueueCopyBuffer( /* Upload sequence */
-        source_buffer /*src*/, m_errorPhase.get_input_buffer() /*dst*/, buffer_byte_offset/*src_offset*/,
-        dst_byte_offset/*dst_offset*/, data_byte_size/*size*/,
-        NULL /*events to wait for*/, &features_events.back()
-      );
-      RFASSERT( return_value == CL_SUCCESS );
-      dst_byte_offset += data_byte_size;
+    m_environment->get_number_of_sequences(), 0u/*start_index_inside_sequence*/,
+    std::max(m_environment->get_sequence_size(), (m_network.memory_size() + 1u))/*sequence_truncation*/,
+    [this, &label_index, &features_events, &dst_byte_offset, &return_value]
+    (cl::Buffer source_buffer, std::uint32_t buffer_byte_offset, std::uint32_t data_byte_size){
+      if(label_index >= m_evalStartInSequence){
+        RFASSERT_LOG(
+          "copying from agent[{}] to objective[{} + {}] / {} bytes..",
+          buffer_byte_offset, dst_byte_offset, data_byte_size,
+          m_objective->get_input_shapes()[0].get_byte_size<double>()
+          /*!Note: m_errorPhase is based on m_objective */
+        );
+        features_events.emplace_back();
+        return_value = m_openclQueue.enqueueCopyBuffer( /* Upload sequence */
+          source_buffer /*src*/, m_errorPhase.get_input_buffer() /*dst*/, buffer_byte_offset/*src_offset*/,
+          dst_byte_offset/*dst_offset*/, data_byte_size/*size*/,
+          NULL /*events to wait for*/, &features_events.back()
+        );
+        RFASSERT( return_value == CL_SUCCESS );
+        dst_byte_offset += data_byte_size;
+      }
+      label_index = (label_index + 1u)%m_numOutputsInOneSequence;
     }
   );
 
@@ -418,23 +429,28 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
   /* upload agent output into error phase inputs */
   std::vector<cl::Event> features_events;
   std::uint32_t dst_byte_offset = 0u;
+  std::uint32_t label_index = 0u;
   upload_agent_output(
     used_minibatch_size, start_index_inside_sequence, used_sequence_truncation,
-    [this, &features_events, &dst_byte_offset, &return_value](cl::Buffer source_buffer, std::uint32_t buffer_byte_offset, std::uint32_t data_byte_size){
-      RFASSERT_LOG(
-        "copying from agent[{}] to objective[{} + {}] / {} bytes..",
-        buffer_byte_offset, dst_byte_offset, data_byte_size,
-        m_objective->get_input_shapes()[0].get_byte_size<double>()
-        /*!Note: m_errorPhase is based on m_objective */
-      );
-      features_events.emplace_back();
-      return_value = m_openclQueue.enqueueCopyBuffer( /* Upload sequence */
-        source_buffer /*src*/, m_errorPhase.get_input_buffer() /*dst*/, buffer_byte_offset/*src_offset*/,
-        dst_byte_offset/*dst_offset*/, data_byte_size/*size*/,
-        NULL /*events to wait for*/, &features_events.back()
-      );
-      RFASSERT( return_value == CL_SUCCESS );
-      dst_byte_offset += data_byte_size;
+    [this, &label_index, &features_events, &dst_byte_offset, &return_value]
+    (cl::Buffer source_buffer, std::uint32_t buffer_byte_offset, std::uint32_t data_byte_size){
+      if(label_index >= m_evalStartInSequence){
+        RFASSERT_LOG(
+          "copying from agent[{}] to objective[{} + {}] / {} bytes..",
+          buffer_byte_offset, dst_byte_offset, data_byte_size,
+          m_objective->get_input_shapes()[0].get_byte_size<double>()
+          /*!Note: m_errorPhase is based on m_objective */
+        );
+        features_events.emplace_back();
+        return_value = m_openclQueue.enqueueCopyBuffer( /* Upload sequence */
+          source_buffer /*src*/, m_errorPhase.get_input_buffer() /*dst*/, buffer_byte_offset/*src_offset*/,
+          dst_byte_offset/*dst_offset*/, data_byte_size/*size*/,
+          NULL /*events to wait for*/, &features_events.back()
+        );
+        RFASSERT( return_value == CL_SUCCESS );
+        dst_byte_offset += data_byte_size;
+      }
+      label_index = (label_index + 1u)%m_numOutputsInOneSequence;
     }
   );
 
@@ -551,23 +567,35 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
     std::tuple_cat(std::tie(m_openclQueue), sol_space)
   ) );
 
-  std::uint32_t output_array_start = ( /* the end of the last memory slot contains the network data */
-    (std::max(2u, m_network.memory_size()) * m_network.neuron_array_size()) - m_network.output_neuron_number()
+  /* upload agent output into provided output vector */
+  std::uint32_t output_index = 0u;
+  m_standaloneSolutionResult.resize(m_network.output_neuron_number());
+  upload_agent_output(
+    1u/*sequences_to_upload*/, 0u/*start_index_inside_sequence*/,
+    std::max(m_environment->get_sequence_size(), (m_network.memory_size() + 1u))/*sequence_truncation*/,
+    [this, &output_index, &return_value, &fill_event](cl::Buffer source_buffer, std::uint32_t buffer_byte_offset, std::uint32_t data_byte_size){
+      static const std::uint32_t relevant_feature_index = m_numOutputsInOneSequence - 1u;
+      std::cout << "label : " << output_index << " <> " << relevant_feature_index << std::endl;
+      if(output_index == relevant_feature_index){
+        RFASSERT_LOG(
+          "copying from agent[{}] to buffer: {} / {} bytes..",
+          buffer_byte_offset, data_byte_size, (m_standaloneSolutionResult.size() * sizeof(double))
+        );
+        //TODO: check if output is read correctly? also cout not showing..
+        std::cout << "buffer_byte_offset: " << buffer_byte_offset << std::endl;
+        return_value = m_openclQueue.enqueueReadBuffer(
+          source_buffer /*src*/, CL_TRUE/*blocking*/, buffer_byte_offset, data_byte_size/*size*/,
+          m_standaloneSolutionResult.data(), NULL/*events to wit for*/, &fill_event
+        );
+        RFASSERT( return_value == CL_SUCCESS );
+      }
+      ++output_index;
+    }
   );
-  RFASSERT_LOG("Output array start: {}", output_array_start);
-  if(static_cast<std::int32_t>(m_standaloneSolutionResult.size()) == m_network.neuron_array_size()){
-    RFASSERT_LOG("Loading output to already allocated vector..");
-    m_solutionPhase.load_output(m_standaloneSolutionResult.data(), m_network.output_neuron_number(), output_array_start);
-  }else{
-    RFASSERT_LOG("Acquiring output and moving it to new vector..");
-    std::unique_ptr<double[]> output_ptr = m_solutionPhase.acquire_output(m_network.output_neuron_number(), output_array_start);
-    m_standaloneSolutionResult = std::vector<double>(output_ptr.get(), output_ptr.get() + m_network.output_neuron_number());
-  }
-  RFASSERT_LOGV(m_standaloneSolutionResult, "Resulting output:");
+  return_value = fill_event.wait();
+  RFASSERT( return_value == CL_SUCCESS );
 
-  RFASSERT_LOG("Last ran evaluation set to `Not evaluation run`");
   m_lastRanEvaluation = not_eval_run;
-
   return { m_standaloneSolutionResult.end() - m_network.output_neuron_number(), m_standaloneSolutionResult.end() };
 }
 
@@ -575,17 +603,17 @@ void RafkoGPUContext::solve_environment(std::vector<std::vector<double>>& output
   RFASSERT(output.size() == (m_environment->get_number_of_sequences() * m_environment->get_sequence_size()));
   [[maybe_unused]]cl_int return_value;
 
-  if(m_lastRanEvaluation != full_eval_run){ /* The same data is needed on the GPU for full evaluation */
-    /* upload mode info */
-    cl::Event fill_event;
-    return_value = m_openclQueue.enqueueFillBuffer<double>(
-      m_solutionPhase.get_input_buffer(), (69.420)/* mode value: network is not being evaluated */,
-      0u /*offset*/, sizeof(double)/*size(bytes)*/, NULL/*events to wit for*/, &fill_event
-    );
-    RFASSERT( return_value == CL_SUCCESS );
-    return_value = fill_event.wait();
-    RFASSERT( return_value == CL_SUCCESS );
+  /* upload mode info */
+  cl::Event fill_event;
+  return_value = m_openclQueue.enqueueFillBuffer<double>(
+    m_solutionPhase.get_input_buffer(), (69.420)/* mode value: network is not being evaluated */,
+    0u /*offset*/, sizeof(double)/*size(bytes)*/, NULL/*events to wit for*/, &fill_event
+  );
+  RFASSERT( return_value == CL_SUCCESS );
+  return_value = fill_event.wait();
+  RFASSERT( return_value == CL_SUCCESS );
 
+  if(m_lastRanEvaluation != full_eval_run){ /* The same data is needed on the GPU for full evaluation */
     std::vector<cl::Event> input_events = m_environment->upload_inputs_to_buffer(
       m_openclQueue, m_solutionPhase.get_input_buffer(),
       sizeof(double) * (m_deviceWeightTableSize + m_agent->get_input_shapes()[0][0])/*buffer_start_byte_offset*/,
@@ -612,18 +640,28 @@ void RafkoGPUContext::solve_environment(std::vector<std::vector<double>>& output
       static std::uint32_t output_index = 0u;
       RFASSERT_LOG(
         "copying from agent[{}] to output[{}]; {} / {} bytes..",
-        buffer_byte_offset, dst_byte_offset, data_byte_size,
+        buffer_byte_offset, buffer_byte_offset, data_byte_size,
         (output[output_index].size() * sizeof(double))
       );
       RFASSERT(output_index < output.size());
       RFASSERT(output[output_index].size() == (data_byte_size / sizeof(double)));
       features_events.emplace_back();
-      return_value = m_openclQueue.enqueueReadBuffer( /* Upload sequence */
+      return_value = m_openclQueue.enqueueReadBuffer(
         source_buffer /*src*/, CL_FALSE/*blocking*/, buffer_byte_offset/*src_offset*/,
         data_byte_size/*size*/, output[output_index].data(),
         NULL /*events to wait for*/, &features_events.back()
       );
       RFASSERT( return_value == CL_SUCCESS );
+
+      //Debug..
+      // double dval;
+      // return_value = m_openclQueue.enqueueReadBuffer(
+      //   source_buffer /*src*/, CL_TRUE/*blocking*/, buffer_byte_offset/*src_offset*/,
+      //   data_byte_size/*size*/, &dval, NULL /*events to wait for*/, NULL
+      // );
+      // RFASSERT( return_value == CL_SUCCESS );
+      // std::cout << "buffer[" << buffer_byte_offset << " + " << data_byte_size << "]: " << dval << std::endl;
+
       ++output_index;
     }
   );

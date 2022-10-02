@@ -99,6 +99,53 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
   }/*for(50 variants)*/
 }
 
+TEST_CASE("Testing if standalone solution is working as intended with the GPU context even with network recurrence","[context][GPU][solve][standalone][memory]"){
+  google::protobuf::Arena arena;
+  constexpr const std::uint32_t sequence_size = 6u;
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
+    rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10)
+  );
+  for(std::uint32_t variant = 0u; variant < 50u; ++variant){
+    rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
+      .input_size(2).expected_input_range(1.0)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .allowed_transfer_functions_by_layer(
+        {
+          {rafko_net::transfer_function_identity},
+          {rafko_net::transfer_function_sigmoid},
+          {rafko_net::transfer_function_tanh},
+          {rafko_net::transfer_function_elu},
+          {rafko_net::transfer_function_selu},
+          {rafko_net::transfer_function_relu},
+        }
+      ).dense_layers({2,2,2,2,2,2});
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+      *settings, rafko_gym::cost_function_squared_error
+    );
+    std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
+    CHECK_NOTHROW(
+      context = (
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
+      )
+    );
+
+    rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
+    std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
+    std::vector<double> network_input(network.input_data_size(), (rand()%10));
+    rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
+    rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
+
+    reference_agent->set_eval_mode(false);
+    for(std::uint32_t result_index = 0; result_index < reference_result.size(); ++result_index){
+      REQUIRE( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
+    }
+  }/*for(50 variants)*/
+}
+
 TEST_CASE("Testing if standalone solution is working as intended with the GPU context even with softmax features","[context][GPU][features][softmax]"){
   google::protobuf::Arena arena;
   constexpr const std::uint32_t sequence_size = 6u;
@@ -916,6 +963,7 @@ TEST_CASE("Testing is batch-solve is working as expected in GPU context", "[cont
 
   std::uint32_t index = 0u;
   for(const std::vector<double>& reference : reference_result){
+    std::cout << "[" << reference[0] << "] <> [" << context_result[index][0] << "]" << std::endl;
     REQUIRE_THAT(reference, Catch::Matchers::Approx(context_result[index++]).margin(0.0000000000001));
   }
 }

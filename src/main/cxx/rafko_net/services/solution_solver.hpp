@@ -133,9 +133,9 @@ public:
       * std::max(2u, std::max( /* number of labels per sequence */
         m_solution->network_memory_length(), (m_sequenceSize + m_prefillInputsPerSequence)
       ) )
-      * m_solution->neuron_number() /* number of numbers per label */
+      * m_solution->neuron_number() /* number of values per label */
     );
-    return{ rafko_mainframe::RafkoNBufShape{bytes_used, 1u} };
+    return{ rafko_mainframe::RafkoNBufShape{bytes_used, 1u/* for performance error */} };
   }
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
@@ -159,10 +159,10 @@ private:
   bool evaluating = true;
 
   #if(RAFKO_USES_OPENCL)
-    std::uint32_t m_sequencesEvaluating = 1u;
-    std::uint32_t m_sequenceSize = 1u;
-    std::uint32_t m_prefillInputsPerSequence = 0u;
-    std::uint32_t m_deviceWeightTableSize;
+  std::uint32_t m_sequencesEvaluating = 1u;
+  std::uint32_t m_sequenceSize = 1u;
+  std::uint32_t m_prefillInputsPerSequence = 0u;
+  std::uint32_t m_deviceWeightTableSize;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   /**

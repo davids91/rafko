@@ -149,12 +149,21 @@ Solution* SolutionBuilder::build(const RafkoNet& net, google::protobuf::Arena* a
   return solution;
 }
 
+//TODO: decide starting point in the array when memory is more, than label+prefill size
+//TODO: Also check/update uploading the outputs to the error phase (wrt the starting index eval start)
+//TODO: Determine how to get only the last sequence items when the network is running
+//TODO: Eliminate mode, or just reduce the functionality to dropout and the kind
+//TODO: Add additional paramter to environment solve: clean_start. CPU context can only do a clean start!
+//      --> Or it can only calculate up to threads sequences with a non-clean start
+//TODO: Document the behavior in the examples
+//TODO: Also update reset_data in both solve and solve_env
 #if(RAFKO_USES_OPENCL)
 std::string SolutionBuilder::get_kernel_for_solution(
   const Solution& solution, std::string name, std::uint32_t sequence_size, std::uint32_t prefill_input_num,
   const rafko_mainframe::RafkoSettings& settings
 ){
   RFASSERT_LOG("Building GPU kernel for solution");
+  //TODO: ALso update the below comment
   /*!Note: Network solve starts from the first memory/sequence slot of the outputs buffer
    * which is calculated from get_global_id(0) and the size of the max(sequence, neuron_memory);
    * UNLESS mode variable input is non-zero.
@@ -171,33 +180,37 @@ std::string SolutionBuilder::get_kernel_for_solution(
       if( (input_sizes_size == 3) && (output_sizes_size == 2) ){
         const int sequence_index = get_global_id(0);
         const int neuron_array_size = ==neuron_array_size==;
-        const int neuron_memory_slots = max(2, ==neuron_memory_size==);
+        const int neuron_memory_slots = max(1, ==network_memory_slots==);
         const int max_backreach = (neuron_memory_slots - 1);
         const int sequence_size = ==sequence_size==;
         const int prefill_input_num = ==prefill_input_num==;
         const int network_input_size = ==network_input_size==;
-        int output_start;
+        const int inputs_in_one_sequence = sequence_size + prefill_input_num;
+        const int outputs_in_one_sequence = max(neuron_memory_slots, inputs_in_one_sequence);
+        const int eval_start = neuron_memory_slots - min(neuron_memory_slots, (prefill_input_num + sequence_size));
+
+        int input_start = ==weight_table_offset== + (sequence_index * inputs_in_one_sequence * network_input_size);
+        int output_start = sequence_index * (outputs_in_one_sequence-1) * neuron_array_size;
         int current_max_backreach;
-        int input_start;
-        int label_index = 0; /* index inside the current inside sequence */
-        int sequence_start;
+        int label_index = 0; /* index inside the current sequence */
+        int starting_slot;
         int sequence_max_index;
         bool evaluate_network = (inputs[0] == 0);
         if(evaluate_network){ /* normal evaluation */
           current_max_backreach = 0;
-          input_start = ==weight_table_offset== + (sequence_index * (sequence_size + prefill_input_num) * network_input_size);
-          output_start = sequence_index * (sequence_size + prefill_input_num) * neuron_array_size;
-          sequence_start = 0;
-          sequence_max_index = max(( sequence_size + prefill_input_num ), 1) - 1;
-        }else{ /* run-once with memory */
+          starting_slot = eval_start;
+          output_start += eval_start * neuron_array_size; /* correct output start in case network memory is more, than the environment sequence size */
+          sequence_max_index = max(inputs_in_one_sequence, 1) - 1;
+        }else{ /* run with memory */
           current_max_backreach = max_backreach;
-          input_start = ==weight_table_offset==;
-          output_start = (max_backreach * neuron_array_size); /*==output_start==*/
-          sequence_start = max(max(max_backreach,( sequence_size + prefill_input_num )), 1) - 1;
-          sequence_max_index = sequence_start;
+          starting_slot = max(outputs_in_one_sequence, 1) - 1;
+          sequence_max_index = starting_slot;
+          output_start += (outputs_in_one_sequence-1) * neuron_array_size; /* correct output start by putting it to the last label in sequence */
+          printf("slots:  %d / %d \n", starting_slot, outputs_in_one_sequence);
+          printf("Byte start: %d / %d \n", output_start, output_sizes[0]);
         }
         #pragma unroll
-        for(int label_index = sequence_start; label_index <= sequence_max_index; ++label_index){
+        for(int label_index = starting_slot; label_index <= sequence_max_index; ++label_index){
           double neuron_partial_result;
           /* +++ GENERATED_NEURON_CODE +++ */
           ==neuron_operations==
@@ -208,6 +221,8 @@ std::string SolutionBuilder::get_kernel_for_solution(
           if(current_max_backreach < max_backreach)
             ++current_max_backreach;
         }
+
+        //TODO: copy-propagate previous results back until possible
 
         outputs[output_sizes[0]] = 0.0; /* zero out performance error */
         ==performance_operations==
@@ -231,7 +246,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
     return "( (min(current_max_backreach,max_backreach) < " + std::to_string(past_reach) + " )?(0.0):( " + content + ") )";
   };
   std::function<std::string(std::string)> label_reach_guard = [](std::string content){
-    return "(  ( ((sequence_start - label_index) == 0)&&(evaluate_network) )?(0.0):( " + content + ")  )";
+    return "(  ( ((starting_slot - label_index) == 0)&&(evaluate_network) )?(0.0):( " + content + ")  )";
   };
   /*!Note: When the network has no memory, backreach counters can not be used to reach the previous value of the Neuron
    * so it would be best to use the currently evaluated label for it (every label except the first reaches the Neurons previous value)
@@ -407,6 +422,16 @@ std::string SolutionBuilder::get_kernel_for_solution(
           "inputs[" + std::to_string(weight_table_offset + spike_weight_index)+ "]"/*parameter*/
         )+"\n);\n"
       );
+
+      // Debug! print Neuron value
+      // if(11 == inner_neuron_index){
+      //   std::string neuron_index_str = std::to_string(partial.output_data().starts() + inner_neuron_index);
+      //   inner_neuron_operation += std::string("if(0 == get_local_id(0))")
+      //   + "printf(\"Neuron[%d] value: %.9f\\n \", " + neuron_index_str
+      //   + ", outputs[output_start + " + neuron_index_str + "]"
+      //   + ");";
+      // }
+
       weight_synapse_start += partial.weight_synapse_number(inner_neuron_index);
       input_synapse_index += input_synapse_index_offset;
       input_synapse_index_offset = 0u;
@@ -450,10 +475,29 @@ std::string SolutionBuilder::get_kernel_for_solution(
     if(declare_locals)
      already_declared_locals.insert(feature.feature());
   }
+
+  //Debug
+  performance_operations += R"(
+    if(0 == get_global_id(0)){
+      int print_sequence_index = 0;
+      printf("label[%d]:", label_index);
+      for(int i = 0; i < output_sizes[0]; ++i){
+        if(0 == i%neuron_array_size){
+          printf("(%d)\n", i);
+          if(0 == print_sequence_index%(prefill_input_num + sequence_size)){
+            printf("=====\n");
+          }
+          ++print_sequence_index;
+        }
+        printf("[%.4f]", outputs[i]);
+      }
+      printf("\n");
+    }
+  )";
   source_base = std::regex_replace(source_base, std::regex("==name=="), name);
   source_base = std::regex_replace(source_base, std::regex("==neuron_array_size=="), std::to_string(solution.neuron_number()));
   source_base = std::regex_replace(source_base, std::regex("==weight_table_offset=="), std::to_string(weight_table_offset));
-  source_base = std::regex_replace(source_base, std::regex("==neuron_memory_size=="), std::to_string(solution.network_memory_length()));
+  source_base = std::regex_replace(source_base, std::regex("==network_memory_slots=="), std::to_string(solution.network_memory_length()));
   source_base = std::regex_replace(source_base, std::regex("==sequence_size=="), std::to_string(sequence_size));
   source_base = std::regex_replace(source_base, std::regex("==neuron_operations=="), neuron_operations);
   source_base = std::regex_replace(source_base, std::regex("==prefill_input_num=="), std::to_string(prefill_input_num));

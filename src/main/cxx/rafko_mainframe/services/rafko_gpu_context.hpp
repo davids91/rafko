@@ -111,6 +111,8 @@ private:
   /* Somebody tell me what is the least propable value of a random seed one can use,
    * so I could initialize this poor fella with it?!
    */
+  std::uint32_t m_numOutputsInOneSequence = 1u;
+  std::uint32_t m_evalStartInSequence = 0u;
 
  enum{
    not_eval_run, full_eval_run, random_eval_run
@@ -136,10 +138,13 @@ private:
   /**
    * @brief     Upload inputs to the solution phase to be able to run the agent kernel code on the inputs
    *
-   * @param[in]   sequence_start_index          The index of the first sequence in the environment to upload the inputs from
-   * @param[in]   buffer_sequence_start_index   Start index of a sequence to start uploading inputs from in the global buffer
    * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
-   * @param[in]   data_handler                  The funciton accepting the CL Buffer, byte offset, and data size(bytes) for each feature for one sequence
+   * @param[in]   start_index_inside_sequence   Start index of a feature vector inside every sequence to start uploading inputs from
+   *                                            Index 0 starts from the first feature vector assigned for each sequence
+   *                                            In case the Network has more memory, than the environment label pairs: index 0 starts at zero still.
+   *                                            In that case, the evaluation doesn't start form 0, as label and prefill values take up less space than what is assigned for one sequence
+   * @param[in]   sequence_truncation           Number of feature vectors to upload per sequence
+   * @param[in]   data_handler                  The funciton accepting the CL Buffer, byte offset, and data size(bytes == output neurons only!) for each feature for one sequence
    */
   void upload_agent_output(
     std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation,
