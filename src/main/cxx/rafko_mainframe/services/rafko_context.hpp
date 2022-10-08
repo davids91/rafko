@@ -132,9 +132,11 @@ public:
   /**
    * @brief     Solves the enclosed network for the whole of the included environment.
    *
-   * @param     output    The buffer to store the data in. Sizes must be set to fit the output exactly
+   * @param         output      The buffer to store the data in. Sizes must be set to fit the output exactly
+   * @param[in]     isolated    Set to true, if the buffers are to be resetted before solving the environment
+   *                            Number of sequences evaluated may be limited by the available threads!
    */
-  virtual void solve_environment(std::vector<std::vector<double>>& output) = 0;
+  virtual void solve_environment(std::vector<std::vector<double>>& output, bool isolated) = 0;
 
   /**
    * @brief      Saves the context state

@@ -301,7 +301,7 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
   }/*for(10 variants)*/
 }
 
-TEST_CASE("Testing is batch-solve is working as expected in CPU context", "[context][CPU][solve][batch]"){
+TEST_CASE("Testing is solve is working as expected in CPU context for isolated environment solve", "[context][CPU][solve][batch][isolated]"){
   constexpr const std::uint32_t sample_number = 50;
   constexpr const std::uint32_t sequence_size = 6;
   google::protobuf::Arena arena;
@@ -325,7 +325,7 @@ TEST_CASE("Testing is batch-solve is working as expected in CPU context", "[cont
   /* Solve with the reference context and store the results */
   std::vector<std::vector<double>> reference_result;
   std::uint32_t raw_inputs_index = 0;
-  reference_solver->set_eval_mode(true);
+  reference_solver->set_eval_mode(false);
   for(std::uint32_t sequence_index = 0; sequence_index < environment->get_number_of_sequences(); ++sequence_index){
     bool reset = true;
     for(std::uint32_t prefill_index = 0; prefill_index < environment->get_prefill_inputs_number(); ++prefill_index){

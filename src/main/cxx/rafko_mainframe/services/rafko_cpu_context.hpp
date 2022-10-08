@@ -114,7 +114,7 @@ public:
     return m_agent->solve(input, reset_neuron_data, thread_index);
   }
 
-  void solve_environment(std::vector<std::vector<double>>& output) override;
+  void solve_environment(std::vector<std::vector<double>>& output, bool isolated = true) override;
 
   void push_state() override{
     m_environment->push_state();

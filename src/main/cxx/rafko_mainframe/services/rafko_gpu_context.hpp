@@ -55,7 +55,7 @@ public:
   void apply_weight_update(const std::vector<double>& weight_delta) override;
   double full_evaluation() override;
   double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override;
-
+  void solve_environment(std::vector<std::vector<double>>& output, bool isolated = true) override;
   void refresh_solution_weights() override{
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
     m_solverFactory.refresh_actual_solution_weights();
@@ -74,8 +74,6 @@ public:
     const std::vector<double>& input,
     bool reset_neuron_data = false, std::uint32_t thread_index = 0
   ) override;
-
-  void solve_environment(std::vector<std::vector<double>>& output) override;
 
   rafko_mainframe::RafkoSettings& expose_settings() override{
     m_lastRanEvaluation = not_eval_run; /* in case some training parameters changed buffers might need to be refreshed */
@@ -107,12 +105,16 @@ private:
   std::vector<double> m_standaloneSolutionResult;
   RafkoGPUPhase m_errorPhase;
   bool m_lastRandomEvalWasSeeded = false;
-  std::uint32_t m_lastUsedSeed;
+  std::uint32_t m_lastUsedSeed = -1;
   /* Somebody tell me what is the least propable value of a random seed one can use,
    * so I could initialize this poor fella with it?!
    */
-  std::uint32_t m_numOutputsInOneSequence = 1u;
-  std::uint32_t m_evalStartInSequence = 0u;
+
+  std::uint32_t m_numOutputsInOneSequence = 2;
+  std::uint32_t m_evalStartInSequence = 1;
+  /*!Note: Because the GPU implementation at least 2 memory slots are needed to run,
+   * because of the spike function: previous value of the actual Neuron is always in the previous buffer slot
+   */
 
  enum{
    not_eval_run, full_eval_run, random_eval_run

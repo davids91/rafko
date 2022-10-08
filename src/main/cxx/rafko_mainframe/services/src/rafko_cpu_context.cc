@@ -149,8 +149,8 @@ double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t seq
   return -error_post_process( error_sum, (sequences_to_evaluate * m_environment->get_sequence_size()) );
 }
 
-void RafkoCPUContext::solve_environment(std::vector<std::vector<double>>& output){
-  RFASSERT_LOG("Solving the whole environment in CPU COntext");
+void RafkoCPUContext::solve_environment(std::vector<std::vector<double>>& output, bool isolated){
+  RFASSERT_LOG("Solving the whole environment in CPU Context");
   RFASSERT(output.size() == (m_environment->get_number_of_sequences() * m_environment->get_sequence_size()));
   std::uint32_t sequence_index = 0u;
   while(sequence_index < m_environment->get_number_of_sequences()){
@@ -182,7 +182,8 @@ void RafkoCPUContext::solve_environment(std::vector<std::vector<double>>& output
       }
     });
     sequence_index += m_executionThreads.get_number_of_threads();
-  }
+    if(isolated)break; /* to keep buffer data consistent, only the first @get_number_of_threads sequences are solved */
+  }/*while(there are sequences left to solve)*/
 }
 
 

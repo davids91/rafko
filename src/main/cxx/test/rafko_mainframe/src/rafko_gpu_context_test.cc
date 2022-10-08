@@ -136,13 +136,11 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
     rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
     std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
     std::vector<double> network_input(network.input_data_size(), (rand()%10));
-    rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
-    rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
 
     reference_agent->set_eval_mode(false);
-    for(std::uint32_t result_index = 0; result_index < reference_result.size(); ++result_index){
-      REQUIRE( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
-    }
+    rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
+    rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
+    CHECK_THAT(reference_result.acquire(), Catch::Matchers::Approx(context_result.acquire()).margin(0.0000000001));
   }/*for(50 variants)*/
 }
 
@@ -240,9 +238,7 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
     for(std::uint32_t steps = 0; steps < 5; ++steps){
       rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
       rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
-      for(std::uint32_t result_index = 0; result_index < reference_result.size(); ++result_index){
-        CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
-      }
+      CHECK_THAT(reference_result.acquire(), Catch::Matchers::Approx(context_result.acquire()).margin(0.0000000001));
     }/*for(5 consecutive steps)*/
   }/*for(10 variant)*/
 }
@@ -909,8 +905,8 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
   }/*for(10 variants)*/
 }
 
-TEST_CASE("Testing is batch-solve is working as expected in GPU context", "[context][GPU][solve][batch]"){
-  constexpr const std::uint32_t sample_number = 50;
+TEST_CASE("Testing is solve is working as expected in GPU context for isolated environment solve", "[context][GPU][solve][batch][isolated]"){
+  constexpr const std::uint32_t sample_number = 5;
   constexpr const std::uint32_t sequence_size = 6;
   google::protobuf::Arena arena;
 
@@ -921,7 +917,22 @@ TEST_CASE("Testing is batch-solve is working as expected in GPU context", "[cont
     .set_minibatch_size(10)
   );
 
-  rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features_and_recurrence(2u/*input_size*/, *settings, 1u);
+  // rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features_and_recurrence(2u/*input_size*/, *settings, 1u);
+  rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
+    .input_size(2).expected_input_range(1.0)
+    .allowed_transfer_functions_by_layer(
+      {
+        {rafko_net::transfer_function_identity}
+
+        // {rafko_net::transfer_function_identity},
+        // {rafko_net::transfer_function_sigmoid},
+        // {rafko_net::transfer_function_tanh},
+        // {rafko_net::transfer_function_elu},
+        // {rafko_net::transfer_function_selu},
+        // {rafko_net::transfer_function_relu},
+      }
+    // ).dense_layers({2,2,2,2,2,1});
+    ).dense_layers({1});
   auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(sample_number, sequence_size);
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::move(inputs), std::move(labels), sequence_size
@@ -930,22 +941,40 @@ TEST_CASE("Testing is batch-solve is working as expected in GPU context", "[cont
   /* Calculate the network output to the environment manually */
   std::shared_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Factory(network, settings).build();
 
-  /* Solve with the reference context and store the results */
+  /* Solve with the reference solver and store the results */
   std::vector<std::vector<double>> reference_result;
   std::uint32_t raw_inputs_index = 0;
-  reference_solver->set_eval_mode(true);
+  reference_solver->set_eval_mode(false);
+  std::cout << "reference inputs and data: " << std::endl;
   for(std::uint32_t sequence_index = 0; sequence_index < environment->get_number_of_sequences(); ++sequence_index){
     bool reset = true;
     for(std::uint32_t prefill_index = 0; prefill_index < environment->get_prefill_inputs_number(); ++prefill_index){
-      (void)reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset);
+      // (void)reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset);
+      auto print_output = reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset).acquire();
+      for(const double& d : environment->get_input_sample(raw_inputs_index)){
+        std::cout << "[" << d << "]";
+      }
+      std::cout << "-->";
+      for(const double& d : print_output){
+        std::cout << "[" << d << "]";
+      }
+      std::cout << std::endl;
       if(reset)reset = false;
       ++raw_inputs_index;
     }
     for(std::uint32_t label_inside_sequence = 0; label_inside_sequence < environment->get_sequence_size(); ++label_inside_sequence){
       reference_result.emplace_back(reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset).acquire());
-      if(reset)reset = false;
+      for(const double& d : environment->get_input_sample(raw_inputs_index)){
+        std::cout << "[" << d << "]";
+      }
+      std::cout << "-->";
+      for(const double& d : reference_result.back()){
+        std::cout << "[" << d << "]";
+      }
+      std::cout << std::endl;      if(reset)reset = false;
       ++raw_inputs_index;
     }
+    std::cout << "== sequence_end ===" << std::endl;
   }
 
   /* Calculate result from a context */
@@ -961,10 +990,28 @@ TEST_CASE("Testing is batch-solve is working as expected in GPU context", "[cont
   );
   context->solve_environment(context_result);
 
+  // double simple_result = context->solve(environment->get_input_sample(0), true).acquire()[0];
+  // std::cout << "simple solve result: " << simple_result
+  // << " vs: " <<  reference_solver->solve(environment->get_input_sample(0), true).acquire()[0]
+  // << std::endl;
+  // auto reference_buffer = reference_solver->solve(environment->get_input_sample(0), true);
+  // auto cheat = reference_buffer.begin() + 1 - network.neuron_array_size();
+  // std::cout << "reference buffer: " << std::endl;
+  // for(int i = 0; i < network.neuron_array_size(); ++i){
+  //   std::cout << "[" << *cheat << "]";
+  //   ++cheat;
+  // }
+  // std::cout << std::endl;
+  //
+  // std::cout << "weight table: " << std::endl;
+  // for(const double& d : network.weight_table()){
+  //   std::cout << "[" << d << "]";
+  // }
+  // std::cout << std::endl;
+
   std::uint32_t index = 0u;
   for(const std::vector<double>& reference : reference_result){
-    std::cout << "[" << reference[0] << "] <> [" << context_result[index][0] << "]" << std::endl;
-    REQUIRE_THAT(reference, Catch::Matchers::Approx(context_result[index++]).margin(0.0000000000001));
+    CHECK_THAT(reference, Catch::Matchers::Approx(context_result[index++]).margin(0.0000000000001));
   }
 }
 
