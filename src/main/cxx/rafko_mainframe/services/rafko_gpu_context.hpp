@@ -23,6 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <functional>
 #include <CL/opencl.hpp>
 
 #include "rafko_net/services/solution_solver.hpp"
@@ -54,17 +55,12 @@ public:
   void apply_weight_update(const std::vector<double>& weight_delta) override;
   double full_evaluation() override;
   double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override;
-
+  void solve_environment(std::vector<std::vector<double>>& output, bool isolated = true) override;
   void refresh_solution_weights() override{
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
     m_solverFactory.refresh_actual_solution_weights();
     upload_weight_table_to_device();
   }
-
-  rafko_utilities::ConstVectorSubrange<> solve(
-    const std::vector<double>& input,
-    bool reset_neuron_data = false, std::uint32_t thread_index = 0
-  ) override;
 
   void push_state() override{
     m_environment->push_state();
@@ -73,6 +69,11 @@ public:
   void pop_state() override{
     m_environment->pop_state();
   }
+
+  rafko_utilities::ConstVectorSubrange<> solve(
+    const std::vector<double>& input,
+    bool reset_neuron_data = false, std::uint32_t thread_index = 0
+  ) override;
 
   rafko_mainframe::RafkoSettings& expose_settings() override{
     m_lastRanEvaluation = not_eval_run; /* in case some training parameters changed buffers might need to be refreshed */
@@ -104,14 +105,20 @@ private:
   std::vector<double> m_standaloneSolutionResult;
   RafkoGPUPhase m_errorPhase;
   bool m_lastRandomEvalWasSeeded = false;
-  std::uint32_t m_lastUsedSeed;
+  std::uint32_t m_lastUsedSeed = -1;
   /* Somebody tell me what is the least propable value of a random seed one can use,
    * so I could initialize this poor fella with it?!
    */
 
-  enum{
-    not_eval_run, full_eval_run, random_eval_run
-  }m_lastRanEvaluation = not_eval_run;
+  std::uint32_t m_numOutputsInOneSequence;
+  std::uint32_t m_evalStartInSequence;
+  /*!Note: Because the GPU implementation at least 2 memory slots are needed to run,
+   * because of the spike function: previous value of the actual Neuron is always in the previous buffer slot
+   */
+
+ enum{
+   not_eval_run, full_eval_run, random_eval_run
+ }m_lastRanEvaluation = not_eval_run;
 
   /**
    * @brief   Uploads the weights from @network to the buffer on the GPU
@@ -133,14 +140,17 @@ private:
   /**
    * @brief     Upload inputs to the solution phase to be able to run the agent kernel code on the inputs
    *
-   * @param[in]   sequence_start_index          The index of the first sequence in the environment to upload the inputs from
-   * @param[in]   buffer_sequence_start_index   Start index of a sequence to start uploading inputs from in the global buffer
    * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
-   *
-   * @return      A vector of events to wait for, signaling operation completion
+   * @param[in]   start_index_inside_sequence   Start index of a feature vector inside every sequence to start uploading inputs from
+   *                                            Index 0 starts from the first feature vector assigned for each sequence
+   *                                            In case the Network has more memory, than the environment label pairs: index 0 starts at zero still.
+   *                                            In that case, the evaluation doesn't start form 0, as label and prefill values take up less space than what is assigned for one sequence
+   * @param[in]   sequence_truncation           Number of feature vectors to upload per sequence
+   * @param[in]   data_handler                  The funciton accepting the CL Buffer, byte offset, and data size(bytes == output neurons only!) for each feature for one sequence
    */
-  [[nodiscard]] std::vector<cl::Event> upload_agent_output(
-    std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation
+  void upload_agent_output(
+    std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation,
+    std::function<void(cl::Buffer, std::uint32_t, std::uint32_t)> data_handler
   );
 
   /**

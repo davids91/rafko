@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
+#include <catch2/matchers/catch_matchers_vector.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
@@ -34,7 +35,6 @@
 namespace rafko_gym_test {
 
 TEST_CASE("Testing if GPU Context is able to build a valid openCL environment", "[context][GPU]"){
-  srand(582801389);
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings().set_arena_ptr(&arena)
@@ -54,7 +54,7 @@ TEST_CASE("Testing if GPU Context is able to build a valid openCL environment", 
 
 TEST_CASE("Testing if standalone solution is working as intended with the GPU context","[context][GPU][solve][standalone]"){
   google::protobuf::Arena arena;
-  std::uint32_t sequence_size = 6u;
+  constexpr const std::uint32_t sequence_size = 6u;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
@@ -98,9 +98,54 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
   }/*for(50 variants)*/
 }
 
+TEST_CASE("Testing if standalone solution is working as intended with the GPU context even with network recurrence","[context][GPU][solve][standalone][memory]"){
+  google::protobuf::Arena arena;
+  constexpr const std::uint32_t sequence_size = 6u;
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
+    rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10)
+  );
+  for(std::uint32_t variant = 0u; variant < 50u; ++variant){
+    rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
+      .input_size(2).expected_input_range(1.0)
+      .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+      .allowed_transfer_functions_by_layer(
+        {
+          {rafko_net::transfer_function_identity},
+          {rafko_net::transfer_function_sigmoid},
+          {rafko_net::transfer_function_tanh},
+          {rafko_net::transfer_function_elu},
+          {rafko_net::transfer_function_selu},
+          {rafko_net::transfer_function_relu},
+        }
+      ).dense_layers({2,2,2,2,2,2});
+    std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+      *settings, rafko_gym::cost_function_squared_error
+    );
+    std::unique_ptr<rafko_mainframe::RafkoGPUContext> context;
+    CHECK_NOTHROW(
+      context = (
+        rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+          .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
+      )
+    );
+
+    rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
+    std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
+    std::vector<double> network_input(network.input_data_size(), (rand()%10));
+
+    reference_agent->set_eval_mode(false);
+    rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
+    rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
+    CHECK_THAT(reference_result.acquire(), Catch::Matchers::Approx(context_result.acquire()).margin(0.0000000001));
+  }/*for(50 variants)*/
+}
+
 TEST_CASE("Testing if standalone solution is working as intended with the GPU context even with softmax features","[context][GPU][features][softmax]"){
   google::protobuf::Arena arena;
-  std::uint32_t sequence_size = 6u;
+  constexpr const std::uint32_t sequence_size = 6u;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
@@ -150,7 +195,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
 
 TEST_CASE("Testing if a standalone solution is working as intended with the GPU context even with inputs from the past","[context][GPU][solve][memory]"){
   google::protobuf::Arena arena;
-  std::uint32_t sequence_size = 6u;
+  constexpr const std::uint32_t sequence_size = 6u;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
@@ -192,17 +237,15 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
     for(std::uint32_t steps = 0; steps < 5; ++steps){
       rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
       rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
-      for(std::uint32_t result_index = 0; result_index < reference_result.size(); ++result_index){
-        CHECK( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
-      }
+      CHECK_THAT(reference_result.acquire(), Catch::Matchers::Approx(context_result.acquire()).margin(0.0000000001));
     }/*for(5 consecutive steps)*/
   }/*for(10 variant)*/
 }
 
 TEST_CASE("Testing full evaluation with the GPU context with single sample of sequence size one","[context][GPU][evaluate]"){
   google::protobuf::Arena arena;
-  std::uint32_t sequence_size = 1;
-  std::uint32_t number_of_sequences = 1;
+  constexpr const std::uint32_t sequence_size = 1;
+  constexpr const std::uint32_t number_of_sequences = 1;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
@@ -237,13 +280,9 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
     for(std::uint32_t steps = 0; steps < 1; ++steps){
-      std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
-        rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size)
-      );
+      auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size);
       std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-        std::vector<std::vector<double>>(std::get<0>(tmp1)),
-        std::vector<std::vector<double>>(std::get<1>(tmp1)),
-        sequence_size
+        std::move(inputs), std::move(labels), sequence_size
       );
 
       context->set_environment(environment);
@@ -297,13 +336,9 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
     REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
 
     for(std::uint32_t steps = 0; steps < 1; ++steps){
-      std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
-        rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size)
-      );
+      auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size);
       std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-        std::vector<std::vector<double>>(std::get<0>(tmp1)),
-        std::vector<std::vector<double>>(std::get<1>(tmp1)),
-        sequence_size
+        std::move(inputs), std::move(labels), sequence_size
       );
 
       context->set_environment(environment);
@@ -316,7 +351,6 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 }
 
 TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[context][GPU][evaluate][multi-label]"){
-  srand(318344848);
   google::protobuf::Arena arena;
   std::uint32_t sequence_size = rand()%3 + 1;
   std::uint32_t number_of_sequences = rand()%10 + 2;
@@ -364,13 +398,9 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
     for(std::uint32_t steps = 0; steps < 5; ++steps){
       number_of_sequences = rand()%10 + 1;
       settings->set_memory_truncation(sequence_size);
-      std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
-        rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size)
-      );
+      auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size);
       std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-        std::vector<std::vector<double>>(std::get<0>(tmp1)),
-        std::vector<std::vector<double>>(std::get<1>(tmp1)),
-        sequence_size
+        std::move(inputs), std::move(labels), sequence_size
       );
 
       context->set_environment(environment);
@@ -430,14 +460,11 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
       number_of_sequences = rand()%10 + 1;
       sequence_size = rand()%10 + 1;
       settings->set_memory_truncation(sequence_size);
-      std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> tmp1 = (
-        rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size)
-      );
+      auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size);
       std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
-        std::vector<std::vector<double>>(std::get<0>(tmp1)),
-        std::vector<std::vector<double>>(std::get<1>(tmp1)),
-        sequence_size
+        std::move(inputs), std::move(labels), sequence_size
       );
+
 
       context->set_environment(environment);
       reference_context.set_environment(environment);
@@ -549,9 +576,7 @@ void preapare_eval_buffers_for_seed(
   used_sequence_truncation = std::min(
     settings.get_memory_truncation(), environment->get_sequence_size()
   );
-  start_index_in_sequence = (rand()%(
-    environment->get_sequence_size() - used_sequence_truncation + 1
-  ));
+  start_index_in_sequence = (rand()%(environment->get_sequence_size() - used_sequence_truncation + 1));
   while(uploaded_sequences < used_minibatch_size){
     std::uint32_t sequences_to_upload = rand()%(used_minibatch_size - uploaded_sequences + 1u);
     std::uint32_t sequence_start_index = rand()%(environment->get_number_of_sequences() - sequences_to_upload + 1u);
@@ -874,6 +899,64 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
       reference_context.apply_weight_update(weight_deltas);
     }/*for(5 consecutive steps)*/
   }/*for(10 variants)*/
+}
+
+TEST_CASE("Testing is solve is working as expected in GPU context for isolated environment solve", "[context][GPU][solve][batch][isolated]"){
+  constexpr const std::uint32_t sample_number = 5;
+  constexpr const std::uint32_t sequence_size = 6;
+  google::protobuf::Arena arena;
+
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
+    rafko_mainframe::RafkoSettings()
+    .set_max_processing_threads(4).set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(10)
+  );
+
+  rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features(2u/*input_size*/, *settings, 1u);
+  auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(sample_number, sequence_size);
+  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+    std::move(inputs), std::move(labels), sequence_size
+  );
+
+  /* Calculate the network output to the environment manually */
+  std::shared_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Factory(network, settings).build();
+
+  /* Solve with the reference solver and store the results */
+  std::vector<std::vector<double>> reference_result;
+  std::uint32_t raw_inputs_index = 0;
+  reference_solver->set_eval_mode(false);
+  for(std::uint32_t sequence_index = 0; sequence_index < environment->get_number_of_sequences(); ++sequence_index){
+    bool reset = true;
+    for(std::uint32_t prefill_index = 0; prefill_index < environment->get_prefill_inputs_number(); ++prefill_index){
+      (void)reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset);
+      if(reset)reset = false;
+      ++raw_inputs_index;
+    }
+    for(std::uint32_t label_inside_sequence = 0; label_inside_sequence < environment->get_sequence_size(); ++label_inside_sequence){
+      reference_result.emplace_back(reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset).acquire());
+      if(reset)reset = false;
+      ++raw_inputs_index;
+    }
+  }
+
+  /* Calculate result from a context */
+  std::unique_ptr<rafko_mainframe::RafkoGPUContext> context = (
+    rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
+      .build<rafko_mainframe::RafkoGPUContext>(network, settings)
+  );
+  context->set_environment(environment);
+
+  std::vector<std::vector<double>> context_result(
+    (environment->get_number_of_sequences() * environment->get_sequence_size()),
+    std::vector<double>(network.output_neuron_number())
+  );
+  context->solve_environment(context_result);
+
+  std::uint32_t index = 0u;
+  for(const std::vector<double>& reference : reference_result){
+    CHECK_THAT(reference, Catch::Matchers::Approx(context_result[index++]).margin(0.0000000000001));
+  }
 }
 
 } /* namespace rako_gym_test */

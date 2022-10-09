@@ -419,11 +419,9 @@ std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> cre
 
 
 TEST_CASE("Testing whether binary addition can be solved with a manual program","[meta]"){
-  std::uint32_t sequence_size = 4;
-  std::uint32_t number_of_samples = 10;
-  std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> dataset = create_sequenced_addition_dataset(number_of_samples, sequence_size);
-  std::vector<std::vector<double>>& inputs = std::get<0>(dataset);
-  std::vector<std::vector<double>>& labels = std::get<1>(dataset);
+  const constexpr std::uint32_t sequence_size = 4;
+  const constexpr std::uint32_t number_of_samples = 10;
+  auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size);
 
   for(std::uint32_t sample_iterator = 0; sample_iterator < number_of_samples; ++sample_iterator){
     double carry_bit = 0;
@@ -440,10 +438,13 @@ TEST_CASE("Testing whether binary addition can be solved with a manual program",
   }
 }
 
-rafko_net::RafkoNet* generate_random_net_with_softmax_features(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings){
+rafko_net::RafkoNet* generate_random_net_with_softmax_features(
+  std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings, std::uint32_t output_size
+){
   std::vector<std::uint32_t> net_structure;
   while((rand()%10 < 9)||(4 > net_structure.size()))
     net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
+  if(0 < output_size)net_structure.push_back(output_size);
 
   std::uint8_t num_of_features = rand()%(net_structure.size()/2) + 1u;
   rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
@@ -466,10 +467,13 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features(std::uint32_t inp
   return builder.dense_layers(net_structure);
 }
 
-rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings){
+rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(
+  std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings, std::uint32_t output_size
+){
   std::vector<std::uint32_t> net_structure;
   while((rand()%10 < 9)||(4 > net_structure.size()))
     net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
+  if(0 < output_size)net_structure.push_back(output_size);
 
   std::uint8_t num_of_features = rand()%(net_structure.size()/2) + 1u;
   rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)

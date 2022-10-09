@@ -335,7 +335,6 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
 
 #if(RAFKO_USES_OPENCL)
 TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU context", "[GPU][context][regularization][features]"){
-  srand(576281468);
   google::protobuf::Arena arena;
   std::uint32_t feature_size = 2u;
   std::uint32_t sequence_size = 3u;
@@ -366,6 +365,9 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
     rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
     rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(network);
 
+    //TODO: this makes things boom
+    // number_of_sequences = std::max(static_cast<std::int32_t>(number_of_sequences), network.weight_table_size());
+
     /* Create environments */
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
@@ -387,18 +389,12 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
       )
     );
 
-    REQUIRE(
-      Catch::Approx(cpu_context.full_evaluation()).epsilon((0.00000000000001))
-      == gpu_context->full_evaluation()
-    );
+    REQUIRE(Catch::Approx(cpu_context.full_evaluation()).epsilon((0.00000000000001)) == gpu_context->full_evaluation());
 
     cpu_context.set_environment(environment);
     gpu_context->set_environment(environment);
 
-    REQUIRE(
-      Catch::Approx(cpu_context.full_evaluation()).epsilon((0.00000000000001))
-      == gpu_context->full_evaluation()
-    );
+    REQUIRE(Catch::Approx(cpu_context.full_evaluation()).epsilon((0.00000000000001)) == gpu_context->full_evaluation());
   }/*for(10 variants)*/
 }
 #endif/*(RAFKO_USES_OPENCL)*/
