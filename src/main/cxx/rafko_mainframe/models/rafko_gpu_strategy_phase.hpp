@@ -32,8 +32,16 @@ namespace rafko_mainframe{
 /**
  * @brief      A phase of the Deep learning GPU pipeline strategy describing
  */
-class RAFKO_FULL_EXPORT RafkoGPUStrategyPhase{
+class RAFKO_EXPORT RafkoGPUStrategyPhase{
 public:
+  virtual ~RafkoGPUStrategyPhase() = default;
+
+  /**
+   * @brief     provides feedback on whether or not the current returned interfaces
+   *            would produce a valid GPU Kernel
+   */
+  bool isValid() const;
+
 
   /**
    * @brief      Provides the kernel source codes of the StrategyPhase in order of execution
@@ -98,10 +106,6 @@ public:
    * @return     tuple of {offset, global dimensions, local dimensions}
    */
   virtual std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const = 0;
-
-  virtual ~RafkoGPUStrategyPhase() = default;
-
-  bool isValid();
 };
 
 } /* namespace rafko_mainframe */

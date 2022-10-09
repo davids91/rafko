@@ -42,7 +42,7 @@ namespace rafko_gym{
  * in a vector, and providing the chance to upload the operation dependencies into the vector when prompted.
  */
 class RafkoBackpropagationOperation;
-class RAFKO_FULL_EXPORT RafkoBackpropagationOperation{
+class RAFKO_EXPORT RafkoBackpropagationOperation{
 public:
   using Dependency = std::shared_ptr<RafkoBackpropagationOperation>;
   using DependencyParameter = std::pair<Autodiff_operations,std::vector<std::uint32_t>>;

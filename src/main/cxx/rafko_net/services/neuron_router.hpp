@@ -49,7 +49,7 @@ namespace rafko_net {
  *             is order sensitive, meaning a Neuron in the subset might depend on a different Neuron in the same subset before it,
  *             whereas in strict mode all Neurons are independent, so the order of the queue doesn't matter.
  */
-class RAFKO_FULL_EXPORT NeuronRouter{
+class RAFKO_EXPORT NeuronRouter{
 public:
   NeuronRouter(const RafkoNet& rafko_net);
 

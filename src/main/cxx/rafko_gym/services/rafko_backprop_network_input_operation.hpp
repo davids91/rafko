@@ -39,7 +39,7 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackpropNetworkInputOperation
+class RAFKO_EXPORT RafkoBackpropNetworkInputOperation
 : public RafkoBackpropagationOperation
 {
 public:

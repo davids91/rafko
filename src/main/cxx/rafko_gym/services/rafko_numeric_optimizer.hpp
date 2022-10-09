@@ -36,7 +36,7 @@ namespace rafko_gym{
  * @brief      This class approximates gradients for a @Dataset and @RafkoNet.
  *             The approximated gradients are collected into one gradient fragment.
  */
-class RAFKO_FULL_EXPORT RafkoNumericOptimizer : public rafko_mainframe::RafkoAutonomousEntity{
+class RAFKO_EXPORT RafkoNumericOptimizer : public rafko_mainframe::RafkoAutonomousEntity{
 public:
 
   /**
@@ -257,6 +257,13 @@ public:
         )
       ))
     );
+  }
+
+  /**
+   * @brief     Resets the iteration count to zero
+   */
+  void reset_epoch(){
+    m_iteration = 1;
   }
 
 private:

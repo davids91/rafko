@@ -32,11 +32,11 @@ namespace rafko_mainframe{
  * @brief      An Autonomous entity means an object within te framework with its own scope of settings and Arena.
  *             It's meant to be a long lived object handling other objects with shorter lifetimes
  */
-class RAFKO_FULL_EXPORT RafkoAutonomousEntity{
+class RAFKO_EXPORT RafkoAutonomousEntity{
 public:
   RafkoAutonomousEntity(std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {})
   : m_settings(settings?settings:std::make_shared<rafko_mainframe::RafkoSettings>())
-  , m_arena(initialize_arena(*settings))
+  , m_arena(initialize_arena(*m_settings))
   {
     if(m_arena)m_settings->set_arena_ptr(m_arena.get());
   }

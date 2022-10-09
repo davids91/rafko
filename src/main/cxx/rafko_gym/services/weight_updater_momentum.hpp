@@ -24,7 +24,7 @@
 
 namespace rafko_gym{
 
-class RAFKO_FULL_EXPORT RafkoWeightUpdaterMomentum : public RafkoWeightUpdater{
+class RAFKO_EXPORT RafkoWeightUpdaterMomentum : public RafkoWeightUpdater{
 public:
   RafkoWeightUpdaterMomentum(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings)
   :  RafkoWeightUpdater(rafko_net, settings)

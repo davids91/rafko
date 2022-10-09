@@ -27,11 +27,12 @@ namespace rafko_gym{
 /**
  * @brief      Error function handling and utilities for MSE: C0 = 1/2n(y-y')^2
  */
-class RAFKO_FULL_EXPORT CostFunctionMSE : public CostFunction{
+class RAFKO_EXPORT CostFunctionMSE : public CostFunction{
 public:
   CostFunctionMSE(const rafko_mainframe::RafkoSettings& settings)
   : CostFunction(cost_function_mse, settings)
   { };
+  ~CostFunctionMSE() = default;
 
 protected:
   [[nodiscard]] constexpr double error_post_process(double error_value, std::uint32_t sample_number) const override{

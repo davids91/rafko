@@ -1,11 +1,10 @@
 add_library(rafko_gym OBJECT)
-target_link_libraries(rafko_gym PUBLIC rafko_protocol rafko_net)
 target_include_directories(rafko_gym PUBLIC ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR} models services)
 
 if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
-  target_link_libraries(rafko_gym PUBLIC rafko_protocol OpenCL::OpenCL)
-  set(GYM_HEADERS_WITH_OCL
+  target_link_libraries(rafko_gym PUBLIC rafko_protocol rafko_net OpenCL::OpenCL)
+  set(GYM_HEADERS_SERVICES_WITH_OCL
     services/rafko_autodiff_gpu_strategy.hpp
     services/rafko_autodiff_gpu_optimizer.hpp
   )
@@ -14,8 +13,8 @@ if(USE_OPENCL)
     services/src/rafko_autodiff_gpu_optimizer.cc
   )
 else()
-  target_link_libraries(rafko_mainframe PUBLIC rafko_protocol)
-  set(GYM_HEADERS_WITH_OCL)
+  target_link_libraries(rafko_gym PUBLIC rafko_protocol rafko_net)
+  set(GYM_HEADERS_SERVICES_WITH_OCL)
   set(GYM_SOURCES_WITH_OCL)
 endif()
 
@@ -39,6 +38,7 @@ set(GYM_HEADER_MODELS
   models/rafko_network_proxy.h
 )
 set(GYM_HEADER_SERVICES
+  ${GYM_HEADERS_SERVICES_WITH_OCL}
   services/cost_function.hpp
   services/function_factory.hpp
   services/rafko_numeric_optimizer.hpp
@@ -47,7 +47,7 @@ set(GYM_HEADER_SERVICES
   services/rafko_weight_updater.hpp
   services/rafko_autodiff_optimizer.hpp
   services/rafko_backpropagation_operation.hpp
-  services/rafko_backrpop_solution_feature_operation.hpp
+  services/rafko_backprop_solution_feature_operation.hpp
   services/rafko_backprop_weight_reg_operation.hpp
   services/rafko_backprop_network_input_operation.hpp
   services/rafko_backprop_neuron_bias_operation.hpp
@@ -58,7 +58,7 @@ set(GYM_HEADER_SERVICES
 )
 target_sources(rafko_gym
   INTERFACE ${GYM_INTERFACE_SERVICES}
-  PUBLIC ${GYM_HEADERS}
+  PUBLIC ${GYM_HEADER_SERVICES} ${GYM_HEADER_MODELS}
   PRIVATE
   ${GYM_SOURCES_WITH_OCL}
   models/src/rafko_cost.cc
@@ -80,6 +80,13 @@ target_sources(rafko_gym
   services/src/weight_updater_amsgrad.cc
 )
 
+# generate convenience header part for current module
+set(MODULE_HEADER_LIST)
+generate_sum_include("rafko_gym" "${GYM_INTERFACE_SERVICES};${GYM_HEADER_SERVICES};${GYM_HEADER_MODELS}" MODULE_HEADER_LIST)
+list(APPEND MODULE_HEADER_LIST ${SUM_HEADER_FILES})
+set(SUM_HEADER_FILES ${MODULE_HEADER_LIST} PARENT_SCOPE)
+
+# install rules
 install(
   FILES ${GYM_INTERFACE_SERVICES} ${GYM_HEADER_SERVICES}
   DESTINATION include/rafko_gym/services

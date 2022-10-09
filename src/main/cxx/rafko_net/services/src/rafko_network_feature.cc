@@ -317,12 +317,7 @@ void RafkoNetworkFeature::add_dropout_kernel_to(
     ++number_of_neurons;
   });
   dropout_operations = std::regex_replace(dropout_operations, std::regex("==range=="), std::to_string(number_of_neurons));
-  dropout_operations = locals + std::regex_replace(R"(
-    if(evaluate_network){
-      ==dropout_operations==
-    }
-  )",std::regex("==dropout_operations=="), dropout_operations);
-  operations += dropout_operations;
+  operations += locals + dropout_operations;
 }
 
 void RafkoNetworkFeature::add_l1_kernel_to(
@@ -359,7 +354,7 @@ void RafkoNetworkFeature::add_lx_kernel_to(
   {
     std::lock_guard<std::mutex> my_lock(m_featureCacheMutex);
     ++m_lxFeatureCalled;
-    /*!Note: if the function were to be called after the start of the function, the index 0
+    /*!Note: if the counter would increase at the end of the function, the index 0
      * would not be wasted, but this way the function is also thread-safe
      */
   }
@@ -387,7 +382,7 @@ void RafkoNetworkFeature::add_lx_kernel_to(
 
   /* add feature calculations */
   std::string feature_calculations = feature_helpers + R"(
-    if(evaluate_network && (get_global_id(0) <= ==feature_weight_number==)){
+    if(get_global_id(0) < ==feature_weight_number==){
       const int weights_in_one_thread = 1 + ( ==feature_weight_number==/(int)(get_global_size(0)) );
       const int execution_start_index = weights_in_one_thread * get_global_id(0);
       const int weights_in_this_thread = min(

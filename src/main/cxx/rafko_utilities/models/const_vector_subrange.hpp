@@ -26,7 +26,7 @@
 namespace rafko_utilities{
 
 template <typename Iterator = std::vector<double>::const_iterator>
-class RAFKO_FULL_EXPORT ConstVectorSubrange{
+class RAFKO_EXPORT ConstVectorSubrange{
 public:
   using T = typename Iterator::value_type;
 
@@ -60,8 +60,9 @@ public:
     return std::next(m_start, m_rangeSize);
   }
 
-  constexpr std::vector<typename std::iterator_traits<Iterator>::value_type> as_vector(){
-    return {begin(),end()};
+  template <typename V = std::vector<typename std::iterator_traits<Iterator>::value_type>>
+  constexpr V acquire(){
+    return { begin(), end() };
   }
 
 private:

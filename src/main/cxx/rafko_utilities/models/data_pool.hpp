@@ -32,18 +32,16 @@ namespace rafko_utilities{
  *              data acess. The container is thread-safe.
  */
 template<class T = double>
-class RAFKO_FULL_EXPORT DataPool{
+class RAFKO_EXPORT DataPool{
 public:
-  DataPool(std::uint32_t pool_size, std::uint32_t expected_buffer_size)
+  DataPool(std::uint32_t pool_size = 1u, std::uint32_t expected_buffer_size = 0u)
   : m_bufferPool(pool_size, std::vector<T>())
   {
     std::for_each(m_bufferPool.begin(),m_bufferPool.end(),[=](std::vector<T>& buf){
       buf.reserve(expected_buffer_size);
     });
   }
-
-  DataPool() = default;
-
+  
   /**
    * @brief     Reserve a buffer to use for a given number of elements to be used
    *

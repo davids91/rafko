@@ -58,7 +58,7 @@ namespace rafko_gym{
  *             Despite the above structure, for eligibility of paralellism, the inputs and labels are in a separate,
  *             contigous array.
  */
-class RAFKO_FULL_EXPORT RafkoDatasetWrapper : public RafkoEnvironment{
+class RAFKO_EXPORT RafkoDatasetWrapper : public RafkoEnvironment{
 public:
   explicit RafkoDatasetWrapper(const rafko_gym::DataSet& samples)
   : m_sequenceSize(std::max(1u,samples.sequence_size()))
@@ -87,6 +87,7 @@ public:
   }
 
   const std::vector<double>& get_input_sample(std::uint32_t raw_input_index) const override{
+    RFASSERT_LOG("Input sample {} / {}", raw_input_index, m_inputSamples.size());
     RFASSERT(m_inputSamples.size() > raw_input_index);
     return m_inputSamples[raw_input_index];
   }
@@ -96,6 +97,7 @@ public:
   }
 
   const std::vector<double>& get_label_sample(std::uint32_t raw_label_index) const override{
+    RFASSERT_LOG("label_sample sample {} / {}", raw_label_index, m_labelSamples.size());
     RFASSERT(m_labelSamples.size() > raw_label_index);
     return m_labelSamples[raw_label_index];
   }

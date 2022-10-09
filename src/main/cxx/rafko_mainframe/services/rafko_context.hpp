@@ -42,7 +42,7 @@ namespace rafko_mainframe{
  * @brief      The interface for the main context of the Rafko Deep learning service. It encapsulates a Network as its central
  *             point, and provides methods to refine it and solve it.
  */
-class RAFKO_FULL_EXPORT RafkoContext : public RafkoAutonomousEntity{
+class RAFKO_EXPORT RafkoContext : public RafkoAutonomousEntity{
 public:
   RafkoContext(std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {})
   : RafkoAutonomousEntity(settings)
@@ -128,6 +128,15 @@ public:
     const std::vector<double>& input,
     bool reset_neuron_data = true, std::uint32_t thread_index = 0
   ) = 0;
+
+  /**
+   * @brief     Solves the enclosed network for the whole of the included environment.
+   *
+   * @param         output      The buffer to store the data in. Sizes must be set to fit the output exactly
+   * @param[in]     isolated    Set to true, if the buffers are to be resetted before solving the environment
+   *                            Number of sequences evaluated may be limited by the available threads!
+   */
+  virtual void solve_environment(std::vector<std::vector<double>>& output, bool isolated) = 0;
 
   /**
    * @brief      Saves the context state

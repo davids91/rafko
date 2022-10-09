@@ -57,11 +57,11 @@ void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_soluti
 
   partial_solution.add_weight_table((0.0)); /* spike function weight for first neuron */
   for(std::uint32_t i = 0; i < number_of_inputs; ++i){
-    partial_solution.add_weight_table((1.0)); /* weight for the inputs coming to the first Neuron */
+    partial_solution.add_weight_table(1.0); /* weight for the inputs coming to the first Neuron */
   } /* Every weight shall be modified in this example, so they'll all have thir own weight table entry */
   partial_solution.add_weight_table((50.0)); /* first neuron bias value */
   partial_solution.add_weight_table((0.0)); /* spike function weight for second neuron */
-  partial_solution.add_weight_table((1.0)); /* Weight for the first Neuron */
+  partial_solution.add_weight_table(1.0); /* Weight for the first Neuron */
   partial_solution.add_weight_table((10.0)); /* 2nd neuron bias value */
 
   /**###################################################################################################
@@ -296,11 +296,11 @@ void print_weights(const rafko_net::RafkoNet& net, const rafko_net::Solution& so
 
 void print_training_sample(
   std::uint32_t sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
-  const rafko_net::RafkoNet& net, const rafko_mainframe::RafkoSettings& settings
+  const rafko_net::RafkoNet& net, std::shared_ptr<const rafko_mainframe::RafkoSettings> settings
 ){
-  rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(net);
-  std::unique_ptr<rafko_net::SolutionSolver> sample_solver(
-    rafko_net::SolutionSolver::Builder(*solution, settings).build()
+  rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(net);
+  std::shared_ptr<rafko_net::SolutionSolver> sample_solver(
+    rafko_net::SolutionSolver::Factory(net, settings).build()
   );
   std::vector<double> neuron_data(data_set.get_sequence_size());
   std::uint32_t raw_label_index = sample_sequence_index;
@@ -359,8 +359,8 @@ void print_training_sample(
     std::cout << "[" << net.weight_table(i) << "]";
   }
   std::cout << std::endl;
-  
-  if(nullptr == settings.get_arena_ptr()){
+
+  if(nullptr == settings->get_arena_ptr()){
     delete solution;
   }
 }
@@ -419,11 +419,9 @@ std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> cre
 
 
 TEST_CASE("Testing whether binary addition can be solved with a manual program","[meta]"){
-  std::uint32_t sequence_size = 4;
-  std::uint32_t number_of_samples = 10;
-  std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> dataset = create_sequenced_addition_dataset(number_of_samples, sequence_size);
-  std::vector<std::vector<double>>& inputs = std::get<0>(dataset);
-  std::vector<std::vector<double>>& labels = std::get<1>(dataset);
+  const constexpr std::uint32_t sequence_size = 4;
+  const constexpr std::uint32_t number_of_samples = 10;
+  auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size);
 
   for(std::uint32_t sample_iterator = 0; sample_iterator < number_of_samples; ++sample_iterator){
     double carry_bit = 0;
@@ -440,10 +438,13 @@ TEST_CASE("Testing whether binary addition can be solved with a manual program",
   }
 }
 
-rafko_net::RafkoNet* generate_random_net_with_softmax_features(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings){
+rafko_net::RafkoNet* generate_random_net_with_softmax_features(
+  std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings, std::uint32_t output_size
+){
   std::vector<std::uint32_t> net_structure;
   while((rand()%10 < 9)||(4 > net_structure.size()))
     net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
+  if(0 < output_size)net_structure.push_back(output_size);
 
   std::uint8_t num_of_features = rand()%(net_structure.size()/2) + 1u;
   rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)
@@ -466,10 +467,13 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features(std::uint32_t inp
   return builder.dense_layers(net_structure);
 }
 
-rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings){
+rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(
+  std::uint32_t input_size, rafko_mainframe::RafkoSettings& settings, std::uint32_t output_size
+){
   std::vector<std::uint32_t> net_structure;
   while((rand()%10 < 9)||(4 > net_structure.size()))
     net_structure.push_back(static_cast<std::uint32_t>(rand()%5) + 1u);
+  if(0 < output_size)net_structure.push_back(output_size);
 
   std::uint8_t num_of_features = rand()%(net_structure.size()/2) + 1u;
   rafko_net::RafkoNetBuilder builder = rafko_net::RafkoNetBuilder(settings)

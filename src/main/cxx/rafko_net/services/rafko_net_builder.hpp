@@ -44,7 +44,7 @@ namespace rafko_net {
  * manually. The Other is to use one of the higher level construction functions like @RafkoNetBuilder::dense_layers.
  * Some parameters needed to be added unconditionally, which is checked by @RafkoNetBuilder::io_pre_requisites_set.
  */
-class RAFKO_FULL_EXPORT RafkoNetBuilder{
+class RAFKO_EXPORT RafkoNetBuilder{
 public:
   RafkoNetBuilder(const rafko_mainframe::RafkoSettings& settings)
   :  m_settings(settings)
@@ -84,7 +84,7 @@ public:
    * @return
    */
   constexpr RafkoNetBuilder& expected_input_range(double range){
-    m_argExpectedInputRange = range;
+    m_argExpectedInputRange = std::abs(range);
     m_isExpectedInputRangeSet = true;
     return *this;
   }
@@ -248,7 +248,7 @@ public:
    *
    * @return   the built neural network
    */
-  void build_dense_layers_and_update(
+  void build_dense_layers_and_swap(
     RafkoNet* previous, std::vector<std::uint32_t> layer_sizes,
     std::vector<std::set<Transfer_functions>> transfer_function_filter = {}
   );

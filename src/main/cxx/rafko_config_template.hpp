@@ -15,10 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef RAFKO_GLOBAL_H
-#define RAFKO_GLOBAL_H
+#cmakedefine RAFKO_USES_OPENCL @RAFKO_USES_OPENCL@
+#cmakedefine CL_HPP_MINIMUM_OPENCL_VERSION @CL_HPP_MINIMUM_OPENCL_VERSION@
+#cmakedefine CL_HPP_TARGET_OPENCL_VERSION @CL_HPP_TARGET_OPENCL_VERSION@
 
-#include "rafko_export.hpp"
-#include "rafko_config.hpp"
-
-#endif /* defined RAFKO_GLOBAL_H */
+#cmakedefine RAFKO_USES_ASSERTLOGS @RAFKO_USES_ASSERTLOGS@

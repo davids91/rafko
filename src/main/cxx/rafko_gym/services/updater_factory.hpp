@@ -32,7 +32,7 @@
 
 namespace rafko_gym{
 
-class RAFKO_FULL_EXPORT UpdaterFactory{
+class RAFKO_EXPORT UpdaterFactory{
 public:
   /**
    * @brief      Builds a weight updater.

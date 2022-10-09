@@ -29,7 +29,7 @@ namespace rafko_net{
  * @brief A container to keep track of different feature descriptors that need to be considered by the @NeuronRouter
  * to provide this information to whoever is using the collected subsets ( e.g.: @RafkoSolutionBuilder )
  */
-class RAFKO_FULL_EXPORT FeatureGroupCache{
+class RAFKO_EXPORT FeatureGroupCache{
 private:
   const std::uint32_t feature_group_index;
   const std::uint32_t num_of_neurons_needed;

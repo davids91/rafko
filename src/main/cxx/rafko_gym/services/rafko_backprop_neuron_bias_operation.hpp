@@ -41,7 +41,7 @@ namespace rafko_gym{
  * @brief
  *
  */
-class RAFKO_FULL_EXPORT RafkoBackpropNeuronBiasOperation
+class RAFKO_EXPORT RafkoBackpropNeuronBiasOperation
 : public RafkoBackpropagationOperation
 {
 public:

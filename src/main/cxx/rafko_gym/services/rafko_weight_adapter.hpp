@@ -35,8 +35,8 @@ namespace rafko_gym {
 /**
  * @brief      Base implementation for updating weights for netowrks based on weight gradients
  */
-using PartialWeightPairs = const std::vector<std::pair<std::uint32_t,std::uint32_t>>;
-class RAFKO_FULL_EXPORT RafkoWeightAdapter{
+using PartialWeightPairs = std::vector<std::pair<std::uint32_t,std::uint32_t>>;
+class RAFKO_EXPORT RafkoWeightAdapter{
 public:
   RafkoWeightAdapter(const rafko_net::RafkoNet& rafko_net, rafko_net::Solution& solution, const rafko_mainframe::RafkoSettings& settings)
   : m_settings(settings)
@@ -53,7 +53,7 @@ public:
    *             It supposes that the solution is one already built, and it is built from
    *             the same @RafkoNet referenced in the updater. Uses a different thread for every partial solution.
    */
-  void update_solution_with_weights() const;
+  void update_solution_with_weights();
 
   /**
    * @brief      Copies the weights in the stored @RafkoNet reference into the provided solution.
@@ -62,19 +62,18 @@ public:
    *
    * @param[in]  weight_index   The index of the weight to take over fro the @RafkoNet
    */
-  void update_solution_with_weight(std::uint32_t weight_index) const;
+  void update_solution_with_weight(std::uint32_t weight_index);
 
   /**
-   * @brief      Provides a list of partials and weight indices inside them for every given network weight_index
-   *             Each weight might be present inside multiple partials, but shall not be repeated multiple times
-   *             inside each partial.
+   * @brief      Provides a list of partials and index values pointing to their weight tables for the given network weight_index
+   *             Each weight might be present inside multiple partials, but shall not be repeated multiple times inside one.
    *
    * @param[in]  network_weight_index   The Weight index inside the @RafkoNet
    *
    * @return     A vector of the following structure: {{partial index,weight_index},...,{...}}
    *             The elements of the vector are in ascending order by partial index.
    */
-  PartialWeightPairs& get_relevant_partial_weight_indices_for(std::uint32_t network_weight_index) const;
+  const PartialWeightPairs& get_relevant_partial_weight_indices_for(std::uint32_t network_weight_index) const;
 
   /**
    * @brief      Provides the partial index the given neuron_index belongs to

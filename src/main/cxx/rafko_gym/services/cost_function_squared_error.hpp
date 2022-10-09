@@ -27,18 +27,19 @@ namespace rafko_gym{
 /**
  * @brief      Error function handling and utilities for Squared Error: C0 = ((y-y')^2)/2
  */
-class RAFKO_FULL_EXPORT CostFunctionSquaredError : public CostFunction{
+class RAFKO_EXPORT CostFunctionSquaredError : public CostFunction{
 public:
   CostFunctionSquaredError(const rafko_mainframe::RafkoSettings& settings)
   : CostFunction(cost_function_squared_error, settings)
   { };
+  ~CostFunctionSquaredError() = default;
 
 protected:
   [[nodiscard]] constexpr double error_post_process(double error_value, std::uint32_t /*sample_number*/) const override{
     return error_value / 2.0;
   }
 
-  constexpr double get_cell_error(double label_value, double feature_value) const override{
+  double get_cell_error(double label_value, double feature_value) const override{
     return pow((label_value - feature_value),2.0);
   }
 

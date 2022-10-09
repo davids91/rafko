@@ -13,6 +13,7 @@ set(UTIL_INTERFACE_MODELS
   models/data_pool.hpp
   models/data_ringbuffer.hpp
   models/const_vector_subrange.hpp
+  models/subscript_proxy.hpp
   ${RAFKO_GPU_LIBRARY_HEADERS}
 )
 set(UTIL_INTERFACE_SERVICES
@@ -27,6 +28,13 @@ target_sources(rafko_utilities
   services/src/thread_group.cc
 )
 
+# generate convenience header part for current module
+set(MODULE_HEADER_LIST)
+generate_sum_include("rafko_utilities" "${UTIL_INTERFACE_MODELS};${UTIL_INTERFACE_SERVICES}" MODULE_HEADER_LIST)
+list(APPEND MODULE_HEADER_LIST ${SUM_HEADER_FILES})
+set(SUM_HEADER_FILES ${MODULE_HEADER_LIST} PARENT_SCOPE)
+
+# install rules
 install(
   FILES ${UTIL_INTERFACE_MODELS}
   DESTINATION include/rafko_utilities/models

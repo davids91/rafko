@@ -263,7 +263,6 @@ void RafkoAutodiffOptimizer::iterate(){
     );
   }
 
-  RFASSERT( static_cast<std::int32_t>(m_tmpAvgD.size()) > std::count(m_tmpAvgD.begin(),m_tmpAvgD.end(), 0.0));
   apply_weight_update(m_tmpAvgD);
   ++m_iteration;
 
@@ -351,7 +350,7 @@ std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_depe
         "operation[{}]: {} for Neuron[{}]",
         m_operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0]
       );
-      return m_operations.emplace_back(new RafkoBackpropTransferFnOperation(
+      return m_operations.emplace_back(std::make_shared<RafkoBackpropTransferFnOperation>(
         m_data, m_network, m_operations.size(), std::get<1>(arguments)[0], *m_settings
       ));
     case ad_operation_neuron_input_d:
@@ -360,7 +359,7 @@ std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_depe
         "Created operation[{}]: {} for Neuron[{}] input[{}]",
         m_operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
       );
-      return m_operations.emplace_back(new RafkoBackpropNeuronInputOperation(
+      return m_operations.emplace_back(std::make_shared<RafkoBackpropNeuronInputOperation>(
         m_data, m_network, m_operations.size(), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
       ));
     case ad_operation_neuron_bias_d:
@@ -372,7 +371,7 @@ std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_depe
           m_network.neuron_array(std::get<1>(arguments)[0]).input_weights()
         )[std::get<1>(arguments)[1]]
       );
-      return m_operations.emplace_back(new RafkoBackpropNeuronBiasOperation(
+      return m_operations.emplace_back(std::make_shared<RafkoBackpropNeuronBiasOperation>(
         m_data, m_network, m_operations.size(), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
       ));
     case ad_operation_network_input_d:
@@ -381,7 +380,7 @@ std::shared_ptr<RafkoBackpropagationOperation> RafkoAutodiffOptimizer::push_depe
         "operation[{}]: {} for Input[{}] weight_index[{}] (Neuron[{}])",
         m_operations.size(), Autodiff_operations_Name(std::get<0>(arguments)), std::get<1>(arguments)[0], std::get<1>(arguments)[1], std::get<1>(arguments)[2]
       );
-      return m_operations.emplace_back(new RafkoBackpropNetworkInputOperation(
+      return m_operations.emplace_back(std::make_shared<RafkoBackpropNetworkInputOperation>(
         m_data, m_network, m_operations.size(), std::get<1>(arguments)[0], std::get<1>(arguments)[1]
       ));
     break;
