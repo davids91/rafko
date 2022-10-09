@@ -40,14 +40,14 @@
 namespace rafko_gym_test {
 
 TEST_CASE("Testing if CPU context produces correct error values upon full evaluation", "[context][CPU][evaluation]"){
-  constexpr const std::uint32_t sample_number = 50;
+  constexpr const std::uint32_t sample_number = 5;
   constexpr const std::uint32_t sequence_size = 6;
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
-    .set_minibatch_size(10)
+    .set_minibatch_size(3)
   );
   double expected_label = 50.0;
   rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features(1u, *settings);
@@ -87,14 +87,14 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
 }
 
 TEST_CASE("Testing if CPU context produces correct error values upon full evaluation when using inputs from the past", "[context][CPU][evaluation][memory]"){
-  constexpr const std::uint32_t sample_number = 50;
+  constexpr const std::uint32_t sample_number = 5;
   constexpr const std::uint32_t sequence_size = 6;
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
-    .set_minibatch_size(10)
+    .set_minibatch_size(3)
   );
   double expected_label = 50.0;
   rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features_and_recurrence(1u, *settings);
@@ -136,13 +136,13 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
 
 TEST_CASE("Testing if CPU context produces correct error values upon stochastic evaluation", "[context][CPU][evaluation]"){
   const std::uint32_t seed = rand() + 1;
-  constexpr const std::uint32_t sample_number = 50;
+  constexpr const std::uint32_t sample_number = 5;
   constexpr const std::uint32_t sequence_size = 6;
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
-    .set_minibatch_size(10)
+    .set_minibatch_size(3)
     .set_arena_ptr(&arena)
   );
   double expected_label = 50.0;
@@ -302,7 +302,7 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
 }
 
 TEST_CASE("Testing is solve is working as expected in CPU context for isolated environment solve", "[context][CPU][solve][batch][isolated]"){
-  constexpr const std::uint32_t sample_number = 50;
+  constexpr const std::uint32_t sample_number = 5;
   constexpr const std::uint32_t sequence_size = 6;
   google::protobuf::Arena arena;
 
@@ -310,10 +310,22 @@ TEST_CASE("Testing is solve is working as expected in CPU context for isolated e
     rafko_mainframe::RafkoSettings()
     .set_max_processing_threads(4).set_memory_truncation(sequence_size)
     .set_arena_ptr(&arena)
-    .set_minibatch_size(10)
+    .set_minibatch_size(3)
   );
 
-  rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features_and_recurrence(2u/*input_size*/, *settings, 1u);
+  rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
+    .input_size(2).expected_input_range(1.0)
+    .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+    .allowed_transfer_functions_by_layer(
+      {
+        {rafko_net::transfer_function_identity},
+        {rafko_net::transfer_function_sigmoid},
+        {rafko_net::transfer_function_tanh},
+        {rafko_net::transfer_function_elu},
+        {rafko_net::transfer_function_selu},
+        {rafko_net::transfer_function_relu},
+      }
+    ).dense_layers({2,2,2,2,2,1});
   auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(sample_number, sequence_size);
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::move(inputs), std::move(labels), sequence_size

@@ -88,7 +88,6 @@ double RafkoCPUContext::error_post_process(double raw_error, std::uint32_t label
     "Error post process: raw error value: {}; error corrected with performance: {}; divisor: {}",
     raw_error, result_error, divisor
   );
-
   return result_error / divisor;
 }
 
@@ -151,7 +150,10 @@ double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t seq
 
 void RafkoCPUContext::solve_environment(std::vector<std::vector<double>>& output, bool isolated){
   RFASSERT_LOG("Solving the whole environment in CPU Context");
-  RFASSERT(output.size() == (m_environment->get_number_of_sequences() * m_environment->get_sequence_size()));
+  RFASSERT(
+    (isolated && (output.size() == (m_environment->get_number_of_sequences() * m_environment->get_sequence_size())))
+    ||(!isolated && (output.size() == (m_executionThreads.get_number_of_threads() * m_environment->get_sequence_size())))
+  );
   std::uint32_t sequence_index = 0u;
   while(sequence_index < m_environment->get_number_of_sequences()){
     m_executionThreads.start_and_block([this, sequence_index, &output](std::uint32_t thread_index){

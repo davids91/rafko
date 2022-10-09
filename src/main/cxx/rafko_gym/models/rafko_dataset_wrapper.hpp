@@ -87,6 +87,7 @@ public:
   }
 
   const std::vector<double>& get_input_sample(std::uint32_t raw_input_index) const override{
+    RFASSERT_LOG("Input sample {} / {}", raw_input_index, m_inputSamples.size());
     RFASSERT(m_inputSamples.size() > raw_input_index);
     return m_inputSamples[raw_input_index];
   }
@@ -96,6 +97,7 @@ public:
   }
 
   const std::vector<double>& get_label_sample(std::uint32_t raw_label_index) const override{
+    RFASSERT_LOG("label_sample sample {} / {}", raw_label_index, m_labelSamples.size());
     RFASSERT(m_labelSamples.size() > raw_label_index);
     return m_labelSamples[raw_label_index];
   }

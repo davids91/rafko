@@ -110,8 +110,8 @@ private:
    * so I could initialize this poor fella with it?!
    */
 
-  std::uint32_t m_numOutputsInOneSequence = 2;
-  std::uint32_t m_evalStartInSequence = 1;
+  std::uint32_t m_numOutputsInOneSequence;
+  std::uint32_t m_evalStartInSequence;
   /*!Note: Because the GPU implementation at least 2 memory slots are needed to run,
    * because of the spike function: previous value of the actual Neuron is always in the previous buffer slot
    */

@@ -77,7 +77,7 @@ public:
   ) override;
 
   void set_eval_mode(bool evaluation) override{
-    evaluating = evaluation;
+    m_evaluating = evaluation;
   }
   #if(RAFKO_USES_OPENCL)
   /**
@@ -132,7 +132,7 @@ public:
       std::max(m_sequencesEvaluating, 1u) /* number of sequences to evaluate */
       * std::max(2u, std::max( /* number of labels per sequence */
         m_solution->network_memory_length(), (m_sequenceSize + m_prefillInputsPerSequence)
-      ) )
+      ) ) /*!Note: at least 2 slots are needed because the Spike Function takes its input from the previous slot always */
       * m_solution->neuron_number() /* number of values per label */
     );
     return{ rafko_mainframe::RafkoNBufShape{bytes_used, 1u/* for performance error */} };
@@ -156,7 +156,7 @@ private:
   std::uint32_t m_maxTmpSizeNeeded = 0u;
   std::uint32_t m_maxTmpDataNeededPerThread = 0u;
   std::mutex m_structureMutex;
-  bool evaluating = true;
+  bool m_evaluating = true;
 
   #if(RAFKO_USES_OPENCL)
   std::uint32_t m_sequencesEvaluating = 1u;

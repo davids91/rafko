@@ -183,10 +183,7 @@ rafko_utilities::ConstVectorSubrange<> SolutionSolver::solve(
          * and each column may contain feature relevant to any @Neuron inside the the current row.
          */
         for(std::uint32_t feature_index = 0; feature_index < solved_features.size(); feature_index++){
-          if(
-            (evaluating)
-            || NeuronInfo::is_feature_relevant_to_training( solved_features[feature_index].get().feature() )
-          ){
+          if((m_evaluating) || NeuronInfo::is_feature_relevant_to_solution( solved_features[feature_index].get().feature() )){
             /*!Note: training relevant features only need to be run during evaluation */
             m_featureExecutor.execute_solution_relevant(
               solved_features[feature_index], m_settings,

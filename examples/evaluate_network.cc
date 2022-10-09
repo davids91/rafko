@@ -91,11 +91,44 @@ int main(){
 
   /*!Note: to build a context using OpenCL the following factory can be used */
   #if(RAFKO_USES_OPENCL)
-  std::unique_ptr<rafko_mainframe::RafkoGPUContext> opencl_context = (
+  std::unique_ptr<rafko_mainframe::RafkoGPUContext> second_context = (
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
       .build<rafko_mainframe::RafkoGPUContext>(*network, settings, objective)
   );
+  #else
+  std::unique_ptr<rafko_mainframe::RafkoCPUContext> second_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(
+    *network, settings, objective
+  );
   #endif/*(RAFKO_USES_OPENCL)*/
+
+  /*!Note: OpenCL context provides speed, which is only visible when evaluating or running many data at once.
+   * For smaller batch sizes copying the data to the GPU and back comes with a big overhead compared to the speedup
+   * from paralellization. To make use of OpenCL, an environment can be solved at once like below,
+   * but the provided vector needs to have the exact sizes of the relevant(more on this later) output of the environment.
+   */
+  second_context->set_environment(environment);
+  std::vector<std::vector<double>> environment_result(
+    environment->get_number_of_label_samples(), std::vector<double>(network->output_neuron_number())
+  );
+  second_context->solve_environment(environment_result);
+  double first_batch_result = environment_result[0][0];
+
+  /*!Note: the above however does not have any data from previous runs */
+  second_context->solve_environment(environment_result);
+  assert(first_batch_result == environment_result[0][0]);
+
+  /*!Note: to have the context remember the results of the previous runs ( up to the memory of the network)
+   * non-isolated batch-solve can be used as below.
+   */
+  #if(!RAFKO_USES_OPENCL) /* In case of CPU context, the buffers available are that of the number of threads offered by the CPU */
+  environment_result.resize( std::min(
+    environment->get_number_of_label_samples(), settings->get_max_processing_threads()
+  ) );
+  #endif/*(RAFKO_USES_OPENCL)*/
+  second_context->solve_environment(environment_result, true/*isolated*/);
+  assert(first_batch_result == environment_result[0][0]);
+  second_context->solve_environment(environment_result, false/*isolated*/);
+  assert(first_batch_result != environment_result[0][0]);
 
   google::protobuf::ShutdownProtobufLibrary(); /* This is only needed to avoid false positive memory leak reports in memory leak analyzers */
   return 0;

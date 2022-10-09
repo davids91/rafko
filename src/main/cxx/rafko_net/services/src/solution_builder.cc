@@ -149,25 +149,19 @@ Solution* SolutionBuilder::build(const RafkoNet& net, google::protobuf::Arena* a
   return solution;
 }
 
-//TODO: Use uploaded inputs when solving environment and mode is set to run!!
-//TODO: Eliminate mode, or just reduce the functionality to dropout and the kind
-//TODO: Add additional paramter to environment solve: clean_start. CPU context can only do a clean start!
-//      --> Or it can only calculate up to threads sequences with a non-clean start
-//TODO: Document the behavior in the examples
-//TODO: Also update reset_data in both solve and solve_env
 #if(RAFKO_USES_OPENCL)
 std::string SolutionBuilder::get_kernel_for_solution(
   const Solution& solution, std::string name, std::uint32_t sequence_size, std::uint32_t prefill_input_num,
   const rafko_mainframe::RafkoSettings& settings
 ){
   RFASSERT_LOG("Building GPU kernel for solution");
-  //TODO: ALso update the below comment
   /*!Note: Network solve starts from the first memory/sequence slot of the outputs buffer
    * which is calculated from get_global_id(0) and the size of the max(sequence, neuron_memory);
    * UNLESS mode variable input is non-zero.
    * If the mode varaible is non-zero the start of the execution shall start at the end of the
    * last output slice ( the last neuron value array the kernel is supposed to be updating )
-   * and every other output slice before that is considered outputs from the past
+   * and every other output slice before that is considered outputs from the past.
+   * The value of the MODE value also tells how many times to run the network.
    */
   std::string source_base = rafko_utilities::random_function + rafko_utilities::atomic_double_add_function
    + R"(
@@ -187,13 +181,6 @@ std::string SolutionBuilder::get_kernel_for_solution(
         const int eval_start = neuron_memory_slots - min(neuron_memory_slots, inputs_in_one_sequence);
         const int received_run_count = inputs[0];
 
-        // if(0 == get_global_id(0)){
-        //   printf(
-        //     "inputs_in_one_sequence: %d; outputs_in_one_sequence: %d; neuron_memory_slots:%d \n",
-        //     inputs_in_one_sequence, outputs_in_one_sequence, neuron_memory_slots
-        //   );
-        // }
-
         int input_start = ==weight_table_offset== + (sequence_index * inputs_in_one_sequence * network_input_size);
         int output_start = sequence_index * outputs_in_one_sequence * neuron_array_size;
         int current_max_backreach;
@@ -203,24 +190,28 @@ std::string SolutionBuilder::get_kernel_for_solution(
         if(evaluate_network){ /* normal evaluation */
           current_max_backreach = 0;
           current_slot_index = eval_start;
-          output_start += eval_start * neuron_array_size; /* correct output start in case network memory is more, than the environment sequence size */
-          run_count = max(inputs_in_one_sequence, 1) - 1;
+          output_start += current_slot_index * neuron_array_size; /* correct output start in case network memory is more, than the environment sequence size */
+          run_count = inputs_in_one_sequence;
         }else{ /* run with memory */
           current_max_backreach = neuron_memory_slots;
           current_slot_index = max(outputs_in_one_sequence, 1) - 1;
-          run_count = received_run_count;
+          run_count = min(received_run_count, outputs_in_one_sequence);
           output_start += current_slot_index * neuron_array_size; /* correct output start by putting it to the last label in sequence */
         }
         const int starting_slot_index = current_slot_index;
+
         #pragma unroll
         for(int run_index = 0; run_index < run_count; ++run_index){
           double neuron_partial_result;
-          // printf(
-          //   "global[%d] run[%d] byte start: %d / %d; input_start: %d; max_backreach: %d \n",
-          //   (int)(get_global_id(0)), run_index, output_start, output_sizes[0], input_start, current_max_backreach
-          // );
 
-          if(!evaluate_network || (0 < run_index)){ /* If network is not evaluating, the current run needs to be copied one slot down */
+          /* +++ GENERATED_NEURON_CODE +++ */
+          ==neuron_operations==
+          /* --- GENERATED_NEURON_CODE --- */
+
+          if(
+            !evaluate_network /* If network is not evaluating, the current run needs to be copied one slot down */
+            &&((run_index < (run_count-1)) || (1 == run_count))
+          ){
             int sequence_start = sequence_index * outputs_in_one_sequence * neuron_array_size;
             for(int slot_index = 0; slot_index < (outputs_in_one_sequence - 1); ++slot_index){
               for(int data_index = 0; data_index < neuron_array_size; ++data_index){
@@ -229,11 +220,6 @@ std::string SolutionBuilder::get_kernel_for_solution(
               sequence_start += neuron_array_size;
             }
           }
-
-          /* +++ GENERATED_NEURON_CODE +++ */
-          ==neuron_operations==
-          /* --- GENERATED_NEURON_CODE --- */
-
           input_start += network_input_size;
           if(evaluate_network){ /* No need to update these when the network is not under evaluation, as then the same slot is being updated always */
             output_start += neuron_array_size;
@@ -243,46 +229,15 @@ std::string SolutionBuilder::get_kernel_for_solution(
           }
         }
 
+        if(0 == get_global_id(0))outputs[output_sizes[0]] = 0.0; /* zero out performance error */
         if(evaluate_network){
-          outputs[output_sizes[0]] = 0.0; /* zero out performance error */
+          while(0.0 < outputs[output_sizes[0]]); /* don't judge me, there's no global barrier */
           ==performance_operations==
         }
 
-        //Debug
-        if(0 == get_global_id(0)){
-          int print_sequence_index = 0;
-        //   int print_input_start = input_sizes[0] + input_sizes[1];
-        //   printf("Input data in GPU(%d <> %d offset): \n", ==weight_table_offset==, print_input_start);
-        //   printf("===\n");
-        //   for(int i = 0; i < print_input_start; ++i){
-        //     printf("[%.4f]", inputs[i]);
-        //   }
-        //   printf("\n===\n");
-        //   for(int i = 0; i < input_sizes[2]; ++i){
-        //     if(0 == i%network_input_size){
-        //       printf("--> index %d\n", print_input_start + i - 1);
-        //       if(0 == print_sequence_index%(prefill_input_num + sequence_size)){
-        //         printf("=====\n");
-        //       }
-        //       ++print_sequence_index;
-        //     }
-        //     printf("[%.4f]", inputs[print_input_start + i]);
-        //   }
-        //   printf("\n");
-        //
-          print_sequence_index = 0;
-          printf("buffer_data in GPU: \n");
-          for(int i = 0; i < output_sizes[0]; ++i){
-            if(0 == i%neuron_array_size){
-              printf("--> index %d \n", i-1);
-              if(0 == print_sequence_index%(prefill_input_num + sequence_size)){
-                printf("=====\n");
-              }
-              ++print_sequence_index;
-            }
-            printf("[%.7f]", outputs[i]);
-          }
-          printf("\n");
+        if(0 == get_global_id(0) && evaluate_network){
+          printf("GPU performance error: %.9f \n", outputs[output_sizes[0]]);
+          printf("output size: %d", (output_sizes[0] * 8));
         }
 
       }/*if(input sizes match)*/
@@ -381,7 +336,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
             };
           }else if(0 != input_past_reach){
             input_string = [input_index_start, input_past_reach, past_reach_guard, &solution](std::string addition){
-              return past_reach_guard( //TODO: Maybe remove this?
+              return past_reach_guard(
                 input_past_reach,
                 "outputs[output_start + " + addition + " + " + std::to_string(input_index_start - static_cast<std::int32_t>(input_past_reach * solution.neuron_number())) + "]"
               );
@@ -477,19 +432,6 @@ std::string SolutionBuilder::get_kernel_for_solution(
         )+"\n);\n"
       );
 
-      // Debug! print Neuron value
-      // if(11 == inner_neuron_index){
-        // inner_neuron_operation += //std::string("if(0 == get_global_id(0))\n") +
-        // std::string("printf(\"global[%d]; neuron_memory_slots: %d; Neuron[%d] value: (%.9f * %.9f) + (%.9f * %.9f) + %.9f == %.9f ==> %.9f\\n \", ")
-        // + "(int)(get_global_id(0)), current_max_backreach, " + neuron_index_str + ","
-        // + std::string("inputs[input_start + 0 + 0], inputs[0 + 2], ")
-        // + std::string("inputs[input_start + 1 + 0], inputs[1 + 2], ")
-        // + std::string("inputs[4], ")
-        // + past_reach_guard( 1/*past_reach*/, std::string("(outputs[output_start + " + neuron_index_str + " - neuron_array_size])")) + ","
-        // + "outputs[output_start + " + neuron_index_str + "]"
-        // + ");";
-      // }
-
       weight_synapse_start += partial.weight_synapse_number(inner_neuron_index);
       input_synapse_index += input_synapse_index_offset;
       input_synapse_index_offset = 0u;
@@ -499,7 +441,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
 
     if(0 < partial.solved_features_size()){ /* if the partial solves any feature */
       for(const FeatureGroup& feature : partial.solved_features()){
-        if(NeuronInfo::is_feature_relevant_to_solution(feature.feature())){
+      if(NeuronInfo::is_feature_relevant_to_solution(feature.feature())){
           RafkoNetworkFeature::add_default_kernel_code_to(
             neuron_operations, feature, settings, solution,
             ""/*input_array*/, ""/*input_start_index*/, "outputs", "output_start", !feature_locals_declared

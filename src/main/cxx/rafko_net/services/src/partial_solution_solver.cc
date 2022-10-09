@@ -85,7 +85,6 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
         }else /* Any additional weight shall count as biases, so the input value is set to 1.0 */
           new_neuron_input = (1.0);
         /* The weighted input shall be added to the calculated value */
-        // std::cout << "Neuron[" << neuron_iterator << "] CPU weighted pair: " << new_neuron_input << "*" << m_partialSolution.weight_table(weight_index) << std::endl;
         if(true == first_input_in_neuron){
           new_neuron_data = new_neuron_input * m_partialSolution.weight_table(weight_index);
           first_input_in_neuron = false;
@@ -106,7 +105,6 @@ void PartialSolutionSolver::solve_internal(const std::vector<double>& input_data
       m_partialSolution.neuron_transfer_functions(neuron_iterator), new_neuron_data
     );
 
-    // std::cout << "; Spike prev value: " << output_neuron_data.get_element(0, (m_partialSolution.output_data().starts() + neuron_iterator)) << std::endl;
     new_neuron_data = SpikeFunction::get_value( /* apply spike function */
       m_partialSolution.neuron_spike_functions(neuron_iterator), spike_function_weight, new_neuron_data,
       output_neuron_data.get_element(0, (m_partialSolution.output_data().starts() + neuron_iterator))

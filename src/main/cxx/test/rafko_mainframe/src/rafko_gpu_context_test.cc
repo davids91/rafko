@@ -35,7 +35,6 @@
 namespace rafko_gym_test {
 
 TEST_CASE("Testing if GPU Context is able to build a valid openCL environment", "[context][GPU]"){
-  srand(582801389);
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings().set_arena_ptr(&arena)
@@ -352,7 +351,6 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 }
 
 TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[context][GPU][evaluate][multi-label]"){
-  srand(318344848);
   google::protobuf::Arena arena;
   std::uint32_t sequence_size = rand()%3 + 1;
   std::uint32_t number_of_sequences = rand()%10 + 2;
@@ -578,9 +576,7 @@ void preapare_eval_buffers_for_seed(
   used_sequence_truncation = std::min(
     settings.get_memory_truncation(), environment->get_sequence_size()
   );
-  start_index_in_sequence = (rand()%(
-    environment->get_sequence_size() - used_sequence_truncation + 1
-  ));
+  start_index_in_sequence = (rand()%(environment->get_sequence_size() - used_sequence_truncation + 1));
   while(uploaded_sequences < used_minibatch_size){
     std::uint32_t sequences_to_upload = rand()%(used_minibatch_size - uploaded_sequences + 1u);
     std::uint32_t sequence_start_index = rand()%(environment->get_number_of_sequences() - sequences_to_upload + 1u);
@@ -917,22 +913,7 @@ TEST_CASE("Testing is solve is working as expected in GPU context for isolated e
     .set_minibatch_size(10)
   );
 
-  // rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features_and_recurrence(2u/*input_size*/, *settings, 1u);
-  rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
-    .input_size(2).expected_input_range(1.0)
-    .allowed_transfer_functions_by_layer(
-      {
-        {rafko_net::transfer_function_identity}
-
-        // {rafko_net::transfer_function_identity},
-        // {rafko_net::transfer_function_sigmoid},
-        // {rafko_net::transfer_function_tanh},
-        // {rafko_net::transfer_function_elu},
-        // {rafko_net::transfer_function_selu},
-        // {rafko_net::transfer_function_relu},
-      }
-    // ).dense_layers({2,2,2,2,2,1});
-    ).dense_layers({1});
+  rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features(2u/*input_size*/, *settings, 1u);
   auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(sample_number, sequence_size);
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::move(inputs), std::move(labels), sequence_size
@@ -945,36 +926,18 @@ TEST_CASE("Testing is solve is working as expected in GPU context for isolated e
   std::vector<std::vector<double>> reference_result;
   std::uint32_t raw_inputs_index = 0;
   reference_solver->set_eval_mode(false);
-  std::cout << "reference inputs and data: " << std::endl;
   for(std::uint32_t sequence_index = 0; sequence_index < environment->get_number_of_sequences(); ++sequence_index){
     bool reset = true;
     for(std::uint32_t prefill_index = 0; prefill_index < environment->get_prefill_inputs_number(); ++prefill_index){
-      // (void)reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset);
-      auto print_output = reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset).acquire();
-      for(const double& d : environment->get_input_sample(raw_inputs_index)){
-        std::cout << "[" << d << "]";
-      }
-      std::cout << "-->";
-      for(const double& d : print_output){
-        std::cout << "[" << d << "]";
-      }
-      std::cout << std::endl;
+      (void)reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset);
       if(reset)reset = false;
       ++raw_inputs_index;
     }
     for(std::uint32_t label_inside_sequence = 0; label_inside_sequence < environment->get_sequence_size(); ++label_inside_sequence){
       reference_result.emplace_back(reference_solver->solve(environment->get_input_sample(raw_inputs_index), reset).acquire());
-      for(const double& d : environment->get_input_sample(raw_inputs_index)){
-        std::cout << "[" << d << "]";
-      }
-      std::cout << "-->";
-      for(const double& d : reference_result.back()){
-        std::cout << "[" << d << "]";
-      }
-      std::cout << std::endl;      if(reset)reset = false;
+      if(reset)reset = false;
       ++raw_inputs_index;
     }
-    std::cout << "== sequence_end ===" << std::endl;
   }
 
   /* Calculate result from a context */
@@ -989,25 +952,6 @@ TEST_CASE("Testing is solve is working as expected in GPU context for isolated e
     std::vector<double>(network.output_neuron_number())
   );
   context->solve_environment(context_result);
-
-  // double simple_result = context->solve(environment->get_input_sample(0), true).acquire()[0];
-  // std::cout << "simple solve result: " << simple_result
-  // << " vs: " <<  reference_solver->solve(environment->get_input_sample(0), true).acquire()[0]
-  // << std::endl;
-  // auto reference_buffer = reference_solver->solve(environment->get_input_sample(0), true);
-  // auto cheat = reference_buffer.begin() + 1 - network.neuron_array_size();
-  // std::cout << "reference buffer: " << std::endl;
-  // for(int i = 0; i < network.neuron_array_size(); ++i){
-  //   std::cout << "[" << *cheat << "]";
-  //   ++cheat;
-  // }
-  // std::cout << std::endl;
-  //
-  // std::cout << "weight table: " << std::endl;
-  // for(const double& d : network.weight_table()){
-  //   std::cout << "[" << d << "]";
-  // }
-  // std::cout << std::endl;
 
   std::uint32_t index = 0u;
   for(const std::vector<double>& reference : reference_result){
