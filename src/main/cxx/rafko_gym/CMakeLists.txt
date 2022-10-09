@@ -34,7 +34,8 @@ set(GYM_HEADER_MODELS
   models/rafko_objective.hpp
   models/rafko_dataset_wrapper.hpp
   models/rafko_cost.hpp
-  models/rafko_backpropagation_data.hpp
+  models/rafko_network_delta_chain_link.h
+  models/rafko_network_proxy.h
 )
 set(GYM_HEADER_SERVICES
   ${GYM_HEADERS_SERVICES_WITH_OCL}
@@ -63,6 +64,7 @@ target_sources(rafko_gym
   models/src/rafko_cost.cc
   models/src/rafko_environment.cc
   models/src/rafko_dataset_wrapper.cc
+  models/src/rafko_network_delta_chain_link.cc
   services/src/cost_function.cc
   services/src/rafko_backpropagation_operation.cc
   services/src/rafko_backprop_neuron_input_operation.cc

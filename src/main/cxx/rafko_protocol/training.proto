@@ -118,3 +118,39 @@ message NetworkWeightVectorDelta{
   repeated rafko_net.IndexSynapseInterval weight_synapses = 1; /* The index values of the weights ( in the @RafkoNet ) for the values stored in the fragment */
   repeated double values = 2; /* Weight update values inside the fragment. The values follow one another in the order they appear based on the @weight_synapses member */
 }
+
+message NetworkNeuronFunctionDelta{
+  repeated rafko_net.IndexSynapseInterval relevant_neurons = 1;
+  repeated rafko_net.Input_functions input_functions = 2;
+  repeated rafko_net.Transfer_functions transfer_functions = 3;
+  repeated rafko_net.Spike_functions spike_functions = 4;
+}
+
+message NonStructuralNetworkDelta{
+  uint32 version = 1;
+  uint32 used_iterations = 2;
+
+  NetworkWeightVectorDelta weights_delta = 10;
+  NetworkNeuronFunctionDelta functional_delta = 20;
+}
+
+message StructuralNetworkDelta{
+  uint32 version = 1;
+  uint32 used_iterations = 2;
+
+  repeated rafko_net.Neuron added_neurons = 10;
+  repeated uint32 removed_neurons = 20;
+
+  repeated double added_weights = 30;
+  repeated uint32 removed_weights = 40;
+}
+
+message NetworkDeltaChainLinkData{
+  repeated double error_delta = 10; /* Error delta for each item in the changed field in version order */
+  repeated NonStructuralNetworkDelta simple_changes = 20;
+  repeated StructuralNetworkDelta structural_changes = 21;
+  /*!Note: the version field inside both repeated fields decides which change to apply first:
+   * smallest version from both fields to be applied first, then the second smallest and so on...
+   * In case of equal versions, NonStructuralNetworkDelta to be applied first.
+   */
+}
