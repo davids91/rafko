@@ -80,8 +80,8 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy
     ));
     ++step_index;
   }
-  RFASSERT_LOG(
-    "Assembling output buffer of strategy phase: bytesize: {}",
+  RFASSERT_LOGV(
+    output_shapes.back(), "Assembling output buffer of strategy phase: bytesize: {}; Output Shape: ",
     output_shapes.back().get_byte_size<double>()
   );
   m_kernelArgs.push_back(std::make_tuple(

@@ -231,13 +231,8 @@ std::string SolutionBuilder::get_kernel_for_solution(
 
         if(0 == get_global_id(0))outputs[output_sizes[0]] = 0.0; /* zero out performance error */
         if(evaluate_network){
-          while(0.0 < outputs[output_sizes[0]]); /* don't judge me, there's no global barrier */
+          while(!isequal(0.0, outputs[output_sizes[0]])); /* don't judge me, there's no global barrier */
           ==performance_operations==
-        }
-
-        if(0 == get_global_id(0) && evaluate_network){
-          printf("GPU performance error: %.9f \n", outputs[output_sizes[0]]);
-          printf("output size: %d", (output_sizes[0] * 8));
         }
 
       }/*if(input sizes match)*/

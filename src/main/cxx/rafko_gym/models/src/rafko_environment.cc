@@ -35,14 +35,11 @@ std::vector<cl::Event> RafkoEnvironment::upload_inputs_to_buffer(
   std::uint32_t raw_input_num = (sequences_to_upload * elements_in_a_sequence);
   std::uint32_t input_buffer_byte_offset = (
     buffer_start_byte_offset
-    + (
-      buffer_sequence_start_index * elements_in_a_sequence
-      * get_input_size() * sizeof(double)
-    )
+    + ( buffer_sequence_start_index * elements_in_a_sequence * get_input_size() * sizeof(double) )
   );
   RFASSERT_LOG(
-    "starting offset: {}; input_size: {}; sequence size: {}; prefill inputs: {}; Resulting offset: {}",
-    buffer_start_byte_offset, get_input_size(), get_sequence_size(), get_prefill_inputs_number(), input_buffer_byte_offset
+    "starting offset: {}; input size: {}; sequence size: {}; Resulting offset: {}",
+    buffer_start_byte_offset, get_input_size(), get_sequence_size(), input_buffer_byte_offset
   );
   std::vector<cl::Event> events(raw_input_num);
 
@@ -87,7 +84,11 @@ std::vector<cl::Event> RafkoEnvironment::upload_labels_to_buffer(
       * get_feature_size() * sizeof(double)
     )
   );
-  RFASSERT_LOG("Buffer byte offset corrected by sequence index: {}", buffer_byte_offset);
+  RFASSERT_LOG(
+    "starting offset: {}; feature size: {}; sequence size: {}; Resulting offset: {}",
+    buffer_start_byte_offset, get_feature_size(), get_sequence_size(), buffer_byte_offset
+  );
+
 
   std::uint32_t labels_byte_offset = 0u;
   const std::uint32_t label_byte_size = (sizeof(double) * get_feature_size());

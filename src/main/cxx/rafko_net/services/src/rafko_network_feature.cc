@@ -367,7 +367,7 @@ void RafkoNetworkFeature::add_lx_kernel_to(
   }
 
   feature_helpers += R"(
-    const int ==index_var_name==[==feature_weight_number==] = {
+    __constant int ==index_var_name==[==feature_weight_number==] = {
       ==index_values==
     };
   )";
@@ -385,9 +385,7 @@ void RafkoNetworkFeature::add_lx_kernel_to(
     if(get_global_id(0) < ==feature_weight_number==){
       const int weights_in_one_thread = 1 + ( ==feature_weight_number==/(int)(get_global_size(0)) );
       const int execution_start_index = weights_in_one_thread * get_global_id(0);
-      const int weights_in_this_thread = min(
-        weights_in_one_thread, max(0, (==feature_weight_number== - execution_start_index))
-      );
+      const int weights_in_this_thread = min( weights_in_one_thread, max(0, (==feature_weight_number== - execution_start_index)) );
 
       ==local_name== = 0.0;
       for(
@@ -400,7 +398,6 @@ void RafkoNetworkFeature::add_lx_kernel_to(
       ){
         ==local_name== += ==lx==;
       }
-
       AtomicAdd(&==output_array==[==output_start_index==], ==local_name==);
     }/*if(evaluating network)*/
   )";

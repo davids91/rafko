@@ -87,6 +87,7 @@ void RafkoGPUContext::upload_weight_to_device(std::uint32_t weight_index){
       m_solutionPhase.get_input_buffer(), CL_TRUE/* blocking */,
       current_offset/*offset: mode */, sizeof(double)/*size*/, &weight_value
     );
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
   }
   RFASSERT_LOG("Weight upload complete!");
@@ -139,6 +140,7 @@ void RafkoGPUContext::upload_weight_table_to_device(){
     (sizeof(double) * device_weight_table.size())/*size*/,
     device_weight_table.data()
   );
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
 }
 
@@ -149,6 +151,7 @@ void RafkoGPUContext::refresh_objective(){
     m_environment->get_number_of_label_samples(),
     m_environment->get_feature_size()
   );
+  RFASSERT_LOG("Updating Error Phase strategy: ");
   m_errorPhase.set_strategy(m_objective);
 }
 
@@ -167,6 +170,8 @@ void RafkoGPUContext::set_weight_updater(rafko_gym::Weight_updaters updater){
 }
 
 void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment){
+  RFASSERT_SCOPE(ENV_BUILD);
+  // rafko_mainframe::RafkoAssertionLogger::set_keep_log(true);
   RFASSERT_LOG("Setting environment in GPU context..");
   RFASSERT_LOG("Environment feature size: {} vs. Network output Neuron number: {}", environment->get_feature_size(), m_network.output_neuron_number());
   RFASSERT(environment->get_feature_size() == m_network.output_neuron_number());
@@ -188,16 +193,18 @@ void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironmen
   m_evalStartInSequence = m_numOutputsInOneSequence - m_environment->get_inputs_in_one_sequence();
   /*!Note: Network memory is not counting the "current" run; which is by definition is not from memory */
   RFASSERT_LOG(
-    "Agent sequence parameters: {} sequences; {} sequence_size; {} prefill inputs",
+    "Agent sequence parameters: {} sequences; {} sequence_size; {} prefill inputs; {} Neurons",
     m_environment->get_number_of_sequences(),
     m_environment->get_sequence_size(),
-    m_environment->get_prefill_inputs_number()
+    m_environment->get_prefill_inputs_number(),
+    m_network.neuron_array_size()
   );
   m_agent->set_sequence_params(
     m_environment->get_number_of_sequences(),
     m_environment->get_sequence_size(),
     m_environment->get_prefill_inputs_number()
   );
+  RFASSERT_LOG("Updating Solution Phase strategy: ");
   m_solutionPhase.set_strategy(m_agent);
   upload_weight_table_to_device();
   if(m_objective)refresh_objective();
@@ -268,8 +275,10 @@ double RafkoGPUContext::full_evaluation(){
     0u /*offset*/, sizeof(double)/*size(bytes)*/,
     NULL/*events to wit for*/, &fill_event
   );
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
   return_value = fill_event.wait();
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
 
   if(m_lastRanEvaluation != full_eval_run){
@@ -280,10 +289,10 @@ double RafkoGPUContext::full_evaluation(){
       m_environment->get_number_of_sequences()/*sequences_to_upload*/
     );
 
+    RFASSERT_LOG("Number of Label samples in environment: {};", m_environment->get_number_of_label_samples());
     label_events = m_environment->upload_labels_to_buffer(
       m_openclQueue, m_errorPhase.get_input_buffer(), (
-        m_environment->get_number_of_label_samples()
-        * m_environment->get_feature_size() * sizeof(double)
+        m_environment->get_number_of_label_samples() * m_environment->get_feature_size() * sizeof(double)
       ) /*buffer_start_byte_offset*/,
       0u/*sequence_start_index*/, 0/*buffer_sequence_start_index*/,
       m_environment->get_number_of_sequences()/*sequences_to_upload*/,
@@ -292,6 +301,7 @@ double RafkoGPUContext::full_evaluation(){
 
     for(cl::Event& input_event : input_events){
       return_value = input_event.wait();
+      if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
       RFASSERT( return_value == CL_SUCCESS );
     }
   }
@@ -310,8 +320,8 @@ double RafkoGPUContext::full_evaluation(){
     [this, &features_events, &dst_byte_offset, &return_value]
     (cl::Buffer source_buffer, std::uint32_t buffer_byte_offset, std::uint32_t data_byte_size){
       RFASSERT_LOG(
-        "Copying from agent[{}] to objective[{} + {}] / {} bytes; evaluation starts at: {}",
-        buffer_byte_offset, dst_byte_offset, data_byte_size,
+        "Copying from agent[{} + {} / {}] to objective[{} + {}] / {} bytes; evaluation starts at slot: {}",
+        buffer_byte_offset, data_byte_size, m_agent->get_output_shapes()[0].get_byte_size<double>(), dst_byte_offset, data_byte_size,
         m_objective->get_input_shapes()[0].get_byte_size<double>(), /* m_errorPhase is based on m_objective */
         m_evalStartInSequence
       );
@@ -321,6 +331,7 @@ double RafkoGPUContext::full_evaluation(){
         dst_byte_offset/*dst_offset*/, data_byte_size/*size*/,
         NULL /*events to wait for*/, &features_events.back()
       );
+      if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
       RFASSERT( return_value == CL_SUCCESS );
       dst_byte_offset += data_byte_size;
     }
@@ -328,11 +339,13 @@ double RafkoGPUContext::full_evaluation(){
 
   for(cl::Event& features_event : features_events){
     return_value = features_event.wait();
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
   }
 
   for(cl::Event& label_event : label_events){
     return_value = label_event.wait();
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
   }
 
@@ -376,8 +389,10 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
       0u /*offset*/, sizeof(double)/*size(bytes)*/,
       NULL/*events to wit for*/, &fill_event
     );
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
     return_value = fill_event.wait();
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
 
     /* upload pseudo-random labels and inputs */
@@ -419,6 +434,7 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
 
   for(cl::Event& event : input_events){
     return_value = event.wait();
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
   }
 
@@ -437,7 +453,7 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
     [this, &features_events, &dst_byte_offset, &return_value]
     (cl::Buffer source_buffer, std::uint32_t buffer_byte_offset, std::uint32_t data_byte_size){
       RFASSERT_LOG(
-        "Copying from agent[{}] to objective[{} + {}] / {} bytes; evaluation starts at: {}",
+        "Copying from agent[{}] to objective[{} + {}] / {} bytes; evaluation starts at slot: {}",
         buffer_byte_offset, dst_byte_offset, data_byte_size,
         m_objective->get_input_shapes()[0].get_byte_size<double>(), /* m_errorPhase is based on m_objective */
         m_evalStartInSequence
@@ -448,6 +464,7 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
         dst_byte_offset/*dst_offset*/, data_byte_size/*size*/,
         NULL /*events to wait for*/, &features_events.back()
       );
+      if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
       RFASSERT( return_value == CL_SUCCESS );
       dst_byte_offset += data_byte_size;
     }
@@ -468,18 +485,22 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
     (minibatch_labels_byte_size - uploaded_bytes_count)/*size*/,
     NULL /*events to wait for*/, &fill_event
   );
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
 
   for(cl::Event& features_event : features_events){
     return_value = features_event.wait();
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
   }
   for(cl::Event& event : label_events){
     return_value = event.wait();
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
   }
 
   return_value = fill_event.wait();
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
 
   /* run error phase */
@@ -515,9 +536,11 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
       (sizeof(double) * m_numOutputsInOneSequence * m_network.neuron_array_size())/*size*/,
       NULL/*events to wait for*/, &fill_event
     );
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
 
     return_value = fill_event.wait();
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
   }
 
@@ -529,8 +552,10 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
   /*!Note: mode value tells the Kernel to run the network one time for each sequence ( given in dimensions )
    * and also that it is currently not being evaluated.
    */
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
   return_value = fill_event.wait();
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
 
   /* upload inputs */
@@ -540,6 +565,7 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
     (sizeof(double) * input.size())/*size*/,
     input.data(), NULL
   );
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> sol_space = m_agent->get_solution_space();
@@ -564,12 +590,14 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
           source_buffer /*src*/, CL_TRUE/*blocking*/, buffer_byte_offset, data_byte_size/*size*/,
           m_standaloneSolutionResult.data(), NULL/*events to wit for*/, &fill_event
         );
+        if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
         RFASSERT( return_value == CL_SUCCESS );
       }
       ++output_index;
     }
   );
   return_value = fill_event.wait();
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
 
   m_lastRanEvaluation = not_eval_run;
@@ -587,8 +615,10 @@ void RafkoGPUContext::solve_environment(std::vector<std::vector<double>>& output
     0u /*offset*/, sizeof(double)/*size(bytes)*/, NULL/*events to wit for*/, &fill_event
   );
   /*!Note: mode value tells the network that it's not being evaluated and to run the network *value* times for one sequence */
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
   return_value = fill_event.wait();
+  if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
   RFASSERT( return_value == CL_SUCCESS );
 
   if(isolated){
@@ -598,6 +628,7 @@ void RafkoGPUContext::solve_environment(std::vector<std::vector<double>>& output
       (sizeof(double) * m_numOutputsInOneSequence * m_network.neuron_array_size() * m_environment->get_number_of_sequences())/*size*/,
       NULL/*events to wait for*/, &fill_event
     );
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
   }
 
@@ -611,6 +642,7 @@ void RafkoGPUContext::solve_environment(std::vector<std::vector<double>>& output
 
     for(cl::Event& input_event : input_events){
       return_value = input_event.wait();
+      if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
       RFASSERT( return_value == CL_SUCCESS );
     }
   }
@@ -641,6 +673,7 @@ void RafkoGPUContext::solve_environment(std::vector<std::vector<double>>& output
           data_byte_size/*size*/, output[output_index].data(),
           NULL /*events to wait for*/, &features_events.back()
         );
+        if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
         RFASSERT( return_value == CL_SUCCESS );
 
         ++output_index;
@@ -651,6 +684,7 @@ void RafkoGPUContext::solve_environment(std::vector<std::vector<double>>& output
 
   for(cl::Event& features_event : features_events){
     return_value = features_event.wait();
+    if(CL_SUCCESS != return_value)RFASSERT_LOG("OpenCL Return value: {}", return_value);
     RFASSERT( return_value == CL_SUCCESS );
   }
 

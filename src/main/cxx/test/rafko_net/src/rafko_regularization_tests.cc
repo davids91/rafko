@@ -365,9 +365,6 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
     rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
     rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(network);
 
-    //TODO: this makes things boom
-    // number_of_sequences = std::max(static_cast<std::int32_t>(number_of_sequences), network.weight_table_size());
-
     /* Create environments */
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
