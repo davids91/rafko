@@ -355,9 +355,9 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
     // .set_neuron_input_function(0u, 2u, rafko_net::input_function_add)
     // .set_neuron_spike_function(0u, 2u, rafko_net::spike_function_none)
     .allowed_transfer_functions_by_layer({
-      {rafko_net::transfer_function_selu},
-      {rafko_net::transfer_function_selu},
-      {rafko_net::transfer_function_selu}
+      {rafko_net::transfer_function_swish},
+      {rafko_net::transfer_function_swish},
+      {rafko_net::transfer_function_swish}
     })
     .dense_layers({3,2,1});
 

@@ -40,7 +40,7 @@ protected:
   }
 
   constexpr double get_cell_error(double label_value, double feature_value) const override{
-    return pow((label_value - feature_value),2);
+    return std::pow((label_value - feature_value),2);
   }
 
   constexpr double get_derivative(

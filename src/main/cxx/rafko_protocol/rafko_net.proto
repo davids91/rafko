@@ -32,6 +32,7 @@ enum Transfer_functions{
   transfer_function_elu = 4;
   transfer_function_selu = 5;
   transfer_function_relu = 6;
+  transfer_function_swish = 7;
   transfer_function_end = 512;
 }
 
