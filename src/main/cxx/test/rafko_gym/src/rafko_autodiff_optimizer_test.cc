@@ -332,7 +332,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
-    .set_learning_rate(2e-4).set_minibatch_size(minibatch_size).set_memory_truncation(2)
+    .set_learning_rate(2e-2).set_minibatch_size(minibatch_size).set_memory_truncation(2)
     .set_droput_probability(0.0)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero, true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping, false)
@@ -402,7 +402,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   );
   #endif/*(RAFKO_USES_OPENCL)*/
   optimizer->build(objective);
-  optimizer->set_weight_updater(rafko_gym::weight_updater_default);
+  optimizer->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   double train_error;
   double test_error;

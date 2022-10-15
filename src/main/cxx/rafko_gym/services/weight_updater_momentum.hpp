@@ -28,24 +28,26 @@ class RAFKO_EXPORT RafkoWeightUpdaterMomentum : public RafkoWeightUpdater{
 public:
   RafkoWeightUpdaterMomentum(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings)
   :  RafkoWeightUpdater(rafko_net, settings)
-  ,  m_previousVelocity(rafko_net.weight_table_size(),(0.0))
+  ,  m_previousUpdate(rafko_net.weight_table_size(),(0.0))
   { }
 
   void iterate(const std::vector<double>& gradients) override{
+    std::uint32_t weight_index = 0;
+    std::transform( m_previousUpdate.begin(), m_previousUpdate.end(), m_previousUpdate.begin(), 
+      [this, &gradients, &weight_index](const double& previous_update){
+        return ( (previous_update * m_settings.get_gamma()) + (gradients[weight_index++] * m_settings.get_learning_rate(m_iteration)) );
+      }
+    );
     RafkoWeightUpdater::iterate(gradients);
-    std::copy(get_current_velocity().begin(), get_current_velocity().end(), m_previousVelocity.begin());
   }
 
 protected:
-  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const override{
-    return (
-      (m_previousVelocity[weight_index] * m_settings.get_gamma())
-      + (gradients[weight_index] * m_settings.get_learning_rate())
-    );
+  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& /*gradients*/) const override{
+    return -m_previousUpdate[weight_index];
   }
 
 private:
-  std::vector<double> m_previousVelocity;
+  std::vector<double> m_previousUpdate;
 };
 
 } /* namespace rafko_gym */
