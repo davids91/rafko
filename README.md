@@ -12,7 +12,7 @@ such as solving a network, calculating gradients and updating a network, etc..
    - **rafko_gym:** Building blocks of network Training
    - **rafko_mainframe:** A basic incomplete implementation if a deep learning service based on the library
    - **rafko_net:** Building blocks of a Neural Network
-   - **rafko_utilities:** Various Utility implementations not strictly part of the library in topic
+   - **rafko_utilities:** Various Utility implementations not strictly part of the library in topic. It is preferred that his module does not have any dependency, not even from the Rafko repository.
    - **test:** Test suites for checking consistency and corect behavior
  - **src/main/java:** Let's not look in there yet..
  - **/res:** miscellianeous resources

@@ -30,6 +30,7 @@
 #include <unordered_map>
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_utilities/services/rafko_math_utils.hpp"
 #include "rafko_net/models/input_function.hpp"
 #include "rafko_net/models/transfer_function.hpp"
 #include "rafko_net/models/spike_function.hpp"
@@ -46,6 +47,8 @@ namespace rafko_net {
  */
 class RAFKO_EXPORT RafkoNetBuilder{
 public:
+  class KernelParameters;
+
   RafkoNetBuilder(const rafko_mainframe::RafkoSettings& settings)
   :  m_settings(settings)
   { }
@@ -205,6 +208,12 @@ public:
     return *this;
   }
 
+  KernelParameters& layer_input_convolution(std::uint32_t layer_index){
+    return std::get<1>(*std::get<0>(m_layerKernelInputParameters.insert(
+      {layer_index, KernelParameters(*this)}
+    )));
+  }
+
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
    *             and function arguments. The structure is according to the provided layer sizes
@@ -272,6 +281,7 @@ private:
    */
   std::vector< std::set<Transfer_functions> > m_argAllowedTransferFunctionsByLayer;
   std::unordered_map<std::uint32_t, std::set<Neuron_group_features>> m_layerFeatures;
+  std::unordered_map<std::uint32_t, KernelParameters> m_layerKernelInputParameters;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Input_functions> > m_argNeuronIndexInputFunctions;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Transfer_functions> > m_argNeuronIndexTransferFunctions;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Spike_functions> > m_argNeuronIndexSpikeFunctions;
@@ -306,6 +316,106 @@ private:
    * Number of Neurons the net-to-be-built shall have as output
    */
   std::uint32_t m_argOutputNeuronNumber = 0;
+
+public:
+  class KernelParameters{
+  public:
+    KernelParameters(RafkoNetBuilder& parent)
+    : m_parent(parent)
+    { }
+
+    template <typename ...Args>
+    KernelParameters& kernelSize(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in kernelSize!");
+      m_kernelSize = {static_cast<std::uint32_t>(sizes) ...};
+      return *this;
+    }
+
+    template <typename ...Args>
+    KernelParameters& kernelStride(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in kernelStride!");
+      m_kernelStride = {static_cast<std::uint32_t>(sizes) ...};
+      return *this;
+    }
+
+    template <typename ...Args>
+    KernelParameters& kernelPadding(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in kernelPadding!");
+      m_kernelPadding = {static_cast<std::uint32_t>(sizes) ...};
+      return *this;
+    }
+
+    template <typename ...Args>
+    KernelParameters& inputSize(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in inputSize!");
+      m_inputSize = {static_cast<std::uint32_t>(sizes) ...};
+      return *this;
+    }
+    
+    template <typename ...Args>
+    KernelParameters& outputSize(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in outputSize!");
+      m_outputSize = {static_cast<std::uint32_t>(sizes) ...};
+      return *this;
+    }
+
+    template <typename ...Args>
+    KernelParameters& dilation(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in dilation!");
+      m_dilation = {static_cast<std::uint32_t>(sizes) ...};
+      rafko_utilities::NDArrayIndex ndv({static_cast<std::uint32_t>(sizes) ...});
+      return *this;
+    }
+
+    KernelParameters& transposed(bool transposed = true){
+      m_transposed = transposed;
+      return *this;
+    }
+
+    RafkoNetBuilder& validate(){
+      return m_parent;
+    }
+
+    KernelParameters& reset(){
+      m_dimensionCount = 0;
+      m_kernelSize.clear();
+      m_kernelStride.clear();
+      m_kernelPadding.clear();
+      m_inputSize.clear();
+      m_outputSize.clear();
+      m_dilation.clear();
+      m_transposed = false;
+      m_valid = false;
+      return *this;
+    }
+
+    
+  private:
+    RafkoNetBuilder& m_parent;
+    std::uint32_t m_dimensionCount = 0u;
+    std::vector<std::uint32_t> m_kernelSize;
+    std::vector<std::uint32_t> m_kernelStride;
+    std::vector<std::uint32_t> m_kernelPadding;
+    std::vector<std::uint32_t> m_inputSize;
+    std::vector<std::uint32_t> m_outputSize;
+    std::vector<std::uint32_t> m_dilation;
+    bool m_transposed = false;
+    bool m_valid = false;
+
+    bool checkDimensionCount(std::uint32_t dim){
+      if(0 == m_dimensionCount){
+        m_dimensionCount = dim;
+        return true;
+      }
+      return dim == m_dimensionCount;
+    }
+  };
 
 };
 

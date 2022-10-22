@@ -18,6 +18,3 @@ providing services for:
 The following dependencies are the ones development use, but that doesn't neccesarily mean that other versions can't be used. 
  - pkg-config
  - protocol buffers 3.12.2
- - gRPC 1.30.1
-  - At the time of writing this [gRPC does not support WSL for C++](https://github.com/grpc/grpc/issues/23314). 
-  - Anyhoo if you install gRPC in your system you should be good to go, as its dependencies fulfill Rafkos.

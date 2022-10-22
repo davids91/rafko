@@ -101,8 +101,10 @@ enum Neuron_group_features{
  */
 message InputSynapseInterval{
   uint32 reach_past_loops = 1; /* How far in the past runs of the network is taken from. 0 is current run. */
-  sint32 starts = 10; /* Starting indexes of intervals */
-  uint32 interval_size = 11; /* Sizes of intervals */
+  sint32 starts = 10; /* Starting indexes of the first interval */
+  uint32 interval_size = 11; /* Sizes of intervals (number of interval) */
+  uint32 interval_count = 12;
+  uint32 stride_size = 13;
 }
 
 message IndexSynapseInterval{

@@ -423,4 +423,36 @@ TEST_CASE( "Testing builder for setting Neuron spike functions manually", "[buil
   }/*for(10 variants)*/
 }
 
+TEST_CASE("",""){
+  google::protobuf::Arena arena;
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
+    rafko_mainframe::RafkoSettings()
+    .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(1)
+    .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4)
+  );
+  rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
+    .input_size(2).expected_input_range(1.0)
+    .add_feature_to_layer(0u, rafko_net::neuron_group_feature_boltzmann_knot)
+    .add_neuron_recurrence(1u,0u,1u)
+    .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
+    // .set_neuron_spike_function(0u, 0u, rafko_net::spike_function_none)
+    // .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
+    // .set_neuron_spike_function(0u, 1u, rafko_net::spike_function_none)
+    // .set_neuron_input_function(0u, 2u, rafko_net::input_function_add)
+    // .set_neuron_spike_function(0u, 2u, rafko_net::spike_function_none)
+    .layer_input_convolution(0u)
+      //Note: Input or output dimensions need not be added, but checked to layer sizes when building
+      .kernelSize(4,4).kernelStride(2,2).kernelPadding(0,0)
+      .inputSize(64,64).outputSize(32,32)
+      // Either Input or output dimensions need to be added along with the parameters
+      .transposed(false) //optional, default: false
+      .dilation(1) // default: 1 
+      .validate() //Returns Builder
+    .allowed_transfer_functions_by_layer({
+      {rafko_net::transfer_function_selu},
+      {rafko_net::transfer_function_selu}
+    })
+    .dense_layers({3,1});
+}
+
 } /* namespace rafko_net_test */
