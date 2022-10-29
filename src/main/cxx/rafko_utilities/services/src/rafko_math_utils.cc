@@ -25,17 +25,38 @@
 
 namespace {
 
-std::vector<std::uint32_t> init_strides(const std::vector<std::uint32_t>& dimensions, std::int32_t padding){
+std::vector<std::int32_t> init_padding(
+  const std::vector<std::uint32_t>& dimensions, const std::vector<std::int32_t>& padding
+){
+  if(1 == padding.size())
+    return std::vector<std::int32_t>(dimensions.size(), padding[0]);
+
+  if(1 < padding.size()){
+    assert(dimensions.size() == padding.size());
+    return padding;
+  }
+  return std::vector<std::int32_t>(dimensions.size(), 0);
+}
+
+std::vector<std::uint32_t> init_strides(
+  const std::vector<std::uint32_t>& dimensions, const std::vector<std::int32_t>& padding
+){
+  assert(dimensions.size() == padding.size());
   std::vector<std::uint32_t> strides;
   std::uint32_t prev_stride = 1u;
-  for(const std::uint32_t& dim : dimensions){
+  std::int32_t prev_padding = padding[0];
+  std::uint32_t dim = 0;
+  for(const std::uint32_t& dimension : dimensions){
     strides.push_back(prev_stride);
-    prev_stride *= dim + 2 * std::min(0, padding);
+    prev_stride *= dimension + 2 * std::min(0, prev_padding);
+    prev_padding = padding[dim++];
   }
   return strides;
 }
 
-std::vector<std::uint32_t> init_position(const std::vector<std::uint32_t>& dimensions, std::initializer_list<std::uint32_t> position){
+std::vector<std::uint32_t> init_position(
+  const std::vector<std::uint32_t>& dimensions, const std::vector<std::uint32_t>& position
+){
   if(0 < position.size()){
     assert(dimensions.size() == position.size());
     return {position};
@@ -48,11 +69,11 @@ std::vector<std::uint32_t> init_position(const std::vector<std::uint32_t>& dimen
 namespace rafko_utilities {
 
 NDArrayIndex::NDArrayIndex(
-  std::initializer_list<std::uint32_t> dimensions, std::int32_t padding, 
-  std::initializer_list<std::uint32_t> position
+  const std::vector<std::uint32_t>& dimensions, const std::vector<std::int32_t>& padding,
+  const std::vector<std::uint32_t>& position
 )
 : m_dimensions(dimensions)
-, m_padding(padding)
+, m_padding(init_padding(m_dimensions, padding))
 , m_strides(init_strides(dimensions, m_padding))
 , m_bufferSize(std::accumulate(m_dimensions.begin(), m_dimensions.end(), 1.0, 
   [](const std::uint32_t& partial, const std::uint32_t& element){ return partial * element; }
@@ -64,6 +85,19 @@ NDArrayIndex::NDArrayIndex(
   assert(inside_bounds(m_position));
 }
 
+NDArrayIndex::NDArrayIndex(const NDArrayIndex& other, const std::vector<std::int32_t>& padding)
+: m_dimensions(other.m_dimensions)
+, m_padding(init_padding(m_dimensions, padding))
+, m_strides(init_strides(m_dimensions, m_padding))
+, m_bufferSize(other.m_bufferSize)
+, m_position(other.m_position)
+, m_mappedIndex(calculate_mapped_position(m_position))
+{
+  assert(0 == std::count(m_dimensions.begin(), m_dimensions.end(), 0));
+  assert(inside_bounds(m_position));
+}
+
+
 NDArrayIndex& NDArrayIndex::set(const std::vector<std::uint32_t>& position){
   assert(position.size() == m_position.size());
   assert(inside_bounds(position));
@@ -73,7 +107,17 @@ NDArrayIndex& NDArrayIndex::set(const std::vector<std::uint32_t>& position){
   return *this;
 }
 
-NDArrayIndex& NDArrayIndex::step(){
+NDArrayIndex& NDArrayIndex::set(std::uint32_t dimension, std::uint32_t position){
+  assert(dimension < size());
+  m_position[dimension] = position;
+  m_mappedIndex = calculate_mapped_position(m_position);
+  assert( (!m_mappedIndex.has_value())||(m_mappedIndex.value() < m_bufferSize) );
+  assert(inside_bounds(m_position));
+  return *this;
+}
+
+
+std::uint32_t NDArrayIndex::step(){
   std::uint32_t dim = 0;
   bool changed = false;
   while(dim < m_dimensions.size()){
@@ -82,23 +126,30 @@ NDArrayIndex& NDArrayIndex::step(){
       break;
     }else{
       changed = true;
-      m_position[dim] = 0;
+      m_position[dim] = 0u;
     }
     ++dim;
   }
   if(dim >= m_dimensions.size()){
-    m_mappedIndex = 0; /* Overflow happened, start from the beginning */
+    m_mappedIndex = 0u; /* Overflow happened, start from the beginning */
+    return m_dimensions.size() - 1;
   }else{
     if(changed)m_mappedIndex = calculate_mapped_position(m_position);
     assert(m_mappedIndex < m_bufferSize);
+    return dim;
   }
-  return *this;
 }
 
 NDArrayIndex& NDArrayIndex::step(std::uint32_t dimension, std::int32_t delta){
   const std::int32_t new_position = static_cast<std::int32_t>(m_position[dimension]) + delta;
-  assert(0 <= new_position);
-  assert((m_dimensions[dimension] + (2 * std::max(0, m_padding))) > static_cast<std::uint32_t>(new_position));
+  if(
+    (new_position < 0)
+    ||(
+      new_position >= static_cast<std::int32_t>(m_dimensions[dimension] + (2 * std::max(0, m_padding[dimension])))
+    )
+  )throw std::runtime_error(
+    "Current position d[" + std::to_string(dimension) + "] + " + std::to_string(delta) + " out of bounds!"
+  );
 
   m_position[dimension] = new_position;
 
@@ -119,31 +170,36 @@ std::optional<std::uint32_t> NDArrayIndex::calculate_mapped_position(const std::
 
   std::uint32_t result_index = 0u;
   for(std::uint32_t dim = 0; dim < position.size(); ++dim){
-    result_index += (position[dim] - std::max(m_padding, -m_padding)) * m_strides[dim];
+    result_index += (position[dim] - std::max(m_padding[dim], -m_padding[dim])) * m_strides[dim];
   }
   return result_index;
 }
 
 bool NDArrayIndex::inside_bounds(const std::vector<std::uint32_t>& position, std::uint32_t dimension, std::int32_t delta) const{
-  std::uint32_t dimension_index = 0;
+  std::uint32_t dim = 0;
   return std::all_of(position.begin(), position.end(), 
-    [this, &dimension_index, dimension, delta](const std::uint32_t& pos){
+    [this, &dim, dimension, delta](const std::uint32_t& pos){
       std::int32_t position = static_cast<std::int32_t>(pos);
-      if(dimension_index == dimension) position += delta;
-      return( (0 <= position)&&(position < static_cast<int32_t>(2 * std::max(0, m_padding) + m_dimensions[dimension_index++])) );
+      if(dim == dimension) position += delta;
+      ++dim;
+      return(
+        (0 <= position)
+        &&( position < (2 * std::max(int64_t{0}, static_cast<int64_t>(m_padding[dim - 1])) + static_cast<int64_t>(m_dimensions[dim - 1])) )
+      );
     }
   );
 }
 
 bool NDArrayIndex::inside_content(const std::vector<std::uint32_t>& position, std::uint32_t dimension, std::int32_t delta) const{
-  std::uint32_t dimension_index = 0;
+  std::uint32_t dim = 0;
   return std::all_of(position.begin(), position.end(), 
-    [this, &dimension_index, dimension, delta](const std::uint32_t& pos){
+    [this, &dim, dimension, delta](const std::uint32_t& pos){
       std::int32_t actual_position = static_cast<std::int32_t>(pos);
-      if(dimension_index == dimension) actual_position += delta;
+      if(dim == dimension) actual_position += delta;
+      ++dim;
       return( 
-        (std::max(m_padding, -m_padding) <= actual_position)
-        &&(actual_position < static_cast<std::int32_t>(m_dimensions[dimension_index++] + m_padding)) 
+        (std::max(m_padding[dim - 1], -m_padding[dim - 1]) <= actual_position)
+        &&(actual_position < static_cast<std::int32_t>(m_dimensions[dim - 1] + m_padding[dim - 1]))
       );
     }
   );
@@ -158,7 +214,7 @@ std::vector<NDArrayIndex::IntervalPart> NDArrayIndex::mappable_parts_of(
     const bool current_position_in_inside_content = inside_content(position, dimension, delta_index);
     if(current_position_in_inside_content && part_in_progress){
       assert(0 < result.size());
-      ++std::get<1>(result.back()); /* Increase the size of the current part of the interval */
+      ++result.back().steps_inside_target; /* Increase the size of the current part of the interval */
     }else if(current_position_in_inside_content){ /* If the interval iteration became inside bounds */
       result.push_back({(position[dimension] + delta_index), 1}); /* Add the new part as a result */
       part_in_progress = true;
@@ -167,5 +223,42 @@ std::vector<NDArrayIndex::IntervalPart> NDArrayIndex::mappable_parts_of(
   return result;
 }
 
+void NDArrayIndex::scan_kernel(NDArrayIndex& kernel, std::function<void(std::uint32_t, std::uint32_t)> fun){
+  assert(!kernel.has_padding());
+  assert(size() == kernel.size());
+  std::vector<std::uint32_t> original_position = m_position;
+  kernel.reset();
+  do{ /* Acquire interval inside bounds of the mappable buffer and call the function with it */
+    std::vector<NDArrayIndex::IntervalPart> parts_inside_content = mappable_parts_of(m_position, 0, kernel[0]);
+    if(mapped_position().has_value() && (0 < parts_inside_content.size())){
+      auto& [start_pos, interval_size] = parts_inside_content[0];
+      fun(mapped_position().value() - m_position[0] + start_pos, interval_size);
+    }
+
+    try{ /* Step in dimension[1], because dimension[0] should stay at position 0 */
+      kernel.step(1,1); /* throws exception if the position goes out of bounds */
+      step(1,1);
+      std::cout << "^";
+    }catch(...){ /* In case dimension[1] is out of bounds, step to the next position by the interface with wrap around */
+      std::cout << ">";
+      kernel.set(0, kernel[0] - 1); /* set the first dimensions position inside the kernel to the last */
+      std::uint32_t modified_dimension = kernel.step();
+      /*!Note: Because of overflow, the position in dimension[0] will reset to zero */
+      if((kernel.mapped_position().has_value())&&(kernel.mapped_position().value() != 0)){
+        for(std::uint32_t dim = 0; dim < modified_dimension; ++dim){
+          m_position[dim] = original_position[dim];
+        }
+        ++m_position[modified_dimension];
+        m_mappedIndex = calculate_mapped_position(m_position);
+      }
+    }
+    std::cout << "set position to: " << m_position[0] << "," << m_position[1] << "," << m_position[2] << std::endl;
+    std::cout << "Kernel mapped: " << kernel.mapped_position().value() << "/" << (kernel.buffer_size() - kernel[0]) << std::endl;
+  }while( /* when the mapped position for the kernel points to the start of the first dimension, and the end of the others */
+    (kernel.mapped_position().has_value()) /* the kernel is iterated through */
+    &&(0 != kernel.mapped_position().value())
+  );
+  set(original_position);
+}
 
 } /* namespace rafko_utilities */
