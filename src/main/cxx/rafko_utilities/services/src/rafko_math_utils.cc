@@ -130,6 +130,7 @@ std::uint32_t NDArrayIndex::step(){
     }
     ++dim;
   }
+
   if(dim >= m_dimensions.size()){
     m_mappedIndex = 0u; /* Overflow happened, start from the beginning */
     return m_dimensions.size() - 1;
@@ -163,14 +164,19 @@ NDArrayIndex& NDArrayIndex::step(std::uint32_t dimension, std::int32_t delta){
   return *this;
 }
 
-std::optional<std::uint32_t> NDArrayIndex::calculate_mapped_position(const std::vector<std::uint32_t>& position) const{
+std::optional<std::uint32_t> NDArrayIndex::calculate_mapped_position(
+  const std::vector<std::uint32_t>& position, std::uint32_t dimension, std::int32_t delta
+) const{
   assert(position.size() == m_strides.size());
-  if(!inside_content(position))
+  assert(inside_bounds(m_position, dimension, delta));
+  if(!inside_content(position, dimension, delta))
     return {};
 
   std::uint32_t result_index = 0u;
   for(std::uint32_t dim = 0; dim < position.size(); ++dim){
-    result_index += (position[dim] - std::max(m_padding[dim], -m_padding[dim])) * m_strides[dim];
+    std::uint32_t new_position = position[dim];
+    if(dim == dimension)new_position += delta;
+    result_index += (new_position - std::max(m_padding[dim], -m_padding[dim])) * m_strides[dim];
   }
   return result_index;
 }
@@ -197,7 +203,7 @@ bool NDArrayIndex::inside_content(const std::vector<std::uint32_t>& position, st
       std::int32_t actual_position = static_cast<std::int32_t>(pos);
       if(dim == dimension) actual_position += delta;
       ++dim;
-      return( 
+      return(
         (std::max(m_padding[dim - 1], -m_padding[dim - 1]) <= actual_position)
         &&(actual_position < static_cast<std::int32_t>(m_dimensions[dim - 1] + m_padding[dim - 1]))
       );
@@ -230,30 +236,34 @@ void NDArrayIndex::scan_kernel(NDArrayIndex& kernel, std::function<void(std::uin
   kernel.reset();
   do{ /* Acquire interval inside bounds of the mappable buffer and call the function with it */
     std::vector<NDArrayIndex::IntervalPart> parts_inside_content = mappable_parts_of(m_position, 0, kernel[0]);
-    if(mapped_position().has_value() && (0 < parts_inside_content.size())){
+    if(0 < parts_inside_content.size()){
       auto& [start_pos, interval_size] = parts_inside_content[0];
-      fun(mapped_position().value() - m_position[0] + start_pos, interval_size);
+      if(mapped_position().has_value()){
+        fun(mapped_position().value() - m_position[0] + start_pos, interval_size);
+      }else{
+        step(0, start_pos);
+        fun(calculate_mapped_position(m_position).value(), interval_size);
+        step(0, -start_pos);
+      }
     }
 
     try{ /* Step in dimension[1], because dimension[0] should stay at position 0 */
       kernel.step(1,1); /* throws exception if the position goes out of bounds */
       step(1,1);
-      std::cout << "^";
     }catch(...){ /* In case dimension[1] is out of bounds, step to the next position by the interface with wrap around */
-      std::cout << ">";
       kernel.set(0, kernel[0] - 1); /* set the first dimensions position inside the kernel to the last */
       std::uint32_t modified_dimension = kernel.step();
+      assert(modified_dimension < m_dimensions.size());
+      assert(kernel[modified_dimension] <= (*this)[modified_dimension]);
       /*!Note: Because of overflow, the position in dimension[0] will reset to zero */
-      if((kernel.mapped_position().has_value())&&(kernel.mapped_position().value() != 0)){
-        for(std::uint32_t dim = 0; dim < modified_dimension; ++dim){
+      if((kernel.mapped_position().has_value())&&(kernel.mapped_position().value() != 0)){ /* If iteration will continue */
+        for(std::uint32_t dim = 0; dim < modified_dimension; ++dim){ /* set the dimension position accordingly */
           m_position[dim] = original_position[dim];
         }
         ++m_position[modified_dimension];
         m_mappedIndex = calculate_mapped_position(m_position);
       }
     }
-    std::cout << "set position to: " << m_position[0] << "," << m_position[1] << "," << m_position[2] << std::endl;
-    std::cout << "Kernel mapped: " << kernel.mapped_position().value() << "/" << (kernel.buffer_size() - kernel[0]) << std::endl;
   }while( /* when the mapped position for the kernel points to the start of the first dimension, and the end of the others */
     (kernel.mapped_position().has_value()) /* the kernel is iterated through */
     &&(0 != kernel.mapped_position().value())

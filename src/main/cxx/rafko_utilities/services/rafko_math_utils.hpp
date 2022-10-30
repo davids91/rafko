@@ -96,7 +96,9 @@ public:
    * 
    * @return    The value of the mapped index, if there is any
    */
-  std::optional<std::uint32_t> calculate_mapped_position(const std::vector<std::uint32_t>& position) const;
+  std::optional<std::uint32_t> calculate_mapped_position(
+    const std::vector<std::uint32_t>& position, std::uint32_t dimension = 0, std::int32_t delta = 0
+  ) const;
 
   /** @brief    Provides the index of the current position in the underlying buffer, if there is any
    * 
