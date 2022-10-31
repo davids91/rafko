@@ -367,7 +367,7 @@ void RafkoNetworkFeature::add_lx_kernel_to(
   }
 
   feature_helpers += R"(
-    __constant int ==index_var_name==[==feature_weight_number==] = {
+    const int ==index_var_name==[==feature_weight_number==] = {
       ==index_values==
     };
   )";

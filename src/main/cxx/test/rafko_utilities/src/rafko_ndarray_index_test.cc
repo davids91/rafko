@@ -46,8 +46,10 @@ TEST_CASE("Testing NDArray Indexing with a 2D array without padding", "[NDArray]
     /*!Note: using width in the above interfaces because it is guaranteed
      * that an interval of that size spans over the relevant dimension
      * */
-    if(y < (height - 1u))REQUIRE( idx.step(1,1).mapped_position() == (x + ((y + 1) * width)) );
-      else CHECK_THROWS(idx.step(1,1));
+    if(y < (height - 1u)){
+      REQUIRE( idx.step(1,1) );
+      REQUIRE( idx.mapped_position() == (x + ((y + 1) * width)) );
+    }else REQUIRE(!idx.step(1,1));
   }
 
   REQUIRE(idx.buffer_size() == (width * height));
@@ -79,9 +81,10 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with positive padding", "[ND
     REQUIRE(1 == idx.mappable_parts_of(0,width).size());
       REQUIRE(x == idx.mappable_parts_of(0,width)[0].position_start);
     REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].steps_inside_target);
-    if((static_cast<std::int32_t>(y) >= padding_y) && (y < (height + padding_y - 1)))
-      REQUIRE( idx.step(1,1).mapped_position() == (x - padding_x + ((y - padding_y + 1) * width)) );
-      else CHECK_NOTHROW(idx.step(1,1));
+    if((static_cast<std::int32_t>(y) >= padding_y) && (y < (height + padding_y - 1))){
+      REQUIRE( idx.step(1,1) );
+      REQUIRE( idx.mapped_position() == (x - padding_x + ((y - padding_y + 1) * width)) );
+    }else REQUIRE(idx.step(1,1));
   }
 
   REQUIRE(idx.buffer_size() == (width * height));
@@ -134,9 +137,10 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with negative padding", "[ND
     REQUIRE(1 == idx.mappable_parts_of(0,width).size());
     REQUIRE(x == idx.mappable_parts_of(0,width)[0].position_start);
     REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].steps_inside_target);
-    if((static_cast<std::int32_t>(y) > -padding_y) && (y < (height + padding_y - 1)))
-      REQUIRE( idx.step(1,1).mapped_position() == (x + padding_x + ((y + padding_y + 1) * (width + 2 * padding_x))) );
-      else CHECK_NOTHROW(idx.step(1,1));
+    if((static_cast<std::int32_t>(y) > -padding_y) && (y < (height + padding_y - 1))){
+      REQUIRE( idx.step(1,1) );
+      REQUIRE( idx.mapped_position() == (x + padding_x + ((y + padding_y + 1) * (width + 2 * padding_x))) );
+    }else REQUIRE(idx.step(1,1));
   }
 
   REQUIRE(idx.buffer_size() == (width * height));
@@ -267,7 +271,6 @@ TEST_CASE("Testing NDArray Convolution Kernel iteration in 3D with positive padd
   });
   REQUIRE(times_run == ((kernel[1] - padding) * (kernel[2] - padding))); /* a Kernel of 3x3 is reduced to 2x2 because of the padding */
   REQUIRE_THAT(target.position(), Catch::Matchers::Equals(std::vector<std::uint32_t>{0,0,0}));
-  std::cout << std::endl;
 
   times_run = 0;
   coordinate_sum = 0;
@@ -334,14 +337,13 @@ TEST_CASE("Testing NDArray Convolution Kernel iteration in 3D with negative padd
     REQUIRE(interval_size == (kernel[0] + padding));
     REQUIRE(target.mapped_position().has_value());
     REQUIRE(mapped_position == target.mapped_position().value());
-    REQUIRE(-padding == target.position()[0]);
+    REQUIRE(-padding == static_cast<std::int32_t>(target.position()[0]));
     REQUIRE(coordinate_sum <= (target.position()[1] * 10 + target.position()[2] * 100)); /* Position sum is increasing always */
     coordinate_sum = target.position()[1] * 10 + target.position()[2] * 100;
     ++times_run;
   });
   REQUIRE(times_run == ((kernel[1] + padding) * (kernel[2] + padding)));
   REQUIRE_THAT(target.position(), Catch::Matchers::Equals(std::vector<std::uint32_t>{0,0,0}));
-  std::cout << std::endl;
 
   times_run = 0;
   coordinate_sum = 0;

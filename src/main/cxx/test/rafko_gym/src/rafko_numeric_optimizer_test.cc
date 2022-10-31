@@ -76,7 +76,7 @@ TEST_CASE("Stress-testing big input takein", "[bigpic][.][!benchmark]"){
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_selu},
-        }).dense_layers({2,2,1});
+        }).create_layers({2,2,1});
       std::chrono::steady_clock::time_point start;
 
       start = std::chrono::steady_clock::now();
@@ -125,7 +125,7 @@ TEST_CASE("Testing aproximization fragment handling","[numeric_optimization][fra
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
     .input_size(2).expected_input_range(1.0)
     .allowed_transfer_functions_by_layer({{rafko_net::transfer_function_selu}})
-    .dense_layers({1});
+    .create_layers({1});
 
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     *settings, rafko_gym::cost_function_squared_error
@@ -221,9 +221,9 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({3,1});
-    // .dense_layers({30,1});
-    // .dense_layers({10,15,20,15,10,5,1});
+    .create_layers({3,1});
+    // .create_layers({30,1});
+    // .create_layers({10,15,20,15,10,5,1});
 
   // network->mutable_weight_table()->Set(22,0.777);
 
@@ -340,7 +340,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu},
-    }).dense_layers({2,2,1});
+    }).create_layers({2,2,1});
 
   /* Create dataset, test set and optimizers; optimize nets */
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(

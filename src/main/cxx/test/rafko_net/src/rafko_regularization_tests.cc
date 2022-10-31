@@ -67,7 +67,7 @@ TEST_CASE("Test if L1 regularization calculates the expected error", "[L1][regul
       static_cast<std::uint32_t>(rand()%3) + 1u,
       2
     };
-    rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
+    rafko_net::RafkoNet& network = *builder.create_layers(layer_sizes);
 
     /* store which Neuron index belongs to which layer index */
     std::map<std::uint32_t,std::uint32_t> layer_index_values;
@@ -140,7 +140,7 @@ TEST_CASE("Test if L2 regularization calculates the expected error", "[L2][regul
       static_cast<std::uint32_t>(rand()%3) + 1u,
       2
     };
-    rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
+    rafko_net::RafkoNet& network = *builder.create_layers(layer_sizes);
 
     /* store which Neuron index belongs to which layer index */
     std::map<std::uint32_t,std::uint32_t> layer_index_values;
@@ -216,7 +216,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
       static_cast<std::uint32_t>(rand()%3) + 1u,
       feature_size
     };
-    rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
+    rafko_net::RafkoNet& network = *builder.create_layers(layer_sizes);
     rafko_net::RafkoNet unregulated_network = rafko_net::RafkoNet(network);
 
     /* declare an executor */
@@ -285,7 +285,7 @@ TEST_CASE("Testing if droput is working as intended with the Solution Solver","[
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(settings)
     .input_size(2).expected_input_range(1.0)
     .add_feature_to_layer( (layer_sizes.size() - 2u), rafko_net::neuron_group_feature_dropout_regularization )
-    .dense_layers(layer_sizes); /* Building a network with dropout as the output_feature */
+    .create_layers(layer_sizes); /* Building a network with dropout as the output_feature */
   rafko_net::RafkoNet unregulated_network = rafko_net::RafkoNet(network);
   unregulated_network.mutable_neuron_group_features()->Clear(); /* remove droput regularaziation from network */
 
@@ -362,7 +362,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
       builder.add_feature_to_layer( (rand()%layer_sizes.size()), rafko_net::neuron_group_feature_l2_regularization );
     }
 
-    rafko_net::RafkoNet& network = *builder.dense_layers(layer_sizes);
+    rafko_net::RafkoNet& network = *builder.create_layers(layer_sizes);
     rafko_net::RafkoNet network_copy = rafko_net::RafkoNet(network);
 
     /* Create environments */

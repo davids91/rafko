@@ -178,7 +178,7 @@ void testing_solution_solver_manually(google::protobuf::Arena* arena){
   /* Build the described net and generate a solution from it */
   rafko_net::RafkoNet* net = rafko_net::RafkoNetBuilder(settings).input_size(5u)
     .expected_input_range((5.0))
-    .dense_layers(net_structure);
+    .create_layers(net_structure);
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(*net);
 
   /* Verify if a generated solution gives back the exact same result, as the manually calculated one */
@@ -244,7 +244,7 @@ double testing_nets_with_memory_manually(
   if(recursion) net_builder.add_neuron_recurrence(layer_index, rand()%net_structure[layer_index], 1u);
   if(boltzman_knot) net_builder.add_feature_to_layer(layer_index, rafko_net::neuron_group_feature_boltzmann_knot);
 
-  rafko_net::RafkoNet* net = net_builder.dense_layers(net_structure);
+  rafko_net::RafkoNet* net = net_builder.create_layers(net_structure);
 
   /* Generate solution from Net */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(*net);
@@ -318,7 +318,7 @@ void test_generated_net_by_calculation(google::protobuf::Arena* arena){
     .output_neuron_number(network_layout_sizes.back())
     .expected_input_range((5.0));
 
-  rafko_net::RafkoNet* network(builder->dense_layers(
+  rafko_net::RafkoNet* network(builder->create_layers(
     network_layout_sizes,{
       {rafko_net::transfer_function_identity},
       {rafko_net::transfer_function_selu,rafko_net::transfer_function_relu},
@@ -447,7 +447,7 @@ TEST_CASE("Solution Solver Multi-threading test", "[solve][full][multithread]"){
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings().set_arena_ptr(&arena);
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(settings)
     .input_size(5).expected_input_range((5.0))
-    .dense_layers(net_structure);
+    .create_layers(net_structure);
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(settings).build(network);
   std::shared_ptr<rafko_net::SolutionSolver> solver = std::make_unique<rafko_net::SolutionSolver>(solution, settings);
 
@@ -488,7 +488,7 @@ TEST_CASE("Solution Solver memory test", "[solve][memory]"){
     .input_size(1).expected_input_range((5.0))
     .add_neuron_recurrence(0u,0u,1u)
     .allowed_transfer_functions_by_layer({{rafko_net::transfer_function_identity}})
-    .dense_layers({1})
+    .create_layers({1})
   );
 
   net.set_weight_table(0u, (0.0)); /* Set the memory filter of the only neuron to 0, so the previous value of it would not modify the current one through the spike function */

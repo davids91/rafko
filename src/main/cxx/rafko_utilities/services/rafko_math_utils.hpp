@@ -44,7 +44,7 @@ public:
     const std::vector<std::uint32_t>& dimensions, const std::vector<std::int32_t>& padding = {},
     const std::vector<std::uint32_t>& position = {}
   );
-  NDArrayIndex(const NDArrayIndex& other, const std::vector<std::int32_t>& padding = {});
+  NDArrayIndex(const NDArrayIndex& other, const std::vector<std::int32_t>& padding);
 
   /** @brief    Sets the position to all zeroes
    *
@@ -83,9 +83,14 @@ public:
    * @param[in]   dimension    The dimension to move the object on
    * @param[in]   delta        The number of steps to move the objects position in the given dimension
    * 
-   * @return    Reference to the object
+   * @return    True if the step was succesful
    */
-  NDArrayIndex& step(std::uint32_t dimension, std::int32_t delta = 1);
+  bool step(std::uint32_t dimension, std::int32_t delta = 1);
+
+  /** @brief    References the stored position
+   *
+   *  @return   a constant reference to the stored position, each element in the vector is the position in the appropriate dimension
+   */
   const std::vector<std::uint32_t>& position() const{
     return m_position;
   }
@@ -187,8 +192,9 @@ public:
   /** @brief    Tells which parts of the provided range relative to the stored direction are mappable to 
    *            the buffer range determined by the dimensions and padding
    * 
-   * @param[in]   dimension    The direction of the range relative to the currently stored position
-   * @param[in]   delta        The size of the range starting from the stored position
+   * @param[in]   position      The starting position of the provided range
+   * @param[in]   dimension     The direction of the provided range
+   * @param[in]   delta         The size of the range starting from the stored position
    * 
    * @return    A vector of the parts of the interval inside the bounds of the objects buffer range:
    *            {position, size}:

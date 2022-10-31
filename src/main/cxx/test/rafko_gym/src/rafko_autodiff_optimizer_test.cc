@@ -71,7 +71,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({3,1});
+    .create_layers({3,1});
 
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::vector<std::vector<double>>{{1.0,1.0},{1.0,1.0}},
@@ -150,7 +150,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({3,1});
+    .create_layers({3,1});
 
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::vector<std::vector<double>>{{0.666, 0.666},{0.666, 0.666}},
@@ -247,9 +247,9 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({3,1});
-    // .dense_layers({30,1});
-    // .dense_layers({10,15,20,15,10,5,1});
+    .create_layers({3,1});
+    // .create_layers({30,1});
+    // .create_layers({10,15,20,15,10,5,1});
 
   // network.mutable_weight_table()->Set(22,0.777);
 
@@ -359,7 +359,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
       {rafko_net::transfer_function_swish},
       {rafko_net::transfer_function_swish}
     })
-    .dense_layers({3,2,1});
+    .create_layers({3,2,1});
 
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     *settings, rafko_gym::cost_function_squared_error

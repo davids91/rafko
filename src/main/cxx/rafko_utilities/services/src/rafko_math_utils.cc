@@ -42,6 +42,7 @@ std::vector<std::uint32_t> init_strides(
   const std::vector<std::uint32_t>& dimensions, const std::vector<std::int32_t>& padding
 ){
   assert(dimensions.size() == padding.size());
+  if(0 == dimensions.size()) return {};
   std::vector<std::uint32_t> strides;
   std::uint32_t prev_stride = 1u;
   std::int32_t prev_padding = padding[0];
@@ -141,19 +142,15 @@ std::uint32_t NDArrayIndex::step(){
   }
 }
 
-NDArrayIndex& NDArrayIndex::step(std::uint32_t dimension, std::int32_t delta){
+bool NDArrayIndex::step(std::uint32_t dimension, std::int32_t delta){
   const std::int32_t new_position = static_cast<std::int32_t>(m_position[dimension]) + delta;
   if(
     (new_position < 0)
     ||(
       new_position >= static_cast<std::int32_t>(m_dimensions[dimension] + (2 * std::max(0, m_padding[dimension])))
     )
-  )throw std::runtime_error(
-    "Current position d[" + std::to_string(dimension) + "] + " + std::to_string(delta) + " out of bounds!"
-  );
-
+  )return false;
   m_position[dimension] = new_position;
-
   bool new_position_is_inside_content = inside_content(m_position);
   if(m_mappedIndex.has_value() && new_position_is_inside_content){ /* m_mappedIndex has a value if the previous position was valid */
     m_mappedIndex.value() += m_strides[dimension] * delta;
@@ -161,7 +158,7 @@ NDArrayIndex& NDArrayIndex::step(std::uint32_t dimension, std::int32_t delta){
   }else if(new_position_is_inside_content){ /* if the new position is inside bounds, then the mapped index can be caluclated */
     m_mappedIndex = calculate_mapped_position(m_position);
   }else m_mappedIndex = {}; /* No mapped index for positions inside the padding */
-  return *this;
+  return true;
 }
 
 std::optional<std::uint32_t> NDArrayIndex::calculate_mapped_position(
@@ -247,10 +244,10 @@ void NDArrayIndex::scan_kernel(NDArrayIndex& kernel, std::function<void(std::uin
       }
     }
 
-    try{ /* Step in dimension[1], because dimension[0] should stay at position 0 */
-      kernel.step(1,1); /* throws exception if the position goes out of bounds */
-      step(1,1);
-    }catch(...){ /* In case dimension[1] is out of bounds, step to the next position by the interface with wrap around */
+    if(kernel.step(1,1)){ /* Step in dimension[1], because dimension[0] should stay at position 0 */
+      [[maybe_unused]]bool stepped = step(1,1); /* ...and if succesful, step with the current object as well */
+      assert(stepped);
+    }else{ /* In case kernel couldn't step in dimension[1] step to the next position by the wrap around interface */
       kernel.set(0, kernel[0] - 1); /* set the first dimensions position inside the kernel to the last */
       std::uint32_t modified_dimension = kernel.step();
       assert(modified_dimension < m_dimensions.size());

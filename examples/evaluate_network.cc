@@ -38,7 +38,7 @@ int main(){
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({3, 3, 1})
+    .create_layers({3, 3, 1})
   );
 
   /*!Note: @RafkoContext can be used to handle a network Intermediate representation and solver.

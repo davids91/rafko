@@ -464,7 +464,7 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features(
     builder.add_feature_to_layer(layer_of_feature_index, rafko_net::neuron_group_feature_softmax);
   }
 
-  return builder.dense_layers(net_structure);
+  return builder.create_layers(net_structure);
 }
 
 rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(
@@ -501,7 +501,7 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(
     builder.add_feature_to_layer(layer_of_feature_index, rafko_net::neuron_group_feature_softmax);
   }
 
-  return builder.dense_layers(net_structure);
+  return builder.create_layers(net_structure);
 }
 
 std::unique_ptr<rafko_gym::DataSet> create_dataset(
