@@ -37,7 +37,7 @@ TEST_CASE("Testing if weight updater updates weights of a solution sufficiently 
     .set_learning_rate(0.1);
   std::vector<std::uint32_t> net_structure = {2,4,3,1,2};
   std::vector<double> net_input = {(10.0),(20.0),(30.0),(40.0),(50.0)};
-  std::unique_ptr<rafko_net::RafkoNet> network(rafko_net::RafkoNetBuilder(settings).input_size(5).expected_input_range((5.0)).dense_layers(net_structure));
+  std::unique_ptr<rafko_net::RafkoNet> network(rafko_net::RafkoNetBuilder(settings).input_size(5).expected_input_range((5.0)).create_layers(net_structure));
   rafko_gym::RafkoWeightUpdater weight_updater(*network, settings);
 
   /* Change the weights in the network and take them over into the generated solution */

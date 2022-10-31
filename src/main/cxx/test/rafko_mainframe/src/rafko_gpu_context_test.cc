@@ -73,7 +73,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_relu},
         }
-      ).dense_layers({2,2,2,2,2,2});
+      ).create_layers({2,2,2,2,2,2});
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
     );
@@ -120,7 +120,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_relu},
         }
-      ).dense_layers({2,2,2,2,2,2});
+      ).create_layers({2,2,2,2,2,2});
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
     );
@@ -168,7 +168,7 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
       .add_feature_to_layer(2, rafko_net::neuron_group_feature_softmax)
       .add_feature_to_layer(3, rafko_net::neuron_group_feature_softmax)
       .add_feature_to_layer(4, rafko_net::neuron_group_feature_softmax)
-      .dense_layers({2,2,2,2,2,2});
+      .create_layers({2,2,2,2,2,2});
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
     );
@@ -217,7 +217,7 @@ TEST_CASE("Testing if a standalone solution is working as intended with the GPU 
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_relu},
         }
-      ).dense_layers({2,2,2,2,2,2});
+      ).create_layers({2,2,2,2,2,2});
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
     );
@@ -264,7 +264,7 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_relu},
         }
-      ).dense_layers({2,2,2,2,2,1});
+      ).create_layers({2,2,2,2,2,1});
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
     );
@@ -319,7 +319,7 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_relu},
         }
-      ).dense_layers({2,2,2,2,2,1});
+      ).create_layers({2,2,2,2,2,1});
 
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
@@ -376,7 +376,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_relu},
         }
-      ).dense_layers({2,2,2,2,2,1});
+      ).create_layers({2,2,2,2,2,1});
 
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_mse
@@ -438,7 +438,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_relu},
         }
-      ).dense_layers({2,2,2,2,2,1});
+      ).create_layers({2,2,2,2,2,1});
 
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_cross_entropy
@@ -501,7 +501,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
           {rafko_net::transfer_function_selu},
           {rafko_net::transfer_function_relu},
         }
-      ).dense_layers({2,2,2,2,2,feature_size});
+      ).create_layers({2,2,2,2,2,feature_size});
 
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_binary_cross_entropy
@@ -659,7 +659,7 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
         {rafko_net::transfer_function_selu},
         {rafko_net::transfer_function_relu},
       }
-    ).dense_layers({2,2,2,2,2,feature_size});
+    ).create_layers({2,2,2,2,2,feature_size});
 
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     *settings, rafko_gym::cost_function_squared_error
@@ -776,7 +776,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_relu},
     })
-    .dense_layers({2,2,2,2,2,feature_size});
+    .create_layers({2,2,2,2,2,feature_size});
 
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     *settings, rafko_gym::cost_function_cross_entropy
@@ -841,7 +841,7 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
         {rafko_net::transfer_function_selu},
         {rafko_net::transfer_function_relu},
       }
-    ).dense_layers({2,2,2,2,2,feature_size});
+    ).create_layers({2,2,2,2,2,feature_size});
 
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     *settings, rafko_gym::cost_function_cross_entropy

@@ -23,7 +23,7 @@ int main(){
       {rafko_net::transfer_function_selu},
       {rafko_net::transfer_function_selu}
     })
-    .dense_layers({3, 3, 1})
+    .create_layers({3, 3, 1})
   );
 
   /*!Note: To solve any network with Rafko on CPU Rafko implements the below class and Factories */

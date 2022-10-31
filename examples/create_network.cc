@@ -17,12 +17,12 @@ int main(){
   std::unique_ptr<RafkoNet> network = std::unique_ptr<RafkoNet>(
     rafko_net::RafkoNetBuilder(*settings)
     /* +++ Basic Parameters to set +++ */
-    .input_size(2) /* The number of values the network reads as its input vector */
+    .input_size(4) /* The number of values the network reads as its input vector */
 
     /* +++ Optional Structural Parameters to set +++ */
     .set_neuron_input_function(0u/*layer_index*/, 0u/*layer_neuron_index*/, rafko_net::input_function_multiply) /* Explicitly set the input function of a Neuron inside the layer */
     .set_neuron_transfer_function(0u, 1u, rafko_net::transfer_function_relu) /* Explicitly set the transfer function of a Neuron inside the layer */
-    /*!Note: If not set explicitly, the builder wil lselect a random transfer function with the arguments set from @allowed_transfer_functions_by_layer */
+    /*!Note: If not set explicitly, the builder will select a random transfer function with the arguments set from @allowed_transfer_functions_by_layer */
     .set_neuron_spike_function(0u, 2u, rafko_net::spike_function_none) /* Explicitly set the spike function of a Neuron inside the layer */
     .allowed_transfer_functions_by_layer({ /* Set the allowed transfer functions for each layer */
       {rafko_net::transfer_function_relu, rafko_net::transfer_function_selu},
@@ -30,6 +30,13 @@ int main(){
       {rafko_net::transfer_function_selu}
     })
     /*!Note: If not set explicitly, a random random transfer function will be selected without restrictions */
+    .layer_input_convolution(0u) /*!Note: to not have a fully connected layers, but convolutions the following can be used */
+      .kernel_size(1,1).kernel_stride(1,1).input_padding(0,0)
+      /*Note: Input or output dimensions both need not be added, but compared to layer sizes when building */
+      .input_size(2,2).output_size(2,2)
+      .validate() /* validation is neccesary where the sizes are compared, so it is made sure that the input and output sizes do not go out of bounds */
+      /* .. which returns with a reference of the actual Builder, s othe chaining can be resumed */
+      /*!Note: sorry I have trust issues */
 
     /* +++ Functional Parameters to set +++ */
     .expected_input_range(1.0) /* The expected maximum value for **each** input value */
@@ -45,7 +52,7 @@ int main(){
     .add_neuron_recurrence(2u/*layer_index*/, 0u/*layer_neuron_index*/, 1u/*past_value*/) /* Add Neuron it's own activation value from the previous @past_index-th run of the network  */
 
     /* +++ Actual Build +++ */
-    .dense_layers({3, 3, 1}) /* The provided vector describes the number of neurons in each layer */
+    .create_layers({4, 3, 1}) /* The provided vector describes the number of neurons in each layer */
     /*!Note: As an optional argument the parameter @allowed_transfer_functions_by_layer can also be added here */
   );
 
@@ -54,23 +61,23 @@ int main(){
    */
   google::protobuf::Arena everything_storage;
   settings->set_arena_ptr(&everything_storage);
-  RafkoNet& first_network_on_arena = *rafko_net::RafkoNetBuilder(*settings).input_size(2).dense_layers({3, 3, 1});
+  RafkoNet& first_network_on_arena = *rafko_net::RafkoNetBuilder(*settings).input_size(2).create_layers({3, 3, 1});
 
   /*!Note: Because of this, every new Network is placed into the arena; The below will be the second instance of a network.
    * Replacing an already allocated Network inside the arena with a newly built one is demonstrated below.
    */
-  RafkoNet* additional_network_on_arena = rafko_net::RafkoNetBuilder(*settings).input_size(2).dense_layers({3, 5, 1});
+  RafkoNet* additional_network_on_arena = rafko_net::RafkoNetBuilder(*settings).input_size(2).create_layers({3, 5, 1});
 
   /* Swap the network with a bigger one*/
   rafko_net::RafkoNetBuilder(*settings)
   .input_size(2) /* The number of values the network reads as its input vector */
-  .build_dense_layers_and_swap(additional_network_on_arena, {5, 5, 1});
+  .build_create_layers_and_swap(additional_network_on_arena, {5, 5, 1});
 
   /*!Note: Even with an existing Arena updated in settings, it is possible to create objects on the Heap.
    * The below function call returns ownership to the caller
    */
   std::unique_ptr<RafkoNet> another_managed_network = std::unique_ptr<RafkoNet>(
-    rafko_net::RafkoNetBuilder(*settings).input_size(2).dense_layers(nullptr, {2, 3, 1})
+    rafko_net::RafkoNetBuilder(*settings).input_size(2).create_layers(nullptr, {2, 3, 1})
   );
 
   /*!Note: It is possible to manually modify a network, build connections and Add/Remove Neurons.

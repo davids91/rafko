@@ -48,7 +48,7 @@ rafko_net::Solution* test_solution_builder_manually(
   if(boltzman_knot) builder.add_feature_to_layer(layer_index, rafko_net::neuron_group_feature_boltzmann_knot);
 
   rafko_net::RafkoNet* net = nullptr;
-  REQUIRE_NOTHROW( net = builder.dense_layers(net_structure) );
+  REQUIRE_NOTHROW( net = builder.create_layers(net_structure) );
   REQUIRE(net != nullptr);
 
   rafko_net::Solution* solution;

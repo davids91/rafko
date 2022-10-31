@@ -158,7 +158,7 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
       .expected_input_range((5.0))
       .add_feature_to_layer(0, rafko_net::neuron_group_feature_softmax)
       .add_feature_to_layer(2, rafko_net::neuron_group_feature_softmax)
-      .dense_layers({20,40,30,10,20})
+      .create_layers({20,40,30,10,20})
   );
 
   CHECK( 2 == net->neuron_group_features_size() );
@@ -201,7 +201,7 @@ TEST_CASE("Checking if the network builder is correctly placing the softmax feat
       feature_neuron_start_index.push_back(layer_start_index);
       feature_layer.push_back(layer_of_feature_index);
     }
-    net = std::unique_ptr<rafko_net::RafkoNet>(builder.dense_layers(net_structure));
+    net = std::unique_ptr<rafko_net::RafkoNet>(builder.create_layers(net_structure));
     for(const rafko_net::FeatureGroup& feature : net->neuron_group_features()){ /* check if all the features point to the correct neuron indices */
       REQUIRE( 1u == feature.relevant_neurons_size() );
       REQUIRE( feature.relevant_neurons(0u).starts() == static_cast<std::int32_t>(feature_neuron_start_index.front()) );

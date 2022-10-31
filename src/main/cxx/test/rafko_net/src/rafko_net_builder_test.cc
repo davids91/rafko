@@ -15,6 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
+#include <set>
 #include <tuple>
 #include <vector>
 #include <algorithm>
@@ -44,7 +45,7 @@ rafko_net::RafkoNet* test_net_builder_fully_connected(google::protobuf::Arena* a
   rafko_net::RafkoNet* network(rafko_net::RafkoNetBuilder(settings).input_size(5)
     .output_neuron_number(2)
     .expected_input_range(5.0)
-    .dense_layers( {2,3,2},{
+    .create_layers( {2,3,2},{
       {rafko_net::transfer_function_identity},
       {rafko_net::transfer_function_selu,rafko_net::transfer_function_relu},
       {rafko_net::transfer_function_tanh,rafko_net::transfer_function_sigmoid}
@@ -219,7 +220,7 @@ TEST_CASE( "Testing builder for adding different features to different layers", 
       }/*for(5 tries)*/
     }/*for(all layers)*/
 
-    rafko_net::RafkoNet& network(*builder.dense_layers(net_structure));
+    rafko_net::RafkoNet& network(*builder.create_layers(net_structure));
     std::vector<std::uint32_t> layer_starts(net_structure.size());
     std::uint32_t layer_start_iterator = 0u;
     for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
@@ -282,7 +283,7 @@ TEST_CASE( "Testing builder for setting Neuron input functions manually", "[buil
       }/*for(5 tries)*/
     }
 
-    rafko_net::RafkoNet& network(*builder.dense_layers(net_structure));
+    rafko_net::RafkoNet& network(*builder.create_layers(net_structure));
     std::vector<std::uint32_t> layer_starts(net_structure.size());
     std::uint32_t layer_start_iterator = 0u;
     for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
@@ -334,7 +335,7 @@ TEST_CASE( "Testing builder for setting Neuron transfer functions manually", "[b
       }/*for(5 tries)*/
     }
 
-    rafko_net::RafkoNet& network(*builder.dense_layers(net_structure));
+    rafko_net::RafkoNet& network(*builder.create_layers(net_structure));
     std::vector<std::uint32_t> layer_starts(net_structure.size());
     std::uint32_t layer_start_iterator = 0u;
     for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
@@ -360,12 +361,12 @@ TEST_CASE( "Testing whether network builder throws an excpetion when conflicting
     REQUIRE_NOTHROW(
       rafko_net::RafkoNetBuilder(settings).input_size(1u).expected_input_range(1.0)
       .set_neuron_transfer_function(0, 0, transfer_function)
-      .dense_layers({1})
+      .create_layers({1})
     );
     REQUIRE_THROWS(
       rafko_net::RafkoNetBuilder(settings).input_size(1u).expected_input_range(1.0)
       .set_neuron_transfer_function(0, 0, transfer_function)
-      .dense_layers({1},{{rafko_net::transfer_function_unknown}})
+      .create_layers({1},{{rafko_net::transfer_function_unknown}})
     );
   }
 }
@@ -406,7 +407,7 @@ TEST_CASE( "Testing builder for setting Neuron spike functions manually", "[buil
       }/*for(5 tries)*/
     }
 
-    rafko_net::RafkoNet& network(*builder.dense_layers(net_structure));
+    rafko_net::RafkoNet& network(*builder.create_layers(net_structure));
     std::vector<std::uint32_t> layer_starts(net_structure.size());
     std::uint32_t layer_start_iterator = 0u;
     for(std::uint32_t layer_index = 0u; layer_index < net_structure.size(); ++layer_index){
@@ -421,6 +422,72 @@ TEST_CASE( "Testing builder for setting Neuron spike functions manually", "[buil
       REQUIRE( network.neuron_array(neuron_index).spike_function() == std::get<2>(element) );
     }
   }/*for(10 variants)*/
+}
+
+TEST_CASE("Testing Convolutional input added to layers","[build][convolution][2D]"){
+  google::protobuf::Arena arena;
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
+    rafko_mainframe::RafkoSettings()
+    .set_learning_rate(8e-2).set_minibatch_size(64).set_memory_truncation(1)
+    .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4)
+  );
+  rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
+    .input_size(64).expected_input_range(1.0)
+    .layer_input_convolution(0u)
+      /*Note: Input or output dimensions need not be added, but compared to layer sizes when building */
+      .kernel_size(2,2).kernel_stride(2,2).input_padding(0,0)
+      .input_size(8,8).output_size(4,4)
+      .validate()
+    .allowed_transfer_functions_by_layer({
+      {rafko_net::transfer_function_swish}
+    })
+    .create_layers({16});
+
+  /* check Neuron inputs */
+  std::set<std::int32_t> index_values;
+  rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>::iterate(
+    network.neuron_array(0).input_indices(),
+    [&index_values](std::int32_t input_index){
+      index_values.insert(
+        rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>::array_index_from_external_index(input_index)
+      );
+    }
+  );
+  REQUIRE( 4 == index_values.size() );
+  REQUIRE( 0 < index_values.count(0) );
+  REQUIRE( 0 < index_values.count(1) );
+  REQUIRE( 0 < index_values.count(8) );
+  REQUIRE( 0 < index_values.count(9) );
+
+  index_values.clear();
+  rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>::iterate(
+    network.neuron_array(8).input_indices(), /* x = 0; y = 2 */
+    [&index_values](std::int32_t input_index){
+      index_values.insert(
+        rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>::array_index_from_external_index(input_index)
+      );
+    }
+  );
+  REQUIRE( 4 == index_values.size() );
+  REQUIRE( 0 < index_values.count(32) );
+  REQUIRE( 0 < index_values.count(33) );
+  REQUIRE( 0 < index_values.count(40) );
+  REQUIRE( 0 < index_values.count(41) );
+
+  index_values.clear();
+  rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>::iterate(
+    network.neuron_array(10).input_indices(), /* x = 2; y = 2 */
+    [&index_values](std::int32_t input_index){
+      index_values.insert(
+        rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>::array_index_from_external_index(input_index)
+      );
+    }
+  );
+  REQUIRE( 4 == index_values.size() );
+  REQUIRE( 0 < index_values.count(36) );
+  REQUIRE( 0 < index_values.count(37) );
+  REQUIRE( 0 < index_values.count(44) );
+  REQUIRE( 0 < index_values.count(45) );
 }
 
 } /* namespace rafko_net_test */

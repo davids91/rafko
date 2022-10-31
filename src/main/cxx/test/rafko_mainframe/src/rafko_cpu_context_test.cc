@@ -218,7 +218,7 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
         {rafko_net::transfer_function_selu},
         {rafko_net::transfer_function_relu},
       }
-    ).dense_layers({2,2,2,2,2,feature_size});
+    ).create_layers({2,2,2,2,2,feature_size});
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     *settings, rafko_gym::cost_function_squared_error
   );
@@ -261,7 +261,7 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
         {rafko_net::transfer_function_selu},
         {rafko_net::transfer_function_relu},
       }
-    ).dense_layers({2,2,2,2,2,feature_size});
+    ).create_layers({2,2,2,2,2,feature_size});
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     *settings, rafko_gym::cost_function_squared_error
   );
@@ -325,7 +325,7 @@ TEST_CASE("Testing is solve is working as expected in CPU context for isolated e
         {rafko_net::transfer_function_selu},
         {rafko_net::transfer_function_relu},
       }
-    ).dense_layers({2,2,2,2,2,1});
+    ).create_layers({2,2,2,2,2,1});
   auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(sample_number, sequence_size);
   std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
     std::move(inputs), std::move(labels), sequence_size

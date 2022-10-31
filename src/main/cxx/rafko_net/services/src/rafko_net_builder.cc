@@ -152,6 +152,57 @@ static std::optional<T> get_value(
 
 namespace rafko_net {
 
+bool RafkoNetBuilder::KernelParameters::check_kernel_sizes(){
+  if(!check_kernel_complete())
+    return false;
+
+  if(0 < m_output.size() && 0 < m_input.size()){
+    for(std::uint32_t dim = 0; dim < m_output.size(); ++dim){
+      if( ((m_output[dim] - 1) * m_kernelStride[dim] + m_kernel[dim]) > m_input[dim] )
+        return false;
+    }
+  }
+  /*!Note: If either the input or output is missing, one can be calculated from the other based on the parameters */
+  return true;
+}
+
+RafkoNetBuilder& RafkoNetBuilder::KernelParameters::validate(){
+  if(!check_kernel_complete())
+    throw std::runtime_error("Unable to validate incomplete kernel!");
+
+  if(0 == m_input.size()){
+    assert(0 < m_output.size());
+    std::vector<std::uint32_t> input_dimensions;
+    input_dimensions.reserve(m_output.size());
+    if(0 < m_inputPadding.size()){
+      assert(m_output.size() == m_inputPadding.size());
+      for(std::uint32_t dim = 0; dim < m_output.size(); ++dim){
+        input_dimensions.push_back((m_output[dim] - 1) * m_kernelStride[dim] + m_kernel[dim] - m_inputPadding[dim]);
+      }
+      new (&m_input) rafko_utilities::NDArrayIndex(input_dimensions, m_inputPadding);
+    }else{
+      for(std::uint32_t dim = 0; dim < m_output.size(); ++dim){
+        input_dimensions.push_back((m_output[dim] - 1) * m_kernelStride[dim] + m_kernel[dim]);
+      }
+      new (&m_input) rafko_utilities::NDArrayIndex(input_dimensions);
+    }
+  }else if(0 == m_output.size()){
+    assert(0 < m_input.size());
+    std::vector<std::uint32_t> output_dimensions;
+    output_dimensions.reserve(m_input.size());
+    for(std::uint32_t dim = 0; dim < m_input.size(); ++dim){
+      output_dimensions.push_back(
+        ((m_input[dim] - m_inputPadding[dim] - m_kernel[dim]) / m_kernelStride[dim]) + 1
+      );
+    }
+    new (&m_output) rafko_utilities::NDArrayIndex(output_dimensions);
+  }
+  m_valid = check_kernel_sizes();
+  if(!m_valid)
+    throw std::runtime_error("Kernel IO sizes don't match!");
+  return m_parent;
+}
+
 RafkoNetBuilder& RafkoNetBuilder::add_feature_to_layer(std::uint32_t layer_index, Neuron_group_features feature){
   if(m_layerFeatures.find(layer_index) == m_layerFeatures.end()){
     m_layerFeatures[layer_index] = make_set(feature);
@@ -176,18 +227,18 @@ RafkoNetBuilder& RafkoNetBuilder::set_neuron_spike_function(std::uint32_t layer_
   return *this;
 }
 
-void RafkoNetBuilder::build_dense_layers_and_swap(
+void RafkoNetBuilder::build_create_layers_and_swap(
   RafkoNet* previous, std::vector<std::uint32_t> layer_sizes,
   std::vector<std::set<Transfer_functions>> transfer_function_filter
 ){
   RFASSERT(nullptr != previous);
-  RafkoNet* built_network = dense_layers(nullptr, layer_sizes, transfer_function_filter);
+  RafkoNet* built_network = create_layers(nullptr, layer_sizes, transfer_function_filter);
   built_network->Swap(previous);
   delete built_network;
 }
 
 
-RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter){
+RafkoNet* RafkoNetBuilder::create_layers(google::protobuf::Arena* arena_ptr, std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter){
   std::uint32_t previous_size = 0;
   std::uint32_t reach_back_max = 0;
 
@@ -216,7 +267,7 @@ RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std:
   if((m_isInputSizeSet)&&( (!m_isOutputNeuronNumberSet)||(m_argOutputNeuronNumber == layer_sizes.back()) ) ){
     std::uint32_t layer_input_starts_at = 0;
     RafkoNet* ret = google::protobuf::Arena::CreateMessage<RafkoNet>(arena_ptr);
-    double expPrevLayerOutput = TransferFunction::get_average_output_range(transfer_function_identity);
+    double expected_previous_layer_output_avg = TransferFunction::get_average_output_range(transfer_function_identity);
 
     ret->set_input_data_size(m_argInputSize);
     ret->set_output_neuron_number(layer_sizes.back());
@@ -234,15 +285,16 @@ RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std:
 
     previous_size = m_argInputSize;
     for(std::uint32_t layer_index = 0; layer_index < layer_sizes.size(); layer_index++)
-    { /* Create the Dense Layers */
+    { /* Create the Neuron Layers */
       if(0 == layer_sizes[layer_index]) throw std::runtime_error("Unable to construct zero sized layer!");
       invalidate(m_argNeuronIndexInputFunctions, layer_index);
       invalidate(m_argNeuronIndexSpikeFunctions, layer_index);
       invalidate(m_argNeuronIndexRecurrence, layer_index);
 
       /* Configuring the weight_initializerializer for this layer */
-      m_argWeightIniter->set((0 == layer_index)?(m_argInputSize):(layer_sizes[layer_index-1]),(expPrevLayerOutput));
-
+      if(0 < m_layerKernelInputParameters.count(layer_index))
+        m_argWeightIniter->set(m_layerKernelInputParameters.at(layer_index).kernel().buffer_size(), expected_previous_layer_output_avg);
+        else m_argWeightIniter->set(previous_size, expected_previous_layer_output_avg);
       /* Store the features for this layer */
       bool layer_is_boltzmann_knot = false;
       if( m_layerFeatures.find(layer_index) != m_layerFeatures.end() ){
@@ -270,8 +322,23 @@ RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std:
       sort_next_layer(m_argNeuronIndexSpikeFunctions, layer_index);
       sort_next_layer(m_argNeuronIndexRecurrence, layer_index);
 
+      if(0 < m_layerKernelInputParameters.count(layer_index)){
+        if(previous_size != m_layerKernelInputParameters.at(layer_index).input().buffer_size())
+          throw std::runtime_error(
+            "Input Kernel Sizes don't match: " + std::to_string(previous_size)
+            + " vs " + std::to_string(m_layerKernelInputParameters.at(layer_index).input().buffer_size())
+            + "in layer[" + std::to_string(layer_index) + "]!"
+          );
+        if(layer_sizes[layer_index] != m_layerKernelInputParameters.at(layer_index).output().buffer_size())
+          throw std::runtime_error(
+            "Output Kernel Sizes don't match: " + std::to_string(layer_sizes[layer_index])
+            + " vs " + std::to_string(m_layerKernelInputParameters.at(layer_index).output().buffer_size())
+            + "in layer[" + std::to_string(layer_index) + "]!"
+          );
+      }
+
       /* Add the Neurons */
-      expPrevLayerOutput = 0;
+      expected_previous_layer_output_avg = 0;
       for(std::uint32_t layer_neuron_index = 0; layer_neuron_index < layer_sizes[layer_index]; layer_neuron_index++){
         m_argNeuronArray.push_back(Neuron());
         std::optional<Input_functions> neuron_input_function = get_value(
@@ -311,12 +378,13 @@ RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std:
         invalidate(m_argNeuronIndexSpikeFunctions, layer_index, layer_neuron_index);
 
         /* Storing the expected output of this Net */
-        if(0 < layer_index)expPrevLayerOutput += TransferFunction::get_average_output_range(
+        if(0 < layer_index)expected_previous_layer_output_avg += TransferFunction::get_average_output_range(
           m_argNeuronArray.back().transfer_function()
         );
 
-        std::uint32_t input_weights_to_add = previous_size; /* starting value is the previous layer  inputs ( below ) */
-        { /* Add the previous layer as an input */
+        std::uint32_t input_weights_to_add;
+        if(0 == m_layerKernelInputParameters.count(layer_index)){ /* not convolutional input: add whole layer as input */
+          input_weights_to_add = previous_size;
           InputSynapseInterval& interval = *m_argNeuronArray.back().add_input_indices();
           if(0 == layer_index){
             interval.set_starts(SynapseIterator<>::external_index_from_array_index(0));
@@ -325,6 +393,36 @@ RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std:
           }
           interval.set_interval_size(previous_size);
           interval.set_reach_past_loops(0);
+        }else{ /* convolutional input: number of weights and inputs are determinded by the kernel parameters */
+          input_weights_to_add = 0; /* The number of weights to add are calculated below */
+          bool wrapped_around = false;
+          m_layerKernelInputParameters.at(layer_index).input().scan_kernel(
+            m_layerKernelInputParameters.at(layer_index).kernel(),
+            [this, &input_weights_to_add, &wrapped_around, layer_index, layer_input_starts_at](std::uint32_t mapped_index, std::uint32_t interval_length){
+              if(wrapped_around)
+                throw std::runtime_error("Kernel Parameter mismatch: Input out of bounds!");
+              
+              input_weights_to_add += interval_length;
+              InputSynapseInterval& interval = *m_argNeuronArray.back().add_input_indices();
+              if(0 == layer_index){
+                interval.set_starts(SynapseIterator<>::external_index_from_array_index(mapped_index));
+              }else{
+                interval.set_starts(layer_input_starts_at + mapped_index);
+              }
+              interval.set_interval_size(interval_length);
+              interval.set_reach_past_loops(0);
+            }
+          );
+          std::uint32_t stepped_dimension = 0;
+          rafko_utilities::NDArrayIndex& input = m_layerKernelInputParameters.at(layer_index).input();
+          const std::vector<std::uint32_t>& stride = m_layerKernelInputParameters.at(layer_index).stride();
+          while((stepped_dimension < input.size())&&(!input.step(stepped_dimension, stride[stepped_dimension]))){
+            input.set(stepped_dimension, 0u);
+            ++stepped_dimension;
+          }
+          if((stepped_dimension >= input.size()))
+            wrapped_around = true;
+          m_layerKernelInputParameters.at(layer_index).output().step();
         }
 
         if(layer_is_boltzmann_knot){ /* recurrence to layer */
@@ -367,9 +465,9 @@ RafkoNet* RafkoNetBuilder::dense_layers(google::protobuf::Arena* arena_ptr, std:
       }/*for(neurons inside the layer)*/
 
       if(0 == layer_index){
-        expPrevLayerOutput = m_argExpectedInputRange;
+        expected_previous_layer_output_avg = m_argExpectedInputRange;
       }else{
-        expPrevLayerOutput /= static_cast<double>(layer_sizes[layer_index]);
+        expected_previous_layer_output_avg /= static_cast<double>(layer_sizes[layer_index]);
         layer_input_starts_at += previous_size;
       }
       previous_size = layer_sizes[layer_index];

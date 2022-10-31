@@ -30,6 +30,7 @@
 #include <unordered_map>
 
 #include "rafko_protocol/rafko_net.pb.h"
+#include "rafko_utilities/services/rafko_math_utils.hpp"
 #include "rafko_net/models/input_function.hpp"
 #include "rafko_net/models/transfer_function.hpp"
 #include "rafko_net/models/spike_function.hpp"
@@ -41,11 +42,13 @@ namespace rafko_net {
 /**
  * @brief RafkoNetBuilder: Builder class to compile Sparse Neural Networks
  * There are Two ways to use this class. One is to add the required building blocks of a Network
- * manually. The Other is to use one of the higher level construction functions like @RafkoNetBuilder::dense_layers.
+ * manually. The Other is to use one of the higher level construction functions like @RafkoNetBuilder::create_layers.
  * Some parameters needed to be added unconditionally, which is checked by @RafkoNetBuilder::io_pre_requisites_set.
  */
 class RAFKO_EXPORT RafkoNetBuilder{
 public:
+  class KernelParameters;
+
   RafkoNetBuilder(const rafko_mainframe::RafkoSettings& settings)
   :  m_settings(settings)
   { }
@@ -136,7 +139,7 @@ public:
   }
 
   /**
-   * @brief      Sets an optional argument which restricts transfer functions by layer ( usable with @dense_layers )
+   * @brief      Sets an optional argument which restricts transfer functions by layer ( usable with @create_layers )
    *
    * @param[in]  allowed_transfer_functions_by_layer  The allowed transfer functions by layer
    *
@@ -205,6 +208,10 @@ public:
     return *this;
   }
 
+  KernelParameters& layer_input_convolution(std::uint32_t layer_index){
+    return std::get<1>( *std::get<0>(m_layerKernelInputParameters.insert({layer_index, KernelParameters(*this)})) );
+  }
+
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
    *             and function arguments. The structure is according to the provided layer sizes
@@ -218,7 +225,7 @@ public:
    *
    * @return   the built neural network
    */
-  RafkoNet* dense_layers(google::protobuf::Arena* arena_ptr, std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter = {});
+  RafkoNet* create_layers(google::protobuf::Arena* arena_ptr, std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter = {});
 
   /**
    * @brief      creates a Fully connected feedforward neural network based on the IO arguments and
@@ -231,8 +238,8 @@ public:
    *
    * @return   the built neural network
    */
-  RafkoNet* dense_layers(std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter = {}){
-    return dense_layers(m_settings.get_arena_ptr(), layer_sizes, transfer_function_filter);
+  RafkoNet* create_layers(std::vector<std::uint32_t> layer_sizes, std::vector<std::set<Transfer_functions>> transfer_function_filter = {}){
+    return create_layers(m_settings.get_arena_ptr(), layer_sizes, transfer_function_filter);
   }
 
   /**
@@ -248,7 +255,7 @@ public:
    *
    * @return   the built neural network
    */
-  void build_dense_layers_and_swap(
+  void build_create_layers_and_swap(
     RafkoNet* previous, std::vector<std::uint32_t> layer_sizes,
     std::vector<std::set<Transfer_functions>> transfer_function_filter = {}
   );
@@ -272,6 +279,7 @@ private:
    */
   std::vector< std::set<Transfer_functions> > m_argAllowedTransferFunctionsByLayer;
   std::unordered_map<std::uint32_t, std::set<Neuron_group_features>> m_layerFeatures;
+  std::unordered_map<std::uint32_t, KernelParameters> m_layerKernelInputParameters;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Input_functions> > m_argNeuronIndexInputFunctions;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Transfer_functions> > m_argNeuronIndexTransferFunctions;
   std::vector< std::tuple<std::uint32_t,std::uint32_t,Spike_functions> > m_argNeuronIndexSpikeFunctions;
@@ -298,16 +306,207 @@ private:
   std::shared_ptr<WeightInitializer> m_argWeightIniter;
 
   /**
-   * Number of inputs the net-to-be-built shall accept
+   * Number of inputs the network to be built shall accept
    */
   std::uint32_t m_argInputSize = 0;
 
   /**
-   * Number of Neurons the net-to-be-built shall have as output
+   * Number of Neurons the network to be built shall have as output
    */
   std::uint32_t m_argOutputNeuronNumber = 0;
 
-};
+public:
+  class KernelParameters{
+  public:
+    KernelParameters(RafkoNetBuilder& parent)
+    : m_parent(parent)
+    , m_input({})
+    , m_kernel({})
+    , m_output({})
+    { }
+
+    /**
+     * @brief    sets the dimension of the kernel to base the convolution on
+     *
+     * @param[in]...    sizes     The dimensions to set
+     *
+     * @return    reference to the object for chaining
+     */
+    template <typename ...Args>
+    KernelParameters& kernel_size(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in kernelSize!");
+      new (&m_kernel) rafko_utilities::NDArrayIndex({static_cast<std::uint32_t>(sizes) ...});
+      return *this;
+    }
+
+    /**
+     * @brief    sets the steps in input to step for one step in the output
+     *
+     * @param[in]...    steps     The number of steps to set
+     *
+     * @return    reference to the object for chaining
+     */
+    template <typename ...Args>
+    KernelParameters& kernel_stride(Args... steps){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in kernelStride!");
+      m_kernelStride = {static_cast<std::uint32_t>(steps) ...};
+      return *this;
+    }
+
+    /**
+     * @brief    sets the padding values to base the convolution on
+     *
+     * @param[in]...    sizes     The padding sizes to set
+     *
+     * @return    reference to the object for chaining
+     */
+    template <typename ...Args>
+    KernelParameters& input_padding(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in kernelPadding!");
+      m_inputPadding = {static_cast<std::int32_t>(sizes) ...};
+      if(0 < m_input.size())
+        new (&m_input) rafko_utilities::NDArrayIndex(std::move(m_input), m_inputPadding);
+      return *this;
+    }
+
+    /**
+     * @brief    sets the dimension of the kernel input to base the convolution on
+     *
+     * @param[in]...    sizes     The dimensions to set
+     *
+     * @return    reference to the object for chaining
+     */
+    template <typename ...Args>
+    KernelParameters& input_size(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in inputSize!");
+      if(m_inputPadding.size() == sizeof...(Args))
+        new (&m_input) rafko_utilities::NDArrayIndex({static_cast<std::uint32_t>(sizes) ...}, m_inputPadding);
+        else new (&m_input) rafko_utilities::NDArrayIndex({static_cast<std::uint32_t>(sizes) ...});
+      return *this;
+    }
+    
+    /**
+     * @brief    sets the dimension of the kernel output to base the convolution on
+     *
+     * @param[in]...    sizes     The dimensions to set
+     *
+     * @return    reference to the object for chaining
+     */
+    template <typename ...Args>
+    KernelParameters& output_size(Args... sizes){
+      if(!checkDimensionCount(sizeof...(Args)))
+        throw std::runtime_error("Wrong Dimensionality for Kernel Argument in outputSize!");
+      new (&m_output) rafko_utilities::NDArrayIndex({static_cast<std::uint32_t>(sizes) ...});
+      return *this;
+    }
+
+    /**
+     * @brief    validates the input, output and kernels with the strides and optional padding,
+     *           calculates either the input or output dimensions if one of them is not available
+     *
+     * @return reference to the parent object for chaining
+     */
+    RafkoNetBuilder& validate();
+
+    /**
+     * @brief     Resets all stored parameters
+     *
+     * @return    reference to the object for chaining
+     */
+    KernelParameters& reset(){
+      m_dimensionCount = 0;
+      new (&m_input) rafko_utilities::NDArrayIndex({});
+      new (&m_kernel) rafko_utilities::NDArrayIndex({});
+      new (&m_output) rafko_utilities::NDArrayIndex({});
+      m_inputPadding.clear();
+      m_kernelStride.clear();
+      m_valid = false;
+      return *this;
+    }
+
+    /**
+     * @brief     Provides the stored input parameter
+     *
+     * @return    reference of the stored input parameter as a non-const reference, so iteration is possible by it
+     */
+    rafko_utilities::NDArrayIndex& input(){
+      if(!m_valid)throw std::runtime_error("Asked for input dimensions in invalid state!");
+      return m_input;
+    }
+
+    /**
+     * @brief     Provides the stored strides parameter; set for each dimension of the input parameter
+     *
+     * @return    reference of the stored strides parameter
+     */
+    const std::vector<std::uint32_t>& stride(){
+      if(!m_valid)throw std::runtime_error("Asked for kernel stride in invalid state!");
+      return m_kernelStride;
+    }
+
+    /**
+     * @brief     Provides the stored kernel parameter
+     *
+     * @return    reference of the stored kernel parameter as a non-const reference, so iteration is possible by it
+     */
+    rafko_utilities::NDArrayIndex& kernel(){
+      if(!m_valid)throw std::runtime_error("Asked for kernel dimensions in invalid state!");
+      return m_kernel;
+    }
+
+    /**
+     * @brief     Provides the stored output parameter
+     *
+     * @return    reference of the stored output parameter as a non-const reference, so iteration is possible by it
+     */
+    rafko_utilities::NDArrayIndex& output(){
+      if(!m_valid)throw std::runtime_error("Asked for output dimensions in invalid state!");
+      return m_output;
+    }
+
+  private:
+    RafkoNetBuilder& m_parent;
+    std::uint32_t m_dimensionCount = 0u;
+    std::vector<std::int32_t> m_inputPadding;
+    std::vector<std::uint32_t> m_kernelStride;
+    bool m_valid = false;
+
+    rafko_utilities::NDArrayIndex m_input;
+    rafko_utilities::NDArrayIndex m_kernel;
+    rafko_utilities::NDArrayIndex m_output;
+
+    /**
+     * @brief     Utility function to check if the provided dimension count matches the stored parameter if the stored
+     *            parameter is above 0. If the stored dimensions count is zero, it is being updated with the provided value
+     *
+     * @return    True if the given dimension count is compatible with the stored one
+     **/
+    bool checkDimensionCount(std::uint32_t dim){
+      if(0 == m_dimensionCount)m_dimensionCount = dim;
+      return dim == m_dimensionCount;
+    }
+
+    /**
+     * @brief     Checks if all parameters are set to be able to validate the object
+     *
+     * @return    true, if all required parameters are set to validate the object
+     */
+    bool check_kernel_complete(){
+      return ( (0 < m_kernel.size())&&(0 < m_kernelStride.size())&&((0 < m_input.size())||(0 < m_output.size())) );
+    }
+
+    /**
+     * @brief     Compares the stored object parameters to decide if the set convolution is computable
+     *
+     * @return    True, if the input size matches the size calculated by iterating on the output by the kernel
+     */
+    bool check_kernel_sizes();
+  }; /* class RafkoNetBuilder::KernelParameters */
+}; /* class RafkoNetBuilder */
 
 } /* namespace rafko_net */
 #endif /* RAFKO_NET_BUILDER_H */

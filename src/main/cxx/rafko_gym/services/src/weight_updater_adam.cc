@@ -19,7 +19,7 @@
 namespace rafko_gym{
 
 void RafkoWeightUpdaterAdam::iterate(const std::vector<double>& gradients){
-  for(std::uint32_t weight_index = 0; weight_index < m_network.weight_table_size(); ++weight_index){
+  for(std::int32_t weight_index = 0; weight_index < m_network.weight_table_size(); ++weight_index){
     m_mean[weight_index] = (
       (m_settings.get_beta() * m_mean[weight_index])
       + ( (((1.0) - m_settings.get_beta()) * gradients[weight_index]) )

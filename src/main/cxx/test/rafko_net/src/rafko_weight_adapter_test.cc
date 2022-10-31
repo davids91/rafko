@@ -35,7 +35,7 @@ TEST_CASE("Testing if weight adapter updates weights of a solution sufficiently"
   rafko_mainframe::RafkoSettings settings;
   std::vector<std::uint32_t> net_structure = {2,4,3,1,2};
   std::vector<double> net_input = {(10.0),(20.0),(30.0),(40.0),(50.0)};
-  std::unique_ptr<rafko_net::RafkoNet> net(rafko_net::RafkoNetBuilder(settings).input_size(5).expected_input_range((5.0)).dense_layers(net_structure));
+  std::unique_ptr<rafko_net::RafkoNet> net(rafko_net::RafkoNetBuilder(settings).input_size(5).expected_input_range((5.0)).create_layers(net_structure));
   std::unique_ptr<rafko_net::Solution> solution = std::unique_ptr<rafko_net::Solution>(rafko_net::SolutionBuilder(settings).build(*net));
   rafko_gym::RafkoWeightAdapter weight_adapter(*net, *solution, settings);
   rafko_test::check_if_the_same(*net, *solution);
