@@ -301,6 +301,51 @@ TEST_CASE("Testing weight updates with the CPU context","[context][CPU][weight-u
   }/*for(10 variants)*/
 }
 
+
+TEST_CASE("Testing is solve is working as expected in CPU context for isolated standalone solve", "[context][CPU][solve][standalone][isolated]"){
+  constexpr const std::uint32_t sample_number = 5;
+  constexpr const std::uint32_t sequence_size = 6;
+  google::protobuf::Arena arena;
+
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
+    rafko_mainframe::RafkoSettings()
+    .set_max_solve_threads(3).set_max_processing_threads(4)
+    .set_memory_truncation(sequence_size)
+    .set_arena_ptr(&arena)
+    .set_minibatch_size(3)
+  );
+
+  rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
+    .input_size(2).expected_input_range(1.0)
+    .add_feature_to_layer(rand()%6, rafko_net::neuron_group_feature_boltzmann_knot)
+    .allowed_transfer_functions_by_layer(
+      {
+        {rafko_net::transfer_function_identity},
+        {rafko_net::transfer_function_sigmoid},
+        {rafko_net::transfer_function_tanh},
+        {rafko_net::transfer_function_elu},
+        {rafko_net::transfer_function_selu},
+        {rafko_net::transfer_function_relu},
+      }
+    ).create_layers({2,2,2,2,2,1});
+  auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(sample_number, sequence_size);
+  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+    std::move(inputs), std::move(labels), sequence_size
+  );
+
+  /* Calculate the network output to the environment manually */
+  std::shared_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Factory(network, settings).build();
+  rafko_mainframe::RafkoCPUContext context(network, settings);
+  for(std::uint32_t variant_index = 0; variant_index < 10; ++variant_index){
+    std::uint32_t raw_inputs_index = rand()%(environment->get_number_of_input_samples());
+    REQUIRE_THAT(
+      reference_solver->solve(environment->get_input_sample(raw_inputs_index)).acquire(), 
+      Catch::Matchers::Approx(context.solve(environment->get_input_sample(raw_inputs_index)).acquire()).margin(0.0000000000001)
+    );
+  }  
+}
+
+
 TEST_CASE("Testing is solve is working as expected in CPU context for isolated environment solve", "[context][CPU][solve][batch][isolated]"){
   constexpr const std::uint32_t sample_number = 5;
   constexpr const std::uint32_t sequence_size = 6;

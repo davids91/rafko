@@ -28,11 +28,11 @@
 namespace rafko_utilities_test {
 
 TEST_CASE("Testing NDArray Indexing with a 2D array without padding", "[NDArray][2D]"){
-  std::uint32_t width = rand()%100;
-  std::uint32_t height = rand()%100;
+  std::uint32_t width = 5 + rand()%100;
+  std::uint32_t height = 5 + rand()%100;
   rafko_utilities::NDArrayIndex idx({width, height});
   REQUIRE(!idx.has_padding());
-  for(std::uint32_t variant = 0; variant < 5; ++variant){
+  for(std::uint32_t variant = 0; variant < 50; ++variant){
     std::uint32_t x = rand()%width;
     std::uint32_t y = rand()%height;
     idx.set({x,y});
@@ -69,8 +69,8 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with positive padding", "[ND
   std::int32_t padding_x = rand()%5;
   std::int32_t padding_y = rand()%5;
   rafko_utilities::NDArrayIndex idx({width, height}, {padding_x, padding_y});
-  REQUIRE(idx.has_padding());
-  for(std::uint32_t variant = 0; variant < 5; ++variant){
+  REQUIRE( ((0 == (std::abs(padding_x) + std::abs(padding_y)))||(idx.has_padding())) );
+  for(std::uint32_t variant = 0; variant < 50; ++variant){
     std::uint32_t x = padding_x + rand()%(width);
     std::uint32_t y = padding_y + rand()%(height);
     idx.set({x,y});
@@ -81,10 +81,17 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with positive padding", "[ND
     REQUIRE(1 == idx.mappable_parts_of(0,width).size());
       REQUIRE(x == idx.mappable_parts_of(0,width)[0].position_start);
     REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].steps_inside_target);
-    if((static_cast<std::int32_t>(y) >= padding_y) && (y < (height + padding_y - 1))){
+
+    std::cout << "pos: (" << x << "," << y << "); size:(" << width << " + (2 * " << padding_x << ")," << height << "+ 2 * (" << padding_y << ")" << std::endl;
+    if(y < (height + (2 * padding_y) - 1)){
       REQUIRE( idx.step(1,1) );
-      REQUIRE( idx.mapped_position() == (x - padding_x + ((y - padding_y + 1) * width)) );
-    }else REQUIRE(idx.step(1,1));
+      if(idx.inside_content()){  
+        REQUIRE( idx.mapped_position().has_value() );
+        REQUIRE( idx.mapped_position().value() == (x - padding_x + ((y - padding_y + 1) * width)) );        
+      }
+    }else{ 
+      REQUIRE(!idx.step(1,1));
+    }
   }
 
   REQUIRE(idx.buffer_size() == (width * height));
@@ -124,8 +131,8 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with negative padding", "[ND
   std::int32_t padding_y = -rand()%5;
 
   rafko_utilities::NDArrayIndex idx({width, height}, {padding_x, padding_y});
-  REQUIRE(idx.has_padding());
-  for(std::uint32_t variant = 0; variant < 5; ++variant){
+  REQUIRE( ((0 == (std::abs(padding_x) + std::abs(padding_y)))||(idx.has_padding())) );
+  for(std::uint32_t variant = 0; variant < 50; ++variant){
     std::uint32_t x = -padding_x + rand()%(width + 2 * padding_x);
     std::uint32_t y = -padding_y + rand()%(height + 2 * padding_y);
     idx.set({x,y});
@@ -133,14 +140,22 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with negative padding", "[ND
     REQUIRE(idx.inside_bounds());
     REQUIRE(idx.mapped_position().has_value());
     REQUIRE( idx.mapped_position().value() == (x + padding_x + ((y + padding_y) * (width + 2 * padding_x))) );
-    std::uint32_t elements_after_x_row = padding_x + width - x;
+    std::uint32_t elements_after_x_row = width + padding_x - x;
     REQUIRE(1 == idx.mappable_parts_of(0,width).size());
     REQUIRE(x == idx.mappable_parts_of(0,width)[0].position_start);
+    std::cout << "pos: (" << x << "," << y << "); size:(" << width << " + (2 * " << padding_x << ")," << height << "+ 2 * (" << padding_y << ")" << std::endl;    
+    std::cout << "elements after x: " << elements_after_x_row << std::endl; 
     REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].steps_inside_target);
-    if((static_cast<std::int32_t>(y) > -padding_y) && (y < (height + padding_y - 1))){
+    std::cout << y << " < (" << height << " + " << padding_y << " - 1 )" << std::endl;
+    if(y < (height - 1)){
       REQUIRE( idx.step(1,1) );
-      REQUIRE( idx.mapped_position() == (x + padding_x + ((y + padding_y + 1) * (width + 2 * padding_x))) );
-    }else REQUIRE(idx.step(1,1));
+      if(idx.inside_content()){
+        REQUIRE( idx.mapped_position().has_value() );
+        REQUIRE( idx.mapped_position().value() == (x + padding_x + ((y + padding_y + 1) * (width + 2 * padding_x))) );        
+      }
+    }else{
+      REQUIRE(!idx.step(1,1));
+    }
   }
 
   REQUIRE(idx.buffer_size() == (width * height));
@@ -150,8 +165,8 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with negative padding", "[ND
   idx.set({0,0});
   for(std::uint32_t i = 0; i < idx.buffer_size(); ++i){
     if(
-      (-padding_x <= static_cast<std::int32_t>(x) && x < (padding_x + width))
-      &&(-padding_y <= static_cast<std::int32_t>(y) && y < (padding_y + height))
+      (-padding_x <= static_cast<std::int32_t>(x) && x < (width + padding_x))
+      &&(-padding_y <= static_cast<std::int32_t>(y) && y < (height + padding_y))
     ){
       REQUIRE(idx.inside_bounds());
       REQUIRE(idx.inside_content());

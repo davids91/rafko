@@ -143,14 +143,8 @@ std::uint32_t NDArrayIndex::step(){
 }
 
 bool NDArrayIndex::step(std::uint32_t dimension, std::int32_t delta){
-  const std::int32_t new_position = static_cast<std::int32_t>(m_position[dimension]) + delta;
-  if(
-    (new_position < 0)
-    ||(
-      new_position >= static_cast<std::int32_t>(m_dimensions[dimension] + (2 * std::max(0, m_padding[dimension])))
-    )
-  )return false;
-  m_position[dimension] = new_position;
+  if(!inside_bounds(m_position, dimension, delta))return false;
+  m_position[dimension] += delta;
   bool new_position_is_inside_content = inside_content(m_position);
   if(m_mappedIndex.has_value() && new_position_is_inside_content){ /* m_mappedIndex has a value if the previous position was valid */
     m_mappedIndex.value() += m_strides[dimension] * delta;
@@ -187,7 +181,7 @@ bool NDArrayIndex::inside_bounds(const std::vector<std::uint32_t>& position, std
       ++dim;
       return(
         (0 <= position)
-        &&( position < (2 * std::max(int64_t{0}, static_cast<int64_t>(m_padding[dim - 1])) + static_cast<int64_t>(m_dimensions[dim - 1])) )
+        &&( position < (static_cast<std::int64_t>(m_dimensions[dim - 1]) + 2 * std::max(std::int64_t{0}, static_cast<int64_t>(m_padding[dim - 1]))) )
       );
     }
   );
@@ -202,7 +196,7 @@ bool NDArrayIndex::inside_content(const std::vector<std::uint32_t>& position, st
       ++dim;
       return(
         (std::max(m_padding[dim - 1], -m_padding[dim - 1]) <= actual_position)
-        &&(actual_position < static_cast<std::int32_t>(m_dimensions[dim - 1] + m_padding[dim - 1]))
+        &&( actual_position < static_cast<std::int64_t>(m_dimensions[dim - 1] + m_padding[dim - 1]) )
       );
     }
   );
@@ -213,7 +207,7 @@ std::vector<NDArrayIndex::IntervalPart> NDArrayIndex::mappable_parts_of(
 ) const{
   std::vector<NDArrayIndex::IntervalPart> result;
   bool part_in_progress = false;
-  for(std::int32_t delta_index = 0; delta_index < delta; delta_index += std::copysign(1, delta)){
+  for(std::int32_t delta_index = 0; delta_index != delta; delta_index += std::copysign(1, delta)){
     const bool current_position_in_inside_content = inside_content(position, dimension, delta_index);
     if(current_position_in_inside_content && part_in_progress){
       assert(0 < result.size());

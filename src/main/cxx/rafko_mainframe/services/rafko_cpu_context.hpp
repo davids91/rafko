@@ -141,8 +141,8 @@ private:
   std::shared_ptr<rafko_gym::RafkoObjective> m_objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
 
-  std::vector<std::vector<double>> m_neuronOutputsToEvaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
   rafko_utilities::ThreadGroup m_executionThreads;
+  std::vector<std::vector<double>> m_neuronOutputsToEvaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
 
   std::uint32_t m_usedSequenceTruncation;
   std::uint32_t m_usedMinibatchSize;
