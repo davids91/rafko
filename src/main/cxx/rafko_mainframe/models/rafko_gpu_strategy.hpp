@@ -30,11 +30,12 @@
 namespace rafko_mainframe{
 
 /**
- * @brief      A phase of the Deep learning GPU pipeline strategy describing
+ * @brief      A phase of the Deep learning GPU pipeline strategy describing the strategy of one entity for
+ *             handling GPU operations
  */
-class RAFKO_EXPORT RafkoGPUStrategyPhase{
+class RAFKO_EXPORT RafkoGPUStrategy{
 public:
-  virtual ~RafkoGPUStrategyPhase() = default;
+  virtual ~RafkoGPUStrategy() = default;
 
   /**
    * @brief     provides feedback on whether or not the current returned interfaces
@@ -42,13 +43,6 @@ public:
    */
   bool isValid() const;
 
-
-  /**
-   * @brief      Provides the kernel source codes of the StrategyPhase in order of execution
-   *
-   * @return     Vector of {name,source code} pairs in order of intended execution
-   */
-  virtual cl::Program::Sources get_step_sources() const = 0;
 
    /**
     * @brief      Provides the kernel function names of the StrategyPhase
@@ -58,11 +52,33 @@ public:
   virtual std::vector<std::string> get_step_names() const = 0;
 
   /**
+   * @brief      Provides the kernel source codes of the StrategyPhase in order of execution
+   *
+   * @return     Vector of {name,source code} pairs in order of intended execution
+   */
+  virtual cl::Program::Sources get_step_sources() const = 0;
+
+
+  /**
    * @brief      Provides the input dimensions of each step in the Strategy Phase
    *
    * @return     Vector of dimensions in order of @get_steps
    */
   virtual std::vector<RafkoNBufShape> get_input_shapes() const = 0;
+
+  /**
+   * @brief      Provides the output dimensions of each step in the Strategy Phase
+   *
+   * @return     Vector of dimensions in order of @get_steps
+   */
+  virtual std::vector<RafkoNBufShape> get_output_shapes() const = 0;
+
+  /**
+   * @brief      Provides the required dimensions to solve the phase
+   *
+   * @return     tuple of {offset, global dimensions, local dimensions}
+   */
+  virtual std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const = 0;
 
   /**
    * @brief     Provides the overall size of every component of the input buffer
@@ -80,13 +96,6 @@ public:
   }
 
   /**
-   * @brief      Provides the output dimensions of each step in the Strategy Phase
-   *
-   * @return     Vector of dimensions in order of @get_steps
-   */
-  virtual std::vector<RafkoNBufShape> get_output_shapes() const = 0;
-
-  /**
    * @brief     Provides the overall size of every component of the output buffer
    *
    * @return    The number of Bytes the whole output buffer occupies
@@ -100,12 +109,6 @@ public:
       }
     );
   }
-  /**
-   * @brief      Provides the required dimensions to solve the phase
-   *
-   * @return     tuple of {offset, global dimensions, local dimensions}
-   */
-  virtual std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const = 0;
 };
 
 } /* namespace rafko_mainframe */

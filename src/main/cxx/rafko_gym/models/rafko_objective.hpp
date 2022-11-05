@@ -23,7 +23,7 @@
 #include <vector>
 
 #if(RAFKO_USES_OPENCL)
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
+#include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_gym/models/rafko_environment.hpp"
 
@@ -34,7 +34,7 @@ namespace rafko_gym{
  */
 class RAFKO_EXPORT RafkoObjective
 #if(RAFKO_USES_OPENCL)
-: public rafko_mainframe::RafkoGPUStrategyPhase
+: public rafko_mainframe::RafkoGPUStrategy
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
@@ -143,13 +143,13 @@ public:
     std::string feature_d, std::string sample_number
   ) const = 0;
 
-  /* +++ Methods forwarding from rafko_mainframe::RafkoGPUStrategyPhase +++ */
+  /* +++ Methods forwarding from rafko_mainframe::RafkoGPUStrategy +++ */
   virtual cl::Program::Sources get_step_sources() const override = 0;
   virtual std::vector<std::string> get_step_names() const override = 0;
   virtual std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override = 0;
   virtual std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override = 0;
   virtual std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override = 0;
-  /* --- Methods forwarding from rafko_mainframe::RafkoGPUStrategyPhase --- */
+  /* --- Methods forwarding from rafko_mainframe::RafkoGPUStrategy --- */
 
   #endif/*(RAFKO_USES_OPENCL)*/
 };

@@ -25,7 +25,7 @@
 #include <CL/opencl.hpp>
 
 #include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
+#include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 #include "rafko_mainframe/services/rafko_gpu_phase.hpp"
 #include "rafko_mainframe/services/rafko_dummies.hpp"
 #include "rafko_gym/services/rafko_autodiff_gpu_strategy.hpp"

@@ -34,7 +34,7 @@
 #include "rafko_mainframe/models/rafko_settings.hpp"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
+#include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 namespace rafko_gym{
@@ -45,7 +45,7 @@ namespace rafko_gym{
  */
 class RAFKO_EXPORT CostFunction
 #if(RAFKO_USES_OPENCL)
-: public rafko_mainframe::RafkoGPUStrategyPhase
+: public rafko_mainframe::RafkoGPUStrategy
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
@@ -176,7 +176,7 @@ public:
     std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
   ) const = 0;
 
-  /* +++ Functions taken from rafko_mainframe::RafkoGPUStrategyPhase */
+  /* +++ Functions taken from rafko_mainframe::RafkoGPUStrategy */
   cl::Program::Sources get_step_sources() const override;
   std::vector<std::string> get_step_names() const override;
   std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override{

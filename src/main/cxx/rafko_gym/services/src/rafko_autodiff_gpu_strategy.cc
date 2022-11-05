@@ -122,7 +122,7 @@ std::string AutoDiffGPUStrategy::generate_switch_case_kernels_from(
       ==all_worker_cases==
       default:break;
     }
-    work_group_barrier(CLK_GLOBAL_MEM_FENCE);
+    barrier(CLK_GLOBAL_MEM_FENCE);
   )";
   const static std::string worker_case_template = R"(
     case ==thread_index==:{
@@ -224,7 +224,7 @@ void AutoDiffGPUStrategy::build(
 
       ==operation_locals==
       ==derivative_operations==
-      work_group_barrier(CLK_GLOBAL_MEM_FENCE);
+      barrier(CLK_GLOBAL_MEM_FENCE);
 
       if(save_to_output){
         #pragma unroll
@@ -234,7 +234,7 @@ void AutoDiffGPUStrategy::build(
         if(0 == get_local_id(0))
           AtomicAdd(&triggered_derivative_operations, ==weight_relevant_operation_count==);
       }
-      work_group_barrier(CLK_GLOBAL_MEM_FENCE);
+      barrier(CLK_GLOBAL_MEM_FENCE);
 
       if(0 == get_global_id(0) && 0 < triggered_derivative_operations){
         d_w_array[d_w_index] /= triggered_derivative_operations;
@@ -250,7 +250,7 @@ void AutoDiffGPUStrategy::build(
       ==operation_switches==
     }/*execute_value_workers()*/
 
-    void kernel autodiff_iterate(
+    void __kernel autodiff_iterate(
       __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
       __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){
@@ -280,7 +280,7 @@ void AutoDiffGPUStrategy::build(
         sequence_truncation = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]];
         sequence_truncation = (sequence_truncation == 0)?(sequence_labels_count):(max(1, sequence_truncation));
       }
-      work_group_barrier(CLK_LOCAL_MEM_FENCE);
+      barrier(CLK_LOCAL_MEM_FENCE);
 
       int network_inputs_start_index = weight_table_size + sequence_start * ==one_input_size==;
       int network_labels_start_index = weight_table_size + input_sizes[1]/*network_inputs*/ + sequence_start * ==one_label_size==;

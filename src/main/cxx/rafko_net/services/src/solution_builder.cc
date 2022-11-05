@@ -165,7 +165,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
    */
   std::string source_base = rafko_utilities::random_function + rafko_utilities::atomic_double_add_function
    + R"(
-    void kernel ==name==(
+    void __kernel ==name==(
        __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
        __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){
@@ -203,7 +203,6 @@ std::string SolutionBuilder::get_kernel_for_solution(
         #pragma unroll
         for(int run_index = 0; run_index < run_count; ++run_index){
           double neuron_partial_result;
-
           /* +++ GENERATED_NEURON_CODE +++ */
           ==neuron_operations==
           /* --- GENERATED_NEURON_CODE --- */

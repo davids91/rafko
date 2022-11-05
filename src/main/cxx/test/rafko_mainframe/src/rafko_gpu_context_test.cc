@@ -88,13 +88,10 @@ TEST_CASE("Testing if standalone solution is working as intended with the GPU co
     rafko_net::Solution* reference_solution = rafko_net::SolutionBuilder(*settings).build(network);
     std::shared_ptr<rafko_net::SolutionSolver> reference_agent = std::make_unique<rafko_net::SolutionSolver>(reference_solution, *settings);
     std::vector<double> network_input(network.input_data_size(), (rand()%10));
+    reference_agent->set_eval_mode(false);
     rafko_utilities::ConstVectorSubrange<> reference_result = reference_agent->solve(network_input);
     rafko_utilities::ConstVectorSubrange<> context_result = context->solve(network_input);
-
-    reference_agent->set_eval_mode(false);
-    for(std::uint32_t result_index = 0; result_index < reference_result.size(); ++result_index){
-      REQUIRE( Catch::Approx(reference_result[result_index]).epsilon(0.0000000001) == context_result[result_index] );
-    }
+    REQUIRE_THAT( reference_result.acquire(), Catch::Matchers::Approx(context_result.acquire()).margin(0.0000000000001) );
   }/*for(50 variants)*/
 }
 

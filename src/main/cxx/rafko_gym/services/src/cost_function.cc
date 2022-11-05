@@ -116,7 +116,7 @@ std::vector<std::string> CostFunction::get_step_names()const  {
 cl::Program::Sources CostFunction::get_step_sources()const {
   std::string source_base = rafko_utilities::atomic_double_add_function + R"(
 
-    void kernel cost_function(
+    void __kernel cost_function(
       __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
       __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){

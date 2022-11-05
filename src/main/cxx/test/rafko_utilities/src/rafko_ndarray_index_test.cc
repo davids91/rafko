@@ -82,7 +82,6 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with positive padding", "[ND
       REQUIRE(x == idx.mappable_parts_of(0,width)[0].position_start);
     REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].steps_inside_target);
 
-    std::cout << "pos: (" << x << "," << y << "); size:(" << width << " + (2 * " << padding_x << ")," << height << "+ 2 * (" << padding_y << ")" << std::endl;
     if(y < (height + (2 * padding_y) - 1)){
       REQUIRE( idx.step(1,1) );
       if(idx.inside_content()){  
@@ -143,10 +142,7 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with negative padding", "[ND
     std::uint32_t elements_after_x_row = width + padding_x - x;
     REQUIRE(1 == idx.mappable_parts_of(0,width).size());
     REQUIRE(x == idx.mappable_parts_of(0,width)[0].position_start);
-    std::cout << "pos: (" << x << "," << y << "); size:(" << width << " + (2 * " << padding_x << ")," << height << "+ 2 * (" << padding_y << ")" << std::endl;    
-    std::cout << "elements after x: " << elements_after_x_row << std::endl; 
     REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].steps_inside_target);
-    std::cout << y << " < (" << height << " + " << padding_y << " - 1 )" << std::endl;
     if(y < (height - 1)){
       REQUIRE( idx.step(1,1) );
       if(idx.inside_content()){

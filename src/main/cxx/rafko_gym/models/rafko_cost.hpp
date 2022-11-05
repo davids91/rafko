@@ -30,7 +30,7 @@
 #include "rafko_mainframe/models/rafko_settings.hpp"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
+#include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_gym/models/rafko_objective.hpp"

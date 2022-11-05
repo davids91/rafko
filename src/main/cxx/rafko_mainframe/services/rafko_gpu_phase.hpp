@@ -26,7 +26,7 @@
 #include <CL/opencl.hpp>
 
 #include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
+#include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 
 namespace rafko_mainframe{
 
@@ -37,7 +37,7 @@ class RAFKO_EXPORT RafkoGPUPhase{
 public:
   RafkoGPUPhase(
     const cl::Context& context, const cl::Device& device, cl::CommandQueue& queue,
-    std::shared_ptr<RafkoGPUStrategyPhase> strategy
+    std::shared_ptr<RafkoGPUStrategy> strategy
   ):m_openclContext(context)
   , m_openclDevice(device)
   , m_openclDeviceQueue(queue)
@@ -50,7 +50,7 @@ public:
    *
    * @param      strategy the strategy parts to implenet in this phase
    */
-  void set_strategy(std::shared_ptr<RafkoGPUStrategyPhase> strategy);
+  void set_strategy(std::shared_ptr<RafkoGPUStrategy> strategy);
 
   /**
    * @brief      Executes the implemented strategy phase
@@ -135,12 +135,13 @@ public:
   }
 
 private:
+  using KernelFunctor = cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>;
   const cl::Context& m_openclContext;
   const cl::Device& m_openclDevice;
   cl::CommandQueue& m_openclDeviceQueue;
-  std::shared_ptr<RafkoGPUStrategyPhase> m_strategy;
+  std::shared_ptr<RafkoGPUStrategy> m_strategy;
   std::vector<std::tuple<cl::Buffer, cl::Buffer, int>> m_kernelArgs;
-  std::vector<cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>> m_steps;
+  std::vector<KernelFunctor> m_steps;
 };
 
 } /* namespace rafko_mainframe */

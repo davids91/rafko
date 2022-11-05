@@ -13,6 +13,7 @@ if(MAKE_TESTS)
   if(USE_OPENCL)
     set(GPU_TEST_SOURCES
       rafko_mainframe/src/rafko_gpu_context_test.cc
+      rafko_mainframe/src/rafko_gpu_phase_test.cc
     )
   else()
     set(GPU_TEST_SOURCES)

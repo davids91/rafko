@@ -36,7 +36,7 @@
 #if(RAFKO_USES_OPENCL)
 #include "rafko_net/services/solution_builder.hpp"
 #include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
+#include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 namespace rafko_gym{
@@ -47,7 +47,7 @@ namespace rafko_gym{
  */
 class RAFKO_EXPORT RafkoAgent
 #if(RAFKO_USES_OPENCL)
-: public rafko_mainframe::RafkoGPUStrategyPhase
+: public rafko_mainframe::RafkoGPUStrategy
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
@@ -79,7 +79,7 @@ public:
     const std::vector<double>& input, bool reset_neuron_data = false, std::uint32_t thread_index = 0u
   ) = 0;
 
-  #if(RAFKO_USES_OPENCL) /* Methods forwarding from rafko_mainframe::RafkoGPUStrategyPhase */
+  #if(RAFKO_USES_OPENCL) /* Methods forwarding from rafko_mainframe::RafkoGPUStrategy */
   virtual cl::Program::Sources get_step_sources() const override = 0;
   virtual std::vector<std::string> get_step_names() const override = 0;
   virtual std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override = 0;

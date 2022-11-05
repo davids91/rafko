@@ -23,6 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <optional>
 #include <CL/opencl.hpp>
 
 #include "rafko_net/services/solution_solver.hpp"
@@ -48,9 +49,9 @@ public:
   RafkoOCLFactory& select_platform(std::uint32_t platform_index = 0u){
     RFASSERT_LOG("Selected platform[{}]..", platform_index);
     RFASSERT( platform_index < m_platforms.size() );
-    RFASSERT_LOG("Platform name: {}", m_platforms[m_selectedPlatform].getInfo<CL_PLATFORM_NAME>());
-    RFASSERT_LOG("Platform version: {}", m_platforms[m_selectedPlatform].getInfo<CL_PLATFORM_VERSION>());
-    RFASSERT_LOG("Platform vendor: {}", m_platforms[m_selectedPlatform].getInfo<CL_PLATFORM_VENDOR>());
+    RFASSERT_LOG("Platform name: {}", m_platforms[platform_index].getInfo<CL_PLATFORM_NAME>());
+    RFASSERT_LOG("Platform version: {}", m_platforms[platform_index].getInfo<CL_PLATFORM_VERSION>());
+    RFASSERT_LOG("Platform vendor: {}", m_platforms[platform_index].getInfo<CL_PLATFORM_VENDOR>());
     m_selectedPlatform = platform_index;
     return *this;
   }
@@ -68,13 +69,27 @@ public:
     return *this;
   }
 
+  cl::Device& selected_device(){
+    RFASSERT_LOG("Asking for device[{}]...", m_selectedDevice);
+    RFASSERT( m_selectedDevice < m_devices.size() );
+    return m_devices[m_selectedDevice];
+  }
+
+  cl::Context& make_context(){
+    RFASSERT_LOG("Creating Context in Factory...");
+    RFASSERT( m_selectedDevice < m_devices.size() );
+    m_context.emplace({m_devices[m_selectedDevice]});
+    return m_context.value();
+  }
+
   template<class C, typename... Args>
   std::unique_ptr<C> build(Args && ... args){
     RFASSERT( 0 < m_platforms.size() );
     RFASSERT( 0 < m_devices.size() );
-    cl::Context context({m_devices[m_selectedDevice]});
+    if(!m_context.has_value())
+      make_context();
     return std::make_unique<C>(
-      std::move(context), m_devices[m_selectedDevice],
+      std::move(m_context.value()), m_devices[m_selectedDevice],
       std::forward<Args>(args)...
     );
   }
@@ -82,8 +97,9 @@ public:
 private:
   std::vector<cl::Platform> m_platforms;
   std::vector<cl::Device> m_devices;
-  std::uint32_t m_selectedPlatform = 0u;
-  std::uint32_t m_selectedDevice = 0u;
+  std::optional<cl::Context> m_context;
+  std::uint32_t m_selectedPlatform = -1;
+  std::uint32_t m_selectedDevice = -1;
   RFASSERT_SCOPE(RAFKO_GPU_BUILD);
 };
 

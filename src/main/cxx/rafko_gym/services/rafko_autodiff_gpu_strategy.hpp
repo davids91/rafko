@@ -27,7 +27,7 @@
 
 #include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
 #include "rafko_mainframe/models/rafko_settings.hpp"
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
+#include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 
 #include "rafko_gym/models/rafko_environment.hpp"
 #include "rafko_gym/services/rafko_backpropagation_operation.hpp"
@@ -38,7 +38,7 @@ namespace rafko_gym{
  * @brief   A class implementing the underlying logic for an autodiff Backpropagation iteration step
  */
 class AutoDiffGPUStrategy
-: public rafko_mainframe::RafkoGPUStrategyPhase
+: public rafko_mainframe::RafkoGPUStrategy
 {
 using OperationsType = std::shared_ptr<RafkoBackpropagationOperation>;
 public:

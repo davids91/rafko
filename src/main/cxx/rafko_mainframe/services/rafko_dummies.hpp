@@ -28,7 +28,7 @@
 
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
+#include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 
 namespace rafko_mainframe {
@@ -67,7 +67,7 @@ class RafkoDummyEnvironment : public rafko_gym::RafkoEnvironment{
 };
 
 #if(RAFKO_USES_OPENCL)
-class RafkoDummyGPUStrategyPhase : public RafkoGPUStrategyPhase{
+class RafkoDummyGPUStrategyPhase : public RafkoGPUStrategy{
 public:
   RafkoDummyGPUStrategyPhase(RafkoNBufShape input_shape, RafkoNBufShape output_shape)
   : m_inputShape(input_shape)
@@ -76,7 +76,7 @@ public:
 
   cl::Program::Sources get_step_sources() const override{
     return{R"(
-      void kernel dummy_kernel(
+      void __kernel dummy_kernel(
         __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
         __global double* outputs, __constant int* output_sizes, int output_sizes_size
       ){ }

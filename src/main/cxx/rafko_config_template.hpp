@@ -14,9 +14,13 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
+#ifndef RAFKO_CONFIG_H
+#define RAFKO_CONFIG_H
 
 #cmakedefine RAFKO_USES_OPENCL @RAFKO_USES_OPENCL@
 #cmakedefine CL_HPP_MINIMUM_OPENCL_VERSION @CL_HPP_MINIMUM_OPENCL_VERSION@
 #cmakedefine CL_HPP_TARGET_OPENCL_VERSION @CL_HPP_TARGET_OPENCL_VERSION@
 
 #cmakedefine RAFKO_USES_ASSERTLOGS @RAFKO_USES_ASSERTLOGS@
+
+#endif /*RAFKO_CONFIG_H*/

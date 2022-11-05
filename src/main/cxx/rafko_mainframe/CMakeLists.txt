@@ -5,7 +5,7 @@ if(USE_OPENCL)
   find_package(OpenCL REQUIRED)
   target_link_libraries(rafko_mainframe PUBLIC rafko_protocol OpenCL::OpenCL)
   set(HEADERS_MODELS_WITH_OCL
-    models/rafko_gpu_strategy_phase.hpp
+    models/rafko_gpu_strategy.hpp
   )
   set(HEADERS_SERVICES_WITH_OCL
     services/rafko_ocl_factory.hpp
@@ -13,7 +13,7 @@ if(USE_OPENCL)
     services/rafko_gpu_phase.hpp
   )
   set(SOURCES_WITH_OCL
-    models/src/rafko_gpu_strategy_phase.cc
+    models/src/rafko_gpu_strategy.cc
     services/src/rafko_gpu_phase.cc
     services/src/rafko_gpu_context.cc
   )

@@ -117,8 +117,8 @@ private:
    */
 
  enum{
-   not_eval_run, full_eval_run, random_eval_run
- }m_lastRanEvaluation = not_eval_run;
+   nothing_yet, not_eval_run, full_eval_run, random_eval_run
+ }m_lastRanEvaluation = nothing_yet;
 
   /**
    * @brief   Uploads the weights from @network to the buffer on the GPU

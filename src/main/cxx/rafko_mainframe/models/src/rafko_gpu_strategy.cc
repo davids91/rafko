@@ -15,11 +15,11 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include "rafko_mainframe/models/rafko_gpu_strategy_phase.hpp"
+#include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 
 namespace rafko_mainframe{
 
-bool RafkoGPUStrategyPhase::isValid() const{
+bool RafkoGPUStrategy::isValid() const{
   std::vector<std::string> step_names = get_step_names();
   std::vector<RafkoNBufShape> input_shapes = get_input_shapes();
   std::vector<RafkoNBufShape> output_shapes = get_output_shapes();
