@@ -200,6 +200,12 @@ std::string SolutionBuilder::get_kernel_for_solution(
         }
         const int starting_slot_index = current_slot_index;
 
+        /* Zero out performance errors */
+        if(0 == get_global_id(0))outputs[output_sizes[0]] = 0.0;
+        /*!Note: Stable Global synchronization is not possible within a kernel, however, the above operation should 
+         * finish way before any thread has the chance to update the value. 
+         */
+
         #pragma unroll
         for(int run_index = 0; run_index < run_count; ++run_index){
           double neuron_partial_result;
@@ -227,10 +233,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
               ++current_max_backreach;
           }
         }
-
-        if(0 == get_global_id(0))outputs[output_sizes[0]] = 0.0; /* zero out performance error */
         if(evaluate_network){
-          while(!isequal(0.0, outputs[output_sizes[0]])); /* don't judge me, there's no global barrier */
           ==performance_operations==
         }
 

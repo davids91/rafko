@@ -220,7 +220,7 @@ void AutoDiffGPUStrategy::build(
     ){
       __global static double triggered_derivative_operations = 0.0;
       if(0 == get_global_id(0))
-        triggered_derivative_operations = 0.0;
+        triggered_derivative_operations = 0;
 
       ==operation_locals==
       ==derivative_operations==
