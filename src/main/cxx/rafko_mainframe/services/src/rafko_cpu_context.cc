@@ -23,7 +23,7 @@
 #include "rafko_utilities/models/data_ringbuffer.hpp"
 #include "rafko_net/models/neuron_info.hpp"
 #include "rafko_net/services/solution_builder.hpp"
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 #include "rafko_gym/services/updater_factory.hpp"
 
 #include "rafko_mainframe/services/rafko_dummies.hpp"
@@ -52,7 +52,7 @@ RafkoCPUContext::RafkoCPUContext(
   m_neuronOutputsToEvaluate.back().resize(m_environment->get_number_of_label_samples());
 }
 
-void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment){
+void RafkoCPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoDataSet> environment){
   RFASSERT_LOG("Setting environment in CPU context..");
   RFASSERT_LOG("Environment feature size: {} vs. Network output Neuron number: {}", environment->get_feature_size(), m_network.output_neuron_number());
   RFASSERT(environment->get_feature_size() == m_network.output_neuron_number());

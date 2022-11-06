@@ -27,7 +27,7 @@
 #include <CL/opencl.hpp>
 
 #include "rafko_net/services/solution_solver.hpp"
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
 #include "rafko_gym/models/rafko_agent.hpp"
 #include "rafko_gym/services/updater_factory.hpp"
@@ -47,7 +47,7 @@ public:
   );
 
   /* +++ Methods taken from @RafkoContext +++ */
-  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment) override;
+  void set_environment(std::shared_ptr<rafko_gym::RafkoDataSet> environment) override;
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override;
   void set_weight_updater(rafko_gym::Weight_updaters updater) override;
   void set_network_weight(std::uint32_t weight_index, double weight_value) override;
@@ -60,14 +60,6 @@ public:
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
     m_solverFactory.refresh_actual_solution_weights();
     upload_weight_table_to_device();
-  }
-
-  void push_state() override{
-    m_environment->push_state();
-  }
-
-  void pop_state() override{
-    m_environment->pop_state();
   }
 
   rafko_utilities::ConstVectorSubrange<> solve(
@@ -91,7 +83,7 @@ private:
   rafko_net::RafkoNet& m_network;
   rafko_net::SolutionSolver::Factory m_solverFactory;
   std::shared_ptr<rafko_net::SolutionSolver> m_agent;
-  std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;
+  std::shared_ptr<rafko_gym::RafkoDataSet> m_environment;
   std::shared_ptr<rafko_gym::RafkoObjective> m_objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
   std::vector<std::vector<double>> m_neuronOutputsToEvaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */

@@ -30,7 +30,7 @@
 #include "rafko_net/services/solution_builder.hpp"
 #include "rafko_net/services/solution_solver.hpp"
 #include "rafko_gym/models/rafko_cost.hpp"
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 #include "rafko_mainframe/services/rafko_cpu_context.hpp"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/services/rafko_ocl_factory.hpp"
@@ -246,12 +246,12 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
     );
     rafko_mainframe::RafkoCPUContext regulated_context(network, settings, objective);
     rafko_mainframe::RafkoCPUContext unregulated_context(unregulated_network, settings, objective);
-    std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+    std::unique_ptr<rafko_gym::DataSetPackage> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
       number_of_sequences, sequence_size, 2/*prefill_size*/,
       rand()%100/*expected_label*/, (1.0)
     ) );
-    std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
+    std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(*dataset);
 
     REQUIRE( /* because the evaluation provides fittness value, the error difference needs to be substracted..*/
       Catch::Approx(regulated_context.full_evaluation()).epsilon((0.00000000000001))
@@ -369,12 +369,12 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
     );
-    std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+    std::unique_ptr<rafko_gym::DataSetPackage> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
       number_of_sequences, sequence_size, 2/*prefill_size*/,
       rand()%100/*expected_label*/, (1.0)/*label_delta_per_feature*/
     ) );
-    std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
+    std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(*dataset);
 
     /* create GPU and CPU contexts */
     rafko_mainframe::RafkoCPUContext cpu_context(network_copy, settings, objective);

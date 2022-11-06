@@ -24,7 +24,7 @@
 #endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_gym/models/rafko_objective.hpp"
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
 
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
@@ -36,15 +36,13 @@ namespace rafko_mainframe {
 /**
  * @brief      Empty environment class
  */
-class RafkoDummyEnvironment : public rafko_gym::RafkoEnvironment{
+class RafkoDummyEnvironment : public rafko_gym::RafkoDataSet{
   public:
     RafkoDummyEnvironment(std::uint32_t input_size = 1u, std::uint32_t feature_size = 1u)
     : m_dummyInputs(1, std::vector<double>(input_size))
     , m_dummyLabels(1, std::vector<double>(feature_size))
     { }
 
-    void push_state() override{ }
-    void pop_state() override{ }
     const std::vector<double>& get_input_sample(std::uint32_t /*raw_input_index*/)const override{
       return m_dummyInputs[0];
     }

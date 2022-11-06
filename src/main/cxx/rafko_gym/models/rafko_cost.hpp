@@ -34,7 +34,7 @@
 #endif/*(RAFKO_USES_OPENCL)*/
 
 #include "rafko_gym/models/rafko_objective.hpp"
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_gym/models/rafko_agent.hpp"
 
 namespace rafko_gym{
@@ -61,23 +61,23 @@ public:
 
   /* +++ Methods taken from @RafkoObjective +++ */
   double set_feature_for_label(
-    const rafko_gym::RafkoEnvironment& environment, std::uint32_t sample_index,
+    const rafko_gym::RafkoDataSet& environment, std::uint32_t sample_index,
     const std::vector<double>& neuron_data
   ) const override;
 
   double set_features_for_labels(
-    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+    const rafko_gym::RafkoDataSet& environment, const std::vector<std::vector<double>>& neuron_data,
     std::uint32_t neuron_buffer_index, std::uint32_t raw_start_index, std::uint32_t labels_to_evaluate
   ) const override;
 
   double set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+    const rafko_gym::RafkoDataSet& environment, const std::vector<std::vector<double>>& neuron_data,
     std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
     std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation
   ) const override;
 
   double set_features_for_sequences(
-    const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+    const rafko_gym::RafkoDataSet& environment, const std::vector<std::vector<double>>& neuron_data,
     std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
     std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation, std::vector<double>& tmp_data
   ) const override;
@@ -148,7 +148,7 @@ private:
   #endif/*(RAFKO_USES_OPENCL)*/
 
   /**
-   * @brief          Converting the @rafko_gym::DataSet message to vectors. The summary starts at the first element,
+   * @brief          Converting the @rafko_gym::DataSetPackage message to vectors. The summary starts at the first element,
    *                 and goes as long as @length defines it
    *
    * @param          source         The vector elements to accumulate into @target

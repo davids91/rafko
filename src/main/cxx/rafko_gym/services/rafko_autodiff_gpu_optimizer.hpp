@@ -42,7 +42,7 @@ public:
   RafkoAutodiffGPUOptimizer(
     cl::Context&& context, cl::Device device,
     std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
-    std::shared_ptr<RafkoEnvironment> environment, rafko_net::RafkoNet& network,
+    std::shared_ptr<RafkoDataSet> environment, rafko_net::RafkoNet& network,
     std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator = {},
     std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator = {}
   )

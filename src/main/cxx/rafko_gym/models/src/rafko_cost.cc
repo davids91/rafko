@@ -27,7 +27,7 @@ namespace rafko_gym{
 rafko_utilities::DataPool<double> RafkoCost::m_commonDatapool(1,1);
 
 double RafkoCost::set_feature_for_label(
-  const rafko_gym::RafkoEnvironment& environment, std::uint32_t sample_index,
+  const rafko_gym::RafkoDataSet& environment, std::uint32_t sample_index,
   const std::vector<double>& neuron_data
 ) const{
   RFASSERT(environment.get_number_of_label_samples() > sample_index);
@@ -38,7 +38,7 @@ double RafkoCost::set_feature_for_label(
 }
 
 double RafkoCost::set_features_for_labels(
-  const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+  const rafko_gym::RafkoDataSet& environment, const std::vector<std::vector<double>>& neuron_data,
   std::uint32_t neuron_buffer_start_index, std::uint32_t raw_start_index, std::uint32_t labels_to_evaluate
 ) const{
   RFASSERT((raw_start_index + labels_to_evaluate) <= environment.get_number_of_label_samples());
@@ -62,7 +62,7 @@ double RafkoCost::set_features_for_labels(
 }
 
 double RafkoCost::set_features_for_sequences(
-  const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+  const rafko_gym::RafkoDataSet& environment, const std::vector<std::vector<double>>& neuron_data,
   std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
   std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation
 ) const{
@@ -77,7 +77,7 @@ double RafkoCost::set_features_for_sequences(
 }
 
 double RafkoCost::set_features_for_sequences(
-  const rafko_gym::RafkoEnvironment& environment, const std::vector<std::vector<double>>& neuron_data,
+  const rafko_gym::RafkoDataSet& environment, const std::vector<std::vector<double>>& neuron_data,
   std::uint32_t neuron_buffer_start_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
   std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation, std::vector<double>& tmp_data
 ) const{

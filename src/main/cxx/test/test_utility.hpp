@@ -27,7 +27,7 @@
 #include "rafko_protocol/training.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_mainframe/models/rafko_settings.hpp"
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 
 namespace rafko_test {
 
@@ -94,7 +94,7 @@ extern void print_weights(const rafko_net::RafkoNet& net, const rafko_net::Solut
  * @param[in]  settings               The service settings
  */
 extern void print_training_sample(
-  std::uint32_t sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
+  std::uint32_t sample_sequence_index, rafko_gym::RafkoDatasetImplementation& data_set,
   const rafko_net::RafkoNet& net, const rafko_mainframe::RafkoSettings& settings
 );
 
@@ -160,15 +160,15 @@ extern rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurr
 /**
  * @brief      Creates a random dataset based on the given parameters
  *
- * @param[in]  input_size         The number of expected inputs are stored for the @DataSet
- * @param[in]  feature_size       The number of features and labels to be stored inside the @DataSet
+ * @param[in]  input_size         The number of expected inputs are stored for the @DataSetPackage
+ * @param[in]  feature_size       The number of features and labels to be stored inside the @DataSetPackage
  * @param[in]  sample_number      The number of samples to generate
  * @param[in]  sequence_size      The number of sequences one sample should contain
  * @param[in]  expected_label     The content of the dataset repeated in the correct structure
  *
  * @return     The created dataset
  */
-extern std::unique_ptr<rafko_gym::DataSet> create_dataset(
+extern std::unique_ptr<rafko_gym::DataSetPackage> create_dataset(
   std::uint32_t input_size, std::uint32_t feature_size,
   std::uint32_t sample_number, std::uint32_t sequence_size, std::uint32_t prefill_size = 0u,
   double expected_label = (0.0), double label_delta_per_feature = (0.0)

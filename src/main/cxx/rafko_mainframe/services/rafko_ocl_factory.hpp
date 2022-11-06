@@ -27,7 +27,7 @@
 #include <CL/opencl.hpp>
 
 #include "rafko_net/services/solution_solver.hpp"
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
 #include "rafko_gym/models/rafko_agent.hpp"
 #include "rafko_gym/services/rafko_weight_adapter.hpp"

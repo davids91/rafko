@@ -295,7 +295,7 @@ void print_weights(const rafko_net::RafkoNet& net, const rafko_net::Solution& so
 }
 
 void print_training_sample(
-  std::uint32_t sample_sequence_index, rafko_gym::RafkoDatasetWrapper& data_set,
+  std::uint32_t sample_sequence_index, rafko_gym::RafkoDatasetImplementation& data_set,
   const rafko_net::RafkoNet& net, std::shared_ptr<const rafko_mainframe::RafkoSettings> settings
 ){
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(net);
@@ -504,12 +504,12 @@ rafko_net::RafkoNet* generate_random_net_with_softmax_features_and_recurrence(
   return builder.create_layers(net_structure);
 }
 
-std::unique_ptr<rafko_gym::DataSet> create_dataset(
+std::unique_ptr<rafko_gym::DataSetPackage> create_dataset(
   std::uint32_t input_size, std::uint32_t feature_size,
   std::uint32_t sample_number, std::uint32_t sequence_size, std::uint32_t prefill_size,
   double expected_label, double label_delta_per_feature
 ){
-  std::unique_ptr<rafko_gym::DataSet> dataset = std::make_unique<rafko_gym::DataSet>();
+  std::unique_ptr<rafko_gym::DataSetPackage> dataset = std::make_unique<rafko_gym::DataSetPackage>();
   dataset->set_input_size(input_size);
   dataset->set_feature_size(feature_size);
   dataset->set_sequence_size(sequence_size);

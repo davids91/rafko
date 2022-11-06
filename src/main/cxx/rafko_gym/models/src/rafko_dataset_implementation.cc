@@ -14,11 +14,11 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 
 namespace rafko_gym{
 
-void RafkoDatasetWrapper::fill(const rafko_gym::DataSet& samples){
+void RafkoDatasetImplementation::fill(const rafko_gym::DataSetPackage& samples){
   std::uint32_t feature_start_index = 0;
   std::uint32_t input_start_index = 0;
   /*!Note: One cycle can be used for both, because there will always be at least as many inputs as labels */

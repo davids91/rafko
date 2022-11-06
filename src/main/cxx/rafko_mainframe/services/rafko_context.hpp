@@ -29,8 +29,8 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/training.pb.h"
 #include "rafko_gym/models/rafko_cost.hpp"
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_gym/models/rafko_agent.hpp"
 #include "rafko_gym/services/rafko_weight_updater.hpp"
 #include "rafko_mainframe/models/rafko_settings.hpp"
@@ -56,7 +56,7 @@ public:
    *
    * @param[in]      environment    An environment ready to be moved inside the context
    */
-  virtual void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment) = 0;
+  virtual void set_environment(std::shared_ptr<rafko_gym::RafkoDataSet> environment) = 0;
 
   /**
    * @brief          Accepts an objective function to base network evaluation on top of and takes ownership of it!
@@ -137,16 +137,6 @@ public:
    *                            Number of sequences evaluated may be limited by the available threads!
    */
   virtual void solve_environment(std::vector<std::vector<double>>& output, bool isolated) = 0;
-
-  /**
-   * @brief      Saves the context state
-   */
-  virtual void push_state() = 0;
-
-  /**
-   * @brief      Restores the previously stored context state
-   */
-  virtual void pop_state() = 0;
 
   /**
    * @brief       Provides access to the settings

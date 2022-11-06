@@ -21,7 +21,7 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/rafko_settings.hpp"
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 
 #include "test/test_utility.hpp"
 
@@ -38,8 +38,8 @@ TEST_CASE("Testing Dataset wrapper creation", "[environment][data-handling]" ) {
     std::uint32_t sequence_size = (rand()%2) + 1;
     std::uint32_t feature_size = (rand()%5) + 1;
     double expected_label = static_cast<double>(rand()%10) * (100.0);
-    std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */, feature_size, sample_number, sequence_size, 0/*prefill_size*/, expected_label));
-    rafko_gym::RafkoDatasetWrapper data_wrap(*dataset);
+    std::unique_ptr<rafko_gym::DataSetPackage> dataset(rafko_test::create_dataset(1/* input size */, feature_size, sample_number, sequence_size, 0/*prefill_size*/, expected_label));
+    rafko_gym::RafkoDatasetImplementation data_wrap(*dataset);
     REQUIRE( 0 == data_wrap.get_prefill_inputs_number() );
     REQUIRE( sample_number == data_wrap.get_number_of_sequences() );
     for(std::uint32_t sequence_index = 0; sequence_index < sample_number; ++sequence_index){

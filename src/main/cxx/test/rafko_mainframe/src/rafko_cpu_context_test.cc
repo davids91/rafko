@@ -32,7 +32,7 @@
 #include "rafko_net/services/solution_solver.hpp"
 #include "rafko_gym/services/cost_function_mse.hpp"
 #include "rafko_gym/models/rafko_cost.hpp"
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 #include "rafko_mainframe/services/rafko_cpu_context.hpp"
 
 #include "test/test_utility.hpp"
@@ -51,12 +51,12 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   );
   double expected_label = 50.0;
   rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features(1u, *settings);
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network.input_data_size(), network.output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
+  std::unique_ptr<rafko_gym::DataSetPackage> dataset(rafko_test::create_dataset(network.input_data_size(), network.output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(*settings);
-  rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
+  rafko_gym::RafkoDatasetImplementation dataset_wrap(*dataset);
   rafko_gym::RafkoCost reference_cost(*settings, cost);
   rafko_mainframe::RafkoCPUContext context(network, settings, std::make_unique<rafko_gym::RafkoCost>(*settings, cost));
-  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
+  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetImplementation>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
@@ -98,12 +98,12 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   );
   double expected_label = 50.0;
   rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features_and_recurrence(1u, *settings);
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network.input_data_size(), network.output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
+  std::unique_ptr<rafko_gym::DataSetPackage> dataset(rafko_test::create_dataset(network.input_data_size(), network.output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(*settings);
-  rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
+  rafko_gym::RafkoDatasetImplementation dataset_wrap(*dataset);
   rafko_gym::RafkoCost reference_cost(*settings, cost);
   rafko_mainframe::RafkoCPUContext context(network, settings, std::make_unique<rafko_gym::RafkoCost>(*settings, cost));
-  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
+  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetImplementation>(*dataset));
 
   /* Set some error and see if the environment produces the expected */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
@@ -147,15 +147,15 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
   );
   double expected_label = 50.0;
   rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features(1u, *settings);
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(network.input_data_size(), network.output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
+  std::unique_ptr<rafko_gym::DataSetPackage> dataset(rafko_test::create_dataset(network.input_data_size(), network.output_neuron_number(), sample_number, sequence_size, 0/*prefill_size*/, expected_label));
   std::shared_ptr<rafko_gym::CostFunction> cost = std::make_shared<rafko_gym::CostFunctionMSE>(*settings);
-  rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
+  rafko_gym::RafkoDatasetImplementation dataset_wrap(*dataset);
   rafko_gym::RafkoCost reference_cost(*settings, cost);
   rafko_mainframe::RafkoCPUContext context(network, settings, std::make_unique<rafko_gym::RafkoCost>(*settings, cost));
 
   (void)context.expose_settings().set_memory_truncation(dataset_wrap.get_sequence_size() / 2); /*!Note: So overall error value can just be halved because of this */
 
-  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetWrapper>(*dataset));
+  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetImplementation>(*dataset));
 
   double environment_error = context.stochastic_evaluation(true, seed);
 
@@ -329,7 +329,7 @@ TEST_CASE("Testing is solve is working as expected in CPU context for isolated s
       }
     ).create_layers({2,2,2,2,2,1});
   auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(sample_number, sequence_size);
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs), std::move(labels), sequence_size
   );
 
@@ -372,7 +372,7 @@ TEST_CASE("Testing is solve is working as expected in CPU context for isolated e
       }
     ).create_layers({2,2,2,2,2,1});
   auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(sample_number, sequence_size);
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs), std::move(labels), sequence_size
   );
 

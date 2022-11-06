@@ -36,7 +36,7 @@
 #include "rafko_net/services/solution_builder.hpp"
 #include "rafko_gym/services/function_factory.hpp"
 #include "rafko_gym/models/rafko_cost.hpp"
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 #include "rafko_gym/services/rafko_numeric_optimizer.hpp"
 #include "rafko_mainframe/services/rafko_cpu_context.hpp"
 #if(RAFKO_USES_OPENCL)
@@ -227,7 +227,7 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
 
   // network->mutable_weight_table()->Set(22,0.777);
 
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::vector<std::vector<double>>{
       // {0.777, 0.777},{0.777, 0.777},
       {0.666, 0.666},{0.666, 0.666}
@@ -351,7 +351,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
     network, settings, objective
   );
   auto [inputs1, labels1] = rafko_test::create_sequenced_addition_dataset(number_of_samples, /*sequence_size*/4);
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs1), std::move(labels1), /* Sequence size */4
   );
 
@@ -378,12 +378,12 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
   context1->set_weight_updater(rafko_gym::weight_updater_amsgrad);
 
   auto [inputs2, labels2] = rafko_test::create_sequenced_addition_dataset(number_of_samples, 4);
-  test_context->set_environment(std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  test_context->set_environment(std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs2), std::move(labels2), /* Sequence size */4
   ));
 
   auto [inputs3, labels3] = rafko_test::create_sequenced_addition_dataset(number_of_samples * 2, 4);
-  rafko_gym::RafkoDatasetWrapper* after_test_set =  google::protobuf::Arena::Create<rafko_gym::RafkoDatasetWrapper>(
+  rafko_gym::RafkoDatasetImplementation* after_test_set =  google::protobuf::Arena::Create<rafko_gym::RafkoDatasetImplementation>(
     settings->get_arena_ptr(), std::move(inputs3), std::move(labels3), /* Sequence size */4
   );
   settings->get_arena_ptr()->Own(after_test_set);

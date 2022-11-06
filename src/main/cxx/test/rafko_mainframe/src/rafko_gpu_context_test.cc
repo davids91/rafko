@@ -26,7 +26,7 @@
 #include "rafko_net/services/solution_builder.hpp"
 #include "rafko_net/services/solution_solver.hpp"
 #include "rafko_gym/models/rafko_cost.hpp"
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 #include "rafko_mainframe/services/rafko_ocl_factory.hpp"
 #include "rafko_mainframe/services/rafko_gpu_context.hpp"
 #include "rafko_mainframe/services/rafko_cpu_context.hpp"
@@ -278,7 +278,7 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 
     for(std::uint32_t steps = 0; steps < 1; ++steps){
       auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size);
-      std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+      std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
         std::move(inputs), std::move(labels), sequence_size
       );
 
@@ -334,7 +334,7 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
 
     for(std::uint32_t steps = 0; steps < 1; ++steps){
       auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size);
-      std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+      std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
         std::move(inputs), std::move(labels), sequence_size
       );
 
@@ -396,7 +396,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
       number_of_sequences = rand()%10 + 1;
       settings->set_memory_truncation(sequence_size);
       auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size);
-      std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+      std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
         std::move(inputs), std::move(labels), sequence_size
       );
 
@@ -458,7 +458,7 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
       sequence_size = rand()%10 + 1;
       settings->set_memory_truncation(sequence_size);
       auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_sequences, sequence_size);
-      std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+      std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
         std::move(inputs), std::move(labels), sequence_size
       );
 
@@ -521,12 +521,12 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
       number_of_sequences = rand()%10 + 1;
       sequence_size = rand()%10 + 1;
       settings->set_memory_truncation(sequence_size);
-      std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+      std::unique_ptr<rafko_gym::DataSetPackage> dataset( rafko_test::create_dataset(
         2/* input size */, feature_size,
         number_of_sequences, sequence_size, 2/*prefill_size*/,
         rand()%100/*expected_label*/
       ) );
-      std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+      std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
         *dataset
       );
 
@@ -547,7 +547,7 @@ void preapare_eval_buffers_for_seed(
   std::vector<std::vector<double>>& reference_features,
   std::vector<std::vector<double>>& reference_labels,
   std::vector<std::uint32_t>& reference_sequence_index_values,
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment,
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment,
   rafko_mainframe::RafkoSettings& settings,
   rafko_net::SolutionSolver& reference_agent,
   std::uint32_t& used_minibatch_size,
@@ -686,12 +686,12 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
       number_of_sequences = rand()%10 + 2;
       sequence_size = rand()%10 + 2;
       settings->set_memory_truncation(sequence_size);
-      std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+      std::unique_ptr<rafko_gym::DataSetPackage> dataset( rafko_test::create_dataset(
         2/* input size */, feature_size,
         number_of_sequences, sequence_size, 2/*prefill_size*/,
         rand()%100/*expected_label*/, (1.0)
       ) );
-      std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
+      std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(*dataset);
       std::vector<std::vector<double>> reference_inputs;
       std::vector<std::vector<double>> reference_features;
       std::vector<std::vector<double>> reference_labels;
@@ -793,12 +793,12 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     number_of_sequences = rand()%10 + 1;
     sequence_size = rand()%10 + 1;
     settings->set_memory_truncation(sequence_size);
-    std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+    std::unique_ptr<rafko_gym::DataSetPackage> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
       number_of_sequences, sequence_size, 2/*prefill_size*/,
       rand()%100/*expected_label*/, (1.0)
     ) );
-    std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
+    std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(*dataset);
 
     context->set_environment(environment);
     reference_context.set_environment(environment);
@@ -858,12 +858,12 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     number_of_sequences = rand()%10 + 1;
     sequence_size = rand()%10 + 1;
     settings->set_memory_truncation(sequence_size);
-    std::unique_ptr<rafko_gym::DataSet> dataset( rafko_test::create_dataset(
+    std::unique_ptr<rafko_gym::DataSetPackage> dataset( rafko_test::create_dataset(
       2/* input size */, feature_size,
       number_of_sequences, sequence_size, 2/*prefill_size*/,
       rand()%100/*expected_label*/, (1.0)
     ) );
-    std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(*dataset);
+    std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(*dataset);
 
     context->set_environment(environment);
     reference_context.set_environment(environment);
@@ -912,7 +912,7 @@ TEST_CASE("Testing is solve is working as expected in GPU context for isolated e
 
   rafko_net::RafkoNet& network = *rafko_test::generate_random_net_with_softmax_features(2u/*input_size*/, *settings, 1u);
   auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(sample_number, sequence_size);
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs), std::move(labels), sequence_size
   );
 

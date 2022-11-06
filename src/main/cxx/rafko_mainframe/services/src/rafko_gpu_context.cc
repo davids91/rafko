@@ -169,7 +169,7 @@ void RafkoGPUContext::set_weight_updater(rafko_gym::Weight_updaters updater){
   m_weightUpdater = rafko_gym::UpdaterFactory::build_weight_updater(m_network, updater, *m_settings);
 }
 
-void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment){
+void RafkoGPUContext::set_environment(std::shared_ptr<rafko_gym::RafkoDataSet> environment){
   RFASSERT_SCOPE(ENV_BUILD);
   RFASSERT_LOG("Setting environment in GPU context..");
   RFASSERT_LOG("Environment feature size: {} vs. Network output Neuron number: {}", environment->get_feature_size(), m_network.output_neuron_number());

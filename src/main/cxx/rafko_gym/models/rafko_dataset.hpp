@@ -24,26 +24,13 @@
 #include <CL/opencl.hpp>
 #endif/*(RAFKO_USES_OPENCL)*/
 
-#include "rafko_gym/models/rafko_agent.hpp"
-
 namespace RAFKO_EXPORT rafko_gym {
 
 /**
- * @brief      A class representing an environment, producing fitness/error value. Error values are negative, while fittness
- *             values are positive
+ * @brief      A class representing an environment supporting objective evaluations with input and label data
  */
-class RAFKO_EXPORT RafkoEnvironment{
+class RAFKO_EXPORT RafkoDataSet{
 public:
-
-  /**
-   * @brief      Saves the RafkoEnvironment state
-   */
-  virtual void push_state() = 0;
-
-  /**
-   * @brief      Restores the previously stored environment state
-   */
-  virtual void pop_state() = 0;
 
   /**
    * @brief      Gets an input sample from the set
@@ -138,7 +125,7 @@ public:
     return get_prefill_inputs_number() + get_sequence_size();
   }
 
-  virtual ~RafkoEnvironment() = default;
+  virtual ~RafkoDataSet() = default;
 
   #if(RAFKO_USES_OPENCL)
   /**

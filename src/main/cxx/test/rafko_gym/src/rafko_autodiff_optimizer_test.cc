@@ -41,7 +41,7 @@
 #include "rafko_net/services/solution_builder.hpp"
 #include "rafko_net/services/solution_solver.hpp"
 #include "rafko_gym/models/rafko_cost.hpp"
-#include "rafko_gym/models/rafko_dataset_wrapper.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 #include "rafko_gym/services/rafko_autodiff_optimizer.hpp"
 
 #include "test/test_utility.hpp"
@@ -73,7 +73,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
     })
     .create_layers({3,1});
 
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::vector<std::vector<double>>{{1.0,1.0},{1.0,1.0}},
     std::vector<std::vector<double>>{{1.0},{2.0}},
     2.0/*sequence_size*/
@@ -152,7 +152,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     })
     .create_layers({3,1});
 
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::vector<std::vector<double>>{{0.666, 0.666},{0.666, 0.666}},
     std::vector<std::vector<double>>{{10.0},{20.0}},
     2 /*sequence_size*/
@@ -253,7 +253,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
 
   // network.mutable_weight_table()->Set(22,0.777);
 
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::vector<std::vector<double>>{
       {0.666, 0.666},{0.666, 0.666}
     },
@@ -379,12 +379,12 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
   #endif/*(RAFKO_USES_OPENCL)*/
   auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size);
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs), std::move(labels), sequence_size
   );
 
   auto [inputs2, labels2] = rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size);
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> test_environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> test_environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs2), std::move(labels2), sequence_size
   );
 

@@ -58,7 +58,7 @@ int main(){
        */
     }
   }
-  std::shared_ptr<rafko_gym::RafkoDatasetWrapper> environment = std::make_shared<rafko_gym::RafkoDatasetWrapper>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(environment_inputs), std::move(environment_labels), sequence_size
   );
   /* --- Generating sample environment Data set --- */

@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef RAFKO_DATASET_WRAP_H
-#define RAFKO_DATASET_WRAP_H
+#ifndef RAFKO_DATASET_WRAPPER_H
+#define RAFKO_DATASET_WRAPPER_H
 
 #include "rafko_global.hpp"
 
@@ -24,13 +24,13 @@
 #include <math.h>
 
 #include "rafko_protocol/training.pb.h"
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_gym{
 
 /**
- * @brief      A wrapper class to store @DataSets in a friendly format.
+ * @brief      A wrapper class to store @DataSetPackages in a friendly format.
  *             It is possible to have more input samples, than label samples; In those cases
  *             the extra inputs are to be used to initialize the network before training.
  *             The data set consists of labels and inputs. Not every label has an input assigned to it,
@@ -58,9 +58,9 @@ namespace rafko_gym{
  *             Despite the above structure, for eligibility of paralellism, the inputs and labels are in a separate,
  *             contigous array.
  */
-class RAFKO_EXPORT RafkoDatasetWrapper : public RafkoEnvironment{
+class RAFKO_EXPORT RafkoDatasetImplementation : public RafkoDataSet{
 public:
-  explicit RafkoDatasetWrapper(const rafko_gym::DataSet& samples)
+  explicit RafkoDatasetImplementation(const rafko_gym::DataSetPackage& samples)
   : m_sequenceSize(std::max(1u,samples.sequence_size()))
   , m_inputSamples(samples.inputs_size() / samples.input_size())
   , m_labelSamples(samples.labels_size() / samples.feature_size())
@@ -75,7 +75,7 @@ public:
     fill(samples);
   }
 
-  RafkoDatasetWrapper(std::vector<std::vector<double>>&& input_samples, std::vector<std::vector<double>>&& label_samples, std::uint32_t sequence_size = 1u)
+  RafkoDatasetImplementation(std::vector<std::vector<double>>&& input_samples, std::vector<std::vector<double>>&& label_samples, std::uint32_t sequence_size = 1u)
   : m_sequenceSize(std::max(1u,sequence_size))
   , m_inputSamples(std::move(input_samples))
   , m_labelSamples(std::move(label_samples))
@@ -134,10 +134,6 @@ public:
     return m_prefillSequences;
   }
 
-  /*!Note: There's no state to talk about with this specialization */
-  constexpr void push_state() override{ }
-  constexpr void pop_state() override{ }
-
 private:
   const std::uint32_t m_sequenceSize;
   std::vector<std::vector<double>> m_inputSamples;
@@ -145,13 +141,13 @@ private:
   const std::uint32_t m_prefillSequences; /* Number of input sequences used only to create an initial state for the Neural network */
 
   /**
-   * @brief      Converting the @rafko_gym::DataSet message to vectors
+   * @brief      Converting the @rafko_gym::DataSetPackage message to vectors
    *
    * @param      samples  The data set to parse
    */
-  void fill(const rafko_gym::DataSet& samples);
+  void fill(const rafko_gym::DataSetPackage& samples);
 };
 
 } /* namespace rafko_gym */
 
-#endif /* RAFKO_DATASET_WRAP_H */
+#endif /* RAFKO_DATASET_WRAPPER_H */

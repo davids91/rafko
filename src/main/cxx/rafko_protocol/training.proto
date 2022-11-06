@@ -100,7 +100,7 @@ message TrainingHyperparameters{
  *              In case of sequential data, label-input pairs of @sequence_size are considered one sequence.
  *              By desgin the number of  @labels should  be a multiple of @sequence_size * @feature_size.
  */
-message DataSet{
+message DataSetPackage{
   uint32 input_size = 1;
   uint32 feature_size = 2;
   uint32 sequence_size = 3;

@@ -33,7 +33,7 @@
 #include "rafko_mainframe/models/rafko_settings.hpp"
 #include "rafko_mainframe/models/rafko_autonomous_entity.hpp"
 #include "rafko_mainframe/services/rafko_context.hpp"
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
 #include "rafko_gym/models/rafko_backpropagation_data.hpp"
 
@@ -51,7 +51,7 @@ class RAFKO_EXPORT RafkoAutodiffOptimizer : public rafko_mainframe::RafkoAutonom
 public:
   RafkoAutodiffOptimizer(
     std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
-    std::shared_ptr<RafkoEnvironment> environment, rafko_net::RafkoNet& network,
+    std::shared_ptr<RafkoDataSet> environment, rafko_net::RafkoNet& network,
     std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator = {},
     std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator = {}
   )
@@ -232,7 +232,7 @@ public:
   }
 
 protected:
-  std::shared_ptr<RafkoEnvironment> m_environment;
+  std::shared_ptr<RafkoDataSet> m_environment;
   rafko_net::RafkoNet& m_network;
   RafkoBackpropagationData m_data;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;

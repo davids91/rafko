@@ -29,7 +29,7 @@
 #include "rafko_mainframe/models/rafko_settings.hpp"
 #include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_gym/services/rafko_backpropagation_operation.hpp"
 
 namespace rafko_gym{
@@ -50,14 +50,14 @@ public:
 
   AutoDiffGPUStrategy(
     const rafko_mainframe::RafkoSettings& settings, rafko_net::RafkoNet& network,
-    std::shared_ptr<RafkoEnvironment> environment
+    std::shared_ptr<RafkoDataSet> environment
   )
   : AutoDiffGPUStrategy(settings, network)
   {
     set_environment(environment);
   }
 
-  void set_environment(std::shared_ptr<RafkoEnvironment> environment){
+  void set_environment(std::shared_ptr<RafkoDataSet> environment){
     m_environment = environment;
     RFASSERT(m_environment->get_input_size() == m_network.input_data_size());
     m_built = false;
@@ -131,7 +131,7 @@ public:
 private:
   const rafko_mainframe::RafkoSettings& m_settings;
   rafko_net::RafkoNet& m_network;
-  std::shared_ptr<RafkoEnvironment> m_environment;
+  std::shared_ptr<RafkoDataSet> m_environment;
   bool m_built = false;
   std::string m_builtSource;
   std::uint32_t m_numberOfOperations;

@@ -30,7 +30,7 @@
 namespace rafko_gym_test {
 
 /*###############################################################################################
- * Testing Data aggregate implementation and seeing if it converts @DataSet correctly
+ * Testing Data aggregate implementation and seeing if it converts @DataSetPackage correctly
  * into the data item wih statistics, and take care of statistic error data correctly
  * */
 TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
@@ -41,10 +41,10 @@ TEST_CASE("Testing Data aggregate for sequential data", "[data-handling]" ) {
   double expected_label = (50.0);
   double set_distance = (10.0);
 
-  std::unique_ptr<rafko_gym::DataSet> dataset(rafko_test::create_dataset(1/* input size */,1/* feature size */,number_of_sequences, sequence_size, 0/*prefill_size*/, expected_label));
+  std::unique_ptr<rafko_gym::DataSetPackage> dataset(rafko_test::create_dataset(1/* input size */,1/* feature size */,number_of_sequences, sequence_size, 0/*prefill_size*/, expected_label));
 
-  /* Create @RafkoCost from @DataSet */
-  rafko_gym::RafkoDatasetWrapper dataset_wrap(*dataset);
+  /* Create @RafkoCost from @DataSetPackage */
+  rafko_gym::RafkoDatasetImplementation dataset_wrap(*dataset);
   rafko_gym::RafkoCost data_objective(settings, std::make_unique<rafko_gym::CostFunctionMSE>(settings));
   REQUIRE( 0 == dataset_wrap.get_prefill_inputs_number() );
   REQUIRE( number_of_sequences == dataset_wrap.get_number_of_sequences() );

@@ -14,12 +14,14 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
+
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_gym{
 
 #if(RAFKO_USES_OPENCL)
-std::vector<cl::Event> RafkoEnvironment::upload_inputs_to_buffer(
+std::vector<cl::Event> RafkoDataSet::upload_inputs_to_buffer(
   cl::CommandQueue opencl_queue, cl::Buffer buffer, std::uint32_t buffer_start_byte_offset,
   std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
   std::uint32_t sequences_to_upload
@@ -57,7 +59,7 @@ std::vector<cl::Event> RafkoEnvironment::upload_inputs_to_buffer(
   return events;
 }
 
-std::vector<cl::Event> RafkoEnvironment::upload_labels_to_buffer(
+std::vector<cl::Event> RafkoDataSet::upload_labels_to_buffer(
   cl::CommandQueue opencl_queue, cl::Buffer buffer, std::uint32_t buffer_start_byte_offset,
   std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
   std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence,

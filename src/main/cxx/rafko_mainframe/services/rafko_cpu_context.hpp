@@ -23,7 +23,7 @@
 #include <memory>
 
 #include "rafko_net/services/solution_solver.hpp"
-#include "rafko_gym/models/rafko_environment.hpp"
+#include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
 #include "rafko_gym/models/rafko_agent.hpp"
 #include "rafko_gym/services/updater_factory.hpp"
@@ -44,7 +44,7 @@ public:
   ~RafkoCPUContext() = default;
 
   /* +++ Methods taken from @RafkoContext +++ */
-  void set_environment(std::shared_ptr<rafko_gym::RafkoEnvironment> environment) override;
+  void set_environment(std::shared_ptr<rafko_gym::RafkoDataSet> environment) override;
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override{
     RFASSERT_LOG("Setting objective in CPU Context");
@@ -116,14 +116,6 @@ public:
 
   void solve_environment(std::vector<std::vector<double>>& output, bool isolated = true) override;
 
-  void push_state() override{
-    m_environment->push_state();
-  }
-
-  void pop_state() override{
-    m_environment->pop_state();
-  }
-
   rafko_mainframe::RafkoSettings& expose_settings() override{
     return *m_settings;
   }
@@ -137,7 +129,7 @@ private:
   rafko_net::RafkoNet& m_network;
   rafko_net::SolutionSolver::Factory m_solverFactory;
   std::shared_ptr<rafko_net::SolutionSolver> m_agent;
-  std::shared_ptr<rafko_gym::RafkoEnvironment> m_environment;
+  std::shared_ptr<rafko_gym::RafkoDataSet> m_environment;
   std::shared_ptr<rafko_gym::RafkoObjective> m_objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
 

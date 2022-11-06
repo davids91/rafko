@@ -165,9 +165,7 @@ double RafkoNumericOptimizer::get_single_weight_gradient(std::uint32_t weight_in
     context.expose_network().set_weight_table(weight_index, w);
   }
 
-  context.push_state(); /* Approximate the modified weights gradient */
   gradient = -stochastic_evaluation(context);
-  context.pop_state();
 
   { /* Push the selected weight in other direction */
     std::lock_guard<std::mutex> my_lock(m_networkMutex);
@@ -176,13 +174,8 @@ double RafkoNumericOptimizer::get_single_weight_gradient(std::uint32_t weight_in
     context.expose_network().set_weight_table(weight_index, w);
   }
 
-  context.push_state(); /* Approximate the newly modified weights gradient */
   double new_error_state = -stochastic_evaluation(context);
-  context.pop_state();
-
-  gradient = -(gradient - new_error_state) * (2.0 * current_epsilon);
-
-  return gradient;
+  return -(gradient - new_error_state) * (2.0 * current_epsilon);
 }
 
 double RafkoNumericOptimizer::get_error_from_direction(
@@ -206,10 +199,7 @@ double RafkoNumericOptimizer::get_error_from_direction(
     };
   }
 
-  context.push_state(); /* Approximate the modified weights gradient */
   result_error = -stochastic_evaluation(context);
-  context.pop_state();
-
   m_tmpDataPool.release_buffer(tmp_weight_table);
   return result_error;
 }
@@ -236,11 +226,7 @@ double RafkoNumericOptimizer::get_error_from_direction(
       network_original_weights.end()
     };
   }
-
-  context.push_state(); /* Approximate the modified weights gradient */
   result_error = -stochastic_evaluation(context);
-  context.pop_state();
-
   m_tmpDataPool.release_buffer(tmp_weight_table);
   return result_error;
 }
