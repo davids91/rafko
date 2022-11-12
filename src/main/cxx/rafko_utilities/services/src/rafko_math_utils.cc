@@ -207,16 +207,27 @@ std::vector<NDArrayIndex::IntervalPart> NDArrayIndex::mappable_parts_of(
 ) const{
   std::vector<NDArrayIndex::IntervalPart> result;
   bool part_in_progress = false;
+  std::uint32_t start = -1;
+  std::uint32_t size = 0;
   for(std::int32_t delta_index = 0; delta_index != delta; delta_index += std::copysign(1, delta)){
     const bool current_position_in_inside_content = inside_content(position, dimension, delta_index);
     if(current_position_in_inside_content && part_in_progress){
-      assert(0 < result.size());
-      ++result.back().steps_inside_target; /* Increase the size of the current part of the interval */
+      ++size; /* Increase the size of the current part of the interval */
     }else if(current_position_in_inside_content){ /* If the interval iteration became inside bounds */
-      result.push_back({(position[dimension] + delta_index), 1}); /* Add the new part as a result */
+      start = (position[dimension] + delta_index);
+      size = 1;
+    }
+
+    if(!current_position_in_inside_content && part_in_progress){
+      assert(inside_content(position, dimension, start - position[dimension] + size - 1));
+      result.push_back({start, size});
+    } 
+
+    if(current_position_in_inside_content)
       part_in_progress = true;
-    }else part_in_progress = false;
+      else part_in_progress = false;
   }
+  if(part_in_progress)result.push_back({start, size});
   return result;
 }
 

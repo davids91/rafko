@@ -154,8 +154,8 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
     )/*offset*/
   );
 
-  RFASSERT( static_cast<std::int32_t>(m_tmpAvgD.size()) > std::count(m_tmpAvgD.begin(),m_tmpAvgD.end(), 0.0));
-  apply_weight_update(m_tmpAvgD);
+  if( static_cast<std::int32_t>(m_tmpAvgD.size()) > std::count(m_tmpAvgD.begin(),m_tmpAvgD.end(), 0.0))
+    apply_weight_update(m_tmpAvgD);
 
   ++m_iteration;
   update_context_errors();

@@ -71,8 +71,7 @@ public:
    * @return     The feature error.
    */
   double get_feature_error(
-    const std::vector<double>& label, const std::vector<double>& neuron_data,
-    std::uint32_t sample_number
+    const std::vector<double>& label, const std::vector<double>& neuron_data, std::uint32_t sample_number
   ) const{
     return get_feature_error(label, neuron_data, settings.get_sqrt_of_solve_threads(), 0, sample_number);
   }

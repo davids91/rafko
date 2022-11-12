@@ -42,7 +42,7 @@ TEST_CASE("Testing NDArray Indexing with a 2D array without padding", "[NDArray]
     std::uint32_t elements_after_x_row = width - x;
     REQUIRE(1 == idx.mappable_parts_of(0,width).size());
     REQUIRE(x == idx.mappable_parts_of(0,width)[0].position_start);
-    REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].steps_inside_target);
+    REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].m_stepsInsideTarget);
     /*!Note: using width in the above interfaces because it is guaranteed
      * that an interval of that size spans over the relevant dimension
      * */
@@ -80,7 +80,7 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with positive padding", "[ND
     std::uint32_t elements_after_x_row = padding_x + width - x;
     REQUIRE(1 == idx.mappable_parts_of(0,width).size());
       REQUIRE(x == idx.mappable_parts_of(0,width)[0].position_start);
-    REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].steps_inside_target);
+    REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].m_stepsInsideTarget);
 
     if(y < (height + (2 * padding_y) - 1)){
       REQUIRE( idx.step(1,1) );
@@ -142,7 +142,7 @@ TEST_CASE("Testing NDArray Indexing with a 2D array with negative padding", "[ND
     std::uint32_t elements_after_x_row = width + padding_x - x;
     REQUIRE(1 == idx.mappable_parts_of(0,width).size());
     REQUIRE(x == idx.mappable_parts_of(0,width)[0].position_start);
-    REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].steps_inside_target);
+    REQUIRE(elements_after_x_row == idx.mappable_parts_of(0,width)[0].m_stepsInsideTarget);
     if(y < (height - 1)){
       REQUIRE( idx.step(1,1) );
       if(idx.inside_content()){

@@ -182,11 +182,11 @@ public:
   /** @struct IntervalPart
    *  @brief Describes part of an interval excluding the direction it lies on
    *  @var    position_start          the absolute starting position of the interval relevan part
-   *  @var    steps_inside_target     the size of the interval's relevant part
+   *  @var    m_stepsInsideTarget     the size of the interval's relevant part
    */
   struct IntervalPart{
-    std::uint32_t position_start;
-    std::uint32_t steps_inside_target;
+    const std::uint32_t position_start;
+    const std::uint32_t m_stepsInsideTarget;
   };
 
   /** @brief    Tells which parts of the provided range relative to the stored direction are mappable to 
