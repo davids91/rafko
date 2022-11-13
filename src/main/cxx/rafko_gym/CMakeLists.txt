@@ -30,6 +30,7 @@ set(GYM_INTERFACE_SERVICES
 )
 set(GYM_HEADER_MODELS
   models/rafq_set.hpp
+  models/rafq_environment.hpp
   models/rafko_agent.hpp
   models/rafko_dataset.hpp
   models/rafko_dataset_implementation.hpp
@@ -43,6 +44,7 @@ set(GYM_HEADER_SERVICES
   services/function_factory.hpp
   services/rafko_numeric_optimizer.hpp
   services/updater_factory.hpp
+  services/rafq_trainer.hpp
   services/rafko_weight_adapter.hpp
   services/rafko_weight_updater.hpp
   services/rafko_autodiff_optimizer.hpp

@@ -48,6 +48,7 @@ if(MAKE_TESTS)
     rafko_net/src/rafko_regularization_tests.cc
     rafko_net/src/rafko_weight_updater_test.cc
     rafko_net/src/rafko_weight_adapter_test.cc
+    rafko_gym/src/rafq_set_test.cc
     rafko_gym/src/rafko_dataset_cost_test.cc
     rafko_gym/src/rafko_dataset_wrapper_test.cc
     rafko_gym/src/cost_function_mse_test.cc
