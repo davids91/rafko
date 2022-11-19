@@ -27,7 +27,7 @@
 namespace RAFKO_EXPORT rafko_gym {
 
 /**
- * @brief      A class representing an environment supporting objective evaluations with input and label data
+ * @brief      A class representing a data set supporting objective evaluations with input and label data
  */
 class RAFKO_EXPORT RafkoDataSet{
 public:
@@ -67,7 +67,7 @@ public:
   /**
    * @brief      Gets the number of floating point values the evaluation accepts to produce the label values
    *
-   * @return     The size of one input inside the environment
+   * @return     The size of one input inside the data set
    */
   virtual std::uint32_t get_input_size() const = 0;
 
@@ -121,7 +121,7 @@ public:
    *
    * @return    the number of input values one sequence contains
    */
-  std::uint32_t get_inputs_in_one_sequence(){
+  std::uint32_t get_inputs_in_one_sequence() const{
     return get_prefill_inputs_number() + get_sequence_size();
   }
 
@@ -134,7 +134,7 @@ public:
    * @param       opencl_queue                  The OpenCL queue to start the buffer oprations on
    * @param       buffer                        The buffer to upload the information to
    * @param       buffer_start_byte_offset      The offset pointing to the beginning of the area the sequences are uploaded to
-   * @param[in]   sequence_start_index          The index of the first sequence in the environment to upload the inputs from
+   * @param[in]   sequence_start_index          The index of the first sequence in the data set to upload the inputs from
    * @param[in]   buffer_sequence_start_index   Start index of a sequence to start uploading inputs from in the global buffer
    * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
    *
@@ -144,7 +144,7 @@ public:
     cl::CommandQueue opencl_queue, cl::Buffer buffer, std::uint32_t buffer_start_byte_offset,
     std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
     std::uint32_t sequences_to_upload
-  );
+  ) const;
 
   /**
    * @brief     Upload labels to the error phase to be able to evaluate agent output
@@ -152,7 +152,7 @@ public:
    * @param       opencl_queue                  The OpenCL queue to start the buffer oprations on
    * @param       buffer                        The buffer to upload the information to
    * @param       buffer_start_byte_offset      The offset pointing to the beginning of the area the sequences are uploaded to
-   * @param[in]   sequence_start_index          The index of the first sequence in the environment to upload the inputs from
+   * @param[in]   sequence_start_index          The index of the first sequence in the data set to upload the inputs from
    * @param[in]   buffer_sequence_start_index   Start index of a sequence to start uploading inputs from in the global buffer
    * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
    * @param[in]   start_index_inside_sequence   Start index inside sequence for sequence truncation
@@ -165,7 +165,7 @@ public:
     std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
     std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence,
     std::uint32_t sequence_truncation
-  );
+  ) const;
   #endif/*(RAFKO_USES_OPENCL)*/
 
 };

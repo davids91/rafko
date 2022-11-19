@@ -73,7 +73,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
     })
     .create_layers({3,1});
 
-  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> data_set = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::vector<std::vector<double>>{{1.0,1.0},{1.0,1.0}},
     std::vector<std::vector<double>>{{1.0},{2.0}},
     2.0/*sequence_size*/
@@ -83,21 +83,21 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
     *settings, rafko_gym::cost_function_squared_error
   );
 
-  rafko_gym::RafkoAutodiffOptimizer optimizer(settings, environment, network);
-  optimizer.build(objective);
+  rafko_gym::RafkoAutodiffOptimizer optimizer(settings, network);
+  optimizer.build(data_set, objective);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   std::uint32_t iteration = 0u;
   rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   while(
     (
-      std::abs(actual_value[1][0] - environment->get_label_sample(0u)[0])
-      + std::abs(actual_value[0][0] - environment->get_label_sample(1u)[0])
+      std::abs(actual_value[1][0] - data_set->get_label_sample(0u)[0])
+      + std::abs(actual_value[0][0] - data_set->get_label_sample(1u)[0])
     ) > (2.0 * learning_rate)
   ){
     optimizer.reset();
     optimizer.calculate(
-      {environment->get_input_samples().begin(), environment->get_input_samples().end()},
-      {environment->get_label_samples().begin(), environment->get_label_samples().end()}
+      {data_set->get_input_samples().begin(), data_set->get_input_samples().end()},
+      {data_set->get_label_samples().begin(), data_set->get_label_samples().end()}
     );
     std::shared_ptr<rafko_net::SolutionSolver> reference_solver = reference_solver_factory.build();
     for(std::int32_t weight_index = 0; weight_index < network.weight_table_size(); ++weight_index){
@@ -109,16 +109,16 @@ TEST_CASE("Testing if autodiff optimizer converges networks", "[optimize][small]
     actual_value[1][0] = optimizer.get_neuron_operation(3u)->get_value(1u/*past_index*/);
     actual_value[0][0] = optimizer.get_neuron_operation(3u)->get_value(0u/*past_index*/);
     REQUIRE(
-      reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
+      reference_solver->solve(data_set->get_input_sample(0u), true, 0u)[0]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000000001)
     );
     REQUIRE(
-      reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
+      reference_solver->solve(data_set->get_input_sample(1u), false, 0u)[0]
       == Catch::Approx(actual_value[0][0]).epsilon(0.0000000000001)
     );
     std::cout << "Target: "
-    << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
-    << environment->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
+    << data_set->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
+    << data_set->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
     << "     \r";
     ++iteration;
   }
@@ -152,7 +152,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     })
     .create_layers({3,1});
 
-  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> data_set = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::vector<std::vector<double>>{{0.666, 0.666},{0.666, 0.666}},
     std::vector<std::vector<double>>{{10.0},{20.0}},
     2 /*sequence_size*/
@@ -162,8 +162,8 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     *settings, rafko_gym::cost_function_squared_error
   );
 
-  rafko_gym::RafkoAutodiffOptimizer optimizer(settings, environment, network);
-  optimizer.build(objective);
+  rafko_gym::RafkoAutodiffOptimizer optimizer(settings, network);
+  optimizer.build(data_set, objective);
   optimizer.set_weight_updater(rafko_gym::weight_updater_default);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   std::uint32_t iteration = 0u;
@@ -172,13 +172,13 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
   rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   while(
     (
-      std::abs(actual_value[1][0] - environment->get_label_sample(0u)[0])
-      + std::abs(actual_value[0][0] - environment->get_label_sample(1u)[0])
+      std::abs(actual_value[1][0] - data_set->get_label_sample(0u)[0])
+      + std::abs(actual_value[0][0] - data_set->get_label_sample(1u)[0])
     ) > (2.0 * settings->get_learning_rate())
   ){
     std::shared_ptr<rafko_net::SolutionSolver> reference_solver = reference_solver_factory.build();
     start = std::chrono::steady_clock::now();
-    optimizer.iterate();
+    optimizer.iterate(*data_set);
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
     if(0.0 == avg_duration)avg_duration = current_duration;
     else avg_duration = (avg_duration + current_duration)/2.0;
@@ -186,11 +186,11 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
     actual_value[1][0] = optimizer.get_neuron_operation(3u)->get_value(1u/*past_index*/);
     actual_value[0][0] = optimizer.get_neuron_operation(3u)->get_value(0u/*past_index*/);
     CHECK(
-      reference_solver->solve(environment->get_input_sample(0u), true/*reset_memory*/, 0u/*thread_index*/)[0]
+      reference_solver->solve(data_set->get_input_sample(0u), true/*reset_memory*/, 0u/*thread_index*/)[0]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000001)
     );
     REQUIRE(
-      reference_solver->solve(environment->get_input_sample(1u), false/*reset_memory*/, 0u/*thread_index*/)[0]
+      reference_solver->solve(data_set->get_input_sample(1u), false/*reset_memory*/, 0u/*thread_index*/)[0]
       == Catch::Approx(actual_value[0][0]).epsilon(0.0000000001)
     );
 
@@ -199,8 +199,8 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration i
       [](const double& accu, const double& element){ return accu + std::abs(element); }
     );
     std::cout << "Target: "
-    << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
-    << environment->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
+    << data_set->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
+    << data_set->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
     << " | avg duration: " << avg_duration << "ms "
     << " | weight_sum: " << weight_sum
     << " | iteration: " << iteration
@@ -253,7 +253,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
 
   // network.mutable_weight_table()->Set(22,0.777);
 
-  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> data_set = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::vector<std::vector<double>>{
       {0.666, 0.666},{0.666, 0.666}
     },
@@ -270,9 +270,9 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
   std::unique_ptr<rafko_gym::RafkoAutodiffGPUOptimizer> optimizerGPU = (
     rafko_mainframe::RafkoOCLFactory()
       .select_platform().select_device()
-      .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, environment, network)
+      .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network, data_set)
   );
-  optimizerGPU->build(objective);
+  optimizerGPU->build(data_set, objective);
   optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   std::uint32_t iteration = 0u;
@@ -281,25 +281,29 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
   rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   while(
     (
-      std::abs(actual_value[1][0] - environment->get_label_sample(0u)[0])
-      + std::abs(actual_value[0][0] - environment->get_label_sample(1u)[0])
+      std::abs(actual_value[1][0] - data_set->get_label_sample(0u)[0])
+      + std::abs(actual_value[0][0] - data_set->get_label_sample(1u)[0])
     ) > (2.0 * settings->get_learning_rate())
   ){
     std::shared_ptr<rafko_net::SolutionSolver> reference_solver = reference_solver_factory.build();
     start = std::chrono::steady_clock::now();
-    optimizerGPU->iterate();
+    optimizerGPU->iterate(*data_set);
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
     if(0.0 == avg_duration)avg_duration = current_duration;
     else avg_duration = (avg_duration + current_duration)/2.0;
 
-    actual_value[1][0] = optimizerGPU->get_neuron_data(0u/*sequence_index*/, 1u/*past_index*/, 3u/*neuron_index*/);
-    actual_value[0][0] = optimizerGPU->get_neuron_data(0u/*sequence_index*/, 0u/*past_index*/, 3u/*neuron_index*/);
+    actual_value[1][0] = optimizerGPU->get_neuron_data(
+      0u/*sequence_index*/, 1u/*past_index*/, 3u/*neuron_index*/, *data_set
+    );
+    actual_value[0][0] = optimizerGPU->get_neuron_data(
+      0u/*sequence_index*/, 0u/*past_index*/, 3u/*neuron_index*/, *data_set
+    );
     CHECK(
-      reference_solver->solve(environment->get_input_sample(0u), true, 0u)[0]
+      reference_solver->solve(data_set->get_input_sample(0u), true, 0u)[0]
       == Catch::Approx(actual_value[1][0]).epsilon(0.0000000001)
     );
     REQUIRE(
-      reference_solver->solve(environment->get_input_sample(1u), false, 0u)[0]
+      reference_solver->solve(data_set->get_input_sample(1u), false, 0u)[0]
       == Catch::Approx(actual_value[0][0]).epsilon(0.0000000001)
     );
 
@@ -308,8 +312,8 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
       [](const double& accu, const double& element){ return accu + std::abs(element); }
     );
     std::cout << "Target: "
-    << environment->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
-    << environment->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
+    << data_set->get_label_sample(0u)[0] << " --?--> " << actual_value[1][0] << ";   "
+    << data_set->get_label_sample(1u)[0] << " --?--> " << actual_value[0][0]
     << " | avg duration: " << avg_duration << "ms "
     << " | weight_sum: " << weight_sum
     << " | iteration: " << iteration
@@ -320,7 +324,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
 }
 #endif/*(RAFKO_USES_OPENCL)*/
 
-TEST_CASE("Testing if autodiff optimizer converges networks with a prepared environment", "[optimize][!benchmark]"){
+TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data_set", "[optimize][!benchmark]"){
   #if(RAFKO_USES_OPENCL)
   std::uint32_t number_of_samples = 1024;
   std::uint32_t minibatch_size = 256;
@@ -379,29 +383,29 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
   #endif/*(RAFKO_USES_OPENCL)*/
   auto [inputs, labels] = rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size);
-  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> data_set = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs), std::move(labels), sequence_size
   );
 
   auto [inputs2, labels2] = rafko_test::create_sequenced_addition_dataset(number_of_samples, sequence_size);
-  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> test_environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> test_data_set = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs2), std::move(labels2), sequence_size
   );
 
-  test_context->set_environment(test_environment);
+  test_context->set_data_set(test_data_set);
 
   #if(RAFKO_USES_OPENCL)
   std::unique_ptr<rafko_gym::RafkoAutodiffGPUOptimizer> optimizer = (
     rafko_mainframe::RafkoOCLFactory()
       .select_platform().select_device()
-      .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, environment, network, context, test_context)
+      .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network, data_set, context, test_context)
   );
   #else
   std::unique_ptr<rafko_gym::RafkoAutodiffOptimizer> optimizer = std::make_unique<rafko_gym::RafkoAutodiffOptimizer>(
-    settings, environment, network, context, test_context
+    settings, network, context, test_context
   );
   #endif/*(RAFKO_USES_OPENCL)*/
-  optimizer->build(objective);
+  optimizer->build(data_set, objective);
   optimizer->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   double train_error;
@@ -435,7 +439,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared envi
   while(!optimizer->stop_triggered()){
     std::shared_ptr<rafko_net::SolutionSolver> reference_solver = reference_solver_factory.build();
     start = std::chrono::steady_clock::now();
-    optimizer->iterate();
+    optimizer->iterate(*data_set);
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
     if(0.0 == avg_duration)avg_duration = current_duration;
     else avg_duration = (avg_duration + current_duration)/2.0;

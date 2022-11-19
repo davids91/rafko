@@ -52,11 +52,11 @@ public:
   virtual ~RafkoContext() = default;
 
   /**
-   * @brief          Accepts an environment to base network evaluation on top of and takes ownership of it!
+   * @brief          Accepts a data set to base network evaluation on top of and takes ownership of it!
    *
    * @param[in]      environment    An environment ready to be moved inside the context
    */
-  virtual void set_environment(std::shared_ptr<rafko_gym::RafkoDataSet> environment) = 0;
+  virtual void set_data_set(std::shared_ptr<rafko_gym::RafkoDataSet> environment) = 0;
 
   /**
    * @brief          Accepts an objective function to base network evaluation on top of and takes ownership of it!
@@ -100,20 +100,24 @@ public:
   virtual void apply_weight_update(const std::vector<double>& weight_delta) = 0;
 
   /**
-   * @brief      Evaluates installed agents and returns with its error/fittness value
+   * @brief          Evaluates installed agents and returns with its error/fittness value
+   * @param[in]      force_gpu_upload     If set true, data in stored objects are uploaded to GPU regardless of previous uploads
    *
-   * @return     The resulting error/fitness value summary of the evaluation
+   * @return         The resulting error/fitness value summary of the evaluation
    */
-  virtual double full_evaluation() = 0;
+  virtual double full_evaluation(bool force_gpu_upload = false) = 0;
 
   /**
    * @brief          Evaluates installed agents in a stochastic manner and returns with its error/fittness value
    *
-   * @param[in]      to_seed        A helper value to make Stochastic evaluation deterministicly reproducible
-   * @param[in]      seed_value     A helper value to make Stochastic evaluation deterministicly reproducible
+   * @param[in]      to_seed              A helper value to make Stochastic evaluation deterministicly reproducible
+   * @param[in]      seed_value           A helper value to make Stochastic evaluation deterministicly reproducible
+   * @param[in]      force_gpu_upload     If set true, data in stored objects are uploaded to GPU regardless of previous uploads
+   *                                      Applies only to implementations targeting GPUs
+   * 
    * @return         The resulting error/fitness value summary of the evaluation
    */
-  virtual double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) = 0;
+  virtual double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u, bool force_gpu_upload = false) = 0;
 
   /**
    * @brief      For the provided input, return the result of the neural network
@@ -133,10 +137,10 @@ public:
    * @brief     Solves the enclosed network for the whole of the included environment.
    *
    * @param         output      The buffer to store the data in. Sizes must be set to fit the output exactly
-   * @param[in]     isolated    Set to true, if the buffers are to be resetted before solving the environment
+   * @param[in]     isolated    Set to true, if the buffers are to be resetted before solving the data set
    *                            Number of sequences evaluated may be limited by the available threads!
    */
-  virtual void solve_environment(std::vector<std::vector<double>>& output, bool isolated) = 0;
+  virtual void solve_data_set(std::vector<std::vector<double>>& output, bool isolated) = 0;
 
   /**
    * @brief       Provides access to the settings

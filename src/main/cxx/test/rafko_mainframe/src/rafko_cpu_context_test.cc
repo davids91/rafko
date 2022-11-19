@@ -56,9 +56,9 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   rafko_gym::RafkoDatasetImplementation dataset_wrap(*dataset);
   rafko_gym::RafkoCost reference_cost(*settings, cost);
   rafko_mainframe::RafkoCPUContext context(network, settings, std::make_unique<rafko_gym::RafkoCost>(*settings, cost));
-  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetImplementation>(*dataset));
+  context.set_data_set(std::make_unique<rafko_gym::RafkoDatasetImplementation>(*dataset));
 
-  /* Set some error and see if the environment produces the expected */
+  /* Set some error and see if the data set produces the expected */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
   std::shared_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
@@ -103,9 +103,9 @@ TEST_CASE("Testing if CPU context produces correct error values upon full evalua
   rafko_gym::RafkoDatasetImplementation dataset_wrap(*dataset);
   rafko_gym::RafkoCost reference_cost(*settings, cost);
   rafko_mainframe::RafkoCPUContext context(network, settings, std::make_unique<rafko_gym::RafkoCost>(*settings, cost));
-  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetImplementation>(*dataset));
+  context.set_data_set(std::make_unique<rafko_gym::RafkoDatasetImplementation>(*dataset));
 
-  /* Set some error and see if the environment produces the expected */
+  /* Set some error and see if the data set produces the expected */
   rafko_net::Solution* solution = rafko_net::SolutionBuilder(*settings).build(network);
   std::shared_ptr<rafko_net::SolutionSolver> reference_solver = std::make_unique<rafko_net::SolutionSolver>(solution, *settings);
 
@@ -155,7 +155,7 @@ TEST_CASE("Testing if CPU context produces correct error values upon stochastic 
 
   (void)context.expose_settings().set_memory_truncation(dataset_wrap.get_sequence_size() / 2); /*!Note: So overall error value can just be halved because of this */
 
-  context.set_environment(std::make_unique<rafko_gym::RafkoDatasetImplementation>(*dataset));
+  context.set_data_set(std::make_unique<rafko_gym::RafkoDatasetImplementation>(*dataset));
 
   double environment_error = context.stochastic_evaluation(true, seed);
 
@@ -333,7 +333,7 @@ TEST_CASE("Testing is solve is working as expected in CPU context for isolated s
     std::move(inputs), std::move(labels), sequence_size
   );
 
-  /* Calculate the network output to the environment manually */
+  /* Calculate the network output to the data set manually */
   std::shared_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Factory(network, settings).build();
   rafko_mainframe::RafkoCPUContext context(network, settings);
   for(std::uint32_t variant_index = 0; variant_index < 10; ++variant_index){
@@ -376,7 +376,7 @@ TEST_CASE("Testing is solve is working as expected in CPU context for isolated e
     std::move(inputs), std::move(labels), sequence_size
   );
 
-  /* Calculate the network output to the environment manually */
+  /* Calculate the network output to the data set manually */
   std::shared_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Factory(network, settings).build();
 
   /* Solve with the reference context and store the results */
@@ -399,13 +399,13 @@ TEST_CASE("Testing is solve is working as expected in CPU context for isolated e
 
   /* Calculate result from a context */
   rafko_mainframe::RafkoCPUContext context(network, settings);
-  context.set_environment(environment);
+  context.set_data_set(environment);
 
   std::vector<std::vector<double>> context_result(
     (environment->get_number_of_sequences() * environment->get_sequence_size()),
     std::vector<double>(network.output_neuron_number())
   );
-  context.solve_environment(context_result);
+  context.solve_data_set(context_result);
 
   std::uint32_t index = 0u;
   for(const std::vector<double>& reference : reference_result){

@@ -63,7 +63,7 @@ int main(){
   );
   /* --- Generating sample environment Data set --- */
 
-  /*!Note: To optimize a network to an environment, the optimizers can be used as follows */
+  /*!Note: To optimize a network to a data set, the optimizers can be used as follows */
   #if(!USE_OPENCL)
   std::unique_ptr<rafko_gym::RafkoAutodiffOptimizer> optimizer = std::make_unique<rafko_gym::RafkoAutodiffOptimizer>(
     settings, environment, network

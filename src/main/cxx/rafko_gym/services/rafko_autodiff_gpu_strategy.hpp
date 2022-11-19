@@ -42,24 +42,19 @@ class AutoDiffGPUStrategy
 {
 using OperationsType = std::shared_ptr<RafkoBackpropagationOperation>;
 public:
-  AutoDiffGPUStrategy(const rafko_mainframe::RafkoSettings& settings, rafko_net::RafkoNet& network)
+  AutoDiffGPUStrategy(
+    const rafko_mainframe::RafkoSettings& settings, rafko_net::RafkoNet& network,
+    std::shared_ptr<RafkoDataSet> data_set = {}
+  )
   : m_settings(settings)
   , m_network(network)
   {
+    if(data_set)set_data_set(data_set);
   }
 
-  AutoDiffGPUStrategy(
-    const rafko_mainframe::RafkoSettings& settings, rafko_net::RafkoNet& network,
-    std::shared_ptr<RafkoDataSet> environment
-  )
-  : AutoDiffGPUStrategy(settings, network)
-  {
-    set_environment(environment);
-  }
-
-  void set_environment(std::shared_ptr<RafkoDataSet> environment){
-    m_environment = environment;
-    RFASSERT(m_environment->get_input_size() == m_network.input_data_size());
+  void set_data_set(std::shared_ptr<RafkoDataSet> environment){
+    m_dataSet = environment;
+    RFASSERT(m_dataSet->get_input_size() == m_network.input_data_size());
     m_built = false;
   }
 
@@ -76,7 +71,7 @@ public:
 
   cl::Program::Sources get_step_sources() const override{
     RFASSERT(m_built);
-    RFASSERT(static_cast<bool>(m_environment));
+    RFASSERT(static_cast<bool>(m_dataSet));
     return {m_builtSource};
   }
 
@@ -88,11 +83,11 @@ public:
   std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const;
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
-    RFASSERT(static_cast<bool>(m_environment));
+    RFASSERT(static_cast<bool>(m_dataSet));
     return {
       cl::NullRange/*offset*/,
       cl::NDRange(
-        std::min(m_settings.get_minibatch_size(), m_environment->get_number_of_sequences()) * m_maximumLocalWorkers
+        std::min(m_settings.get_minibatch_size(), m_dataSet->get_number_of_sequences()) * m_maximumLocalWorkers
       )/*global*/,
       cl::NDRange(m_maximumLocalWorkers)/*local*/
     };
@@ -131,7 +126,7 @@ public:
 private:
   const rafko_mainframe::RafkoSettings& m_settings;
   rafko_net::RafkoNet& m_network;
-  std::shared_ptr<RafkoDataSet> m_environment;
+  std::shared_ptr<RafkoDataSet> m_dataSet;
   bool m_built = false;
   std::string m_builtSource;
   std::uint32_t m_numberOfOperations;

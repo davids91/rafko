@@ -25,7 +25,7 @@ std::vector<cl::Event> RafkoDataSet::upload_inputs_to_buffer(
   cl::CommandQueue opencl_queue, cl::Buffer buffer, std::uint32_t buffer_start_byte_offset,
   std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
   std::uint32_t sequences_to_upload
-){
+) const{
   [[maybe_unused]]cl_int return_value;
   RFASSERT_LOG(
     "Uploading agent inputs: sequence start index: {}, sequence start index in buffer: {}, sequences to upload: {}",
@@ -64,7 +64,7 @@ std::vector<cl::Event> RafkoDataSet::upload_labels_to_buffer(
   std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
   std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence,
   std::uint32_t sequence_truncation
-){
+) const{
   [[maybe_unused]]cl_int return_value;
   RFASSERT_LOG(
     "Uploading labels to evaluate: sequence start index: {}, sequence start index in buffer: {}, buffer labels byte offset: {} sequences to upload: {}; start index inside sequence: {}; sequence truncation: {}",

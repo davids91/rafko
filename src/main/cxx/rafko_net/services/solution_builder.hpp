@@ -102,7 +102,7 @@ public:
    * @param[in]     solution              The Solution to base Kernel code generation upon
    * @param[in]     name                  The name of the resulting kernel
    * @param[in]     sequence_size         The number of consecutive input-label pairs an envirnment should have for one item
-   * @param[in]     prefill_input_num     The number of prefill inputs the environment has
+   * @param[in]     prefill_input_num     The number of prefill inputs the data set has
    * @param[in]     settings              The Setting instance containing some of the required parameters
    *
    * @return    The generated Kernel code to compile and send to an OpenCL Device

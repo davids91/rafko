@@ -45,7 +45,7 @@ public:
    *             assumes that the sequence size of the @environment is 1
    *
    * @param[in]  environment                  The environment to evaluate the provided Neuron data on
-   * @param[in]  sample_index             The sample index inside the environment
+   * @param[in]  sample_index             The sample index inside the data set
    * @param[in]  neuron_data              The neuron data to evaluate
    * @return     The resulting error
    */
@@ -60,7 +60,7 @@ public:
    * @param[in]  environment                  The environment to evaluate the provided Neuron data on
    * @param[in]  neuron_data              The neuron data
    * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  raw_start_index          The raw start index inside the environment labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  raw_start_index          The raw start index inside the data set labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
    * @param[in]  labels_to_evaluate       The labels to evaluate
    * @return     The resulting error
    */
@@ -75,7 +75,7 @@ public:
    * @param[in]  environment                  The environment to evaluate the provided Neuron data on
    * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
    * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  sequence_start_index     The raw start index inside the environment labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  sequence_start_index     The raw start index inside the data set labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
    * @param[in]  sequences_to_evaluate    The labels to evaluate
    * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
    * @param[in]  sequence_truncation      The sequence truncation
@@ -93,7 +93,7 @@ public:
    * @param[in]  environment                  The environment to evaluate the provided Neuron data on
    * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
    * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  sequence_start_index     The raw start index inside the environment labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  sequence_start_index     The raw start index inside the data set labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
    * @param[in]  sequences_to_evaluate    The labels to evaluate
    * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
    * @param[in]  sequence_truncation      The sequence truncation

@@ -81,7 +81,7 @@ public:
   }
   #if(RAFKO_USES_OPENCL)
   /**
-   * @brief     Sets the parameters the generated kernel code will be based on. These parameters usually come from an environment
+   * @brief     Sets the parameters the generated kernel code will be based on. These parameters usually come from a data set
    *
    * @param[in]     sequence_number                 How many sequences are there?
    * @param[in]     sequence_size                   How many feature-label pairs are in a sequence?
