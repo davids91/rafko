@@ -224,7 +224,10 @@ public:
   using DataType = std::vector<double>;
   using MaybeDataType = std::optional<std::reference_wrapper<const DataType>>; 
 
-  RafQSet(const rafko_mainframe::RafkoSettings& settings, RafQEnvironment& environment, std::uint32_t max_set_size, double overwrite_q_threshold)
+  RafQSet(
+    const rafko_mainframe::RafkoSettings& settings, RafQEnvironment& environment,
+    std::uint32_t max_set_size, double overwrite_q_threshold
+  )
   : m_settings(settings)
   , m_environment(environment)
   , m_costFunction(m_settings)
@@ -250,33 +253,33 @@ public:
   }
 
   void incorporate(const std::vector<DataType>& state_buffer, const std::vector<DataType>& actions_buffer){
-    std::cout << "======================"  << std::endl;
-    std::cout << "QSet: " << std::endl;
-    for(int i = 0; i < get_number_of_sequences(); ++i){
-      const RafQSetItemConstView<ActionCount> actions_view((*this)[i]);
-      std::cout << get_input_sample(i)[0] << " == >  {";
-      for(int j = 0; j < ActionCount; ++j)
-        std::cout << "(" << actions_view[j][0]<< ", q:" << actions_view.q_value(j) << ")";
-      std::cout << "}" << std::endl;
-    }
-    std::cout << std::endl;
+    // std::cout << "======================"  << std::endl;
+    // std::cout << "QSet: " << std::endl;
+    // for(int i = 0; i < get_number_of_sequences(); ++i){
+    //   const RafQSetItemConstView<ActionCount> actions_view((*this)[i]);
+    //   std::cout << get_input_sample(i)[0] << " == >  {";
+    //   for(int j = 0; j < ActionCount; ++j)
+    //     std::cout << "(" << actions_view[j][0]<< ", q:" << actions_view.q_value(j) << ")";
+    //   std::cout << "}" << std::endl;
+    // }
+    // std::cout << std::endl;
     RFASSERT(state_buffer.size() == actions_buffer.size());
     for(std::uint32_t state_index = 0; state_index < state_buffer.size(); ++state_index){
-      std::cout << "Incorporating vector of " << state_buffer.size() << std::endl;
+      // std::cout << "Incorporating vector of " << state_buffer.size() << std::endl;
       RFASSERT(state_buffer[state_index].size() == get_input_size());
       RFASSERT(actions_buffer[state_index].size() == RafQSetItemView<1>::feature_size(m_environment.action_size()));
       std::uint32_t match_index;
       MaybeDataType state_match = look_up(state_buffer[state_index], &match_index);
       const std::uint32_t action_size = m_environment.action_size();
       const RafQSetItemConstView<1> new_action_view(state_buffer[state_index], actions_buffer[state_index], action_size);
-      std::cout << "Looking for state " << state_buffer[state_index][0] << std::endl;
+      // std::cout << "Looking for state " << state_buffer[state_index][0] << std::endl;
       if(state_match.has_value()){
-        std::cout << "found state (" << state_buffer[state_index][0] << ") in the set!" << std::endl;
+        // std::cout << "found state (" << state_buffer[state_index][0] << ") in the set!" << std::endl;
         RFASSERT(match_index < get_number_of_sequences());
         std::uint32_t action_index = ActionCount;
         RafQSetItemView<ActionCount> stored_action_view((*this)[match_index]);
         for(action_index = 0; action_index < ActionCount; ++action_index){
-          std::cout << "comparing actions: " << stored_action_view[action_index][0] << " <> " << new_action_view[0][0] << std::endl;
+          // std::cout << "comparing actions: " << stored_action_view[action_index][0] << " <> " << new_action_view[0][0] << std::endl;
           //TODO: try to avoid temporaries below
           if( m_settings.get_delta_2() >= m_costFunction.get_feature_error(
             {stored_action_view[action_index], stored_action_view[action_index] + action_size}, 
@@ -284,66 +287,93 @@ public:
           ) ) break; /* if the difference is small enough, a match is found! */
         }
         if(action_index < ActionCount){ /* Update the QValue based on TD Learning */
-          std::cout << " found action[" << action_index << "]" << std::endl;
+          // std::cout << " found action[" << action_index << "]" << std::endl;
           double temporal_difference_value = new_action_view.max_q_value(); /* The only Q-value is the maximum one */
-          double lambda = m_settings.get_gamma();
-          std::uint32_t next_state_index = match_index;
-          MaybeDataType next_state_data(stored_action_view.state());
-          RafQSetItemView<ActionCount> next_state_view((*this)[next_state_index]);
-          std::cout << "calculating q value; starting q value:" << temporal_difference_value << std::endl;;
-          for(std::uint16_t look_ahead_index = 0; look_ahead_index < m_settings.get_look_ahead_count(); ++look_ahead_index){
-            RFASSERT(next_state_data.has_value());
-            RFASSERT(next_state_index < get_number_of_sequences());
-            std::cout << "future state[" << look_ahead_index << "]: " << next_state_view[0][0] << std::endl;;
-            //TODO: try to avoid temporaries below
-            RafQEnvironment::StateTransition state_transition = m_environment.next(
-              next_state_view.state(), {next_state_view[0], next_state_view[0] + action_size}
-            ); /*!Note: The first action also has the highest q-value */
 
-            if(!state_transition.m_resultState.has_value())
-              break;
+          if(0 < m_settings.get_look_ahead_count()){
+            double lambda = m_settings.get_gamma();
+            std::uint32_t next_state_index = match_index;
+            MaybeDataType next_state_data(stored_action_view.state());
+            RafQSetItemView<ActionCount> next_state_view((*this)[next_state_index]);
 
-            next_state_data = look_up(state_transition.m_resultState.value(), &next_state_index);
-            if(next_state_data.has_value()){
-              std::cout << "resulting state: " << next_state_data.value().get()[0] << std::endl;;
+            //TODO: this is not true! Start with the actual next state, becvause starting from the current state best match is faulty!
+            // std::cout << "calculating q value; starting q value:" << temporal_difference_value << std::endl;
+            for(std::uint16_t look_ahead_index = 0; look_ahead_index < m_settings.get_look_ahead_count(); ++look_ahead_index){
+              RFASSERT(next_state_data.has_value());
               RFASSERT(next_state_index < get_number_of_sequences());
-              new (&next_state_view) RafQSetItemView<ActionCount>((*this)[next_state_index]);
-              std::cout << " + (" << lambda << " * " << next_state_view.max_q_value() << ")" << std::endl;
-              temporal_difference_value += lambda * next_state_view.max_q_value();
-              lambda = std::pow(lambda, 2.0);              
-            }else break;
+              //TODO: try to avoid temporaries below
+              RafQEnvironment::StateTransition state_transition;
+              if(0 == look_ahead_index){ /* In the first look ahead iteration the current action runs instead of the best */
+                // std::cout << "//q value " << new_action_view.max_q_value() << " -->future[" << look_ahead_index << "]:"
+                // << "{" << next_state_view.state()[0] << ","
+                // << next_state_view[action_index][0] << "}"
+                // << std::endl;
+                new (&state_transition) RafQEnvironment::StateTransition(m_environment.next(
+                  next_state_view.state(), {next_state_view[action_index], next_state_view[action_index] + action_size}
+                ));
+              }else{
+                // std::cout << "//q value " << next_state_view.max_q_value() << " -->future[" << look_ahead_index << "]:"
+                // << "{" << next_state_view.state()[0] << ","
+                // << next_state_view[0][0] << "(best action)}"
+                // << std::endl; 
+                new (&state_transition) RafQEnvironment::StateTransition(m_environment.next(
+                  next_state_view.state(), {next_state_view[0], next_state_view[0] + action_size}
+                )); /*!Note: The first action also has the highest q-value */
+              }
 
-            if(state_transition.m_terminal)
-              break;
+              if(!state_transition.m_resultState.has_value()){
+                // std::cout << "No further state transitions stored!" << std::endl;
+                break;
+              }
+
+              next_state_data = look_up(state_transition.m_resultState.value(), &next_state_index);
+              if(next_state_data.has_value()){
+                RFASSERT(next_state_index < get_number_of_sequences());
+                new (&next_state_view) RafQSetItemView<ActionCount>((*this)[next_state_index]);
+                // std::cout << "resulting next state: " 
+                // << "q value " << next_state_view.max_q_value() << " -->"
+                // << "{" << next_state_view.state()[0] << "," 
+                // << next_state_view[0][0] << "(best action)}"
+                // << std::endl;
+                // std::cout << " + (" << lambda << " * " << next_state_view.max_q_value() << ")" << std::endl;
+                temporal_difference_value += lambda * next_state_view.max_q_value();
+                lambda = std::pow(lambda, 2.0);              
+              }else{
+                // std::cout << "State " << state_transition.m_resultState.value().get()[0] << " Not found in set!" << std::endl;
+                break;
+              }
+
+              if(state_transition.m_terminal){
+                // std::cout << "state is terminal.." << std::endl;
+                break;
+              }
+            }
           }
           temporal_difference_value -= stored_action_view.q_value(action_index);
           double new_q_value = stored_action_view.q_value(action_index) + temporal_difference_value;
-          std::cout << "result td value:" << new_q_value << "; delta: " << temporal_difference_value << std::endl;
-          if( 
-            (action_index < (ActionCount - 1))
-            && (new_q_value > stored_action_view.q_value(action_index + 1))
-          ){
+          // std::cout << "old q value : " << stored_action_view.q_value(action_index) << std::endl;
+          // std::cout << "result td value:" << new_q_value << "; delta: " << temporal_difference_value << std::endl;
+          if((action_index < (ActionCount - 1)) && (new_q_value < stored_action_view.q_value(action_index + 1)) ){
+            // std::cout << "overwriting action[" << action_index << "] from action[" << (action_index + 1) << "]!" << std::endl;
             stored_action_view.copy_action(action_index + 1, action_index);
             ++action_index;
             stored_action_view.take_over(new_action_view, 0, action_index);
-          }else if( 
-            (0 < action_index)
-            && (new_q_value < stored_action_view.q_value(action_index - 1)) 
-          ){
+          }else if( (0 < action_index) && (new_q_value > stored_action_view.q_value(action_index - 1)) ){
+            // std::cout << "overwriting action[" << action_index << "] from action[" << (action_index - 1) << "]!" << std::endl;
             stored_action_view.copy_action(action_index - 1, action_index);
             --action_index;
             stored_action_view.take_over(new_action_view, 0, action_index);
           }
           stored_action_view.set_q_value(new_q_value, action_index);
         }else if(new_action_view.q_value() > (stored_action_view.min_q_value() * (1.0 + m_overwriteQThreshold))){
-          std::cout << "Did not find a matching action!" << std::endl;
+          // std::cout << "Did not find a matching action!" << std::endl;
           std::uint32_t action_index = ActionCount;
           do{ /* Find the action to overwrite */
             --action_index;
-            std::cout << "comparing action[" << action_index << "] qvalues: " 
-            << "(" << stored_action_view.q_value(action_index) << " * (1.0 + " << m_overwriteQThreshold << "))"
-            << " > " << new_action_view.q_value()
-            << std::endl;
+            // std::cout << "comparing action[" << action_index << "] qvalues: " 
+            // << "(" << stored_action_view.q_value(action_index) << " * (1.0 + " << m_overwriteQThreshold << "))"
+            // << " > " << new_action_view.q_value()
+            // << std::endl;
             if( (stored_action_view.q_value(action_index) * (1.0 + m_overwriteQThreshold)) > new_action_view.q_value() ){
               ++action_index;
               RFASSERT(action_index < ActionCount); 
@@ -356,7 +386,7 @@ public:
               break;
             }
           }while(0 < action_index);
-          std::cout << "Overwriting action[" << action_index << "]!" << std::endl;
+          // std::cout << "Overwriting action[" << action_index << "]!" << std::endl;
           /*!Note: there will surely be match, because the action because of the entry condition of this block */
           std::uint32_t i = ActionCount; /* write over the actions starting from the worst */
           do{
@@ -372,7 +402,7 @@ public:
         m_stateBuffer.emplace_back(state_buffer[state_index]);
         m_actionsBuffer.emplace_back(get_feature_size());
         m_avgQValue.emplace_back(new_action_view.q_value());
-        std::cout << "Copying Action value: " << new_action_view[0][0] << "; q value "  << new_action_view.q_value() << std::endl;
+        // std::cout << "Copying Action value: " << new_action_view[0][0] << "; q value "  << new_action_view.q_value() << std::endl;
         std::copy( 
           new_action_view[0], new_action_view[0] + m_environment.action_size(),
           DataView::action_iterator(m_actionsBuffer.back(), m_environment.action_size())
@@ -393,18 +423,50 @@ public:
   }
 
   void erase_worst(std::uint32_t count){
+    // std::cout << "======================"  << std::endl;
+    // std::cout << "QSet: " << std::endl;
+    // for(int i = 0; i < get_number_of_sequences(); ++i){
+    //   const RafQSetItemConstView<ActionCount> actions_view((*this)[i]);
+    //   std::cout << get_input_sample(i)[0] << " == >  {";
+    //   for(int j = 0; j < ActionCount; ++j)
+    //     std::cout << "(" << actions_view[j][0]<< ", q:" << actions_view.q_value(j) << ")";
+    //   std::cout << "}" << std::endl;
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Erasing worst " << count << " elements.." << std::endl;
     RFASSERT(count < get_number_of_sequences());
-    std::map<double, std::uint32_t> worst_q_values;
+    std::map<double, std::uint32_t, std::greater<double>> worst_q_values;
     double best_in_worst_q_value = std::numeric_limits<double>::max();
     for(std::uint32_t item_index = 0; item_index < get_number_of_sequences(); item_index++){
+      // std::cout << "checking item[" << item_index << "]..." << std::endl;
       RafQSetItemView<ActionCount> item_view((*this)[item_index]);
       double current_q_value = item_view.avg_q_value();
       if(current_q_value < best_in_worst_q_value){
         worst_q_values.insert({current_q_value, item_index});
+        RafQSetItemView<ActionCount> view((*this)[worst_q_values.begin()->second]);
+        // std::cout << "Worst items in set: ";
+        // for(const auto& [q_value, index] : worst_q_values){
+        //   RafQSetItemView<ActionCount> view((*this)[index]);
+        //   std::cout << "{" 
+        //   << view.state()[0]<< "," << view[0][0] 
+        //   << "(q value: " << q_value << ")"
+        //   << "},";
+        // }
+        // std::cout << std::endl;
+
         if(worst_q_values.size() > count)
           worst_q_values.erase(worst_q_values.begin());
       }
     }/*for(every item in the set)*/
+    // std::cout << "Finally.. Worst items in set: ";
+    // for(const auto& [q_value, index] : worst_q_values){
+    //   RafQSetItemView<ActionCount> view((*this)[index]);
+    //   std::cout << "{" 
+    //   << view.state()[0]<< "," << view[0][0] 
+    //   << "(q value: " << q_value << ")"
+    //   << "},";
+    // }
+    // std::cout << std::endl;
     std::map<std::uint32_t, double, std::greater<std::uint32_t>> to_delete;
     for(auto& [q_value, index] : worst_q_values){
       to_delete.insert({index, q_value});
@@ -422,6 +484,10 @@ public:
     return RafQSetItemView<ActionCount>(
       m_stateBuffer[index], m_actionsBuffer[index], m_environment.action_size()
     );
+  }
+
+  constexpr std::uint32_t max_size() const{
+    return m_maxSetSize;
   }
 
   const DataType& get_input_sample(std::uint32_t raw_input_index) const override{

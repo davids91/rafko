@@ -39,9 +39,9 @@ public:
   }
 
   struct StateTransition{
-    MaybeDataType m_resultState;
-    const double m_resultQValue;
-    const bool m_terminal;
+    MaybeDataType m_resultState = {};
+    const double m_resultQValue = 0.0;
+    const bool m_terminal = true;
   };
 
   virtual StateTransition next(const DataType& state, const DataType& action) = 0;

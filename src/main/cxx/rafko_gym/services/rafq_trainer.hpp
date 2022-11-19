@@ -38,10 +38,13 @@ namespace rafko_gym{
 template<std::size_t ActionCount>
 class RAFKO_EXPORT RafQTrainer : public RafkoAutonomousEntity{
   using DataType = RafQSet<ActionCount>::DataType;
-  using ExperienceEntry = std::pair<std::vector<DataType>, std::vector<DataType>>;
+  struct XPDataBase{
+    std::vector<DataType> m_states;
+    std::vector<DataType> m_singleActions;
+  };
 public:
   RafQTrainer(
-    rafko_net::RafkoNet& network, std::uint32_t q_set_size, std::shared_ptr<RafQEnvironment> environment = {}, 
+    rafko_net::RafkoNet& network, std::uint32_t q_set_size, std::shared_ptr<RafQEnvironment> environment, 
     std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {}
   )
   : RafkoAutonomousEntity(settings)
@@ -49,7 +52,7 @@ public:
   , m_solverFactory(m_network, m_settings)
   , m_agent(m_solverFactory.build())
   , m_environment(environment)
-  , m_qSet(???)
+  , m_qSet(m_settings, m_environment, q_set_size, m_settings.get_delta())
   , m_optimizer(???)
   {
   }
@@ -74,7 +77,7 @@ private:
   rafko_net::SolutionSolver m_agent;
   std::shared_ptr<RafQEnvironment> m_environment;
   RafQSet<ActionCount> m_qSet;
-  std::vector<ExperienceEntry> m_xpDataBase;
+  XPDataBase m_xpDataBase;
   std::unique_ptr<rafko_gym::RafkoAutodiffOptimizer> m_optimizer;
 };
 
