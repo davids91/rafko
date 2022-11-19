@@ -47,7 +47,7 @@ public:
   );
 
   /* +++ Methods taken from @RafkoContext +++ */
-  void set_environment(std::shared_ptr<rafko_gym::RafkoDataSet> environment) override;
+  void set_data_set(std::shared_ptr<rafko_gym::RafkoDataSet> environment) override;
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override;
   void set_weight_updater(rafko_gym::Weight_updaters updater) override;
   void set_network_weight(std::uint32_t weight_index, double weight_value) override;
@@ -55,7 +55,7 @@ public:
   void apply_weight_update(const std::vector<double>& weight_delta) override;
   double full_evaluation() override;
   double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override;
-  void solve_environment(std::vector<std::vector<double>>& output, bool isolated = true) override;
+  void solve_data_set(std::vector<std::vector<double>>& output, bool isolated = true) override;
   void refresh_solution_weights() override{
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
     m_solverFactory.refresh_actual_solution_weights();
@@ -83,7 +83,7 @@ private:
   rafko_net::RafkoNet& m_network;
   rafko_net::SolutionSolver::Factory m_solverFactory;
   std::shared_ptr<rafko_net::SolutionSolver> m_agent;
-  std::shared_ptr<rafko_gym::RafkoDataSet> m_environment;
+  std::shared_ptr<rafko_gym::RafkoDataSet> m_dataSet;
   std::shared_ptr<rafko_gym::RafkoObjective> m_objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
   std::vector<std::vector<double>> m_neuronOutputsToEvaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
@@ -125,7 +125,7 @@ private:
   void upload_weight_to_device(std::uint32_t weight_index);
 
   /**
-   * @brief     sets the paramterers of the objective based on the environment, re-generates its kernels and uploads them to GPU
+   * @brief     sets the paramterers of the objective based on the data set, re-generates its kernels and uploads them to GPU
    */
   void refresh_objective();
 
@@ -135,7 +135,7 @@ private:
    * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
    * @param[in]   start_index_inside_sequence   Start index of a feature vector inside every sequence to start uploading inputs from
    *                                            Index 0 starts from the first feature vector assigned for each sequence
-   *                                            In case the Network has more memory, than the environment label pairs: index 0 starts at zero still.
+   *                                            In case the Network has more memory, than the data set label pairs: index 0 starts at zero still.
    *                                            In that case, the evaluation doesn't start form 0, as label and prefill values take up less space than what is assigned for one sequence
    * @param[in]   sequence_truncation           Number of feature vectors to upload per sequence
    * @param[in]   data_handler                  The funciton accepting the CL Buffer, byte offset, and data size(bytes == output neurons only!) for each feature for one sequence

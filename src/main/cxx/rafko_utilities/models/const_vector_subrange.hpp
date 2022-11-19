@@ -25,20 +25,32 @@
 
 namespace rafko_utilities{
 
+/** 
+ * @brief     A lightweight class representing a read-only part of a vector-like container,  
+ *            using iterators to simulate the interface of it.
+ */
 template <typename Iterator = std::vector<double>::const_iterator>
 class RAFKO_EXPORT ConstVectorSubrange{
 public:
   using T = typename Iterator::value_type;
 
+  ConstVectorSubrange(const std::vector<T>& data)
+  : m_start(data.begin())
+  , m_rangeSize(data.size())
+  {
+  }
+
   constexpr ConstVectorSubrange(Iterator start, std::size_t size)
   : m_start(start)
   , m_rangeSize(size)
-  { }
+  {
+  }
 
   constexpr ConstVectorSubrange(Iterator begin, Iterator end)
   : m_start(begin)
   , m_rangeSize(std::distance(m_start, end))
-  { }
+  {
+  }
 
   const T& operator[](std::size_t index) const{
     assert(index < m_rangeSize);
@@ -60,12 +72,13 @@ public:
     return std::next(m_start, m_rangeSize);
   }
 
-  template <typename V = std::vector<typename std::iterator_traits<Iterator>::value_type>>
+  template <typename V = std::vector<T>>
   constexpr V acquire(){
     return { begin(), end() };
   }
 
 private:
+  const std::vector<T> m_maybeData;
   const Iterator m_start;
   const std::size_t m_rangeSize;
 };

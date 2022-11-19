@@ -282,8 +282,8 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
         std::move(inputs), std::move(labels), sequence_size
       );
 
-      context->set_environment(environment);
-      reference_context.set_environment(environment);
+      context->set_data_set(environment);
+      reference_context.set_data_set(environment);
 
       for(std::uint32_t i = 0; i < 3; ++i)
         REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
@@ -338,8 +338,8 @@ TEST_CASE("Testing full evaluation with the GPU context with single sample of se
         std::move(inputs), std::move(labels), sequence_size
       );
 
-      context->set_environment(environment);
-      reference_context.set_environment(environment);
+      context->set_data_set(environment);
+      reference_context.set_data_set(environment);
 
       for(std::uint32_t i = 0; i < 3; ++i)
         REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
@@ -400,8 +400,8 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels","[
         std::move(inputs), std::move(labels), sequence_size
       );
 
-      context->set_environment(environment);
-      reference_context.set_environment(environment);
+      context->set_data_set(environment);
+      reference_context.set_data_set(environment);
 
       for(std::uint32_t i = 0; i < 3; ++i)
         REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
@@ -463,8 +463,8 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
       );
 
 
-      context->set_environment(environment);
-      reference_context.set_environment(environment);
+      context->set_data_set(environment);
+      reference_context.set_data_set(environment);
 
       for(std::uint32_t i = 0; i < 3; ++i)
         REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.00000000000001) == context->full_evaluation() );
@@ -530,8 +530,8 @@ TEST_CASE("Testing full evaluation with the GPU context with multiple labels and
         *dataset
       );
 
-      context->set_environment(environment);
-      reference_context.set_environment(environment);
+      context->set_data_set(environment);
+      reference_context.set_data_set(environment);
 
       for(std::uint32_t i = 0; i < 3; ++i){
         (void)context->stochastic_evaluation(); /* to fill up buffers with something */
@@ -700,7 +700,7 @@ TEST_CASE("Testing Stochastic evaluation with the GPU context","[stochastic][con
       std::uint32_t used_minibatch_size;
       std::uint32_t start_index_in_sequence;
       std::uint32_t used_sequence_truncation;
-      context->set_environment(environment);
+      context->set_data_set(environment);
       /* upload random labels and inputs */
       std::uint32_t seed = rand();
       preapare_eval_buffers_for_seed(
@@ -800,8 +800,8 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     ) );
     std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(*dataset);
 
-    context->set_environment(environment);
-    reference_context.set_environment(environment);
+    context->set_data_set(environment);
+    reference_context.set_data_set(environment);
 
     for(std::uint32_t steps = 0; steps < 5; ++steps){
       REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
@@ -865,8 +865,8 @@ TEST_CASE("Testing weight updates with the GPU context","[context][GPU][weight-u
     ) );
     std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(*dataset);
 
-    context->set_environment(environment);
-    reference_context.set_environment(environment);
+    context->set_data_set(environment);
+    reference_context.set_data_set(environment);
 
     for(std::uint32_t steps = 0; steps < 5; ++steps){
       REQUIRE( Catch::Approx(reference_context.full_evaluation()).epsilon(0.0000000001) == context->full_evaluation() );
@@ -916,7 +916,7 @@ TEST_CASE("Testing is solve is working as expected in GPU context for isolated e
     std::move(inputs), std::move(labels), sequence_size
   );
 
-  /* Calculate the network output to the environment manually */
+  /* Calculate the network output to the data set manually */
   std::shared_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Factory(network, settings).build();
 
   /* Solve with the reference solver and store the results */
@@ -942,13 +942,13 @@ TEST_CASE("Testing is solve is working as expected in GPU context for isolated e
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
       .build<rafko_mainframe::RafkoGPUContext>(network, settings)
   );
-  context->set_environment(environment);
+  context->set_data_set(environment);
 
   std::vector<std::vector<double>> context_result(
     (environment->get_number_of_sequences() * environment->get_sequence_size()),
     std::vector<double>(network.output_neuron_number())
   );
-  context->solve_environment(context_result);
+  context->solve_data_set(context_result);
 
   std::uint32_t index = 0u;
   for(const std::vector<double>& reference : reference_result){

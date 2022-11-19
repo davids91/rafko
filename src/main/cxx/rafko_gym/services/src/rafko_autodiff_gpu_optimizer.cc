@@ -18,11 +18,15 @@
 
 namespace rafko_gym{
 
-void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoObjective> objective){
+void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective){
   RFASSERT_SCOPE(AUTODIFF_GPU_BUILD);
-  m_strategy->build(m_operations, build_without_data(objective));
+  m_usedSequenceTruncation = std::min(m_settings->get_memory_truncation(), data_set->get_sequence_size());
+  m_usedMinibatchSize = std::min(m_settings->get_minibatch_size(), data_set->get_number_of_sequences());
+  if(m_trainingEvaluator)m_trainingEvaluator->set_data_set(data_set);
+  m_strategy->set_data_set(data_set);
+  m_strategy->build(m_operations, build_without_data(data_set, objective));
   m_gpuPhase.set_strategy(m_strategy);
-  refresh_GPU_environment();
+  sync_data_set_on_GPU(*data_set);
 }
 
 void RafkoAutodiffGPUOptimizer::upload_weight_table(){
@@ -35,31 +39,30 @@ void RafkoAutodiffGPUOptimizer::upload_weight_table(){
   RFASSERT( return_value == CL_SUCCESS );
 }
 
-std::vector<cl::Event> RafkoAutodiffGPUOptimizer::update_inputs(){
-  return m_environment->upload_inputs_to_buffer(
+std::vector<cl::Event> RafkoAutodiffGPUOptimizer::update_inputs(const RafkoDataSet& data_set){
+  return data_set.upload_inputs_to_buffer(
     m_openclQueue, m_gpuPhase.get_input_buffer(),
     sizeof(double) * static_cast<std::uint32_t>(m_network.weight_table_size())/*buffer_start_byte_offset*/,
-    0u/*sequence_start_index*/, 0u/*buffer_sequence_start_index*/,
-    m_environment->get_number_of_sequences()/*sequences_to_upload*/
+    0u/*sequence_start_index*/, 0u/*buffer_sequence_start_index*/, data_set.get_number_of_sequences()/*sequences_to_upload*/
   );
 }
 
-std::vector<cl::Event> RafkoAutodiffGPUOptimizer::update_labels(){
-  return m_environment->upload_labels_to_buffer(
+std::vector<cl::Event> RafkoAutodiffGPUOptimizer::update_labels(const RafkoDataSet& data_set){
+  return data_set.upload_labels_to_buffer(
     m_openclQueue, m_gpuPhase.get_input_buffer(),
     (
       sizeof(double) * static_cast<std::uint32_t>(m_network.weight_table_size())
-      + (sizeof(double) * m_environment->get_number_of_sequences() * m_environment->get_inputs_in_one_sequence() * m_network.input_data_size())
+      + (sizeof(double) * data_set.get_number_of_sequences() * data_set.get_inputs_in_one_sequence() * m_network.input_data_size())
     )/*buffer_start_byte_offset*/,
     0u/*sequence_start_index*/, 0u/*buffer_sequence_start_index*/,
-    m_environment->get_number_of_sequences()/*sequences_to_upload*/,
-    0u/*start_index_inside_sequence*/, m_environment->get_sequence_size()/*sequence_truncation*/
+    data_set.get_number_of_sequences()/*sequences_to_upload*/,
+    0u/*start_index_inside_sequence*/, data_set.get_sequence_size()/*sequence_truncation*/
   );
 }
 
-void RafkoAutodiffGPUOptimizer::refresh_GPU_environment(){
-  std::vector<cl::Event> input_events = update_inputs();
-  std::vector<cl::Event> label_events = update_labels();
+void RafkoAutodiffGPUOptimizer::sync_data_set_on_GPU(const RafkoDataSet& data_set){
+  std::vector<cl::Event> input_events = update_inputs(data_set);
+  std::vector<cl::Event> label_events = update_labels(data_set);
   for(cl::Event& e : input_events){
     cl_int return_value = e.wait();
     RFASSERT( return_value == CL_SUCCESS );
@@ -70,11 +73,11 @@ void RafkoAutodiffGPUOptimizer::refresh_GPU_environment(){
   }
 }
 
-void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
+void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool refresh_data_set){
   RFASSERT_SCOPE(AUTODIFF_GPU_ITERATE);
   upload_weight_table();
-  if(refresh_environment){
-    refresh_GPU_environment();
+  if(refresh_data_set){
+    sync_data_set_on_GPU(data_set);
   }
 
   /* Reset GPU Derivatives and triggered derivative operation count */
@@ -92,7 +95,7 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   cl::Event sequence_start_index_event;
   return_value = m_openclQueue.enqueueFillBuffer<double>(
     m_gpuPhase.get_input_buffer(), static_cast<double>(rand()%(std::max(1,
-      static_cast<std::int32_t>(m_environment->get_number_of_sequences())
+      static_cast<std::int32_t>(data_set.get_number_of_sequences())
       - static_cast<std::int32_t>(m_settings->get_minibatch_size())
     )))/*the data(pattern) value*/,
     (m_strategy->get_input_buffer_byte_size<double>() - (sizeof(double) * 3)),/*offset*/
@@ -134,23 +137,23 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
   }
 
   tmp_reset_thread.join();
-  RFASSERT_LOG("sequence count: {}", m_environment->get_number_of_sequences());
-  RFASSERT_LOG("inputs in one sequence: {}", m_environment->get_inputs_in_one_sequence());
+  RFASSERT_LOG("sequence count: {}", data_set.get_number_of_sequences());
+  RFASSERT_LOG("inputs in one sequence: {}", data_set.get_inputs_in_one_sequence());
   RFASSERT_LOG("operations count: {}", m_operations.size());
   RFASSERT_LOG("weights count: {}", m_network.weight_table_size());
   RFASSERT_LOG(
     "Getting Autodiff Phase weight derivatives({} numbers) from: [{}]",
     m_tmpAvgD.size(),
     ( /* operation values + operation derivatives size */
-      (m_environment->get_number_of_sequences() * m_environment->get_inputs_in_one_sequence() * m_operations.size())
-      + (m_environment->get_number_of_sequences() * m_environment->get_sequence_size() * m_operations.size())
+      (data_set.get_number_of_sequences() * data_set.get_inputs_in_one_sequence() * m_operations.size())
+      + (data_set.get_number_of_sequences() * data_set.get_sequence_size() * m_operations.size())
     )/*offset*/
   );
   m_gpuPhase.load_output(
     m_tmpAvgD.data()/*target*/, m_tmpAvgD.size()/*size*/,
     ( /* operation values + operation derivatives size */
-      (m_environment->get_number_of_sequences() * m_environment->get_inputs_in_one_sequence() * m_operations.size())
-      + (m_environment->get_number_of_sequences() * m_environment->get_sequence_size() * m_operations.size())
+      (data_set.get_number_of_sequences() * data_set.get_inputs_in_one_sequence() * m_operations.size())
+      + (data_set.get_number_of_sequences() * data_set.get_sequence_size() * m_operations.size())
     )/*offset*/
   );
 
@@ -162,26 +165,27 @@ void RafkoAutodiffGPUOptimizer::iterate(bool refresh_environment){
 }
 
 double RafkoAutodiffGPUOptimizer::get_neuron_data(
-  std::uint32_t sequence_index, std::uint32_t past_index, std::uint32_t neuron_index
+  std::uint32_t sequence_index, std::uint32_t past_index, std::uint32_t neuron_index,
+  const RafkoDataSet& data_set
 ){
   double ret = 0.0;
   RFASSERT(past_index < m_network.memory_size());
   RFASSERT_LOG(
     "Loading Neuron data from GPU Phase: sequence[{}/{}], past[{}], Neuron[{}/{}], operation[{}/{}] ==> offset: {}",
-    sequence_index, m_environment->get_number_of_sequences(),
+    sequence_index, data_set.get_number_of_sequences(),
     past_index, neuron_index, m_network.neuron_array_size(),
     get_operation_index(neuron_index), m_operations.size(),
     (
-      (sequence_index * m_environment->get_inputs_in_one_sequence() * m_operations.size())
-      + ((m_environment->get_inputs_in_one_sequence() - 1 - past_index) * m_operations.size())
+      (sequence_index * data_set.get_inputs_in_one_sequence() * m_operations.size())
+      + ((data_set.get_inputs_in_one_sequence() - 1 - past_index) * m_operations.size())
       + get_operation_index(neuron_index)
     )
   );
 
   m_gpuPhase.load_output(
     &ret/*target*/, 1u/*size*/, (
-      (sequence_index * m_environment->get_inputs_in_one_sequence() * m_operations.size())
-      + ((m_environment->get_inputs_in_one_sequence() - 1 - past_index) * m_operations.size())
+      (sequence_index * data_set.get_inputs_in_one_sequence() * m_operations.size())
+      + ((data_set.get_inputs_in_one_sequence() - 1 - past_index) * m_operations.size())
       + get_operation_index(neuron_index)
     )/*offset*/
   );

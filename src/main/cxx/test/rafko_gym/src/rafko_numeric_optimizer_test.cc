@@ -256,7 +256,7 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
       .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
   );
   rafko_gym::RafkoNumericOptimizer approximizer({context1,context2}, {}/*test_context*/, settings);
-  context2->set_environment(environment);
+  context2->set_data_set(environment);
   context2->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   context2->set_objective(objective);
   #else
@@ -264,7 +264,7 @@ TEST_CASE("Testing if numeric optimizer converges networks", "[optimize][CPU][sm
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
   rafko_gym::RafkoNumericOptimizer approximizer({context1}, {}/*test_context*/, settings);
   #endif/*(RAFKO_USES_OPENCL)*/
-  context1->set_environment(environment);
+  context1->set_data_set(environment);
   context1->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   context1->set_objective(objective);
   test_context->set_objective(objective);
@@ -365,7 +365,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
       .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
   );
   rafko_gym::RafkoNumericOptimizer approximizer({context1,context2}, {}/*test_context*/, settings);
-  context2->set_environment(environment);
+  context2->set_data_set(environment);
   context2->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   #else
   std::shared_ptr<rafko_mainframe::RafkoCPUContext> context1 = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
@@ -374,11 +374,11 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
   #endif/*(RAFKO_USES_OPENCL)*/
 
   approximizer.set_weight_filter(1.0);
-  context1->set_environment(environment);
+  context1->set_data_set(environment);
   context1->set_weight_updater(rafko_gym::weight_updater_amsgrad);
 
   auto [inputs2, labels2] = rafko_test::create_sequenced_addition_dataset(number_of_samples, 4);
-  test_context->set_environment(std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+  test_context->set_data_set(std::make_shared<rafko_gym::RafkoDatasetImplementation>(
     std::move(inputs2), std::move(labels2), /* Sequence size */4
   ));
 

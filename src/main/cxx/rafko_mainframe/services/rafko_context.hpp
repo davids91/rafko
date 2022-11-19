@@ -52,11 +52,11 @@ public:
   virtual ~RafkoContext() = default;
 
   /**
-   * @brief          Accepts an environment to base network evaluation on top of and takes ownership of it!
+   * @brief          Accepts a data set to base network evaluation on top of and takes ownership of it!
    *
    * @param[in]      environment    An environment ready to be moved inside the context
    */
-  virtual void set_environment(std::shared_ptr<rafko_gym::RafkoDataSet> environment) = 0;
+  virtual void set_data_set(std::shared_ptr<rafko_gym::RafkoDataSet> environment) = 0;
 
   /**
    * @brief          Accepts an objective function to base network evaluation on top of and takes ownership of it!
@@ -133,10 +133,10 @@ public:
    * @brief     Solves the enclosed network for the whole of the included environment.
    *
    * @param         output      The buffer to store the data in. Sizes must be set to fit the output exactly
-   * @param[in]     isolated    Set to true, if the buffers are to be resetted before solving the environment
+   * @param[in]     isolated    Set to true, if the buffers are to be resetted before solving the data set
    *                            Number of sequences evaluated may be limited by the available threads!
    */
-  virtual void solve_environment(std::vector<std::vector<double>>& output, bool isolated) = 0;
+  virtual void solve_data_set(std::vector<std::vector<double>>& output, bool isolated) = 0;
 
   /**
    * @brief       Provides access to the settings

@@ -240,7 +240,7 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
       }
     }
 
-    /* Create CPU contexts and an environment */
+    /* Create CPU contexts and a data set */
     std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
       *settings, rafko_gym::cost_function_squared_error
     );
@@ -258,8 +258,8 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to CPU co
       == (unregulated_context.full_evaluation() - error_difference)
     );
 
-    regulated_context.set_environment(environment);
-    unregulated_context.set_environment(environment);
+    regulated_context.set_data_set(environment);
+    unregulated_context.set_data_set(environment);
 
     REQUIRE(
       Catch::Approx(regulated_context.full_evaluation()).epsilon((0.00000000000001))
@@ -388,8 +388,8 @@ TEST_CASE("Test if L1 and L2 regularization errors are added correctly to GPU co
 
     REQUIRE(Catch::Approx(cpu_context.full_evaluation()).epsilon((0.00000000000001)) == gpu_context->full_evaluation());
 
-    cpu_context.set_environment(environment);
-    gpu_context->set_environment(environment);
+    cpu_context.set_data_set(environment);
+    gpu_context->set_data_set(environment);
 
     REQUIRE(Catch::Approx(cpu_context.full_evaluation()).epsilon((0.00000000000001)) == gpu_context->full_evaluation());
   }/*for(10 variants)*/

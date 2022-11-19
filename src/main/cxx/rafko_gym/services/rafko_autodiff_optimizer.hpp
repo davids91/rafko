@@ -50,13 +50,11 @@ class RAFKO_EXPORT RafkoAutodiffOptimizer : public rafko_mainframe::RafkoAutonom
   using BackpropDataBufferRange = rafko_utilities::ConstVectorSubrange<std::vector<std::vector<double>>::const_iterator>;
 public:
   RafkoAutodiffOptimizer(
-    std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
-    std::shared_ptr<RafkoDataSet> environment, rafko_net::RafkoNet& network,
+    std::shared_ptr<rafko_mainframe::RafkoSettings> settings, rafko_net::RafkoNet& network,
     std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator = {},
     std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator = {}
   )
   : rafko_mainframe::RafkoAutonomousEntity(settings)
-  , m_environment(environment)
   , m_network(network)
   , m_data(network)
   , m_weightUpdater(UpdaterFactory::build_weight_updater(m_network, weight_updater_default, *m_settings))
@@ -64,13 +62,8 @@ public:
   , m_executionThreads()
   , m_trainingEvaluator(training_evaluator)
   , m_testEvaluator(test_evaluator)
-  , m_usedSequenceTruncation( std::min(m_settings->get_memory_truncation(), m_environment->get_sequence_size()) )
-  , m_usedMinibatchSize( std::min(m_settings->get_minibatch_size(), m_environment->get_number_of_sequences()) )
   , m_tmpAvgD(m_network.weight_table_size())
   {
-    if(m_trainingEvaluator){
-      m_trainingEvaluator->set_environment(m_environment);
-    }
     for(std::uint32_t thread_index = 0; thread_index < m_settings->get_max_processing_threads(); ++thread_index)
       m_executionThreads.push_back(std::make_unique<rafko_utilities::ThreadGroup>(
         m_settings->get_max_solve_threads()
@@ -128,15 +121,11 @@ public:
   /**
    * @brief   build or re-build the operateions based on the provided parameters
    *
-   * @param   objective     The objective function evaluating the network output
+   * @param[in]   data_set      The data set the network is evaluated on, required to set buffer sizes 
+   *                            and to add needed parameters for objective operations
+   * @param       objective     The objective function evaluating the network output
    */
-  void build(std::shared_ptr<RafkoObjective> objective){
-    std::uint32_t weight_relevant_operation_count = build_without_data(objective);
-    m_data.build(
-      m_operations.size(), weight_relevant_operation_count,
-      m_environment->get_sequence_size()
-    );
-  }
+  void build(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective = {});
 
   /**
    * @brief     calculates the values and derivatives from the provided inputs and the stored Network reference
@@ -148,8 +137,11 @@ public:
 
   /**
    * @brief   calculate the values and derivatives and update the weights based on them
+   *
+   * @param[in]   data_set      The data set the network is evaluated on
+   * @param                     Empty parameter only used in GPU child class, ensuring the current method is overwritten.
    */
-  void iterate();
+  void iterate(const RafkoDataSet& data_set, bool = false);
 
   /**
    * @brief     provides a const reference to the calculated values of the network output
@@ -232,7 +224,6 @@ public:
   }
 
 protected:
-  std::shared_ptr<RafkoDataSet> m_environment;
   rafko_net::RafkoNet& m_network;
   RafkoBackpropagationData m_data;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
@@ -245,8 +236,8 @@ protected:
   std::shared_ptr<rafko_mainframe::RafkoContext> m_trainingEvaluator;
   std::shared_ptr<rafko_mainframe::RafkoContext> m_testEvaluator;
 
-  const std::uint32_t m_usedSequenceTruncation;
-  const std::uint32_t m_usedMinibatchSize;
+  std::uint32_t m_usedSequenceTruncation = 0;
+  std::uint32_t m_usedMinibatchSize = 0;
   std::uint32_t m_iteration = 0u;
   std::uint32_t m_lastTestedIteration = 0u;
   double m_lastTrainingError = std::numeric_limits<double>::quiet_NaN();
@@ -287,11 +278,12 @@ protected:
   /**
    * @brief   build or re-build the operateions based on the provided parameters
    *
-   * @param   objective     The objective function evaluating the network output
+   * @param[in]   data_set      The data set the network is evaluated on
+   * @param       objective     The objective function evaluating the network output
    *
    * @return  The number of operations at the start of the array directly relevant to weight derivatives
    */
-  std::uint32_t build_without_data(std::shared_ptr<RafkoObjective> objective);
+  std::uint32_t build_without_data(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective);
 
 
   /**

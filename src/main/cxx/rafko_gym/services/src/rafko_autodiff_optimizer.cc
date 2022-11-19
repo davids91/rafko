@@ -31,8 +31,21 @@
 
 namespace rafko_gym{
 
-std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoObjective> objective){
+void RafkoAutodiffOptimizer::build(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective){
+  RFASSERT(static_cast<bool>(data_set));
+  RFASSERT(static_cast<bool>(objective));
+  m_usedSequenceTruncation = std::min(m_settings->get_memory_truncation(), data_set->get_sequence_size());
+  m_usedMinibatchSize = std::min(m_settings->get_minibatch_size(), data_set->get_number_of_sequences());
+  if(m_trainingEvaluator)
+    m_trainingEvaluator->set_data_set(data_set);
+  std::uint32_t w_relevant_op_count = build_without_data(data_set, objective);
+  m_data.build(m_operations.size(), w_relevant_op_count, data_set->get_sequence_size());
+}
+
+std::uint32_t RafkoAutodiffOptimizer::build_without_data(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective){
   RFASSERT_SCOPE(AUTODIFF_BUILD);
+  RFASSERT(static_cast<bool>(data_set));
+  RFASSERT(static_cast<bool>(objective));
   RFASSERT(m_unplacedSpikes.empty());
   RFASSERT(m_spikeSolvesFeatureMap.empty());
   std::uint32_t weight_relevant_operation_count;
@@ -40,16 +53,18 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(std::shared_ptr<RafkoOb
   m_neuronSpikeToOperationMap->clear();
   m_data.reset();
   if(m_trainingEvaluator){
+    m_trainingEvaluator->set_data_set(data_set);
     m_trainingEvaluator->set_objective(objective);
   }
   if(m_testEvaluator){
+    /* Test set should not be set inside this object */
     m_testEvaluator->set_objective(objective);
   }
 
   /*!Note: other components depend on the output objectives being the first operations in the array. */
   for(std::uint32_t output_index = 0; output_index < m_network.output_neuron_number(); ++output_index){
     m_operations.push_back(std::make_shared<RafkoBackpropObjectiveOperation>(
-      m_data, m_network, *objective, m_operations.size(), output_index, m_environment->get_number_of_label_samples()
+      m_data, m_network, *objective, m_operations.size(), output_index, data_set->get_number_of_label_samples()
     ));
     RFASSERT_LOG(
       "operation[{}]: {} for output {} ",
@@ -164,9 +179,7 @@ void RafkoAutodiffOptimizer::calculate_value(const std::vector<double>& network_
   }
 }
 
-void RafkoAutodiffOptimizer::calculate_derivative(
-  const std::vector<double>& network_input, const std::vector<double>& label_data
-){
+void RafkoAutodiffOptimizer::calculate_derivative(const std::vector<double>& network_input, const std::vector<double>& label_data){
   m_executionThreads[0]->start_and_block([this, &network_input, &label_data](std::uint32_t thread_index){
     const std::int32_t weights_in_one_thread = 1 + (m_network.weight_table_size() / m_executionThreads[0]->get_number_of_threads());
     const std::int32_t weight_start_in_thread = (weights_in_one_thread * thread_index);
@@ -214,35 +227,34 @@ void RafkoAutodiffOptimizer::update_context_errors(){
   }
 }
 
-void RafkoAutodiffOptimizer::iterate(){
+void RafkoAutodiffOptimizer::iterate(const RafkoDataSet& data_set, bool){
   RFASSERT_SCOPE(AUTODIFF_ITERATE);
-  RFASSERT(static_cast<bool>(m_environment));
-  std::uint32_t sequence_start_index = (rand()%(m_environment->get_number_of_sequences() - m_usedMinibatchSize + 1));
+  std::uint32_t sequence_start_index = (rand()%(data_set.get_number_of_sequences() - m_usedMinibatchSize + 1));
   std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
-    m_environment->get_sequence_size() - m_usedSequenceTruncation + 1u /* ..not all result output values are evaluated.. */
+    data_set.get_sequence_size() - m_usedSequenceTruncation + 1u /* ..not all result output values are evaluated.. */
   )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
 
   for(std::uint32_t sequence_index = sequence_start_index; sequence_index < m_usedMinibatchSize; ++sequence_index){
-    std::uint32_t raw_inputs_index = sequence_index * (m_environment->get_sequence_size() + m_environment->get_prefill_inputs_number());
-    std::uint32_t raw_labels_index = sequence_index * m_environment->get_sequence_size();
+    std::uint32_t raw_inputs_index = sequence_index * (data_set.get_sequence_size() + data_set.get_prefill_inputs_number());
+    std::uint32_t raw_labels_index = sequence_index * data_set.get_sequence_size();
 
     /* Evaluate the current sequence step by step */
     reset();
-    for(std::uint32_t prefill_iterator = 0; prefill_iterator < m_environment->get_prefill_inputs_number(); ++prefill_iterator){
+    for(std::uint32_t prefill_iterator = 0; prefill_iterator < data_set.get_prefill_inputs_number(); ++prefill_iterator){
       m_data.step();
-      calculate_value(m_environment->get_input_sample(raw_inputs_index));
+      calculate_value(data_set.get_input_sample(raw_inputs_index));
       ++raw_inputs_index;
     } /* The first few inputs are there to set an initial state to the network */
 
     /* Solve the data and store the result after the inital "prefill" */
-    for(std::uint32_t sequence_index = 0; sequence_index < m_environment->get_sequence_size(); ++sequence_index){
+    for(std::uint32_t sequence_index = 0; sequence_index < data_set.get_sequence_size(); ++sequence_index){
       m_data.step();
       m_data.set_weight_derivative_update( /* Add to the relevant derivatives only when truncation parameters match */
         (sequence_index >= start_index_inside_sequence)
         &&(sequence_index < (start_index_inside_sequence + m_usedSequenceTruncation))
       );
-      calculate_value(m_environment->get_input_sample(raw_inputs_index));
-      calculate_derivative( m_environment->get_input_sample(raw_inputs_index), m_environment->get_label_sample(raw_labels_index) );
+      calculate_value(data_set.get_input_sample(raw_inputs_index));
+      calculate_derivative( data_set.get_input_sample(raw_inputs_index), data_set.get_label_sample(raw_labels_index) );
       ++raw_inputs_index;
       ++raw_labels_index;
     }/*for(relevant sequences)*/

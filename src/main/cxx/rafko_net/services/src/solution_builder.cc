@@ -190,7 +190,7 @@ std::string SolutionBuilder::get_kernel_for_solution(
         if(evaluate_network){ /* normal evaluation */
           current_max_backreach = 0;
           current_slot_index = eval_start;
-          output_start += current_slot_index * neuron_array_size; /* correct output start in case network memory is more, than the environment sequence size */
+          output_start += current_slot_index * neuron_array_size; /* correct output start in case network memory is more, than the data set sequence size */
           run_count = inputs_in_one_sequence;
         }else{ /* run with memory */
           current_max_backreach = neuron_memory_slots;

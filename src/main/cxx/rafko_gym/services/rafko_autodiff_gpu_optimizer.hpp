@@ -34,7 +34,8 @@
 namespace rafko_gym{
 
 /**
- * @brief
+ * @brief   A class to calculate the values and derivatives of a Network, and update its weights based on it
+ *          using OpenCL drivers
  */
 class RAFKO_EXPORT RafkoAutodiffGPUOptimizer : private RafkoAutodiffOptimizer
 {
@@ -42,15 +43,15 @@ public:
   RafkoAutodiffGPUOptimizer(
     cl::Context&& context, cl::Device device,
     std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
-    std::shared_ptr<RafkoDataSet> environment, rafko_net::RafkoNet& network,
+    rafko_net::RafkoNet& network, std::shared_ptr<RafkoDataSet> data_set = {}, 
     std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator = {},
     std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator = {}
   )
-  : RafkoAutodiffOptimizer(settings, environment, network, training_evaluator, test_evaluator)
+  : RafkoAutodiffOptimizer(settings, network, training_evaluator, test_evaluator)
   , m_openclContext(context)
   , m_openclDevice(device)
   , m_openclQueue(m_openclContext, m_openclDevice)
-  , m_strategy(std::make_shared<AutoDiffGPUStrategy>(*m_settings, m_network, m_environment))
+  , m_strategy(std::make_shared<AutoDiffGPUStrategy>(*m_settings, m_network, data_set))
   , m_gpuPhase(
     m_openclContext, m_openclDevice, m_openclQueue,
     std::make_shared<rafko_mainframe::RafkoDummyGPUStrategyPhase>(
@@ -61,7 +62,7 @@ public:
   {
   }
 
-  void build(std::shared_ptr<RafkoObjective> objective);
+  void build(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective);
   using RafkoAutodiffOptimizer::set_weight_updater;
   using RafkoAutodiffOptimizer::stop_triggered;
   using RafkoAutodiffOptimizer::get_last_training_error;
@@ -71,14 +72,20 @@ public:
   using RafkoAutodiffOptimizer::set_training_context;
   using RafkoAutodiffOptimizer::set_testing_context;
 
+  /**
+   * @brief   calculate the values and derivatives and update the weights based on them. The sizes of the buffers are supposed based on the provided 
+   *          @data_set reference, but actual data uploaded to the GPU from the @data_set only if @refresh_data_set is true
+   *
+   * @param[in]   data_set            The data set the network is evaluated on
+   * @param[in]   refresh_data_set    if true, the GPU environment (meaning input values and labels) will be reuploaded based on the dependencies
+   */
+  void iterate(const RafkoDataSet& data_set, bool refresh_data_set = false);
 
   /**
-   * @brief   calculate the values and derivatives and update the weights based on them
-   *
-   * @param[in]   refresh_environment     if true, the GPU environment (meaning input values and labels) will be reuploaded based on the dependencies
+   * @brief   provides the average gradient for the weight under the given index
+   * 
+   * @return    the average weight gradient for the weight under the given weight index
    */
-  void iterate(bool refresh_environment = false);
-
   double get_avg_gradient(std::uint32_t d_w_index) const override;
 
   /**
@@ -87,23 +94,29 @@ public:
   void upload_weight_table();
 
   /**
-   * @brief     Uploads the input data from the environment into its internal buffers
+   * @brief     Uploads the input data from the data set into its internal buffers
    *
+   * @param[in]   data_set                The data set the network is evaluated on
+   * 
    * @return    A vector of events signaling when the operations are ready
    */
-  [[nodiscard]] std::vector<cl::Event> update_inputs();
+  [[nodiscard]] std::vector<cl::Event> update_inputs(const RafkoDataSet& data_set);
 
   /**
-   * @brief     Uploads the label data from the environment into its internal buffers
+   * @brief     Uploads the label data from the data set into its internal buffers
    *
+   * @param[in]   data_set                The data set the network is evaluated on
+   * 
    * @return    A vector of events signaling when the operations are ready
    */
-  [[nodiscard]] std::vector<cl::Event> update_labels();
+  [[nodiscard]] std::vector<cl::Event> update_labels(const RafkoDataSet& data_set);
 
   /**
    * @brief     Refreshes buffer data based on its current status
+   * 
+   * @param[in]   data_set    The data set the network is evaluated on
    */
-  void refresh_GPU_environment();
+  void sync_data_set_on_GPU(const RafkoDataSet& data_set);
 
   /**
    * @brief     Downloads the activation value of a single neuron from the GPU.
@@ -114,9 +127,11 @@ public:
    * @param[in]   sequence_index    The sequence index to take the value from
    * @param[in]   past_index        The past index to take the value from
    * @param[in]   neuron_index      The relevant neuron index
+   * @param[in]   data_set                The data set the network is evaluated on
    */
   double get_neuron_data(
-    std::uint32_t sequence_index, std::uint32_t past_index, std::uint32_t neuron_index
+    std::uint32_t sequence_index, std::uint32_t past_index, std::uint32_t neuron_index,
+    const RafkoDataSet& data_set
   );
 
 private:
@@ -125,7 +140,6 @@ private:
   cl::CommandQueue m_openclQueue;
   std::shared_ptr<AutoDiffGPUStrategy> m_strategy;
   rafko_mainframe::RafkoGPUPhase m_gpuPhase;
-
 };
 
 } /* namespace rafko_gym */

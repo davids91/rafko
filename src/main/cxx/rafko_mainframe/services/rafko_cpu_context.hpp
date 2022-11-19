@@ -44,7 +44,7 @@ public:
   ~RafkoCPUContext() = default;
 
   /* +++ Methods taken from @RafkoContext +++ */
-  void set_environment(std::shared_ptr<rafko_gym::RafkoDataSet> environment) override;
+  void set_data_set(std::shared_ptr<rafko_gym::RafkoDataSet> environment) override;
 
   void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override{
     RFASSERT_LOG("Setting objective in CPU Context");
@@ -88,17 +88,17 @@ public:
   double full_evaluation() override{
     RFASSERT_SCOPE(CPU_FULL_EVALUATION);
     return evaluate(
-      0u, m_environment->get_number_of_sequences(),
-      0u, m_environment->get_sequence_size()
+      0u, m_dataSet->get_number_of_sequences(),
+      0u, m_dataSet->get_sequence_size()
     );
   }
 
   double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override{
     RFASSERT_SCOPE(CPU_STOCHASTIC_EVALUATION);
     if(to_seed)srand(seed_value);
-    std::uint32_t sequence_start_index = (rand()%(m_environment->get_number_of_sequences() - m_usedMinibatchSize + 1));
+    std::uint32_t sequence_start_index = (rand()%(m_dataSet->get_number_of_sequences() - m_usedMinibatchSize + 1));
     std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
-      m_environment->get_sequence_size() - m_usedSequenceTruncation + 1u /* ..not all result output values are evaluated.. */
+      m_dataSet->get_sequence_size() - m_usedSequenceTruncation + 1u /* ..not all result output values are evaluated.. */
     )); /* ..only settings.get_memory_truncation(), starting at a random index inside bounds */
     return evaluate(
       sequence_start_index, m_usedMinibatchSize,
@@ -114,7 +114,7 @@ public:
     return m_agent->solve(input, reset_neuron_data, thread_index);
   }
 
-  void solve_environment(std::vector<std::vector<double>>& output, bool isolated = true) override;
+  void solve_data_set(std::vector<std::vector<double>>& output, bool isolated = true) override;
 
   rafko_mainframe::RafkoSettings& expose_settings() override{
     return *m_settings;
@@ -129,7 +129,7 @@ private:
   rafko_net::RafkoNet& m_network;
   rafko_net::SolutionSolver::Factory m_solverFactory;
   std::shared_ptr<rafko_net::SolutionSolver> m_agent;
-  std::shared_ptr<rafko_gym::RafkoDataSet> m_environment;
+  std::shared_ptr<rafko_gym::RafkoDataSet> m_dataSet;
   std::shared_ptr<rafko_gym::RafkoObjective> m_objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
 

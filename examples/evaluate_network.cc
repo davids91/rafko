@@ -59,27 +59,27 @@ int main(){
   );
   context.set_objective(objective);
 
-  /* +++ Generating sample environment Data set +++ */
+  /* +++ Generating sample data_set Data set +++ */
   constexpr const std::uint32_t sequence_size = 5u;
-  std::vector<std::vector<double>> environment_inputs;
-  std::vector<std::vector<double>> environment_labels;
+  std::vector<std::vector<double>> data_set_inputs;
+  std::vector<std::vector<double>> data_set_labels;
   for(std::uint32_t sequence_index = 0; sequence_index < settings->get_minibatch_size() * 3; ++sequence_index){
     /*!Note: For this example, since the values don't matter full zero content is fine */
     for(std::uint32_t datapoint_index = 0; datapoint_index < sequence_size; ++datapoint_index){
-      environment_inputs.push_back(std::vector<double>(network->input_data_size()));
-      environment_labels.push_back(std::vector<double>(network->output_neuron_number()));
-      /*!Note: It is possible to add more inputs, than the networks input size here and still have a valid environment
+      data_set_inputs.push_back(std::vector<double>(network->input_data_size()));
+      data_set_labels.push_back(std::vector<double>(network->output_neuron_number()));
+      /*!Note: It is possible to add more inputs, than the networks input size here and still have a valid data_set
        * Inside each sequence, the number of labels are compared to the size of the sequence, and surplus inputs
        * at the beginning of each sequence are counted as "prefill". Their only purpose is to initialize
        * the networks data buffers for each sequence, np error scores or gradients are calculated from them
        */
     }
   }
-  /* --- Generating sample environment Data set --- */
-  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> environment = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
-    std::move(environment_inputs), std::move(environment_labels), sequence_size
+  /* --- Generating sample data_set Data set --- */
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> data_set = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+    std::move(data_set_inputs), std::move(data_set_labels), sequence_size
   );
-  context.set_environment(environment);
+  context.set_data_set(data_set);
 
   /*!Note: Evaluation results may be given in both positive and negative ranges.
    * Negative number represents an error value, while positive value represents a fitness value.
@@ -103,32 +103,32 @@ int main(){
 
   /*!Note: OpenCL context provides speed, which is only visible when evaluating or running many data at once.
    * For smaller batch sizes copying the data to the GPU and back comes with a big overhead compared to the speedup
-   * from paralellization. To make use of OpenCL, an environment can be solved at once like below,
-   * but the provided vector needs to have the exact sizes of the relevant(more on this later) output of the environment.
+   * from paralellization. To make use of OpenCL, a data set can be solved at once like below,
+   * but the provided vector needs to have the exact sizes of the relevant(more on this later) output of the data set.
    */
-  second_context->set_environment(environment);
-  std::vector<std::vector<double>> environment_result(
-    environment->get_number_of_label_samples(), std::vector<double>(network->output_neuron_number())
+  second_context->set_data_set(data_set);
+  std::vector<std::vector<double>> data_set_result(
+    data_set->get_number_of_label_samples(), std::vector<double>(network->output_neuron_number())
   );
-  second_context->solve_environment(environment_result);
-  double first_batch_result = environment_result[0][0];
+  second_context->solve_data_set(data_set_result);
+  double first_batch_result = data_set_result[0][0];
 
   /*!Note: the above however does not have any data from previous runs */
-  second_context->solve_environment(environment_result);
-  assert(first_batch_result == environment_result[0][0]);
+  second_context->solve_data_set(data_set_result);
+  assert(first_batch_result == data_set_result[0][0]);
 
   /*!Note: to have the context remember the results of the previous runs ( up to the memory of the network)
    * non-isolated batch-solve can be used as below.
    */
   #if(!RAFKO_USES_OPENCL) /* In case of CPU context, the buffers available are that of the number of threads offered by the CPU */
-  environment_result.resize( std::min(
-    environment->get_number_of_label_samples(), settings->get_max_processing_threads()
+  data_set_result.resize( std::min(
+    data_set->get_number_of_label_samples(), settings->get_max_processing_threads()
   ) );
   #endif/*(RAFKO_USES_OPENCL)*/
-  second_context->solve_environment(environment_result, true/*isolated*/);
-  assert(first_batch_result == environment_result[0][0]);
-  second_context->solve_environment(environment_result, false/*isolated*/);
-  assert(first_batch_result != environment_result[0][0]);
+  second_context->solve_data_set(data_set_result, true/*isolated*/);
+  assert(first_batch_result == data_set_result[0][0]);
+  second_context->solve_data_set(data_set_result, false/*isolated*/);
+  assert(first_batch_result != data_set_result[0][0]);
 
   google::protobuf::ShutdownProtobufLibrary(); /* This is only needed to avoid false positive memory leak reports in memory leak analyzers */
   return 0;
