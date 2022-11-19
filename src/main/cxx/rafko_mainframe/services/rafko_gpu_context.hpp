@@ -53,8 +53,8 @@ public:
   void set_network_weight(std::uint32_t weight_index, double weight_value) override;
   void set_network_weights(const std::vector<double>& weights) override;
   void apply_weight_update(const std::vector<double>& weight_delta) override;
-  double full_evaluation() override;
-  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override;
+  double full_evaluation(bool force_gpu_upload = false) override;
+  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u, bool force_gpu_upload = false) override;
   void solve_data_set(std::vector<std::vector<double>>& output, bool isolated = true) override;
   void refresh_solution_weights() override{
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");

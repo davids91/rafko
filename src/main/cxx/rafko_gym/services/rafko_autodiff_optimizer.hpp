@@ -138,10 +138,10 @@ public:
   /**
    * @brief   calculate the values and derivatives and update the weights based on them
    *
-   * @param[in]   data_set      The data set the network is evaluated on
-   * @param                     Empty parameter only used in GPU child class, ensuring the current method is overwritten.
+   * @param[in]   data_set            The data set the network is evaluated on
+   * @param[in]   force_gpu_upload    Force upload inpuat and label data to GPU, should it be relevant in used test/training contexts
    */
-  void iterate(const RafkoDataSet& data_set, bool = false);
+  void iterate(const RafkoDataSet& data_set, bool force_gpu_upload = false);
 
   /**
    * @brief     provides a const reference to the calculated values of the network output
@@ -259,8 +259,10 @@ protected:
 
   /**
    * @brief   Calculates the training and test set values where appropriate
+   * 
+   * @param[in]      force_gpu_upload     If set true, data in stored objects are uploaded to GPU regardless of previous uploads
    */
-  void update_context_errors();
+  void update_context_errors(bool force_gpu_upload);
 
   /**
    * @brief   applies a weight update to the network

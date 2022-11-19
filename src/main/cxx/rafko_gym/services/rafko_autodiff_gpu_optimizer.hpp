@@ -69,6 +69,7 @@ public:
   using RafkoAutodiffOptimizer::get_last_testing_error;
   using RafkoAutodiffOptimizer::get_avg_of_abs_gradient;
   using RafkoAutodiffOptimizer::apply_weight_update;
+  using RafkoAutodiffOptimizer::update_context_errors;
   using RafkoAutodiffOptimizer::set_training_context;
   using RafkoAutodiffOptimizer::set_testing_context;
 
@@ -77,9 +78,9 @@ public:
    *          @data_set reference, but actual data uploaded to the GPU from the @data_set only if @refresh_data_set is true
    *
    * @param[in]   data_set            The data set the network is evaluated on
-   * @param[in]   refresh_data_set    if true, the GPU environment (meaning input values and labels) will be reuploaded based on the dependencies
+   * @param[in]   force_gpu_upload    if true, the  input values and labels will be reuploaded to GPU based on the dependencies
    */
-  void iterate(const RafkoDataSet& data_set, bool refresh_data_set = false);
+  void iterate(const RafkoDataSet& data_set, bool force_gpu_upload = false);
 
   /**
    * @brief   provides the average gradient for the weight under the given index

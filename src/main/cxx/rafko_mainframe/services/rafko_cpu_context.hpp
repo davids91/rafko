@@ -85,7 +85,7 @@ public:
     refresh_solution_weights();
   }
 
-  double full_evaluation() override{
+  double full_evaluation(bool /*force_gpu_upload*/ = false) override{
     RFASSERT_SCOPE(CPU_FULL_EVALUATION);
     return evaluate(
       0u, m_dataSet->get_number_of_sequences(),
@@ -93,7 +93,7 @@ public:
     );
   }
 
-  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u) override{
+  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u, bool /*force_gpu_upload*/ = false) override{
     RFASSERT_SCOPE(CPU_STOCHASTIC_EVALUATION);
     if(to_seed)srand(seed_value);
     std::uint32_t sequence_start_index = (rand()%(m_dataSet->get_number_of_sequences() - m_usedMinibatchSize + 1));

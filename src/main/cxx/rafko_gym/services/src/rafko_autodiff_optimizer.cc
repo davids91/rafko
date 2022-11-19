@@ -206,10 +206,10 @@ void RafkoAutodiffOptimizer::calculate(BackpropDataBufferRange network_input, Ba
   }
 }
 
-void RafkoAutodiffOptimizer::update_context_errors(){
+void RafkoAutodiffOptimizer::update_context_errors(bool force_gpu_upload){
   if( (m_trainingEvaluator) && (0 == (m_iteration%m_settings->get_tolerance_loop_value())) ){
     m_trainingEvaluator->refresh_solution_weights();
-    m_lastTrainingError = -m_trainingEvaluator->stochastic_evaluation();
+    m_lastTrainingError = -m_trainingEvaluator->stochastic_evaluation(force_gpu_upload);
   }
   if(
     (m_testEvaluator)
@@ -222,12 +222,12 @@ void RafkoAutodiffOptimizer::update_context_errors(){
     )
   ){
     m_testEvaluator->refresh_solution_weights();
-    m_lastTestingError = -m_testEvaluator->stochastic_evaluation();
+    m_lastTestingError = -m_testEvaluator->stochastic_evaluation(force_gpu_upload);
     m_lastTestedIteration = m_iteration;
   }
 }
 
-void RafkoAutodiffOptimizer::iterate(const RafkoDataSet& data_set, bool){
+void RafkoAutodiffOptimizer::iterate(const RafkoDataSet& data_set, bool force_gpu_upload){
   RFASSERT_SCOPE(AUTODIFF_ITERATE);
   std::uint32_t sequence_start_index = (rand()%(data_set.get_number_of_sequences() - m_usedMinibatchSize + 1));
   std::uint32_t start_index_inside_sequence = (rand()%( /* If the memory is truncated for the training.. */
@@ -279,7 +279,7 @@ void RafkoAutodiffOptimizer::iterate(const RafkoDataSet& data_set, bool){
     apply_weight_update(m_tmpAvgD);
   
   ++m_iteration;
-  update_context_errors();
+  update_context_errors(force_gpu_upload);
 }
 
 double RafkoAutodiffOptimizer::get_avg_gradient(std::uint32_t d_w_index) const{

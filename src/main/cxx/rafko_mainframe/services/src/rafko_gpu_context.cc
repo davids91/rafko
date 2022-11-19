@@ -260,7 +260,7 @@ double RafkoGPUContext::error_post_process(double raw_error, std::uint32_t label
   return ( (error_value + performance_error) / divisor );
 }
 
-double RafkoGPUContext::full_evaluation(){
+double RafkoGPUContext::full_evaluation(bool force_gpu_upload){
   [[maybe_unused]]cl_int return_value;
   std::vector<cl::Event> label_events;
   RFASSERT_SCOPE(GPU_FULL_EVALUATION);
@@ -280,7 +280,7 @@ double RafkoGPUContext::full_evaluation(){
   if(CL_SUCCESS != return_value){ RFASSERT_LOG("OpenCL Return value: {}", return_value); }
   RFASSERT( return_value == CL_SUCCESS );
 
-  if(m_lastRanEvaluation != full_eval_run){
+  if(force_gpu_upload || (m_lastRanEvaluation != full_eval_run)){
     std::vector<cl::Event> input_events = m_dataSet->upload_inputs_to_buffer(
       m_openclQueue, m_solutionPhase.get_input_buffer(),
       sizeof(double) * (m_deviceWeightTableSize + m_agent->get_input_shapes()[0][0])/*buffer_start_byte_offset*/,
@@ -358,7 +358,7 @@ double RafkoGPUContext::full_evaluation(){
   return -error_post_process(m_errorPhase.acquire_output(1u)[0], m_dataSet->get_number_of_label_samples());
 }
 
-double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_value){
+double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_value, bool force_gpu_upload){
   [[maybe_unused]]cl_int return_value;
   std::vector<cl::Event> input_events;
   std::vector<cl::Event> label_events;
@@ -376,11 +376,7 @@ double RafkoGPUContext::stochastic_evaluation(bool to_seed, std::uint32_t seed_v
     "Used minibatch size: {}; sequence_truncation: {}; start index inside sequence: {}",
     used_minibatch_size, used_sequence_truncation, start_index_inside_sequence
   );
-  if(
-    (m_lastRanEvaluation != random_eval_run)
-    ||(m_lastUsedSeed != seed_value)
-    ||(!m_lastRandomEvalWasSeeded)
-  ){
+  if((force_gpu_upload)||(m_lastRanEvaluation != random_eval_run)||(m_lastUsedSeed != seed_value)||(!m_lastRandomEvalWasSeeded)){
     cl::Event fill_event;
     RFASSERT_LOG("Updating evaluation buffer..");
     return_value = m_openclQueue.enqueueFillBuffer<double>( /* upload mode info */

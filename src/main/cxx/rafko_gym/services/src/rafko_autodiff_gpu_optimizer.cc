@@ -73,10 +73,10 @@ void RafkoAutodiffGPUOptimizer::sync_data_set_on_GPU(const RafkoDataSet& data_se
   }
 }
 
-void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool refresh_data_set){
+void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool force_gpu_upload){
   RFASSERT_SCOPE(AUTODIFF_GPU_ITERATE);
   upload_weight_table();
-  if(refresh_data_set){
+  if(force_gpu_upload){
     sync_data_set_on_GPU(data_set);
   }
 
@@ -161,7 +161,7 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool refre
     apply_weight_update(m_tmpAvgD);
 
   ++m_iteration;
-  update_context_errors();
+  update_context_errors(force_gpu_upload);
 }
 
 double RafkoAutodiffGPUOptimizer::get_neuron_data(
