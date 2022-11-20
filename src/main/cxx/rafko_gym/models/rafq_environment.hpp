@@ -21,6 +21,9 @@
 #include "rafko_global.hpp"
 
 #include <vector>
+#include <optional>
+
+#include "rafko_utilities/models/const_vector_subrange.hpp"
 
 namespace rafko_gym{
 /**
@@ -30,12 +33,31 @@ class RAFKO_EXPORT RafQEnvironment
 {
 public:
   using DataType = std::vector<double>;
+  using DataView = rafko_utilities::ConstVectorSubrange<DataType::const_iterator>;
   using MaybeDataType = std::optional<std::reference_wrapper<const DataType>>; 
 
-  RafQEnvironment(std::uint32_t state_size, std::uint32_t action_size)
+  struct EnvProperties{
+    const double m_mean = 0.0;
+    const double m_standardDeviation = 1.0;
+  };
+
+  RafQEnvironment(
+    std::uint32_t state_size, std::uint32_t action_size, 
+    EnvProperties state_properties = {0.0, 1.0}, EnvProperties action_properties = {0.0, 1.0}
+  )
   : m_stateSize(state_size)
   , m_actionSize(action_size)
+  , m_stateProperties(state_properties)
+  , m_actionProperties(action_properties)
   {
+  }
+
+  const EnvProperties& state_peoperties(){
+    return m_stateProperties;
+  }
+
+  const EnvProperties& action_properties(){
+    return m_actionProperties;
   }
 
   struct StateTransition{
@@ -44,19 +66,21 @@ public:
     const bool m_terminal = true;
   };
 
-  virtual StateTransition next(const DataType& state, const DataType& action) = 0;
+  virtual StateTransition next(DataView state, DataView action) = 0;
 
-  std::uint32_t state_size(){
+  constexpr std::uint32_t state_size(){
     return m_stateSize;
   }
 
-  std::uint32_t action_size(){
+  constexpr std::uint32_t action_size(){
     return m_actionSize;
   }
 
 private:
   const std::uint32_t m_stateSize;
   const std::uint32_t m_actionSize;
+  const EnvProperties m_stateProperties;
+  const EnvProperties m_actionProperties;
 };
 
 } /* namespace rafko_gym */

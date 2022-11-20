@@ -17,6 +17,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
+#include <catch2/matchers/catch_matchers_vector.hpp>
 
 #include <vector>
 #include <utility>
@@ -29,8 +30,12 @@
 
 #include "test/test_utility.hpp"
 
-namespace rafko_mainframe_test {
+namespace rafko_gym_test {
 
+/**
+ * @brief     A test environment with 5 internal states, one dead-end local minima ( state 4 )
+ *            and a big value state ( 5 ) reached through a low value ( 3 ) state only.
+ */
 class TestEnvironment : public rafko_gym::RafQEnvironment{
 
   static inline const std::vector<DataType> s_states = {
@@ -58,11 +63,10 @@ class TestEnvironment : public rafko_gym::RafQEnvironment{
 public:
   TestEnvironment()
   : rafko_gym::RafQEnvironment(1,1)
-  , m_dummyBuffer()
   {
   }
 
-  StateTransition next(const DataType& state, const DataType& action) override{
+  StateTransition next(DataView state, DataView action) override{
     REQUIRE(state.size() == state_size());
     REQUIRE(action.size() == action_size());
 
@@ -81,8 +85,6 @@ public:
       };
     }   
   }
-private:
-  const DataType m_dummyBuffer;
 };
 
 TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
@@ -102,7 +104,10 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
     /* The Q Value of state 2 ( result of {1,2} ) is 20 */
     q_set.incorporate(
       {{1.0}},
-      {XPSlot::action_slot({2.0}/*action*/, environment.next({1.0}, {2.0}).m_resultQValue)}
+      { XPSlot::action_slot(
+        {2.0}/*action*/, 
+        environment.next(std::vector<double>{1.0}, std::vector<double>{2.0}).m_resultQValue
+      ) }
     );
     REQUIRE(1 == q_set.get_number_of_sequences());
 
@@ -113,7 +118,10 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
     /* The Q Value of state 4 ( result of {1,4} ) is 40 */
     q_set.incorporate(
       {{1.0}},
-      {XPSlot::action_slot({4.0}/*action*/, environment.next({1.0}, {4.0}).m_resultQValue)}
+      {XPSlot::action_slot(
+        {4.0}/*action*/, 
+        environment.next(std::vector<double>{1.0}, std::vector<double>{4.0}).m_resultQValue
+      ) }
     );
     REQUIRE(1 == q_set.get_number_of_sequences());
 
@@ -127,11 +135,17 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
   SECTION("Checking if a worse initial action, which would lead to a better state gets stored"){
     q_set.incorporate(
       {{1.0}},
-      {XPSlot::action_slot({2.0}/*action*/, environment.next({1.0}, {2.0}).m_resultQValue)}
+      {XPSlot::action_slot(
+        {2.0}/*action*/,
+        environment.next(std::vector<double>{1.0}, std::vector<double>{2.0}).m_resultQValue
+      ) }
     );
     q_set.incorporate(
       {{1.0}},
-      {XPSlot::action_slot({4.0}/*action*/, environment.next({1.0}, {4.0}).m_resultQValue)}
+      {XPSlot::action_slot(
+        {4.0}/*action*/,
+        environment.next(std::vector<double>{1.0}, std::vector<double>{4.0}).m_resultQValue
+      ) }
     );
     REQUIRE(1 == q_set.get_number_of_sequences());
 
@@ -140,13 +154,19 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
 
     q_set.incorporate(
       {{2.0}},
-      {XPSlot::action_slot({3.0}/*action*/, environment.next({2.0}, {3.0}).m_resultQValue)}
+      {XPSlot::action_slot(
+        {3.0}/*action*/,
+        environment.next(std::vector<double>{2.0}, std::vector<double>{3.0}).m_resultQValue
+      ) }
     );
     REQUIRE(2 == q_set.get_number_of_sequences());
 
     q_set.incorporate(
       {{3.0}},
-      {XPSlot::action_slot({5.0}/*action*/, environment.next({3.0}, {5.0}).m_resultQValue)}
+      {XPSlot::action_slot(
+        {5.0}/*action*/,
+        environment.next(std::vector<double>{3.0}, std::vector<double>{5.0}).m_resultQValue
+      ) }
     );
     REQUIRE(3 == q_set.get_number_of_sequences());
 
@@ -157,7 +177,10 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
     double initial_q_value = element_view.q_value(1); /* the second action is the worse currently */
     q_set.incorporate(
       {{1.0}},
-      {XPSlot::action_slot({2.0}/*action*/, environment.next({1.0}, {2.0}).m_resultQValue)}
+      {XPSlot::action_slot(
+        {2.0}/*action*/,
+        environment.next(std::vector<double>{1.0}, std::vector<double>{2.0}).m_resultQValue
+      ) }
     );
     REQUIRE(element_view[0][0] == Catch::Approx(2.0).epsilon(0.0000000000001)); /* {1,2} moved to the first place in the actions */
     REQUIRE(initial_q_value < element_view.q_value(0));
@@ -197,4 +220,91 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
   }
 }
 
-} /* namespace rafko_mainframe_test */
+/**
+ * @brief     A test environment with an arbitrary number of possible actions for each state
+ */
+class TestEnvironment2 : public rafko_gym::RafQEnvironment{
+  static std::vector<DataType> states(std::uint32_t size){
+    std::vector<DataType> ret;
+    for(std::uint32_t i = 0; i < size; ++i)
+      ret.push_back({static_cast<double>(i)});
+    return ret;
+  }
+public:
+  TestEnvironment2(std::uint32_t max_states = 5)
+  : rafko_gym::RafQEnvironment(1,1)
+  , m_states(states(max_states))
+  {
+  }
+
+  StateTransition next(DataView state, DataView action) override{
+    REQUIRE(state.size() == state_size());
+    REQUIRE(action.size() == action_size());
+    auto next_state_iterator = std::find_if(
+      m_states.begin(), m_states.end(),
+      [&state, &action](const DataType& stored_state){ 
+        return stored_state[0] == (state[0] + action[0]); 
+      }
+    );
+    if(next_state_iterator == m_states.end())
+      return {{}, (state[0] + action[0]), true};
+      else return {{*next_state_iterator}, (state[0] + action[0]), false}; 
+  }
+private:
+  const std::vector<DataType> m_states;
+};
+
+TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]") {
+  constexpr const std::uint32_t max_set_size = 4u;
+  constexpr const std::uint32_t action_count = 5;
+
+  using DataType = rafko_gym::RafQEnvironment::DataType;
+
+  rafko_mainframe::RafkoSettings settings;
+  TestEnvironment environment;
+  rafko_gym::RafQSet<action_count> q_set(settings, environment, max_set_size, 0.1);
+
+  for(double state_index = 0; state_index < max_set_size; state_index += 1.0){
+    std::vector<DataType> actions_for_state;
+    for(double action_index = 0; action_index < action_count; action_index += 1.0){
+      actions_for_state.push_back(rafko_gym::RafQSetItemConstView<1>::action_slot(
+        std::vector<double>{action_index}/*action*/,
+        environment.next(
+          std::vector<double>{state_index}, std::vector<double>{action_index}
+        ).m_resultQValue
+      ));
+    }
+    q_set.incorporate(
+      std::vector<DataType>(action_count, {state_index})/* states */,
+      actions_for_state
+    );
+  }
+
+  SECTION("Checking if QSet can build with reduced action count correctly"){
+    constexpr const std::uint32_t reduced_action_count = action_count - std::min(3u, action_count);
+    const std::uint32_t action_slot_size = (
+      reduced_action_count * rafko_gym::RafQSetItemConstView<reduced_action_count>::action_slot_size(environment.action_size())
+    );
+
+    using Catch::Matchers::Approx;
+
+    rafko_gym::RafQSet<reduced_action_count> reduced_q_set(q_set);
+
+    for(std::uint32_t state_index = 0; state_index < max_set_size; ++state_index){
+      REQUIRE_THAT(
+        q_set.get_input_sample(state_index), 
+        Catch::Matchers::Approx(reduced_q_set.get_input_sample(state_index)).margin(0.0000000000001)
+      );
+      DataType label_reference = {
+        q_set.get_label_sample(state_index).begin(), 
+        q_set.get_label_sample(state_index).begin() + (reduced_action_count * action_slot_size) 
+      };
+      REQUIRE_THAT(
+        label_reference, 
+        Approx(reduced_q_set.get_label_sample(state_index)).margin(0.0000000000001) 
+      );
+    }
+  }
+}
+
+} /* namespace rafko_gym_test */
