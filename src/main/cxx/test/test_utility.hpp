@@ -32,6 +32,11 @@
 namespace rafko_test {
 
 /**
+ * @brief     Cross-platform method of obtaining the width of the actual console
+ */
+extern std::uint32_t get_console_width();
+
+/**
  * @brief      generates a partial partial_solution manually based on the Neural Network structure:
  *             2 Neurons: The first neuron has the inputs and the second has the first neuron
  *

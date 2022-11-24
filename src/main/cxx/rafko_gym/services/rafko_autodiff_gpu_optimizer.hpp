@@ -37,7 +37,7 @@ namespace rafko_gym{
  * @brief   A class to calculate the values and derivatives of a Network, and update its weights based on it
  *          using OpenCL drivers
  */
-class RAFKO_EXPORT RafkoAutodiffGPUOptimizer : private RafkoAutodiffOptimizer
+class RAFKO_EXPORT RafkoAutodiffGPUOptimizer : public RafkoAutodiffOptimizer
 {
 public:
   RafkoAutodiffGPUOptimizer(

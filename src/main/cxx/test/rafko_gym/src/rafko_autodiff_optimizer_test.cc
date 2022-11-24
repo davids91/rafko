@@ -14,35 +14,29 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
-#include <iostream>
-#include <iomanip>
-
-#ifdef WIN32
-#include <windows.h>
-#else
-#include <sys/ioctl.h>
-#include <unistd.h>
-#endif
-
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
+
+#include <iostream>
+#include <iomanip>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 #include "rafko_utilities/models/const_vector_subrange.hpp"
 #include "rafko_mainframe/models/rafko_settings.hpp"
-#include "rafko_mainframe/services/rafko_cpu_context.hpp"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/services/rafko_ocl_factory.hpp"
 #include "rafko_mainframe/services/rafko_gpu_context.hpp"
 #include "rafko_gym/services/rafko_autodiff_gpu_optimizer.hpp"
+#else
+#include "rafko_mainframe/services/rafko_cpu_context.hpp"
+#include "rafko_gym/services/rafko_autodiff_optimizer.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_net/services/rafko_net_builder.hpp"
 #include "rafko_net/services/solution_builder.hpp"
 #include "rafko_net/services/solution_solver.hpp"
 #include "rafko_gym/models/rafko_cost.hpp"
 #include "rafko_gym/models/rafko_dataset_implementation.hpp"
-#include "rafko_gym/services/rafko_autodiff_optimizer.hpp"
 
 #include "test/test_utility.hpp"
 
@@ -398,11 +392,11 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data
   std::unique_ptr<rafko_gym::RafkoAutodiffGPUOptimizer> optimizer = (
     rafko_mainframe::RafkoOCLFactory()
       .select_platform().select_device()
-      .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network, data_set, context, test_context)
+      .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network)
   );
   #else
   std::unique_ptr<rafko_gym::RafkoAutodiffOptimizer> optimizer = std::make_unique<rafko_gym::RafkoAutodiffOptimizer>(
-    settings, network, context, test_context
+    settings, network
   );
   #endif/*(RAFKO_USES_OPENCL)*/
   optimizer->build(data_set, objective);
@@ -422,17 +416,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data
   avg_duration = 0;
   iteration = 0;
   minimum_error = std::numeric_limits<double>::max();
-  std::uint32_t console_width;
-  #ifdef WIN32
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    int columns, rows;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    console_width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-  #else
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    console_width = w.ws_col;
-  #endif
+
   rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   std::cout << "Optimizing network:" << std::endl;
   std::cout << "Training Error; \t\tTesting Error; min; \t\t avg_d_w_abs; \t\t iteration; \t\t duration(ms); avg duration(ms)\t " << std::endl;
@@ -452,7 +436,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data
     }
 
     std::cout << "\r";
-    for(std::uint32_t space_count = 0; space_count < console_width - 1; ++space_count)
+    for(std::uint32_t space_count = 0; space_count < rafko_test::get_console_width() - 1; ++space_count)
       std::cout << " ";
     std::cout << "\r";
     std::cout << std::setprecision(9)

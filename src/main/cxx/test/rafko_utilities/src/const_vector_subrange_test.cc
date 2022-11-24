@@ -53,4 +53,17 @@ TEST_CASE("Testing Vector subrange", "[data-handling][sub-range]"){
   }
 }
 
+
+TEST_CASE("Testing Vector subrange Equality operator", "[data-handling][sub-range]"){
+  std::vector<double> big_vec = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+  std::vector<double> big_vec_copy = big_vec;
+  std::vector<double> another_vec = {big_vec.begin() + 5, big_vec.end()};
+  rafko_utilities::ConstVectorSubrange<> big_range{ big_vec.begin(), big_vec.end() };
+  rafko_utilities::ConstVectorSubrange<> smaller_range{ big_vec.begin() + 5, big_vec.end() };
+
+  REQUIRE(big_range == big_vec);  
+  REQUIRE(big_range == big_vec_copy);  
+  REQUIRE(smaller_range == another_vec);  
+}
+
 } /* namespace rafko_utilities_test */

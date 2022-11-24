@@ -14,19 +14,12 @@
  *    along with Rafko.  If not, see <https://www.gnu.org/licenses/> or
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
+
 #include <iostream>
 #include <iomanip>
 #include <limits>
-
-#ifdef WIN32
-#include <windows.h>
-#else
-#include <sys/ioctl.h>
-#include <unistd.h>
-#endif
-
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/models/rafko_settings.hpp"
@@ -404,18 +397,6 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
   iteration = 0;
   minimum_error = std::numeric_limits<double>::max();
 
-  std::uint32_t console_width;
-  #ifdef WIN32
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    int columns, rows;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    console_width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-  #else
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    console_width = w.ws_col;
-  #endif
-
   std::cout << "Approximizing network:" << std::endl;
   std::cout << "Training Error; \t\tTesting Error; min; \t\t avg_d_w_abs; \t\t iteration; \t\t duration(ms); avg duration(ms)\t " << std::endl;
   std::cout.precision(15);
@@ -442,7 +423,7 @@ TEST_CASE("Testing basic aproximization","[numeric_optimization][feed-forward][.
       std::cout << std::endl;
     }
     std::cout << "\r";
-    for(std::uint32_t space_count = 0; space_count < console_width - 1; ++space_count)
+    for(std::uint32_t space_count = 0; space_count < rafko_test::get_console_width() - 1; ++space_count)
       std::cout << " ";
     std::cout << "\r";
     std::cout << std::setprecision(9)
