@@ -19,7 +19,17 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_session.hpp>
+
 #include <cfloat>
+#include <iostream>
+#include <random>
+
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
@@ -36,12 +46,27 @@
 #include "test/test_utility.hpp"
 
 int main( int argc, char* argv[] ) {
-  int result = Catch::Session().run( argc, argv );
+  Catch::Session session;
+  srand(session.config().rngSeed());
+  int result = session.run( argc, argv );
   google::protobuf::ShutdownProtobufLibrary();
   return result;
 }
 
 namespace rafko_test {
+
+std::uint32_t get_console_width(){
+  #ifdef WIN32
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int columns, rows;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+  #else
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    return w.ws_col;
+  #endif
+}
 
 void manual_2_neuron_partial_solution(rafko_net::PartialSolution& partial_solution, std::uint32_t number_of_inputs, std::uint32_t neuron_offset){
 

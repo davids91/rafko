@@ -57,7 +57,7 @@ int main(){
   );
 
   /*!Note: Rafko May also use Protocol Buffers Arena implementation, which means that the object returned by the builder is owned by it.
-   * Because of this, it is perfectly acceptable to build a Netwrok like in the below example, because the declared arena will have ownership of it.
+   * Because of this, it is perfectly acceptable to build a Network like in the below example, because the declared arena will have ownership of it.
    */
   google::protobuf::Arena everything_storage;
   settings->set_arena_ptr(&everything_storage);

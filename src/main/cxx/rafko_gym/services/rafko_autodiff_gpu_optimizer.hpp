@@ -37,7 +37,7 @@ namespace rafko_gym{
  * @brief   A class to calculate the values and derivatives of a Network, and update its weights based on it
  *          using OpenCL drivers
  */
-class RAFKO_EXPORT RafkoAutodiffGPUOptimizer : private RafkoAutodiffOptimizer
+class RAFKO_EXPORT RafkoAutodiffGPUOptimizer : public RafkoAutodiffOptimizer
 {
 public:
   RafkoAutodiffGPUOptimizer(
@@ -62,7 +62,7 @@ public:
   {
   }
 
-  void build(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective);
+  void build(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective) override;
   using RafkoAutodiffOptimizer::set_weight_updater;
   using RafkoAutodiffOptimizer::stop_triggered;
   using RafkoAutodiffOptimizer::get_last_training_error;
@@ -80,7 +80,7 @@ public:
    * @param[in]   data_set            The data set the network is evaluated on
    * @param[in]   force_gpu_upload    if true, the  input values and labels will be reuploaded to GPU based on the dependencies
    */
-  void iterate(const RafkoDataSet& data_set, bool force_gpu_upload = false);
+  void iterate(const RafkoDataSet& data_set, bool force_gpu_upload = false) override;
 
   /**
    * @brief   provides the average gradient for the weight under the given index

@@ -46,7 +46,6 @@ public:
   SolutionSolver(const Solution* to_solve, const rafko_mainframe::RafkoSettings& settings);
 
   SolutionSolver(const SolutionSolver& other) = delete; /* Copy constructor */
-  SolutionSolver(SolutionSolver&& other) = delete; /* Move constructor */
   SolutionSolver& operator=(const SolutionSolver& other) = delete; /* Copy assignment */
   SolutionSolver& operator=(SolutionSolver&& other) = delete; /* Move assignment */
   ~SolutionSolver() = default;

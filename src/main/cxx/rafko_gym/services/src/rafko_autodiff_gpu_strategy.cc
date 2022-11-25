@@ -139,6 +139,7 @@ std::string AutoDiffGPUStrategy::generate_switch_case_kernels_from(
     static_cast<double>(avg_row_size) / static_cast<double>(operations_matrix.size())
   ) );
   m_maximumLocalWorkers = avg_row_size;
+  RFASSERT_LOG("One Local Group size: {}", m_maximumLocalWorkers);
 
   for(const std::vector<std::uint32_t>& current_row : operations_matrix){
     /*!Note: one row to be split up between the workers */

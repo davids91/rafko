@@ -21,6 +21,7 @@
 #include "rafko_global.hpp"
 
 #include <vector>
+#include <algorithm>
 #include <cassert>
 
 namespace rafko_utilities{
@@ -50,6 +51,12 @@ public:
   : m_start(begin)
   , m_rangeSize(std::distance(m_start, end))
   {
+  }
+
+  template<class U>
+  bool operator==(const U& other) const{
+    std::uint32_t i = 0;
+    return std::all_of(begin(), end(),[&i, &other](const T& item){ return item == other[i++]; });
   }
 
   const T& operator[](std::size_t index) const{
