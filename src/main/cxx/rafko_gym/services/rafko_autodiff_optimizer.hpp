@@ -125,7 +125,7 @@ public:
    *                            and to add needed parameters for objective operations
    * @param       objective     The objective function evaluating the network output
    */
-  void build(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective = {});
+  virtual void build(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective = {});
 
   /**
    * @brief     calculates the values and derivatives from the provided inputs and the stored Network reference
@@ -141,7 +141,7 @@ public:
    * @param[in]   data_set            The data set the network is evaluated on
    * @param[in]   force_gpu_upload    Force upload inpuat and label data to GPU, should it be relevant in used test/training contexts
    */
-  void iterate(const RafkoDataSet& data_set, bool force_gpu_upload = false);
+  virtual void iterate(const RafkoDataSet& data_set, bool force_gpu_upload = false);
 
   /**
    * @brief     provides a const reference to the calculated values of the network output
