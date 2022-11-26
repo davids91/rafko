@@ -20,7 +20,6 @@
 
 #include "rafko_global.hpp"
 
-#include <array>
 #include <vector>
 #include <cassert>
 #include <algorithm>
@@ -40,33 +39,40 @@ namespace rafko_gym{
  * @brief      This class helps query a state paired with a number of Action Q-value pairs set by its template arguments
  *             providing only const access
  */
-template<std::size_t ActionCount = 1>
 class RAFKO_EXPORT RafQSetItemConstView
 {
-  template<std::size_t... ActionIndex>
-  static std::array<std::uint32_t, ActionCount> q_value_offset(std::uint32_t  action_size, std::index_sequence<ActionIndex...>){
-    return { static_cast<std::uint32_t>(ActionIndex * (action_size + 1u)) ... };
+  static std::vector<std::uint32_t> q_value_offset(std::uint32_t  action_size, std::uint32_t action_count){
+    std::vector<std::uint32_t> offsets;
+    for(std::uint32_t action_index = 0u; action_index < action_count; ++action_index)
+      offsets.push_back( action_index * (action_size + 1u) );
+    return offsets;
   }
 
-  template<std::size_t... ActionIndex>
-  static std::array<std::uint32_t, ActionCount> action_offset(std::uint32_t  action_size, std::index_sequence<ActionIndex...>){
-    return { static_cast<std::uint32_t>(ActionIndex * (action_size + 1u) + 1u) ... };
+  static std::vector<std::uint32_t> action_offset(std::uint32_t  action_size, std::uint32_t action_count){
+    std::vector<std::uint32_t> offsets;
+    for(std::uint32_t action_index = 0u; action_index < action_count; ++action_index)
+      offsets.push_back( action_index * (action_size + 1u) + 1u );
+    return offsets;
   }
 
 public:
   using DataType = RafQEnvironment::DataType;
 
-  RafQSetItemConstView(const DataType& state, const DataType& actions, std::uint32_t action_size)
-  : m_state(state)
+  RafQSetItemConstView(
+    const DataType& state, const DataType& actions,
+    std::uint32_t action_size, std::uint32_t action_count = 1
+  )
+  : m_actionCount(action_count)
+  , m_state(state)
   , m_actions(actions)
   , m_stateSize(state.size())
   , m_actionSize(action_size)
-  , m_qValueOffset(q_value_offset(m_actionSize, std::make_index_sequence<ActionCount>()))
-  , m_actionOffset(action_offset(m_actionSize, std::make_index_sequence<ActionCount>()))
+  , m_qValueOffset(q_value_offset(m_actionSize, m_actionCount))
+  , m_actionOffset(action_offset(m_actionSize, m_actionCount))
   {
-    static_assert(0 < ActionCount);
+    RFASSERT(0 < m_actionCount);
     RFASSERT(0 < m_stateSize);
-    RFASSERT(actions.size() == feature_size(m_actionSize));
+    RFASSERT(actions.size() == feature_size(m_actionSize, m_actionCount));
   }
 
   DataType::const_iterator operator[](std::uint32_t action_index) const{
@@ -78,7 +84,7 @@ public:
   }
 
   DataType::const_iterator worst_action() const{
-    return (*this)[ActionCount - 1];
+    return (*this)[m_actionCount - 1];
   } 
 
   double q_value(std::uint32_t action_index = 0) const{
@@ -89,7 +95,7 @@ public:
   double avg_q_value() const{
     double count = 0.0;
     double sum = 0.0;
-    for(std::uint32_t action_index = 0; action_index < ActionCount; ++action_index){
+    for(std::uint32_t action_index = 0; action_index < m_actionCount; ++action_index){
       if(
         (m_actionSize > std::count((*this)[action_index], (*this)[action_index] + m_actionSize, 0.0))
         &&(0 < q_value(action_index))
@@ -99,13 +105,13 @@ public:
       }
     }
     if(0 < count)
-      return sum / static_cast<double>(ActionCount);
+      return sum / static_cast<double>(m_actionCount);
       else return sum;
   }
 
   double max_q_value() const{
     double max = q_value(0);
-    for(std::uint32_t action_index = 1; action_index < ActionCount; ++action_index){
+    for(std::uint32_t action_index = 1; action_index < m_actionCount; ++action_index){
       max = std::max(max, q_value(action_index));
     }
     return max;
@@ -113,18 +119,22 @@ public:
 
   double min_q_value() const{
     double min = q_value(0);
-    for(std::uint32_t action_index = 1; action_index < ActionCount; ++action_index){
+    for(std::uint32_t action_index = 1; action_index < m_actionCount; ++action_index){
       min = std::min(min, q_value(action_index));
     }
     return min;
+  }
+
+  std::uint32_t action_count(){
+    return m_actionCount;
   }
 
   static constexpr std::uint32_t action_slot_size(std::uint32_t action_size){
     return (action_size + 1);
   }
 
-  static constexpr std::uint32_t feature_size(std::uint32_t action_size){
-    return action_slot_size(action_size) * ActionCount;
+  static constexpr std::uint32_t feature_size(std::uint32_t action_size, std::uint32_t action_count){
+    return action_slot_size(action_size) * action_count;
   }
 
   static DataType action_slot(const DataType& action, double q_value){
@@ -134,41 +144,44 @@ public:
   }
 
 protected:
+  const std::uint32_t m_actionCount;
   const DataType& m_state;
   const DataType& m_actions;
   const std::uint32_t m_stateSize;
   const std::uint32_t m_actionSize;
-  const std::array<std::uint32_t, ActionCount> m_qValueOffset;
-  const std::array<std::uint32_t, ActionCount> m_actionOffset;
+  const std::vector<std::uint32_t> m_qValueOffset;
+  const std::vector<std::uint32_t> m_actionOffset;
 };
 
 /**
  * @brief      This class helps handle a state paired with a number of Action Q-value pairs
  */
-template<std::size_t ActionCount = 1>
-class RAFKO_EXPORT RafQSetItemView : public RafQSetItemConstView<ActionCount>
+class RAFKO_EXPORT RafQSetItemView : public RafQSetItemConstView
 {
-  using RafQSetItemConstView<ActionCount>::m_stateSize;
-  using RafQSetItemConstView<ActionCount>::m_actionSize;
-  using RafQSetItemConstView<ActionCount>::m_qValueOffset;
-  using RafQSetItemConstView<ActionCount>::m_actionOffset;
+  using RafQSetItemConstView::m_stateSize;
+  using RafQSetItemConstView::m_actionSize;
+  using RafQSetItemConstView::m_qValueOffset;
+  using RafQSetItemConstView::m_actionOffset;
 public:
   using DataType = RafQEnvironment::DataType;
-  using RafQSetItemConstView<ActionCount>::state;
-  using RafQSetItemConstView<ActionCount>::worst_action;
-  using RafQSetItemConstView<ActionCount>::q_value;
-  using RafQSetItemConstView<ActionCount>::avg_q_value;
-  using RafQSetItemConstView<ActionCount>::max_q_value;
-  using RafQSetItemConstView<ActionCount>::min_q_value;
-  using RafQSetItemConstView<ActionCount>::feature_size;
-  using RafQSetItemConstView<ActionCount>::action_slot;
+  using RafQSetItemConstView::state;
+  using RafQSetItemConstView::worst_action;
+  using RafQSetItemConstView::q_value;
+  using RafQSetItemConstView::avg_q_value;
+  using RafQSetItemConstView::max_q_value;
+  using RafQSetItemConstView::min_q_value;
+  using RafQSetItemConstView::feature_size;
+  using RafQSetItemConstView::action_slot;
 
-  RafQSetItemView(DataType& state, DataType& actions, std::uint32_t action_size)
-  : RafQSetItemConstView<ActionCount>(state, actions, action_size)
+  RafQSetItemView(
+    DataType& state, DataType& actions,
+    std::uint32_t action_size, std::uint32_t action_count = 1
+  )
+  : RafQSetItemConstView(state, actions, action_size, action_count)
   , m_state(state)
   , m_actions(actions)
   {
-    static_assert(0 < ActionCount);
+    RFASSERT(0 < m_actionCount);
   }
 
   void set_q_value(double value, std::uint32_t action_index = 0){
@@ -181,23 +194,24 @@ public:
   }
 
   typename DataType::iterator worst_action(){
-    return (*this)[ActionCount - 1];
+    return (*this)[m_actionCount - 1];
   }
 
   typename DataType::iterator best_action(){
-    return (*this)[ActionCount - 1];
+    return (*this)[m_actionCount - 1];
   }
 
   void copy_action(std::uint32_t source, std::uint32_t target){
-    RFASSERT(source < ActionCount);
-    RFASSERT(target < ActionCount);
+    RFASSERT(source < m_actionCount);
+    RFASSERT(target < m_actionCount);
     if(source == target) return;
     std::copy((*this)[source], (*this)[source] + m_actionSize, (*this)[target]);
     set_q_value(q_value(source), target);
   }
 
-  template <std::size_t N = 1>
-  void take_over(RafQSetItemConstView<N> xp_element, std::uint32_t source_action_index = 0u, std::uint32_t target_action_index = 0u){
+  void take_over(RafQSetItemConstView xp_element, std::uint32_t source_action_index = 0u, std::uint32_t target_action_index = 0u){
+    RFASSERT(source_action_index < xp_element.action_count());
+    RFASSERT(target_action_index < m_actionCount);
     std::copy(
       xp_element[source_action_index], xp_element[source_action_index] + m_actionSize, 
       (*this)[target_action_index]
@@ -221,13 +235,14 @@ private:
   DataType& m_actions;
 };
 
+//TODO: convert state-best action pairs to sequences: so that consecutive states can be a sequence
+//TODO: implement look_up function in openCL also
+
 /**
  * @brief      This class stores and provides a set of states and connected actions with corresponding QValues
  */
-template<std::size_t ActionCount>
 class RAFKO_EXPORT RafQSet : public RafkoDataSet
 {
-  template<std::size_t N> friend class RafQSet;
 public:
   using DataType = RafQEnvironment::DataType;
   using DataView = RafQEnvironment::DataView;
@@ -235,41 +250,38 @@ public:
 
   RafQSet(
     const rafko_mainframe::RafkoSettings& settings, RafQEnvironment& environment,
-    std::uint32_t max_set_size, double overwrite_q_threshold
+    std::uint32_t action_count, std::uint32_t max_set_size, double overwrite_q_threshold
   )
   : m_settings(settings)
+  , m_actionCount(action_count)
   , m_environment(environment)
   , m_costFunction(m_settings)
   , m_overwriteQThreshold(overwrite_q_threshold)
   , m_maxSetSize(max_set_size)
   {
-    static_assert(0 < ActionCount);
+    RFASSERT(0 < m_actionCount);
   }
 
-  template<std::size_t N>
-  RafQSet(const RafQSet<N>& other)
+  RafQSet(const RafQSet& other, std::uint32_t action_count)
   : m_settings(other.m_settings)
+  , m_actionCount(action_count)
   , m_environment(other.m_environment)
   , m_costFunction(m_settings)
   , m_overwriteQThreshold(other.m_overwriteQThreshold)
   , m_maxSetSize(other.m_maxSetSize)
   {
-    static_assert(ActionCount <= N);
+    assert(m_actionCount <= action_count);
     for(std::uint32_t item_index = 0; item_index < other.get_number_of_sequences(); ++item_index){
       m_stateBuffer.push_back(other.m_stateBuffer[item_index]);
       m_actionsBuffer.push_back({
         other.m_actionsBuffer[item_index].begin(), 
-        other.m_actionsBuffer[item_index].begin() + (ActionCount * get_feature_size())
+        other.m_actionsBuffer[item_index].begin() + (m_actionCount * get_feature_size())
       });
       m_avgQValue.push_back(other.m_avgQValue[item_index]);
     }
   }
 
-  //TODO: convert state-best action pairs to sequences: so that consecutive states can be a sequence
-
-
-  //TODO: implement function in openCL also
-  MaybeDataType look_up(const DataType& state, std::uint32_t* result_index_buffer = nullptr){
+  MaybeDataType look_up(DataView state, std::uint32_t* result_index_buffer = nullptr){
     RFASSERT(state.size() == m_environment.state_size());
     //TODO: multi-thread below logic
     MaybeDataType result;
@@ -288,9 +300,9 @@ public:
     // std::cout << "======================"  << std::endl;
     // std::cout << "QSet: " << std::endl;
     // for(int i = 0; i < get_number_of_sequences(); ++i){
-    //   const RafQSetItemConstView<ActionCount> actions_view((*this)[i]);
+    //   const RafQSetItemConstView actions_view((*this)[i]);
     //   std::cout << get_input_sample(i)[0] << " == >  {";
-    //   for(int j = 0; j < ActionCount; ++j)
+    //   for(int j = 0; j < m_actionCount; ++j)
     //     std::cout << "(" << actions_view[j][0]<< ", q:" << actions_view.q_value(j) << ")";
     //   std::cout << "}" << std::endl;
     // }
@@ -300,24 +312,26 @@ public:
     for(std::uint32_t state_index = 0; state_index < state_buffer.size(); ++state_index){
       // std::cout << "Incorporating vector of " << state_buffer.size() << std::endl;
       RFASSERT(state_buffer[state_index].size() == get_input_size());
-      RFASSERT(actions_buffer[state_index].size() == RafQSetItemView<1>::feature_size(m_environment.action_size()));
+      RFASSERT(actions_buffer[state_index].size() == RafQSetItemView::feature_size(m_environment.action_size(), 1u/*action count*/));
       std::uint32_t match_index;
       MaybeDataType state_match = look_up(state_buffer[state_index], &match_index);
       const std::uint32_t action_size = m_environment.action_size();
-      const RafQSetItemConstView<1> new_action_view(state_buffer[state_index], actions_buffer[state_index], action_size);
+      const RafQSetItemConstView new_action_view(
+        state_buffer[state_index], actions_buffer[state_index], action_size, 1u /*action count*/
+      );
       // std::cout << "Looking for state " << state_buffer[state_index][0] << std::endl;
       if(state_match.has_value()){
         // std::cout << "found state (" << state_buffer[state_index][0] << ") in the set!" << std::endl;
         RFASSERT(match_index < get_number_of_sequences());
-        std::uint32_t action_index = ActionCount;
-        RafQSetItemView<ActionCount> stored_action_view((*this)[match_index]);
-        for(action_index = 0; action_index < ActionCount; ++action_index){
+        std::uint32_t action_index = m_actionCount;
+        RafQSetItemView stored_action_view((*this)[match_index]);
+        for(action_index = 0; action_index < m_actionCount; ++action_index){
           // std::cout << "comparing actions: " << stored_action_view[action_index][0] << " <> " << new_action_view[0][0] << std::endl;
           if( m_settings.get_delta_2() >= m_costFunction.get_feature_error(
             {stored_action_view[action_index], action_size}, {new_action_view[0], action_size}, action_size
           ) ) break; /* if the difference is small enough, a match is found! */
         }
-        if(action_index < ActionCount){ /* Update the QValue based on TD Learning */
+        if(action_index < m_actionCount){ /* Update the QValue based on TD Learning */
           // std::cout << " found action[" << action_index << "]" << std::endl;
           double temporal_difference_value = new_action_view.max_q_value(); /* The only Q-value is the maximum one */
 
@@ -325,7 +339,7 @@ public:
             double lambda = m_settings.get_gamma();
             std::uint32_t next_state_index = match_index;
             MaybeDataType next_state_data(stored_action_view.state());
-            RafQSetItemView<ActionCount> next_state_view((*this)[next_state_index]);
+            RafQSetItemView next_state_view((*this)[next_state_index]);
 
             // std::cout << "calculating q value; starting q value:" << temporal_difference_value << std::endl;
             for(std::uint16_t look_ahead_index = 0; look_ahead_index < m_settings.get_look_ahead_count(); ++look_ahead_index){
@@ -356,10 +370,10 @@ public:
                 break;
               }
 
-              next_state_data = look_up(state_transition.m_resultState.value(), &next_state_index);
+              next_state_data = look_up(state_transition.m_resultState.value().get(), &next_state_index);
               if(next_state_data.has_value()){
                 RFASSERT(next_state_index < get_number_of_sequences());
-                new (&next_state_view) RafQSetItemView<ActionCount>((*this)[next_state_index]);
+                new (&next_state_view) RafQSetItemView((*this)[next_state_index]);
                 // std::cout << "resulting next state: " 
                 // << "q value " << next_state_view.max_q_value() << " -->"
                 // << "{" << next_state_view.state()[0] << "," 
@@ -383,7 +397,7 @@ public:
           double new_q_value = stored_action_view.q_value(action_index) + temporal_difference_value;
           // std::cout << "old q value : " << stored_action_view.q_value(action_index) << std::endl;
           // std::cout << "result td value:" << new_q_value << "; delta: " << temporal_difference_value << std::endl;
-          if((action_index < (ActionCount - 1)) && (new_q_value < stored_action_view.q_value(action_index + 1)) ){
+          if((action_index < (m_actionCount - 1)) && (new_q_value < stored_action_view.q_value(action_index + 1)) ){
             // std::cout << "overwriting action[" << action_index << "] from action[" << (action_index + 1) << "]!" << std::endl;
             stored_action_view.copy_action(action_index + 1, action_index);
             ++action_index;
@@ -397,7 +411,7 @@ public:
           stored_action_view.set_q_value(new_q_value, action_index);
         }else if(new_action_view.q_value() > (stored_action_view.min_q_value() * (1.0 + m_overwriteQThreshold))){
           // std::cout << "Did not find a matching action!" << std::endl;
-          std::uint32_t action_index = ActionCount;
+          std::uint32_t action_index = m_actionCount;
           do{ /* Find the action to overwrite */
             --action_index;
             // std::cout << "comparing action[" << action_index << "] qvalues: " 
@@ -406,10 +420,10 @@ public:
             // << std::endl;
             if( (stored_action_view.q_value(action_index) * (1.0 + m_overwriteQThreshold)) > new_action_view.q_value() ){
               ++action_index;
-              RFASSERT(action_index < ActionCount); 
+              RFASSERT(action_index < m_actionCount); 
               /*!Note: Because the entry point of the outer block had the condition, that the new q value is greater, than the minimum 
                * it should be guaranteed that the new q value is greater, than the last index, and by extension, the index must be 
-               * smaller than ActionCount here.
+               * smaller than m_actionCount here.
                * The reason for that is that the condition for this block is the current stored q value is greater, than the new,
                * which means that @action_index is at the index after its designated index.
                **/
@@ -418,7 +432,7 @@ public:
           }while(0 < action_index);
           // std::cout << "Overwriting action[" << action_index << "]!" << std::endl;
           /*!Note: there will surely be match, because the action because of the entry condition of this block */
-          std::uint32_t i = ActionCount; /* write over the actions starting from the worst */
+          std::uint32_t i = m_actionCount; /* write over the actions starting from the worst */
           do{
             --i;
             stored_action_view.copy_action(i-1/*source*/, i/*target*/);
@@ -434,9 +448,9 @@ public:
         // std::cout << "Copying Action value: " << new_action_view[0][0] << "; q value "  << new_action_view.q_value() << std::endl;
         std::copy( 
           new_action_view[0], new_action_view[0] + m_environment.action_size(),
-          RafQSetItemView<ActionCount>::action_iterator(m_actionsBuffer.back(), m_environment.action_size())
+          RafQSetItemView::action_iterator(m_actionsBuffer.back(), m_environment.action_size())
         ); 
-        RafQSetItemView<ActionCount>::q_value_iterator(m_actionsBuffer.back(), m_environment.action_size())[0] = new_action_view.q_value();
+        RafQSetItemView::q_value_iterator(m_actionsBuffer.back(), m_environment.action_size())[0] = new_action_view.q_value();
 
         /*!Note: Since this state at this point only has 1 action, it is the best one; which needs to be the first of the 
          * actions.
@@ -455,9 +469,9 @@ public:
     // std::cout << "======================"  << std::endl;
     // std::cout << "QSet: " << std::endl;
     // for(int i = 0; i < get_number_of_sequences(); ++i){
-    //   const RafQSetItemConstView<ActionCount> actions_view((*this)[i]);
+    //   const RafQSetItemConstView actions_view((*this)[i]);
     //   std::cout << get_input_sample(i)[0] << " == >  {";
-    //   for(int j = 0; j < ActionCount; ++j)
+    //   for(int j = 0; j < m_actionCount; ++j)
     //     std::cout << "(" << actions_view[j][0]<< ", q:" << actions_view.q_value(j) << ")";
     //   std::cout << "}" << std::endl;
     // }
@@ -468,14 +482,14 @@ public:
     double best_in_worst_q_value = std::numeric_limits<double>::max();
     for(std::uint32_t item_index = 0; item_index < get_number_of_sequences(); item_index++){
       // std::cout << "checking item[" << item_index << "]..." << std::endl;
-      RafQSetItemView<ActionCount> item_view((*this)[item_index]);
+      RafQSetItemView item_view((*this)[item_index]);
       double current_q_value = item_view.avg_q_value();
       if(current_q_value < best_in_worst_q_value){
         worst_q_values.insert({current_q_value, item_index});
-        RafQSetItemView<ActionCount> view((*this)[worst_q_values.begin()->second]);
+        RafQSetItemView view((*this)[worst_q_values.begin()->second]);
         // std::cout << "Worst items in set: ";
         // for(const auto& [q_value, index] : worst_q_values){
-        //   RafQSetItemView<ActionCount> view((*this)[index]);
+        //   RafQSetItemView view((*this)[index]);
         //   std::cout << "{" 
         //   << view.state()[0]<< "," << view[0][0] 
         //   << "(q value: " << q_value << ")"
@@ -489,7 +503,7 @@ public:
     }/*for(every item in the set)*/
     // std::cout << "Finally.. Worst items in set: ";
     // for(const auto& [q_value, index] : worst_q_values){
-    //   RafQSetItemView<ActionCount> view((*this)[index]);
+    //   RafQSetItemView view((*this)[index]);
     //   std::cout << "{" 
     //   << view.state()[0]<< "," << view[0][0] 
     //   << "(q value: " << q_value << ")"
@@ -508,11 +522,16 @@ public:
 
   ~RafQSet() = default;
 
-  RafQSetItemView<ActionCount> operator[](std::uint32_t index){
+  RafQSetItemView operator[](std::uint32_t index){
     RFASSERT(index < get_number_of_sequences());
-    return RafQSetItemView<ActionCount>(
-      m_stateBuffer[index], m_actionsBuffer[index], m_environment.action_size()
+    return RafQSetItemView(
+      m_stateBuffer[index], m_actionsBuffer[index], 
+      m_environment.action_size(), m_actionCount
     );
+  }
+
+  constexpr std::uint32_t action_count(){
+    return m_actionCount;
   }
 
   constexpr std::uint32_t max_size() const{
@@ -542,7 +561,7 @@ public:
   }
 
   std::uint32_t get_feature_size() const override{
-    return RafQSetItemView<ActionCount>::feature_size(m_environment.action_size());
+    return RafQSetItemView::feature_size(m_environment.action_size(), m_actionCount);
   }
 
   std::uint32_t get_number_of_input_samples() const override{
@@ -567,6 +586,7 @@ public:
 
 private:
   const rafko_mainframe::RafkoSettings& m_settings;
+  const std::uint32_t m_actionCount;
   RafQEnvironment& m_environment;
   std::vector<DataType> m_stateBuffer;
   std::vector<DataType> m_actionsBuffer;

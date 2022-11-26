@@ -52,11 +52,11 @@ public:
   {
   }
 
-  const EnvProperties& state_peoperties(){
+  const EnvProperties& state_properties() const{
     return m_stateProperties;
   }
 
-  const EnvProperties& action_properties(){
+  const EnvProperties& action_properties() const{
     return m_actionProperties;
   }
 
@@ -66,13 +66,17 @@ public:
     const bool m_terminal = true;
   };
 
-  virtual StateTransition next(DataView state, DataView action) = 0;
 
-  constexpr std::uint32_t state_size(){
+  virtual void reset() = 0;
+  virtual MaybeDataType current_state() const = 0;
+  virtual StateTransition next(DataView action) = 0;
+  virtual StateTransition next(DataView state, DataView action) const = 0;
+
+  constexpr std::uint32_t state_size() const{
     return m_stateSize;
   }
 
-  constexpr std::uint32_t action_size(){
+  constexpr std::uint32_t action_size() const{
     return m_actionSize;
   }
 

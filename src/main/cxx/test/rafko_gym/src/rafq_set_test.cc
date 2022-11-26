@@ -66,7 +66,22 @@ public:
   {
   }
 
-  StateTransition next(DataView state, DataView action) override{
+  void reset() override{
+    m_state = s_states[0];
+  }
+  
+  MaybeDataType current_state() const override{
+    return m_state;
+  }
+
+  StateTransition next(DataView action) override{ 
+    StateTransition ret(next(m_state, action));
+    if(ret.m_resultState.has_value())
+      m_state = ret.m_resultState.value().get();
+    return ret;
+  }
+
+  StateTransition next(DataView state, DataView action) const override{
     REQUIRE(state.size() == state_size());
     REQUIRE(action.size() == action_size());
 
@@ -85,18 +100,17 @@ public:
       };
     }   
   }
+private: 
+  DataType m_state = s_states[0];
 };
 
 TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
   constexpr const std::uint32_t max_set_size = 4u;
   constexpr const std::uint32_t action_count = 2;
 
-  using XPSlot = rafko_gym::RafQSetItemConstView<1>;
-  using QSetSlot = rafko_gym::RafQSetItemConstView<action_count>;
-
   rafko_mainframe::RafkoSettings settings;
   TestEnvironment environment;
-  rafko_gym::RafQSet<action_count> q_set(settings, environment, max_set_size, 0.1);
+  rafko_gym::RafQSet q_set(settings, environment, action_count, max_set_size, 0.1);
   REQUIRE(0 == q_set.get_number_of_sequences());
 
   /*!Note: in the below comments {x,y} means --> {state,action} */
@@ -104,7 +118,7 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
     /* The Q Value of state 2 ( result of {1,2} ) is 20 */
     q_set.incorporate(
       {{1.0}},
-      { XPSlot::action_slot(
+      { rafko_gym::RafQSetItemConstView::action_slot(
         {2.0}/*action*/, 
         environment.next(std::vector<double>{1.0}, std::vector<double>{2.0}).m_resultQValue
       ) }
@@ -118,14 +132,14 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
     /* The Q Value of state 4 ( result of {1,4} ) is 40 */
     q_set.incorporate(
       {{1.0}},
-      {XPSlot::action_slot(
+      {rafko_gym::RafQSetItemConstView::action_slot(
         {4.0}/*action*/, 
         environment.next(std::vector<double>{1.0}, std::vector<double>{4.0}).m_resultQValue
       ) }
     );
     REQUIRE(1 == q_set.get_number_of_sequences());
 
-    rafko_gym::RafQSetItemView<action_count> element_view(q_set[0]);
+    rafko_gym::RafQSetItemView element_view(q_set[0]);
     REQUIRE( element_view.max_q_value() == Catch::Approx(40.0).epsilon(0.0000000000001) );
 
     /* average: (20 + 40)/2 == 30 */
@@ -135,26 +149,26 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
   SECTION("Checking if a worse initial action, which would lead to a better state gets stored"){
     q_set.incorporate(
       {{1.0}},
-      {XPSlot::action_slot(
+      {rafko_gym::RafQSetItemConstView::action_slot(
         {2.0}/*action*/,
         environment.next(std::vector<double>{1.0}, std::vector<double>{2.0}).m_resultQValue
       ) }
     );
     q_set.incorporate(
       {{1.0}},
-      {XPSlot::action_slot(
+      {rafko_gym::RafQSetItemConstView::action_slot(
         {4.0}/*action*/,
         environment.next(std::vector<double>{1.0}, std::vector<double>{4.0}).m_resultQValue
       ) }
     );
     REQUIRE(1 == q_set.get_number_of_sequences());
 
-    QSetSlot element_view(q_set[0]); /* first state is under the first index */
+    rafko_gym::RafQSetItemConstView element_view(q_set[0]); /* first state is under the first index */
     REQUIRE(element_view[0][0] == Catch::Approx(4.0).epsilon(0.0000000000001)); /* {1,4} is in the first place in the actions */
 
     q_set.incorporate(
       {{2.0}},
-      {XPSlot::action_slot(
+      {rafko_gym::RafQSetItemConstView::action_slot(
         {3.0}/*action*/,
         environment.next(std::vector<double>{2.0}, std::vector<double>{3.0}).m_resultQValue
       ) }
@@ -163,7 +177,7 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
 
     q_set.incorporate(
       {{3.0}},
-      {XPSlot::action_slot(
+      {rafko_gym::RafQSetItemConstView::action_slot(
         {5.0}/*action*/,
         environment.next(std::vector<double>{3.0}, std::vector<double>{5.0}).m_resultQValue
       ) }
@@ -173,11 +187,11 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
     /*!Note: At this point since the initial states for {1,2} is already stored, re-adding the same 
      * state-action pair would include the additional states, so the qValue of {1,2} would increase
      */
-    new (&element_view) QSetSlot(q_set[0]); /* Iterator is invalidated so a new object is required */
+    new (&element_view) rafko_gym::RafQSetItemConstView(q_set[0]); /* Iterator is invalidated so a new object is required */
     double initial_q_value = element_view.q_value(1); /* the second action is the worse currently */
     q_set.incorporate(
       {{1.0}},
-      {XPSlot::action_slot(
+      {rafko_gym::RafQSetItemConstView::action_slot(
         {2.0}/*action*/,
         environment.next(std::vector<double>{1.0}, std::vector<double>{2.0}).m_resultQValue
       ) }
@@ -199,16 +213,16 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
           {static_cast<double>(element_index*4)},
         },
         {
-          XPSlot::action_slot({4.0}/*action*/, static_cast<double>(element_index + element_index)),
-          XPSlot::action_slot({3.0}/*action*/, static_cast<double>(element_index + 2 * element_index)),
-          XPSlot::action_slot({2.0}/*action*/, static_cast<double>(element_index + 3 * element_index)),
-          XPSlot::action_slot({1.0}/*action*/, static_cast<double>(element_index + 4 * element_index))
+          rafko_gym::RafQSetItemConstView::action_slot({4.0}/*action*/, static_cast<double>(element_index + element_index)),
+          rafko_gym::RafQSetItemConstView::action_slot({3.0}/*action*/, static_cast<double>(element_index + 2 * element_index)),
+          rafko_gym::RafQSetItemConstView::action_slot({2.0}/*action*/, static_cast<double>(element_index + 3 * element_index)),
+          rafko_gym::RafQSetItemConstView::action_slot({1.0}/*action*/, static_cast<double>(element_index + 4 * element_index))
         }
       );   
     }
     REQUIRE(q_set.get_number_of_sequences() == max_set_size);
     for(std::uint32_t element_index = 0; element_index < q_set.max_size(); ++element_index){
-      QSetSlot element_view(q_set[element_index]);
+      rafko_gym::RafQSetItemConstView element_view(q_set[element_index]);
       /*!Note: Because each iteration added as many elements as the set max size,
        * the last iteration should overwrite the previous ones. Because of this, 
        * every state should be >= @elements_to_upload
@@ -237,7 +251,22 @@ public:
   {
   }
 
-  StateTransition next(DataView state, DataView action) override{
+  void reset() override{
+    m_state = m_states[0]; 
+  }
+
+  MaybeDataType current_state() const override{
+    return m_state;
+  }
+
+  StateTransition next(DataView action) override{ 
+    StateTransition ret(next(m_state, action));
+    if(ret.m_resultState.has_value())
+      m_state = ret.m_resultState.value().get();
+    return ret;
+  }
+
+  StateTransition next(DataView state, DataView action) const override{
     REQUIRE(state.size() == state_size());
     REQUIRE(action.size() == action_size());
     auto next_state_iterator = std::find_if(
@@ -252,6 +281,7 @@ public:
   }
 private:
   const std::vector<DataType> m_states;
+  DataType m_state = m_states[0];
 };
 
 TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]") {
@@ -262,12 +292,12 @@ TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]"
 
   rafko_mainframe::RafkoSettings settings;
   TestEnvironment environment;
-  rafko_gym::RafQSet<action_count> q_set(settings, environment, max_set_size, 0.1);
+  rafko_gym::RafQSet q_set(settings, environment, action_count, max_set_size, 0.1);
 
   for(double state_index = 0; state_index < max_set_size; state_index += 1.0){
     std::vector<DataType> actions_for_state;
     for(double action_index = 0; action_index < action_count; action_index += 1.0){
-      actions_for_state.push_back(rafko_gym::RafQSetItemConstView<1>::action_slot(
+      actions_for_state.push_back(rafko_gym::RafQSetItemConstView::action_slot(
         std::vector<double>{action_index}/*action*/,
         environment.next(
           std::vector<double>{state_index}, std::vector<double>{action_index}
@@ -283,12 +313,12 @@ TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]"
   SECTION("Checking if QSet can build with reduced action count correctly"){
     constexpr const std::uint32_t reduced_action_count = action_count - std::min(3u, action_count);
     const std::uint32_t action_slot_size = (
-      reduced_action_count * rafko_gym::RafQSetItemConstView<reduced_action_count>::action_slot_size(environment.action_size())
+      reduced_action_count * rafko_gym::RafQSetItemConstView::action_slot_size(environment.action_size())
     );
 
     using Catch::Matchers::Approx;
 
-    rafko_gym::RafQSet<reduced_action_count> reduced_q_set(q_set);
+    rafko_gym::RafQSet reduced_q_set(q_set, reduced_action_count);
 
     for(std::uint32_t state_index = 0; state_index < max_set_size; ++state_index){
       REQUIRE_THAT(
