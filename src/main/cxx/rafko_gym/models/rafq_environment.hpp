@@ -66,7 +66,6 @@ public:
     const bool m_terminal = true;
   };
 
-
   virtual void reset() = 0;
   virtual MaybeDataType current_state() const = 0;
   virtual StateTransition next(DataView action) = 0;

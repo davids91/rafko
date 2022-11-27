@@ -23,14 +23,13 @@
 #include <iostream>
 
 #include "rafko_net/services/rafko_net_builder.hpp"
+#include "rafko_net/services/solution_solver.hpp"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/services/rafko_ocl_factory.hpp"
 #include "rafko_mainframe/services/rafko_gpu_context.hpp"
-#include "rafko_gym/services/rafko_autodiff_gpu_optimizer.hpp"
 #else
 #include "rafko_mainframe/services/rafko_cpu_context.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
-#include "rafko_gym/services/rafko_autodiff_optimizer.hpp"
 #include "rafko_gym/services/rafq_trainer.hpp"
 #include "rafko_gym/models/rafko_cost.hpp"
 
@@ -106,7 +105,7 @@ class ConsoleJumper : public rafko_gym::RafQEnvironment{
 
 public:
   ConsoleJumper(std::uint32_t width = 80, std::uint32_t sight = 5)
-  : rafko_gym::RafQEnvironment(sight, 1) /* state: what the player sees; action: where the player moves relative to itself */
+  : rafko_gym::RafQEnvironment(sight, 1, {100, 100}, {0, 7}) /* state: what the player sees; action: where the player moves relative to itself */
   , m_consoleWidth(width)
   , m_sight(sight)
   , m_level(generate_level(m_consoleWidth, m_sight, m_lastTeleportPosition))
@@ -203,9 +202,12 @@ public:
     const std::int32_t jump_length = std::min(static_cast<std::int32_t>(m_sight), static_cast<std::int32_t>(action[0]));
     std::int32_t result_index = (state_it - m_statesBuffer.begin()) + jump_length;
     process(m_level, result_index, m_lastTeleportPosition);
-    if(result_index < static_cast<std::int32_t>(m_level.size()))
+    if( (result_index < static_cast<std::int32_t>(m_level.size())) && (0 <= result_index) ){
+      RFASSERT(result_index < static_cast<std::int32_t>(m_statesBuffer.size()));
       return {{*(m_statesBuffer.begin() + result_index)}, static_cast<double>(result_index), false};
-      else return {{}, 0.0, true};
+    }else{
+      return {{}, 0.0, true};
+    } 
   }
 
 private:
@@ -270,11 +272,13 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
   constexpr const std::uint32_t policy_q_set_size = 500; /*???*/
 
   google::protobuf::Arena arena; /* so the network and trainer would be on the same Arena */
-  std::shared_ptr<ConsoleJumper> test_game = std::make_shared<ConsoleJumper>((rafko_test::get_console_width() - 50), 7);
+  std::shared_ptr<ConsoleJumper> test_game = std::make_shared<ConsoleJumper>(
+    (rafko_test::get_console_width()/2), 7/* sight */
+  );
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_arena_ptr(&arena)
-    .set_learning_rate(2e-2).set_minibatch_size(policy_q_set_size / 10).set_memory_truncation(2)
+    .set_learning_rate(2e-7).set_minibatch_size(policy_q_set_size / 10).set_memory_truncation(2)
     .set_droput_probability(0.0)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero, true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping, false)
@@ -291,55 +295,37 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
       {rafko_net::transfer_function_relu},
       {rafko_net::transfer_function_relu}
     })
-    .create_layers({
-      3,2,(policy_action_count * (1 + policy_action_size))
-    });
+    .create_layers({5,5,(policy_action_count * (1 + policy_action_size))});
 
   std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
     *settings, rafko_gym::cost_function_mse
   );
-
-  #if(RAFKO_USES_OPENCL)
-  std::shared_ptr<rafko_mainframe::RafkoGPUContext> context(
-    rafko_mainframe::RafkoOCLFactory()
-      .select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
-  );
-  std::shared_ptr<rafko_gym::RafkoAutodiffOptimizer> optimizer = (
-    rafko_mainframe::RafkoOCLFactory()
-      .select_platform().select_device()
-      .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network, std::shared_ptr<rafko_gym::RafkoDataSet>(), context)
-  );
-  #else
-  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(
-    network, settings, objective
-  );
-  std::unique_ptr<rafko_gym::RafkoAutodiffOptimizer> optimizer = std::make_unique<rafko_gym::RafkoAutodiffOptimizer>(
-    settings, network, context
-  );
-  #endif
-
-  rafko_gym::RafQTrainer trainer(
-    network, policy_action_count, policy_q_set_size, test_game,
-    optimizer, objective, settings
-  );
-
+  rafko_net::SolutionSolver::Factory solverFactory(network, settings);
+  std::shared_ptr<rafko_net::SolutionSolver> reference_solver = solverFactory.build();
+  rafko_gym::RafQTrainer trainer(network, policy_action_count, policy_q_set_size, test_game, objective, settings);
+  std::uint32_t iteration = 0;
   while(true){
     bool terminal;
     std::uint32_t steps = 0;
     test_game->reset();
     while(!terminal && steps < 200){
-      std::cout << "\rerr: " << context->stochastic_evaluation() << "; ";
+      std::cout << "\r" 
+      << "iter: " << iteration
+      << "; qSet size: " << trainer.q_set_size()
+      << "; err: " << trainer.stochastic_evaluation(false, 0, true) << "; ";
       test_game->print();
       if(!test_game->current_state().has_value()){
         std::cout << "GAME OVER" << std::endl;
       }
-      auto state_transition = test_game->next(
-        context->solve(test_game->current_state().value(), true/*reset_neuron_data*/)
-      );
+      solverFactory.refresh_actual_solution_weights();
+      auto policy_action = reference_solver->solve(test_game->current_state().value(), true/*reset_neuron_data*/);
+      std::cout << "(" << policy_action[1] <<")";
+      auto state_transition = test_game->next({policy_action.begin() + 1, 1});
       terminal = state_transition.m_terminal;
+      ++steps;
     }
     trainer.iterate(200/*max_discovery_length*/, 0.7/*exploration_ratio*/, 500/*q_set_training_epochs*/);
+    ++iteration;
   }
 }
 

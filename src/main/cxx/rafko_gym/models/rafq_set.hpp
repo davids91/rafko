@@ -316,9 +316,7 @@ public:
       std::uint32_t match_index;
       MaybeDataType state_match = look_up(state_buffer[state_index], &match_index);
       const std::uint32_t action_size = m_environment.action_size();
-      const RafQSetItemConstView new_action_view(
-        state_buffer[state_index], actions_buffer[state_index], action_size, 1u /*action count*/
-      );
+      const RafQSetItemConstView new_action_view(state_buffer[state_index], actions_buffer[state_index], action_size, 1u /*action count*/);
       // std::cout << "Looking for state " << state_buffer[state_index][0] << std::endl;
       if(state_match.has_value()){
         // std::cout << "found state (" << state_buffer[state_index][0] << ") in the set!" << std::endl;
@@ -332,6 +330,27 @@ public:
           ) ) break; /* if the difference is small enough, a match is found! */
         }
         if(action_index < m_actionCount){ /* Update the QValue based on TD Learning */
+
+
+
+
+
+
+
+
+
+
+          //TODO: Modification of q value can make action jump multiple slots!!
+
+
+
+
+
+
+
+
+
+        
           // std::cout << " found action[" << action_index << "]" << std::endl;
           double temporal_difference_value = new_action_view.max_q_value(); /* The only Q-value is the maximum one */
 
@@ -412,6 +431,27 @@ public:
         }else if(new_action_view.q_value() > (stored_action_view.min_q_value() * (1.0 + m_overwriteQThreshold))){
           // std::cout << "Did not find a matching action!" << std::endl;
           std::uint32_t action_index = m_actionCount;
+
+
+
+
+
+
+
+
+
+
+          //TODO: Also correct qValue in terms of future steps here!
+          
+
+
+
+
+
+
+
+
+
           do{ /* Find the action to overwrite */
             --action_index;
             // std::cout << "comparing action[" << action_index << "] qvalues: " 
@@ -420,7 +460,7 @@ public:
             // << std::endl;
             if( (stored_action_view.q_value(action_index) * (1.0 + m_overwriteQThreshold)) > new_action_view.q_value() ){
               ++action_index;
-              RFASSERT(action_index < m_actionCount); 
+              RFASSERT(action_index < m_actionCount); //TODO: 
               /*!Note: Because the entry point of the outer block had the condition, that the new q value is greater, than the minimum 
                * it should be guaranteed that the new q value is greater, than the last index, and by extension, the index must be 
                * smaller than m_actionCount here.
