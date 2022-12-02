@@ -175,13 +175,17 @@ public:
   }
 
   StateTransition next(DataView action) override{
-    const std::int32_t jump_length = std::min(static_cast<std::int32_t>(m_sight), static_cast<std::int32_t>(action[0]));
+    const std::int32_t jump_length = std::min(
+      static_cast<std::int32_t>(m_sight), 
+      std::max(-static_cast<std::int32_t>(m_sight), static_cast<std::int32_t>(action[0]))
+    );
     m_pos += jump_length;
     process(m_level, m_pos, m_lastTeleportPosition);
 
     double q_value = static_cast<double>(m_pos);
     if(m_pos < 0 || static_cast<std::int32_t>(m_level.size()) < m_pos)
       return {{}, q_value , true};
+    std::cout << "result position: " << m_pos << std::endl;
     return {m_statesBuffer[m_pos], q_value, false};
   }
 
@@ -199,7 +203,10 @@ public:
     if(state_it == m_statesBuffer.end())
       return {{}, 0.0, true};
 
-    const std::int32_t jump_length = std::min(static_cast<std::int32_t>(m_sight), static_cast<std::int32_t>(action[0]));
+    const std::int32_t jump_length = std::min(
+      static_cast<std::int32_t>(m_sight), 
+      std::max(-static_cast<std::int32_t>(m_sight), static_cast<std::int32_t>(action[0]))
+    );
     std::int32_t result_index = (state_it - m_statesBuffer.begin()) + jump_length;
     process(m_level, result_index, m_lastTeleportPosition);
     if( (result_index < static_cast<std::int32_t>(m_level.size())) && (0 <= result_index) ){

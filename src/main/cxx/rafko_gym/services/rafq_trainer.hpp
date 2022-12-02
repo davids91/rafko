@@ -132,7 +132,7 @@ public:
         xp_actions.back() = RafQSetItemConstView::action_slot(xp_actions.back(), next_state.m_resultQValue);
         RFASSERT(xp_actions.back().size() == RafQSetItemConstView::feature_size(m_environment->action_size(), 1));
         if(!terminal && next_state.m_resultState.has_value() && (iteration < (max_discovery_length - 1))){
-          xp_states.push_back(next_state.m_resultState.value());
+          xp_states.push_back(next_state.m_resultState.value()); //TODO: bad alloc?!?!
           RFASSERT(xp_states.back().size() == m_environment->state_size());
           xp_actions.push_back(generate_action(xp_states.back(), exploration_ratio));
           RFASSERT(xp_actions.back().size() == m_environment->action_size());

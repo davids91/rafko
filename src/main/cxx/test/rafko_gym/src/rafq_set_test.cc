@@ -104,11 +104,13 @@ private:
   DataType m_state = s_states[0];
 };
 
-TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
+TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLearning]") {
   constexpr const std::uint32_t max_set_size = 4u;
-  constexpr const std::uint32_t action_count = 2;
+  constexpr const std::uint32_t action_count = 4;
 
-  rafko_mainframe::RafkoSettings settings;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_learning_rate(1.0); /* learning rate set to 1.0 to make testing TD q values easier */
+
   TestEnvironment environment;
   rafko_gym::RafQSet q_set(settings, environment, action_count, max_set_size, 0.1);
   REQUIRE(0 == q_set.get_number_of_sequences());
@@ -141,9 +143,7 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
 
     rafko_gym::RafQSetItemView element_view(q_set[0]);
     REQUIRE( element_view.max_q_value() == Catch::Approx(40.0).epsilon(0.0000000000001) );
-
-    /* average: (20 + 40)/2 == 30 */
-    REQUIRE( element_view.avg_q_value() == Catch::Approx(30.0).epsilon(0.0000000000001) );
+    REQUIRE( element_view.avg_q_value() == Catch::Approx((20.0 + 40.0)/action_count).epsilon(0.0000000000001) );
   }
 
   SECTION("Checking if a worse initial action, which would lead to a better state gets stored"){
@@ -231,6 +231,40 @@ TEST_CASE("Testing if RafQSet works as expected", "[QSet][QLearning]") {
       REQUIRE( elements_to_upload < element_view.max_q_value() );
     }
     /* check if the best is always kept */
+  }
+
+  SECTION("Checking if a currently available state-action pair is updated, the ordering of the actions are kept"){
+    REQUIRE(0 == q_set.get_number_of_sequences());
+    q_set.incorporate(
+      {{1.0},{1.0},{1.0},{1.0}},
+      {
+        rafko_gym::RafQSetItemConstView::action_slot({1.0}/*action*/, 3.0/*q_value*/),
+        rafko_gym::RafQSetItemConstView::action_slot({2.0}/*action*/, 4.0/*q_value*/),
+        rafko_gym::RafQSetItemConstView::action_slot({3.0}/*action*/, 2.0/*q_value*/),
+        rafko_gym::RafQSetItemConstView::action_slot({4.0}/*action*/, 1.0/*q_value*/),
+      }
+    );
+    REQUIRE(1 == q_set.get_number_of_sequences());
+    rafko_gym::RafQSetItemConstView element_view(q_set[0]);
+    REQUIRE(element_view[0][0] == 2.0); /* The action with the best q Value is supposed to be 2.0*/
+    REQUIRE(element_view[3][0] == 4.0); /* The action with the worst q Value is supposed to be 4.0*/
+
+    /* Update the worst action to be the best */
+    q_set.incorporate({{1.0}}, {rafko_gym::RafQSetItemConstView::action_slot({4.0}/*action*/, 5.0/*q_value*/)});
+    REQUIRE(1 == q_set.get_number_of_sequences());
+    new (&element_view) rafko_gym::RafQSetItemConstView(q_set[0]);
+    REQUIRE(element_view[0][0] == 4.0); /* The action with the best q Value is supposed to be 4.0*/
+  }
+
+  SECTION("Checking the only case when a negative q-value is accepted: When its state is not already present"){
+    REQUIRE(0 == q_set.get_number_of_sequences());
+    q_set.incorporate(
+      {{1.0}},{rafko_gym::RafQSetItemConstView::action_slot({4.0}/*action*/, -5.0/*q_value*/)}
+    );
+    REQUIRE(1 == q_set.get_number_of_sequences());
+    rafko_gym::RafQSetItemConstView element_view(q_set[0]);
+    REQUIRE(element_view[3][0] == 4.0); /* The action with the worst q Value is supposed to be 4.0 */
+    REQUIRE(element_view.min_q_value() == -5.0);    
   }
 }
 
