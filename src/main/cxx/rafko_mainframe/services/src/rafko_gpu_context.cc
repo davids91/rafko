@@ -593,12 +593,15 @@ rafko_utilities::ConstVectorSubrange<> RafkoGPUContext::solve(
       ++output_index;
     }
   );
+  // std::cout << "agent output: ";
+  // for(double d : m_standaloneSolutionResult) std::cout << "[" << d << "]";
+  // std::cout << std::endl;
   return_value = fill_event.wait();
   if(CL_SUCCESS != return_value){ RFASSERT_LOG("OpenCL Return value: {}", return_value); }
   RFASSERT( return_value == CL_SUCCESS );
 
   m_lastRanEvaluation = not_eval_run;
-  return { m_standaloneSolutionResult.end() - m_network.output_neuron_number(), m_standaloneSolutionResult.end() };
+  return { m_standaloneSolutionResult.begin(), m_standaloneSolutionResult.end() };
 }
 
 void RafkoGPUContext::solve_data_set(std::vector<std::vector<double>>& output, bool isolated){

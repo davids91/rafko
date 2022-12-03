@@ -50,8 +50,8 @@ public:
     return m_sqrtOfProcessThreads;
   }
 
-  std::uint32_t get_tolerance_loop_value() const{
-    return m_hypers.tolerance_loop_value();
+  std::uint32_t get_training_relevant_loop_count() const{
+    return m_hypers.training_relevant_loop_count();
   }
 
   constexpr double get_device_max_megabytes() const{
@@ -152,8 +152,8 @@ public:
     return *this;
   }
 
-  RafkoSettings& set_tolerance_loop_value(std::uint32_t tolerance_loop_value){
-    m_hypers.set_tolerance_loop_value(tolerance_loop_value);
+  RafkoSettings& set_training_relevant_loop_count(std::uint32_t training_relevant_loop_count){
+    m_hypers.set_training_relevant_loop_count(training_relevant_loop_count);
     return *this;
   }
 
@@ -246,7 +246,7 @@ public:
     m_hypers.set_learning_rate((1e-6));
     m_hypers.set_minibatch_size(64);
     m_hypers.set_memory_truncation(2);
-    m_hypers.set_tolerance_loop_value(100);
+    m_hypers.set_training_relevant_loop_count(100);
     m_hypers.set_look_ahead_count(4);
     m_hypers.set_training_strategies(rafko_gym::Training_strategy::training_strategy_unknown);
 

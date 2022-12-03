@@ -169,11 +169,13 @@ public:
   }
 
   MaybeDataType current_state() const override{
-    if(m_pos < 0 || static_cast<std::int32_t>(m_level.size()) < m_pos)
+    if(m_pos < 0 || static_cast<std::int32_t>(m_level.size()) < m_pos){
       return {};
+    }
     return m_statesBuffer[m_pos];
   }
 
+  //TODO: Add energy into system
   StateTransition next(DataView action) override{
     const std::int32_t jump_length = std::min(
       static_cast<std::int32_t>(m_sight), 
@@ -183,9 +185,9 @@ public:
     process(m_level, m_pos, m_lastTeleportPosition);
 
     double q_value = static_cast<double>(m_pos);
-    if(m_pos < 0 || static_cast<std::int32_t>(m_level.size()) < m_pos)
+    if(m_pos < 0 || static_cast<std::int32_t>(m_level.size()) <= m_pos){
       return {{}, q_value , true};
-    std::cout << "result position: " << m_pos << std::endl;
+    }
     return {m_statesBuffer[m_pos], q_value, false};
   }
 
@@ -200,8 +202,9 @@ public:
       }
     );
 
-    if(state_it == m_statesBuffer.end())
+    if(state_it == m_statesBuffer.end()){
       return {{}, 0.0, true};
+    }
 
     const std::int32_t jump_length = std::min(
       static_cast<std::int32_t>(m_sight), 
@@ -211,7 +214,7 @@ public:
     process(m_level, result_index, m_lastTeleportPosition);
     if( (result_index < static_cast<std::int32_t>(m_level.size())) && (0 <= result_index) ){
       RFASSERT(result_index < static_cast<std::int32_t>(m_statesBuffer.size()));
-      return {{*(m_statesBuffer.begin() + result_index)}, static_cast<double>(result_index), false};
+      return {{m_statesBuffer[result_index]}, static_cast<double>(result_index), false};
     }else{
       return {{}, 0.0, true};
     } 
@@ -273,10 +276,10 @@ TEST_CASE("Testing if RafQTrainer works as expected", "[.][ConsoleJumper]") {
 }
 
 TEST_CASE("Testing if RafQTrainer works as expected with a simple board game simulation", "[optimize][QLearning][!benchmark]") {
-  constexpr const std::uint32_t policy_action_count = 4;
+  constexpr const std::uint32_t policy_action_count = 2;
   constexpr const std::uint32_t policy_action_size = 1;
   constexpr const std::uint32_t policy_sight = 7;
-  constexpr const std::uint32_t policy_q_set_size = 500; /*???*/
+  constexpr const std::uint32_t policy_q_set_size = 500;
 
   google::protobuf::Arena arena; /* so the network and trainer would be on the same Arena */
   std::shared_ptr<ConsoleJumper> test_game = std::make_shared<ConsoleJumper>(
@@ -285,12 +288,12 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_arena_ptr(&arena)
-    .set_learning_rate(2e-7).set_minibatch_size(policy_q_set_size / 10).set_memory_truncation(2)
+    .set_learning_rate(2e-5).set_minibatch_size(policy_q_set_size / 10).set_memory_truncation(2)
     .set_droput_probability(0.0)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero, true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping, false)
     .set_learning_rate_decay({{100u,0.8}})
-    .set_tolerance_loop_value(10)
+    .set_training_relevant_loop_count(10)
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4)
   );
 
@@ -298,9 +301,9 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
     .input_size(policy_sight).expected_input_range(test_game->state_properties().m_standardDeviation)
     .add_feature_to_layer(1u, rafko_net::neuron_group_feature_boltzmann_knot)
     .allowed_transfer_functions_by_layer({
-      {rafko_net::transfer_function_relu},
-      {rafko_net::transfer_function_relu},
-      {rafko_net::transfer_function_relu}
+      {rafko_net::transfer_function_selu},
+      {rafko_net::transfer_function_selu},
+      {rafko_net::transfer_function_selu}
     })
     .create_layers({5,5,(policy_action_count * (1 + policy_action_size))});
 
@@ -310,19 +313,24 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
   rafko_net::SolutionSolver::Factory solverFactory(network, settings);
   std::shared_ptr<rafko_net::SolutionSolver> reference_solver = solverFactory.build();
   rafko_gym::RafQTrainer trainer(network, policy_action_count, policy_q_set_size, test_game, objective, settings);
-  std::uint32_t iteration = 0;
+  std::uint32_t iteration = 1;
   while(true){
-    bool terminal;
+    double exploration_ratio = (1.0 - (static_cast<double>(std::min(200u,iteration))/201));
+    bool terminal = false;
     std::uint32_t steps = 0;
     test_game->reset();
     while(!terminal && steps < 200){
       std::cout << "\r" 
       << "iter: " << iteration
+      << "; expl: " << exploration_ratio
+      << "; opt loops: " << ((exploration_ratio > 0.75)?(0.0):((1.0 - exploration_ratio) * 10000))
       << "; qSet size: " << trainer.q_set_size()
-      << "; err: " << trainer.stochastic_evaluation(false, 0, true) << "; ";
+      // << "; err: " << trainer.stochastic_evaluation(false/*to_seed*/, 0/*seed_value*/, true/*force_gpu_upload*/) << "; ";
+      << "; err: " << trainer.full_evaluation(true/*force_gpu_upload*/) << "; ";
       test_game->print();
       if(!test_game->current_state().has_value()){
         std::cout << "GAME OVER" << std::endl;
+        break;
       }
       solverFactory.refresh_actual_solution_weights();
       auto policy_action = reference_solver->solve(test_game->current_state().value(), true/*reset_neuron_data*/);
@@ -331,7 +339,16 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
       terminal = state_transition.m_terminal;
       ++steps;
     }
-    trainer.iterate(200/*max_discovery_length*/, 0.7/*exploration_ratio*/, 500/*q_set_training_epochs*/);
+    std::cout << std::endl;
+    trainer.iterate(
+      200/*max_discovery_length*/, 
+      exploration_ratio, 
+      (exploration_ratio > 0.8)?(0):((1.0 - exploration_ratio) * 10000)/*q_set_training_epochs*/,
+      [](double progress){ std::cout << "\r progress: " << (progress * 100) << "%   " << std::flush; }
+    );
+    // if(1 >= trainer.q_set_size()) //TODO: restore so that iteration can go with bigger sizes
+    //   trainer.iterate(200/*max_discovery_length*/, 0.7/*exploration_ratio*/, 500/*q_set_training_epochs*/);
+    //   else trainer.iterate(0/*max_discovery_length*/, 0.7/*exploration_ratio*/, 500/*q_set_training_epochs*/);
     ++iteration;
   }
 }

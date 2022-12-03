@@ -52,6 +52,11 @@ protected:
   #if(RAFKO_USES_OPENCL)
   std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const override{
     return "pow((" + label_value + " - " + feature_value + "),2.0)";
+    // return (
+    //   "pow((" + label_value + " - " + feature_value + "),2.0);\n"
+    //   + "if(100 < fabs(" + label_value + "))"
+    //   + R"(printf("(%f<>%f) \n",)" + label_value +", " + feature_value +" );"
+    // );
   }
 
   std::string get_post_process_kernel_source(std::string error_value) const override{

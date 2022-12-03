@@ -27,7 +27,7 @@ int main(){
     .set_droput_probability(0.0)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero, true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping, false)
-    .set_tolerance_loop_value(10)
+    .set_training_relevant_loop_count(10)
     .set_delta(0.1) /* for early stopping */
   );
 
