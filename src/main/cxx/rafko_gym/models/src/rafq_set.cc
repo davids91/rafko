@@ -37,11 +37,7 @@ RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* r
     for(std::uint32_t item_index = items_start_index; item_index < (items_start_index + items_in_this_thread); ++item_index){
       if(
         (!someone_found_it) /* If there are multiple matches, there might be interference */
-        &&(m_costFunction.get_feature_error(
-          state/*label*/, get_input_sample(item_index)/*neuron_data*/,
-          m_executionThreads.get_number_of_threads()/*max_trheads*/, thread_index/*outer_thread_index*/,
-          m_environment.state_size() /*sample_number*/
-        ) <= m_settings.get_delta())
+        &&(m_costFunction.get_feature_error(state, get_input_sample(item_index), m_environment.state_size()) <= m_settings.get_delta())
       ){
         std::lock_guard<std::mutex> my_lock(output_mutex);
         if(!someone_found_it){

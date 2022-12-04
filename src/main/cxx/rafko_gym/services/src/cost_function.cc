@@ -18,6 +18,7 @@
 
 #include <math.h>
 #include <utility>
+#include <atomic>
 
 #if(RAFKO_USES_OPENCL)
 #include "rafko_utilities/models/rafko_gpu_kernel_library.hpp"
@@ -37,7 +38,7 @@ void CostFunction::get_feature_errors(
     throw std::runtime_error("Can't evaluate more labels, than there is data provided!");
 
   const std::uint32_t labels_to_do_in_a_thread = 1u + static_cast<std::uint32_t>(labels_to_evaluate/settings.get_sqrt_of_solve_threads());
-  m_executionThreads.start_and_block( std::bind( &CostFunction::feature_errors_thread, this,
+  m_outerThreads.start_and_block( std::bind( &CostFunction::feature_errors_thread, this,
     std::ref(labels), std::ref(neuron_data), std::ref(errors_for_labels),
     label_start, error_start, neuron_start,
     labels_to_do_in_a_thread, labels_to_evaluate, sample_number, std::placeholders::_1
@@ -64,47 +65,36 @@ void CostFunction::feature_errors_thread(
   );
   for(std::int32_t label_iterator = 0; label_iterator < labels_to_evaluate_in_this_thread; ++label_iterator){
     errors_for_labels[error_start_in_thread + label_iterator] = get_feature_error(
-      labels[label_start_in_thread + label_iterator], neuron_data[neuron_data_start_index_in_thread + label_iterator],
-      1, thread_index, sample_number
+      labels[label_start_in_thread + label_iterator], neuron_data[neuron_data_start_index_in_thread + label_iterator], sample_number
     );
   }
 }
 
-double CostFunction::get_feature_error(
-  FeatureView label, FeatureView neuron_data,
-  std::uint32_t max_threads, std::uint32_t outer_thread_index, std::uint32_t sample_number
-) const{
+double CostFunction::get_feature_error(FeatureView label, FeatureView neuron_data, std::uint32_t sample_number) const{
   RFASSERT( label.size() == neuron_data.size() );
+  const std::uint32_t count_in_one_thread = 1u + static_cast<std::uint32_t>(label.size() / m_innerThreads.get_number_of_threads());
+  if(count_in_one_thread > m_innerThreads.get_number_of_threads()){
+    std::atomic<double> error_value = 0.0;
+    m_innerThreads.start_and_block([this, &label, &neuron_data, &error_value, count_in_one_thread](std::uint32_t thread_index){
+      const std::uint32_t start_index = count_in_one_thread * thread_index;
+      const std::uint32_t count_in_this_thread = std::min(
+        static_cast<std::size_t>(count_in_one_thread), (label.size() - std::min(label.size(), static_cast<std::size_t>(start_index)))
+      );
 
-  double error_value = 0;
-  std::uint32_t feature_start = 0;
-  if(max_threads > 1u){
-    const std::uint32_t feature_number = 1 + static_cast<std::uint32_t>(label.size()/max_threads);
-    for(std::uint32_t thread_index = 0; ((thread_index < max_threads) && (feature_start < label.size())); ++thread_index){
-      thread_results[outer_thread_index].push_back(std::async(std::launch::async,
-        &CostFunction::summarize_errors, this, std::ref(label), std::ref(neuron_data),
-        feature_start, std::min(feature_number, static_cast<std::uint32_t>(label.size() - feature_start))
-      ));
-      feature_start += feature_number;
-    }
-    while(0 < thread_results[outer_thread_index].size()){ /* wait for threads */
-      error_value += thread_results[outer_thread_index].back().get();
-      thread_results[outer_thread_index].pop_back();
-    }
-  }else{
-    error_value = summarize_errors(label, neuron_data, 0, label.size() );
+      for(std::uint32_t feature_index = start_index; feature_index < (start_index + count_in_this_thread); ++feature_index){
+        double current_error = error_value;
+        const double cell_error = get_cell_error(label[feature_index], neuron_data[feature_index]);
+        while(!error_value.compare_exchange_weak(current_error, (current_error + cell_error)))
+          current_error = error_value;
+      }
+    });
+    return error_post_process(error_value, sample_number);
+  }else{ /* label size does not justify multiple threads */
+    double error_value = 0.0;
+    for(std::uint32_t feature_index = 0; feature_index < label.size(); ++feature_index)
+      error_value += get_cell_error(label[feature_index], neuron_data[feature_index]);
+    return error_post_process(error_value, sample_number);
   }
-
-  return error_post_process(error_value, sample_number);
-}
-
-double CostFunction::summarize_errors(
-  FeatureView label, FeatureView neuron_data, std::uint32_t feature_start_index, std::uint32_t number_to_eval
-) const{
-  double local_error = 0;
-  for(std::uint32_t feature_iterator = 0; feature_iterator < number_to_eval; ++feature_iterator)
-    local_error += get_cell_error(label[feature_start_index + feature_iterator], neuron_data[feature_start_index + feature_iterator]);
-  return local_error;
 }
 
 #if(RAFKO_USES_OPENCL)
