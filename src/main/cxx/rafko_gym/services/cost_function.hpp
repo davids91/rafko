@@ -22,7 +22,6 @@
 
 #include <vector>
 #include <thread>
-#include <future>
 #if(RAFKO_USES_OPENCL)
 #include <utility>
 #include <string>
@@ -52,17 +51,16 @@ class RAFKO_EXPORT CostFunction
 public:
   using DataView = rafko_utilities::ConstVectorSubrange<>;
 
-  CostFunction(Cost_functions the_function, const rafko_mainframe::RafkoSettings& settings)
+  CostFunction(
+    Cost_functions the_function, const rafko_mainframe::RafkoSettings& settings,
+    std::uint32_t inner_thread_count = 0u, std::uint32_t outer_thread_count = 0u
+  )
   : settings(settings)
   , m_theFunction(the_function)
-  , m_executionThreads(settings.get_sqrt_of_solve_threads())
+  , m_outerThreads((0 < outer_thread_count)?outer_thread_count:settings.get_sqrt_of_solve_threads())
+  , m_innerThreads((0 < inner_thread_count)?inner_thread_count:settings.get_sqrt_of_solve_threads())
   {
-    process_threads.reserve(settings.get_sqrt_of_solve_threads());
-    for(std::uint32_t thread_index = 0; thread_index < settings.get_max_solve_threads(); ++thread_index){
-      thread_results.push_back(std::vector<std::future<double>>());
-      thread_results.back().reserve(settings.get_sqrt_of_solve_threads());
-    }
-  };
+  }
 
   /**
    * @brief      Gets the error for a feature-label pair under the given index
@@ -73,25 +71,7 @@ public:
    *
    * @return     The feature error.
    */
-  double get_feature_error(DataView label, DataView neuron_data, std::uint32_t sample_number) const{
-    return get_feature_error(label, neuron_data, settings.get_sqrt_of_solve_threads(), 0, sample_number);
-  }
-
-  /**
-   * @brief      Corresponding to the other function in this class with the same name, without default one-threaded parameters given.
-   *
-   * @param[in]  label               The array containing the label to compare the given neuron data to
-   * @param[in]  neuron_data         The neuron data to compare for the given label array
-   * @param[in]  max_threads         The maximum threads to be used for the curren processing run
-   * @param[in]  outer_thread_index  The index to be used for this processing run, basically to find out which @thread_results array to use
-   * @param[in]  sample_number       The overall count of the samples to be used in the final calculations(e.g. in mean squared error)
-   *
-   * @return     The overall error produced by the given label-data pair.
-   */
-  double get_feature_error(
-    DataView label, DataView neuron_data,
-    std::uint32_t max_threads, std::uint32_t outer_thread_index, std::uint32_t sample_number
-  ) const;
+  double get_feature_error(DataView label, DataView neuron_data, std::uint32_t sample_number) const;
 
   /**
    * @brief      Gets the error produced by the sequences of the given label-data pair
@@ -197,7 +177,6 @@ public:
 protected:
   const rafko_mainframe::RafkoSettings& settings;
   std::vector<std::thread> process_threads;
-  mutable std::vector<std::vector<std::future<double>>> thread_results;
 
   /**
    * @brief      The post-processing function to be provided by the implementer
@@ -219,24 +198,10 @@ protected:
    */
   virtual double get_cell_error(double label_value, double feature_value) const = 0;
 
-  /**
-   * @brief      Summarizes the errors given back by @get_cell_error for all of the features. It's called
-   *             by @get_feature_error, which divides the features to almost equal parts,
-   *             and calls this function on them.
-   *
-   * @param[in]  labels                 The labels
-   * @param[in]  neuron_data            The neuron data
-   * @param[in]  feature_start_index    The start index to start comparison from
-   * @param[in]  number_to_eval         The number of features to calculate
-   *
-   * @return     returns with the error summary under the range {start_index;(start_index + number_to_add)}
-   */
-  double summarize_errors(
-    DataView labels, DataView neuron_data, std::uint32_t feature_start_index, std::uint32_t number_to_eval
-  ) const;
 private:
   Cost_functions m_theFunction; /* cost function type */
-  rafko_utilities::ThreadGroup m_executionThreads;
+  rafko_utilities::ThreadGroup m_outerThreads;
+  rafko_utilities::ThreadGroup m_innerThreads;
   #if(RAFKO_USES_OPENCL)
   std::uint32_t m_pairsToEvaluate = 1u;
   std::uint32_t m_featureSize = 1u;

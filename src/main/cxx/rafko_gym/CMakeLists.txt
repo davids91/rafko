@@ -29,7 +29,6 @@ set(GYM_INTERFACE_SERVICES
   services/weight_updater_nesterovs.hpp
 )
 set(GYM_HEADER_MODELS
-  models/rafq_set.hpp
   models/rafko_agent.hpp
   models/rafko_dataset.hpp
   models/rafko_dataset_implementation.hpp
