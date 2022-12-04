@@ -32,9 +32,9 @@ namespace rafko_gym{
 class RAFKO_EXPORT RafQEnvironment
 {
 public:
-  using DataType = std::vector<double>;
-  using DataView = rafko_utilities::ConstVectorSubrange<DataType::const_iterator>;
-  using MaybeDataType = std::optional<std::reference_wrapper<const DataType>>; 
+  using FeatureVector = std::vector<double>;
+  using FeatureView = rafko_utilities::ConstVectorSubrange<FeatureVector::const_iterator>;
+  using MaybeFeatureVector = std::optional<std::reference_wrapper<const FeatureVector>>; 
 
   struct EnvProperties{
     const double m_mean = 0.0;
@@ -61,15 +61,15 @@ public:
   }
 
   struct StateTransition{
-    MaybeDataType m_resultState = {};
+    MaybeFeatureVector m_resultState = {};
     const double m_resultQValue = 0.0;
     const bool m_terminal = true;
   };
 
   virtual void reset() = 0;
-  virtual MaybeDataType current_state() const = 0;
-  virtual StateTransition next(DataView action) = 0;
-  virtual StateTransition next(DataView state, DataView action) const = 0;
+  virtual MaybeFeatureVector current_state() const = 0;
+  virtual StateTransition next(FeatureView action) = 0;
+  virtual StateTransition next(FeatureView state, FeatureView action) const = 0;
 
   constexpr std::uint32_t state_size() const{
     return m_stateSize;

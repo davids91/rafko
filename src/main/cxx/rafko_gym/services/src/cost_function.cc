@@ -71,7 +71,7 @@ void CostFunction::feature_errors_thread(
 }
 
 double CostFunction::get_feature_error(
-  DataView label, DataView neuron_data,
+  FeatureView label, FeatureView neuron_data,
   std::uint32_t max_threads, std::uint32_t outer_thread_index, std::uint32_t sample_number
 ) const{
   RFASSERT( label.size() == neuron_data.size() );
@@ -99,7 +99,7 @@ double CostFunction::get_feature_error(
 }
 
 double CostFunction::summarize_errors(
-  DataView label, DataView neuron_data, std::uint32_t feature_start_index, std::uint32_t number_to_eval
+  FeatureView label, FeatureView neuron_data, std::uint32_t feature_start_index, std::uint32_t number_to_eval
 ) const{
   double local_error = 0;
   for(std::uint32_t feature_iterator = 0; feature_iterator < number_to_eval; ++feature_iterator)

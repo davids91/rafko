@@ -50,7 +50,7 @@ class RAFKO_EXPORT CostFunction
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
-  using DataView = rafko_utilities::ConstVectorSubrange<>;
+  using FeatureView = rafko_utilities::ConstVectorSubrange<>;
 
   CostFunction(Cost_functions the_function, const rafko_mainframe::RafkoSettings& settings)
   : settings(settings)
@@ -73,7 +73,7 @@ public:
    *
    * @return     The feature error.
    */
-  double get_feature_error(DataView label, DataView neuron_data, std::uint32_t sample_number) const{
+  double get_feature_error(FeatureView label, FeatureView neuron_data, std::uint32_t sample_number) const{
     return get_feature_error(label, neuron_data, settings.get_sqrt_of_solve_threads(), 0, sample_number);
   }
 
@@ -89,7 +89,7 @@ public:
    * @return     The overall error produced by the given label-data pair.
    */
   double get_feature_error(
-    DataView label, DataView neuron_data,
+    FeatureView label, FeatureView neuron_data,
     std::uint32_t max_threads, std::uint32_t outer_thread_index, std::uint32_t sample_number
   ) const;
 
@@ -232,7 +232,7 @@ protected:
    * @return     returns with the error summary under the range {start_index;(start_index + number_to_add)}
    */
   double summarize_errors(
-    DataView labels, DataView neuron_data, std::uint32_t feature_start_index, std::uint32_t number_to_eval
+    FeatureView labels, FeatureView neuron_data, std::uint32_t feature_start_index, std::uint32_t number_to_eval
   ) const;
 private:
   Cost_functions m_theFunction; /* cost function type */

@@ -38,7 +38,7 @@ namespace rafko_gym_test {
  */
 class TestEnvironment : public rafko_gym::RafQEnvironment{
 
-  static inline const std::vector<DataType> s_states = {
+  static inline const std::vector<FeatureVector> s_states = {
     {1.0}, {2.0}, {3.0}, {4.0}, {5.0}
   };
 
@@ -70,18 +70,18 @@ public:
     m_state = s_states[0];
   }
   
-  MaybeDataType current_state() const override{
+  MaybeFeatureVector current_state() const override{
     return m_state;
   }
 
-  StateTransition next(DataView action) override{ 
+  StateTransition next(FeatureView action) override{ 
     StateTransition ret(next(m_state, action));
     if(ret.m_resultState.has_value())
       m_state = ret.m_resultState.value().get();
     return ret;
   }
 
-  StateTransition next(DataView state, DataView action) const override{
+  StateTransition next(FeatureView state, FeatureView action) const override{
     REQUIRE(state.size() == state_size());
     REQUIRE(action.size() == action_size());
 
@@ -91,7 +91,7 @@ public:
     else{
       auto state_iterator = std::find_if(
         s_states.begin(), s_states.end(),
-        [&result_state](const DataType& stored_state){ return stored_state[0] == std::get<1>(*result_state); }
+        [&result_state](const FeatureVector& stored_state){ return stored_state[0] == std::get<1>(*result_state); }
       );
       return {
         {*state_iterator}, 
@@ -101,12 +101,12 @@ public:
     }   
   }
 private: 
-  DataType m_state = s_states[0];
+  FeatureVector m_state = s_states[0];
 };
 
 TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLearning]") {
   constexpr const std::uint32_t max_set_size = 4u;
-  constexpr const std::uint32_t action_count = 4;
+  constexpr const std::uint32_t action_count = 4u;
 
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(1.0); /* learning rate set to 1.0 to make testing TD q values easier */
@@ -117,6 +117,8 @@ TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLea
 
   /*!Note: in the below comments {x,y} means --> {state,action} */
   SECTION("Adding new actions for the same state"){
+    REQUIRE(0 == q_set.get_number_of_sequences());
+
     /* The Q Value of state 2 ( result of {1,2} ) is 20 */
     q_set.incorporate(
       {{1.0}},
@@ -272,8 +274,8 @@ TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLea
  * @brief     A test environment with an arbitrary number of possible actions for each state
  */
 class TestEnvironment2 : public rafko_gym::RafQEnvironment{
-  static std::vector<DataType> states(std::uint32_t size){
-    std::vector<DataType> ret;
+  static std::vector<FeatureVector> states(std::uint32_t size){
+    std::vector<FeatureVector> ret;
     for(std::uint32_t i = 0; i < size; ++i)
       ret.push_back({static_cast<double>(i)});
     return ret;
@@ -289,23 +291,23 @@ public:
     m_state = m_states[0]; 
   }
 
-  MaybeDataType current_state() const override{
+  MaybeFeatureVector current_state() const override{
     return m_state;
   }
 
-  StateTransition next(DataView action) override{ 
+  StateTransition next(FeatureView action) override{ 
     StateTransition ret(next(m_state, action));
     if(ret.m_resultState.has_value())
       m_state = ret.m_resultState.value().get();
     return ret;
   }
 
-  StateTransition next(DataView state, DataView action) const override{
+  StateTransition next(FeatureView state, FeatureView action) const override{
     REQUIRE(state.size() == state_size());
     REQUIRE(action.size() == action_size());
     auto next_state_iterator = std::find_if(
       m_states.begin(), m_states.end(),
-      [&state, &action](const DataType& stored_state){ 
+      [&state, &action](const FeatureVector& stored_state){ 
         return stored_state[0] == (state[0] + action[0]); 
       }
     );
@@ -314,22 +316,22 @@ public:
       else return {{*next_state_iterator}, (state[0] + action[0]), false}; 
   }
 private:
-  const std::vector<DataType> m_states;
-  DataType m_state = m_states[0];
+  const std::vector<FeatureVector> m_states;
+  FeatureVector m_state = m_states[0];
 };
 
 TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]") {
   constexpr const std::uint32_t max_set_size = 4u;
-  constexpr const std::uint32_t action_count = 5;
+  constexpr const std::uint32_t action_count = 5u;
 
-  using DataType = rafko_gym::RafQEnvironment::DataType;
+  using FeatureVector = rafko_gym::RafQEnvironment::FeatureVector;
 
   rafko_mainframe::RafkoSettings settings;
   TestEnvironment environment;
   rafko_gym::RafQSet q_set(settings, environment, action_count, max_set_size, 0.1);
 
   for(double state_index = 0; state_index < max_set_size; state_index += 1.0){
-    std::vector<DataType> actions_for_state;
+    std::vector<FeatureVector> actions_for_state;
     for(double action_index = 0; action_index < action_count; action_index += 1.0){
       actions_for_state.push_back(rafko_gym::RafQSetItemConstView::action_slot(
         std::vector<double>{action_index}/*action*/,
@@ -339,7 +341,7 @@ TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]"
       ));
     }
     q_set.incorporate(
-      std::vector<DataType>(action_count, {state_index})/* states */,
+      std::vector<FeatureVector>(action_count, {state_index})/* states */,
       actions_for_state
     );
   }
@@ -359,7 +361,7 @@ TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]"
         q_set.get_input_sample(state_index), 
         Catch::Matchers::Approx(reduced_q_set.get_input_sample(state_index)).margin(0.0000000000001)
       );
-      DataType label_reference = {
+      FeatureVector label_reference = {
         q_set.get_label_sample(state_index).begin(), 
         q_set.get_label_sample(state_index).begin() + (reduced_action_count * action_slot_size) 
       };
@@ -369,6 +371,44 @@ TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]"
       );
     }
   }
+}
+
+TEST_CASE("Testing if RafQSet lookup works as expected", "[QSet][QLearning][lookup]") {
+  constexpr const std::uint32_t max_set_size = 4u;
+  constexpr const std::uint32_t action_count = 2u;
+
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_learning_rate(1.0); /* learning rate set to 1.0 to make testing TD q values easier */
+
+  TestEnvironment environment;
+  rafko_gym::RafQSet q_set(settings, environment, action_count, max_set_size, 0.1);
+  REQUIRE( 0 == q_set.get_number_of_sequences() );
+  q_set.incorporate(
+    {{1.0},{2.0},{3.0},{4.0}},
+    {
+      rafko_gym::RafQSetItemConstView::action_slot({1.0}/*action*/, 3.0/*q_value*/),
+      rafko_gym::RafQSetItemConstView::action_slot({2.0}/*action*/, 4.0/*q_value*/),
+      rafko_gym::RafQSetItemConstView::action_slot({3.0}/*action*/, 2.0/*q_value*/),
+      rafko_gym::RafQSetItemConstView::action_slot({4.0}/*action*/, 1.0/*q_value*/),
+    }
+  );
+
+  std::uint32_t test_index;
+  REQUIRE( q_set.look_up(std::vector<double>{1.0}).has_value() );
+  REQUIRE( 1.0 == q_set.look_up(std::vector<double>{1.0}, &test_index).value().get()[0] );
+  REQUIRE( 0 == test_index );
+
+  REQUIRE( q_set.look_up(std::vector<double>{2.0}).has_value() );
+  REQUIRE( 2.0 == q_set.look_up(std::vector<double>{2.0}, &test_index).value().get()[0] );
+  REQUIRE( 1 == test_index );
+
+  REQUIRE( q_set.look_up(std::vector<double>{3.0}).has_value() );
+  REQUIRE( 3.0 == q_set.look_up(std::vector<double>{3.0}, &test_index).value().get()[0] );
+  REQUIRE( 2 == test_index );
+
+  REQUIRE( q_set.look_up(std::vector<double>{4.0}).has_value() );
+  REQUIRE( 4.0 == q_set.look_up(std::vector<double>{4.0}, &test_index).value().get()[0] );
+  REQUIRE( 3 == test_index );
 }
 
 } /* namespace rafko_gym_test */

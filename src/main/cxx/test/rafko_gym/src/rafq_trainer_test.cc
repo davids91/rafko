@@ -168,7 +168,7 @@ public:
     m_pos = 0;
   }
 
-  MaybeDataType current_state() const override{
+  MaybeFeatureVector current_state() const override{
     if(m_pos < 0 || static_cast<std::int32_t>(m_level.size()) < m_pos){
       return {};
     }
@@ -176,12 +176,11 @@ public:
   }
 
   //TODO: Add energy into system
-  StateTransition next(DataView action) override{
-    const std::int32_t jump_length = std::min(
-      static_cast<std::int32_t>(m_sight), 
-      std::max(-static_cast<std::int32_t>(m_sight), static_cast<std::int32_t>(action[0]))
-    );
-    m_pos += jump_length;
+  StateTransition next(FeatureView action) override{
+    if(action[0] < -action[0] || m_sight < action[0]) /* if player tries to jump too much it dies*/
+      return {{}, static_cast<double>(m_pos), true};
+
+    m_pos += action[0];
     process(m_level, m_pos, m_lastTeleportPosition);
 
     double q_value = static_cast<double>(m_pos);
@@ -191,9 +190,12 @@ public:
     return {m_statesBuffer[m_pos], q_value, false};
   }
 
-  StateTransition next(DataView state, DataView action) const override{
+  StateTransition next(FeatureView state, FeatureView action) const override{
+    if(action[0] < -action[0] || m_sight < action[0]) /* if player tries to jump too much it dies*/
+      return {{}, static_cast<double>(m_pos), true};
+
     auto state_it = std::find_if(m_statesBuffer.begin(), m_statesBuffer.end(),
-      [&state](const DataType& stored_state){
+      [&state](const FeatureVector& stored_state){
         std::uint32_t i = 0;
         return std::all_of(
           stored_state.begin(), stored_state.end(),
@@ -206,11 +208,7 @@ public:
       return {{}, 0.0, true};
     }
 
-    const std::int32_t jump_length = std::min(
-      static_cast<std::int32_t>(m_sight), 
-      std::max(-static_cast<std::int32_t>(m_sight), static_cast<std::int32_t>(action[0]))
-    );
-    std::int32_t result_index = (state_it - m_statesBuffer.begin()) + jump_length;
+    std::int32_t result_index = (state_it - m_statesBuffer.begin()) + action[0];
     process(m_level, result_index, m_lastTeleportPosition);
     if( (result_index < static_cast<std::int32_t>(m_level.size())) && (0 <= result_index) ){
       RFASSERT(result_index < static_cast<std::int32_t>(m_statesBuffer.size()));
@@ -224,7 +222,7 @@ private:
   const std::uint32_t m_consoleWidth;
   const std::uint32_t m_sight;
   const std::vector<char> m_level;
-  std::vector<DataType> m_statesBuffer;
+  std::vector<FeatureVector> m_statesBuffer;
   std::uint32_t m_lastTeleportPosition;
   std::int32_t m_pos = 0;
 
@@ -294,7 +292,7 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping, false)
     .set_learning_rate_decay({{100u,0.8}})
     .set_training_relevant_loop_count(10)
-    .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4)
+    .set_arena_ptr(&arena).set_max_solve_threads(4).set_max_processing_threads(3)
   );
 
   rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
@@ -323,7 +321,7 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
       std::cout << "\r" 
       << "iter: " << iteration
       << "; expl: " << exploration_ratio
-      << "; opt loops: " << ((exploration_ratio > 0.75)?(0.0):((1.0 - exploration_ratio) * 10000))
+      << "; opt loops: " << ((exploration_ratio > 0.8)?(0.0):((1.0 - exploration_ratio) * 10000))
       << "; qSet size: " << trainer.q_set_size()
       // << "; err: " << trainer.stochastic_evaluation(false/*to_seed*/, 0/*seed_value*/, true/*force_gpu_upload*/) << "; ";
       << "; err: " << trainer.full_evaluation(true/*force_gpu_upload*/) << "; ";
@@ -346,9 +344,6 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
       (exploration_ratio > 0.8)?(0):((1.0 - exploration_ratio) * 10000)/*q_set_training_epochs*/,
       [](double progress){ std::cout << "\r progress: " << (progress * 100) << "%   " << std::flush; }
     );
-    // if(1 >= trainer.q_set_size()) //TODO: restore so that iteration can go with bigger sizes
-    //   trainer.iterate(200/*max_discovery_length*/, 0.7/*exploration_ratio*/, 500/*q_set_training_epochs*/);
-    //   else trainer.iterate(0/*max_discovery_length*/, 0.7/*exploration_ratio*/, 500/*q_set_training_epochs*/);
     ++iteration;
   }
 }

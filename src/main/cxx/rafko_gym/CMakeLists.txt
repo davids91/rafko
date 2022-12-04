@@ -64,9 +64,11 @@ target_sources(rafko_gym
   PRIVATE
   ${GYM_SOURCES_WITH_OCL}
   models/src/rafko_cost.cc
+  models/src/rafq_set.cc
   models/src/rafko_dataset.cc
   models/src/rafko_dataset_implementation.cc
   services/src/cost_function.cc
+  services/src/rafq_trainer.cc
   services/src/rafko_backpropagation_operation.cc
   services/src/rafko_backprop_neuron_input_operation.cc
   services/src/rafko_backprop_neuron_bias_operation.cc
