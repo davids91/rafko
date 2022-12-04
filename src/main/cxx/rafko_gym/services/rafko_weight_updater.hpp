@@ -43,7 +43,7 @@ public:
   , m_requiredIterationsForStep(required_iterations_for_step)
   , m_weightsToDoInOneThread(1u + static_cast<std::uint32_t>(m_network.weight_table_size()/m_settings.get_max_solve_threads()))
   , m_currentVelocity(m_network.weight_table_size(),(0.0))
-  , execution_threads(m_settings.get_max_solve_threads())
+  , m_executionThreads(m_settings.get_max_solve_threads())
   {
   }
 
@@ -130,8 +130,8 @@ protected:
   }
 
 private:
-  rafko_utilities::ThreadGroup execution_threads;
-  mutable std::mutex reference_mutex;
+  rafko_utilities::ThreadGroup m_executionThreads;
+  mutable std::mutex m_referenceMutex;
 
   /**
    * @brief      Calculates and stroes the required velocity for a weight based on the provided gradients
