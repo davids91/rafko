@@ -73,7 +73,7 @@ void RafQTrainer::iterate(
     progress_callback(static_cast<double>(discovery_iteration + training_iteration) / static_cast<double>(max_discovery_length + q_set_training_epochs));
   }
   if(0 == (m_iteration % m_settings->get_training_relevant_loop_count())){
-    //TODO: Handle modified structure as well
+    //TODO: Handle modified network structure as well
     m_stableNetwork.mutable_weight_table()->Assign(m_volatileNetwork->weight_table().begin(), m_volatileNetwork->weight_table().end());
     m_context->refresh_solution_weights();
   }

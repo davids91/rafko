@@ -235,7 +235,7 @@ TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLea
     /* check if the best is always kept */
   }
 
-  SECTION("Checking if a currently available state-action pair is updated, the ordering of the actions are kept"){
+  SECTION("Checking if a currently available state-action pair is updated, the ordering of the actions are kept according to the q-values"){
     REQUIRE(0 == q_set.get_number_of_sequences());
     q_set.incorporate(
       {{1.0},{1.0},{1.0},{1.0}},
@@ -396,19 +396,19 @@ TEST_CASE("Testing if RafQSet lookup works as expected", "[QSet][QLearning][look
   std::uint32_t test_index;
   REQUIRE( q_set.look_up(std::vector<double>{1.0}).has_value() );
   REQUIRE( 1.0 == q_set.look_up(std::vector<double>{1.0}, &test_index).value().get()[0] );
-  REQUIRE( 0 == test_index );
+  REQUIRE( test_index < max_set_size);
 
   REQUIRE( q_set.look_up(std::vector<double>{2.0}).has_value() );
   REQUIRE( 2.0 == q_set.look_up(std::vector<double>{2.0}, &test_index).value().get()[0] );
-  REQUIRE( 1 == test_index );
+  REQUIRE( test_index < max_set_size);
 
   REQUIRE( q_set.look_up(std::vector<double>{3.0}).has_value() );
   REQUIRE( 3.0 == q_set.look_up(std::vector<double>{3.0}, &test_index).value().get()[0] );
-  REQUIRE( 2 == test_index );
+  REQUIRE( test_index < max_set_size);
 
   REQUIRE( q_set.look_up(std::vector<double>{4.0}).has_value() );
   REQUIRE( 4.0 == q_set.look_up(std::vector<double>{4.0}, &test_index).value().get()[0] );
-  REQUIRE( 3 == test_index );
+  REQUIRE( test_index < max_set_size);
 }
 
 } /* namespace rafko_gym_test */

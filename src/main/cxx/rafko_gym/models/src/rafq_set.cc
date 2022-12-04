@@ -19,22 +19,22 @@
 #include <algorithm>
 #include <limits>
 #include <atomic>
-#include <mutex>
 
 namespace rafko_gym{
 
-//TODO: implement look_up function in openCL also
+//TODO: implement look_up function in openCL also?
 RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* result_index_buffer) const{
   RFASSERT(state.size() == m_environment.state_size());
   MaybeFeatureVector result;
-  m_executionThreads.start_and_block([this, &state, &result, &result_index_buffer](std::uint32_t thread_index){
+  const std::uint32_t item_count = get_number_of_sequences();
+  const std::uint32_t items_in_one_thread = 1u + (item_count / m_lookupThreads.get_number_of_threads());
+  m_lookupThreads.start_and_block([this, &state, &result, &result_index_buffer, item_count, items_in_one_thread](std::uint32_t thread_index){
     static std::atomic_bool someone_found_it = false;
-    static std::mutex output_mutex;
-    const std::uint32_t items_count = get_number_of_sequences();
-    const std::uint32_t items_in_one_thread = 1u + (items_count / m_executionThreads.get_number_of_threads());
+    static std::mutex output_mutex; //TODO: Maybe move to members? 
     const std::uint32_t items_start_index = thread_index * items_in_one_thread;
-    const std::uint32_t items_in_this_thread = std::min( items_in_one_thread, (items_count - std::min(items_count, items_start_index)) );
+    const std::uint32_t items_in_this_thread = std::min( items_in_one_thread, (item_count - std::min(item_count, items_start_index)) );
     for(std::uint32_t item_index = items_start_index; item_index < (items_start_index + items_in_this_thread); ++item_index){
+      /*!Note: this is needed here in case any insertion inside the states buffer would cause a race condition */
       if(
         (!someone_found_it) /* If there are multiple matches, there might be interference */
         &&(m_costFunction.get_feature_error(state, get_input_sample(item_index), m_environment.state_size()) <= m_settings.get_delta())
@@ -53,14 +53,6 @@ RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* r
     std::lock_guard<std::mutex> my_lock(output_mutex);
     someone_found_it = false; /* restore state for the next run */
   });
-  // for(std::uint32_t match_index = 0; match_index < get_number_of_sequences(); ++match_index){
-  //   if(m_costFunction.get_feature_error(state, get_input_sample(match_index), m_environment.state_size()) <= m_settings.get_delta()){
-  //     result.emplace(get_input_sample(match_index));
-  //     if(result_index_buffer)
-  //       *result_index_buffer = match_index;
-  //     break; /* if the difference is small enough, a match is found! */
-  //   }
-  // }
   return result;
 }
 
@@ -79,7 +71,8 @@ void RafQSet::incorporate(const std::vector<FeatureVector>& state_buffer, const 
   // }
   // std::cout << std::endl;
   RFASSERT(state_buffer.size() == actions_buffer.size());
-  //TODO: multi-thread below logic
+  m_statesBuffer.reserve(m_statesBuffer.size() + state_buffer.size()); /* Reserve enough space so iteration invalidation can be minimized.. */
+  m_actionsBuffer.reserve(m_actionsBuffer.size() + actions_buffer.size()); /* ..despite the slim possibility of actually filling up the reserved space */
   for(std::uint32_t state_index = 0; state_index < state_buffer.size(); ++state_index){
     // std::cout << "Incorporating vector of " << state_buffer.size() << std::endl;
     RFASSERT(state_buffer[state_index].size() == get_input_size());
@@ -166,8 +159,8 @@ void RafQSet::incorporate(const std::vector<FeatureVector>& state_buffer, const 
         stored_action_view.set_q_value(new_action_q_value, action_index);
       }
       m_avgQValue[match_index] = stored_action_view.avg_q_value();
-    }else{ /* no match is found for the state, extend the database with the newly found state*/
-      m_stateBuffer.emplace_back(state_buffer[state_index]);
+    }else{ /* no match is found for the state, extend the database with the newly found state */
+      m_statesBuffer.emplace_back(state_buffer[state_index]);
       m_actionsBuffer.emplace_back(get_feature_size());
       m_avgQValue.emplace_back(new_action_q_value);
       const std::uint32_t target_action_index = (0 <= new_action_q_value)?(0):(m_actionCount - 1);
@@ -179,7 +172,6 @@ void RafQSet::incorporate(const std::vector<FeatureVector>& state_buffer, const 
         RafQSetItemView::action_iterator(m_actionsBuffer.back(), m_environment.action_size(), target_action_index)
       ); 
       *RafQSetItemView::q_value_iterator(m_actionsBuffer.back(), m_environment.action_size(), target_action_index) = new_action_q_value;
-
       /*!Note: Since this state at this point only has 1 action, it is the best one; which needs to be the first of the 
        * actions.
        */
@@ -262,7 +254,7 @@ void RafQSet::erase_worst(std::uint32_t count){
     to_delete.insert({index, q_value});
   }
   for(auto& [index, q_value] : to_delete){
-    m_stateBuffer.erase(m_stateBuffer.begin() + index);
+    m_statesBuffer.erase(m_statesBuffer.begin() + index);
     m_actionsBuffer.erase(m_actionsBuffer.begin() + index);
   }
 }
@@ -329,7 +321,6 @@ double RafQSet::get_td_value(const RafQSetItemConstView& new_action_view, double
       }
     }
   }
-  //TODO: Learning rate may have an iteration, to interpolate
   return (temporal_difference_value - old_q_value) * m_settings.get_learning_rate();
 }
 

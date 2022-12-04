@@ -23,6 +23,7 @@
 #include <vector>
 #include <functional>
 #include <optional>
+#include <mutex>
 
 #include "rafko_utilities/services/thread_group.hpp"
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
@@ -244,6 +245,7 @@ private:
 };
 
 //TODO: convert state-best action pairs to sequences: so that consecutive states can be a sequence
+//TODO: generate QSet from @Dataset ( make save/load of qSets possible )
 
 /**
  * @brief      This class stores and provides a set of states and connected actions with corresponding QValues
@@ -265,9 +267,11 @@ public:
   , m_costFunction(m_settings)
   , m_overwriteQThreshold(overwrite_q_threshold)
   , m_maxSetSize(max_set_size)
-  , m_executionThreads(m_settings.get_max_solve_threads()) /* because cost function uses get_max_solve_threads */
+  , m_lookupThreads(m_settings.get_max_solve_threads()) /* because cost function uses get_max_solve_threads */
   {
     RFASSERT(0 < m_actionCount);
+    m_statesBuffer.reserve(m_maxSetSize);
+    m_actionsBuffer.reserve(m_maxSetSize);
   }
 
   RafQSet(const RafQSet& other, std::uint32_t action_count)
@@ -277,11 +281,13 @@ public:
   , m_costFunction(m_settings)
   , m_overwriteQThreshold(other.m_overwriteQThreshold)
   , m_maxSetSize(other.m_maxSetSize)
-  , m_executionThreads(m_settings.get_max_solve_threads())
+  , m_lookupThreads(m_settings.get_max_solve_threads())
   {
     RFASSERT(m_actionCount <= action_count);
+    m_statesBuffer.reserve(m_maxSetSize);
+    m_actionsBuffer.reserve(m_maxSetSize);
     for(std::uint32_t item_index = 0; item_index < other.get_number_of_sequences(); ++item_index){
-      m_stateBuffer.push_back(other.m_stateBuffer[item_index]);
+      m_statesBuffer.push_back(other.m_statesBuffer[item_index]);
       m_actionsBuffer.push_back({
         other.m_actionsBuffer[item_index].begin(), 
         other.m_actionsBuffer[item_index].begin() + (m_actionCount * get_feature_size())
@@ -292,6 +298,7 @@ public:
 
   MaybeFeatureVector look_up(FeatureView state, std::uint32_t* result_index_buffer = nullptr) const;
 
+  //TODO: progress callback
   void incorporate(const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer);
 
   void keep_best(std::uint32_t count){
@@ -306,7 +313,7 @@ public:
   RafQSetItemConstView operator[](std::uint32_t index) const{
     RFASSERT(index < get_number_of_sequences());
     return RafQSetItemConstView(
-      m_stateBuffer[index], m_actionsBuffer[index], 
+      m_statesBuffer[index], m_actionsBuffer[index], 
       m_environment.action_size(), m_actionCount
     );
   }
@@ -314,7 +321,7 @@ public:
   RafQSetItemView operator[](std::uint32_t index){
     RFASSERT(index < get_number_of_sequences());
     return RafQSetItemView(
-      m_stateBuffer[index], m_actionsBuffer[index], 
+      m_statesBuffer[index], m_actionsBuffer[index], 
       m_environment.action_size(), m_actionCount
     );
   }
@@ -329,11 +336,11 @@ public:
 
   const FeatureVector& get_input_sample(std::uint32_t raw_input_index) const override{
     RFASSERT( raw_input_index < get_number_of_sequences() );
-    return m_stateBuffer[raw_input_index];
+    return m_statesBuffer[raw_input_index];
   }
 
   const std::vector<FeatureVector>& get_input_samples() const override{
-    return m_stateBuffer;
+    return m_statesBuffer;
   }
 
   const FeatureVector& get_label_sample(std::uint32_t raw_label_index) const override{
@@ -354,7 +361,7 @@ public:
   }
 
   std::uint32_t get_number_of_input_samples() const override{
-    return m_stateBuffer.size();
+    return m_statesBuffer.size();
   }
 
   std::uint32_t get_number_of_label_samples() const override{
@@ -362,7 +369,7 @@ public:
   }
 
   std::uint32_t get_number_of_sequences() const override{
-    return m_stateBuffer.size();
+    return m_statesBuffer.size();
   }
   
   std::uint32_t get_sequence_size() const override{
@@ -377,16 +384,14 @@ private:
   const rafko_mainframe::RafkoSettings& m_settings;
   const std::uint32_t m_actionCount;
   RafQEnvironment& m_environment;
-  std::vector<FeatureVector> m_stateBuffer;
+  std::vector<FeatureVector> m_statesBuffer;
   std::vector<FeatureVector> m_actionsBuffer;
   std::vector<double> m_avgQValue;
   CostFunctionMSE m_costFunction;
   double m_overwriteQThreshold;
   std::uint32_t m_maxSetSize;
-  rafko_utilities::ThreadGroup m_executionThreads;
+  rafko_utilities::ThreadGroup m_lookupThreads; 
 
-  //TODO: Experiment: each look ahead adds the delta ( improvement) of q-values
-  //TODO: Td policy: for creating td; essentially a function for temporal q-value sequence
   double get_td_value(const RafQSetItemConstView& new_action_view, double old_q_value) const;
 };
 
