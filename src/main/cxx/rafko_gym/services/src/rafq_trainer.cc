@@ -27,6 +27,9 @@ void RafQTrainer::iterate(
   std::vector<FeatureVector> xp_states;
   std::vector<FeatureVector> xp_actions;
   std::uint32_t discovery_iteration = 0;
+  double q_set_iterations = m_qSet->get_number_of_sequences();
+  double all_iterations = (max_discovery_length + q_set_training_epochs + q_set_iterations);
+  double done_iterations = 0.0;
   if(0 < max_discovery_length){
     bool terminal = false;
     m_environment->reset();
@@ -53,15 +56,20 @@ void RafQTrainer::iterate(
         xp_actions.push_back(generate_action(xp_states.back(), exploration_ratio));
         RFASSERT(xp_actions.back().size() == m_environment->action_size());
       }else break;
-      progress_callback(static_cast<double>(discovery_iteration) / static_cast<double>(max_discovery_length + q_set_training_epochs));
-      ++discovery_iteration;
+      done_iterations = ++discovery_iteration;
+      progress_callback(done_iterations / all_iterations);
     }
     RFASSERT(xp_actions.back().size() == RafQSetItemConstView::feature_size(m_environment->action_size(), 1));
   }
-
+  q_set_iterations = std::max(static_cast<std::size_t>(m_qSet->get_number_of_sequences()), xp_states.size());
+  all_iterations = (max_discovery_length + q_set_training_epochs + q_set_iterations);
   std::uint32_t initial_q_set_size = m_qSet->get_number_of_sequences();  
   if((0 < xp_states.size()) && (0 < xp_actions.size())){
-    m_qSet->incorporate(xp_states, xp_actions);
+    m_qSet->incorporate(
+      xp_states, xp_actions, [&progress_callback, &done_iterations, &q_set_iterations, &all_iterations](double progress){ 
+        progress_callback((done_iterations + progress * q_set_iterations) / all_iterations); 
+      }
+    );
     if(0 < q_set_training_epochs)
       m_optimizer->build(m_qSet, m_objective);
   }
@@ -70,7 +78,8 @@ void RafQTrainer::iterate(
   }
   for(std::uint32_t training_iteration = 0; training_iteration < q_set_training_epochs; ++training_iteration){
     m_optimizer->iterate(*m_qSet, (0 == training_iteration)/*force_gpu_upload*/);
-    progress_callback(static_cast<double>(discovery_iteration + training_iteration) / static_cast<double>(max_discovery_length + q_set_training_epochs));
+    done_iterations += 1.0;
+    progress_callback(done_iterations / all_iterations);
   }
   if(0 == (m_iteration % m_settings->get_training_relevant_loop_count())){
     //TODO: Handle modified network structure as well

@@ -24,6 +24,7 @@
 #include <functional>
 #include <optional>
 #include <mutex>
+#include <functional>
 
 #include "rafko_utilities/services/thread_group.hpp"
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
@@ -299,7 +300,10 @@ public:
   MaybeFeatureVector look_up(FeatureView state, std::uint32_t* result_index_buffer = nullptr) const;
 
   //TODO: progress callback
-  void incorporate(const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer);
+  void incorporate(
+    const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer, 
+    const std::function<void(double/*progress*/)>& progress_callback = {}
+  );
 
   void keep_best(std::uint32_t count){
     if(count < get_number_of_sequences())

@@ -56,7 +56,10 @@ RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* r
   return result;
 }
 
-void RafQSet::incorporate(const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer){
+void RafQSet::incorporate(
+  const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer, 
+  const std::function<void(double/*progress*/)>& progress_callback
+){
   // std::cout << "======================INCORPORATE STARTED======================"  << std::endl;
   // std::cout << "QSet: " << std::endl;
   // for(int i = 0; i < get_number_of_sequences(); ++i){
@@ -176,6 +179,9 @@ void RafQSet::incorporate(const std::vector<FeatureVector>& state_buffer, const 
        * actions.
        */
     }
+    progress_callback( static_cast<double>(state_index) / static_cast<double>(
+      state_buffer.size() + get_number_of_sequences() - std::min(get_number_of_sequences(), m_maxSetSize)
+    ) );
   }/*for(every incoming state-action pair)*/
   keep_best(m_maxSetSize);
   // std::cout << "======================INCORPORATE FINISHED======================"  << std::endl;
