@@ -31,6 +31,7 @@ namespace RAFKO_EXPORT rafko_gym {
  */
 class RAFKO_EXPORT RafkoDataSet{
 public:
+  using FeatureVector = std::vector<double>;
 
   /**
    * @brief      Gets an input sample from the set
@@ -39,14 +40,14 @@ public:
    *
    * @return     The input sample.
    */
-  virtual const std::vector<double>& get_input_sample(std::uint32_t raw_input_index) const = 0;
+  virtual const FeatureVector& get_input_sample(std::uint32_t raw_input_index) const = 0;
 
   /**
    * @brief      Gets an input sample from the set
    *
    * @return     A const reference of the input sample.
    */
-  virtual const std::vector<std::vector<double>>& get_input_samples() const = 0;
+  virtual const std::vector<FeatureVector>& get_input_samples() const = 0;
 
   /**
    * @brief      Gets a label sample from the set
@@ -55,14 +56,14 @@ public:
    *
    * @return     The label sample.
    */
-  virtual const std::vector<double>& get_label_sample(std::uint32_t raw_label_index) const = 0;
+  virtual const FeatureVector& get_label_sample(std::uint32_t raw_label_index) const = 0;
 
   /**
    * @brief      Gets a label sample from the set
    *
    * @return     A const reference of the label samples array
    */
-  virtual const std::vector<std::vector<double>>& get_label_samples() const = 0;
+  virtual const std::vector<FeatureVector>& get_label_samples() const = 0;
 
   /**
    * @brief      Gets the number of floating point values the evaluation accepts to produce the label values

@@ -72,10 +72,10 @@ public:
     RFASSERT(0 < samples.sequence_size());
     RFASSERT(0 < samples.inputs_size());
     RFASSERT(0 < samples.labels_size());
-    fill(samples);
+    fill(samples, m_inputSamples, m_labelSamples);
   }
 
-  RafkoDatasetImplementation(std::vector<std::vector<double>>&& input_samples, std::vector<std::vector<double>>&& label_samples, std::uint32_t sequence_size = 1u)
+  RafkoDatasetImplementation(std::vector<FeatureVector>&& input_samples, std::vector<FeatureVector>&& label_samples, std::uint32_t sequence_size = 1u)
   : m_sequenceSize(std::max(1u,sequence_size))
   , m_inputSamples(std::move(input_samples))
   , m_labelSamples(std::move(label_samples))
@@ -86,23 +86,23 @@ public:
     RFASSERT(m_inputSamples.size() == m_labelSamples.size());
   }
 
-  const std::vector<double>& get_input_sample(std::uint32_t raw_input_index) const override{
+  const FeatureVector& get_input_sample(std::uint32_t raw_input_index) const override{
     RFASSERT_LOG("Input sample {} / {}", raw_input_index, m_inputSamples.size());
     RFASSERT(m_inputSamples.size() > raw_input_index);
     return m_inputSamples[raw_input_index];
   }
 
-  constexpr const std::vector<std::vector<double>>& get_input_samples() const override{
+  constexpr const std::vector<FeatureVector>& get_input_samples() const override{
     return m_inputSamples;
   }
 
-  const std::vector<double>& get_label_sample(std::uint32_t raw_label_index) const override{
+  const FeatureVector& get_label_sample(std::uint32_t raw_label_index) const override{
     RFASSERT_LOG("label_sample sample {} / {}", raw_label_index, m_labelSamples.size());
     RFASSERT(m_labelSamples.size() > raw_label_index);
     return m_labelSamples[raw_label_index];
   }
 
-  const std::vector<std::vector<double>>& get_label_samples() const override{
+  const std::vector<FeatureVector>& get_label_samples() const override{
     return m_labelSamples;
   }
 
@@ -134,18 +134,36 @@ public:
     return m_prefillSequences;
   }
 
-private:
-  const std::uint32_t m_sequenceSize;
-  std::vector<std::vector<double>> m_inputSamples;
-  std::vector<std::vector<double>> m_labelSamples;
-  const std::uint32_t m_prefillSequences; /* Number of input sequences used only to create an initial state for the Neural network */
+  /**
+   * @brief      Converts the @rafko_gym::DataSetPackage message to vectors
+   *
+   * @param[in]     samples           The data set to parse
+   * @param         input_samples     The vector to push the input sample data into
+   * @param         label_samples     The vector to push the label sample data into
+   */
+  static void fill(
+    const DataSetPackage& samples, std::vector<FeatureVector>& input_samples, std::vector<FeatureVector>& label_samples
+  );
 
   /**
-   * @brief      Converting the @rafko_gym::DataSetPackage message to vectors
+   * @brief      Converts the  given vectors to @rafko_gym::DataSetPackage message
    *
-   * @param      samples  The data set to parse
+   * @param[in]     samples                     The data set to parse
+   * @param         input_samples               The vector to get the input sample data from
+   * @param         label_samples               The vector to get the label sample data from
+   * @param[in]     sequence_size               The size of the sequences contained in the vector
+   * @param[in]     possible_sequence_count     An optional parameter storing the potential number of sequences the Set should hold at maximum.
    */
-  void fill(const rafko_gym::DataSetPackage& samples);
+  static DataSetPackage generate_from(
+    const std::vector<FeatureVector>& input_samples, const std::vector<FeatureVector>& label_samples,
+    std::uint32_t sequence_size = 1u, std::uint32_t possible_sequence_count = 0u
+  );
+
+private:
+  const std::uint32_t m_sequenceSize;
+  std::vector<FeatureVector> m_inputSamples;
+  std::vector<FeatureVector> m_labelSamples;
+  const std::uint32_t m_prefillSequences; /* Number of input sequences used only to create an initial state for the Neural network */
 };
 
 } /* namespace rafko_gym */
