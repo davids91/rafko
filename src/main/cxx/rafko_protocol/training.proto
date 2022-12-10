@@ -108,6 +108,7 @@ message DataSetPackage{
   uint32 input_size = 1;
   uint32 feature_size = 2;
   uint32 sequence_size = 3;
+  uint32 possible_sequence_count = 4;
   repeated double inputs = 10;
   repeated double labels = 11;
 }
