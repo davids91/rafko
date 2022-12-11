@@ -49,7 +49,7 @@ class RAFKO_EXPORT CostFunction
 #endif/*(RAFKO_USES_OPENCL)*/
 {
 public:
-  using DataView = rafko_utilities::ConstVectorSubrange<>;
+  using FeatureView = rafko_utilities::ConstVectorSubrange<>;
 
   CostFunction(
     Cost_functions the_function, const rafko_mainframe::RafkoSettings& settings,
@@ -71,7 +71,7 @@ public:
    *
    * @return     The feature error.
    */
-  double get_feature_error(DataView label, DataView neuron_data, std::uint32_t sample_number) const;
+  double get_feature_error(FeatureView label, FeatureView neuron_data, std::uint32_t sample_number) const;
 
   /**
    * @brief      Gets the error produced by the sequences of the given label-data pair

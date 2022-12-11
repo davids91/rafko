@@ -29,6 +29,8 @@ set(GYM_INTERFACE_SERVICES
   services/weight_updater_nesterovs.hpp
 )
 set(GYM_HEADER_MODELS
+  models/rafq_set.hpp
+  models/rafq_environment.hpp
   models/rafko_agent.hpp
   models/rafko_dataset.hpp
   models/rafko_dataset_implementation.hpp
@@ -42,6 +44,7 @@ set(GYM_HEADER_SERVICES
   services/function_factory.hpp
   services/rafko_numeric_optimizer.hpp
   services/updater_factory.hpp
+  services/rafq_trainer.hpp
   services/rafko_weight_adapter.hpp
   services/rafko_weight_updater.hpp
   services/rafko_autodiff_optimizer.hpp
@@ -61,9 +64,11 @@ target_sources(rafko_gym
   PRIVATE
   ${GYM_SOURCES_WITH_OCL}
   models/src/rafko_cost.cc
+  models/src/rafq_set.cc
   models/src/rafko_dataset.cc
   models/src/rafko_dataset_implementation.cc
   services/src/cost_function.cc
+  services/src/rafq_trainer.cc
   services/src/rafko_backpropagation_operation.cc
   services/src/rafko_backprop_neuron_input_operation.cc
   services/src/rafko_backprop_neuron_bias_operation.cc

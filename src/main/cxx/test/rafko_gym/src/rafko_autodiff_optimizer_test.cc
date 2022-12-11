@@ -335,7 +335,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero, true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping, false)
     .set_learning_rate_decay({{100u,0.8}})
-    .set_tolerance_loop_value(10)
+    .set_training_relevant_loop_count(10)
     .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4)
   );
 

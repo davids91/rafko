@@ -207,14 +207,14 @@ void RafkoAutodiffOptimizer::calculate(BackpropDataBufferRange network_input, Ba
 }
 
 void RafkoAutodiffOptimizer::update_context_errors(bool force_gpu_upload){
-  if( (m_trainingEvaluator) && (0 == (m_iteration%m_settings->get_tolerance_loop_value())) ){
+  if( (m_trainingEvaluator) && (0 == (m_iteration%m_settings->get_training_relevant_loop_count())) ){
     m_trainingEvaluator->refresh_solution_weights();
     m_lastTrainingError = -m_trainingEvaluator->stochastic_evaluation(force_gpu_upload);
   }
   if(
     (m_testEvaluator)
     &&(
-      (m_iteration > (m_lastTestedIteration + m_settings->get_tolerance_loop_value()))
+      (m_iteration > (m_lastTestedIteration + m_settings->get_training_relevant_loop_count()))
       ||(
         (m_trainingEvaluator)
         &&((m_lastTestingError * m_settings->get_delta()) < std::abs(m_lastTrainingError - m_lastTestingError))

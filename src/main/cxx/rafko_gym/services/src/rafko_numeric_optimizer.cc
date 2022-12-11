@@ -348,14 +348,14 @@ void RafkoNumericOptimizer::apply_weight_vector_delta(){
   /*!Note: This should help, but doesn't ..  training_contexts[0]->full_evaluation(); */
 
   /* Update test and training errors */
-  if(0 == (m_iteration%m_settings->get_tolerance_loop_value())){
+  if(0 == (m_iteration%m_settings->get_training_relevant_loop_count())){
     training_contexts[0]->refresh_solution_weights();
     m_lastTrainingError = -training_contexts[0]->stochastic_evaluation();
   }
   if(
     (test_context)
     &&(
-      (m_iteration > (m_lastTestedIteration + m_settings->get_tolerance_loop_value()))
+      (m_iteration > (m_lastTestedIteration + m_settings->get_training_relevant_loop_count()))
       ||((m_lastTestingError * m_settings->get_delta()) < std::abs(m_lastTrainingError - m_lastTestingError))
     )
   ){

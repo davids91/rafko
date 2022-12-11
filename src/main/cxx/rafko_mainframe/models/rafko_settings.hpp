@@ -30,6 +30,10 @@ namespace rafko_mainframe{
 
 class RAFKO_EXPORT RafkoSettings{
 public:
+  std::uint16_t get_look_ahead_count() const{
+    return m_hypers.look_ahead_count();
+  }
+
   constexpr std::uint16_t get_max_solve_threads() const{
     return m_maxSolveThreads;
   }
@@ -46,8 +50,8 @@ public:
     return m_sqrtOfProcessThreads;
   }
 
-  constexpr std::uint32_t get_tolerance_loop_value() const{
-    return m_toleranceLoopValue;
+  std::uint32_t get_training_relevant_loop_count() const{
+    return m_hypers.training_relevant_loop_count();
   }
 
   constexpr double get_device_max_megabytes() const{
@@ -96,6 +100,10 @@ public:
     return m_hypers.delta();
   }
 
+  double get_delta_2() const{
+    return m_hypers.delta_2();
+  }
+
   double get_epsilon() const{
     return m_hypers.epsilon();
   }
@@ -131,6 +139,11 @@ public:
     return *this;
   }
 
+  RafkoSettings& set_look_ahead_count(double count){
+    m_hypers.set_look_ahead_count(count);
+    return *this;
+  }
+
   RafkoSettings& set_max_processing_threads(std::uint16_t max_processing_threads){
     m_maxProcessingThreads = max_processing_threads;
     m_sqrtOfProcessThreads = static_cast<std::uint16_t>(std::max(
@@ -139,8 +152,8 @@ public:
     return *this;
   }
 
-  constexpr RafkoSettings& set_tolerance_loop_value(std::uint32_t tolerance_loop_value){
-    m_toleranceLoopValue = tolerance_loop_value;
+  RafkoSettings& set_training_relevant_loop_count(std::uint32_t training_relevant_loop_count){
+    m_hypers.set_training_relevant_loop_count(training_relevant_loop_count);
     return *this;
   }
 
@@ -233,24 +246,26 @@ public:
     m_hypers.set_learning_rate((1e-6));
     m_hypers.set_minibatch_size(64);
     m_hypers.set_memory_truncation(2);
-
-    m_hypers.set_alpha((1.6732));
-    m_hypers.set_beta((0.9));
-    m_hypers.set_beta_2((0.99));
-    m_hypers.set_gamma((0.9));
-    m_hypers.set_delta((0.03));
-    m_hypers.set_epsilon(1e-8); /* very small positive value almost greater, than (0.0) */
-    m_hypers.set_zetta((0.3));
-    m_hypers.set_lambda((1.0507));
+    m_hypers.set_training_relevant_loop_count(100);
+    m_hypers.set_look_ahead_count(4);
     m_hypers.set_training_strategies(rafko_gym::Training_strategy::training_strategy_unknown);
+
+    m_hypers.set_alpha(1.6732);
+    m_hypers.set_beta(0.9);
+    m_hypers.set_beta_2(0.99);
+    m_hypers.set_gamma(0.9);
+    m_hypers.set_delta(0.03);
+    m_hypers.set_delta_2(0.03);
+    m_hypers.set_epsilon(1e-8); /* very small positive value almost greater, than (0.0) */
+    m_hypers.set_zetta(0.3);
+    m_hypers.set_lambda(1.0507);
   }
 
-private:
+private: 
   std::uint16_t m_maxSolveThreads = 4u;
   std::uint16_t m_sqrtOfSolveThreads = 2u;
   std::uint16_t m_maxProcessingThreads = 4u;
   std::uint16_t m_sqrtOfProcessThreads = 2u;
-  std::uint32_t m_toleranceLoopValue = 100u;
   double m_sqrtEpsilon = std::sqrt((1e-15));
   double m_deviceMaxMegabytes = (2048);
   google::protobuf::Arena* m_arenaPtr = nullptr;

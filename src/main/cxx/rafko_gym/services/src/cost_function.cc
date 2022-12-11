@@ -70,7 +70,7 @@ void CostFunction::feature_errors_thread(
   }
 }
 
-double CostFunction::get_feature_error(DataView label, DataView neuron_data, std::uint32_t sample_number) const{
+double CostFunction::get_feature_error(FeatureView label, FeatureView neuron_data, std::uint32_t sample_number) const{
   RFASSERT( label.size() == neuron_data.size() );
   const std::uint32_t count_in_one_thread = 1u + static_cast<std::uint32_t>(label.size() / m_innerThreads.get_number_of_threads());
   if(count_in_one_thread > m_innerThreads.get_number_of_threads()){

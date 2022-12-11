@@ -30,7 +30,7 @@ void RafkoTrainingLogger::log(std::uint32_t iteration, const std::vector<std::ui
   for(const double& data_element : data) measured.add_data(data_element);
   *m_measurement.add_packs() = measured;
   ++m_changesSince;
-  if(m_settings.get_tolerance_loop_value() < m_changesSince)
+  if(m_settings.get_training_relevant_loop_count() < m_changesSince)
     flush();
 }
 

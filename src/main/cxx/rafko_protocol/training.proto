@@ -82,16 +82,20 @@ message TrainingHyperparameters{
   double learning_rate = 10;
   uint32 minibatch_size = 11;
   uint32 memory_truncation = 12;
-  rafko_gym.Training_strategy training_strategies = 13;
+  int32 training_relevant_loop_count = 13;
+  int32 look_ahead_count = 14;
 
   double alpha = 20;
   double beta = 21;
   double gamma = 22;
-  double delta = 23;
+  double delta = 23; /* mostly used as thresholds for difference evaluation */
   double epsilon = 24; /* very small positive value almost greater, than zero */
   double zetta = 25; /* Commonly used for oscillation dampening purposes */
   double lambda = 31;
-  double beta_2 = 45; /* a second alphabet shall be started for algorithms requiring two variants of parameters */
+  double beta_2 = 45;
+  double delta_2 = 47;
+
+  rafko_gym.Training_strategy training_strategies = 97;
 }
 
 /** @brief      Describes a data-set to train or test Neural Networks
