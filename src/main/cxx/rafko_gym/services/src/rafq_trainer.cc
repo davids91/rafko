@@ -56,6 +56,7 @@ void RafQTrainer::iterate(
         xp_actions.push_back(generate_action(xp_states.back(), exploration_ratio));
         RFASSERT(xp_actions.back().size() == m_environment->action_size());
       }else break;
+
       done_iterations = ++discovery_iteration;
       progress_callback(done_iterations / all_iterations);
     }
@@ -82,7 +83,6 @@ void RafQTrainer::iterate(
     progress_callback(done_iterations / all_iterations);
   }
   if(0 == (m_iteration % m_settings->get_training_relevant_loop_count())){
-    //TODO: Handle modified network structure as well
     m_stableNetwork.mutable_weight_table()->Assign(m_volatileNetwork->weight_table().begin(), m_volatileNetwork->weight_table().end());
     m_context->refresh_solution_weights();
   }

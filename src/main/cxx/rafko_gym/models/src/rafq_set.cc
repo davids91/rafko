@@ -22,7 +22,84 @@
 
 namespace rafko_gym{
 
-//TODO: implement look_up function in openCL also?
+
+DataSetPackage RafQSet::generate_best_sequences(std::uint32_t preferred_sequence_size) const{
+  std::size_t max_sequence_length = 0;
+  std::vector<std::vector<std::size_t>> index_sequences;
+  std::vector<bool> included(get_number_of_sequences(), false);
+  std::size_t start_in_set = 0u;
+  RafQEnvironment::StateTransition state_transition{{}, 0.0, false};
+  while(start_in_set < get_number_of_sequences()){
+    // std::cout << "====NEW SEQUENCE==== start: " << start_in_set << std::endl;
+    if(!included[start_in_set]){
+      index_sequences.push_back({});
+      std::uint32_t next_state_index = start_in_set;
+      MaybeFeatureVector next_state_data(get_input_sample(next_state_index));
+      while(next_state_data.has_value() && (index_sequences.back().size() < m_maxSetSize)){
+        RFASSERT(next_state_index < get_number_of_sequences());
+        index_sequences.back().push_back(next_state_index);
+        included[next_state_index] = true;
+        // std::cout << "including: state[" << next_state_index << "]" 
+        // << "(=={" << next_state_data.value().get()[0] << "})" 
+        // << " to super-sequence[" << (index_sequences.size()-1) << "]"
+        // << "transition: {{?}," << state_transition.m_resultQValue << ", " << state_transition.m_terminal << "}"
+        // << std::endl;
+        if(state_transition.m_terminal)
+          break; /* previous state was terminal, don't look for another state */
+
+        new (&state_transition) RafQEnvironment::StateTransition(
+          m_environment.next(
+            next_state_data.value().get(), 
+            RafQSetItemConstView::best_action_slot(
+              get_label_sample(next_state_index), m_environment.action_size()
+            )
+          )
+        );
+
+        if(state_transition.m_resultState.has_value())
+          next_state_data = look_up(state_transition.m_resultState.value().get(), &next_state_index);
+      }
+      if(max_sequence_length < index_sequences.back().size())
+        max_sequence_length = index_sequences.back().size();
+    }/* if( current index is not yet included in set ) */
+    ++start_in_set;
+  }/* while( current index in set ) */
+
+  DataSetPackage result;
+  result.set_input_size(get_input_size());
+  result.set_feature_size(m_environment.action_size());
+  result.set_sequence_size(preferred_sequence_size);
+
+  // std::cout << "max length: " << max_sequence_length << ">=" << preferred_sequence_size << std::endl;
+  if(max_sequence_length >= preferred_sequence_size){
+    for(const std::vector<std::size_t>& index_sequence : index_sequences){
+      if(index_sequence.size() < preferred_sequence_size)
+        continue;
+
+      std::size_t sequence_start_index = 0;
+      while(sequence_start_index < index_sequence.size()){
+        const std::size_t actual_sequence_start = (
+          sequence_start_index - (
+            preferred_sequence_size - std::min(
+              static_cast<std::size_t>(preferred_sequence_size), (index_sequence.size() - sequence_start_index)
+            )
+          )
+        );
+        for(std::size_t index = actual_sequence_start; index < (actual_sequence_start + preferred_sequence_size); ++index){
+          const std::size_t i = index_sequence[index];
+          FeatureView action_slot = RafQSetItemConstView::best_action_slot(get_label_sample(i), m_environment.action_size());
+          result.mutable_inputs()->Add(get_input_sample(i).begin(), get_input_sample(i).end());
+          result.mutable_labels()->Add(action_slot.begin(), action_slot.end());
+        }
+        sequence_start_index += preferred_sequence_size;
+      }
+    }
+  }
+
+  return result;
+}
+
+
 RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* result_index_buffer) const{
   RFASSERT(state.size() == m_environment.state_size());
   MaybeFeatureVector result;
@@ -30,7 +107,6 @@ RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* r
   const std::uint32_t items_in_one_thread = 1u + (item_count / m_lookupThreads.get_number_of_threads());
   m_lookupThreads.start_and_block([this, &state, &result, &result_index_buffer, item_count, items_in_one_thread](std::uint32_t thread_index){
     static std::atomic_bool someone_found_it = false;
-    static std::mutex output_mutex; //TODO: Maybe move to members? 
     const std::uint32_t items_start_index = thread_index * items_in_one_thread;
     const std::uint32_t items_in_this_thread = std::min( items_in_one_thread, (item_count - std::min(item_count, items_start_index)) );
     for(std::uint32_t item_index = items_start_index; item_index < (items_start_index + items_in_this_thread); ++item_index){
@@ -39,7 +115,7 @@ RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* r
         (!someone_found_it) /* If there are multiple matches, there might be interference */
         &&(m_costFunction.get_feature_error(state, get_input_sample(item_index), m_environment.state_size()) <= m_settings.get_delta())
       ){
-        std::lock_guard<std::mutex> my_lock(output_mutex);
+        std::lock_guard<std::mutex> my_lock(m_searchResultMutex);
         if(!someone_found_it){
           result.emplace(get_input_sample(item_index));
           if(result_index_buffer)
@@ -50,8 +126,10 @@ RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* r
       if(someone_found_it)break;
     }
 
-    std::lock_guard<std::mutex> my_lock(output_mutex);
-    someone_found_it = false; /* restore state for the next run */
+    if(someone_found_it){
+      std::lock_guard<std::mutex> my_lock(m_searchResultMutex);
+      someone_found_it = false; /* restore state for the next run */      
+    }
   });
   return result;
 }
@@ -265,11 +343,9 @@ void RafQSet::erase_worst(std::uint32_t count){
   }
 }
 
-//TODO: Experiment: each look ahead adds the delta ( improvement) of q-values
-//TODO: Td policy: for creating td; essentially a function for temporal q-value sequence
 double RafQSet::get_td_value(const RafQSetItemConstView& new_action_view, double old_q_value) const{
   // std::cout << "\n\n calculating td value.." << std::endl;
-  double temporal_difference_value = new_action_view.q_value(0); /* Reqward: the only Q-value in @new_action_view */
+  double temporal_difference_value = new_action_view.q_value(0); /* Reward: the only Q-value in @new_action_view */
   if(0 < m_settings.get_look_ahead_count()){
     double lambda = m_settings.get_gamma();
     std::uint32_t next_state_index;
@@ -285,7 +361,7 @@ double RafQSet::get_td_value(const RafQSetItemConstView& new_action_view, double
         // // << new_action_view[0] << "}"
         // << std::endl;
         new (&state_transition) RafQEnvironment::StateTransition(m_environment.next(
-          {next_state_view.state().begin(), next_state_view.state().end()}, {next_state_view[0], m_environment.action_size()}
+          next_state_view.state(), {next_state_view[0], m_environment.action_size()}
         ));
       }else{
         RFASSERT(next_state_index < get_number_of_sequences());

@@ -29,6 +29,7 @@
 #include "rafko_utilities/services/thread_group.hpp"
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 #include "rafko_gym/models/rafko_dataset.hpp"
+#include "rafko_gym/models/rafko_dataset_implementation.hpp"
 #include "rafko_gym/models/rafq_environment.hpp"
 #include "rafko_gym/services/cost_function_mse.hpp"
 
@@ -56,6 +57,7 @@ class RAFKO_EXPORT RafQSetItemConstView
 
 public:
   using FeatureVector = RafQEnvironment::FeatureVector;
+  using FeatureView = RafQEnvironment::FeatureView;
 
   RafQSetItemConstView(
     const FeatureVector& state, const FeatureVector& actions,
@@ -140,6 +142,11 @@ public:
     FeatureVector ret(action);
     ret.insert(ret.begin(), q_value);
     return ret;
+  }
+
+  static FeatureView best_action_slot(FeatureView actions_buffer, std::uint32_t action_size){
+    RFASSERT(action_slot_size(action_size) <= actions_buffer.size());
+    return{ actions_buffer.begin() + 1, actions_buffer.begin() + 1 + action_size };
   }
 
 protected:
@@ -245,9 +252,6 @@ private:
   FeatureVector& m_actions;
 };
 
-//TODO: convert state-best action pairs to sequences: so that consecutive states can be a sequence
-//TODO: generate QSet from @Dataset ( make save/load of qSets possible )
-
 /**
  * @brief      This class stores and provides a set of states and connected actions with corresponding QValues
  */
@@ -297,12 +301,31 @@ public:
     }
   }
 
+  RafQSet(
+    const rafko_mainframe::RafkoSettings& settings, RafQEnvironment& environment, 
+    std::uint32_t action_count, double overwrite_q_threshold, const DataSetPackage& source
+  )
+  : RafQSet(settings, environment, action_count, source.possible_sequence_count(), overwrite_q_threshold)
+  {
+    RafkoDatasetImplementation::fill(source, m_statesBuffer, m_actionsBuffer);
+    RFASSERT(m_statesBuffer.size() <= source.possible_sequence_count());
+    m_statesBuffer.reserve(source.possible_sequence_count());
+    m_actionsBuffer.reserve(source.possible_sequence_count());
+  }
+
+  DataSetPackage generate_package() const{
+    return RafkoDatasetImplementation::generate_from(
+      m_statesBuffer, m_actionsBuffer, get_sequence_size(), m_maxSetSize
+    );
+  }
+
+  DataSetPackage generate_best_sequences(std::uint32_t preferred_sequence_size) const;
+
   MaybeFeatureVector look_up(FeatureView state, std::uint32_t* result_index_buffer = nullptr) const;
 
-  //TODO: progress callback
   void incorporate(
     const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer, 
-    const std::function<void(double/*progress*/)>& progress_callback = {}
+    const std::function<void(double/*progress*/)>& progress_callback = [](double){}
   );
 
   void keep_best(std::uint32_t count){
@@ -394,7 +417,8 @@ private:
   CostFunctionMSE m_costFunction;
   double m_overwriteQThreshold;
   std::uint32_t m_maxSetSize;
-  rafko_utilities::ThreadGroup m_lookupThreads; 
+  rafko_utilities::ThreadGroup m_lookupThreads;
+  mutable std::mutex m_searchResultMutex;
 
   double get_td_value(const RafQSetItemConstView& new_action_view, double old_q_value) const;
 };

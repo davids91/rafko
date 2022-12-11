@@ -66,6 +66,14 @@ public:
   {
   }
 
+  static std::uint32_t states_count(){
+    return s_states.size();
+  }
+
+  static std::uint32_t max_q_set_size(){
+    return s_states.size() - 1u; /* state 4 has no next states, so it won't be involved in the stored states */
+  }
+
   void reset() override{
     m_state = s_states[0];
   }
@@ -84,21 +92,25 @@ public:
   StateTransition next(FeatureView state, FeatureView action) const override{
     REQUIRE(state.size() == state_size());
     REQUIRE(action.size() == action_size());
-
+    std::cout << "looking for state: " <<  state[0] << ", action: " << action[0] << "--";
     auto result_state = s_stateTransitions.find({state[0], action[0]});
-    if(result_state == s_stateTransitions.end())
+    if(result_state == s_stateTransitions.end()){
+      std::cout << "found: x\n";
       return {{}, 0.0, true};
+    }
     else{
       auto state_iterator = std::find_if(
         s_states.begin(), s_states.end(),
         [&result_state](const FeatureVector& stored_state){ return stored_state[0] == std::get<1>(*result_state); }
       );
+      std::cout << "found: " <<  (*state_iterator)[0] << "\n";
       return {
         {*state_iterator}, 
         s_stateQValues.at((*state_iterator)[0]), 
         s_stateTerminalValues.at((*state_iterator)[0])
       };
-    }   
+    }
+    std::cout << "found: x\n";
   }
 private: 
   FeatureVector m_state = s_states[0];
@@ -321,29 +333,34 @@ private:
 };
 
 TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]") {
-  constexpr const std::uint32_t max_set_size = 4u;
-  constexpr const std::uint32_t action_count = 5u;
-
   using FeatureVector = rafko_gym::RafQEnvironment::FeatureVector;
 
-  rafko_mainframe::RafkoSettings settings;
-  TestEnvironment environment;
-  rafko_gym::RafQSet q_set(settings, environment, action_count, max_set_size, 0.1);
+  constexpr const std::uint32_t action_count = 5u;
+  rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
+    .set_learning_rate(1.0); /* learning rate set to 1.0 to make testing TD q values easier */
 
-  for(double state_index = 0; state_index < max_set_size; state_index += 1.0){
-    std::vector<FeatureVector> actions_for_state;
-    for(double action_index = 0; action_index < action_count; action_index += 1.0){
-      actions_for_state.push_back(rafko_gym::RafQSetItemConstView::action_slot(
-        std::vector<double>{action_index}/*action*/,
-        environment.next(
-          std::vector<double>{state_index}, std::vector<double>{action_index}
-        ).m_resultQValue
-      ));
-    }
-    q_set.incorporate(
-      std::vector<FeatureVector>(action_count, {state_index})/* states */,
-      actions_for_state
-    );
+  TestEnvironment environment;
+  rafko_gym::RafQSet q_set(settings, environment, action_count, TestEnvironment::max_q_set_size(), 0.1);
+
+  /* Filling up qSet with every posible state and action in the test environment twice! so that correct correct qvalues are stored for the transitively better actions */
+  for(std::uint32_t fill = 0; fill < 2; ++fill){
+    for(double state_index = 0; state_index < TestEnvironment::states_count(); state_index += 1.0){
+      std::vector<FeatureVector> actions_for_state;
+      for(double action_index = 0; action_index < TestEnvironment::states_count(); action_index += 1.0){
+        rafko_gym::RafQEnvironment::StateTransition state_transition =  environment.next(
+          std::vector<double>{state_index + 1.0}, std::vector<double>{action_index + 1.0}
+        );
+        if(state_transition.m_resultState.has_value()){
+          // std::cout << "Incorporating state: " << (state_index + 1.0l) << "; action: " << (action_index + 1.0) << std::endl;
+          actions_for_state.push_back(rafko_gym::RafQSetItemConstView::action_slot(
+            std::vector<double>{action_index + 1.0}/*action*/, state_transition.m_resultQValue
+          ));        
+        }
+      }
+      q_set.incorporate(
+        std::vector<FeatureVector>(actions_for_state.size(), {state_index + 1.0})/* states */, actions_for_state
+      );
+    }    
   }
 
   SECTION("Checking if QSet can build with reduced action count correctly"){
@@ -352,24 +369,34 @@ TEST_CASE("Testing if RafQSet conversion works as expected", "[QSet][QLearning]"
       reduced_action_count * rafko_gym::RafQSetItemConstView::action_slot_size(environment.action_size())
     );
 
-    using Catch::Matchers::Approx;
-
     rafko_gym::RafQSet reduced_q_set(q_set, reduced_action_count);
-
-    for(std::uint32_t state_index = 0; state_index < max_set_size; ++state_index){
+    for(std::uint32_t state_index = 0; state_index < q_set.get_number_of_sequences(); ++state_index){
       REQUIRE_THAT(
-        q_set.get_input_sample(state_index), 
-        Catch::Matchers::Approx(reduced_q_set.get_input_sample(state_index)).margin(0.0000000000001)
+        q_set.get_input_sample(state_index), Catch::Matchers::Approx(reduced_q_set.get_input_sample(state_index)).margin(0.0000000000001)
       );
       FeatureVector label_reference = {
-        q_set.get_label_sample(state_index).begin(), 
-        q_set.get_label_sample(state_index).begin() + (reduced_action_count * action_slot_size) 
+        q_set.get_label_sample(state_index).begin(), q_set.get_label_sample(state_index).begin() + (reduced_action_count * action_slot_size)
       };
       REQUIRE_THAT(
-        label_reference, 
-        Approx(reduced_q_set.get_label_sample(state_index)).margin(0.0000000000001) 
+        label_reference, Catch::Matchers::Approx(reduced_q_set.get_label_sample(state_index)).margin(0.0000000000001) 
       );
     }
+  }
+
+  SECTION("Testing if generating the best actions as sequences working as expected"){
+    REQUIRE( TestEnvironment::max_q_set_size() == q_set.get_number_of_sequences() );
+    rafko_gym::DataSetPackage generated = q_set.generate_best_sequences(4u); /* best sequence is 4 steps long in test env */
+    REQUIRE( generated.input_size() == 1u );
+    REQUIRE( generated.feature_size() == 1u );
+    REQUIRE( generated.sequence_size() == 4u );
+    REQUIRE_THAT( 
+      std::vector<double>(generated.inputs().begin(), generated.inputs().end()), 
+      Catch::Matchers::Approx(std::vector<double>{1.0, 2.0, 3.0, 5.0}).margin(0.0000000000001) 
+    );    
+    REQUIRE_THAT( 
+      std::vector<double>(generated.labels().begin(), generated.labels().end()), 
+      Catch::Matchers::Approx(std::vector<double>{2.0, 3.0, 5.0, 2.0}).margin(0.0000000000001) 
+    );
   }
 }
 

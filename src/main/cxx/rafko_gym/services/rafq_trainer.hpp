@@ -111,7 +111,7 @@ public:
 
   void iterate(
     std::uint32_t max_discovery_length, double exploration_ratio, std::uint32_t q_set_training_epochs, 
-    const std::function<void(double/*progress*/)>& progress_callback = {}
+    const std::function<void(double/*progress*/)>& progress_callback = [](double){}
   );
 
 private:
