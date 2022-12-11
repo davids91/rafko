@@ -36,11 +36,13 @@
 namespace rafko_gym{
 
 /**
- * @brief      This class helps query a state paired with a number of Action Q-value pairs set by its template arguments
- *             providing only const access
+ * @brief      This class helps query a state paired with a number of Action Q-value pairs with only const access
  */
 class RAFKO_EXPORT RafQSetItemConstView
 {
+  /**
+   * @brief     Calculates the offsets for the q-values in the common buffer based on the given action size and count
+   */
   static std::vector<std::uint32_t> q_value_offset(std::uint32_t  action_size, std::uint32_t action_count){
     std::vector<std::uint32_t> offsets;
     for(std::uint32_t action_index = 0u; action_index < action_count; ++action_index)
@@ -48,6 +50,9 @@ class RAFKO_EXPORT RafQSetItemConstView
     return offsets;
   }
 
+  /**
+   * @brief     Calculates the offsets for the actions in the common buffer based on the given action size and count
+   */
   static std::vector<std::uint32_t> action_offset(std::uint32_t  action_size, std::uint32_t action_count){
     std::vector<std::uint32_t> offsets;
     for(std::uint32_t action_index = 0u; action_index < action_count; ++action_index)
@@ -76,23 +81,64 @@ public:
     RFASSERT(actions.size() == feature_size(m_actionSize, m_actionCount));
   }
 
+  /**
+   * @brief     Provides const access for actions
+   * 
+   * @param[in]     Action_index    the index of the action to query
+   * 
+   * @return    Const iterator to the first element of the action under the given index
+   */
   FeatureVector::const_iterator operator[](std::uint32_t action_index) const{
     return m_actions.begin() + m_actionOffset[action_index];
   }
 
+  /**
+   * @brief     Provides const access for the enclosed state
+   * 
+   * @return    Const reference to the enclosed state vector
+   */
   const FeatureVector& state() const{
     return m_state;
   }
 
+  /**
+   * @brief     Provides const access for actions
+   * 
+   * @param[in]     Action_index    the index of the action to query
+   * 
+   * @return    A view the buffer the queried action is stored in
+   */
+  FeatureView action(std::uint32_t action_index = 0u) const{
+    RFASSERT(action_index < m_actionCount);
+    return {(*this)[action_index], m_actionSize};
+  }
+
+  /**
+   * @brief     Provides const access for actions
+   * 
+   * @return    Const iterator to the first element of the worst action
+   */
   FeatureVector::const_iterator worst_action() const{
     return (*this)[m_actionCount - 1];
   } 
 
+  /**
+   * @brief     Provides access to the stored q-values
+   * 
+   * @param[in]     action_index    The index of the action to query(q-values are paired with actions)
+   * 
+   * @return    The value of the q-value stored under the given action index
+   */
   double q_value(std::uint32_t action_index = 0) const{
     RFASSERT(action_index < m_actions.size());
     return m_actions[m_qValueOffset[action_index]];
   }
 
+  /**
+   * @brief     Calculates the average of the enclosed q-values
+   * 
+   * @return    The average value of the enclosed q-values
+   */
   double avg_q_value() const{
     double count = 0.0;
     double sum = 0.0;
@@ -110,6 +156,11 @@ public:
       else return sum;
   }
 
+  /**
+   * @brief     Calculates the maximum of the enclosed q-values
+   * 
+   * @return    The maximum value of the enclosed q-values
+   */
   double max_q_value() const{
     double max = q_value(0);
     for(std::uint32_t action_index = 1; action_index < m_actionCount; ++action_index){
@@ -118,6 +169,11 @@ public:
     return max;
   }
 
+  /**
+   * @brief     Calculates the minimum of the enclosed q-values
+   * 
+   * @return    The minimum value of the enclosed q-values
+   */
   double min_q_value() const{
     double min = q_value(0);
     for(std::uint32_t action_index = 1; action_index < m_actionCount; ++action_index){
@@ -126,24 +182,54 @@ public:
     return min;
   }
 
+  /**
+   * @brief     Provides the number of actions paired to one state in this view
+   * 
+   * @return    Number of actions kept track
+   */
   std::uint32_t action_count(){
     return m_actionCount;
   }
 
+  /**
+   * @brief     Provides the size of one action-q-value pair
+   * 
+   * @return    Number of elements in one action-q-value pair
+   */
   static constexpr std::uint32_t action_slot_size(std::uint32_t action_size){
     return (action_size + 1);
   }
 
+  /**
+   * @brief     Provides the number of elements stored in the enclosed actions buffer
+   * 
+   * @return    The number of elements making up all of the enclosed actions and q-values
+   */
   static constexpr std::uint32_t feature_size(std::uint32_t action_size, std::uint32_t action_count){
     return action_slot_size(action_size) * action_count;
   }
 
+  /**
+   * @brief     Generates a vector from the given data in a size-agnostic way
+   * 
+   * @param[in]     action      Const reference to the buffer containing the actions
+   * @param         q_value     The q-value to assign the action buffer    
+   */
   static FeatureVector action_slot(const FeatureVector& action, double q_value){
     FeatureVector ret(action);
     ret.insert(ret.begin(), q_value);
     return ret;
   }
 
+  /**
+   * @brief     Gives back a view of the best action from given actions buffer. 
+   *            Buffer is considered to contain at least one action of the given size
+   * 
+   * @param[in]     actions_buffer    The buffer to query
+   * @param         action_size       Size of one Action inside the buffer
+   * 
+   * @return    A view of the best action inside the given buffer
+   */
   static FeatureView best_action_slot(FeatureView actions_buffer, std::uint32_t action_size){
     RFASSERT(action_slot_size(action_size) <= actions_buffer.size());
     return{ actions_buffer.begin() + 1, actions_buffer.begin() + 1 + action_size };
@@ -160,7 +246,7 @@ protected:
 };
 
 /**
- * @brief      This class helps handle a state paired with a number of Action Q-value pairs
+ * @brief      This class helps read and update a state paired with a number of Action Q-value pairs
  */
 class RAFKO_EXPORT RafQSetItemView : public RafQSetItemConstView
 {
@@ -190,23 +276,52 @@ public:
     RFASSERT(0 < m_actionCount);
   }
 
+  /**
+   * @brief     Updates the q-value under the given index
+   * 
+   * @param     value           The q-value to update the given action with
+   * @param     action_index    The index of the action to update the q-value for
+   */
   void set_q_value(double value, std::uint32_t action_index = 0){
     RFASSERT(action_index < m_actions.size());
     m_actions[m_qValueOffset[action_index]] = value;
   }
 
+  /**
+   * @brief     Provides access for actions
+   * 
+   * @param     action_index    The index of the action to rquery
+   * 
+   * @return    Iterator to the first element of the given action
+   */
   typename FeatureVector::iterator operator[](std::uint32_t action_index){
     return m_actions.begin() + m_actionOffset[action_index];
   }
 
+  /**
+   * @brief     Provides access to the worst action
+   * 
+   * @return    Iterator to the first element of the worst action
+   */
   typename FeatureVector::iterator worst_action(){
     return (*this)[m_actionCount - 1];
   }
 
+  /**
+   * @brief     Provides access to the best action
+   * 
+   * @return    Iterator to the first element of the best action
+   */
   typename FeatureVector::iterator best_action(){
     return (*this)[m_actionCount - 1];
   }
 
+  /**
+   * @brief     Copies action buffer data from source to target
+   * 
+   * @param     source    The index of the action to copy the data from
+   * @param     target    The index of the action to copy the data to
+   */
   void copy_action(std::uint32_t source, std::uint32_t target){
     RFASSERT(source < m_actionCount);
     RFASSERT(target < m_actionCount);
@@ -215,6 +330,12 @@ public:
     set_q_value(q_value(source), target);
   }
 
+  /**
+   * @brief     Swaps action buffer data from source to target
+   * 
+   * @param     source    The index of the action to swap
+   * @param     target    The index of the action to swap it with
+   */
   void swap_action(std::uint32_t source, std::uint32_t target){
     RFASSERT(source < m_actionCount);
     RFASSERT(target < m_actionCount);
@@ -225,7 +346,13 @@ public:
     set_q_value(source_q_value, target);
   }
 
-
+  /**
+   * @brief     Copies action buffer data from RafQSetItemConstView to target
+   * 
+   * @param     xp_element              The View to take over action data from
+   * @param     source_action_index     The index of the action in @xp_element to copy the data from
+   * @param     target_action_index     The index of the action in the current object to copy the data to
+   */
   void take_over(RafQSetItemConstView xp_element, std::uint32_t source_action_index = 0u, std::uint32_t target_action_index = 0u){
     RFASSERT(source_action_index < xp_element.action_count());
     RFASSERT(target_action_index < m_actionCount);
@@ -235,13 +362,31 @@ public:
     );
   }
 
-  static typename FeatureVector::iterator action_iterator(FeatureVector& actions_buffer, std::uint32_t action_size, std::uint32_t action_index = 0){ 
+  /**
+   * @brief     Provides access to the buffer of the action under the given action index. Indexes are checked for OOB
+   * 
+   * @param     actions_buffer      Rreference to the buffer containing the action-q-value pairs
+   * @param     action_size         Size of one action inside the buffer
+   * @param     action_index        The index of the action to reach
+   * 
+   * @return    Iterator to the first element of the queried action
+   */
+  static FeatureVector::iterator action_iterator(FeatureVector& actions_buffer, std::uint32_t action_size, std::uint32_t action_index = 0){ 
     RFASSERT((((action_size + 1) * action_index) + action_size + 1) <= actions_buffer.size());
               /* Action slot start + (slot size *  slot_index )         + q_value offset */
     return (actions_buffer.begin() + ((action_size + 1) * action_index) + 1);
   }
 
-  static typename FeatureVector::iterator q_value_iterator(FeatureVector& actions_buffer, std::uint32_t action_size, std::uint32_t action_index = 0){ 
+  /**
+   * @brief     Provides access to the buffer of the q-value under the given action index. Indexes are checked for OOB
+   * 
+   * @param     actions_buffer      Rreference to the buffer containing the action-q-value pairs
+   * @param     action_size         Size of one action inside the buffer
+   * @param     action_index        The index of the action to reach
+   * 
+   * @return    Iterator to the first element of the queried action
+   */
+  static FeatureVector::iterator q_value_iterator(FeatureVector& actions_buffer, std::uint32_t action_size, std::uint32_t action_index = 0){ 
     RFASSERT((((action_size + 1) * action_index) + action_size + 1) <= actions_buffer.size());
               /* Action slot start + (slot size *  slot_index )         + q_value offset */
     return (actions_buffer.begin() + ((action_size + 1) * action_index));
@@ -313,30 +458,77 @@ public:
     m_actionsBuffer.reserve(source.possible_sequence_count());
   }
 
+  /**
+   * @brief     Export every item in the set into the @DataSetPackage message for later use
+   * 
+   * @return    A @DataSetPackage containing all of the stored items in the set with a sequence size of 1
+   */
   DataSetPackage generate_package() const{
     return RafkoDatasetImplementation::generate_from(
       m_statesBuffer, m_actionsBuffer, get_sequence_size(), m_maxSetSize
     );
   }
 
+
+  /**
+   * @brief     Export the best action from the set into a @DataSetPackage for later use. 
+   *            Produces an empty package if long enough sequences could not be generated
+   * 
+   * @param     preferred_sequence_size     The number of items expected to be in one sequence
+   * 
+   * @return    A @DataSetPackage containing all of the best actions in temporal order, or an empty package
+   */
   DataSetPackage generate_best_sequences(std::uint32_t preferred_sequence_size) const;
 
+  /**
+   * @brief     Provides a View matching the given state View should there be a match inside the set.
+   * 
+   * @param[in]       state                   The data to look for in the stored states
+   * @param[inout]    result_index_buffer     A pointer to an integer to store the result index should there be any
+   * 
+   * @return    An optional, storing the reference to the stored state buffer matching the given one, if there is any
+   */
   MaybeFeatureVector look_up(FeatureView state, std::uint32_t* result_index_buffer = nullptr) const;
 
+  /**
+   * @brief     Updates the q-set with the given state-action-q-value pairs. The sizes of the given vectors 
+   *            must match exactly.
+   * 
+   * @param[in]     state_buffer          A vector of states to look for
+   * @param[in]     actions_buffer        A vector of action-q-value pairs to update the data with
+   * @param[in]     progress_callback     A function to call at each progress update with a value of 0..1 representing the progress of the operation
+   */
   void incorporate(
     const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer, 
     const std::function<void(double/*progress*/)>& progress_callback = [](double){}
   );
 
+  /**
+   * @brief     Erases elements from the set if it gets greater, than the given size. Elements with the smallest q-values are erased
+   * 
+   * @param     count     the number of elements to keep in the set
+   */
   void keep_best(std::uint32_t count){
     if(count < get_number_of_sequences())
       erase_worst(get_number_of_sequences() - count);
   }
 
+  /**
+   * @brief     Erases the worst q-value elements from the set
+   * 
+   * @param     count     the number of elements to erase from the set
+   */
   void erase_worst(std::uint32_t count);
 
   ~RafQSet() = default;
 
+  /**
+   * @brief     Provides const access to an item in the set under the given index
+   * 
+   * @param     index     The index of the item to query
+   * 
+   * @return  An instance of @RafQSetItemConstView for the elements under the given index
+   */
   RafQSetItemConstView operator[](std::uint32_t index) const{
     RFASSERT(index < get_number_of_sequences());
     return RafQSetItemConstView(
@@ -345,6 +537,13 @@ public:
     );
   }
 
+  /**
+   * @brief     Provides access to an item in the set under the given index
+   * 
+   * @param     index     The index of the item to query
+   * 
+   * @return  An instance of @RafQSetItemView for the elements under the given index
+   */
   RafQSetItemView operator[](std::uint32_t index){
     RFASSERT(index < get_number_of_sequences());
     return RafQSetItemView(
@@ -353,10 +552,20 @@ public:
     );
   }
 
+  /**
+   * @brief     Provides the number of action assigned for one state by the q-set policy
+   * 
+   * @return    Number of action-q-value pairs assigned to one state inside the q-set
+   */
   constexpr std::uint32_t action_count(){
     return m_actionCount;
   }
 
+  /**
+   * @brief     Gives back the maximum number of elements the q-set is configured to contain
+   * 
+   * @return    Number of elements the set is configured to keep when extending
+   */
   constexpr std::uint32_t max_size() const{
     return m_maxSetSize;
   }
@@ -420,6 +629,12 @@ private:
   rafko_utilities::ThreadGroup m_lookupThreads;
   mutable std::mutex m_searchResultMutex;
 
+  /**
+   * @brief     Calculates the Temporal difference value for the given state-action-q-value pair 
+   * 
+   * @param     new_action_view     Object providing const acess to the data for the given state-action-q-value pair
+   * @param     old_q_value         The Q-value for the given object prior to a recent update
+   */
   double get_td_value(const RafQSetItemConstView& new_action_view, double old_q_value) const;
 };
 

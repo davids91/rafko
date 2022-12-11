@@ -97,18 +97,52 @@ public:
   {
   }
 
+  /**
+   * @brief   provides the current size of the enclosing q-set
+   * 
+   * @return    number of state-actions pairs stored in the q-set
+   */
   std::uint32_t q_set_size() const{
     return m_qSet->get_number_of_sequences();
   }
 
+
+  /**
+   * @brief   evaluates the stored network on the enclosing q-set
+   * 
+   * @param[in]      to_seed              A helper value to make Stochastic evaluation deterministicly reproducible
+   * @param[in]      seed_value           A helper value to make Stochastic evaluation deterministicly reproducible
+   * @param[in]      force_gpu_upload     If set true, data in stored objects are uploaded to GPU regardless of previous uploads
+   *                                      Applies only to implementations targeting GPUs
+   * 
+   * @return    error/fitness value resulting from the evaluation
+   */
   double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u, bool force_gpu_upload = false){
     return m_context->stochastic_evaluation(to_seed, seed_value, force_gpu_upload);
   }
 
+  /**
+   * @brief   evaluates the stored network on the enclosing q-set
+   * 
+   * @param[in]      force_gpu_upload     If set true, data in stored objects are uploaded to GPU regardless of previous uploads
+   *                                      Applies only to implementations targeting GPUs
+   * 
+   * @return    error/fitness value resulting from the evaluation
+   */
   double full_evaluation(bool force_gpu_upload = false){
     return m_context->full_evaluation(force_gpu_upload);
   }
 
+  /**
+   * @brief   Applies one iteration of collecting experience data, incorporating it into the q-set and optimizing the enclosed network for it
+   * 
+   * @param[in]     max_discovery_length      Number of discovery steps to take in this iteration
+   * @param[in]     exploration_ratio         Exploration vs Exploitation ratio: 1.0 to explore, 0.0 to exploit fully
+   * @param[in]     q_set_training_epochs     Number of training iterations to run on the enclosing policy network
+   * @param[in]     progress_callback         A function to help with showing progress
+   * 
+   * @return    error/fitness value resulting from the evaluation
+   */
   void iterate(
     std::uint32_t max_discovery_length, double exploration_ratio, std::uint32_t q_set_training_epochs, 
     const std::function<void(double/*progress*/)>& progress_callback = [](double){}
@@ -125,6 +159,12 @@ private:
   std::normal_distribution<double> m_randomActionGenerator;
   std::uint32_t m_iteration = 0;
 
+  /**
+   * @brief     Generates an action for the given state and exploration ratio
+   * 
+   * @param[in]     state                 The state to generate the action to
+   * @param[in]     exploration_ratio     Exploration vs Exploitation ratio: 1.0 to explore, 0.0 to exploit fully
+   */
   FeatureVector generate_action(const FeatureVector& state, double exploration_ratio);
 };
 
