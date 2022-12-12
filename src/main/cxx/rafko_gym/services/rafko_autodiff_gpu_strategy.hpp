@@ -84,13 +84,11 @@ public:
 
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
     RFASSERT(static_cast<bool>(m_dataSet));
-    return {
-      cl::NullRange/*offset*/,
-      cl::NDRange(
-        std::min(m_settings.get_minibatch_size(), m_dataSet->get_number_of_sequences()) * m_maximumLocalWorkers
-      )/*global*/,
-      cl::NDRange(m_maximumLocalWorkers)/*local*/
-    };
+    std::size_t global_range = (
+      std::min(m_settings.get_minibatch_size(), m_dataSet->get_number_of_sequences()) * m_maximumLocalWorkers
+    );
+    RFASSERT_LOG("Autodiff strategy global solution space: {}", global_range);
+    return {cl::NullRange/*offset*/, cl::NDRange(global_range)/*global*/, cl::NDRange(m_maximumLocalWorkers)/*local*/ };
   }
 
   /**
