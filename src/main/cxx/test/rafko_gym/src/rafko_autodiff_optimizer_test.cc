@@ -400,6 +400,8 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data
   );
   #endif/*(RAFKO_USES_OPENCL)*/
   optimizer->build(data_set, objective);
+  optimizer->set_training_context(context);
+  optimizer->set_testing_context(test_context);
   optimizer->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
   double train_error;

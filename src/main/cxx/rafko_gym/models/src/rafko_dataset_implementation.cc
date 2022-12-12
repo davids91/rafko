@@ -63,6 +63,7 @@ DataSetPackage RafkoDatasetImplementation::generate_from(
     result.mutable_inputs()->Add(input_samples[sample_index].begin(),input_samples[sample_index].end());
     result.mutable_labels()->Add(label_samples[sample_index].begin(),label_samples[sample_index].end());
   }
+  return result;
 }
 
 
