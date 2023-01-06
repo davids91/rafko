@@ -217,6 +217,15 @@ public:
   }
 
   /**
+   * @brief     Provides information about the optimizer built state
+   *
+   * @return    True, if the optimizer is built correctly
+   */
+  constexpr bool built(){
+    return m_built;
+  }
+
+  /**
    * @brief     Resets the iteration count to zero
    */
   void reset_epoch(){
@@ -242,6 +251,7 @@ protected:
   std::uint32_t m_lastTestedIteration = 0u;
   double m_lastTrainingError = std::numeric_limits<double>::quiet_NaN();
   double m_lastTestingError = std::numeric_limits<double>::quiet_NaN();
+  bool m_built = false;
   std::vector<double> m_tmpAvgD;
 
   /**

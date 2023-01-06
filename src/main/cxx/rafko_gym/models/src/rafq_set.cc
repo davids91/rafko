@@ -140,6 +140,7 @@ void RafQSet::incorporate(
   const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer, 
   const std::function<void(double/*progress*/)>& progress_callback
 ){
+  RFASSERT_SCOPE(QSET_INCORPORATE)
   RFASSERT_LOG("Incorporating {} states and {} actions to q-set!", state_buffer.size(), actions_buffer.size());
   RFASSERT(state_buffer.size() == actions_buffer.size());
   m_statesBuffer.reserve(m_statesBuffer.size() + state_buffer.size()); /* Reserve enough space so iteration invalidation can be minimized.. */
@@ -160,8 +161,7 @@ void RafQSet::incorporate(
       FeatureView stored_action_vector_view(stored_action_view[0], action_size);
       for(action_index = 0; action_index < m_actionCount; ++action_index){
         if(0 < action_index)
-         new (&stored_action_vector_view) FeatureView(stored_action_view[action_index], action_size);
-
+          new (&stored_action_vector_view) FeatureView(stored_action_view[action_index], action_size);
         if( m_settings.get_delta_2() >= m_costFunction.get_feature_error(
           stored_action_vector_view, {new_action_view[0], action_size}, action_size
         ) ) break; /* if the difference is small enough, a match is found! */
@@ -198,8 +198,10 @@ void RafQSet::incorporate(
           new_action_q_value, stored_action_view.min_q_value(), m_overwriteQThreshold
         );
         std::uint32_t action_index = m_actionCount;
+
         do{ /* Find the index of the new action */
           --action_index;
+          if(1 == m_actionCount) break; /* no need to look for anything, since there's only one action! */
           RFASSERT_LOG(
             "comparing new action to stored action[{}], q_value: {}",
             action_index, stored_action_view.q_value(action_index)
@@ -219,8 +221,9 @@ void RafQSet::incorporate(
         }while(0 < action_index);
         RFASSERT_LOG("Overwriting stored action[{}]", action_index);
         /*!Note: there will surely be match, because the action because of the entry condition of this block */
-        std::uint32_t i = m_actionCount; /* write over the actions starting from the worst */
+        std::uint32_t i = m_actionCount; /* overwrite the actions starting from the worst */
         do{
+          if(1 == m_actionCount) break; /* no need to do anything, since there's only one action! */
           --i;
           stored_action_view.copy_action(i-1/*source*/, i/*target*/);
         }while(i > (action_index + 1));
@@ -307,7 +310,6 @@ double RafQSet::get_td_value(const RafQSetItemConstView& new_action_view, double
         else{
           RFASSERT_LOG("..of new action..");
         }
-
       RafQEnvironment::StateTransition state_transition = m_environment.next(
         next_state_view.state(), {next_state_view[0], m_environment.action_size()}
       ); /*!Note: The first action also has the highest q-value */
@@ -339,7 +341,7 @@ double RafQSet::get_td_value(const RafQSetItemConstView& new_action_view, double
         break;
       }
     }
-  }
+  }/*if(settings permit looking ahead)*/
   return (temporal_difference_value - old_q_value) * m_settings.get_learning_rate();
 }
 

@@ -506,4 +506,29 @@ TEST_CASE("Solution Solver memory test", "[solve][memory]"){
   }
 }
 
+TEST_CASE("Solution Solver memory test", "[runtime][!benchmark]"){
+  google::protobuf::Arena arena;
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
+    rafko_mainframe::RafkoSettings().set_arena_ptr(&arena)
+  );
+  rafko_net::RafkoNet& network(*rafko_net::RafkoNetBuilder(*settings)
+    .input_size(1).expected_input_range((5.0))
+    .add_neuron_recurrence(0u,0u,1u)
+    .create_layers({10,20})
+  );
+  std::chrono::steady_clock::time_point start;
+  start = std::chrono::steady_clock::now();
+  std::shared_ptr<rafko_net::SolutionSolver> solver = rafko_net::SolutionSolver::Factory(network, settings).build();
+  std::cout << "creation duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << ";" << std::endl;
+
+  std::uint32_t avg_ms = 0;
+  while(true){
+    start = std::chrono::steady_clock::now();
+    solver->solve({0});
+    auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+    std::cout << "\rrun duration: " << current_duration << "ms; \t\tavg:" <<  avg_ms << "ms      ";
+    avg_ms = (current_duration + avg_ms)/2;
+  }
+}
+
 }

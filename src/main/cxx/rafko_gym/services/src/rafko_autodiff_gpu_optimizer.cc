@@ -27,6 +27,7 @@ void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoDataSet> data_set, st
   m_strategy->build(m_operations, build_without_data(data_set, objective));
   m_gpuPhase.set_strategy(m_strategy);
   sync_data_set_on_GPU(*data_set);
+  m_built = true;
 }
 
 void RafkoAutodiffGPUOptimizer::upload_weight_table(){
@@ -75,6 +76,8 @@ void RafkoAutodiffGPUOptimizer::sync_data_set_on_GPU(const RafkoDataSet& data_se
 
 void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool force_gpu_upload){
   RFASSERT_SCOPE(AUTODIFF_GPU_ITERATE);
+  RFASSERT(data_set.get_feature_size() == m_network.output_neuron_number());
+
   upload_weight_table();
   if(force_gpu_upload){
     sync_data_set_on_GPU(data_set);
@@ -157,8 +160,9 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool force
     )/*offset*/
   );
 
-  if( static_cast<std::int32_t>(m_tmpAvgD.size()) > std::count(m_tmpAvgD.begin(),m_tmpAvgD.end(), 0.0))
+  if( static_cast<std::int32_t>(m_tmpAvgD.size()) > std::count(m_tmpAvgD.begin(),m_tmpAvgD.end(), 0.0)){
     apply_weight_update(m_tmpAvgD);
+  }
 
   ++m_iteration;
   update_context_errors(force_gpu_upload);

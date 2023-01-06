@@ -99,10 +99,7 @@ std::vector<cl::Event> RafkoDataSet::upload_labels_to_buffer(
     std::uint32_t truncated_start = (sequence_index * elements_in_a_sequence) + start_index_inside_sequence;
     std::uint32_t uploaded_label_index = (sequence_index - sequence_start_index) * sequence_truncation;
     for(std::uint32_t truncated_index = truncated_start; truncated_index < (truncated_start + sequence_truncation); ++truncated_index){
-      RFASSERT_LOG(
-        "used offset for label[{}]: {} ( + {})",
-        truncated_index, (buffer_byte_offset + labels_byte_offset), label_byte_size
-      );
+      RFASSERT_LOG("used offset for label[{}]: {} ( + {})", truncated_index, (buffer_byte_offset + labels_byte_offset), label_byte_size);
       return_value = opencl_queue.enqueueWriteBuffer(
         buffer, CL_FALSE/*blocking*/, (buffer_byte_offset + labels_byte_offset)/*offset*/,
         label_byte_size/*size*/, get_label_sample(truncated_index).data(),

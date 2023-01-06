@@ -2,7 +2,6 @@
 #include <memory>
 #include <cmath>
 #include <thread>
-#include <iostream>
 #include <fstream>
 
 #include <rafko_protocol/rafko_net.pb.h>
@@ -71,7 +70,7 @@ int main(){
   /* Swap the network with a bigger one*/
   rafko_net::RafkoNetBuilder(*settings)
   .input_size(2) /* The number of values the network reads as its input vector */
-  .build_create_layers_and_swap(additional_network_on_arena, {5, 5, 1});
+  .create_layers_and_swap(additional_network_on_arena, {5, 5, 1});
 
   /*!Note: Even with an existing Arena updated in settings, it is possible to create objects on the Heap.
    * The below function call returns ownership to the caller

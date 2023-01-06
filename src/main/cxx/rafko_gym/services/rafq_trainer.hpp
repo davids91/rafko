@@ -83,14 +83,14 @@ public:
   #if(RAFKO_USES_OPENCL)
   , m_context(
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(m_stableNetwork, settings, m_objective)
+      .build<rafko_mainframe::RafkoGPUContext>(*m_volatileNetwork, settings, m_objective)
   )
   , m_optimizer(
     rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
       .build<RafkoAutodiffGPUOptimizer>(settings, *m_volatileNetwork, m_qSet, m_context)
   )
   #else
-  , m_context(std::make_shared<rafko_mainframe::RafkoCPUContext>(m_stableNetwork, settings, objective))
+  , m_context(std::make_shared<rafko_mainframe::RafkoCPUContext>(*m_volatileNetwork, settings, objective))
   , m_optimizer(std::make_shared<RafkoAutodiffOptimizer>(settings, *m_volatileNetwork, m_context))
   #endif/*(RAFKO_USES_OPENCL)*/
   , m_randomActionGenerator(m_environment->action_properties().m_mean, m_environment->action_properties().m_standardDeviation)
@@ -103,9 +103,23 @@ public:
    * @return    number of state-actions pairs stored in the q-set
    */
   std::uint32_t q_set_size() const{
+    RFASSERT(static_cast<bool>(m_qSet));
     return m_qSet->get_number_of_sequences();
   }
 
+  /**
+   * @brief     Provides const access to the contained Q-set
+   * 
+   * @return    const reference to the contained Q-set
+   */
+  const RafQSet& q_set();
+
+  /**
+   * @brief     Sets the type of the weight updater used with the enclosed optimizer
+   * 
+   * @param     updater     The type of the weight updater to set
+   */
+  void set_weight_updater(rafko_gym::Weight_updaters updater);
 
   /**
    * @brief   evaluates the stored network on the enclosing q-set
@@ -118,6 +132,8 @@ public:
    * @return    error/fitness value resulting from the evaluation
    */
   double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u, bool force_gpu_upload = false){
+    if(force_gpu_upload)
+      m_context->refresh_solution_weights();
     return m_context->stochastic_evaluation(to_seed, seed_value, force_gpu_upload);
   }
 
@@ -130,22 +146,25 @@ public:
    * @return    error/fitness value resulting from the evaluation
    */
   double full_evaluation(bool force_gpu_upload = false){
+    if(force_gpu_upload)
+      m_context->refresh_solution_weights();
     return m_context->full_evaluation(force_gpu_upload);
   }
 
   /**
    * @brief   Applies one iteration of collecting experience data, incorporating it into the q-set and optimizing the enclosed network for it
+   *          It does not reset the environment, so it may be set to any desired initial state before calling the function.
    * 
    * @param[in]     max_discovery_length      Number of discovery steps to take in this iteration
    * @param[in]     exploration_ratio         Exploration vs Exploitation ratio: 1.0 to explore, 0.0 to exploit fully
    * @param[in]     q_set_training_epochs     Number of training iterations to run on the enclosing policy network
-   * @param[in]     progress_callback         A function to help with showing progress
+   * @param[in]     progress_callback         A function to help with showing progress, providing the actual progress, and step index
    * 
    * @return    error/fitness value resulting from the evaluation
    */
   void iterate(
     std::uint32_t max_discovery_length, double exploration_ratio, std::uint32_t q_set_training_epochs, 
-    const std::function<void(double/*progress*/)>& progress_callback = [](double){}
+    const std::function<void(double/*progress*/, std::uint32_t/*step*/)>& progress_callback = [](double, std::uint32_t){}
   );
 
 private:

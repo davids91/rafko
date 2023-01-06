@@ -40,6 +40,7 @@ void RafkoAutodiffOptimizer::build(const std::shared_ptr<RafkoDataSet> data_set,
     m_trainingEvaluator->set_data_set(data_set);
   std::uint32_t w_relevant_op_count = build_without_data(data_set, objective);
   m_data.build(m_operations.size(), w_relevant_op_count, data_set->get_sequence_size());
+  m_built = true;
 }
 
 std::uint32_t RafkoAutodiffOptimizer::build_without_data(const std::shared_ptr<RafkoDataSet> data_set, std::shared_ptr<RafkoObjective> objective){

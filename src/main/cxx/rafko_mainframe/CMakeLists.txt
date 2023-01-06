@@ -26,10 +26,8 @@ endif()
 
 if(ASSERTLOGS)
   add_subdirectory(external/spdlog)
-  target_link_libraries(rafko_mainframe PUBLIC spdlog::spdlog)
-
   add_subdirectory(external/date)
-  target_link_libraries(rafko_mainframe PUBLIC date::date)
+  target_link_libraries(rafko_mainframe PUBLIC spdlog::spdlog date::date)
 endif()
 
 set(MAINFRAME_MODELS_HEADERS

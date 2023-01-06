@@ -376,7 +376,7 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
       200/*max_discovery_length*/, 
       exploration_ratio, 
       (exploration_ratio > 0.8)?(0):((1.0 - exploration_ratio) * 1000)/*q_set_training_epochs*/,
-      [](double progress){ std::cout << "\r progress: " << (progress * 100) << "%   " << std::flush; }
+      [](double progress, std::uint32_t){ std::cout << "\r progress: " << (progress * 100) << "%   " << std::flush; }
     );
     ++iteration;
   }

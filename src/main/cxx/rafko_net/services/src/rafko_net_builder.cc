@@ -227,7 +227,7 @@ RafkoNetBuilder& RafkoNetBuilder::set_neuron_spike_function(std::uint32_t layer_
   return *this;
 }
 
-void RafkoNetBuilder::build_create_layers_and_swap(
+void RafkoNetBuilder::create_layers_and_swap(
   RafkoNet* previous, std::vector<std::uint32_t> layer_sizes,
   std::vector<std::set<Transfer_functions>> transfer_function_filter
 ){
@@ -341,17 +341,13 @@ RafkoNet* RafkoNetBuilder::create_layers(google::protobuf::Arena* arena_ptr, std
       expected_previous_layer_output_avg = 0;
       for(std::uint32_t layer_neuron_index = 0; layer_neuron_index < layer_sizes[layer_index]; layer_neuron_index++){
         m_argNeuronArray.push_back(Neuron());
-        std::optional<Input_functions> neuron_input_function = get_value(
-          m_argNeuronIndexInputFunctions, layer_neuron_index
-        );
+        std::optional<Input_functions> neuron_input_function = get_value(m_argNeuronIndexInputFunctions, layer_neuron_index);
         if(neuron_input_function.has_value())
           m_argNeuronArray.back().set_input_function( InputFunction::next({neuron_input_function.value()}) );
           else m_argNeuronArray.back().set_input_function(InputFunction::next());
         invalidate(m_argNeuronIndexInputFunctions, layer_index, layer_neuron_index);
 
-        std::optional<Transfer_functions> neuron_transfer_function = get_value(
-          m_argNeuronIndexTransferFunctions, layer_neuron_index
-        );
+        std::optional<Transfer_functions> neuron_transfer_function = get_value(m_argNeuronIndexTransferFunctions, layer_neuron_index);
         if(neuron_transfer_function.has_value()){
           if(
             m_isAllowedTransferFunctionsByLayerSet
@@ -386,11 +382,9 @@ RafkoNet* RafkoNetBuilder::create_layers(google::protobuf::Arena* arena_ptr, std
         if(0 == m_layerKernelInputParameters.count(layer_index)){ /* not convolutional input: add whole layer as input */
           input_weights_to_add = previous_size;
           InputSynapseInterval& interval = *m_argNeuronArray.back().add_input_indices();
-          if(0 == layer_index){
+          if(0 == layer_index)
             interval.set_starts(SynapseIterator<>::external_index_from_array_index(0));
-          }else{
-            interval.set_starts(layer_input_starts_at);
-          }
+            else interval.set_starts(layer_input_starts_at);
           interval.set_interval_size(previous_size);
           interval.set_reach_past_loops(0);
         }else{ /* convolutional input: number of weights and inputs are determinded by the kernel parameters */
@@ -404,11 +398,9 @@ RafkoNet* RafkoNetBuilder::create_layers(google::protobuf::Arena* arena_ptr, std
               
               input_weights_to_add += interval_length;
               InputSynapseInterval& interval = *m_argNeuronArray.back().add_input_indices();
-              if(0 == layer_index){
+              if(0 == layer_index)
                 interval.set_starts(SynapseIterator<>::external_index_from_array_index(mapped_index));
-              }else{
-                interval.set_starts(layer_input_starts_at + mapped_index);
-              }
+                else interval.set_starts(layer_input_starts_at + mapped_index); 
               interval.set_interval_size(interval_length);
               interval.set_reach_past_loops(0);
             }

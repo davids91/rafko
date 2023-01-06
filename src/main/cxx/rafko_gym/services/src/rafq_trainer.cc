@@ -15,14 +15,25 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 #include "rafko_gym/services/rafq_trainer.hpp"
+#include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 #include <algorithm>
 
 namespace rafko_gym{
 
+const RafQSet& RafQTrainer::q_set(){
+  RFASSERT(static_cast<bool>(m_qSet));
+  return *m_qSet;
+}
+
+void RafQTrainer::set_weight_updater(rafko_gym::Weight_updaters updater){
+  RFASSERT(static_cast<bool>(m_optimizer));
+  m_optimizer->set_weight_updater(updater);
+}
+
 void RafQTrainer::iterate(
   std::uint32_t max_discovery_length, double exploration_ratio, std::uint32_t q_set_training_epochs,
-  const std::function<void(double/*progress*/)>& progress_callback
+  const std::function<void(double/*progress*/, std::uint32_t/*step*/)>& progress_callback
 ){
   RFASSERT_SCOPE(RAFQ_ITERATION);
   RFASSERT_LOG("RafQ Iteration {}", m_iteration);
@@ -33,9 +44,9 @@ void RafQTrainer::iterate(
   double all_iterations = (max_discovery_length + q_set_training_epochs + q_set_iterations);
   double done_iterations = 0.0;
   RFASSERT_LOG("Estimated q-learning iterations: {}", all_iterations);
+  progress_callback(0,0);
   if(0 < max_discovery_length){
     bool terminal = false;
-    m_environment->reset();
     RFASSERT(m_environment->current_state().has_value());
     xp_states.push_back(m_environment->current_state().value().get());
     RFASSERT(xp_states.back().size() == m_environment->state_size());
@@ -61,37 +72,38 @@ void RafQTrainer::iterate(
       }else break;
 
       done_iterations = ++discovery_iteration;
-      progress_callback(done_iterations / all_iterations);
+      progress_callback(done_iterations / all_iterations, 1);
     }
     RFASSERT(xp_actions.back().size() == RafQSetItemConstView::feature_size(m_environment->action_size(), 1));
   }
   q_set_iterations = std::max(static_cast<std::size_t>(m_qSet->get_number_of_sequences()), xp_states.size());
   all_iterations = (max_discovery_length + q_set_training_epochs + q_set_iterations);
   RFASSERT_LOG("Q-learning iterations corrected: {}/{}", done_iterations, all_iterations);
-
-  std::uint32_t initial_q_set_size = m_qSet->get_number_of_sequences();  
   if((0 < xp_states.size()) && (0 < xp_actions.size())){
     m_qSet->incorporate(
       xp_states, xp_actions, [&progress_callback, &done_iterations, &q_set_iterations, &all_iterations](double progress){ 
-        progress_callback((done_iterations + progress * q_set_iterations) / all_iterations); 
+        done_iterations += 1.0;
+        progress_callback((done_iterations + progress * q_set_iterations) / all_iterations, 2); 
       }
     );
-    if(0 < q_set_training_epochs)
-      m_optimizer->build(m_qSet, m_objective);
   }
-  if((0 < q_set_training_epochs) && (0 == initial_q_set_size)){
+
+  progress_callback(done_iterations / all_iterations, 3);
+  if(0 < q_set_training_epochs) /* Needs to build optimizer when the qset is the same size, because there might be changes within each state */
     m_optimizer->build(m_qSet, m_objective);
-  }
   for(std::uint32_t training_iteration = 0; training_iteration < q_set_training_epochs; ++training_iteration){
     m_optimizer->iterate(*m_qSet, (0 == training_iteration)/*force_gpu_upload*/);
     done_iterations += 1.0;
-    progress_callback(done_iterations / all_iterations);
+    progress_callback(done_iterations / all_iterations, 4);
   }
+
   if(0 == (m_iteration % m_settings->get_training_relevant_loop_count())){
+    progress_callback(done_iterations / all_iterations, 5);
     RFASSERT_LOG("Updating weights of stable network..");
     m_stableNetwork.mutable_weight_table()->Assign(m_volatileNetwork->weight_table().begin(), m_volatileNetwork->weight_table().end());
     m_context->refresh_solution_weights();
   }
+  progress_callback(1.0, 6);
   ++m_iteration;
 }
 
