@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <optional>
+#include <memory>
 
 #include "rafko_utilities/models/const_vector_subrange.hpp"
 
@@ -37,6 +38,7 @@ public:
   using FeatureVector = std::vector<double>;
   using FeatureView = rafko_utilities::ConstVectorSubrange<FeatureVector::const_iterator>;
   using MaybeFeatureVector = std::optional<std::reference_wrapper<const FeatureVector>>; 
+  using AnyData = std::unique_ptr<void, std::function<void(void*)>>;
 
   /**
    * @struct    environmental properties. THey are used to generate new random actions
@@ -82,6 +84,7 @@ public:
     MaybeFeatureVector m_resultState = {};
     const double m_resultQValue = 0.0;
     const bool m_terminal = true;
+    AnyData m_userData = {};
   };
 
   /**
@@ -94,12 +97,12 @@ public:
    * 
    * @return    a bufffer reference to the actual state of the environment wrapped in an optional 
    */
-  virtual MaybeFeatureVector current_state() const = 0;
+  virtual StateTransition current_state() const = 0;
 
   /**
    * @brief    steps the environment forward with the provided action
    * 
-   * @param[in]     Buffer to the action the environment should step forward with
+   * @param[in]     action    Buffer to the action the environment should step forward with
    * 
    * @return    An appropriate @StateTransition structure
    */  
@@ -108,12 +111,14 @@ public:
   /**
    * @brief    provides access to the next step for the given state-action pair
    * 
-   * @param[in]     Buffer to the state the environment should be when applying the given action
-   * @param[in]     Buffer to the action the environment should step forward with
+   * @param[in]     state       Buffer to the state the environment should be when applying the given action
+   * @param[in]     action      Buffer to the action the environment should step forward with
+   * @param         user_data   User defined data helping the environment re-construct the state with data
+   *                            which might be exempt from the state vector on purpose
    * 
    * @return    An appropriate @StateTransition structure
    */
-  virtual StateTransition next(FeatureView state, FeatureView action) const = 0;
+  virtual StateTransition next(FeatureView state, FeatureView action, const AnyData& user_data = {}) const = 0;
 
   /**
    * @brief   provides the size of one state feature vector

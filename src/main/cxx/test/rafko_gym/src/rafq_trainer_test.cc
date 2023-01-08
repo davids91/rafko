@@ -17,6 +17,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
+#include <catch2/matchers/catch_matchers_vector.hpp>
 
 #include <cmath>
 #include <string>
@@ -142,14 +143,6 @@ public:
        start_in_view = 0;
       }
 
-      // if(19 == pos){
-      //   std::cout << "pos: " << pos << std::endl; 
-      //   std::cout << "m_sight: " << m_sight << std::endl; 
-      //   std::cout << "start_index: " << start_index << "/" << m_level.size() << std::endl; 
-      //   std::cout << "state_count: " << state_count << std::endl; 
-      //   std::cout << "start_in_buffer: " << start_in_buffer << std::endl; 
-      //   std::cout << "end_in_buffer: " << end_in_buffer << std::endl; 
-      // }
       std::uint32_t buffer_index = 0;
       std::uint32_t view_index = start_in_view;
       std::transform(
@@ -189,16 +182,19 @@ public:
     std::copy(m_statesBuffer[m_pos].begin(), m_statesBuffer[m_pos].end(), m_actualState.begin() + 1u);
   }
 
-  MaybeFeatureVector current_state() const override{
+  StateTransition current_state() const override{
     if(m_pos < 0 || static_cast<std::int32_t>(m_level.size()) < m_pos){
-      return {};
+      return {{}, 0.0, true, AnyData(new std::int32_t(m_pos), [](void* ptr){ delete static_cast<int*>(ptr); })};
     }
-    return m_actualState;
+    return {
+      m_actualState, get_q_value(static_cast<double>(m_pos), m_actualState[0]), false,
+      AnyData(new std::int32_t(m_pos), [](void* ptr){ delete static_cast<int*>(ptr); })
+    };
   }
 
   StateTransition next(FeatureView action) override{
-    if(action[0] < -action[0] || m_sight < action[0] || (m_tmpState[0] <= 0.0)) /* if player tries to jump too much it dies*/
-      return {{}, static_cast<double>(m_pos), true};
+    if(m_sight < std::abs(action[0]) || (m_actualState[0] <= 0.0)) /* if player tries to jump too much, or lost all energy it dies*/
+      return {{}, static_cast<double>(m_pos), true, AnyData(new std::int32_t(m_pos), [](void* ptr){ delete static_cast<int*>(ptr); })};
 
     m_pos += action[0];
     m_actualState[0] -= std::max(0.0, action[0]);
@@ -209,17 +205,22 @@ public:
       (m_pos < 0 || static_cast<std::int32_t>(m_level.size()) <= m_pos)
       ||(m_actualState[0] <= 0.0) /* no energy left */
     ){
-      return {{}, q_value , true};
+      return {{}, q_value , true, AnyData(new std::int32_t(m_pos), [](void* ptr){ delete static_cast<int*>(ptr); })};
     }
     std::copy(m_statesBuffer[m_pos].begin(), m_statesBuffer[m_pos].end(), m_actualState.begin() + 1);
-    return {m_actualState, q_value, false};
+    return {m_actualState, q_value, false, AnyData(new std::int32_t(m_pos), [](void* ptr){ delete static_cast<int*>(ptr); })};
   }
 
-  StateTransition next(FeatureView state, FeatureView action) const override{
+  StateTransition next(FeatureView state, FeatureView action, const AnyData& user_data = {}) const override{
     REQUIRE(state.size() == m_tmpState.size());
     m_tmpState = state.acquire();
-    if(action[0] < -action[0] || m_sight < action[0] || (m_tmpState[0] <= 0.0)) /* if player tries to jump too much it dies*/
-      return {{}, (static_cast<double>(m_pos) + m_tmpState[0]), true};
+    REQUIRE( static_cast<bool>(user_data) );
+    std::uint32_t pos = *static_cast<std::int32_t*>(user_data.get());
+    if(m_sight < std::abs(action[0]) || (m_tmpState[0] <= 0.0)) /* if player tries to jump too much, or lost all energy it dies*/
+      return {
+        {}, (static_cast<double>(pos) + m_tmpState[0]), true, 
+        AnyData(new std::int32_t(pos), [](void* ptr){ delete static_cast<int*>(ptr); })
+      };
 
     auto state_it = std::find_if(m_statesBuffer.begin(), m_statesBuffer.end(),
       [&state](const FeatureVector& stored_state){
@@ -232,9 +233,11 @@ public:
       }
     );
 
-    if(state_it == m_statesBuffer.end()){
-      return {{}, 0.0, true};
-    }
+    if(state_it == m_statesBuffer.end())
+      return {{}, 0.0, true, AnyData(new std::int32_t(pos), [](void* ptr){ delete static_cast<int*>(ptr); })};
+    
+    /* generated state needs to match the provided state, to check if the user_data is transferred correctly through the trainer! */
+    REQUIRE_THAT( *state_it, Catch::Matchers::Approx(m_statesBuffer[pos]).margin(0.0000000000001) );
 
     m_tmpState[0] -= std::max(0.0, action[0]);
     double q_value = get_q_value(static_cast<double>(m_pos), m_tmpState[0]);
@@ -244,9 +247,9 @@ public:
     if( (result_index < static_cast<std::int32_t>(m_level.size())) && (0 <= result_index) ){
       RFASSERT(result_index < static_cast<std::int32_t>(m_statesBuffer.size()));
       std::copy(m_statesBuffer[result_index].begin(), m_statesBuffer[result_index].end(), m_tmpState.begin() + 1);
-      return {{m_tmpState}, q_value, false};
+      return {{m_tmpState}, q_value, false, AnyData(new std::int32_t(pos), [](void* ptr){ delete static_cast<int*>(ptr); })};
     }else{
-      return {{}, q_value, true};
+      return {{}, q_value, true, AnyData(new std::int32_t(pos), [](void* ptr){ delete static_cast<int*>(ptr); })};
     } 
   }
 
@@ -320,7 +323,7 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings()
     .set_arena_ptr(&arena)
-    .set_learning_rate(2e-5).set_minibatch_size(policy_q_set_size / 10).set_memory_truncation(2)
+    .set_learning_rate(2e-2).set_minibatch_size(policy_q_set_size / 10).set_memory_truncation(2)
     .set_droput_probability(0.0)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero, true)
     .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping, false)
@@ -345,6 +348,7 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
   rafko_net::SolutionSolver::Factory solverFactory(network, settings);
   std::shared_ptr<rafko_net::SolutionSolver> reference_solver = solverFactory.build();
   rafko_gym::RafQTrainer trainer(network, policy_action_count, policy_q_set_size, test_game, objective, settings);
+  trainer.set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::uint32_t iteration = 1;
   while(true){
     double exploration_ratio = (1.0 - (static_cast<double>(std::min(500u,iteration))/501));
@@ -357,21 +361,22 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game sim
       << "; iter: " << iteration
       << "; expl: " << exploration_ratio
       << "; qSet size: " << trainer.q_set_size()
-      // << "; err: " << trainer.stochastic_evaluation(false/*to_seed*/, 0/*seed_value*/, true/*force_gpu_upload*/) << "; ";
       << "; err: " << trainer.full_evaluation(true/*force_gpu_upload*/) << "; ";
       test_game->print();
-      if(!test_game->current_state().has_value()){
+      if(!test_game->current_state().m_resultState.has_value()){
         std::cout << "GAME OVER" << std::endl;
         break;
       }
       solverFactory.refresh_actual_solution_weights();
-      auto policy_action = reference_solver->solve(test_game->current_state().value(), true/*reset_neuron_data*/);
+      auto policy_action = reference_solver->solve(
+        test_game->current_state().m_resultState.value(), true/*reset_neuron_data*/
+      );
       auto state_transition = test_game->next({policy_action.begin() + 1, 1});
       terminal = state_transition.m_terminal;
       ++steps;
       std::cout << "|" << policy_action[1] << "  "; 
     }
-    // std::cout << std::endl;
+
     trainer.iterate(
       200/*max_discovery_length*/, 
       exploration_ratio, 

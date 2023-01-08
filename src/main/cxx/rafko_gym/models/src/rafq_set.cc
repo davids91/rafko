@@ -22,6 +22,57 @@
 
 namespace rafko_gym{
 
+RafQSet::RafQSet(
+  const rafko_mainframe::RafkoSettings& settings, RafQEnvironment& environment,
+  std::uint32_t action_count, std::uint32_t max_set_size, double overwrite_q_threshold
+)
+: m_settings(settings)
+, m_actionCount(action_count)
+, m_environment(environment)
+, m_costFunction(m_settings)
+, m_overwriteQThreshold(overwrite_q_threshold)
+, m_maxSetSize(max_set_size)
+, m_lookupThreads(m_settings.get_max_solve_threads()) /* because cost function uses get_max_solve_threads */
+{
+  RFASSERT(0 < m_actionCount);
+  m_statesBuffer.reserve(m_maxSetSize);
+  m_actionsBuffer.reserve(m_maxSetSize);
+}
+
+RafQSet::RafQSet(const RafQSet& other, std::uint32_t action_count)
+: m_settings(other.m_settings)
+, m_actionCount(action_count)
+, m_environment(other.m_environment)
+, m_costFunction(m_settings)
+, m_overwriteQThreshold(other.m_overwriteQThreshold)
+, m_maxSetSize(other.m_maxSetSize)
+, m_lookupThreads(m_settings.get_max_solve_threads())
+{
+  RFASSERT(m_actionCount <= action_count);
+  m_statesBuffer.reserve(m_maxSetSize);
+  m_actionsBuffer.reserve(m_maxSetSize);
+  for(std::uint32_t item_index = 0; item_index < other.get_number_of_sequences(); ++item_index){
+    m_statesBuffer.push_back(other.m_statesBuffer[item_index]);
+    m_actionsBuffer.push_back({
+      other.m_actionsBuffer[item_index].begin(), 
+      other.m_actionsBuffer[item_index].begin() + (m_actionCount * get_feature_size())
+    });
+    m_avgQValue.push_back(other.m_avgQValue[item_index]);
+  }
+}
+
+RafQSet::RafQSet(
+  const rafko_mainframe::RafkoSettings& settings, RafQEnvironment& environment, 
+  std::uint32_t action_count, double overwrite_q_threshold, const DataSetPackage& source
+)
+: RafQSet(settings, environment, action_count, source.possible_sequence_count(), overwrite_q_threshold)
+{
+  RafkoDatasetImplementation::fill(source, m_statesBuffer, m_actionsBuffer);
+  RFASSERT(m_statesBuffer.size() <= source.possible_sequence_count());
+  m_statesBuffer.reserve(source.possible_sequence_count());
+  m_actionsBuffer.reserve(source.possible_sequence_count());
+}
+
 DataSetPackage RafQSet::generate_best_sequences(std::uint32_t preferred_sequence_size) const{
   RFASSERT_LOG("Generating best action sequences..");
   std::size_t max_sequence_length = 0;
@@ -50,9 +101,8 @@ DataSetPackage RafQSet::generate_best_sequences(std::uint32_t preferred_sequence
         new (&state_transition) RafQEnvironment::StateTransition(
           m_environment.next(
             next_state_data.value().get(), 
-            RafQSetItemConstView::best_action_slot(
-              get_label_sample(next_state_index), m_environment.action_size()
-            )
+            RafQSetItemConstView::best_action_slot(get_label_sample(next_state_index), m_environment.action_size()),
+            m_userDataBuffer[next_state_index]
           )
         );
 
@@ -138,14 +188,22 @@ RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* r
 
 void RafQSet::incorporate(
   const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer, 
-  const std::function<void(double/*progress*/)>& progress_callback
+  std::vector<AnyData>&& user_data_buffer, const std::function<void(double/*progress*/)>& progress_callback
 ){
   RFASSERT_SCOPE(QSET_INCORPORATE)
   RFASSERT_LOG("Incorporating {} states and {} actions to q-set!", state_buffer.size(), actions_buffer.size());
   RFASSERT(state_buffer.size() == actions_buffer.size());
+  RFASSERT( (0 == user_data_buffer.size()) || (user_data_buffer.size() == state_buffer.size()) );
   m_statesBuffer.reserve(m_statesBuffer.size() + state_buffer.size()); /* Reserve enough space so iteration invalidation can be minimized.. */
   m_actionsBuffer.reserve(m_actionsBuffer.size() + actions_buffer.size()); /* ..despite the slim possibility of actually filling up the reserved space */
+  m_userDataBuffer.reserve(m_userDataBuffer.size() + user_data_buffer.size());
   for(std::uint32_t state_index = 0; state_index < state_buffer.size(); ++state_index){
+    AnyData dummy_data;
+    AnyData& user_data = (0 == user_data_buffer.size())?dummy_data:user_data_buffer[state_index];
+    progress_callback( static_cast<double>(state_index) / static_cast<double>(
+      state_buffer.size() + get_number_of_sequences() - std::min(get_number_of_sequences(), m_maxSetSize)
+    ) );
+
     RFASSERT_LOG("state[{}] size: {}", state_index, state_buffer[state_index].size());
     RFASSERT(state_buffer[state_index].size() == get_input_size());
     RFASSERT(actions_buffer[state_index].size() == RafQSetItemView::feature_size(m_environment.action_size(), 1u/*action count*/));
@@ -153,7 +211,6 @@ void RafQSet::incorporate(
     MaybeFeatureVector state_match = look_up(state_buffer[state_index], &match_index);
     const std::uint32_t action_size = m_environment.action_size();
     const RafQSetItemConstView new_action_view(state_buffer[state_index], actions_buffer[state_index], action_size, 1u /*action count*/);
-    const double new_action_q_value = new_action_view.q_value() + get_td_value(new_action_view, new_action_view.q_value());
     if(state_match.has_value()){
       RFASSERT(match_index < get_number_of_sequences());
       std::uint32_t action_index = m_actionCount;
@@ -166,9 +223,17 @@ void RafQSet::incorporate(
           stored_action_vector_view, {new_action_view[0], action_size}, action_size
         ) ) break; /* if the difference is small enough, a match is found! */
       }
+
       if(action_index < m_actionCount){ /* Update the QValue based on TD Learning */
         RFASSERT_LOGV(stored_action_vector_view.acquire(), "found action[{}]: ", action_index);
-        const double new_q_value = stored_action_view.q_value(action_index) + get_td_value(new_action_view, stored_action_view.q_value(action_index));
+        const double new_q_value = (
+          stored_action_view.q_value(action_index) 
+          + get_td_value(new_action_view, stored_action_view.q_value(action_index), m_userDataBuffer[match_index])
+        );
+        /*!Note: Based on the deviation parameters provided in @m_settings, m_statesBuffer[match_index] and state_buffer[state_index]
+         *   should be the same. Because of this, m_userDataBuffer[match_index] and user_data_buffer[state_index] should also be the same,
+         *   but here m_userDataBuffer[match_index] is used to maximize koherence. The two might differ inside the threshold set in settings.
+         */
         stored_action_view.set_q_value(new_q_value, action_index);
 
         /* Updated q-value may have modified the order of possibly multiple actions */
@@ -184,9 +249,14 @@ void RafQSet::incorporate(
             else break;
           --action_index;
         }
-      }else if( /* state is present, but the action is new. Take it over in case the qvalue is greate4r, than the worse */
+        m_avgQValue[match_index] = stored_action_view.avg_q_value();
+        continue;
+      }
+
+      double new_action_q_value = new_action_view.q_value() + get_td_value(new_action_view, new_action_view.q_value(), user_data);      
+      if( /* state is present, but the action is new. Take it over in case the qvalue is greate4r, than the worse */
         ( /* In case the q value is positive, the percentage is added to 1 */
-          (0 <= new_action_q_value) /* so the bigger value is being comapred to the new action */
+          (0 <= new_action_q_value) /* so the bigger value is being comapred to the new action. */
           && (new_action_q_value > (stored_action_view.min_q_value() * (1.0 + m_overwriteQThreshold)))
         )||( /* In case the q value is negative, the percentage is substraceted from 1 */
           (0 > new_action_q_value) /* so the bigger value is being comapred to the new action in this case as well */
@@ -232,8 +302,10 @@ void RafQSet::incorporate(
       }
       m_avgQValue[match_index] = stored_action_view.avg_q_value();
     }else{ /* no match is found for the state, extend the database with the newly found state */
+      double new_action_q_value = new_action_view.q_value() + get_td_value(new_action_view, new_action_view.q_value(), user_data);      
       m_statesBuffer.emplace_back(state_buffer[state_index]);
       m_actionsBuffer.emplace_back(get_feature_size());
+      m_userDataBuffer.emplace_back(std::move(user_data));
       m_avgQValue.emplace_back(new_action_q_value);
       const std::uint32_t target_action_index = (0 <= new_action_q_value)?(0):(m_actionCount - 1);
       RFASSERT_LOGV(
@@ -249,9 +321,6 @@ void RafQSet::incorporate(
        * actions.
        */
     }
-    progress_callback( static_cast<double>(state_index) / static_cast<double>(
-      state_buffer.size() + get_number_of_sequences() - std::min(get_number_of_sequences(), m_maxSetSize)
-    ) );
   }/*for(every incoming state-action pair)*/
   RFASSERT_LOG("Resulting q-set size: {} / {}", get_number_of_sequences(), m_maxSetSize);
   keep_best(m_maxSetSize);
@@ -289,10 +358,11 @@ void RafQSet::erase_worst(std::uint32_t count){
   for(auto& [index, q_value] : to_delete){
     m_statesBuffer.erase(m_statesBuffer.begin() + index);
     m_actionsBuffer.erase(m_actionsBuffer.begin() + index);
+    m_userDataBuffer.erase(m_userDataBuffer.begin() + index);
   }
 }
 
-double RafQSet::get_td_value(const RafQSetItemConstView& new_action_view, double old_q_value) const{
+double RafQSet::get_td_value(const RafQSetItemConstView& new_action_view, double old_q_value, const AnyData& user_data) const{
   RFASSERT_LOG("Calculating temporal difference value, based on latest reward: {}", new_action_view.q_value(0));
   double temporal_difference_value = new_action_view.q_value(0); /* Reward: the only Q-value in @new_action_view */
   if(0 < m_settings.get_look_ahead_count()){
@@ -305,14 +375,18 @@ double RafQSet::get_td_value(const RafQSetItemConstView& new_action_view, double
       RFASSERT_LOG("future[{}]---", look_ahead_index);
       RFASSERT(next_state_data.has_value());
       RFASSERT_LOG("max q-value: {}", next_state_view.max_q_value());
-      if(0 < look_ahead_index) /* In the first look ahead iteration the current action runs instead of the best */
+      RafQEnvironment::StateTransition state_transition;
+      if(0 < look_ahead_index){ 
         RFASSERT(next_state_index < get_number_of_sequences());
-        else{
-          RFASSERT_LOG("..of new action..");
-        }
-      RafQEnvironment::StateTransition state_transition = m_environment.next(
-        next_state_view.state(), {next_state_view[0], m_environment.action_size()}
-      ); /*!Note: The first action also has the highest q-value */
+        new (&state_transition) RafQEnvironment::StateTransition(m_environment.next(
+          next_state_view.state(), {next_state_view[0], m_environment.action_size()}, m_userDataBuffer[next_state_index]
+        )); /*!Note: The first action also has the highest q-value */
+      }else{ /* In the first look ahead iteration the provided user data is used to restore state in the environment */
+        RFASSERT_LOG("..of new action..");
+        new (&state_transition) RafQEnvironment::StateTransition(m_environment.next(
+          next_state_view.state(), {next_state_view[0], m_environment.action_size()}, user_data
+        )); /*!Note: The first action also has the highest q-value */
+      }
 
       if(!state_transition.m_resultState.has_value()){
         RFASSERT_LOG("Environment doesn't contain a next step..");

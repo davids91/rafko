@@ -56,46 +56,26 @@ public:
   RafQTrainer(
     rafko_net::RafkoNet& network, std::uint32_t action_count, std::uint32_t q_set_size, 
     std::shared_ptr<RafQEnvironment> environment, Cost_functions cost_function,
-    std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {}
-  )
-  : RafQTrainer(
-    network, action_count, q_set_size, environment, 
-    std::make_shared<RafkoCost>(*m_settings, cost_function), settings
-  )
-  {
-  }
+    std::shared_ptr<rafko_mainframe::RafkoSettings> settings
+  );
 
   RafQTrainer(
     rafko_net::RafkoNet& network, std::uint32_t action_count, std::uint32_t q_set_size, 
+    std::shared_ptr<RafQEnvironment> environment, std::shared_ptr<rafko_gym::RafkoObjective> objective,
+    std::shared_ptr<rafko_mainframe::RafkoSettings> settings
+  );
+
+  RafQTrainer(
+    rafko_net::RafkoNet& network, std::shared_ptr<RafQSet> q_set, 
+    std::shared_ptr<RafQEnvironment> environment, Cost_functions cost_function,
+    std::shared_ptr<rafko_mainframe::RafkoSettings> settings
+  );
+
+  RafQTrainer(
+    rafko_net::RafkoNet& network, std::shared_ptr<RafQSet> q_set, 
     std::shared_ptr<RafQEnvironment> environment, std::shared_ptr<rafko_gym::RafkoObjective> objective, 
     std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {}
-  )
-  : RafkoAutonomousEntity(settings)
-  , m_stableNetwork(network)
-  , m_volatileNetwork(google::protobuf::Arena::Create<rafko_net::RafkoNet>(
-    m_settings->get_arena_ptr(), m_stableNetwork
-  ))
-  , m_environment(environment)
-  , m_objective(objective)
-  , m_qSet(std::make_shared<RafQSet>(
-    *m_settings, *m_environment, action_count, q_set_size, m_settings->get_delta()
-  ))
-  #if(RAFKO_USES_OPENCL)
-  , m_context(
-    rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-      .build<rafko_mainframe::RafkoGPUContext>(*m_volatileNetwork, settings, m_objective)
-  )
-  , m_optimizer(
-    rafko_mainframe::RafkoOCLFactory().select_platform().select_device()
-      .build<RafkoAutodiffGPUOptimizer>(settings, *m_volatileNetwork, m_qSet, m_context)
-  )
-  #else
-  , m_context(std::make_shared<rafko_mainframe::RafkoCPUContext>(*m_volatileNetwork, settings, objective))
-  , m_optimizer(std::make_shared<RafkoAutodiffOptimizer>(settings, *m_volatileNetwork, m_context))
-  #endif/*(RAFKO_USES_OPENCL)*/
-  , m_randomActionGenerator(m_environment->action_properties().m_mean, m_environment->action_properties().m_standardDeviation)
-  {
-  }
+  );
 
   /**
    * @brief   provides the current size of the enclosing q-set
@@ -103,7 +83,6 @@ public:
    * @return    number of state-actions pairs stored in the q-set
    */
   std::uint32_t q_set_size() const{
-    RFASSERT(static_cast<bool>(m_qSet));
     return m_qSet->get_number_of_sequences();
   }
 

@@ -216,8 +216,9 @@ public:
    * @param         q_value     The q-value to assign the action buffer    
    */
   static FeatureVector action_slot(const FeatureVector& action, double q_value){
-    FeatureVector ret(action);
-    ret.insert(ret.begin(), q_value);
+    FeatureVector ret(action.size() + 1);
+    std::copy(action.begin(), action.end(), ret.begin() + 1);
+    ret[0] = q_value;
     return ret;
   }
 
@@ -406,57 +407,19 @@ public:
   using FeatureVector = RafQEnvironment::FeatureVector;
   using FeatureView = RafQEnvironment::FeatureView;
   using MaybeFeatureVector = std::optional<std::reference_wrapper<const FeatureVector>>; 
+  using AnyData = RafQEnvironment::AnyData;
 
   RafQSet(
     const rafko_mainframe::RafkoSettings& settings, RafQEnvironment& environment,
     std::uint32_t action_count, std::uint32_t max_set_size, double overwrite_q_threshold
-  )
-  : m_settings(settings)
-  , m_actionCount(action_count)
-  , m_environment(environment)
-  , m_costFunction(m_settings)
-  , m_overwriteQThreshold(overwrite_q_threshold)
-  , m_maxSetSize(max_set_size)
-  , m_lookupThreads(m_settings.get_max_solve_threads()) /* because cost function uses get_max_solve_threads */
-  {
-    RFASSERT(0 < m_actionCount);
-    m_statesBuffer.reserve(m_maxSetSize);
-    m_actionsBuffer.reserve(m_maxSetSize);
-  }
+  );
 
-  RafQSet(const RafQSet& other, std::uint32_t action_count)
-  : m_settings(other.m_settings)
-  , m_actionCount(action_count)
-  , m_environment(other.m_environment)
-  , m_costFunction(m_settings)
-  , m_overwriteQThreshold(other.m_overwriteQThreshold)
-  , m_maxSetSize(other.m_maxSetSize)
-  , m_lookupThreads(m_settings.get_max_solve_threads())
-  {
-    RFASSERT(m_actionCount <= action_count);
-    m_statesBuffer.reserve(m_maxSetSize);
-    m_actionsBuffer.reserve(m_maxSetSize);
-    for(std::uint32_t item_index = 0; item_index < other.get_number_of_sequences(); ++item_index){
-      m_statesBuffer.push_back(other.m_statesBuffer[item_index]);
-      m_actionsBuffer.push_back({
-        other.m_actionsBuffer[item_index].begin(), 
-        other.m_actionsBuffer[item_index].begin() + (m_actionCount * get_feature_size())
-      });
-      m_avgQValue.push_back(other.m_avgQValue[item_index]);
-    }
-  }
+  RafQSet(const RafQSet& other, std::uint32_t action_count);
 
   RafQSet(
     const rafko_mainframe::RafkoSettings& settings, RafQEnvironment& environment, 
     std::uint32_t action_count, double overwrite_q_threshold, const DataSetPackage& source
-  )
-  : RafQSet(settings, environment, action_count, source.possible_sequence_count(), overwrite_q_threshold)
-  {
-    RafkoDatasetImplementation::fill(source, m_statesBuffer, m_actionsBuffer);
-    RFASSERT(m_statesBuffer.size() <= source.possible_sequence_count());
-    m_statesBuffer.reserve(source.possible_sequence_count());
-    m_actionsBuffer.reserve(source.possible_sequence_count());
-  }
+  );
 
   /**
    * @brief     Export every item in the set into the @DataSetPackage message for later use
@@ -468,7 +431,6 @@ public:
       m_statesBuffer, m_actionsBuffer, get_sequence_size(), m_maxSetSize
     );
   }
-
 
   /**
    * @brief     Export the best action from the set into a @DataSetPackage for later use. 
@@ -496,11 +458,12 @@ public:
    * 
    * @param[in]     state_buffer          A vector of states to look for
    * @param[in]     actions_buffer        A vector of action-q-value pairs to update the data with
+   * @param[in]     user_data_buffer      Custom data for each state, to help environment restore state from hidden data
    * @param[in]     progress_callback     A function to call at each progress update with a value of 0..1 representing the progress of the operation
    */
   void incorporate(
-    const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer, 
-    const std::function<void(double/*progress*/)>& progress_callback = [](double){}
+    const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer,
+    std::vector<AnyData>&& user_data_buffer = {}, const std::function<void(double/*progress*/)>& progress_callback = [](double){}
   );
 
   /**
@@ -622,6 +585,7 @@ private:
   RafQEnvironment& m_environment;
   std::vector<FeatureVector> m_statesBuffer;
   std::vector<FeatureVector> m_actionsBuffer;
+  std::vector<AnyData> m_userDataBuffer;
   std::vector<double> m_avgQValue;
   CostFunctionMSE m_costFunction;
   double m_overwriteQThreshold;
@@ -632,10 +596,11 @@ private:
   /**
    * @brief     Calculates the Temporal difference value for the given state-action-q-value pair 
    * 
-   * @param     new_action_view     Object providing const acess to the data for the given state-action-q-value pair
-   * @param     old_q_value         The Q-value for the given object prior to a recent update
+   * @param         new_action_view       Object providing const acess to the data for the given state-action-q-value pair
+   * @param         old_q_value           The Q-value for the given object prior to a recent update
+   * @param[in]     user_data_buffer      Custom data for the new action state, to help environment restore state from hidden data not included in the state vector
    */
-  double get_td_value(const RafQSetItemConstView& new_action_view, double old_q_value) const;
+  double get_td_value(const RafQSetItemConstView& new_action_view, double old_q_value, const AnyData& user_data = {}) const;
 };
 
 } /* namespace rafko_gym */
