@@ -149,7 +149,6 @@ DataSetPackage RafQSet::generate_best_sequences(std::uint32_t preferred_sequence
   return result;
 }
 
-
 RafQSet::MaybeFeatureVector RafQSet::look_up(FeatureView state, std::uint32_t* result_index_buffer) const{
   RFASSERT_LOGV(state.acquire(), "Looking for state: ");
   RFASSERT(state.size() == m_environment.state_size());

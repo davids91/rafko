@@ -506,7 +506,7 @@ TEST_CASE("Solution Solver memory test", "[solve][memory]"){
   }
 }
 
-TEST_CASE("Solution Solver memory test", "[runtime][!benchmark]"){
+TEST_CASE("Solution Solver Neuron benchmark", "[runtime][!benchmark]"){
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
     rafko_mainframe::RafkoSettings().set_arena_ptr(&arena)

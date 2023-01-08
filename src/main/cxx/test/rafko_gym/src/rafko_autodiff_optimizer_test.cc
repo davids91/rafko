@@ -272,14 +272,13 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
   std::uint32_t iteration = 0u;
   std::uint32_t avg_duration = 0.0;
   std::chrono::steady_clock::time_point start;
-  rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   while(
     (
       std::abs(actual_value[1][0] - data_set->get_label_sample(0u)[0])
       + std::abs(actual_value[0][0] - data_set->get_label_sample(1u)[0])
     ) > (2.0 * settings->get_learning_rate())
   ){
-    std::shared_ptr<rafko_net::SolutionSolver> reference_solver = reference_solver_factory.build();
+    std::shared_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Factory(network, settings).build();
     start = std::chrono::steady_clock::now();
     optimizerGPU->iterate(*data_set);
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
@@ -419,11 +418,10 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data
   iteration = 0;
   minimum_error = std::numeric_limits<double>::max();
 
-  rafko_net::SolutionSolver::Factory reference_solver_factory(network, settings);
   std::cout << "Optimizing network:" << std::endl;
   std::cout << "Training Error; \t\tTesting Error; min; \t\t avg_d_w_abs; \t\t iteration; \t\t duration(ms); avg duration(ms)\t " << std::endl;
   while(!optimizer->stop_triggered()){
-    std::shared_ptr<rafko_net::SolutionSolver> reference_solver = reference_solver_factory.build();
+    std::shared_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Factory(network, settings).build();
     start = std::chrono::steady_clock::now();
     optimizer->iterate(*data_set);
     auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();

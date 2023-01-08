@@ -15,9 +15,7 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
-#include <catch2/matchers/catch_matchers_vector.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <vector>
 #include <utility>
@@ -128,15 +126,14 @@ private:
   FeatureVector m_state = s_states[0];
 };
 
-TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLearning]") {
+TEMPLATE_TEST_CASE_SIG("Testing if RafQSet element insertion works as expected", "[QSet][QLearning]", ((int ActionCount), ActionCount), 1,2,3,4) {
   constexpr const std::uint32_t max_set_size = 4u;
-  constexpr const std::uint32_t action_count = 4u;
 
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(1.0); /* learning rate set to 1.0 to make testing TD q values easier */
 
   TestEnvironment environment;
-  rafko_gym::RafQSet q_set(settings, environment, action_count, max_set_size, 0.1);
+  rafko_gym::RafQSet q_set(settings, environment, ActionCount, max_set_size, 0.1);
   REQUIRE(0 == q_set.get_number_of_sequences());
 
   /*!Note: in the below comments {x,y} means --> {state,action} */
@@ -171,7 +168,9 @@ TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLea
 
     rafko_gym::RafQSetItemView element_view(q_set[0]);
     REQUIRE( element_view.max_q_value() == Catch::Approx(40.0).epsilon(0.0000000000001) );
-    REQUIRE( element_view.avg_q_value() == Catch::Approx((20.0 + 40.0)/action_count).epsilon(0.0000000000001) );
+    if(1 < ActionCount){
+      REQUIRE( element_view.avg_q_value() == Catch::Approx((20.0 + 40.0)/ActionCount).epsilon(0.0000000000001) );      
+    }
   }
 
   SECTION("Checking if a worse initial action, which would lead to a better state gets stored"){
@@ -185,6 +184,7 @@ TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLea
 
     rafko_gym::RafQSetItemConstView element_view(q_set[0]); /* first state is under the first index */
     REQUIRE(element_view[0][0] == Catch::Approx(4.0).epsilon(0.0000000000001)); /* {1,4} is in the first place in the actions */
+    double initial_q_value = element_view.q_value(0);
 
     q_set.incorporate(
       { {2.0} }, { action_slot({3.0}, environment.next(std::vector<double>{2.0}, std::vector<double>{3.0}).m_resultQValue) }
@@ -197,10 +197,9 @@ TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLea
     REQUIRE(3 == q_set.get_number_of_sequences());
 
     /*!Note: At this point since the initial states for {1,2} is already stored, re-adding the same 
-     * state-action pair would include the additional states, so the qValue of {1,2} would increase
+     * state-action pair would include the additional actions, so the qValue of {1,2} wouldbe updated
      */
     new (&element_view) rafko_gym::RafQSetItemConstView(q_set[0]); /* Iterator is invalidated so a new object is required */
-    double initial_q_value = element_view.q_value(1); /* the second action is the worse currently */
     q_set.incorporate(
       { {1.0} }, {action_slot({2.0}, environment.next(std::vector<double>{1.0}, std::vector<double>{2.0}).m_resultQValue) }
     );
@@ -266,12 +265,12 @@ TEST_CASE("Testing if RafQSet element insertion works as expected", "[QSet][QLea
 
   SECTION("Checking the only case when a negative q-value is accepted: When its state is not already present"){
     REQUIRE(0 == q_set.get_number_of_sequences());
-    q_set.incorporate(
-      {{1.0}},{action_slot({4.0}/*action*/, -5.0/*q_value*/)}
-    );
+    
+    q_set.incorporate({{1.0}},{action_slot({4.0}/*action*/, -5.0/*q_value*/)});
     REQUIRE(1 == q_set.get_number_of_sequences());
+
     rafko_gym::RafQSetItemConstView element_view(q_set[0]);
-    REQUIRE(element_view[3][0] == 4.0); /* The action with the worst q Value is supposed to be 4.0 */
+    REQUIRE(element_view[ActionCount - 1][0] == 4.0); /* The action with the worst q Value is supposed to be 4.0 */
     REQUIRE(element_view.min_q_value() == -5.0);    
   }
 }
@@ -350,6 +349,7 @@ TEST_CASE("Testing if RafQSet lookup works as expected", "[QSet][QLearning][look
   rafko_mainframe::RafkoSettings settings = rafko_mainframe::RafkoSettings()
     .set_learning_rate(1.0); /* learning rate set to 1.0 to make testing TD q values easier */
 
+  /* Testing if looking up separate states work as expected */
   TestEnvironment environment;
   rafko_gym::RafQSet q_set(settings, environment, action_count, max_set_size, 0.1);
   REQUIRE( 0 == q_set.get_number_of_sequences() );
@@ -379,6 +379,21 @@ TEST_CASE("Testing if RafQSet lookup works as expected", "[QSet][QLearning][look
   REQUIRE( q_set.look_up(std::vector<double>{4.0}).has_value() );
   REQUIRE( 4.0 == q_set.look_up(std::vector<double>{4.0}, &test_index).value().get()[0] );
   REQUIRE( test_index < max_set_size);
+
+  settings.set_delta(0.25); /* Setting delta determines the difference to state value where it is considered different */
+  /*!Note: Since The cost function Mean Squared error is used: a difference of 0.5 will result in 
+   * the error (label - (label + 0.5))^2 = 0.5^2 = 0.25. 
+   * Setting delta to 0.3 will eliminate the possiblity for rounding errors.
+   */
+  rafko_gym::RafQSet::MaybeFeatureVector query_result = q_set.look_up(std::vector<double>{1.5});
+  double queried_state = query_result.value().get()[0];
+  REQUIRE( (queried_state == 1.0 || queried_state == 2.0) );
+
+
+  query_result = q_set.look_up(std::vector<double>{3.5});
+  queried_state = query_result.value().get()[0];
+  REQUIRE( (queried_state == 3.0 || queried_state == 4.0) );
+
 }
 
 } /* namespace rafko_gym_test */

@@ -72,6 +72,31 @@ void RafkoAutodiffGPUOptimizer::sync_data_set_on_GPU(const RafkoDataSet& data_se
     cl_int return_value = e.wait();
     RFASSERT( return_value == CL_SUCCESS );
   }
+
+  // RFASSERT_LOG(
+  //   "Autodiff strategy Input shape: (weights: {} + inputs: {} + Labels: {} + sequence start: + sequence truncation: {} + d_w_index: {})",
+  //   /* Weights */ (static_cast<std::uint32_t>(m_network.weight_table_size())),
+  //   /* Inputs */ (m_dataSet->get_number_of_sequences() * m_dataSet->get_inputs_in_one_sequence() * m_network.input_data_size()),
+  //   /* Labels */(m_dataSet->get_number_of_sequences() * m_dataSet->get_sequence_size() * m_network.output_neuron_number()),
+  //   /* Sequence_start_index */ 1u, /* Sequence_truncation */ 1u, /* d_w_index */ 1u
+  // );
+  // const std::size_t labels_size = (data_set.get_number_of_sequences() * data_set.get_sequence_size() * m_network.output_neuron_number());
+  // const std::size_t labels_offset = (
+  //   m_network.weight_table_size()
+  //   + (data_set.get_number_of_sequences() * data_set.get_inputs_in_one_sequence() * m_network.input_data_size())
+  // );
+  // std::cout << "Labels read back from GPU:" << std::endl;
+  // std::cout << "labels_offset:" << labels_offset << std::endl;
+  // std::cout << "labels_size:" << labels_size << std::endl;
+
+  // std::vector<double> target_vector(labels_size);
+  // cl_int return_value = m_openclQueue.enqueueReadBuffer(
+  //   m_gpuPhase.get_input_buffer(), CL_TRUE/*blocking*/, 
+  //   (sizeof(double) * labels_offset), (sizeof(double) * labels_size), 
+  //   target_vector.data()
+  // );
+  // for(double d : target_vector)std::cout << "[" << d << "]";
+  // std::cout << std::endl;
 }
 
 void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool force_gpu_upload){
@@ -125,6 +150,8 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool force
     std::fill(m_tmpAvgD.begin(), m_tmpAvgD.end(), 0.0);
   });
 
+  // std::cout << "======\n ======  \n ====== " <<std::endl;
+
   for(std::int32_t d_w_index = 0; d_w_index < m_network.weight_table_size(); ++d_w_index){
     cl::Event d_w_index_event;
     return_value = m_openclQueue.enqueueFillBuffer<double>(
@@ -152,6 +179,10 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool force
       + (data_set.get_number_of_sequences() * data_set.get_sequence_size() * m_operations.size())
     )/*offset*/
   );
+  // std::cout << "tmp_data:" << std::endl;
+  // for(double d : m_tmpAvgD)std::cout << "[" << d << "]";
+  // std::cout << std::endl;
+
   m_gpuPhase.load_output(
     m_tmpAvgD.data()/*target*/, m_tmpAvgD.size()/*size*/,
     ( /* operation values + operation derivatives size */
@@ -161,6 +192,9 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool force
   );
 
   if( static_cast<std::int32_t>(m_tmpAvgD.size()) > std::count(m_tmpAvgD.begin(),m_tmpAvgD.end(), 0.0)){
+    // std::cout << "weight derivatives:" << std::endl;
+    // for(double d : m_tmpAvgD)std::cout << "[" << d << "]";
+    // std::cout << std::endl;
     apply_weight_update(m_tmpAvgD);
   }
 

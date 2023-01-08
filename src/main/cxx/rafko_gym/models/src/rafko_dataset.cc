@@ -16,6 +16,8 @@
  */
 #include "rafko_gym/models/rafko_dataset.hpp"
 
+#include <iostream> //TODO: Remove this debug line
+
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
 namespace rafko_gym{
@@ -100,6 +102,15 @@ std::vector<cl::Event> RafkoDataSet::upload_labels_to_buffer(
     std::uint32_t uploaded_label_index = (sequence_index - sequence_start_index) * sequence_truncation;
     for(std::uint32_t truncated_index = truncated_start; truncated_index < (truncated_start + sequence_truncation); ++truncated_index){
       RFASSERT_LOG("used offset for label[{}]: {} ( + {})", truncated_index, (buffer_byte_offset + labels_byte_offset), label_byte_size);
+      // std::cout << "label sample during upload: ";
+      // for(double d : get_label_sample(truncated_index))std::cout << "[" << d << "]";
+      // std::cout << std::endl;
+      // std::cout << "get_feature_size():" << get_feature_size() << std::endl;
+      // std::cout << "label_byte_size:" << label_byte_size << std::endl;
+      // std::cout << "buffer_byte_offset:" << buffer_byte_offset << std::endl;
+      // std::cout << "labels_byte_offset:" << labels_byte_offset << std::endl;
+      // std::cout << "truncated_index:" << truncated_index << std::endl;
+      // std::cout << "====\n";
       return_value = opencl_queue.enqueueWriteBuffer(
         buffer, CL_FALSE/*blocking*/, (buffer_byte_offset + labels_byte_offset)/*offset*/,
         label_byte_size/*size*/, get_label_sample(truncated_index).data(),
@@ -109,6 +120,7 @@ std::vector<cl::Event> RafkoDataSet::upload_labels_to_buffer(
       labels_byte_offset += label_byte_size;
     }
   }
+  // std::cout << "============" << std::endl;
 
   return events;
 }

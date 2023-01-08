@@ -222,6 +222,7 @@ void AutoDiffGPUStrategy::build(
       __global static double triggered_derivative_operations = 0.0;
       if(0 == get_global_id(0))
         triggered_derivative_operations = 0;
+      // if(0 == d_w_index)printf("starting_dw_array[%d]: %.4f", d_w_index, d_w_array[d_w_index]);
 
       ==operation_locals==
       ==derivative_operations==
@@ -230,6 +231,7 @@ void AutoDiffGPUStrategy::build(
       if(save_to_output){
         #pragma unroll
         for(int operation_index = 0; operation_index < ==weight_relevant_operation_count==; ++operation_index){
+          // if(0 == d_w_index)printf("adding operation[%d]: %.4f", operation_index, operations_d_array[operation_index]);
           AtomicAdd(&d_w_array[d_w_index], operations_d_array[operation_index]);
         }
         if(0 == get_local_id(0))
@@ -238,6 +240,8 @@ void AutoDiffGPUStrategy::build(
       barrier(CLK_GLOBAL_MEM_FENCE);
 
       if(0 == get_global_id(0) && 0 < triggered_derivative_operations){
+        // if(0 == d_w_index)printf("result: d_w_array[%d]: %.4f", d_w_index, d_w_array[d_w_index]);
+        // printf("\n weight[%d]: %.4f / %.4f on GPU\n", d_w_index, d_w_array[d_w_index], triggered_derivative_operations);
         d_w_array[d_w_index] /= triggered_derivative_operations;
       }
     }/*execute_derivative_workers()*/
