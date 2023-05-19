@@ -319,11 +319,11 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
 
 TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data_set", "[optimize][!benchmark]"){
   #if(RAFKO_USES_OPENCL)
-  std::uint32_t number_of_samples = 1024;
-  std::uint32_t minibatch_size = 256;
+  constexpr std::uint32_t number_of_samples = 1024u;
+  constexpr std::uint32_t minibatch_size = 256u;
   #else
-  std::uint32_t number_of_samples = 64;
-  std::uint32_t minibatch_size = 32;
+  constexpr std::uint32_t number_of_samples = 64u;
+  constexpr std::uint32_t minibatch_size = 32u;
   #endif/*(RAFKO_USES_OPENCL)*/
   std::uint32_t sequence_size = 4;
   google::protobuf::Arena arena;
@@ -456,6 +456,163 @@ TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data
         break; /* End the loop if 200 loops spent below error threshold */
       }
     }
+  }
+  std::cout << std::endl << "Optimum reached in " << (iteration + 1)
+  << " steps!(average runtime: "<< avg_duration << " ms)   " << std::endl;
+}
+
+TEST_CASE("Testing autodiff optimizer runtime with MNIST data set", "[optimize][MNIST][!benchmark]"){
+  #if(RAFKO_USES_OPENCL)
+  constexpr std::uint32_t number_of_samples = 1024u;
+  constexpr std::uint32_t minibatch_size = 256u;
+  #else
+  constexpr std::uint32_t number_of_samples = 64u;
+  constexpr std::uint32_t minibatch_size = 32u;
+  #endif/*(RAFKO_USES_OPENCL)*/
+
+  constexpr std::size_t mnist_input_size = 800;
+  constexpr std::size_t mnist_output_size = 10;
+
+  google::protobuf::Arena arena;
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<rafko_mainframe::RafkoSettings>(
+    rafko_mainframe::RafkoSettings()
+    .set_learning_rate(2e-2).set_minibatch_size(minibatch_size).set_memory_truncation(2)
+    .set_droput_probability(0.0)
+    .set_training_strategy(rafko_gym::Training_strategy::training_strategy_stop_if_training_error_zero, true)
+    .set_training_strategy(rafko_gym::Training_strategy::training_strategy_early_stopping, false)
+    .set_learning_rate_decay({{100u,0.8}})
+    .set_training_relevant_loop_count(10)
+    .set_arena_ptr(&arena).set_max_solve_threads(2).set_max_processing_threads(4)
+  );
+
+  auto start_time = std::chrono::steady_clock::now();
+  rafko_net::RafkoNet& network = *rafko_net::RafkoNetBuilder(*settings)
+    .input_size(mnist_input_size).expected_input_range(1.0)
+    // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l1_regularization)
+    // .add_feature_to_layer(0u, rafko_net::neuron_group_feature_l2_regularization)
+    // .add_neuron_recurrence(1u,0u,1u)
+    // .set_neuron_input_function(0u, 0u, rafko_net::input_function_multiply)
+    // .set_neuron_spike_function(0u, 0u, rafko_net::spike_function_none)
+    // .set_neuron_input_function(0u, 1u, rafko_net::input_function_add)
+    // .set_neuron_spike_function(0u, 1u, rafko_net::spike_function_none)
+    // .set_neuron_input_function(0u, 2u, rafko_net::input_function_add)
+    // .set_neuron_spike_function(0u, 2u, rafko_net::spike_function_none)
+    .allowed_transfer_functions_by_layer({
+      {rafko_net::transfer_function_swish},
+      {rafko_net::transfer_function_swish},
+      {rafko_net::transfer_function_swish}
+    })
+    .create_layers({25,15,10});
+  std::cout << "(network creation)duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count()
+  << " ms" << std::endl;
+
+  std::shared_ptr<rafko_gym::RafkoObjective> objective = std::make_shared<rafko_gym::RafkoCost>(
+    *settings, rafko_gym::cost_function_cross_entropy
+  );
+
+  #if(RAFKO_USES_OPENCL)
+  rafko_mainframe::RafkoOCLFactory factory;
+  std::shared_ptr<rafko_mainframe::RafkoGPUContext> context(
+    factory.select_platform().select_device()
+      .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
+  );
+  //TODO: test context and data set
+  // std::shared_ptr<rafko_mainframe::RafkoGPUContext> test_context(
+  //   factory.select_platform().select_device()
+  //     .build<rafko_mainframe::RafkoGPUContext>(network, settings, objective)
+  // );
+  #else
+  std::shared_ptr<rafko_mainframe::RafkoCPUContext> context = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
+  // std::shared_ptr<rafko_mainframe::RafkoCPUContext> test_context = std::make_unique<rafko_mainframe::RafkoCPUContext>(network, settings, objective);
+  #endif/*(RAFKO_USES_OPENCL)*/
+
+
+  // ----------------------------- DUMMY DATASET FOR RUNTIME TEST -----------------------------
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> data_set = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+      std::vector<std::vector<double>>(number_of_samples, std::vector<double>(mnist_input_size)), std::vector<std::vector<double>>(number_of_samples,std::vector<double>(mnist_output_size))
+  );
+
+  //TODO: test context and data set
+  // std::shared_ptr<rafko_gym::RafkoDatasetImplementation> test_data_set = std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+  //   std::move(inputs2), std::move(labels2)
+  // );
+  // test_context->set_data_set(test_data_set);
+  start_time = std::chrono::steady_clock::now();
+  #if(0) //RAFKO_USES_OPENCL)
+  std::unique_ptr<rafko_gym::RafkoAutodiffGPUOptimizer> optimizer = (
+    rafko_mainframe::RafkoOCLFactory()
+      .select_platform().select_device()
+      .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network)
+  );
+  #else
+  std::unique_ptr<rafko_gym::RafkoAutodiffOptimizer> optimizer = std::make_unique<rafko_gym::RafkoAutodiffOptimizer>(
+    settings, network
+  );
+  #endif/*(RAFKO_USES_OPENCL)*/
+  std::cout << "(optimizer creation)duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count() 
+  << " ms" << std::endl;
+
+  start_time = std::chrono::steady_clock::now();
+  optimizer->build(data_set, objective);
+  optimizer->set_training_context(context);
+  std::cout << "(optimizer build)duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count() 
+  << " ms" << std::endl;
+  // optimizer->set_testing_context(test_context);
+  optimizer->set_weight_updater(rafko_gym::weight_updater_amsgrad);
+  std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
+  double train_error;
+  // double test_error;
+  double minimum_error;
+  double low_error = 0.025;
+  std::uint32_t iteration_reached_low_error = std::numeric_limits<std::uint32_t>::max();
+  std::uint32_t iteration;
+  std::chrono::steady_clock::time_point start;
+  std::uint32_t avg_duration;
+
+  train_error = 1.0;
+  // test_error = 1.0;
+  avg_duration = 0;
+  iteration = 0;
+  minimum_error = std::numeric_limits<double>::max();
+
+  std::cout << "Optimizing network:" << std::endl;
+  std::cout << "Training Error; \t\tTesting Error; min; \t\t avg_d_w_abs; \t\t iteration; \t\t duration(ms); avg duration(ms)\t " << std::endl;
+  while(!optimizer->stop_triggered()){
+    std::shared_ptr<rafko_net::SolutionSolver> reference_solver = rafko_net::SolutionSolver::Factory(network, settings).build();
+    start = std::chrono::steady_clock::now();
+    optimizer->iterate(*data_set);
+    auto current_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+    if(0.0 == avg_duration)avg_duration = current_duration;
+    else avg_duration = (avg_duration + current_duration)/2.0;
+
+    train_error = optimizer->get_last_training_error();
+    // test_error = optimizer->get_last_testing_error();
+    // if(abs(test_error) < minimum_error){
+    //   minimum_error = abs(test_error);
+    //   std::cout << std::endl;
+    // }
+
+    std::cout << "\r";
+    for(std::uint32_t space_count = 0; space_count < rafko_test::get_console_width() - 1; ++space_count)
+      std::cout << " ";
+    std::cout << "\r";
+    std::cout << std::setprecision(9)
+    << train_error << ";\t\t"
+    // << test_error << "; "
+    << minimum_error <<";\t\t"
+    << optimizer->get_avg_of_abs_gradient() << ";\t\t"
+    << iteration <<";\t\t"
+    << current_duration <<"; "
+    << avg_duration <<"; "
+    << std::flush;
+    ++iteration;
+    // if(std::abs(test_error) <= low_error){
+    //   iteration_reached_low_error = std::min(iteration_reached_low_error, iteration);
+    //   if((iteration - iteration_reached_low_error) > 200){
+    //     std::cout << std::endl << "== good enough for a test ==" << std::endl;
+    //     break; /* End the loop if 200 loops spent below error threshold */
+    //   }
+    // }
   }
   std::cout << std::endl << "Optimum reached in " << (iteration + 1)
   << " steps!(average runtime: "<< avg_duration << " ms)   " << std::endl;

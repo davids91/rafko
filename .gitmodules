@@ -7,3 +7,6 @@
 [submodule "src/main/cxx/rafko_mainframe/external/date"]
 	path = src/main/cxx/rafko_mainframe/external/date
 	url = https://github.com/HowardHinnant/date.git
+[submodule "src/main/python/grade-school-math"]
+	path = src/main/python/grade-school-math
+	url = git@github.com:davids91/grade-school-math.git
