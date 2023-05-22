@@ -113,13 +113,6 @@ public:
   ) const override{
     RFASSERT(static_cast<bool>(m_featureDependency));
     return (
-      // R"(if(0 == d_w_index)printf("op[%d](%f<>%f<>%f) ",)" 
-      //   + std::to_string(get_operation_index()) + ","
-      //   + label_array + "[" + std::to_string(m_outputIndex) + "]," 
-      //   + operations_value_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "],"
-      //   + operations_derivative_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]"
-      // +" );"
-      // +
       operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
       + m_objective.get_derivative_kernel_source(
         label_array + "[" + std::to_string(m_outputIndex) + "]",
@@ -127,24 +120,6 @@ public:
         operations_derivative_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
         std::to_string(m_sampleNumber)
       ) + ";"
-
-      // + R"(if(0 == d_w_index)printf(" == %f ",)" 
-      // + m_objective.get_derivative_kernel_source(
-      //   label_array + "[" + std::to_string(m_outputIndex) + "]",
-      //   operations_value_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
-      //   operations_derivative_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
-      //   std::to_string(m_sampleNumber)
-      // )
-      // +" );"
-
-      // + R"(if(0 == d_w_index)printf(" ==> )" 
-      // + m_objective.get_derivative_kernel_source(
-      //   label_array + "[" + std::to_string(m_outputIndex) + "]",
-      //   operations_value_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
-      //   operations_derivative_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
-      //   std::to_string(m_sampleNumber)
-      // )
-      // +R"(");)" 
     );
   }
   #endif/*(RAFKO_USES_OPENCL)*/

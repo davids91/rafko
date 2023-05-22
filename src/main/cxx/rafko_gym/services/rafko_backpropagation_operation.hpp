@@ -128,7 +128,7 @@ public:
   std::vector<Dependency> get_dependencies(){
     std::vector<Dependency> deps(m_addedDependencies);
     std::vector<Dependency> own_deps(get_own_dependencies());
-    deps.insert(deps.begin(), own_deps.begin(), own_deps.end());
+    deps.insert(deps.end(), own_deps.begin(), own_deps.end());
     return deps;
   }
 

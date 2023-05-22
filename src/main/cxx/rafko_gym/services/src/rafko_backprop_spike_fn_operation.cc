@@ -149,15 +149,12 @@ std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
       past_value = 0.0;
       past_derivative_value = 0.0;
     }
-  )";
-  kernel_code += R"(
     if(d_w_index == ==this_op_weight_index==){
       ==op_derivative_array==[==op_index==] = ==spike_w_kernel==;
     }else{
       ==op_derivative_array==[==op_index==] = ==spike_kernel==;
     }
   )";
-
   kernel_code = rafko_utilities::replace_all_in_string(
     kernel_code, std::regex("==spike_w_kernel=="), rafko_net::SpikeFunction::get_derivative_kernel_for_w(
       m_network.neuron_array(m_neuronIndex).spike_function(),

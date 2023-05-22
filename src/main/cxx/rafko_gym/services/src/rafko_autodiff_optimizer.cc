@@ -71,7 +71,6 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(const std::shared_ptr<R
       "operation[{}]: {} for output {} ",
       m_operations.size()-1, Autodiff_operations_Name(ad_operation_objective_d), output_index
     );
-    std::cout << "(Optimizer build) output operations " <<  output_index << " / " << m_network.output_neuron_number() << std::endl;
   }
 
   /* handle the group feature related operations, upload performance related feature group operations. */
@@ -93,7 +92,6 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(const std::shared_ptr<R
   weight_relevant_operation_count = m_operations.size();
 
   /* Collect the Neuron subsets to determine the order of placement */
-  std::cout << "(Optimizer build) Collecting subsets " << std::endl;
   rafko_net::NeuronRouter neuron_router(m_network);
   std::vector<std::deque<std::uint32_t>> neuron_subsets;
   bool strict_mode = false;
@@ -115,19 +113,14 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(const std::shared_ptr<R
       }/*for(each solved feature group index)*/
     }/*for(each neuron_index in the subset)*/
     strict_mode = true; /* non-strict mode should only run be enabled in the first subset collection */
-    std::cout << ".";
   }/*while(neuron_router is finished)*/
-  std::cout << std::endl;
 
   RFASSERT_LOGV2( neuron_subsets, "Subset array:");
 
   /* Place one subset of Neurons */
   std::uint32_t done_index = 0;
   while(0u < neuron_subsets.size()){
-    std::cout << "(Optimizer build) Neurons " << neuron_count << " / " <<  m_network.neuron_array_size() << std::endl;
     for(std::uint32_t neuron_index : *neuron_subsets.begin()){
-      std::cout << "(Optimizer build) Neuron [" << neuron_index << "]";
-
       auto found_feature = m_spikeSolvesFeatureMap.find(neuron_index);
       if(found_feature != m_spikeSolvesFeatureMap.end()){
         using FeaturePtr = std::shared_ptr<RafkoBackPropSolutionFeatureOperation>;
@@ -152,7 +145,6 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(const std::shared_ptr<R
        */
 
       /* Upload dependencies for every operation until every dependency is registered */
-      std::cout << "... plus Dependencies";
       while(done_index < m_operations.size()){
         if(!m_operations[done_index]->are_dependencies_registered()){
           RFASSERT_LOG("Registering dependencies for operation[{}]...", done_index);
@@ -168,7 +160,6 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(const std::shared_ptr<R
         }
         ++done_index;
       }/*while(done_index < operations.size())*/
-      std::cout << ".. Done!" << std::endl;
 
     }/*for(every neuron_index in the collected subset)*/
     neuron_count += neuron_subsets.begin()->size();
@@ -182,7 +173,6 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(const std::shared_ptr<R
   }
   #endif/*(RAFKO_USES_ASSERTLOGS)*/
   RFASSERT_LOG("============================");
-  std::cout << "Done with build!"  << std::endl;
   return weight_relevant_operation_count;
 }
 

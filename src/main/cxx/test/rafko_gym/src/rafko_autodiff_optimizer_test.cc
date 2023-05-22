@@ -563,8 +563,8 @@ TEST_CASE("Testing autodiff optimizer runtime with MNIST data set", "[optimize][
   double train_error;
   // double test_error;
   double minimum_error;
-  double low_error = 0.025;
-  std::uint32_t iteration_reached_low_error = std::numeric_limits<std::uint32_t>::max();
+  // double low_error = 0.025;
+  // std::uint32_t iteration_reached_low_error = std::numeric_limits<std::uint32_t>::max();
   std::uint32_t iteration;
   std::chrono::steady_clock::time_point start;
   std::uint32_t avg_duration;

@@ -189,7 +189,7 @@ void RafQSet::incorporate(
   const std::vector<FeatureVector>& state_buffer, const std::vector<FeatureVector>& actions_buffer, 
   std::vector<AnyData>&& user_data_buffer, const std::function<void(double/*progress*/)>& progress_callback
 ){
-  RFASSERT_SCOPE(QSET_INCORPORATE)
+  RFASSERT_SCOPE(QSET_INCORPORATE);
   RFASSERT_LOG("Incorporating {} states and {} actions to q-set!", state_buffer.size(), actions_buffer.size());
   RFASSERT(state_buffer.size() == actions_buffer.size());
   RFASSERT( (0 == user_data_buffer.size()) || (user_data_buffer.size() == state_buffer.size()) );
