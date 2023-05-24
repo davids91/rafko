@@ -317,7 +317,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU opt
 }
 #endif/*(RAFKO_USES_OPENCL)*/
 
-TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data_set", "[optimize][!benchmark]"){
+TEST_CASE("Testing if autodiff optimizer converges networks with a prepared data_set", "[optimize][sequenced][addition][!benchmark]"){
   #if(RAFKO_USES_OPENCL)
   constexpr std::uint32_t number_of_samples = 1024u;
   constexpr std::uint32_t minibatch_size = 256u;

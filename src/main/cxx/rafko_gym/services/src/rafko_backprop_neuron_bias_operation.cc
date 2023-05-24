@@ -107,8 +107,7 @@ std::string RafkoBackpropNeuronBiasOperation::derivative_kernel_operation(
       operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
       + rafko_net::InputFunction::derivative_kernel_for(
         m_network.neuron_array(m_neuronIndex).input_function(),
-        weight_array + "[" + std::to_string(m_network.neuron_array(m_neuronIndex).input_weights(0).starts()) + "]",
-        "((d_w_index == ==this_op_weight_index==)?(1.0):(0.0))",
+        weight_array + "[==this_op_weight_index]", "((d_w_index == ==this_op_weight_index==)?(1.0):(0.0))",
         "==op_value_array==[==value_dep_op_index==]", "==op_derivative_array==[==value_dep_op_index==]"
       )
       + ";"
