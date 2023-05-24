@@ -58,17 +58,7 @@ public:
     m_built = false;
   }
 
-  /**
-   * @brief     Constructs the strategy based on the provided parameters
-   *
-   * @param[in]   operations                        The array of operations to process
-   * @param[in]   weight_relevant_operation_count   The number of operations relevant to weights at the start of the opeartions array
-   */
-  void build(
-    const std::vector<OperationsType>& operations,
-    std::uint32_t weight_relevant_operation_count
-  );
-
+  
   cl::Program::Sources get_step_sources() const override{
     RFASSERT(m_built);
     RFASSERT(static_cast<bool>(m_dataSet));
@@ -90,6 +80,17 @@ public:
     RFASSERT_LOG("Autodiff strategy global solution space: {}", global_range);
     return {cl::NullRange/*offset*/, cl::NDRange(global_range)/*global*/, cl::NDRange(m_maximumLocalWorkers)/*local*/ };
   }
+
+  /**
+   * @brief     Constructs the strategy based on the provided parameters
+   *
+   * @param[in]   operations                        The array of operations to process
+   * @param[in]   weight_relevant_operation_count   The number of operations relevant to weights at the start of the opeartions array
+   */
+  void build(
+    const std::vector<OperationsType>& operations,
+    std::uint32_t weight_relevant_operation_count
+  );
 
   /**
    * @brief     Generates a 2D vector of operation index values
