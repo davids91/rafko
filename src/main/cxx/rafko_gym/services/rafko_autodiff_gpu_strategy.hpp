@@ -65,14 +65,14 @@ public:
     return {m_builtSource};
   }
 
-  std::vector<std::string> get_step_names() const{
+  std::vector<std::string> get_step_names() const override{
     return {"autodiff_iterate"};
   }
 
-  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const;
-  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const;
+  std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override;
+  std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override;
 
-  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const{
+  std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
     RFASSERT(static_cast<bool>(m_dataSet));
     std::size_t global_range = (
       std::min(m_settings.get_minibatch_size(), m_dataSet->get_number_of_sequences()) * m_maximumLocalWorkers

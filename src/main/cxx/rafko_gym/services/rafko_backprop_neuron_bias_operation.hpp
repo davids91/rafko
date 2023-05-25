@@ -58,6 +58,14 @@ public:
   }
   ~RafkoBackpropNeuronBiasOperation() = default;
 
+  std::uint32_t get_weight_index() const{
+    return m_weightIndex;
+  }
+
+  rafko_net::Input_functions get_input_function() const{
+    return m_network.neuron_array(m_neuronIndex).input_function();
+  }
+
   DependencyRequest upload_dependencies_to_operations() override{
     if(m_neuronWeightIndex < (m_weightsIterator.cached_size() - 1u)){ /* more biases are present with the Neuron */
       return {{
@@ -95,6 +103,8 @@ public:
     std::string operations_value_array, std::string operations_derivative_array,
     std::string operations_array_size, std::string d_operations_array_size
   ) const override;
+  
+  void substitute_index_values_in_kernels(std::string& kernel_source) const override;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{

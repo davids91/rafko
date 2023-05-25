@@ -51,6 +51,7 @@ public:
   , m_sampleNumber(sample_number)
   {
   }
+
   ~RafkoBackpropObjectiveOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations() override{
@@ -113,13 +114,24 @@ public:
   ) const override{
     RFASSERT(static_cast<bool>(m_featureDependency));
     return (
-      operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
+      operations_derivative_array + "[==op_index==] = "
       + m_objective.get_derivative_kernel_source(
-        label_array + "[" + std::to_string(m_outputIndex) + "]",
-        operations_value_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
-        operations_derivative_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
+        label_array + "[==label_index==]",
+        operations_value_array + "[==dependency_op_index==]",
+        operations_derivative_array + "[==dependency_op_index==]",
         std::to_string(m_sampleNumber)
       ) + ";"
+    );
+  }
+  void substitute_index_values_in_kernels(std::string& kernel_source) const override { 
+    kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==op_index=="), std::to_string(get_operation_index())
+    );
+    kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==label_index=="), std::to_string(m_outputIndex)
+    );
+    kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==dependency_op_index=="), std::to_string(m_featureDependency->get_operation_index())
     );
   }
   #endif/*(RAFKO_USES_OPENCL)*/
@@ -127,6 +139,14 @@ public:
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
     RFASSERT(static_cast<bool>(m_featureDependency));
     return {m_featureDependency};
+  }
+
+  Cost_functions get_cost_type() const{
+    return m_objective.get_cost_type();
+  }
+
+  std::uint32_t get_label_index(){
+    return m_outputIndex;
   }
 
 private:

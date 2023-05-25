@@ -48,6 +48,27 @@ public:
   );
   ~RafkoBackpropNeuronInputOperation() = default;
 
+  std::uint32_t get_weight_index() const{
+    return m_weightIndex;
+  }
+
+  std::uint32_t get_input_past_index() const{
+    return m_inputPastIndex;
+  }
+
+  rafko_net::Input_functions get_input_function() const{
+    return m_network.neuron_array(m_neuronIndex).input_function();
+  }
+
+  /**
+   * @brief     Provides all the dependency pointers, irregardless if the inputs are from the past or not.
+   *            The distinction is relevant, because past inputs are not defining operation structures, 
+   *            but for inference index values they are required.
+   * 
+   * @return    list of all stored dependency pointers
+   */
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies_past_included();
+
   DependencyRequest upload_dependencies_to_operations() override;
 
   void calculate_value(const std::vector<double>& network_input) override;
@@ -67,6 +88,7 @@ public:
     std::string operations_value_array, std::string operations_derivative_array,
     std::string operations_array_size, std::string d_operations_array_size
   ) const override;
+  void substitute_index_values_in_kernels(std::string& kernel_source) const override;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override;

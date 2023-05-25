@@ -57,6 +57,14 @@ public:
   }
   ~RafkoBackpropSpikeFnOperation() = default;
 
+  rafko_net::Spike_functions get_spike_function() const{
+    return m_network.neuron_array(m_neuronIndex).spike_function();
+  }
+
+  std::uint32_t get_weight_index() const{
+    return m_network.neuron_array(m_neuronIndex).input_weights(0).starts();
+  }
+
   std::uint32_t get_operation_index() const override{
     return m_actualOperationIndex;
   }
@@ -99,6 +107,7 @@ public:
     std::string operations_value_array, std::string operations_derivative_array,
     std::string operations_array_size, std::string d_operations_array_size
   ) const override;
+  void substitute_index_values_in_kernels(std::string& kernel_source) const override;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{

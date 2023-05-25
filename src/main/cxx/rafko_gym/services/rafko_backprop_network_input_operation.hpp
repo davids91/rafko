@@ -54,6 +54,14 @@ public:
   }
   ~RafkoBackpropNetworkInputOperation() = default;
 
+  std::uint32_t get_weight_index() const{
+    return m_weightIndex;
+  }
+
+  std::uint32_t get_input_index() const{
+    return m_inputIndex;
+  }
+
   DependencyRequest upload_dependencies_to_operations() override{
     /*!Note: Network inputs have no dependencies! */
     set_registered();
@@ -88,15 +96,13 @@ public:
     return "";
   }
 
-
   std::string value_kernel_operation(
     std::string network_input_array, std::string weight_array,
     std::string operations_value_array, std::string /*operations_array_size*/
   ) const override{
     return (
-      operations_value_array + "[" + std::to_string(get_operation_index()) + "] = "
-      + network_input_array + "[" + std::to_string(m_inputIndex) + "]"
-      + " * " + weight_array + "[" + std::to_string(m_weightIndex) + "];\n"
+      operations_value_array + "[==op_index==] = " + network_input_array + "[==network_input_index==]"
+      + " * " + weight_array + "[==this_op_weight_index==];\n"
     );
   }
 
@@ -105,25 +111,28 @@ public:
     std::string /*operations_value_array*/, std::string operations_derivative_array,
     std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
   ) const override{
-    std::string kernel_code = R"(
+    std::string kernel_source = R"(
       if(d_w_index == ==this_op_weight_index==){
         ==op_derivative_array==[==op_index==] = ( ==network_input_array==[==network_input_index==] );
       }else{
         ==op_derivative_array==[==op_index==] = 0.0;
       }
     )";
-    kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, std::regex("==this_op_weight_index=="), std::to_string(m_weightIndex)
+    kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==network_input_array=="), network_input_array
     );
-    kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, std::regex("==network_input_array=="), network_input_array
+    kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_derivative_array=="), operations_derivative_array);
+    return kernel_source;
+  }
+
+  void substitute_index_values_in_kernels(std::string& kernel_source) const override {
+    kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==network_input_index=="), std::to_string(m_inputIndex)
     );
-    kernel_code = rafko_utilities::replace_all_in_string(
-      kernel_code, std::regex("==network_input_index=="), std::to_string(m_inputIndex)
+    kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==this_op_weight_index=="), std::to_string(m_weightIndex)
     );
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_derivative_array=="), operations_derivative_array);
-    kernel_code = rafko_utilities::replace_all_in_string(kernel_code, std::regex("==op_index=="), std::to_string(get_operation_index()));
-    return kernel_code;
+    kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_index=="), std::to_string(get_operation_index()));
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 

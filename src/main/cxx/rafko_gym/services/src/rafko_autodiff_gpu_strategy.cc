@@ -25,6 +25,10 @@
 #include "rafko_utilities/services/rafko_string_utils.hpp"
 #include "rafko_utilities/services/thread_group.hpp"
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
+#include "rafko_gym/services/rafko_backprop_objective_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_spike_fn_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_transfer_fn_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_neuron_bias_operation.hpp"
 
 namespace rafko_gym{
 
@@ -404,19 +408,23 @@ void AutoDiffGPUStrategy::build(
   RFASSERT_LOG("Starting to split operations into workers..");
   std::string value_operation_switch_cases = generate_switch_case_kernels_from(
     operations, operations_matrix, [&operations](OperationsType operation)->std::string{
-      return operation->value_kernel_operation(
+      std::string operation_source = operation->value_kernel_operation(
         "network_inputs", "network_weights", "operations_value_array",
         std::to_string(operations.size()) /*operations_array_size*/
       );
+      operation->substitute_index_values_in_kernels(operation_source);
+      return operation_source;
     }
   );
   std::string derivative_operation_switch_cases = generate_switch_case_kernels_from(
     operations, operations_matrix, [&operations](OperationsType operation)->std::string{
-      return operation->derivative_kernel_operation(
+        std::string operation_source = operation->derivative_kernel_operation(
         "network_inputs", "labels", "network_weights",
         "operations_value_array", "operations_d_array",
         std::to_string(operations.size()), "operation_count"
       );
+      operation->substitute_index_values_in_kernels(operation_source);
+      return operation_source;
     }
   );
 

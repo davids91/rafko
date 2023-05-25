@@ -107,6 +107,7 @@ public:
       std::to_string(get_operation_index())/*output_start_index*/, false/*declare_locals*/
     );
   }
+  void substitute_index_values_in_kernels(std::string& kernel_source) const override { }
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{

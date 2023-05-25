@@ -98,15 +98,34 @@ public:
    *          by @value_kernel_operation and @derivative_kernel_operation
    */
   virtual std::string local_declaration_operation() const = 0;
+
+  /**
+   * @brief   Provides the kernel code for this operation in the forward propagation of the neural network
+   * 
+   * @return  OpenCL Kernel code, without the index values substituted
+   */
   virtual std::string value_kernel_operation(
     std::string network_input_array, std::string weight_array,
     std::string operations_value_array, std::string operations_array_size
   ) const = 0;
+
+  /**
+   * @brief   Provides the kernel code for this operation in the backward propagation of the neural network
+   * 
+   * @return  OpenCL Kernel code, without the index values substituted
+   */
   virtual std::string derivative_kernel_operation(
     std::string network_input_array, std::string label_array, std::string weight_array,
     std::string operations_value_array, std::string operations_derivative_array,
     std::string operations_array_size, std::string d_operations_array_size
   ) const = 0;
+
+  /**
+   * @brief   Substitutes index values for the kernel code of this operation, producing fully expanded compilable kernel code
+   * 
+   * @param     kernel_source       The OpenCL Kernel source to update
+   */
+  virtual void substitute_index_values_in_kernels(std::string& kernel_source) const = 0;
 
   /**
    * @brief   Tells if the generated kernel code is using local groups in the execution, so the provided logic 
@@ -165,7 +184,7 @@ public:
     m_addedDependencies.push_back(dep);
   }
 
-  std::vector<Dependency> get_dependencies(){
+  std::vector<Dependency> get_dependencies() {
     std::vector<Dependency> deps(m_addedDependencies);
     std::vector<Dependency> own_deps(get_own_dependencies());
     deps.insert(deps.end(), own_deps.begin(), own_deps.end());

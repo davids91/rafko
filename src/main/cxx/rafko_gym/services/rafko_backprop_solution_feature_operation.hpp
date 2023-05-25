@@ -85,6 +85,7 @@ public:
   bool is_multi_worker() const override{
     return true;
   }
+  void substitute_index_values_in_kernels(std::string& kernel_source) const override { }
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
