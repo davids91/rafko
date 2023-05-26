@@ -103,6 +103,19 @@ public:
     return "";
   }
 
+  /**
+   * @brief     Generates OpenCL Kernel code for the operation for forward propagation
+   * 
+   * @param   operations_value_array        The name of the array containing the operation values for forward propagation
+   *
+   * @return    Raw Kernel code for the forward propagation of this operation
+   */
+  static std::string value_kernel_operation(std::string operations_value_array, std::string behavior_index, const rafko_mainframe::RafkoSettings& settings){
+    return rafko_net::TransferFunction::get_all_kernel_value_functions(
+      settings, behavior_index, operations_value_array + "[==op_index==]", operations_value_array + "[==dependency_op_index==]"
+    );
+  }
+
   std::string value_kernel_operation(
     std::string /*network_input_array*/, std::string /*weight_array*/,
     std::string operations_value_array, std::string /*operations_array_size*/
@@ -116,10 +129,35 @@ public:
     ) + ";";
   }
 
+/**
+   * @brief     Generates OpenCL Kernel code for the operation for forward propagation
+   * 
+   * @param   network_input_array           The name of the arry containing the Inputs for the Neural network
+   * @param   label_array                   The name of the arry containing the Labels the Neural network is evaluated against
+   * @param   weight_array                  The name of the array contining the Neural network weights 
+   * @param   operations_value_array        The name of the array containing the operation values for forward propagation
+   * @param   operations_derivative_array   The name of the array containing the operation values for forward propagation
+   * @param   operations_array_size         The size of the array contining the operation values for both forward and backward propagation
+   *
+   * @return    Raw Kernel code for the forward propagation of this operation
+   */
+  static std::string generic_derivative_kernel_operation(
+    std::string operations_value_array, std::string operations_derivative_array, 
+    std::string behavior_index, const rafko_mainframe::RafkoSettings& settings
+  ){
+    return (
+      rafko_net::TransferFunction::get_all_kernel_derivative_functions(
+        settings, behavior_index, operations_derivative_array + "[==op_index==]",
+        operations_value_array + "[==dependency_op_index==]",
+        operations_derivative_array + "[==dependency_op_index==]"
+      )
+    ) + ";";
+  }
+
   std::string derivative_kernel_operation(
     std::string /*network_input_array*/, std::string /*label_array*/, std::string /*weight_array*/,
     std::string operations_value_array, std::string operations_derivative_array,
-    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
+    std::string /*operations_array_size*/
   ) const override{
     RFASSERT(are_dependencies_registered());
     RFASSERT(static_cast<bool>(m_neededInputDependency));

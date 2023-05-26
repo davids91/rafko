@@ -48,11 +48,13 @@ Note: Since for One Neurons might have multiple Bias values, the information mus
 | Derivative of Network input          | weight_index        | input_index               |                     | operation_index     |                                   |
 | Derivative of Bias(es)               | weight_index        | is_there_dependency       | dependency_index    | operation_index     | input_function_index(optional)    |
 | Derivative of Neuron input           | weight_index        | dependency_index          | dependency_index    | operation_index     | input_function_index + past_index |
-| Derivative of Objective operation    | label_index         |                           | dependency_index    | operation_index     | cost_function_index               |
+| Derivative of Objective operation    | label_index         |                           | dependency_index    | operation_index     |                                   |
 | Derivative of Solution operation     |                     |                           |                     |                     |                                   |
 | Derivative of Spike Function         | weight_index        |                           | dependency_index    | operation_index     | spike_function_index              |
 | Derivative of Transfer function      |                     |                           | dependency_index    | operation_index     | transfer_function_index           |
 | Derivative of Weight regularization  | weight_index_start  | count_weights             |                     | operation_index     | feature_index                     |
+
+Note: cost_function_index is missing from the table(from Objective Operation), as it is burned into the OpenCL Kernels.  
 
 
 ## Consolidated Instruction table
@@ -65,9 +67,17 @@ Each instruction for Network inference and error back-propagation with thier res
 | Network input           | weight_index        | input_index         |                     | operation_index     |                                   |
 | Neuron Bias             | weight_index        | is_there_dependency | dependency_index    | operation_index     | input_function_index(optional)    |
 | Neuron input            | weight_index        | dependency_index    | dependency_index    | operation_index     | input_function_index + past_index |
-| Objective operation     | label_index         |                     | dependency_index    | operation_index     | cost_function_index               |
+| Objective operation     | label_index         |                     | dependency_index    | operation_index     |                                   |
 | Solution operation      | neuron_index_start  | count_neurons       |                     |                     |                                   |
 | Spike Function          | weight_index        |                     | dependency_index    | operation_index     | spike_function_index              |
 | Transfer function       |                     |                     | dependency_index    | operation_index     | transfer_function_index           |
 | Weight regularization   | weight_index_start  | count_weights       |                     | operation_index     | feature_index                     |
 
+
+
+TODO:
+- Generate inside GPU Strategy the indexable functions for all of the operations
+- Update index values of generated operations code
+- Add extra input to the strategy (the generated Neural network bytecode) and upload it during build
+- Investigate if a re-compile is always needed with the cost function; Make Objective indexable
+- try to optimize? a bit might be enough

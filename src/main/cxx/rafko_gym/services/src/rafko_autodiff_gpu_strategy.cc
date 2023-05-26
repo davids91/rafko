@@ -417,11 +417,11 @@ void AutoDiffGPUStrategy::build(
     }
   );
   std::string derivative_operation_switch_cases = generate_switch_case_kernels_from(
-    operations, operations_matrix, [&operations](OperationsType operation)->std::string{
+    operations, operations_matrix, [](OperationsType operation)->std::string{
         std::string operation_source = operation->derivative_kernel_operation(
         "network_inputs", "labels", "network_weights",
         "operations_value_array", "operations_d_array",
-        std::to_string(operations.size()), "operation_count"
+        "operation_count"
       );
       operation->substitute_index_values_in_kernels(operation_source);
       return operation_source;

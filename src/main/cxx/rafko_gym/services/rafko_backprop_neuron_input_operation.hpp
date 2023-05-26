@@ -79,14 +79,47 @@ public:
   #if(RAFKO_USES_OPENCL)
   std::string local_declaration_operation() const override;
 
+
+  /**
+   * @brief     Generates OpenCL Kernel code for the operation for forward propagation
+   * 
+   * @param   weight_array                  The name of the array contining the Neural network weights 
+   * @param   operations_value_array        The name of the array containing the operation values for forward propagation
+   * @param   operations_array_size         The size of the array contining the operation values for both forward and backward propagation
+   *
+   * @return    Raw Kernel code for the forward propagation of this operation
+   */
+  static std::string generic_value_kernel_operation(
+    std::string weight_array, std::string operations_value_array, std::string operations_array_size,
+    std::string behavior_index, std::string past_index, std::string weight_is_used
+  );
+
   std::string value_kernel_operation(
     std::string network_input_array, std::string weight_array,
     std::string operations_value_array, std::string operations_array_size
   ) const override;
+
+  /**
+   * @brief     Generates OpenCL Kernel code for the operation for backward propagation
+   * 
+   * @param   weight_array                  The name of the array contining the Neural network weights 
+   * @param   operations_value_array        The name of the array containing the operation values for backward propagation
+   * @param   operations_derivative_array   The name of the array containing the operation values for backward propagation
+   * @param   operations_array_size         The size of the array contining the operation values for both forward and backward propagation
+   * @param   behavior_index                The value determining the input function of the operation
+   * @param   past_index                    The value determining the past index inside this operations input 
+   *
+   * @return    Raw Kernel code for the forward propagation of this operation
+   */
+  static std::string generic_derivative_kernel_operation(
+    std::string weight_array, std::string operations_value_array, std::string operations_derivative_array,
+    std::string operations_array_size, std::string behavior_index, std::string past_index
+  );
+
   std::string derivative_kernel_operation(
     std::string network_input_array, std::string label_array, std::string weight_array,
     std::string operations_value_array, std::string operations_derivative_array,
-    std::string operations_array_size, std::string d_operations_array_size
+    std::string operations_array_size
   ) const override;
   void substitute_index_values_in_kernels(std::string& kernel_source) const override;
   #endif/*(RAFKO_USES_OPENCL)*/

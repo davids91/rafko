@@ -423,9 +423,9 @@ std::string SolutionBuilder::get_kernel_for_solution(
         "outputs[output_start + " + neuron_index_str + "] = (\n"
         + SpikeFunction::get_kernel_function_for(
           partial.neuron_spike_functions(inner_neuron_index),
-          "neuron_partial_result"/* new_data */,
+          "inputs[" + std::to_string(weight_table_offset + spike_weight_index) + "]"/*parameter*/,
           past_reach_guard( 1/*past_reach*/, std::string("(outputs[output_start + " + neuron_index_str + " - neuron_array_size])"))/* previous_data */,
-          "inputs[" + std::to_string(weight_table_offset + spike_weight_index) + "]"/*parameter*/
+          "neuron_partial_result"/* new_data */
         )+"\n);\n"
       );
 

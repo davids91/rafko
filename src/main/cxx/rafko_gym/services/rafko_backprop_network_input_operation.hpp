@@ -96,21 +96,39 @@ public:
     return "";
   }
 
-  std::string value_kernel_operation(
-    std::string network_input_array, std::string weight_array,
-    std::string operations_value_array, std::string /*operations_array_size*/
-  ) const override{
+  /**
+   * @brief     Generates OpenCL Kernel code for the operation for forward propagation
+   * 
+   * @param   network_input_array           The name of the arry containing the Inputs for the Neural network
+   * @param   weight_array                  The name of the array contining the Neural network weights 
+   * @param   operations_value_array        The name of the array containing the operation values for forward propagation
+   *
+   * @return    Raw Kernel code for the forward propagation of this operation
+   */
+  static std::string generic_value_kernel_operation(std::string network_input_array, std::string weight_array, std::string operations_value_array){
     return (
       operations_value_array + "[==op_index==] = " + network_input_array + "[==network_input_index==]"
       + " * " + weight_array + "[==this_op_weight_index==];\n"
     );
   }
 
-  std::string derivative_kernel_operation(
-    std::string network_input_array, std::string /*label_array*/, std::string /*weight_array*/,
-    std::string /*operations_value_array*/, std::string operations_derivative_array,
-    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
+
+  std::string value_kernel_operation(
+    std::string network_input_array, std::string weight_array,
+    std::string operations_value_array, std::string /*operations_array_size*/
   ) const override{
+    return generic_value_kernel_operation(network_input_array, weight_array, operations_value_array);
+  }
+
+  /**
+   * @brief     Generates OpenCL Kernel code for the operation for backward propagation
+   * 
+   * @param   network_input_array           The name of the arry containing the Inputs for the Neural network
+   * @param   operations_derivative_array   The name of the array containing the operation values for backward propagation
+   *
+   * @return    Raw Kernel code for the backward propagation of this operation
+   */
+  static std::string generic_derivative_kernel_operation(std::string network_input_array, std::string operations_derivative_array){
     std::string kernel_source = R"(
       if(d_w_index == ==this_op_weight_index==){
         ==op_derivative_array==[==op_index==] = ( ==network_input_array==[==network_input_index==] );
@@ -123,6 +141,14 @@ public:
     );
     kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_derivative_array=="), operations_derivative_array);
     return kernel_source;
+  }
+
+  std::string derivative_kernel_operation(
+    std::string network_input_array, std::string /*label_array*/, std::string /*weight_array*/,
+    std::string /*operations_value_array*/, std::string operations_derivative_array,
+    std::string /*operations_array_size*/
+  ) const override{
+    return generic_derivative_kernel_operation(network_input_array, operations_derivative_array);
   }
 
   void substitute_index_values_in_kernels(std::string& kernel_source) const override {

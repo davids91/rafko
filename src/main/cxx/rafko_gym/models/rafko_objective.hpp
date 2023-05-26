@@ -22,6 +22,7 @@
 
 #include <vector>
 
+#include "rafko_protocol/training.pb.h"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
@@ -39,6 +40,13 @@ class RAFKO_EXPORT RafkoObjective
 {
 public:
   virtual ~RafkoObjective() = default;
+
+  /**
+   * @brief     Provides the impleemnted cost function type
+   * 
+   * @return    The enumeration represents the cost being implemented this class.
+   */
+  virtual Cost_functions get_cost_type() const = 0;
 
   /**
    * @brief      Sets the approximated value for an observed value and provides the calculated fitness.

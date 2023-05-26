@@ -24,6 +24,7 @@
 #include <memory>
 #include <utility>
 
+#include "rafko_utilities/services/rafko_string_utils.hpp"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
@@ -100,17 +101,43 @@ public:
     return "";
   }
 
-
   std::string value_kernel_operation(
     std::string /*network_input_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string /*operations_array_size*/
   ) const override{ /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     return "";
   }
+
+  /**
+   * @brief     Generates OpenCL Kernel code for the operation for backward propagation
+   * 
+   * @param   label_array                   The name of the arry containing the Labels the Neural network is evaluated against
+   * @param   operations_value_array        The name of the array containing the operation values for forward propagation
+   * @param   operations_derivative_array   The name of the array containing the operation values for forward propagation
+   * @param   sample_number                 The number of samples the dataset contains in the mini-batch
+   * @param   objective                     The source of the Kernel code for thi Operation
+   *
+   * @return    Raw Kernel code for the backward propagation of this operation
+   */
+  static std::string generic_derivative_kernel_operation(
+    std::string label_array, std::string operations_value_array, std::string operations_derivative_array,
+    std::string sample_number, const RafkoObjective& objective
+  ){
+    return (
+      operations_derivative_array + "[==op_index==] = "
+      + objective.get_derivative_kernel_source(
+        label_array + "[==label_index==]",
+        operations_value_array + "[==dependency_op_index==]",
+        operations_derivative_array + "[==dependency_op_index==]",
+        sample_number
+      ) + ";"
+    );
+  }
+
   std::string derivative_kernel_operation(
     std::string /*network_input_array*/, std::string label_array, std::string /*weight_array*/,
     std::string operations_value_array, std::string operations_derivative_array,
-    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
+    std::string /*operations_array_size*/
   ) const override{
     RFASSERT(static_cast<bool>(m_featureDependency));
     return (

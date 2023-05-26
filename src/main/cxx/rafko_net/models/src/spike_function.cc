@@ -90,7 +90,7 @@ Spike_functions SpikeFunction::next(std::set<Spike_functions> range){
 }
 
 #if(RAFKO_USES_OPENCL)
-std::string SpikeFunction::get_kernel_function_for(Spike_functions function, std::string new_data, std::string previous_data, std::string parameter){
+std::string SpikeFunction::get_kernel_function_for(Spike_functions function, std::string parameter, std::string previous_data, std::string new_data){
   switch(function){
     case spike_function_none: return "(" + new_data + ")";
     case spike_function_memory: return "(((" + previous_data + ") * " + parameter + ") + ((" + new_data +") * (1.0 - " + parameter + ")))";
@@ -100,23 +100,24 @@ std::string SpikeFunction::get_kernel_function_for(Spike_functions function, std
   }
 }
 
-std::string SpikeFunction::get_all_kernel_functions_for(std::string operation_index, std::string previous_data, std::string new_data, std::string parameter){
+std::string SpikeFunction::get_all_kernel_value_functions(std::string operation_index, std::string target, std::string parameter, std::string previous_data, std::string new_data){
   std::string code = R"(
     switch(==op==){
       case neuron_spike_function_none:
-        ==previous_data== = ==new_data==;
+        ==target== = ==new_data==;
         break;
       case neuron_spike_function_memory:
-        ==previous_data== = (==previous_data== * ==parameter==) - (==new_data== * ==parameter==) + ==new_data==;
+        ==target== = ((==previous_data==) * ==parameter==) + ((==new_data==) * (1.0 - ==parameter==));
         break;
       case neuron_spike_function_p:
-        ==previous_data== = ==previous_data== + ==parameter== * (==new_data== - ==previous_data==);
+        ==target== = ==previous_data== + ((==new_data== - ==previous_data==) * ==parameter==);
         break;
       case neuron_spike_function_amplify_value:
-        ==previous_data== = ==parameter== * ==new_data==;
+        ==target== = ==parameter== * ==new_data==;
         break;
     }
   )";
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==target=="), target);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==parameter=="), parameter);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==new_data=="), new_data);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==previous_data=="), previous_data);
@@ -124,10 +125,77 @@ std::string SpikeFunction::get_all_kernel_functions_for(std::string operation_in
   return code;
 }
 
+std::string SpikeFunction::get_all_kernel_derivative_functions_for_w(
+  std::string operation_index, std::string target, std::string parameter, 
+  std::string previous_data, std::string previous_data_d,
+  std::string new_data, std::string new_data_d
+){
+    std::string code = R"(
+    switch(==op==){
+      case neuron_spike_function_none:
+        ==target== = ==new_data_d==;
+        break;
+      case neuron_spike_function_memory:
+        ==target== = (
+          (==previous_data_d== * ==parameter==) + ==previous_data== 
+          - (==new_data_d== * ==parameter==) + ==new_data_d== - ==new_data==
+        );
+        break;
+      case neuron_spike_function_p:
+        ==target== =( 
+          -==parameter== * ==previous_data_d== + ==previous_data_d== - ==previous_data== 
+          + ==parameter== * ==new_data_d== + ==new_data==
+        );
+        break;
+      case neuron_spike_function_amplify_value:
+        ==target== = ==parameter== * ==new_data_d== + ==new_data==;
+        break;
+    }
+  )";
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==target=="), target);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==parameter=="), parameter);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==new_data=="), new_data);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==new_data_d=="), new_data_d);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==previous_data=="), previous_data);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==previous_data_d=="), previous_data_d);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
+  return code;
+}
+
+std::string SpikeFunction::get_all_kernel_derivative_functions_not_for_w(
+  std::string operation_index, std::string target, std::string parameter, 
+  std::string previous_data_d, std::string new_data_d
+){
+    std::string code = R"(
+    switch(==op==){
+      case neuron_spike_function_none:
+        ==target== = ==new_data_d==;
+        break;
+      case neuron_spike_function_memory:
+        ==target== = (
+          ( ==parameter== * ==previous_data_d== ) - (==parameter== * ==new_data_d== ) + ==new_data_d==
+        );
+        break;
+      case neuron_spike_function_p:        
+        ==target== = (==parameter== * ==new_data_d== ) - ((==parameter== - 1.0) * ==previous_data_d==);
+        break;
+      case neuron_spike_function_amplify_value:
+        ==target== = ==parameter== * ==new_data_d==;
+        break;
+    }
+  )";
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==target=="), target);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==parameter=="), parameter);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==previous_data_d=="), previous_data_d);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==new_data_d=="), new_data_d);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
+  return code;
+}
+
 std::string SpikeFunction::get_derivative_kernel_for_w(
   Spike_functions function, std::string parameter,
-  std::string new_data, std::string new_data_d,
-  std::string previous_data, std::string previous_data_d
+  std::string previous_data, std::string previous_data_d,
+  std::string new_data, std::string new_data_d
 ){
   std::string parameter_ = "(" + parameter + ")";
   std::string new_data_d_ = "(" + new_data_d + ")";
@@ -137,7 +205,7 @@ std::string SpikeFunction::get_derivative_kernel_for_w(
     case spike_function_memory:
       return(
         "(" + parameter_ + "*" + previous_data_d_ + ") + " + previous_data
-        + " - ((" + parameter_ + ") * (" + new_data_d_ + ")) + (" + new_data_d_ + ")-(" + new_data + ")"
+        + " - (" + parameter_ + " * " + new_data_d_ + ") + " + new_data_d_ + " - " + new_data
       );
     case spike_function_p:
       return(
@@ -152,7 +220,7 @@ std::string SpikeFunction::get_derivative_kernel_for_w(
 
 std::string SpikeFunction::get_derivative_kernel_not_for_w(
   Spike_functions function, std::string parameter,
-  std::string new_data_d, std::string previous_data_d
+  std::string previous_data_d, std::string new_data_d
 ){
   std::string parameter_ = "(" + parameter + ")";
   std::string new_data_d_ = "(" + new_data_d + ")";
@@ -161,10 +229,10 @@ std::string SpikeFunction::get_derivative_kernel_not_for_w(
     case spike_function_none: return new_data_d_;
     case spike_function_memory:
     return(
-      "(" + parameter_ + "*" + previous_data_d_ + ")" + " - (" + parameter_ + "*" + new_data_d_ + ")" + "+" + new_data_d_
+      "(" + parameter_ + "*" + previous_data_d_ + ") - (" + parameter_ + "*" + new_data_d_ + ")" + "+" + new_data_d_
     );
     case spike_function_p:
-    return "(" + parameter_ + "*" + new_data_d_ + ")" + " - ((" + parameter_ + "-1.0) * " + previous_data_d_ + ")";
+    return "(" + parameter_ + "*" + new_data_d_ + ") - ((" + parameter_ + "-1.0) * " + previous_data_d_ + ")";
     case spike_function_amplify_value:
       return "(" + parameter_ + "*" + new_data_d_ + ")";
     default: throw std::runtime_error("Unknown spike function requested for derivative calculation!");

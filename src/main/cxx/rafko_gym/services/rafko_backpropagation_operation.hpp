@@ -102,6 +102,11 @@ public:
   /**
    * @brief   Provides the kernel code for this operation in the forward propagation of the neural network
    * 
+   * @param   network_input_array       The name of the arry containing the Inputs for the Neural network
+   * @param   weight_array              The name of the array contining the Neural network weights 
+   * @param   operations_value_array    The name of the array containing the operation values for forward propagation
+   * @param   operations_array_size     The size of the array contining the operation values for forward propagation
+   * 
    * @return  OpenCL Kernel code, without the index values substituted
    */
   virtual std::string value_kernel_operation(
@@ -112,12 +117,19 @@ public:
   /**
    * @brief   Provides the kernel code for this operation in the backward propagation of the neural network
    * 
+   * @param   network_input_array           The name of the arry containing the Inputs for the Neural network
+   * @param   label_array                   The name of the arry containing the Labels the Neural network is evaluated against
+   * @param   weight_array                  The name of the array contining the Neural network weights 
+   * @param   operations_value_array        The name of the array containing the operation values for forward propagation
+   * @param   operations_derivative_array   The name of the array containing the operation values for forward propagation
+   * @param   operations_array_size         The size of the array contining the operation values for both forward and backward propagation
+   * 
    * @return  OpenCL Kernel code, without the index values substituted
    */
   virtual std::string derivative_kernel_operation(
     std::string network_input_array, std::string label_array, std::string weight_array,
     std::string operations_value_array, std::string operations_derivative_array,
-    std::string operations_array_size, std::string d_operations_array_size
+    std::string operations_array_size
   ) const = 0;
 
   /**

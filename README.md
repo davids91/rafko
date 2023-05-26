@@ -20,7 +20,8 @@ such as solving a network, calculating gradients and updating a network, etc..
 ## Build Dependencies:
 The Library is built upon [Googles protocol buffer library](https://github.com/protocolbuffers/protobuf) and the services are using [GRPC](https://github.com/grpc/grpc); Tested with the [Catch Framework](https://github.com/catchorg/Catch2).
 
-- Building the Network Library only requires a working installation of protobuf
+- Building the Network Library only requires a working installation of protobuf and g++
+  + clang not supported yet
 - Building the mainframe requires a working installation of GRPC
 
 ### Unix dependencies:

@@ -60,6 +60,10 @@ public:
   ~RafkoCost() = default;
 
   /* +++ Methods taken from @RafkoObjective +++ */
+  Cost_functions get_cost_type() const override{
+    return m_costFunction->get_type(); 
+  }
+
   double set_feature_for_label(
     const rafko_gym::RafkoDataSet& environment, std::uint32_t sample_index,
     const std::vector<double>& neuron_data

@@ -56,16 +56,34 @@ double InputFunction::get_derivative(Input_functions function, double a, double 
 
 
 #if(RAFKO_USES_OPENCL)
-std::string InputFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b){
+std::string InputFunction::get_all_kernel_value_functions(std::string operation_index, std::string target, std::string a, std::string b){
   std::string code = R"(
     switch(==op==){
-      case neuron_input_function_add: ==a== = ((==a==) + (==b==)); break;
-      case neuron_input_function_multiply: ==a== = ((==a==) * (==b==)); break;
+      case neuron_input_function_add: ==target== = ((==a==) + (==b==)); break;
+      case neuron_input_function_multiply: ==target== = ((==a==) * (==b==)); break;
       default: break;
     }
   )";
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==target=="), target);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==a=="), a);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==b=="), b);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
+  return code;
+}
+
+std::string InputFunction::get_all_kernel_derivative_functions(std::string operation_index, std::string target, std::string a, std::string a_dw, std::string b, std::string b_dw){
+  std::string code = R"(
+    switch(==op==){
+      case neuron_input_function_add: ==target== = ((==a_dw==) + (==b_dw==)); break;
+      case neuron_input_function_multiply: ==target== = ((==a==) * (==b_dw==)) + ((==a_dw==) * (==b==)); break;
+      default: break;
+    }
+  )";
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==target=="), target);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==a=="), a);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==b=="), b);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==a_dw=="), a_dw);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==b_dw=="), b_dw);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
   return code;
 }

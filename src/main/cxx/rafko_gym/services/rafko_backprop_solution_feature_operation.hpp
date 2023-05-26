@@ -78,7 +78,7 @@ public:
   std::string derivative_kernel_operation(
     std::string /*network_input_array*/, std::string /*label_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string /*operations_derivative_array*/,
-    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
+    std::string /*operations_array_size*/
   ) const override{ /*!Note: solution features don't have any derivatives, so nothing is here.. */
     return "";
   }
