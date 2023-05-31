@@ -53,6 +53,10 @@ public:
   {
   }
 
+  std::uint32_t get_sample_number() const{
+    return m_sampleNumber;
+  }
+
   ~RafkoBackpropObjectiveOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations() override{

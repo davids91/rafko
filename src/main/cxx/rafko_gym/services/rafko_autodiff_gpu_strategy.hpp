@@ -31,6 +31,10 @@
 
 #include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_gym/services/rafko_backpropagation_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_objective_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_spike_fn_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_transfer_fn_operation.hpp"
+#include "rafko_gym/services/rafko_backprop_neuron_bias_operation.hpp"
 
 namespace rafko_gym{
 
@@ -92,6 +96,26 @@ public:
     std::uint32_t weight_relevant_operation_count
   );
 
+private:
+  const rafko_mainframe::RafkoSettings& m_settings;
+  rafko_net::RafkoNet& m_network;
+  std::shared_ptr<RafkoDataSet> m_dataSet;
+  bool m_built = false;
+  std::string m_builtSource;
+  std::uint32_t m_numberOfOperations;
+  std::uint32_t m_maximumLocalWorkers;
+
+  /**
+   * @brief     Generates the instruction set to infer the Neural network on the GPU
+   * 
+   * @param[in]   operations          The array of operations to process
+   *   
+   * @return    An array to upload to GPU: the instruction index values representing the Neural network and parsed by the provided phase
+   */
+  [[nodiscard]] static std::vector<std::uint32_t> generate_propagation_instructions(
+    const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>& operations
+  );
+
   /**
    * @brief     Generates a 2D vector of operation index values
    *            where each operations in one row can be run in paralell, and each row depends on the previous one
@@ -121,15 +145,22 @@ public:
     std::function<std::string(OperationsType)> operation_generator
   );
 
+  static std::string generate_value_kernels(
+    std::string network_input_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_array_size,
+    const rafko_mainframe::RafkoSettings& settings
+  );
 
-private:
-  const rafko_mainframe::RafkoSettings& m_settings;
-  rafko_net::RafkoNet& m_network;
-  std::shared_ptr<RafkoDataSet> m_dataSet;
-  bool m_built = false;
-  std::string m_builtSource;
-  std::uint32_t m_numberOfOperations;
-  std::uint32_t m_maximumLocalWorkers;
+  static std::string generate_derivative_kernels(
+    std::string network_input_array, std::string label_array, std::string weight_array,
+    std::string operations_value_array, std::string operations_derivative_array,
+    std::string operations_array_size, 
+    const rafko_mainframe::RafkoSettings& settings, const RafkoObjective& objective
+  );
+
+  static void substitute_index_values_in_kernels(std::string& kernel_source);
+
+
 };
 
 } /* namespace rafko_gym */

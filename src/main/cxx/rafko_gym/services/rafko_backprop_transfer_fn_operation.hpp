@@ -110,7 +110,7 @@ public:
    *
    * @return    Raw Kernel code for the forward propagation of this operation
    */
-  static std::string value_kernel_operation(std::string operations_value_array, std::string behavior_index, const rafko_mainframe::RafkoSettings& settings){
+  static std::string generic_value_kernel_operation(std::string operations_value_array, std::string behavior_index, const rafko_mainframe::RafkoSettings& settings){
     return rafko_net::TransferFunction::get_all_kernel_value_functions(
       settings, behavior_index, operations_value_array + "[==op_index==]", operations_value_array + "[==dependency_op_index==]"
     );
@@ -170,6 +170,7 @@ public:
       )
     ) + ";";
   }
+  
   void substitute_index_values_in_kernels(std::string& kernel_source) const override { 
     kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==op_index=="), std::to_string(get_operation_index())

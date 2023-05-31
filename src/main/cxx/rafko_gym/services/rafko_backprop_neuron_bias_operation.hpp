@@ -58,12 +58,22 @@ public:
   }
   ~RafkoBackpropNeuronBiasOperation() = default;
 
+  std::uint32_t get_dependency_descriptor() const{
+    if(m_nextBiasDependency){
+      return m_nextBiasDependency->get_operation_index();
+    }
+    return 0xFFFFFFFFu;
+  }
+
   std::uint32_t get_weight_index() const{
     return m_weightIndex;
   }
 
   rafko_net::Input_functions get_input_function() const{
-    return m_network.neuron_array(m_neuronIndex).input_function();
+    if(m_nextBiasDependency){
+      return m_network.neuron_array(m_neuronIndex).input_function();
+    }
+    return rafko_net::Input_functions::input_function_unknown;
   }
 
   DependencyRequest upload_dependencies_to_operations() override{
@@ -98,15 +108,12 @@ public:
    * 
    * @param   weight_array                  The name of the array contining the Neural network weights 
    * @param   operations_value_array        The name of the array containing the operation values for forward propagation
-   * @param   behavior_index                The index to select which input function to use should there be another bias value dependency
-   * @param   additional_dependency_flag    Conditional value to tell if there's another bias dependency for this operation
    * @param   behavior_index                The index value to determine the Input function in this operation 
-   * @param   additional_dependency_flag    Conditional in OpenCL Kernel to determine if this operation has additional bias dependencies or not
    *
    * @return    Raw Kernel code for the forward propagation of this operation
    */
   static std::string generic_value_kernel_operation(
-    std::string weight_array, std::string operations_value_array, std::string behavior_index, std::string additional_dependency_flag
+    std::string weight_array, std::string operations_value_array, std::string behavior_index
   );
 
   std::string value_kernel_operation(
@@ -121,13 +128,11 @@ public:
    * @param   operations_value_array        The name of the array containing the operation values for backward propagation
    * @param   operations_derivative_array   The name of the array containing the operation values for backward propagation
    * @param   behavior_index                The index to select which input function to use should there be another bias value dependency
-   * @param   additional_dependency_flag    Conditional value to tell if there's another bias dependency for this operation
    *
    * @return    Raw Kernel code for the backward propagation of this operation
    */
   static std::string generic_derivative_kernel_operation(
-    std::string weight_array, std::string operations_value_array, std::string operations_derivative_array,
-    std::string behavior_index, std::string additional_dependency_flag
+    std::string weight_array, std::string operations_value_array, std::string operations_derivative_array, std::string behavior_index
   );
 
   std::string derivative_kernel_operation(

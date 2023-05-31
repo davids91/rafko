@@ -48,8 +48,12 @@ public:
   );
   ~RafkoBackpropNeuronInputOperation() = default;
 
-  std::uint32_t get_weight_index() const{
-    return m_weightIndex;
+  std::uint32_t get_weight_descriptor() const{
+    if(m_isNetworkInput){
+      return 0xFFFFFFFFu;
+    }else{
+      return m_weightIndex;      
+    }
   }
 
   std::uint32_t get_input_past_index() const{
@@ -86,17 +90,16 @@ public:
    * @param   weight_array                  The name of the array contining the Neural network weights 
    * @param   operations_value_array        The name of the array containing the operation values for forward propagation
    * @param   operations_array_size         The size of the array contining the operation values for both forward and backward propagation
+   * @param   behavior_index                The value determining the input function of the operation
    *
    * @return    Raw Kernel code for the forward propagation of this operation
    */
   static std::string generic_value_kernel_operation(
-    std::string weight_array, std::string operations_value_array, std::string operations_array_size,
-    std::string behavior_index, std::string past_index, std::string weight_is_used
+    std::string weight_array, std::string operations_value_array, std::string operations_array_size, std::string behavior_index
   );
 
   std::string value_kernel_operation(
-    std::string network_input_array, std::string weight_array,
-    std::string operations_value_array, std::string operations_array_size
+    std::string network_input_array, std::string weight_array, std::string operations_value_array, std::string operations_array_size
   ) const override;
 
   /**
@@ -107,13 +110,12 @@ public:
    * @param   operations_derivative_array   The name of the array containing the operation values for backward propagation
    * @param   operations_array_size         The size of the array contining the operation values for both forward and backward propagation
    * @param   behavior_index                The value determining the input function of the operation
-   * @param   past_index                    The value determining the past index inside this operations input 
    *
    * @return    Raw Kernel code for the forward propagation of this operation
    */
   static std::string generic_derivative_kernel_operation(
     std::string weight_array, std::string operations_value_array, std::string operations_derivative_array,
-    std::string operations_array_size, std::string behavior_index, std::string past_index
+    std::string operations_array_size, std::string behavior_index
   );
 
   std::string derivative_kernel_operation(

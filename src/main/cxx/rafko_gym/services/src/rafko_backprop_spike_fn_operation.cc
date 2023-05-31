@@ -228,15 +228,9 @@ std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
       "past_derivative_value", "==op_derivative_array==[==dependency_op_index==]"
     )
   );
-  kernel_source = rafko_utilities::replace_all_in_string(
-    kernel_source, std::regex("==op_value_array=="), operations_value_array
-  );
-  kernel_source = rafko_utilities::replace_all_in_string(
-    kernel_source, std::regex("==op_array_size=="), operations_array_size
-  );
-  kernel_source = rafko_utilities::replace_all_in_string(
-    kernel_source, std::regex("==op_derivative_array=="), operations_derivative_array
-  );
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_value_array=="), operations_value_array);
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_array_size=="), operations_array_size);
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_derivative_array=="), operations_derivative_array);
   return kernel_source;
 }
 

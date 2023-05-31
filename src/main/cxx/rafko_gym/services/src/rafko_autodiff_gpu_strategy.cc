@@ -115,6 +115,85 @@ std::vector<std::vector<std::uint32_t>> AutoDiffGPUStrategy::generate_operation_
   return operations_matrix;
 }
 
+std::string AutoDiffGPUStrategy::generate_value_kernels(
+  std::string network_input_array, std::string weight_array,
+  std::string operations_value_array, std::string operations_array_size,
+  const rafko_mainframe::RafkoSettings& settings
+){
+  std::string kernel_source = RafkoBackpropNetworkInputOperation::generic_value_kernel_operation(
+    network_input_array, weight_array, operations_value_array
+  );
+  kernel_source += RafkoBackpropNeuronBiasOperation::generic_value_kernel_operation(
+    weight_array, operations_value_array, "network_instructions[5]"/*behavior_index*/
+  );
+  kernel_source += RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
+    weight_array, operations_value_array, operations_array_size, "(network_instructions[5] & 0x00FFu)"/*behavior_index*/
+  );
+
+  /* RafkoBackpropObjectiveOperation does not calculate value */
+  
+  kernel_source += RafkoBackpropSpikeFnOperation::generic_value_kernel_operation(
+    weight_array, operations_value_array, operations_array_size, "network_instructions[5]"/*behavior_index*/
+  );
+  kernel_source += RafkoBackpropTransferFnOperation::generic_value_kernel_operation(
+    operations_value_array, "network_instructions[5]"/*behavior_index*/, settings
+  );
+  
+  substitute_index_values_in_kernels(kernel_source);
+
+  //TODO: Weight regularization + solution feature operation
+  return kernel_source;
+}
+
+std::string AutoDiffGPUStrategy::generate_derivative_kernels(
+  std::string network_input_array, std::string label_array, std::string weight_array,
+  std::string operations_value_array, std::string operations_derivative_array,
+  std::string operations_array_size, 
+  const rafko_mainframe::RafkoSettings& settings, const RafkoObjective& objective
+){
+  std::string kernel_source = RafkoBackpropNetworkInputOperation::generic_derivative_kernel_operation(
+    network_input_array, operations_derivative_array
+  );
+  kernel_source += RafkoBackpropNeuronBiasOperation::generic_derivative_kernel_operation(
+    weight_array, operations_value_array, operations_derivative_array,
+    "network_instructions[5]"/*behavior_index*/
+  );
+  kernel_source += RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
+    weight_array, operations_value_array, operations_derivative_array,
+    operations_array_size, "network_instructions[5]"/*behavior_index*/
+  );
+  kernel_source += RafkoBackpropObjectiveOperation::generic_derivative_kernel_operation(
+    label_array, operations_value_array, operations_derivative_array,
+    "network_instructions[5]"/*sample_number*/, objective
+  );
+  kernel_source += RafkoBackpropSpikeFnOperation::generic_derivative_kernel_operation(
+    weight_array, operations_value_array, operations_derivative_array, operations_array_size,
+    "network_instructions[5]"/*behavior_index*/
+  );
+  kernel_source += RafkoBackpropTransferFnOperation::generic_derivative_kernel_operation(
+    operations_value_array, operations_derivative_array, "network_instructions[5]"/*behavior_index*/, settings
+  );
+
+  substitute_index_values_in_kernels(kernel_source);
+
+  //TODO: Weight regularization + feature operation    
+  return kernel_source;
+}
+
+void AutoDiffGPUStrategy::substitute_index_values_in_kernels(std::string& kernel_source){
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==network_input_index=="), "network_instructions[2]");
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==this_op_weight_index=="), "network_instructions[1]");
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_index=="), "network_instructions[4]");
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==past_index=="), "((network_instructions[5] & 0xFF00u) >> 8)");
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==f_x_op_index=="), "network_instructions[2]");
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==u_x_op_index=="), "network_instructions[3]");
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==label_index=="), "network_instructions[1]");
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==dependency_op_index=="), "network_instructions[3]");
+
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==weight_descriptor=="), "network_instructions[1]");
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==dependency_descriptor=="), "network_instructions[3]");
+}
+
 std::string AutoDiffGPUStrategy::generate_switch_case_kernels_from(
   const std::vector<OperationsType>& operations,
   const std::vector<std::vector<std::uint32_t>>& operations_matrix,
@@ -134,7 +213,7 @@ std::string AutoDiffGPUStrategy::generate_switch_case_kernels_from(
     }break;
   )";
 
-  std::uint32_t operations_phase = 0u;
+  [[maybe_unused]] std::uint32_t operations_phase = 0u;
   std::uint32_t avg_row_size = 0u;
   std::string result_switch_cases;
   std::vector<std::string> value_phases(operations_matrix.size());
@@ -204,12 +283,14 @@ std::string AutoDiffGPUStrategy::generate_switch_case_kernels_from(
 }
 
 void AutoDiffGPUStrategy::build(
-  const std::vector<OperationsType>& operations,
-  std::uint32_t weight_relevant_operation_count
+  const std::vector<OperationsType>& operations, std::uint32_t weight_relevant_operation_count
 ){
   std::string source_base =
     rafko_utilities::atomic_double_add_function
     + rafko_utilities::atomic_double_average_function
+    + rafko_net::InputFunction::get_kernel_enums()
+    + rafko_net::TransferFunction::get_kernel_enums()
+    + rafko_net::SpikeFunction::get_kernel_enums()
     + rafko_utilities::random_function + R"(
 
     __constant bool evaluate_network = true;
