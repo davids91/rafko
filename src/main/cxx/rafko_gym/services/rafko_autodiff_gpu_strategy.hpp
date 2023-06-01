@@ -62,7 +62,6 @@ public:
     m_built = false;
   }
 
-  
   cl::Program::Sources get_step_sources() const override{
     RFASSERT(m_built);
     RFASSERT(static_cast<bool>(m_dataSet));
@@ -96,6 +95,11 @@ public:
     std::uint32_t weight_relevant_operation_count
   );
 
+  static inline const std::uint32_t s_oneNeuralInstructionEntrySize = 6;
+  const std::vector<std::uint32_t>& get_propagation_instructions() const{
+    return m_neuralPropagationInstructions;
+  }
+
 private:
   const rafko_mainframe::RafkoSettings& m_settings;
   rafko_net::RafkoNet& m_network;
@@ -104,6 +108,7 @@ private:
   std::string m_builtSource;
   std::uint32_t m_numberOfOperations;
   std::uint32_t m_maximumLocalWorkers;
+  std::vector<std::uint32_t> m_neuralPropagationInstructions;
 
   /**
    * @brief     Generates the instruction set to infer the Neural network on the GPU
@@ -159,8 +164,6 @@ private:
   );
 
   static void substitute_index_values_in_kernels(std::string& kernel_source);
-
-
 };
 
 } /* namespace rafko_gym */

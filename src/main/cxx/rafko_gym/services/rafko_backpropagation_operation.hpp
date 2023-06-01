@@ -147,6 +147,26 @@ public:
   virtual bool is_multi_worker() const{
     return false;
   }
+
+  /**
+   * @brief     Generates GPU kernel enumerations
+   *
+   * @return    AN enumerator to be ised in the GPU kernel
+   */
+  static std::string get_kernel_enums(){
+    return R"(
+      typedef enum autodiff_operations_e{
+        ad_operation_unknown = 0,
+        ad_operation_objective_d,
+        ad_operation_neuron_spike_d,
+        ad_operation_neuron_transfer_d,
+        ad_operation_neuron_input_d,
+        ad_operation_neuron_bias_d,
+        ad_operation_network_input_d,
+      }autodiff_operations_t __attribute__ ((aligned));
+    )";
+  }
+
   #endif/*(RAFKO_USES_OPENCL)*/
 
 

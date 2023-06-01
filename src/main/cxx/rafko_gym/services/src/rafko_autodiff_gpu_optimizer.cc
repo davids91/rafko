@@ -27,6 +27,7 @@ void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoDataSet> data_set, st
   m_strategy->build(m_operations, build_without_data(data_set, objective));
   m_gpuPhase.set_strategy(m_strategy);
   sync_data_set_on_GPU(*data_set);
+  upload_network();
   m_built = true;
 }
 
@@ -36,6 +37,29 @@ void RafkoAutodiffGPUOptimizer::upload_weight_table(){
     m_gpuPhase.get_input_buffer(), CL_TRUE/*blocking*/, 0u/*offset*/,
     (sizeof(double) * m_network.weight_table_size())/*size*/,
     m_network.mutable_weight_table()->Mutable(0)
+  );
+  RFASSERT( return_value == CL_SUCCESS );
+}
+
+void RafkoAutodiffGPUOptimizer::upload_network(){
+  const std::vector<std::uint32_t>& propagation_instructions = m_strategy->get_propagation_instructions();
+  const std::uint32_t propagation_instructions_byte_size = (sizeof(std::uint32_t) * propagation_instructions.size());
+  const std::uint32_t weight_table_byte_size = sizeof(double) * m_strategy->get_input_shapes()[0][0];
+  const std::uint32_t inputs_byte_size = sizeof(double) * m_strategy->get_input_shapes()[0][1];
+  const std::uint32_t labels_byte_size = sizeof(double) * m_strategy->get_input_shapes()[0][2]; 
+  const std::uint32_t byte_offset = (weight_table_byte_size + inputs_byte_size + labels_byte_size);
+  /*!Note: byte_ofset is aligned to sizeof(double), because it is based on the previous entries in front of it in the input buffer.
+   * Since enqueueWriteBuffer acepts byte size it is fine to use sizeof(std::uint32_t) for the size.
+   * Only the offset needs to be aligned, because accessing it inside the kernel is with the help of the strategy @get_input_shapes sizes.
+   * The only requirement here is that propagation_instructions_byte_size needs to be bigger or equal to the actual data to be accessed
+   **/
+  RFASSERT_LOG(
+    "Uploading network propagation table(offset: {}, size: {} bytes) to device..", 
+    byte_offset, propagation_instructions.size()
+  );
+  cl_int return_value = m_openclQueue.enqueueWriteBuffer(
+    m_gpuPhase.get_input_buffer(), CL_TRUE/*blocking*/, 
+    byte_offset, propagation_instructions_byte_size, propagation_instructions.data()
   );
   RFASSERT( return_value == CL_SUCCESS );
 }
@@ -85,8 +109,8 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet& data_set, bool force
 
   /* Reset GPU Derivatives and triggered derivative operation count */
   cl::Event reset_event;
-  std::uint32_t output_buffer_byte_size = m_strategy->get_output_buffer_byte_size<double>();
-  std::uint32_t weight_derivatives_byte_size = m_strategy->get_output_shapes().back().get_byte_size<double>();
+  const std::uint32_t output_buffer_byte_size = m_strategy->get_output_buffer_byte_size<double>();
+  const std::uint32_t weight_derivatives_byte_size = m_strategy->get_output_shapes().back().get_byte_size<double>();
   cl_int return_value = m_openclQueue.enqueueFillBuffer<double>(
     m_gpuPhase.get_output_buffer(), (0.0)/* the data(pattern) value */,
     (output_buffer_byte_size - weight_derivatives_byte_size)/*offset*/,

@@ -319,7 +319,7 @@ std::string RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
     }
 
     /* calculate the next value (u(x)) */
-    u_x_value = ==op_value__array==[==u_x_op_index==];    
+    u_x_value = ==op_value_array==[==u_x_op_index==];    
   )";
 
   /* add the input function */
