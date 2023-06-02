@@ -301,7 +301,7 @@ void AutoDiffGPUStrategy::build(
             );
           }
           ++network_ran_count;
-          available_memory_slots = min(network_ran_count, (network_memory_size-1));
+          available_memory_slots = min(network_ran_count, network_memory_size);
           network_inputs_start_index += ==one_input_size==;
           network_values_start_index += operation_count;
         }/*for(prefill of the sequence)*/
@@ -333,8 +333,8 @@ void AutoDiffGPUStrategy::build(
             &outputs[output_sizes[0] + output_sizes[1]]/*d_w_array*/
           );
           ++network_ran_count;
+          available_memory_slots = min(network_ran_count, network_memory_size);
           if(label_index < sequence_labels_count-1){
-            available_memory_slots = min(network_ran_count, (network_memory_size-1));
             network_inputs_start_index += ==one_input_size==;
             network_labels_start_index += ==one_label_size==;
             network_values_start_index += operation_count;

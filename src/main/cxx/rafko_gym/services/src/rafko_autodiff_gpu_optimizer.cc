@@ -174,7 +174,7 @@ double RafkoAutodiffGPUOptimizer::get_neuron_data(
   const RafkoDataSet& data_set
 ){
   double ret = 0.0;
-  RFASSERT(past_index < m_network.memory_size());
+  RFASSERT(past_index <= m_network.memory_size());
   RFASSERT_LOG(
     "Loading Neuron data from GPU Phase: sequence[{}/{}], past[{}], Neuron[{}/{}], operation[{}/{}] ==> offset: {}",
     sequence_index, data_set.get_number_of_sequences(),

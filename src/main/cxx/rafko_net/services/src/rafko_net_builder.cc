@@ -473,7 +473,7 @@ RafkoNet* RafkoNetBuilder::create_layers(google::protobuf::Arena* arena_ptr, std
       *ret->mutable_neuron_array() = {m_argNeuronArray.begin(),m_argNeuronArray.end()};
     }else throw std::runtime_error("Unable to set Neuron Array into Sparse net as the last Neuron seems invalid!");
 
-    ret->set_memory_size(reach_back_max + 1u);
+    ret->set_memory_size(reach_back_max + 1u); /* because network memory includes current run */
     return ret;
   }else throw std::runtime_error("Input Output Pre-requisites failed;Unable to determine Net Structure!");
 }
