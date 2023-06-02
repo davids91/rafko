@@ -199,7 +199,7 @@ public:
    *
    * @param[in]   layer_index     The index of the Layer to set the features on
    * @param[in]   neuron_index    The relative index of the neuron inside the layer
-   * @param[in]   feature         The function to set to the Neuron
+   * @param[in]   past            The index of the previous run from which the Neuron should take its own past data
    *
    * @return     builder reference for chaining
    */

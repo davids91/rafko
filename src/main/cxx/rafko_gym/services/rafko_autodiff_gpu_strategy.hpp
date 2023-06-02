@@ -89,10 +89,11 @@ public:
    *
    * @param[in]   operations                        The array of operations to process
    * @param[in]   weight_relevant_operation_count   The number of operations relevant to weights at the start of the opeartions array
+   * @param[in]   objective                         The Objective containing the cost fuinction and derivative kernels
+   * 
    */
   void build(
-    const std::vector<OperationsType>& operations,
-    std::uint32_t weight_relevant_operation_count
+    const std::vector<OperationsType>& operations, std::uint32_t weight_relevant_operation_count, const RafkoObjective& objective
   );
 
   static inline const std::uint32_t s_oneNeuralInstructionEntrySize = 6;

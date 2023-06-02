@@ -24,7 +24,7 @@ void RafkoAutodiffGPUOptimizer::build(std::shared_ptr<RafkoDataSet> data_set, st
   m_usedMinibatchSize = std::min(m_settings->get_minibatch_size(), data_set->get_number_of_sequences());
   if(m_trainingEvaluator)m_trainingEvaluator->set_data_set(data_set);
   m_strategy->set_data_set(data_set);
-  m_strategy->build(m_operations, build_without_data(data_set, objective));
+  m_strategy->build(m_operations, build_without_data(data_set, objective), *objective);
   m_gpuPhase.set_strategy(m_strategy);
   sync_data_set_on_GPU(*data_set);
   upload_network();

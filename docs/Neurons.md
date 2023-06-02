@@ -76,11 +76,8 @@ Each instruction for Network inference and error back-propagation with thier res
 \*weight_descriptor, dependency_descriptor either contains the used index, or a special value meaning: not used
 
 TODO:
-- create loop to go through the operation matrix
-- Implement switches between operations absed on network_instructions[0]
-- Move "network_instructions", "==operation_count==" to the arguments of the kernel functions?
-- Make Autodiff operation kernel enums based on the prtoto file
-- Generate inside GPU Strategy the indexable functions for all of the operations
+- Switch derivative kernel code to the new system
+- Clean up after the old system ( switch case operations ), decide if old kernel functions are to stay
 - Eliminate the warnings with kernel codes!
 - Investigate if a re-compile is always needed with the cost function; Make Objective indexable
 - behavior_index to be moved out of static kernel generation functions maybe?
@@ -91,3 +88,4 @@ TODO:
 - Create ticket for: Eliminate Network Input Operation by making Neuron Input more complex; Additional ticket to investigate bias for the same thing
 - Create ticket for: Format code all the way through LSP
 - Create ticket: Include Kernel source files through CMAKE 
+- Create ticket: Make Autodiff operation, spike_fn, transfer_fn, input_fn kernel enums based on the proto files

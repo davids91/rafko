@@ -243,7 +243,6 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
   std::string operations_value_array, std::string operations_array_size,
   const rafko_mainframe::RafkoSettings& settings
 ){
-  //TODO: Make the selection based on network_instructions[0]
   std::string kernel_source = "switch(network_instructions[0]){";
   kernel_source += "case ad_operation_network_input_d:{" + RafkoBackpropNetworkInputOperation::generic_value_kernel_operation(
     network_input_array, weight_array, operations_value_array
@@ -277,28 +276,30 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
   std::string operations_array_size, 
   const rafko_mainframe::RafkoSettings& settings, const RafkoObjective& objective
 ){
-  std::string kernel_source = RafkoBackpropNetworkInputOperation::generic_derivative_kernel_operation(
+  std::string kernel_source = "switch(network_instructions[0]){";
+  kernel_source += "case ad_operation_network_input_d:{" + RafkoBackpropNetworkInputOperation::generic_derivative_kernel_operation(
     network_input_array, operations_derivative_array
-  );
-  kernel_source += RafkoBackpropNeuronBiasOperation::generic_derivative_kernel_operation(
+  ) + "}break;";
+  kernel_source += "case ad_operation_neuron_bias_d:{" + RafkoBackpropNeuronBiasOperation::generic_derivative_kernel_operation(
     weight_array, operations_value_array, operations_derivative_array,
     "network_instructions[5]"/*behavior_index*/
-  );
-  kernel_source += RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
+  ) + "}break;";
+  kernel_source += "case ad_operation_neuron_input_d:{" + RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
     weight_array, operations_value_array, operations_derivative_array,
     operations_array_size, "network_instructions[5]"/*behavior_index*/
-  );
-  kernel_source += RafkoBackpropObjectiveOperation::generic_derivative_kernel_operation(
+  ) + "}break;";
+  kernel_source += "case ad_operation_objective_d:{" + RafkoBackpropObjectiveOperation::generic_derivative_kernel_operation(
     label_array, operations_value_array, operations_derivative_array,
-    "network_instructions[5]"/*sample_number*/, objective
-  );
-  kernel_source += RafkoBackpropSpikeFnOperation::generic_derivative_kernel_operation(
+    "==number_of_sequences=="/*sample_number*/, objective
+  ) + "}break;";
+  kernel_source += "case ad_operation_neuron_spike_d:{" + RafkoBackpropSpikeFnOperation::generic_derivative_kernel_operation(
     weight_array, operations_value_array, operations_derivative_array, operations_array_size,
     "network_instructions[5]"/*behavior_index*/
-  );
-  kernel_source += RafkoBackpropTransferFnOperation::generic_derivative_kernel_operation(
+  ) + "}break;";
+  kernel_source += "case ad_operation_neuron_transfer_d:{" + RafkoBackpropTransferFnOperation::generic_derivative_kernel_operation(
     operations_value_array, operations_derivative_array, "network_instructions[5]"/*behavior_index*/, settings
-  );
+  ) + "}break;";
+  kernel_source +=  "}";
 
   substitute_index_values_in_kernels(kernel_source);
 
@@ -320,96 +321,8 @@ void AutoDiffGPUStrategy::substitute_index_values_in_kernels(std::string& kernel
   kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==dependency_descriptor=="), "network_instructions[3]");
 }
 
-std::string AutoDiffGPUStrategy::generate_switch_case_kernels_from(
-  const std::vector<OperationsType>& operations,
-  const std::vector<std::vector<std::uint32_t>>& operations_matrix,
-  std::function<std::string(OperationsType)> operation_generator
-){
-  const static std::string switch_case_template = R"(
-    ==multi_worker_operations==
-    switch(get_local_id(0)){
-      ==all_worker_cases==
-      default:break;
-    }
-    barrier(CLK_GLOBAL_MEM_FENCE);
-  )";
-  const static std::string worker_case_template = R"(
-    case ==thread_index==:{
-      ==thread_contents==
-    }break;
-  )";
-
-  [[maybe_unused]] std::uint32_t operations_phase = 0u;
-  std::uint32_t avg_row_size = 0u;
-  std::string result_switch_cases;
-  std::vector<std::string> value_phases(operations_matrix.size());
-  for(const std::vector<std::uint32_t>& row : operations_matrix) avg_row_size += row.size();
-  avg_row_size = static_cast<std::uint32_t>( std::ceil(
-    static_cast<double>(avg_row_size) / static_cast<double>(operations_matrix.size())
-  ) );
-  m_maximumLocalWorkers = avg_row_size;
-  RFASSERT_LOG("One Local Group size: {}", m_maximumLocalWorkers);
-
-  for(const std::vector<std::uint32_t>& current_row : operations_matrix){
-    /*!Note: one row to be split up between the workers */
-    std::vector<std::string> worker_operations(avg_row_size);
-    std::string multi_worker_operations = "";
-    std::uint32_t placed_operation_count = 0u;
-    while(placed_operation_count < current_row.size()){
-      for(std::uint32_t worker_index = 0u; worker_index < avg_row_size; ++worker_index){
-        if((placed_operation_count + worker_index) < current_row.size()){
-          std::uint32_t operation_index = current_row[placed_operation_count + worker_index];
-          if(operations[operation_index]->is_multi_worker()){
-            multi_worker_operations += operation_generator(operations[operation_index]);
-            RFASSERT_LOG(
-              "Placing operation[current_row[{}] ==> {}] before worker[{}] phase[{}](it's a multi-worker operation)",
-              (placed_operation_count + worker_index), operation_index, worker_index, operations_phase
-            );
-          }else{
-            worker_operations[worker_index] += operation_generator(operations[operation_index]);
-            RFASSERT_LOG(
-              "Placing operation[current_row[{}] ==> {}] into worker[{}] phase[{}]",
-              (placed_operation_count + worker_index), operation_index, worker_index, operations_phase
-            );
-          }
-        }
-      }/*for(every worker thread)*/
-      placed_operation_count += avg_row_size;
-    }/*while(any operation remain unplaced)*/
-
-    /* wrap every worker operation into a switch case*/
-    std::uint32_t worker_index = 0;
-    std::string all_worker_cases = "";
-    for(std::string& worker_case : worker_operations){
-      std::string one_worker_case = rafko_utilities::replace_all_in_string(
-        worker_case_template, std::regex("==thread_index=="), std::to_string(worker_index)
-      );
-      if(0 < worker_case.size()){
-        worker_case = rafko_utilities::replace_all_in_string(
-          one_worker_case, std::regex("==thread_contents=="), worker_case
-        );
-        all_worker_cases += worker_case;
-      }
-      ++worker_index;
-    }
-    std::string one_switch_case = rafko_utilities::replace_all_in_string(
-      switch_case_template, std::regex("==all_worker_cases=="), all_worker_cases
-    );
-    one_switch_case = rafko_utilities::replace_all_in_string(
-      one_switch_case, std::regex("==multi_worker_operations=="), multi_worker_operations
-    );
-    result_switch_cases += one_switch_case;
-    RFASSERT_LOGV(
-      current_row, "Used every available worker, row(at index {}/{}):",
-      placed_operation_count, current_row.size()
-    );
-    ++operations_phase;
-  }/*for(all rows in the operations_matrix)*/
-  return result_switch_cases;
-}
-
 void AutoDiffGPUStrategy::build(
-  const std::vector<OperationsType>& operations, std::uint32_t weight_relevant_operation_count
+  const std::vector<OperationsType>& operations, std::uint32_t weight_relevant_operation_count, const RafkoObjective& objective
 ){
   std::string source_base =
     rafko_utilities::atomic_double_add_function
@@ -427,18 +340,35 @@ void AutoDiffGPUStrategy::build(
      */
 
     void execute_derivative_workers(
-      int d_w_index, int available_memory_slots, int weight_table_size, int operation_count, bool save_to_output,
+      int d_w_index, int available_memory_slots, int weight_table_size, bool save_to_output,
       __constant double* network_inputs, __constant double* labels, __constant double* network_weights,
-      __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array
+      __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array, 
+      __constant unsigned int* network_instruction_table
     ){
       __global static double triggered_derivative_operations = 0.0;
       if(0 == get_global_id(0))
         triggered_derivative_operations = 0;
 
       ==operation_locals==
-      ==derivative_operations==
-      barrier(CLK_GLOBAL_MEM_FENCE);
+      const int operation_count = ==operation_count==;
+      const unsigned int network_instruction_count = ==network_instruction_count==;
+      int current_instruction_index = 0;
+      while(current_instruction_index < network_instruction_count){
+        int operations_to_do_now = network_instruction_table[current_instruction_index];
+        int local_operation_index = 0; 
+        while((local_operation_index + get_local_id(0)) < operations_to_do_now){
+          int current_instruction_entry_start = current_instruction_index + 1 + ((local_operation_index + get_local_id(0)) * ==one_neural_instruction_entry_size==);
+          __constant unsigned int* network_instructions = &network_instruction_table[current_instruction_entry_start];
 
+          ==derivative_command_list_parsers== 
+
+          local_operation_index += get_local_size(0);
+        }
+        current_instruction_index += 1 + (operations_to_do_now * ==one_neural_instruction_entry_size==);
+        barrier(CLK_LOCAL_MEM_FENCE);
+      }
+
+      barrier(CLK_GLOBAL_MEM_FENCE);
       if(save_to_output){
         #pragma unroll
         for(int operation_index = 0; operation_index < ==weight_relevant_operation_count==; ++operation_index){
@@ -471,13 +401,14 @@ void AutoDiffGPUStrategy::build(
           int current_instruction_entry_start = current_instruction_index + 1 + ((local_operation_index + get_local_id(0)) * ==one_neural_instruction_entry_size==);
           __constant unsigned int* network_instructions = &network_instruction_table[current_instruction_entry_start];
 
-          ==command_list_parsers== 
+          ==value_command_list_parsers== 
 
           local_operation_index += get_local_size(0);
         }
         current_instruction_index += 1 + (operations_to_do_now * ==one_neural_instruction_entry_size==);
         barrier(CLK_LOCAL_MEM_FENCE);
       }
+      barrier(CLK_GLOBAL_MEM_FENCE);
     }/*execute_value_workers()*/
 
     void __kernel autodiff_iterate(
@@ -551,7 +482,7 @@ void AutoDiffGPUStrategy::build(
            */
           execute_derivative_workers(
             d_w_index, min(available_memory_slots, label_index), weight_table_size,
-            operation_count, (
+            (
               ( label_index >= sequence_truncation_start )
               &&( label_index < (sequence_truncation_start + sequence_truncation) )
             ),
@@ -560,7 +491,8 @@ void AutoDiffGPUStrategy::build(
             &inputs[0]/*network_weights*/,
             &outputs[network_values_start_index]/*operation_values*/,
             &outputs[network_derivatives_start_index]/*operation_derivatives*/,
-            &outputs[output_sizes[0] + output_sizes[1]]/*d_w_array*/
+            &outputs[output_sizes[0] + output_sizes[1]]/*d_w_array*/,
+            (__constant unsigned int*)&inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]]/*network_instruction_table*/
           );
           ++network_ran_count;
           available_memory_slots = min(network_ran_count, network_memory_size);
@@ -628,27 +560,10 @@ void AutoDiffGPUStrategy::build(
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==operation_locals=="), operation_locals
   );
-
-  std::vector<std::vector<std::uint32_t>> operations_matrix = generate_operation_paralell_matrix(operations);
-
   RFASSERT_LOG("Starting to split operations into workers..");
-  std::string derivative_operation_switch_cases = generate_switch_case_kernels_from(
-    operations, operations_matrix, [](OperationsType operation)->std::string{
-        std::string operation_source = operation->derivative_kernel_operation(
-        "network_inputs", "labels", "network_weights",
-        "operations_value_array", "operations_d_array",
-        "operation_count"
-      );
-      operation->substitute_index_values_in_kernels(operation_source);
-      return operation_source;
-    }
-  );
-
-  //TODO: See if there's any dependencies not met at this point..
-  m_neuralPropagationInstructions = generate_propagation_instructions(operations);
 
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==command_list_parsers=="), 
+    source_base, std::regex("==value_command_list_parsers=="), 
     generate_value_kernels(
       "network_inputs", "network_weights",
       "operations_value_array", "operation_count",
@@ -656,7 +571,12 @@ void AutoDiffGPUStrategy::build(
     )
   );
   source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==derivative_operations=="), derivative_operation_switch_cases
+    source_base, std::regex("==derivative_command_list_parsers=="),
+    generate_derivative_kernels(
+        "network_inputs", "labels", "network_weights",
+        "operations_value_array", "operations_d_array",
+        "operation_count", m_settings, objective
+    )    
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==network_instruction_count=="), std::to_string(m_neuralPropagationInstructions.size())
@@ -671,9 +591,18 @@ void AutoDiffGPUStrategy::build(
     source_base, std::regex("==one_label_size=="), std::to_string(m_dataSet->get_feature_size())
   );
   RFASSERT_LOG("Optimizer source: {}", source_base);
+
+  m_neuralPropagationInstructions = generate_propagation_instructions(operations);
+  std::vector<std::vector<std::uint32_t>> operations_matrix = generate_operation_paralell_matrix(operations);
+  std::uint32_t avg_row_size = 0u;
+  for(const std::vector<std::uint32_t>& row : operations_matrix) avg_row_size += row.size();
+  avg_row_size = static_cast<std::uint32_t>( std::ceil(static_cast<double>(avg_row_size) / static_cast<double>(operations_matrix.size())) );
+  m_maximumLocalWorkers = avg_row_size;
   m_builtSource = source_base;
   m_numberOfOperations = operations.size();
   m_built = true;
+  std::cout << m_builtSource << std::endl;
+  RFASSERT_LOG("Build finished! One Local Group size: {}", m_maximumLocalWorkers);
 }
 
 
