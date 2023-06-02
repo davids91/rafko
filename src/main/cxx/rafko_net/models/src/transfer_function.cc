@@ -138,29 +138,29 @@ std::string TransferFunction::get_all_kernel_value_functions(
 ){
   std::string code = R"(
     switch(==op==){
-      case neuron_transfer_function_identity:
+      case transfer_function_identity:
         ==target== = ==value==;
         break;
-      case neuron_transfer_function_sigmoid:
+      case transfer_function_sigmoid:
         ==target== = 1.0/(1.0+exp(-==value==));
         break;
-      case neuron_transfer_function_tanh:
+      case transfer_function_tanh:
         ==target== = tanh(==value==);
         break;
-      case neuron_transfer_function_elu:
+      case transfer_function_elu:
         ==target== = (
           max(0.0, ==value==) + ( ==alpha== * (exp(min(0.0, ==value==)) - 1.0) )
         );
         break;
-      case neuron_transfer_function_selu:
+      case transfer_function_selu:
         ==target== = ==lambda== * (
           max(0.0, ==value==) + ( ==alpha== * (exp(min(0.0, ==value==)) - 1.0) )
         );
         break;
-      case neuron_transfer_function_relu:
+      case transfer_function_relu:
         ==target== = fmax(0.0, ==value==);
         break;
-      case neuron_transfer_function_swish:
+      case transfer_function_swish:
         ==target== = (==value== / ( 1.0 + exp(-==value==)));
         break;
     }
@@ -179,25 +179,25 @@ std::string TransferFunction::get_all_kernel_derivative_functions(
 ){
   std::string code = R"(
     switch(==op==){
-      case neuron_transfer_function_identity:
+      case transfer_function_identity:
         ==target== = (==derivative==);
         break;
-      case neuron_transfer_function_sigmoid:
+      case transfer_function_sigmoid:
         ==target== = (==derivative== * exp(==value==))/pow((exp(-==value==) + 1.0), 2.0);
         break;
-      case neuron_transfer_function_tanh:
+      case transfer_function_tanh:
         ==target== = ==derivative== / pow(cosh(==value==), 2.0);
         break;
-      case neuron_transfer_function_elu:
+      case transfer_function_elu:
         ==target== = (==value== <= 0.0)?(==alpha== * exp(==value==) * ==derivative==):(==value==);
         break;
-      case neuron_transfer_function_selu:
+      case transfer_function_selu:
         ==target== = (==value== < 0.0)?(==lambda== * ==alpha== * exp(==value==) * ==derivative== ):(==lambda== * ==derivative==);
         break;
-      case neuron_transfer_function_relu:
+      case transfer_function_relu:
         ==target== = (==value== <= 0.0)?(0.0):(==derivative==);
         break;
-      case neuron_transfer_function_swish:
+      case transfer_function_swish:
         ==target== = (exp(==value==) * (==value== + exp(==value==) + 1.0) * ==derivative==)/pow((exp(==value==) + 1.0), 2.0);
         break;
     }

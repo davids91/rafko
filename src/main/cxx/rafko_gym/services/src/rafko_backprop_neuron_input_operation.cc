@@ -309,7 +309,7 @@ std::string RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
     if(==past_index== <= available_memory_slots){
       if(==weight_descriptor== != 0xFFFFFFFFu){ /* this value would mean that the weight is not used */
         f_x_value = (
-          ==op_value_array==[==f_x_op_index== - (==op_value_array_size== * ==past_index==) ] * ==weight_array==[==weight_descriptor==]
+          ==op_value_array==[(long int)(==f_x_op_index==) - (long int)(==op_value_array_size== * ==past_index==) ] * ==weight_array==[==weight_descriptor==]
         );        
       }else{ /* When weight is not used, it is supposed that the input of the operation is a network input ( already contains weight multiplication ) */
         f_x_value = ==op_value_array==[==f_x_op_index==]; /* It is also supposed that past index is 0 in this case */
@@ -352,7 +352,7 @@ std::string RafkoBackpropNeuronInputOperation::value_kernel_operation(
     operations += std::string("\n")
     + "if(==past_index== <= available_memory_slots){"
     + "  f_x_value = ("
-    + "    ==op_value_array==[==f_x_op_index== - (==op_value_array_size== * ==past_index==) ] * ==weight_array==[==weight_descriptor==]"
+    + "    ==op_value_array==[(long int)(==f_x_op_index==) - (long int)(==op_value_array_size== * ==past_index==) ] * ==weight_array==[==weight_descriptor==]"
     + "  );"
     + "}else{"
     + "  f_x_value = 0.0;"
@@ -383,7 +383,7 @@ std::string RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operati
     u_x_value = ==op_value_array==[==u_x_op_index==];
     u_x_derivative = ==op_derivative_array==[==u_x_op_index==];
     if(==past_index== <= available_memory_slots){
-      f_x_value = ==op_value_array==[==f_x_op_index== - (==op_array_size== * ==past_index==)];
+      f_x_value = ==op_value_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)];
       if(==weight_descriptor== != 0xFFFFFFFFu){
         f_x_derivative = ==f_x_dependency_from_network==;
       }else{
@@ -403,11 +403,11 @@ std::string RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operati
   /* finish f_x_dependency */
   kernel_source = rafko_utilities::replace_all_in_string(
     kernel_source, std::regex("==f_x_dependency_from_network=="),
-      "==op_derivative_array==[==f_x_op_index== - (==op_array_size== * ==past_index==)]"
+      "==op_derivative_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)]"
   );
   kernel_source = rafko_utilities::replace_all_in_string(
     kernel_source, std::regex("==f_x_dependency=="),
-      "==op_derivative_array==[==f_x_op_index== - (==op_array_size== * ==past_index==)] * ==weight_array==[==weight_descriptor==]"
+      "==op_derivative_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)] * ==weight_array==[==weight_descriptor==]"
   );
 
   /* finish u_x_dependency */
@@ -435,7 +435,7 @@ std::string RafkoBackpropNeuronInputOperation::derivative_kernel_operation(
     u_x_value = ==op_value_array==[==u_x_op_index==];
     u_x_derivative = ==op_derivative_array==[==u_x_op_index==];
     if(==past_index== <= available_memory_slots){
-      f_x_value = ==op_value_array==[==f_x_op_index== - (==op_array_size== * ==past_index==)];
+      f_x_value = ==op_value_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)];
       f_x_derivative = ==f_x_dependency==;
       if(==weight_descriptor== == d_w_index){
         f_x_derivative += f_x_value;
@@ -454,13 +454,13 @@ std::string RafkoBackpropNeuronInputOperation::derivative_kernel_operation(
     RFASSERT(static_cast<bool>(m_networkInputDependency));
     kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==f_x_dependency=="),
-        "==op_derivative_array==[==f_x_op_index== - (==op_array_size== * ==past_index==)]"
+        "==op_derivative_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)]"
     );
   } else {
     RFASSERT(static_cast<bool>(m_neuronDataDependency));
     kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==f_x_dependency=="),
-        "==op_derivative_array==[==f_x_op_index== - (==op_array_size== * ==past_index==)]"
+        "==op_derivative_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)]"
         + std::string(" * ") + weight_array + "[==weight_descriptor==]"
     );
   }

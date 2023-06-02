@@ -97,7 +97,7 @@ std::string RafkoBackpropSpikeFnOperation::generic_value_kernel_operation(
 ){
   std::string kernel_source = R"(
     if(0 < available_memory_slots){
-      past_value = ==op_value_array==[==op_index== - ==op_array_size==];
+      past_value = ==op_value_array==[(long int)(==op_index==) - (long int)(==op_array_size==)];
     }else{
       past_value = 0.0;
     }
@@ -127,7 +127,7 @@ std::string RafkoBackpropSpikeFnOperation::value_kernel_operation(
   RFASSERT(static_cast<bool>(m_presentValueDependency));
   std::string kernel_source = R"(
     if(0 < available_memory_slots){
-      past_value = ==op_value_array==[==op_index== - ==op_array_size==];
+      past_value = ==op_value_array==[(long int)(==op_index==) - (long int)(==op_array_size==)];
     }else{
       past_value = 0.0;
     }

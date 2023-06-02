@@ -165,13 +165,13 @@ public:
    */
   static std::string get_kernel_enum_for(Transfer_functions function){
     switch(function){
-      case transfer_function_identity: return "neuron_transfer_function_identity";
-      case transfer_function_sigmoid: return "neuron_transfer_function_sigmoid";
-      case transfer_function_tanh: return "neuron_transfer_function_tanh";
-      case transfer_function_elu: return "neuron_transfer_function_elu";
-      case transfer_function_selu: return "neuron_transfer_function_selu";
-      case transfer_function_relu: return "neuron_transfer_function_relu";
-      case transfer_function_swish: return "neuron_transfer_function_swish";
+      case transfer_function_identity: return "transfer_function_identity";
+      case transfer_function_sigmoid: return "transfer_function_sigmoid";
+      case transfer_function_tanh: return "transfer_function_tanh";
+      case transfer_function_elu: return "transfer_function_elu";
+      case transfer_function_selu: return "transfer_function_selu";
+      case transfer_function_relu: return "transfer_function_relu";
+      case transfer_function_swish: return "transfer_function_swish";
       default: throw std::runtime_error("Unidentified transfer function queried for information!");
     }
   }
@@ -184,13 +184,14 @@ public:
   static std::string get_kernel_enums(){
     return R"(
       typedef enum rafko_transfer_function_e{
-        neuron_transfer_function_identity = 0,
-        neuron_transfer_function_sigmoid,
-        neuron_transfer_function_tanh,
-        neuron_transfer_function_elu,
-        neuron_transfer_function_selu,
-        neuron_transfer_function_relu,
-        neuron_transfer_function_swish
+        transfer_function_unknown = 0,
+        transfer_function_identity,
+        transfer_function_sigmoid,
+        transfer_function_tanh,
+        transfer_function_elu,
+        transfer_function_selu,
+        transfer_function_relu,
+        transfer_function_swish
       }rafko_transfer_function_t __attribute__ ((aligned));
     )";
   }

@@ -133,8 +133,8 @@ public:
    */
   static std::string get_kernel_enum_for(Input_functions function){
     switch(function){
-      case input_function_add: return "neuron_input_function_add";
-      case input_function_multiply: return "neuron_input_function_multiply";
+      case input_function_add: return "input_function_add";
+      case input_function_multiply: return "input_function_multiply";
       default: throw std::runtime_error("Unidentified input function queried for information!");
     }
   }
@@ -147,8 +147,9 @@ public:
   static std::string get_kernel_enums(){
     return R"(
       typedef enum rafko_input_function_e{
-        neuron_input_function_add = 0,
-        neuron_input_function_multiply
+        input_function_unknown = 0,
+        input_function_add,
+        input_function_multiply
       }rafko_input_function_t __attribute__ ((aligned));
     )";
   }

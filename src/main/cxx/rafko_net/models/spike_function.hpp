@@ -206,10 +206,11 @@ public:
   static std::string get_kernel_enums(){
     return R"(
       typedef enum rafko_spike_function_e{
-        neuron_spike_function_none = 0,
-        neuron_spike_function_memory,
-        neuron_spike_function_p,
-        neuron_spike_function_amplify_value
+        spike_function_unknown = 0,
+        spike_function_none,
+        spike_function_memory,
+        spike_function_p,
+        spike_function_amplify_value
       }rafko_spike_function_t __attribute__ ((aligned));
     )";
   }

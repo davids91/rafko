@@ -466,12 +466,16 @@ void AutoDiffGPUStrategy::build(
       int current_instruction_index = 0;
       while(current_instruction_index < network_instruction_count){
         int operations_to_do_now = network_instruction_table[current_instruction_index];
-        if(get_local_id(0) < operations_to_do_now){
-          int current_instruction_entry_start = current_instruction_index + 1 + (get_local_id(0) * ==one_neural_instruction_entry_size==);
+        int local_operation_index = 0; 
+        while((local_operation_index + get_local_id(0)) < operations_to_do_now){
+          int current_instruction_entry_start = current_instruction_index + 1 + ((local_operation_index + get_local_id(0)) * ==one_neural_instruction_entry_size==);
           __constant unsigned int* network_instructions = &network_instruction_table[current_instruction_entry_start];
-          ==command_list_parsers==        
+
+          ==command_list_parsers== 
+
+          local_operation_index += get_local_size(0);
         }
-        current_instruction_index += operations_to_do_now;
+        current_instruction_index += 1 + (operations_to_do_now * ==one_neural_instruction_entry_size==);
         barrier(CLK_LOCAL_MEM_FENCE);
       }
     }/*execute_value_workers()*/
@@ -496,7 +500,7 @@ void AutoDiffGPUStrategy::build(
       __local int sequence_truncation;
       __local int sequences_in_this_group;
       if(0 == get_local_id(0)){
-        /* Sequence starts from the given input, with some safeguards, and each group gets their own based on their id */
+        /* Sequence starts from the given input, with some safeguards, and each group gets their own sequence based on their id */
         sequence_start = (int)(inputs[input_sizes[0] + input_sizes[1] + input_sizes[2] + input_sizes[3]]);
         sequence_start = max( 0, min(sequence_start, (number_of_sequences - minibatch_size)) );
         sequence_start = sequence_start + (get_group_id(0) * sequences_in_work_groups);
@@ -513,7 +517,6 @@ void AutoDiffGPUStrategy::build(
       int network_values_start_index = sequence_start * sequence_inputs_count * operation_count;
       int network_derivatives_start_index = output_sizes[0] + sequence_start * sequence_labels_count * operation_count;
 
-      #pragma unroll
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
         int network_ran_count = 0;
         int available_memory_slots = 0;
@@ -535,7 +538,7 @@ void AutoDiffGPUStrategy::build(
           max(1, (sequence_labels_count - sequence_truncation)), &local_seed
         );
         #pragma unroll
-        for(int label_index = 0; label_index < sequence_labels_count; ++label_index){
+        for(int label_index = 0; label_index < ==sequence_size==; ++label_index){
           if(calculate_value){
             execute_value_workers(
               available_memory_slots, weight_table_size, &inputs[network_inputs_start_index]/*network_inputs*/,

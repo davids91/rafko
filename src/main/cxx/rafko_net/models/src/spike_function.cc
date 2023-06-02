@@ -103,16 +103,16 @@ std::string SpikeFunction::get_kernel_function_for(Spike_functions function, std
 std::string SpikeFunction::get_all_kernel_value_functions(std::string operation_index, std::string target, std::string parameter, std::string previous_data, std::string new_data){
   std::string code = R"(
     switch(==op==){
-      case neuron_spike_function_none:
+      case spike_function_none:
         ==target== = ==new_data==;
         break;
-      case neuron_spike_function_memory:
+      case spike_function_memory:
         ==target== = ((==previous_data==) * ==parameter==) + ((==new_data==) * (1.0 - ==parameter==));
         break;
-      case neuron_spike_function_p:
+      case spike_function_p:
         ==target== = ==previous_data== + ((==new_data== - ==previous_data==) * ==parameter==);
         break;
-      case neuron_spike_function_amplify_value:
+      case spike_function_amplify_value:
         ==target== = ==parameter== * ==new_data==;
         break;
     }
@@ -132,22 +132,22 @@ std::string SpikeFunction::get_all_kernel_derivative_functions_for_w(
 ){
     std::string code = R"(
     switch(==op==){
-      case neuron_spike_function_none:
+      case spike_function_none:
         ==target== = ==new_data_d==;
         break;
-      case neuron_spike_function_memory:
+      case spike_function_memory:
         ==target== = (
           (==previous_data_d== * ==parameter==) + ==previous_data== 
           - (==new_data_d== * ==parameter==) + ==new_data_d== - ==new_data==
         );
         break;
-      case neuron_spike_function_p:
+      case spike_function_p:
         ==target== =( 
           -==parameter== * ==previous_data_d== + ==previous_data_d== - ==previous_data== 
           + ==parameter== * ==new_data_d== + ==new_data==
         );
         break;
-      case neuron_spike_function_amplify_value:
+      case spike_function_amplify_value:
         ==target== = ==parameter== * ==new_data_d== + ==new_data==;
         break;
     }
@@ -168,18 +168,18 @@ std::string SpikeFunction::get_all_kernel_derivative_functions_not_for_w(
 ){
     std::string code = R"(
     switch(==op==){
-      case neuron_spike_function_none:
+      case spike_function_none:
         ==target== = ==new_data_d==;
         break;
-      case neuron_spike_function_memory:
+      case spike_function_memory:
         ==target== = (
           ( ==parameter== * ==previous_data_d== ) - (==parameter== * ==new_data_d== ) + ==new_data_d==
         );
         break;
-      case neuron_spike_function_p:        
+      case spike_function_p:        
         ==target== = (==parameter== * ==new_data_d== ) - ((==parameter== - 1.0) * ==previous_data_d==);
         break;
-      case neuron_spike_function_amplify_value:
+      case spike_function_amplify_value:
         ==target== = ==parameter== * ==new_data_d==;
         break;
     }
@@ -241,10 +241,10 @@ std::string SpikeFunction::get_derivative_kernel_not_for_w(
 
 std::string SpikeFunction::get_kernel_enum_for(Spike_functions function){
   switch(function){
-    case spike_function_none: return "neuron_spike_function_none";
-    case spike_function_memory: return "neuron_spike_function_memory";
-    case spike_function_p: return "neuron_spike_function_p";
-    case spike_function_amplify_value: return "neuron_spike_function_amplify_value";
+    case spike_function_none: return "spike_function_none";
+    case spike_function_memory: return "spike_function_memory";
+    case spike_function_p: return "spike_function_p";
+    case spike_function_amplify_value: return "spike_function_amplify_value";
     default: throw std::runtime_error("Unidentified spike function queried for information!");
   }
 }
