@@ -176,7 +176,7 @@ std::vector<std::uint32_t> AutoDiffGPUStrategy::generate_propagation_instruction
               operation->get_operation_index(), 
               (
                 (upcasted_operation_ptr->get_input_function() & 0x00FFu) 
-                | ((upcasted_operation_ptr->get_input_past_index() << 16) & 0xFF00u)
+                | ((upcasted_operation_ptr->get_input_past_index() << 8) & 0xFF00u)
               )
             }
           );
@@ -560,8 +560,9 @@ void AutoDiffGPUStrategy::build(
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==operation_locals=="), operation_locals
   );
-  RFASSERT_LOG("Starting to split operations into workers..");
 
+  RFASSERT_LOG("Starting to split operations into workers..");
+  m_neuralPropagationInstructions = generate_propagation_instructions(operations);
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==value_command_list_parsers=="), 
     generate_value_kernels(
@@ -573,9 +574,9 @@ void AutoDiffGPUStrategy::build(
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==derivative_command_list_parsers=="),
     generate_derivative_kernels(
-        "network_inputs", "labels", "network_weights",
-        "operations_value_array", "operations_d_array",
-        "operation_count", m_settings, objective
+      "network_inputs", "labels", "network_weights",
+      "operations_value_array", "operations_d_array",
+      "operation_count", m_settings, objective
     )    
   );
   source_base = rafko_utilities::replace_all_in_string(
@@ -590,9 +591,6 @@ void AutoDiffGPUStrategy::build(
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==one_label_size=="), std::to_string(m_dataSet->get_feature_size())
   );
-  RFASSERT_LOG("Optimizer source: {}", source_base);
-
-  m_neuralPropagationInstructions = generate_propagation_instructions(operations);
   std::vector<std::vector<std::uint32_t>> operations_matrix = generate_operation_paralell_matrix(operations);
   std::uint32_t avg_row_size = 0u;
   for(const std::vector<std::uint32_t>& row : operations_matrix) avg_row_size += row.size();
@@ -601,8 +599,7 @@ void AutoDiffGPUStrategy::build(
   m_builtSource = source_base;
   m_numberOfOperations = operations.size();
   m_built = true;
-  std::cout << m_builtSource << std::endl;
-  RFASSERT_LOG("Build finished! One Local Group size: {}", m_maximumLocalWorkers);
+  RFASSERT_LOG("Build finished! One Local Group size: {}; \n Optimizer kernel source: \n {}", m_maximumLocalWorkers, m_builtSource);
 }
 
 

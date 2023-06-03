@@ -86,8 +86,7 @@ std::string RafkoBackpropNeuronBiasOperation::generic_value_kernel_operation(
   kernel_source = rafko_utilities::replace_all_in_string(
     kernel_source, std::regex("==input_fnc=="),
     rafko_net::InputFunction::get_all_kernel_value_functions(
-      behavior_index,
-      "==op_value_array==[==dependency_descriptor==]", "==op_value_array==[==dependency_descriptor==]", "==weight_array==[==this_op_weight_index==]"
+      behavior_index, "==op_value_array==[==op_index==]", "==op_value_array==[==dependency_descriptor==]", "==weight_array==[==this_op_weight_index==]"
     ) 
   );
   kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_value_array=="), operations_value_array);  

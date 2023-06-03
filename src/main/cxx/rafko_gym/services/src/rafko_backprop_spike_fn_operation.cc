@@ -105,7 +105,8 @@ std::string RafkoBackpropSpikeFnOperation::generic_value_kernel_operation(
   )";
 
   kernel_source = rafko_utilities::replace_all_in_string(
-    kernel_source, std::regex("==spike_kernel=="), rafko_net::SpikeFunction::get_all_kernel_value_functions(
+    kernel_source, std::regex("==spike_kernel=="), 
+    rafko_net::SpikeFunction::get_all_kernel_value_functions(
       behavior_index, "==op_value_array==[==op_index==]", weight_array + "[==this_op_weight_index==]",
       "past_value", "==op_value_array==[==dependency_op_index==]"
     )
@@ -136,9 +137,7 @@ std::string RafkoBackpropSpikeFnOperation::value_kernel_operation(
 
   kernel_source = rafko_utilities::replace_all_in_string(
     kernel_source, std::regex("==spike_kernel=="), rafko_net::SpikeFunction::get_kernel_function_for(
-      get_spike_function(),
-      weight_array + "[==this_op_weight_index==]",
-      "past_value", "==op_value_array==[==dependency_op_index==]"
+      get_spike_function(), weight_array + "[==this_op_weight_index==]", "past_value", "==op_value_array==[==dependency_op_index==]"
     )
   );
   kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_value_array=="), operations_value_array);
@@ -152,8 +151,8 @@ std::string RafkoBackpropSpikeFnOperation::generic_derivative_kernel_operation(
 ){
   std::string kernel_source = R"(
     if(0 < available_memory_slots){
-      past_value = ==op_value_array==[==op_index== - ==op_array_size==];
-      past_derivative_value = ==op_derivative_array==[==op_index== - ==op_array_size==];
+      past_value = ==op_value_array==[(long int)(==op_index==) - (long int)(==op_array_size==)];
+      past_derivative_value = ==op_derivative_array==[(long int)(==op_index==) - (==op_array_size==)];
     }else{
       past_value = 0.0;
       past_derivative_value = 0.0;
@@ -202,8 +201,8 @@ std::string RafkoBackpropSpikeFnOperation::derivative_kernel_operation(
    */
   std::string kernel_source = R"(
     if(0 < available_memory_slots){
-      past_value = ==op_value_array==[==op_index== - ==op_array_size==];
-      past_derivative_value = ==op_derivative_array==[==op_index== - ==op_array_size==];
+      past_value = ==op_value_array==[(long int)(==op_index==) - (long int)(==op_array_size==)];
+      past_derivative_value = ==op_derivative_array==[(long int)(==op_index==) - (==op_array_size==)];
     }else{
       past_value = 0.0;
       past_derivative_value = 0.0;

@@ -76,13 +76,10 @@ Each instruction for Network inference and error back-propagation with thier res
 \*weight_descriptor, dependency_descriptor either contains the used index, or a special value meaning: not used
 
 TODO:
-- Switch derivative kernel code to the new system
-- Clean up after the old system ( switch case operations ), decide if old kernel functions are to stay
-- Eliminate the warnings with kernel codes!
 - Investigate if a re-compile is always needed with the cost function; Make Objective indexable
-- behavior_index to be moved out of static kernel generation functions maybe?
 - Add documentation for generate_value_kernels, generate_derivative_kernels and substitute_index_values_in_kernels in GPU Strategy
 - Extend strategy with Weight regularization and Solution operation features
+- Implement the same system in Solution Builder
 - try to optimize? a bit might be enough
 - =========================================================================================================
 - Create ticket for: Eliminate Network Input Operation by making Neuron Input more complex; Additional ticket to investigate bias for the same thing

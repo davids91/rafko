@@ -305,6 +305,8 @@ std::string RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
   std::string behavior_index
 ){
   std::string operations = R"(
+    /* calculate the next value (u(x)) */
+    u_x_value = ==op_value_array==[==u_x_op_index==];    
     /* Calculate the weighted input(f(x)) */
     if(==past_index== <= available_memory_slots){
       if(==weight_descriptor== != 0xFFFFFFFFu){ /* this value would mean that the weight is not used */
@@ -317,9 +319,6 @@ std::string RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
     }else{
       f_x_value = 0.0;
     }
-
-    /* calculate the next value (u(x)) */
-    u_x_value = ==op_value_array==[==u_x_op_index==];    
   )";
 
   /* add the input function */
@@ -385,9 +384,9 @@ std::string RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operati
     if(==past_index== <= available_memory_slots){
       f_x_value = ==op_value_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)];
       if(==weight_descriptor== != 0xFFFFFFFFu){
-        f_x_derivative = ==f_x_dependency_from_network==;
+        f_x_derivative = ==f_x_dependency==;
       }else{
-        f_x_derivative = ==f_x_dependency==;        
+        f_x_derivative = ==f_x_dependency_from_network==;
       }
       if(==weight_descriptor== == d_w_index){
         f_x_derivative += f_x_value;
@@ -407,7 +406,8 @@ std::string RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operati
   );
   kernel_source = rafko_utilities::replace_all_in_string(
     kernel_source, std::regex("==f_x_dependency=="),
-      "==op_derivative_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)] * ==weight_array==[==weight_descriptor==]"
+      "==op_derivative_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)] " 
+      + std::string(" * ==weight_array==[==weight_descriptor==]")
   );
 
   /* finish u_x_dependency */

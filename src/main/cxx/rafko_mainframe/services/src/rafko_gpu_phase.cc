@@ -50,11 +50,14 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategy> strategy){
   /* Compile Kernel program */
   cl::Program program(m_openclContext, sources);
   return_value = program.build({m_openclDevice}, "-cl-std=CL2.0");
+  std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_openclDevice);
   if(return_value != CL_SUCCESS){
-    std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_openclDevice);
-    RFASSERT_LOG("{}", build_log);
-    throw std::runtime_error( "OpenCL Kernel compilation failed with error: \n" + build_log + "\n" );
+    RFASSERT_LOG("OpenCL Kernel Compilation failed with log: {}", build_log);
+    throw std::runtime_error("OpenCL Kernel compilation failed with error: \n" + build_log + "\n");
   }
+  if(0 < build_log.length()){    
+    RFASSERT_LOG("OpenCL kernel compilation successful! Log: {}", build_log);
+  }else RFASSERT_LOG("OpenCL kernel compilation successful!");
 
   /* Set buffers, kernel arguments and functors */
   std::uint32_t step_index = 0;
