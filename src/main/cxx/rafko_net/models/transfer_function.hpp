@@ -131,15 +131,30 @@ public:
 
 
   /**
-   * @brief     Generates GPU kernel function code for the provided parameters
+   * @brief     Generates GPU kernel code for the provided parameters and all transfer functions
    *
    * @param[in]   operation_index   The variable containing a value from @get_kernel_enums
-   * @param[in]   a                 The value on which the transfer function result is stored in
-   * @param[in]   b                 The value on which the transfer function is called upon
+   * @param[in]   target            The target on which the transfer function result is stored in
+   * @param[in]   value             The value on which the transfer function is called upon
    *
-   * @return    The generated Kernel code merging the parameters through the given input function
+   * @return    The generated Kernel code containing all transfer functions, selected by @operation_index
    */
-  std::string get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b) const;
+  static std::string get_all_kernel_value_functions(
+    const rafko_mainframe::RafkoSettings& settings, std::string operation_index, std::string target, std::string value
+  );
+
+  /**
+   * @brief     Generates GPU kernel derivative function code for all transfer functions
+   *
+   * @param[in]   operation_index   The variable containing a value from @get_kernel_enums
+   *
+   * @return    The generated Kernel code containing the derivative of all transfer functions, selected by @operation_index
+   */
+  static std::string get_all_kernel_derivative_functions(
+    const rafko_mainframe::RafkoSettings& settings, std::string operation_index, 
+    std::string target, std::string value, std::string derivative
+  );
+
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel
@@ -150,12 +165,13 @@ public:
    */
   static std::string get_kernel_enum_for(Transfer_functions function){
     switch(function){
-      case transfer_function_identity: return "neuron_transfer_function_identity";
-      case transfer_function_sigmoid: return "neuron_transfer_function_sigmoid";
-      case transfer_function_tanh: return "neuron_transfer_function_tanh";
-      case transfer_function_elu: return "neuron_transfer_function_elu";
-      case transfer_function_selu: return "neuron_transfer_function_selu";
-      case transfer_function_relu: return "neuron_transfer_function_relu";
+      case transfer_function_identity: return "transfer_function_identity";
+      case transfer_function_sigmoid: return "transfer_function_sigmoid";
+      case transfer_function_tanh: return "transfer_function_tanh";
+      case transfer_function_elu: return "transfer_function_elu";
+      case transfer_function_selu: return "transfer_function_selu";
+      case transfer_function_relu: return "transfer_function_relu";
+      case transfer_function_swish: return "transfer_function_swish";
       default: throw std::runtime_error("Unidentified transfer function queried for information!");
     }
   }
@@ -163,17 +179,19 @@ public:
   /**
    * @brief     Generates GPU kernel enumerations
    *
-   * @return    AN enumerator to be ised in the GPU kernel
+   * @return    An enumerator to be ised in the GPU kernel
    */
   static std::string get_kernel_enums(){
     return R"(
       typedef enum rafko_transfer_function_e{
-        neuron_transfer_function_identity = 0,
-        neuron_transfer_function_sigmoid,
-        neuron_transfer_function_tanh,
-        neuron_transfer_function_elu,
-        neuron_transfer_function_selu,
-        neuron_transfer_function_relu
+        transfer_function_unknown = 0,
+        transfer_function_identity,
+        transfer_function_sigmoid,
+        transfer_function_tanh,
+        transfer_function_elu,
+        transfer_function_selu,
+        transfer_function_relu,
+        transfer_function_swish
       }rafko_transfer_function_t __attribute__ ((aligned));
     )";
   }

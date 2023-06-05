@@ -18,12 +18,14 @@
 #ifndef RAFKO_BACKPROP_OBJECTIVE_OPERATION_H
 #define RAFKO_BACKPROP_OBJECTIVE_OPERATION_H
 
+#include "rafko_cost.hpp"
 #include "rafko_global.hpp"
 
 #include <vector>
 #include <memory>
 #include <utility>
 
+#include "rafko_utilities/services/rafko_string_utils.hpp"
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
@@ -51,6 +53,11 @@ public:
   , m_sampleNumber(sample_number)
   {
   }
+
+  std::uint32_t get_sample_number() const{
+    return m_sampleNumber;
+  }
+
   ~RafkoBackpropObjectiveOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations() override{
@@ -99,27 +106,33 @@ public:
     return "";
   }
 
-
   std::string value_kernel_operation(
     std::string /*network_input_array*/, std::string /*weight_array*/,
     std::string /*operations_value_array*/, std::string /*operations_array_size*/
   ) const override{ /*!Note: Value is not being calculated, because they are not of use (as of now.. ) */
     return "";
   }
-  std::string derivative_kernel_operation(
-    std::string /*network_input_array*/, std::string label_array, std::string /*weight_array*/,
-    std::string operations_value_array, std::string operations_derivative_array,
-    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
-  ) const override{
-    RFASSERT(static_cast<bool>(m_featureDependency));
-    return (
-      operations_derivative_array + "[" + std::to_string(get_operation_index()) + "] = "
-      + m_objective.get_derivative_kernel_source(
-        label_array + "[" + std::to_string(m_outputIndex) + "]",
-        operations_value_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
-        operations_derivative_array + "[" + std::to_string(m_featureDependency->get_operation_index()) + "]",
-        std::to_string(m_sampleNumber)
-      ) + ";"
+
+  /**
+   * @brief     Generates OpenCL Kernel code for the operation for backward propagation
+   * 
+   * @param   label_array                   The name of the arry containing the Labels the Neural network is evaluated against
+   * @param   operations_value_array        The name of the array containing the operation values for forward propagation
+   * @param   operations_derivative_array   The name of the array containing the operation values for forward propagation
+   * @param   sample_number                 The number of samples the dataset contains in the mini-batch
+   * @param   objective                     The source of the Kernel code for thi Operation
+   *
+   * @return    Raw Kernel code for the backward propagation of this operation
+   */
+  static std::string generic_derivative_kernel_operation(
+    std::string label_array, std::string operations_value_array, std::string operations_derivative_array,
+    std::string behavior_index, std::string sample_number
+  ){
+    return RafkoCost::generic_derivative_kernel_source(
+      label_array + "[==label_index==]", operations_value_array + "[==dependency_op_index==]",
+      operations_derivative_array + "[==dependency_op_index==]",
+      sample_number, operations_derivative_array + "[==op_index==]",
+      behavior_index 
     );
   }
   #endif/*(RAFKO_USES_OPENCL)*/
@@ -127,6 +140,14 @@ public:
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{
     RFASSERT(static_cast<bool>(m_featureDependency));
     return {m_featureDependency};
+  }
+
+  Cost_functions get_cost_type() const{
+    return m_objective.get_cost_type();
+  }
+
+  std::uint32_t get_label_index(){
+    return m_outputIndex;
   }
 
 private:

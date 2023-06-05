@@ -22,6 +22,7 @@
 
 #include <vector>
 
+#include "rafko_protocol/training.pb.h"
 #if(RAFKO_USES_OPENCL)
 #include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 #endif/*(RAFKO_USES_OPENCL)*/
@@ -39,6 +40,13 @@ class RAFKO_EXPORT RafkoObjective
 {
 public:
   virtual ~RafkoObjective() = default;
+
+  /**
+   * @brief     Provides the impleemnted cost function type
+   * 
+   * @return    The enumeration represents the cost being implemented this class.
+   */
+  virtual Cost_functions get_cost_type() const = 0;
 
   /**
    * @brief      Sets the approximated value for an observed value and provides the calculated fitness.
@@ -127,21 +135,6 @@ public:
    * @param[in]   pairs_to_evaluate
    */
   virtual void set_gpu_parameters(std::uint32_t pairs_to_evaluate, std::uint32_t feature_size) = 0;
-
-  /**
-   * @brief      Provides the kernel function for the derivative of the objective
-   *
-   * @param[in]  label_value      The label value
-   * @param[in]  feature_value    The data to comapre to the label value
-   * @param[in]  feature_d        The derivative of the of the feature value
-   * @param[in]  sample_number    The number of sample values the objective is evaluated on at once
-   *
-   * @return    The source implementing the derivative of the objective
-   */
-  virtual std::string get_derivative_kernel_source(
-    std::string label_value, std::string feature_value,
-    std::string feature_d, std::string sample_number
-  ) const = 0;
 
   /* +++ Methods forwarding from rafko_mainframe::RafkoGPUStrategy +++ */
   virtual cl::Program::Sources get_step_sources() const override = 0;

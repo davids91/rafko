@@ -128,48 +128,86 @@ std::string TransferFunction::get_kernel_function_for_d(
       return "(" + input_ + " <= 0.0)?(0.0):(" + input_dw_ + ")";
     }
     case transfer_function_swish: 
-      //  return (std::exp(input) * (input + std:exp(input) + 1.0) * input_dw)/std::pow((std::exp(input) + 1.0), 2.0);
       return "(exp(" + input_ + ") * (" + input_ + " + exp(" + input_ + ") + 1.0) * " + input_dw_ + ")/pow((exp(" + input_ + ") + 1.0), 2.0)";
     default: throw std::runtime_error("Unidentified transfer function queried for information!");
   }
 }
 
-std::string TransferFunction::get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b) const{
+std::string TransferFunction::get_all_kernel_value_functions(
+  const rafko_mainframe::RafkoSettings& settings, std::string operation_index, std::string target, std::string value
+){
   std::string code = R"(
     switch(==op==){
-      case neuron_transfer_function_identity:
-        ==a== = ==b==;
+      case transfer_function_identity:
+        ==target== = ==value==;
         break;
-      case neuron_transfer_function_sigmoid:
-        ==a== = 1.0/(1.0+exp(-==b==));
+      case transfer_function_sigmoid:
+        ==target== = 1.0/(1.0+exp(-==value==));
         break;
-      case neuron_transfer_function_tanh:
-        ==a== = tanh(==b==);
+      case transfer_function_tanh:
+        ==target== = tanh(==value==);
         break;
-      case neuron_transfer_function_elu:
-        ==a== = (
-          max(0.0, ==b==) + ( ==alpha== * (exp(min(0.0, ==b==)) - 1.0) )
+      case transfer_function_elu:
+        ==target== = (
+          max(0.0, ==value==) + ( ==alpha== * (exp(min(0.0, ==value==)) - 1.0) )
         );
         break;
-      case neuron_transfer_function_selu:
-        ==a== = ==lambda== * (
-          max(0.0, ==b==) + ( ==alpha== * (exp(min(0.0, ==b==)) - 1.0) )
+      case transfer_function_selu:
+        ==target== = ==lambda== * (
+          max(0.0, ==value==) + ( ==alpha== * (exp(min(0.0, ==value==)) - 1.0) )
         );
         break;
-      case neuron_transfer_function_relu:
-        ==a== = fmax(0.0, ==b==);
+      case transfer_function_relu:
+        ==target== = fmax(0.0, ==value==);
         break;
-      case neuron_transfer_function_swish:
-        ==a== = (==b== / ( 1.0 + exp(-==b==)));
+      case transfer_function_swish:
+        ==target== = (==value== / ( 1.0 + exp(-==value==)));
         break;
     }
   )";
-  code = rafko_utilities::replace_all_in_string(code, std::regex("==a=="), a);
-  code = rafko_utilities::replace_all_in_string(code, std::regex("==b=="), b);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==target=="), target);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==value=="), value);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
-  code = rafko_utilities::replace_all_in_string(code, std::regex("==alpha=="), std::to_string(m_settings.get_alpha()));
-  code = rafko_utilities::replace_all_in_string(code, std::regex("==beta=="), std::to_string(m_settings.get_beta()));
-  code = rafko_utilities::replace_all_in_string(code, std::regex("==lambda=="), std::to_string(m_settings.get_lambda()));
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==alpha=="), std::to_string(settings.get_alpha()));
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==lambda=="), std::to_string(settings.get_lambda()));
+  return code;
+}
+
+std::string TransferFunction::get_all_kernel_derivative_functions(
+  const rafko_mainframe::RafkoSettings& settings, std::string operation_index, 
+  std::string target, std::string value, std::string derivative
+){
+  std::string code = R"(
+    switch(==op==){
+      case transfer_function_identity:
+        ==target== = (==derivative==);
+        break;
+      case transfer_function_sigmoid:
+        ==target== = (==derivative== * exp(==value==))/pow((exp(-==value==) + 1.0), 2.0);
+        break;
+      case transfer_function_tanh:
+        ==target== = ==derivative== / pow(cosh(==value==), 2.0);
+        break;
+      case transfer_function_elu:
+        ==target== = (==value== <= 0.0)?(==alpha== * exp(==value==) * ==derivative==):(==value==);
+        break;
+      case transfer_function_selu:
+        ==target== = (==value== < 0.0)?(==lambda== * ==alpha== * exp(==value==) * ==derivative== ):(==lambda== * ==derivative==);
+        break;
+      case transfer_function_relu:
+        ==target== = (==value== <= 0.0)?(0.0):(==derivative==);
+        break;
+      case transfer_function_swish:
+        ==target== = (exp(==value==) * (==value== + exp(==value==) + 1.0) * ==derivative==)/pow((exp(==value==) + 1.0), 2.0);
+        break;
+    }
+  )";
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==target=="), target);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==value=="), value);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==derivative=="), derivative);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="), operation_index);
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==alpha=="), std::to_string(settings.get_alpha()));
+  code = rafko_utilities::replace_all_in_string(code, std::regex("==lambda=="), std::to_string(settings.get_lambda()));
   return code;
 }
 

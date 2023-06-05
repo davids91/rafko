@@ -90,9 +90,14 @@ public:
   double get_avg_gradient(std::uint32_t d_w_index) const override;
 
   /**
-   * @brief     Uploads the weight table from the network into its internal buffers
+   * @brief     Uploads the weight table from the network into the GPU
    */
   void upload_weight_table();
+
+  /**
+   * @brief     Uploads the Neural Network built by the strategy into the GPU
+   */
+  void upload_network();
 
   /**
    * @brief     Uploads the input data from the data set into its internal buffers

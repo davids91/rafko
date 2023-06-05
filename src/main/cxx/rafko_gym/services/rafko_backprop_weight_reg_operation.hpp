@@ -95,18 +95,6 @@ public:
     /*!Note: No actual value is calculated for weight regularization */
     return "";
   }
-
-  std::string derivative_kernel_operation(
-    std::string /*network_input_array*/, std::string /*label_array*/, std::string weight_array,
-    std::string /*operations_value_array*/, std::string operations_derivative_array,
-    std::string /*operations_array_size*/, std::string /*d_operations_array_size*/
-  ) const override{
-    return rafko_net::RafkoNetworkFeature::generate_kernel_code(
-      m_settings, m_featureGroup.feature(), m_relevantIndexValues,
-      weight_array, "0"/*input_start_index*/, operations_derivative_array/* output_array */,
-      std::to_string(get_operation_index())/*output_start_index*/, false/*declare_locals*/
-    );
-  }
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{

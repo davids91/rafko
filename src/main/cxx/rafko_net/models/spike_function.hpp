@@ -95,25 +95,64 @@ public:
    *
    * @param[in]   function        The function to apply
    * @param[in]   parameter       The Spike function to base the generated kernel code on
-   * @param[in]   new_data        The result of the newly collected inputs and transfer function
    * @param[in]   previous_data   The previous activation value of the neuron
+   * @param[in]   new_data        The result of the newly collected inputs and transfer function
    *
    * @return    The generated Kernel code calling the asked spike function based on the parameter
    */
-  static std::string get_kernel_function_for(Spike_functions function, std::string parameter, std::string new_data, std::string previous_data);
+  static std::string get_kernel_function_for(Spike_functions function, std::string parameter, std::string previous_data, std::string new_data);
 
   /**
-   * @brief     Generates GPU kernel function code for the provided parameters
+   * @brief     Generates GPU code for the provided spike function and parameters
    *
    * @param[in]   operation_index   The variable containing a value from @get_kernel_enums
+   * @param[in]   target            The target on which to store the results 
    * @param[in]   parameter         The value of the input weight for the spike function
-   * @param[in]   previous_data     The value of the previously present neuron data in which the result is stored,
-   *                                So the variable needs to hold a reference in the kernel code
+   * @param[in]   previous_data     The value of the previously present neuron data in which the result is stored.
    * @param[in]   new_data          The value of the newly calculated neuron data
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  static std::string get_all_kernel_functions_for(std::string operation_index, std::string parameter, std::string previous_data, std::string new_data);
+  static std::string get_all_kernel_value_functions(std::string operation_index, std::string target, std::string parameter, std::string previous_data, std::string new_data);
+
+  /**
+   * @brief     Generates GPU code for all of the spike function derivatives in case 
+   *            the derivative base weight index matches the one used in the spike function
+   *
+   * @param[in]   operation_index   The variable containing a value from @get_kernel_enums
+   * @param[in]   target            The target on which to store the results 
+   * @param[in]   parameter         The value of the input weight for the spike function
+   * @param[in]   previous_data     The previously stored state of the Spike function
+   * @param[in]   previous_data_d   The derivative of the previously stored state
+   * @param[in]   new_data          The latest data as input to the spike function
+   * @param[in]   new_data_d        The derivative of the latest data
+   *
+   * @return    The generated Kernel code containing all of the Spike functions, the one being executed selected by @operation_index
+   */
+  static std::string get_all_kernel_derivative_functions_for_w(
+    std::string operation_index, std::string target, std::string parameter, 
+    std::string previous_data, std::string previous_data_d,
+    std::string new_data, std::string new_data_d
+  );
+
+
+  /**
+   * @brief     Generates GPU code for all of the spike function derivatives in case 
+   *            the derivative base weight index doesn't match the one used in the spike function
+   *
+   * @param[in]   operation_index   The variable containing a value from @get_kernel_enums
+   * @param[in]   target            The target on which to store the results 
+   * @param[in]   parameter         The value of the input weight for the spike function
+   * @param[in]   previous_data_d   The derivative of the previously stored state
+   * @param[in]   new_data          The latest data as input to the spike function
+   * @param[in]   new_data_d        The derivative of the latest data
+   *
+   * @return    The generated Kernel code containing all of the Spike functions, the one being executed selected by @operation_index
+   */
+  static std::string get_all_kernel_derivative_functions_not_for_w(
+    std::string operation_index, std::string target, std::string parameter, 
+    std::string previous_data_d, std::string new_data_d
+  );
 
   /**
    * @brief      Provides the derivative kernel for the derivative of the spike function
@@ -130,8 +169,8 @@ public:
    */
   static std::string get_derivative_kernel_for_w(
     Spike_functions function, std::string parameter,
-    std::string new_data, std::string new_data_d,
-    std::string previous_data, std::string previous_data_d
+    std::string previous_data, std::string previous_data_d,
+    std::string new_data, std::string new_data_d
   );
 
   /**
@@ -147,8 +186,8 @@ public:
    */
   static std::string get_derivative_kernel_not_for_w(
     Spike_functions function, std::string parameter,
-    std::string new_data_d, std::string previous_data_d
-);
+    std::string previous_data_d, std::string new_data_d
+  );
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel
@@ -162,15 +201,16 @@ public:
   /**
    * @brief     Generates GPU kernel enumerations
    *
-   * @return    AN enumerator to be ised in the GPU kernel
+   * @return    An enumerator to be ised in the GPU kernel
    */
   static std::string get_kernel_enums(){
     return R"(
       typedef enum rafko_spike_function_e{
-        neuron_spike_function_none = 0,
-        neuron_spike_function_memory,
-        neuron_spike_function_p,
-        neuron_spike_function_amplify_value
+        spike_function_unknown = 0,
+        spike_function_none,
+        spike_function_memory,
+        spike_function_p,
+        spike_function_amplify_value
       }rafko_spike_function_t __attribute__ ((aligned));
     )";
   }

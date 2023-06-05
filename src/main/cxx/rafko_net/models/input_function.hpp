@@ -85,15 +85,30 @@ public:
   }
 
   /**
-   * @brief     Generates GPU kernel function code for the provided parameters
+   * @brief     Generates GPU code for the provided input function
    *
    * @param[in]   operation_index   The variable containing a value from @get_kernel_enums
    * @param[in]   a                 A value to be merged through the input function
+   *                                The variable needs to hold a non-const reference in the kernel code so its value can be updated
    * @param[in]   b                 Another value to be merged through the input function
    *
    * @return    The generated Kernel code merging the parameters through the given input function
    */
-  static std::string get_all_kernel_functions_for(std::string operation_index, std::string a, std::string b);
+  static std::string get_all_kernel_value_functions(std::string operation_index, std::string target, std::string a, std::string b);
+
+  /**
+   * @brief     Generates GPU code for all of the Input functions
+   *
+   * @param[in]   operation_index     The variable containing a value from @get_kernel_enums
+   * @param[in]   a                   A value to merge through the input function
+   *                                  The variable needs to hold a non-const reference in the kernel code so its value can be updated
+   * @param[in]   a_w                 The derivative of @a
+   * @param[in]   b                   The other value to merge with the input function
+   * @param[in]   b_w                 The derivative of @b
+   *
+   * @return    The generated Kernel code merging the parameters through the given input function
+   */
+  static std::string get_all_kernel_derivative_functions(std::string operation_index, std::string target, std::string a, std::string a_dw, std::string b, std::string b_dw);
 
   /**
    * @brief      Provide the kernel code for derivative of the given input function and the given inputs
@@ -118,8 +133,8 @@ public:
    */
   static std::string get_kernel_enum_for(Input_functions function){
     switch(function){
-      case input_function_add: return "neuron_input_function_add";
-      case input_function_multiply: return "neuron_input_function_multiply";
+      case input_function_add: return "input_function_add";
+      case input_function_multiply: return "input_function_multiply";
       default: throw std::runtime_error("Unidentified input function queried for information!");
     }
   }
@@ -127,13 +142,14 @@ public:
   /**
    * @brief     Generates GPU kernel enumerations
    *
-   * @return    AN enumerator to be ised in the GPU kernel
+   * @return    An enumerator to be ised in the GPU kernel
    */
   static std::string get_kernel_enums(){
     return R"(
       typedef enum rafko_input_function_e{
-        neuron_input_function_add = 0,
-        neuron_input_function_multiply
+        input_function_unknown = 0,
+        input_function_add,
+        input_function_multiply
       }rafko_input_function_t __attribute__ ((aligned));
     )";
   }

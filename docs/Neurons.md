@@ -48,26 +48,25 @@ Note: Since for One Neurons might have multiple Bias values, the information mus
 | Derivative of Network input          | weight_index        | input_index               |                     | operation_index     |                                   |
 | Derivative of Bias(es)               | weight_index        | is_there_dependency       | dependency_index    | operation_index     | input_function_index(optional)    |
 | Derivative of Neuron input           | weight_index        | dependency_index          | dependency_index    | operation_index     | input_function_index + past_index |
-| Derivative of Objective operation    | label_index         |                           | dependency_index    | operation_index     | cost_function_index               |
+| Derivative of Objective operation    | label_index         | sample_number             | dependency_index    | operation_index     | cost_function_index               |
 | Derivative of Solution operation     |                     |                           |                     |                     |                                   |
 | Derivative of Spike Function         | weight_index        |                           | dependency_index    | operation_index     | spike_function_index              |
 | Derivative of Transfer function      |                     |                           | dependency_index    | operation_index     | transfer_function_index           |
 | Derivative of Weight regularization  | weight_index_start  | count_weights             |                     | operation_index     | feature_index                     |
 
-
 ## Consolidated Instruction table
 
 Each instruction for Network inference and error back-propagation with thier respective requirements are summarized in the above 2 tables. Because of the similarities, they can be merged into one final table; Whether or not it's derivative shall be decided by the context and the execution state of the GPU Kernel.
 
+| Step Desicription       | Input Global Buffer | Input Global Buffer | Input Global Buffer     | Input Global Buffer | Behavior Index                    |
+|-------------------------|---------------------|---------------------|-------------------------|---------------------|-----------------------------------|
+| Network input           | weight_index        | input_index         |                         | operation_index     |                                   |
+| Neuron Bias             | weight_index        |                     | dependency_descriptor*  | operation_index     | input_function_index(optional)    |
+| Neuron input            | weight_descriptor*  | dependency_index    | dependency_index        | operation_index     | input_function_index + past_index |
+| Objective operation     | label_index         | sample_number       | dependency_index        | operation_index     | cost_function_index               |
+| Solution operation      | neuron_index_start  | count_neurons       |                         |                     |                                   |
+| Spike Function          | weight_index        |                     | dependency_index        | operation_index     | spike_function_index              |
+| Transfer function       |                     |                     | dependency_index        | operation_index     | transfer_function_index           |
+| Weight regularization   | weight_index_start  | count_weights       |                         | operation_index     | feature_index                     |
 
-| Step Desicription       | Input Global Buffer | Input Global Buffer | Input Global Buffer | Input Global Buffer | Behavior Index                    |
-|-------------------------|---------------------|---------------------|---------------------|---------------------|-----------------------------------|
-| Network input           | weight_index        | input_index         |                     | operation_index     |                                   |
-| Neuron Bias             | weight_index        | is_there_dependency | dependency_index    | operation_index     | input_function_index(optional)    |
-| Neuron input            | weight_index        | dependency_index    | dependency_index    | operation_index     | input_function_index + past_index |
-| Objective operation     | label_index         |                     | dependency_index    | operation_index     | cost_function_index               |
-| Solution operation      | neuron_index_start  | count_neurons       |                     |                     |                                   |
-| Spike Function          | weight_index        |                     | dependency_index    | operation_index     | spike_function_index              |
-| Transfer function       |                     |                     | dependency_index    | operation_index     | transfer_function_index           |
-| Weight regularization   | weight_index_start  | count_weights       |                     | operation_index     | feature_index                     |
-
+\*weight_descriptor, dependency_descriptor either contains the used index, or a special value meaning: not used

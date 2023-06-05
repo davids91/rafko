@@ -15,12 +15,22 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 #include "rafko_gym/models/rafko_cost.hpp"
+#include "cost_function_binary_cross_entropy.hpp"
+#include "cost_function_cross_entropy.hpp"
+#include "cost_function_mse.hpp"
+#include "cost_function_squared_error.hpp"
 
 #include <math.h>
 #include <mutex>
 #include <functional>
 
+
+#if(RAFKO_USES_OPENCL)
+#include "rafko_utilities/services/rafko_string_utils.hpp"
+#include "rafko_gym/services/function_factory.hpp"
+#endif/*(RAFKO_USES_OPENCL)*/
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
+
 
 namespace rafko_gym{
 
@@ -130,6 +140,39 @@ void RafkoCost::accumulate_error_sum(std::vector<double>& source, double& target
 
   std::lock_guard<std::mutex> my_lock(error_mutex);
   target += local_error;
+}
+
+std::string RafkoCost::generic_derivative_kernel_source(
+  std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number,
+  std::string target, std::string behavior_index
+){
+  std::string kernel_source = R"(
+    switch(==behavior_index==){
+      case cost_function_squared_error:{==target== = ==cost_function_squared_error==; }break;
+      case cost_function_mse:{==target== = ==cost_function_mse==; }break;
+      case cost_function_cross_entropy:{==target== = ==cost_function_cross_entropy==; }break;
+      case cost_function_binary_cross_entropy:{==target== = ==cost_function_binary_cross_entropy==; }break;
+    }
+  )";
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==target=="), target);
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==behavior_index=="), behavior_index);
+  kernel_source = rafko_utilities::replace_all_in_string(
+    kernel_source, std::regex("==cost_function_squared_error=="),
+    CostFunctionSquaredError::derivative_kernel_source(label_value, feature_value, feature_d)
+  );
+  kernel_source = rafko_utilities::replace_all_in_string(
+    kernel_source, std::regex("==cost_function_mse=="), 
+    CostFunctionMSE::derivative_kernel_source(label_value, feature_value, feature_d, sample_number)
+  );
+  kernel_source = rafko_utilities::replace_all_in_string(
+    kernel_source, std::regex("==cost_function_cross_entropy=="), 
+    CostFunctionCrossEntropy::derivative_kernel_source(label_value, feature_value, feature_d, sample_number)
+  );
+  kernel_source = rafko_utilities::replace_all_in_string(
+    kernel_source, std::regex("==cost_function_binary_cross_entropy=="), 
+    CostFunctionBinaryCrossEntropy::get_derivative_kernel_source(label_value, feature_value, feature_d, sample_number)
+  );
+  return kernel_source;
 }
 
 } /* namespace rafko_gym */
