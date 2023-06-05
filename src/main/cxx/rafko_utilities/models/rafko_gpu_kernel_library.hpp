@@ -22,7 +22,7 @@
 
 #include <string>
 
-namespace rafko_utilities{
+namespace rafko_utilities {
 
 const std::string atomic_double_add_function = R"(
   #pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable

@@ -19,19 +19,21 @@
 
 namespace rafko_net {
 
-std::uint32_t FeatureGroupCache::construct(const FeatureGroup& host){
+std::uint32_t FeatureGroupCache::construct(const FeatureGroup &host) {
   std::uint32_t calculated_checksum = 0u;
-  std::uint32_t fletchers_hash = 0; /* https://en.wikipedia.org/wiki/Fletcher%27s_checksum */
-  SynapseIterator<> relevant_neurons = SynapseIterator<>(host.relevant_neurons());
-  relevant_neurons.skim([this, &calculated_checksum, &fletchers_hash](IndexSynapseInterval interval){
+  std::uint32_t fletchers_hash =
+      0; /* https://en.wikipedia.org/wiki/Fletcher%27s_checksum */
+  SynapseIterator<> relevant_neurons =
+      SynapseIterator<>(host.relevant_neurons());
+  relevant_neurons.skim([this, &calculated_checksum,
+                         &fletchers_hash](IndexSynapseInterval interval) {
     calculated_checksum |= interval.starts();
     calculated_checksum |= interval.interval_size();
     fletchers_hash |= calculated_checksum;
   });
-  return( /* is this complexity too much? */
-    ((calculated_checksum + 1) & 0x0000FFFFu)
-    | ((fletchers_hash << 16) && 0xFFFF0000u)
-  );
+  return (/* is this complexity too much? */
+          ((calculated_checksum + 1) & 0x0000FFFFu) |
+          ((fletchers_hash << 16) && 0xFFFF0000u));
 }
 
 } /* namespace rafko_net */

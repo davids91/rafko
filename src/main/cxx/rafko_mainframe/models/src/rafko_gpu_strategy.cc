@@ -17,26 +17,27 @@
 
 #include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
 
-namespace rafko_mainframe{
+namespace rafko_mainframe {
 
-bool RafkoGPUStrategy::isValid() const{
+bool RafkoGPUStrategy::isValid() const {
   std::vector<std::string> step_names = get_step_names();
   std::vector<RafkoNBufShape> input_shapes = get_input_shapes();
   std::vector<RafkoNBufShape> output_shapes = get_output_shapes();
 
-  if(
-    (0u == step_names.size())
-    ||(step_names.size() != get_step_sources().size())
-    ||(step_names.size() != input_shapes.size())
-    ||(step_names.size() != output_shapes.size())
-  ) return false;
+  if ((0u == step_names.size()) ||
+      (step_names.size() != get_step_sources().size()) ||
+      (step_names.size() != input_shapes.size()) ||
+      (step_names.size() != output_shapes.size()))
+    return false;
 
-  for(std::int32_t dimension_index = 0; dimension_index < (static_cast<std::int32_t>(input_shapes.size()) - 1); ++dimension_index){
-    if(input_shapes[dimension_index + 1] != output_shapes[dimension_index])
+  for (std::int32_t dimension_index = 0;
+       dimension_index < (static_cast<std::int32_t>(input_shapes.size()) - 1);
+       ++dimension_index) {
+    if (input_shapes[dimension_index + 1] != output_shapes[dimension_index])
       return false;
   }
 
   return true;
 }
 
-} /* rafko_mainframe */
+} // namespace rafko_mainframe

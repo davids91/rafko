@@ -19,174 +19,249 @@
 
 #include <math.h>
 
-#include "rafko_protocol/training.pb.h"
-#include "rafko_utilities/models/data_ringbuffer.hpp"
-#include "rafko_net/models/neuron_info.hpp"
-#include "rafko_net/services/solution_builder.hpp"
 #include "rafko_gym/models/rafko_dataset_implementation.hpp"
 #include "rafko_gym/services/updater_factory.hpp"
+#include "rafko_net/models/neuron_info.hpp"
+#include "rafko_net/services/solution_builder.hpp"
+#include "rafko_protocol/training.pb.h"
+#include "rafko_utilities/models/data_ringbuffer.hpp"
 
 #include "rafko_mainframe/services/rafko_dummies.hpp"
 
-namespace rafko_mainframe{
+namespace rafko_mainframe {
 
 RafkoCPUContext::RafkoCPUContext(
-  rafko_net::RafkoNet& neural_network, std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
-  std::shared_ptr<rafko_gym::RafkoObjective> objective
-)
-: RafkoContext(settings)
-, m_network(neural_network)
-, m_solverFactory(m_network, m_settings)
-, m_agent(m_solverFactory.build())
-, m_dataSet(std::make_unique<RafkoDummyEnvironment>(m_network.input_data_size(), m_network.output_neuron_number()))
-, m_objective(objective)
-, m_weightUpdater(rafko_gym::UpdaterFactory::build_weight_updater(m_network, rafko_gym::weight_updater_default, *m_settings))
-, m_executionThreads(m_settings->get_max_processing_threads())
-, m_neuronOutputsToEvaluate( /* For every thread, 1 sequence is evaluated.. */
-  (m_executionThreads.get_number_of_threads() * m_dataSet->get_sequence_size() + 1u),
-  std::vector<double>(m_network.output_neuron_number()) /* ..plus for the label errors one additional vector is needed */
-)
-, m_usedSequenceTruncation( std::min(m_settings->get_memory_truncation(), m_dataSet->get_sequence_size()) )
-, m_usedMinibatchSize( std::min(m_settings->get_minibatch_size(), m_dataSet->get_number_of_sequences()) )
-{
-  m_neuronOutputsToEvaluate.back().resize(m_dataSet->get_number_of_label_samples());
+    rafko_net::RafkoNet &neural_network,
+    std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
+    std::shared_ptr<rafko_gym::RafkoObjective> objective)
+    : RafkoContext(settings), m_network(neural_network),
+      m_solverFactory(m_network, m_settings), m_agent(m_solverFactory.build()),
+      m_dataSet(std::make_unique<RafkoDummyEnvironment>(
+          m_network.input_data_size(), m_network.output_neuron_number())),
+      m_objective(objective),
+      m_weightUpdater(rafko_gym::UpdaterFactory::build_weight_updater(
+          m_network, rafko_gym::weight_updater_default, *m_settings)),
+      m_executionThreads(m_settings->get_max_processing_threads()),
+      m_neuronOutputsToEvaluate(/* For every thread, 1 sequence is evaluated..
+                                 */
+                                (m_executionThreads.get_number_of_threads() *
+                                     m_dataSet->get_sequence_size() +
+                                 1u),
+                                std::vector<double>(
+                                    m_network
+                                        .output_neuron_number()) /* ..plus for
+                                                                    the label
+                                                                    errors one
+                                                                    additional
+                                                                    vector is
+                                                                    needed */
+                                ),
+      m_usedSequenceTruncation(std::min(m_settings->get_memory_truncation(),
+                                        m_dataSet->get_sequence_size())),
+      m_usedMinibatchSize(std::min(m_settings->get_minibatch_size(),
+                                   m_dataSet->get_number_of_sequences())) {
+  m_neuronOutputsToEvaluate.back().resize(
+      m_dataSet->get_number_of_label_samples());
 }
 
-void RafkoCPUContext::set_data_set(std::shared_ptr<rafko_gym::RafkoDataSet> data_set){
+void RafkoCPUContext::set_data_set(
+    std::shared_ptr<rafko_gym::RafkoDataSet> data_set) {
   RFASSERT_LOG("Setting data set in CPU context..");
-  RFASSERT_LOG("Environment feature size: {} vs. Network output Neuron number: {}", data_set->get_feature_size(), m_network.output_neuron_number());
+  RFASSERT_LOG(
+      "Environment feature size: {} vs. Network output Neuron number: {}",
+      data_set->get_feature_size(), m_network.output_neuron_number());
   RFASSERT(data_set->get_feature_size() == m_network.output_neuron_number());
-  RFASSERT_LOG("Environment input size: {} vs. Network input size: {}", data_set->get_input_size(), m_network.input_data_size());
+  RFASSERT_LOG("Environment input size: {} vs. Network input size: {}",
+               data_set->get_input_size(), m_network.input_data_size());
   RFASSERT(data_set->get_input_size() == m_network.input_data_size());
   m_dataSet.reset();
   m_dataSet = data_set;
   std::uint32_t old_output_buffer_num = m_neuronOutputsToEvaluate.size();
-  std::uint32_t new_output_buffer_num = m_executionThreads.get_number_of_threads() * m_dataSet->get_sequence_size() + 1u;
+  std::uint32_t new_output_buffer_num =
+      m_executionThreads.get_number_of_threads() *
+          m_dataSet->get_sequence_size() +
+      1u;
   m_neuronOutputsToEvaluate.resize(new_output_buffer_num);
-  if(old_output_buffer_num < new_output_buffer_num){
-    for(std::uint32_t buffer_index = old_output_buffer_num-1; buffer_index < new_output_buffer_num; ++buffer_index){
-      m_neuronOutputsToEvaluate[buffer_index].resize(m_dataSet->get_feature_size());
+  if (old_output_buffer_num < new_output_buffer_num) {
+    for (std::uint32_t buffer_index = old_output_buffer_num - 1;
+         buffer_index < new_output_buffer_num; ++buffer_index) {
+      m_neuronOutputsToEvaluate[buffer_index].resize(
+          m_dataSet->get_feature_size());
     }
   }
-  m_neuronOutputsToEvaluate.back().resize(m_dataSet->get_number_of_label_samples());
-  m_usedSequenceTruncation = std::min(m_settings->get_memory_truncation(), m_dataSet->get_sequence_size());
-  m_usedMinibatchSize = std::min(m_settings->get_minibatch_size(), m_dataSet->get_number_of_sequences());
+  m_neuronOutputsToEvaluate.back().resize(
+      m_dataSet->get_number_of_label_samples());
+  m_usedSequenceTruncation = std::min(m_settings->get_memory_truncation(),
+                                      m_dataSet->get_sequence_size());
+  m_usedMinibatchSize = std::min(m_settings->get_minibatch_size(),
+                                 m_dataSet->get_number_of_sequences());
 }
 
-double RafkoCPUContext::error_post_process(double raw_error, std::uint32_t labels_evaluated){
+double RafkoCPUContext::error_post_process(double raw_error,
+                                           std::uint32_t labels_evaluated) {
   double result_error = raw_error;
   double divisor = std::max(1u, labels_evaluated);
-  for(const rafko_net::FeatureGroup& feature : m_network.neuron_group_features()){
-    if(rafko_net::NeuronInfo::is_feature_relevant_to_performance(feature.feature())){
+  for (const rafko_net::FeatureGroup &feature :
+       m_network.neuron_group_features()) {
+    if (rafko_net::NeuronInfo::is_feature_relevant_to_performance(
+            feature.feature())) {
       result_error += m_agent->expose_executor().calculate_performance_relevant(
-        feature, *m_settings, m_network
-      );
+          feature, *m_settings, m_network);
     }
   }
 
-  RFASSERT_LOG(
-    "Error post process: raw error value: {}; error corrected with performance: {}; divisor: {}",
-    raw_error, result_error, divisor
-  );
+  RFASSERT_LOG("Error post process: raw error value: {}; error corrected with "
+               "performance: {}; divisor: {}",
+               raw_error, result_error, divisor);
   return result_error / divisor;
 }
 
-double RafkoCPUContext::evaluate(std::uint32_t sequence_start, std::uint32_t sequences_to_evaluate, std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation){
-  RFASSERT_LOG(
-    "Evaluating sequences in CPU context: {} + {} / {}; start index inside sequence: {}; sequence truncation: {} ",
-    sequence_start, sequences_to_evaluate, m_dataSet->get_number_of_sequences(), start_index_in_sequence, sequence_truncation
-  );
-  RFASSERT(m_dataSet->get_number_of_sequences() >= (sequence_start + sequences_to_evaluate));
+double RafkoCPUContext::evaluate(std::uint32_t sequence_start,
+                                 std::uint32_t sequences_to_evaluate,
+                                 std::uint32_t start_index_in_sequence,
+                                 std::uint32_t sequence_truncation) {
+  RFASSERT_LOG("Evaluating sequences in CPU context: {} + {} / {}; start index "
+               "inside sequence: {}; sequence truncation: {} ",
+               sequence_start, sequences_to_evaluate,
+               m_dataSet->get_number_of_sequences(), start_index_in_sequence,
+               sequence_truncation);
+  RFASSERT(m_dataSet->get_number_of_sequences() >=
+           (sequence_start + sequences_to_evaluate));
   RFASSERT(static_cast<bool>(m_objective));
 
   double error_sum = (0.0);
   m_agent->set_eval_mode(true);
-  for(std::uint32_t sequence_index = sequence_start; sequence_index < (sequence_start + sequences_to_evaluate); sequence_index += m_executionThreads.get_number_of_threads()){
-    m_executionThreads.start_and_block([this, sequence_index](std::uint32_t thread_index){
-      if(m_dataSet->get_number_of_sequences() > (sequence_index + thread_index)){ /* See if the sequence index is inside bounds */
-        /*!Note: This might happen because of the number of used threads might point to a grater index, than the number of sequences;
-         * Which is mainly because of division remainder between number fo threads and the number of sequences
+  for (std::uint32_t sequence_index = sequence_start;
+       sequence_index < (sequence_start + sequences_to_evaluate);
+       sequence_index += m_executionThreads.get_number_of_threads()) {
+    m_executionThreads.start_and_block([this, sequence_index](
+                                           std::uint32_t thread_index) {
+      if (m_dataSet->get_number_of_sequences() >
+          (sequence_index +
+           thread_index)) { /* See if the sequence index is inside bounds */
+        /*!Note: This might happen because of the number of used threads might
+         * point to a grater index, than the number of sequences; Which is
+         * mainly because of division remainder between number fo threads and
+         * the number of sequences
          * */
         /* Solve the sequence under sequence_index + thread_index */
-        std::uint32_t raw_inputs_index = (sequence_index + thread_index) * (m_dataSet->get_sequence_size() + m_dataSet->get_prefill_inputs_number());
+        std::uint32_t raw_inputs_index =
+            (sequence_index + thread_index) *
+            (m_dataSet->get_sequence_size() +
+             m_dataSet->get_prefill_inputs_number());
 
         /* Evaluate the current sequence step by step */
-        for(std::uint32_t prefill_iterator = 0; prefill_iterator < m_dataSet->get_prefill_inputs_number(); ++prefill_iterator){
-          (void)m_agent->solve(m_dataSet->get_input_sample(raw_inputs_index), (0 == prefill_iterator), thread_index);
+        for (std::uint32_t prefill_iterator = 0;
+             prefill_iterator < m_dataSet->get_prefill_inputs_number();
+             ++prefill_iterator) {
+          (void)m_agent->solve(m_dataSet->get_input_sample(raw_inputs_index),
+                               (0 == prefill_iterator), thread_index);
           ++raw_inputs_index;
-        } /* The first few inputs are there to set an initial state to the network */
+        } /* The first few inputs are there to set an initial state to the
+             network */
 
         /* Solve the data and store the result after the inital "prefill" */
-        for(std::uint32_t sequence_iterator = 0; sequence_iterator < m_dataSet->get_sequence_size(); ++sequence_iterator){
-          rafko_utilities::ConstVectorSubrange<> neuron_output = m_agent->solve(
-            m_dataSet->get_input_sample(raw_inputs_index),
-            ( (0u == m_dataSet->get_prefill_inputs_number())&&(0u == sequence_iterator) ),
-            thread_index
-          );
-          std::copy( /* copy the result to the eval array */
-            neuron_output.begin(), neuron_output.end(),
-            m_neuronOutputsToEvaluate[(thread_index * m_dataSet->get_sequence_size()) + sequence_iterator].begin()
-          );
+        for (std::uint32_t sequence_iterator = 0;
+             sequence_iterator < m_dataSet->get_sequence_size();
+             ++sequence_iterator) {
+          rafko_utilities::ConstVectorSubrange<> neuron_output =
+              m_agent->solve(m_dataSet->get_input_sample(raw_inputs_index),
+                             ((0u == m_dataSet->get_prefill_inputs_number()) &&
+                              (0u == sequence_iterator)),
+                             thread_index);
+          std::copy(/* copy the result to the eval array */
+                    neuron_output.begin(), neuron_output.end(),
+                    m_neuronOutputsToEvaluate[(thread_index *
+                                               m_dataSet->get_sequence_size()) +
+                                              sequence_iterator]
+                        .begin());
           ++raw_inputs_index;
-        }/*for(relevant sequences)*/
-      }/*if(thread index inside bounds)*/
+        } /*for(relevant sequences)*/
+      }   /*if(thread index inside bounds)*/
     });
 
     RFASSERT_LOGV2(m_neuronOutputsToEvaluate, "Neuron outputs to evaluate: ");
 
-    double error_part = m_objective->set_features_for_sequences( /* Upload results to the data set */
-      *m_dataSet, m_neuronOutputsToEvaluate,
-      0u/* neuron_buffer_index */, sequence_index, std::min(
-        ((sequence_start + sequences_to_evaluate) - (sequence_index)),
-        static_cast<std::uint32_t>(m_executionThreads.get_number_of_threads())
-      )/* sequences_to_evaluate */,
-      start_index_in_sequence, sequence_truncation, m_neuronOutputsToEvaluate.back()
-    );
+    double error_part =
+        m_objective
+            ->set_features_for_sequences(/* Upload results to the data set */
+                                         *m_dataSet, m_neuronOutputsToEvaluate,
+                                         0u /* neuron_buffer_index */,
+                                         sequence_index,
+                                         std::min(
+                                             ((sequence_start +
+                                               sequences_to_evaluate) -
+                                              (sequence_index)),
+                                             static_cast<std::uint32_t>(
+                                                 m_executionThreads
+                                                     .get_number_of_threads())) /* sequences_to_evaluate */
+                                         ,
+                                         start_index_in_sequence,
+                                         sequence_truncation,
+                                         m_neuronOutputsToEvaluate.back());
     error_sum += error_part;
-  } /* for(sequence_index: sequence_start --> (sequence start + sequences_to_evaluate)) */
+  } /* for(sequence_index: sequence_start --> (sequence start +
+       sequences_to_evaluate)) */
 
-  return -error_post_process( error_sum, (sequences_to_evaluate * m_dataSet->get_sequence_size()) );
+  return -error_post_process(
+      error_sum, (sequences_to_evaluate * m_dataSet->get_sequence_size()));
 }
 
-void RafkoCPUContext::solve_data_set(std::vector<std::vector<double>>& output, bool isolated){
+void RafkoCPUContext::solve_data_set(std::vector<std::vector<double>> &output,
+                                     bool isolated) {
   RFASSERT_LOG("Solving the whole environment in CPU Context");
   RFASSERT(
-    (isolated && (output.size() == (m_dataSet->get_number_of_sequences() * m_dataSet->get_sequence_size())))
-    ||(!isolated && (output.size() == (m_executionThreads.get_number_of_threads() * m_dataSet->get_sequence_size())))
-  );
+      (isolated && (output.size() == (m_dataSet->get_number_of_sequences() *
+                                      m_dataSet->get_sequence_size()))) ||
+      (!isolated &&
+       (output.size() == (m_executionThreads.get_number_of_threads() *
+                          m_dataSet->get_sequence_size()))));
   std::uint32_t sequence_index = 0u;
-  while(sequence_index < m_dataSet->get_number_of_sequences()){
-    m_executionThreads.start_and_block([this, sequence_index, &output](std::uint32_t thread_index){
+  while (sequence_index < m_dataSet->get_number_of_sequences()) {
+    m_executionThreads.start_and_block([this, sequence_index,
+                                        &output](std::uint32_t thread_index) {
       const std::uint32_t actual_sequence_index = sequence_index + thread_index;
-      if(actual_sequence_index < m_dataSet->get_number_of_sequences()){
+      if (actual_sequence_index < m_dataSet->get_number_of_sequences()) {
         /* Solve the sequence under sequence_index + thread_index */
-        std::uint32_t raw_inputs_index = actual_sequence_index * (m_dataSet->get_sequence_size() + m_dataSet->get_prefill_inputs_number());
+        std::uint32_t raw_inputs_index =
+            actual_sequence_index * (m_dataSet->get_sequence_size() +
+                                     m_dataSet->get_prefill_inputs_number());
 
         /* Evaluate the current sequence step by step */
-        for(std::uint32_t prefill_iterator = 0; prefill_iterator < m_dataSet->get_prefill_inputs_number(); ++prefill_iterator){
-          (void)m_agent->solve(m_dataSet->get_input_sample(raw_inputs_index), (0 == prefill_iterator), thread_index);
+        for (std::uint32_t prefill_iterator = 0;
+             prefill_iterator < m_dataSet->get_prefill_inputs_number();
+             ++prefill_iterator) {
+          (void)m_agent->solve(m_dataSet->get_input_sample(raw_inputs_index),
+                               (0 == prefill_iterator), thread_index);
           ++raw_inputs_index;
-        } /* The first few inputs are there to set an initial state to the network */
+        } /* The first few inputs are there to set an initial state to the
+             network */
 
         /* Solve the data and store the result after the inital "prefill" */
-        for(std::uint32_t sequence_iterator = 0; sequence_iterator < m_dataSet->get_sequence_size(); ++sequence_iterator){
-          rafko_utilities::ConstVectorSubrange<> neuron_output = m_agent->solve(
-            m_dataSet->get_input_sample(raw_inputs_index),
-            ( (0u == m_dataSet->get_prefill_inputs_number())&&(0u == sequence_iterator) ),
-            thread_index
-          );
-          const std::uint32_t output_buffer_index = (actual_sequence_index * m_dataSet->get_sequence_size()) + sequence_iterator;
+        for (std::uint32_t sequence_iterator = 0;
+             sequence_iterator < m_dataSet->get_sequence_size();
+             ++sequence_iterator) {
+          rafko_utilities::ConstVectorSubrange<> neuron_output =
+              m_agent->solve(m_dataSet->get_input_sample(raw_inputs_index),
+                             ((0u == m_dataSet->get_prefill_inputs_number()) &&
+                              (0u == sequence_iterator)),
+                             thread_index);
+          const std::uint32_t output_buffer_index =
+              (actual_sequence_index * m_dataSet->get_sequence_size()) +
+              sequence_iterator;
           RFASSERT(output_buffer_index < output.size());
           RFASSERT(output[output_buffer_index].size() == neuron_output.size());
-          std::copy(neuron_output.begin(), neuron_output.end(), output[output_buffer_index].begin());
+          std::copy(neuron_output.begin(), neuron_output.end(),
+                    output[output_buffer_index].begin());
           ++raw_inputs_index;
-        }/*for(relevant sequences)*/
+        } /*for(relevant sequences)*/
       }
     });
     sequence_index += m_executionThreads.get_number_of_threads();
-    if(!isolated)break; /* to keep buffer data consistent in non-isolated runs, only the first @get_number_of_threads sequences are solved */
-  }/*while(there are sequences left to solve)*/
+    if (!isolated)
+      break; /* to keep buffer data consistent in non-isolated runs, only the
+                first @get_number_of_threads sequences are solved */
+  }          /*while(there are sequences left to solve)*/
 }
-
 
 } /* namespace rafko_mainframe */

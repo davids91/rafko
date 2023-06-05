@@ -20,22 +20,22 @@
 
 #include <limits>
 
-namespace rafko_gym{
+namespace rafko_gym {
 
-std::uint32_t RafkoBackpropagationOperation::get_max_dependency_index(){
+std::uint32_t RafkoBackpropagationOperation::get_max_dependency_index() {
   RFASSERT(are_dependencies_registered());
   std::vector<Dependency> dependencies = get_dependencies();
-  for(const Dependency& dep : dependencies)
+  for (const Dependency &dep : dependencies)
     RFASSERT(dep->operation_index_finalised());
   auto found_element = std::max_element(
-    dependencies.begin(), dependencies.end(),
-    [](const Dependency& a, const Dependency& b){
-      return a->get_operation_index() < b->get_operation_index();
-    }
-  );
-  if(found_element == dependencies.end())
+      dependencies.begin(), dependencies.end(),
+      [](const Dependency &a, const Dependency &b) {
+        return a->get_operation_index() < b->get_operation_index();
+      });
+  if (found_element == dependencies.end())
     return std::numeric_limits<std::uint32_t>::max();
-    else return (*found_element)->get_operation_index();
+  else
+    return (*found_element)->get_operation_index();
 }
 
 } /* namespace rafko_gym */

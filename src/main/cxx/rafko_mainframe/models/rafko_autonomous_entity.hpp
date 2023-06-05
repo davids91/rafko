@@ -26,19 +26,23 @@
 
 #include "rafko_mainframe/models/rafko_settings.hpp"
 
-namespace rafko_mainframe{
+namespace rafko_mainframe {
 
 /**
- * @brief      An Autonomous entity means an object within te framework with its own scope of settings and Arena.
- *             It's meant to be a long lived object handling other objects with shorter lifetimes
+ * @brief      An Autonomous entity means an object within te framework with its
+ * own scope of settings and Arena. It's meant to be a long lived object
+ * handling other objects with shorter lifetimes
  */
-class RAFKO_EXPORT RafkoAutonomousEntity{
+class RAFKO_EXPORT RafkoAutonomousEntity {
 public:
-  RafkoAutonomousEntity(std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {})
-  : m_settings(settings?settings:std::make_shared<rafko_mainframe::RafkoSettings>())
-  , m_arena(initialize_arena(*m_settings))
-  {
-    if(m_arena)m_settings->set_arena_ptr(m_arena.get());
+  RafkoAutonomousEntity(
+      std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {})
+      : m_settings(settings
+                       ? settings
+                       : std::make_shared<rafko_mainframe::RafkoSettings>()),
+        m_arena(initialize_arena(*m_settings)) {
+    if (m_arena)
+      m_settings->set_arena_ptr(m_arena.get());
   }
 
 protected:
@@ -47,16 +51,21 @@ protected:
 
 private:
   /**
-   * @brief     Constructs an arena in case the provided settings doesn't contain any
+   * @brief     Constructs an arena in case the provided settings doesn't
+   * contain any
    *
-   * @param     settings    The @RafkoSettings instance to check for an existing arena implementation
+   * @param     settings    The @RafkoSettings instance to check for an existing
+   * arena implementation
    *
-   * @return    The pointer to the arena should the @RafkoSettings instance not contain it.
+   * @return    The pointer to the arena should the @RafkoSettings instance not
+   * contain it.
    */
-  static std::unique_ptr<google::protobuf::Arena> initialize_arena(rafko_mainframe::RafkoSettings& settings){
-    if(nullptr == settings.get_arena_ptr())
+  static std::unique_ptr<google::protobuf::Arena>
+  initialize_arena(rafko_mainframe::RafkoSettings &settings) {
+    if (nullptr == settings.get_arena_ptr())
       return std::make_unique<google::protobuf::Arena>();
-      else return {};
+    else
+      return {};
   }
 };
 

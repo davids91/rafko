@@ -20,42 +20,46 @@
 
 #include "rafko_global.hpp"
 
-#include <utility>
 #include <unordered_map>
+#include <utility>
 
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 
 #include "rafko_net/services/synapse_iterator.hpp"
 
-namespace rafko_net{
+namespace rafko_net {
 
 /**
- * @brief      Front-end to create partial solution objects by adding Neurons into them.
- *             Weights of a Neuron consists of: {memory_ratio, w1..wn, bias1..biasn}
+ * @brief      Front-end to create partial solution objects by adding Neurons
+ * into them. Weights of a Neuron consists of: {memory_ratio, w1..wn,
+ * bias1..biasn}
  */
-class RAFKO_EXPORT PartialSolutionBuilder{
+class RAFKO_EXPORT PartialSolutionBuilder {
 public:
-  PartialSolutionBuilder(PartialSolution& partial)
-  : m_partial(partial)
-  , m_inputSynapse(m_partial.input_data())
-  { }
+  PartialSolutionBuilder(PartialSolution &partial)
+      : m_partial(partial), m_inputSynapse(m_partial.input_data()) {}
 
   /**
    * @brief      Looks for the given Neuron index in the @PartialSolution input,
    *             and adds the input to it if found
    *
    * @param[in]  net            The network to read the Neuron from
-   * @param[in]  neuron_index   The index of the Neuron to read inside the @RafkoNet
+   * @param[in]  neuron_index   The index of the Neuron to read inside the
+   * @RafkoNet
    *
-   * @return     returns the input parameters of the Neurons: {maximum reach back in Neural memory, maximum input index reached}
+   * @return     returns the input parameters of the Neurons: {maximum reach
+   * back in Neural memory, maximum input index reached}
    */
-  [[nodiscard]] std::pair<std::uint32_t,std::uint32_t> add_neuron_to_partial_solution(const RafkoNet& net, std::uint32_t neuron_index);
+  [[nodiscard]] std::pair<std::uint32_t, std::uint32_t>
+  add_neuron_to_partial_solution(const RafkoNet &net,
+                                 std::uint32_t neuron_index);
 
 private:
-  PartialSolution& m_partial;
+  PartialSolution &m_partial;
   SynapseIterator<InputSynapseInterval> m_inputSynapse;
-  std::unordered_map<std::uint64_t,std::uint32_t> m_foundNetworkInputInPartialInput;
+  std::unordered_map<std::uint64_t, std::uint32_t>
+      m_foundNetworkInputInPartialInput;
 
   std::uint32_t m_neuronSynapseCount = 0u;
   std::uint32_t m_partialInputSynapseCount = 0u;
@@ -63,7 +67,8 @@ private:
   std::uint8_t m_previousNeuronInputSource;
 
   /**
-   *  definitions to assign a source of a neurons input upon building up the partial solution
+   *  definitions to assign a source of a neurons input upon building up the
+   * partial solution
    */
   static const std::uint8_t m_neuronInputNone = 0u;
   static const std::uint8_t m_neuronInputInternal = 1u;
@@ -74,19 +79,23 @@ private:
    *             and adds the input to it if found
    *
    * @param[in]  neuron_input_index  The neuron input index to look for
-   * @param[in]  input_reach_back    The number of loops a Neural input reaches back to
+   * @param[in]  input_reach_back    The number of loops a Neural input reaches
+   * back to
    *
-   * @return     returns true if the neuron index was found in the @PartialSolution input
+   * @return     returns true if the neuron index was found in the
+   * @PartialSolution input
    */
-  bool look_for_neuron_input(std::int32_t neuron_input_index, std::uint32_t input_reach_back);
+  bool look_for_neuron_input(std::int32_t neuron_input_index,
+                             std::uint32_t input_reach_back);
 
   /**
-   * @brief      Looks for the given Neuron index in the @PartialSolution internally,
-   *             and adds the input to it if found
+   * @brief      Looks for the given Neuron index in the @PartialSolution
+   * internally, and adds the input to it if found
    *
    * @param[in]  neuron_input_index  The neuron input index to look for
    *
-   * @return     returns true if the neuron index was found in the @PartialSolution Inner Neurons
+   * @return     returns true if the neuron index was found in the
+   * @PartialSolution Inner Neurons
    */
   bool look_for_neuron_input_internally(std::uint32_t neuron_input_index);
 
@@ -94,12 +103,18 @@ private:
    * @brief      Adds the given index to the given synapse
    *
    * @param[in]  index                  The Neuron index
-   * @param[in]  reach_back             The input reach_back value to show how far the input reaches back to past runs
-   * @param      current_synapse_count  The number of elements currently present in the synapse
-   * @param      synapse_intervals      The array of synapses to add the index to
+   * @param[in]  reach_back             The input reach_back value to show how
+   * far the input reaches back to past runs
+   * @param      current_synapse_count  The number of elements currently present
+   * in the synapse
+   * @param      synapse_intervals      The array of synapses to add the index
+   * to
    */
-  static void add_to_synapse(std::int32_t index, std::uint32_t reach_back, std::uint32_t& current_synapse_count, google::protobuf::RepeatedPtrField<InputSynapseInterval>* synapse_intervals);
-
+  static void
+  add_to_synapse(std::int32_t index, std::uint32_t reach_back,
+                 std::uint32_t &current_synapse_count,
+                 google::protobuf::RepeatedPtrField<InputSynapseInterval>
+                     *synapse_intervals);
 };
 
 } /* namespace rafko_net */

@@ -24,20 +24,21 @@
 
 namespace rafko_gym {
 
-class RAFKO_EXPORT RafkoWeightUpdaterAdam : public RafkoWeightUpdater{
+class RAFKO_EXPORT RafkoWeightUpdaterAdam : public RafkoWeightUpdater {
 public:
-  RafkoWeightUpdaterAdam(rafko_net::RafkoNet& rafko_net, const rafko_mainframe::RafkoSettings& settings)
-  :  RafkoWeightUpdater(rafko_net, settings)
-  ,  m_mean(rafko_net.weight_table_size(),(0.0))
-  ,  m_variance(rafko_net.weight_table_size(),(0.0))
-  { }
+  RafkoWeightUpdaterAdam(rafko_net::RafkoNet &rafko_net,
+                         const rafko_mainframe::RafkoSettings &settings)
+      : RafkoWeightUpdater(rafko_net, settings),
+        m_mean(rafko_net.weight_table_size(), (0.0)),
+        m_variance(rafko_net.weight_table_size(), (0.0)) {}
 
   ~RafkoWeightUpdaterAdam() = default;
-  
-  void iterate(const std::vector<double>& gradients) override;
+
+  void iterate(const std::vector<double> &gradients) override;
 
 protected:
-  double get_new_velocity(std::uint32_t weight_index, const std::vector<double>& gradients) const override;
+  double get_new_velocity(std::uint32_t weight_index,
+                          const std::vector<double> &gradients) const override;
 
 private:
   std::uint32_t m_iterationCount = 1u;

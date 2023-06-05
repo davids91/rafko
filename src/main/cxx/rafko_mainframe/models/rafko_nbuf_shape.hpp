@@ -20,33 +20,35 @@
 
 #include "rafko_global.hpp"
 
+#include <CL/opencl.hpp>
 #include <memory>
 #include <vector>
-#include <CL/opencl.hpp>
 
-namespace rafko_mainframe{
+namespace rafko_mainframe {
 
 /**
  * @brief      A container class to store a shape for multiple consequitve
  *             buffers mapped onto one. The buffers are mapped into memory
- *             as if they were concatenated. Each buffer handles their own internal
- *             structure. Shape of the buffer is understood to be in elements, not bytes.
+ *             as if they were concatenated. Each buffer handles their own
+ * internal structure. Shape of the buffer is understood to be in elements, not
+ * bytes.
  */
-class RAFKO_EXPORT RafkoNBufShape : public std::vector<std::size_t>{
+class RAFKO_EXPORT RafkoNBufShape : public std::vector<std::size_t> {
 public:
-  RafkoNBufShape(std::initializer_list<std::size_t> list){
-    for(const std::size_t& s : list)push_back(s);
+  RafkoNBufShape(std::initializer_list<std::size_t> list) {
+    for (const std::size_t &s : list)
+      push_back(s);
   }
 
   /**
-   * @brief      Provides the bytesize of a buffer of this shape with the given type T
+   * @brief      Provides the bytesize of a buffer of this shape with the given
+   * type T
    *
    * @return     the bytesize of a buffer of this shape with the given type T
    */
-  template<typename T>
-  std::size_t get_byte_size() const{
+  template <typename T> std::size_t get_byte_size() const {
     std::size_t byte_size = 0u;
-    for(const std::size_t& dim : *this)
+    for (const std::size_t &dim : *this)
       byte_size += (sizeof(T) * dim);
     return byte_size;
   }
@@ -56,9 +58,10 @@ public:
    *
    * @return     the number of elements stored in a buffer of this shape
    */
-  std::size_t get_number_of_elements() const{
+  std::size_t get_number_of_elements() const {
     std::size_t number = 0u;
-    for(const std::size_t& dim : *this) number += dim;
+    for (const std::size_t &dim : *this)
+      number += dim;
     return number;
   }
 
@@ -67,7 +70,7 @@ public:
    *
    * @return     the number of bytes required to store this shape
    */
-  std::size_t get_shape_buffer_byte_size() const{
+  std::size_t get_shape_buffer_byte_size() const {
     return sizeof(cl_int) * size();
   }
 
@@ -75,9 +78,10 @@ public:
    * @brief      Provides the shape of the Nbuffer in `cl_int` datatype.
    *             The bytesize of std::size_t and cl_int might differ!
    *
-   * @return     Allocated bytes representing the shape of the RafkoNDArray object
+   * @return     Allocated bytes representing the shape of the RafkoNDArray
+   * object
    */
-  std::unique_ptr<cl_int[]> acquire_shape_buffer() const{
+  std::unique_ptr<cl_int[]> acquire_shape_buffer() const {
     std::unique_ptr<cl_int[]> shape_buffer(new cl_int[size()]);
     std::copy(begin(), end(), shape_buffer.get());
     return shape_buffer;

@@ -17,30 +17,37 @@
 
 #include "rafko_mainframe/services/rafko_training_logger.hpp"
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
-namespace rafko_mainframe{
+namespace rafko_mainframe {
 
-void RafkoTrainingLogger::log(std::uint32_t iteration, const std::vector<std::uint32_t>& coordinates, const std::vector<std::string>& tags, const std::vector<double>& data){
+void RafkoTrainingLogger::log(std::uint32_t iteration,
+                              const std::vector<std::uint32_t> &coordinates,
+                              const std::vector<std::string> &tags,
+                              const std::vector<double> &data) {
   DataPackage measured;
   measured.set_iteration(iteration);
-  for(const std::uint32_t& coordinate : coordinates) measured.add_coordinates(coordinate);
-  for(const std::string& tag : tags) measured.add_tags(tag);
-  for(const double& data_element : data) measured.add_data(data_element);
+  for (const std::uint32_t &coordinate : coordinates)
+    measured.add_coordinates(coordinate);
+  for (const std::string &tag : tags)
+    measured.add_tags(tag);
+  for (const double &data_element : data)
+    measured.add_data(data_element);
   *m_measurement.add_packs() = measured;
   ++m_changesSince;
-  if(m_settings.get_training_relevant_loop_count() < m_changesSince)
+  if (m_settings.get_training_relevant_loop_count() < m_changesSince)
     flush();
 }
 
-void RafkoTrainingLogger::flush(){
+void RafkoTrainingLogger::flush() {
   std::filebuf logfile;
-  logfile.open(m_id+".log", std::ios::out | std::ios::binary | std::ios::trunc);
+  logfile.open(m_id + ".log",
+               std::ios::out | std::ios::binary | std::ios::trunc);
   std::ostream log_stream(&logfile);
   m_measurement.SerializeToOstream(&log_stream);
   m_changesSince = 0;
   logfile.close();
 }
 
-} /* rafko_mainframe */
+} // namespace rafko_mainframe

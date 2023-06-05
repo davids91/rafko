@@ -20,28 +20,27 @@
 
 #include "rafko_global.hpp"
 
-#include <vector>
-#include <utility>
-#include <string>
 #include <CL/opencl.hpp>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
 #include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
+#include "rafko_mainframe/models/rafko_nbuf_shape.hpp"
 
-namespace rafko_mainframe{
+namespace rafko_mainframe {
 
 /**
- * @brief      A phase of the Deep learning GPU pipeline consisting of several ordered GPU Kernels.
+ * @brief      A phase of the Deep learning GPU pipeline consisting of several
+ * ordered GPU Kernels.
  */
-class RAFKO_EXPORT RafkoGPUPhase{
+class RAFKO_EXPORT RafkoGPUPhase {
 public:
-  RafkoGPUPhase(
-    const cl::Context& context, const cl::Device& device, cl::CommandQueue& queue,
-    std::shared_ptr<RafkoGPUStrategy> strategy
-  ):m_openclContext(context)
-  , m_openclDevice(device)
-  , m_openclDeviceQueue(queue)
-  {
+  RafkoGPUPhase(const cl::Context &context, const cl::Device &device,
+                cl::CommandQueue &queue,
+                std::shared_ptr<RafkoGPUStrategy> strategy)
+      : m_openclContext(context), m_openclDevice(device),
+        m_openclDeviceQueue(queue) {
     set_strategy(strategy);
   }
 
@@ -57,14 +56,15 @@ public:
    *
    * @param[in]  input    the input array to upload to device memory
    */
-  void operator()(const std::vector<double>& input);
+  void operator()(const std::vector<double> &input);
 
   /**
    * @brief      Executes the implemented strategy phase
    *
-   * @param[in]  input    the input buffer containing input data already on device
+   * @param[in]  input    the input buffer containing input data already on
+   * device
    */
-  void operator()(cl::Buffer& input);
+  void operator()(cl::Buffer &input);
 
   /**
    * @brief      Executes the implemented strategy phase
@@ -78,15 +78,16 @@ public:
    * @param[in]  enq      the OpenCL enqeue arguments provided by the caller
    * @param[in]  input    the input array to upload to device memory
    */
-  void operator()(cl::EnqueueArgs enq, const std::vector<double>& input);
+  void operator()(cl::EnqueueArgs enq, const std::vector<double> &input);
 
   /**
    * @brief      Executes the implemented strategy phase
    *
    * @param[in]  enq      the OpenCL enqeue arguments provided by the caller
-   * @param[in]  input    the input buffer containing input data already on device
+   * @param[in]  input    the input buffer containing input data already on
+   * device
    */
-  void operator()(cl::EnqueueArgs enq, cl::Buffer& input);
+  void operator()(cl::EnqueueArgs enq, cl::Buffer &input);
 
   /**
    * @brief      Executes the implemented strategy phase
@@ -96,14 +97,16 @@ public:
   void operator()(cl::EnqueueArgs enq);
 
   /**
-   * @brief      Constructs a buffer containing the output data of the implemented strategy phase
+   * @brief      Constructs a buffer containing the output data of the
+   * implemented strategy phase
    *
    * @param[in]  size     The number of elements to take from the output
    * @param[in]  offset   An offset inside the output buffer to get
    *
    * @return     The output data with ownership transferred to the caller
    */
-  std::unique_ptr<double[]> acquire_output(std::size_t size, std::size_t offset = 0u) const;
+  std::unique_ptr<double[]> acquire_output(std::size_t size,
+                                           std::size_t offset = 0u) const;
 
   /**
    * @brief      Loads the output of the Phase into the supported pointer
@@ -112,33 +115,31 @@ public:
    * @param[in]  size     The number of elements to take from the output
    * @param[in]  offset   An offset inside the output buffer to get
    */
-  void load_output(double* target, std::size_t size, std::size_t offset = 0u) const;
+  void load_output(double *target, std::size_t size,
+                   std::size_t offset = 0u) const;
 
   /**
-   * @brief      Provides the buffer containing the input data of the implemented
-   *             strategy phase inside device memory to upload data to
+   * @brief      Provides the buffer containing the input data of the
+   * implemented strategy phase inside device memory to upload data to
    *
    * @return     A buffer of the input data on the device
    */
-  cl::Buffer& get_input_buffer(){
-    return std::get<0>(m_kernelArgs.front());
-  }
+  cl::Buffer &get_input_buffer() { return std::get<0>(m_kernelArgs.front()); }
 
   /**
-   * @brief      Provides the buffer containing the output data of the implemented
-   *             strategy phase inside device memory
+   * @brief      Provides the buffer containing the output data of the
+   * implemented strategy phase inside device memory
    *
    * @return     A buffer of the output data on the device
    */
-  cl::Buffer& get_output_buffer(){
-    return std::get<0>(m_kernelArgs.back());
-  }
+  cl::Buffer &get_output_buffer() { return std::get<0>(m_kernelArgs.back()); }
 
 private:
-  using KernelFunctor = cl::KernelFunctor<cl::Buffer, cl::Buffer, int, cl::Buffer, cl::Buffer, int>;
-  const cl::Context& m_openclContext;
-  const cl::Device& m_openclDevice;
-  cl::CommandQueue& m_openclDeviceQueue;
+  using KernelFunctor = cl::KernelFunctor<cl::Buffer, cl::Buffer, int,
+                                          cl::Buffer, cl::Buffer, int>;
+  const cl::Context &m_openclContext;
+  const cl::Device &m_openclDevice;
+  cl::CommandQueue &m_openclDeviceQueue;
   std::shared_ptr<RafkoGPUStrategy> m_strategy;
   std::vector<std::tuple<cl::Buffer, cl::Buffer, int>> m_kernelArgs;
   std::vector<KernelFunctor> m_steps;
