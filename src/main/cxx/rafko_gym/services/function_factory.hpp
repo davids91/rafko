@@ -25,16 +25,15 @@
 
 #include "rafko_protocol/rafko_net.pb.h"
 
-#include "rafko_gym/services/cost_function_squared_error.hpp"
-#include "rafko_gym/services/cost_function_mse.hpp"
-#include "rafko_gym/services/cost_function_cross_entropy.hpp"
 #include "rafko_gym/services/cost_function_binary_cross_entropy.hpp"
+#include "rafko_gym/services/cost_function_cross_entropy.hpp"
+#include "rafko_gym/services/cost_function_mse.hpp"
+#include "rafko_gym/services/cost_function_squared_error.hpp"
 
-namespace rafko_gym{
+namespace rafko_gym {
 
-class RAFKO_EXPORT FunctionFactory{
+class RAFKO_EXPORT FunctionFactory {
 public:
-
   /**
    * @brief      Builds a cost function.
    *
@@ -44,17 +43,24 @@ public:
    *
    * @return     The cost function.
    */
-  [[nodiscard]] static std::unique_ptr<CostFunction> build_cost_function(Cost_functions the_function, const rafko_mainframe::RafkoSettings& settings){
-    switch(the_function){
-      case cost_function_mse:                     return std::make_unique<CostFunctionMSE>(settings);
-        case cost_function_squared_error:         return std::make_unique<CostFunctionSquaredError>(settings);
-        case cost_function_cross_entropy:         return std::make_unique<CostFunctionCrossEntropy>(settings);
-        case cost_function_binary_cross_entropy:  return std::make_unique<CostFunctionBinaryCrossEntropy>(settings);
-      default: throw std::runtime_error("Unknown cost function requested from builder!");
+  [[nodiscard]] static std::unique_ptr<CostFunction>
+  build_cost_function(Cost_functions the_function,
+                      const rafko_mainframe::RafkoSettings &settings) {
+    switch (the_function) {
+    case cost_function_mse:
+      return std::make_unique<CostFunctionMSE>(settings);
+    case cost_function_squared_error:
+      return std::make_unique<CostFunctionSquaredError>(settings);
+    case cost_function_cross_entropy:
+      return std::make_unique<CostFunctionCrossEntropy>(settings);
+    case cost_function_binary_cross_entropy:
+      return std::make_unique<CostFunctionBinaryCrossEntropy>(settings);
+    default:
+      throw std::runtime_error("Unknown cost function requested from builder!");
     }
   }
 };
 
-} /* namespace rafko_net */
+} // namespace rafko_gym
 
 #endif /* FUNCTION_FACTORY_H */

@@ -21,11 +21,10 @@
 #include "rafko_global.hpp"
 #include "rafko_protocol/rafko_net.pb.h"
 
-namespace rafko_net{
+namespace rafko_net {
 
-class RAFKO_EXPORT NeuronInfo{
+class RAFKO_EXPORT NeuronInfo {
 public:
-
   /**
    * @brief      Gets a neurons estimated size in bytes.
    *
@@ -33,10 +32,11 @@ public:
    *
    * @return     The neuron estimated size in bytes.
    */
-  static std::uint32_t get_neuron_estimated_size_bytes(const Neuron& neuron){
-    return (
-      neuron.input_weights_size()  * 2/* Byte */ * 2/* fields( interval_size and starts) */
-      + neuron.input_indices_size() * 2/* Byte */ * 2/* fields( interval_size and starts) */
+  static std::uint32_t get_neuron_estimated_size_bytes(const Neuron &neuron) {
+    return (neuron.input_weights_size() * 2 /* Byte */ *
+                2 /* fields( interval_size and starts) */
+            + neuron.input_indices_size() * 2 /* Byte */ *
+                  2 /* fields( interval_size and starts) */
     );
   }
 
@@ -47,85 +47,121 @@ public:
    *
    * @return     The neuron estimated size in megabytes.
    */
-  static double get_neuron_estimated_size_megabytes(const Neuron& neuron){
-    return (
-      static_cast<double>(get_neuron_estimated_size_bytes(neuron)) / ((1024.0) * (1024.0))
-    );
+  static double get_neuron_estimated_size_megabytes(const Neuron &neuron) {
+    return (static_cast<double>(get_neuron_estimated_size_bytes(neuron)) /
+            ((1024.0) * (1024.0)));
   }
 
   /**
    * @brief      Determines whether the specified neuron is valid, but does
-   *             not take RafkoNet integrity into account (eg.: it doesn't check index validities)
+   *             not take RafkoNet integrity into account (eg.: it doesn't check
+   * index validities)
    *
    * @param[in]  neuron  The neuron reference
    */
-  static bool is_neuron_valid(const Neuron& neuron);
+  static bool is_neuron_valid(const Neuron &neuron);
 
   /**
-   * @brief      Determines whether the given feature is relevant to calculating ( solving ) the neural network
+   * @brief      Determines whether the given feature is relevant to calculating
+   * ( solving ) the neural network
    *
    * @param[in]  feature  The feature to be considered
    */
-  static constexpr bool is_feature_relevant_to_solution(Neuron_group_features feature){
-    switch(feature){
-      case neuron_group_feature_softmax: return true;
-      case neuron_group_feature_disentanglement: return false;
-      case neuron_group_feature_dropout_regularization: return true;
-      case neuron_group_feature_l1_regularization: return false;
-      case neuron_group_feature_l2_regularization: return false;
-      case neuron_group_feature_boltzmann_knot: return false;
-      default: return false;
+  static constexpr bool
+  is_feature_relevant_to_solution(Neuron_group_features feature) {
+    switch (feature) {
+    case neuron_group_feature_softmax:
+      return true;
+    case neuron_group_feature_disentanglement:
+      return false;
+    case neuron_group_feature_dropout_regularization:
+      return true;
+    case neuron_group_feature_l1_regularization:
+      return false;
+    case neuron_group_feature_l2_regularization:
+      return false;
+    case neuron_group_feature_boltzmann_knot:
+      return false;
+    default:
+      return false;
     }
   }
 
   /**
-   * @brief      Determines whether the given feature is relevant to the error / fitness value of the neural network
+   * @brief      Determines whether the given feature is relevant to the error /
+   * fitness value of the neural network
    *
    * @param[in]  feature  The feature to be considered
    */
-  static constexpr bool is_feature_relevant_to_performance(Neuron_group_features feature){
-    switch(feature){
-      case neuron_group_feature_softmax: return false;
-      case neuron_group_feature_disentanglement: return true;
-      case neuron_group_feature_dropout_regularization: return false;
-      case neuron_group_feature_l1_regularization: return true;
-      case neuron_group_feature_l2_regularization: return true;
-      case neuron_group_feature_boltzmann_knot: return false;
-      default: return false;
+  static constexpr bool
+  is_feature_relevant_to_performance(Neuron_group_features feature) {
+    switch (feature) {
+    case neuron_group_feature_softmax:
+      return false;
+    case neuron_group_feature_disentanglement:
+      return true;
+    case neuron_group_feature_dropout_regularization:
+      return false;
+    case neuron_group_feature_l1_regularization:
+      return true;
+    case neuron_group_feature_l2_regularization:
+      return true;
+    case neuron_group_feature_boltzmann_knot:
+      return false;
+    default:
+      return false;
     }
   }
 
   /**
-   * @brief      Determines whether the given feature is relevant to the training of the neural network
+   * @brief      Determines whether the given feature is relevant to the
+   * training of the neural network
    *
    * @param[in]  feature  The feature to be considered
    */
-  static constexpr bool is_feature_relevant_to_training(Neuron_group_features feature){
-    switch(feature){
-      case neuron_group_feature_softmax: return false;
-      case neuron_group_feature_disentanglement: return false;
-      case neuron_group_feature_dropout_regularization: return true;
-      case neuron_group_feature_l1_regularization: return true;
-      case neuron_group_feature_l2_regularization: return true;
-      case neuron_group_feature_boltzmann_knot: return true;
-      default: return false;
+  static constexpr bool
+  is_feature_relevant_to_training(Neuron_group_features feature) {
+    switch (feature) {
+    case neuron_group_feature_softmax:
+      return false;
+    case neuron_group_feature_disentanglement:
+      return false;
+    case neuron_group_feature_dropout_regularization:
+      return true;
+    case neuron_group_feature_l1_regularization:
+      return true;
+    case neuron_group_feature_l2_regularization:
+      return true;
+    case neuron_group_feature_boltzmann_knot:
+      return true;
+    default:
+      return false;
     }
   }
 
   /**
-   * @brief      Determines whether the given feature is relevant to the structure of the Neural Network
+   * @brief      Determines whether the given feature is relevant to the
+   * structure of the Neural Network
    *
    * @param[in]  feature  The feature to be considered
    */
-  static constexpr bool is_feature_relevant_to_structure(Neuron_group_features feature){
-    switch(feature){
-      case neuron_group_feature_softmax: return false;
-      case neuron_group_feature_disentanglement: return false;
-      case neuron_group_feature_dropout_regularization: return false;
-      case neuron_group_feature_l1_regularization: return false;
-      case neuron_group_feature_l2_regularization: return false;
-      case neuron_group_feature_boltzmann_knot: return true;
-      default: return false;
+  static constexpr bool
+  is_feature_relevant_to_structure(Neuron_group_features feature) {
+    switch (feature) {
+    case neuron_group_feature_softmax:
+      return false;
+    case neuron_group_feature_disentanglement:
+      return false;
+    case neuron_group_feature_dropout_regularization:
+      return false;
+    case neuron_group_feature_l1_regularization:
+      return false;
+    case neuron_group_feature_l2_regularization:
+      return false;
+    case neuron_group_feature_boltzmann_knot:
+      return true;
+    default:
+      return false;
     }
   }
 };

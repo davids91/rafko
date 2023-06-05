@@ -20,32 +20,33 @@
 
 #include "rafko_global.hpp"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "rafko_protocol/logger.pb.h"
 
 #include "rafko_mainframe/models/rafko_settings.hpp"
 
-namespace rafko_mainframe{
+namespace rafko_mainframe {
 
 /**
- * @brief      This class is a helper utility to create measurements about the neuron activations and experiences
- *             during training
+ * @brief      This class is a helper utility to create measurements about the
+ * neuron activations and experiences during training
  */
-class RafkoTrainingLogger{
+class RafkoTrainingLogger {
 public:
-  RafkoTrainingLogger(std::string id, RafkoSettings& settings)
-  : m_id(id)
-  , m_settings(settings)
-  { }
+  RafkoTrainingLogger(std::string id, RafkoSettings &settings)
+      : m_id(id), m_settings(settings) {}
 
-  void log(std::uint32_t iteration, const std::vector<std::uint32_t>& coordinates, const std::vector<std::string>& tags, const std::vector<double>& data);
+  void log(std::uint32_t iteration,
+           const std::vector<std::uint32_t> &coordinates,
+           const std::vector<std::string> &tags,
+           const std::vector<double> &data);
   void flush();
 
 private:
   std::string m_id;
-  RafkoSettings& m_settings;
+  RafkoSettings &m_settings;
   Measurement m_measurement;
   std::uint32_t m_changesSince = 0u;
 };

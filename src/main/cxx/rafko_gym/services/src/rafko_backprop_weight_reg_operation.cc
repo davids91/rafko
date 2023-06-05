@@ -16,22 +16,26 @@
  */
 #include "rafko_gym/services/rafko_backprop_weight_reg_operation.hpp"
 
-namespace rafko_gym{
+namespace rafko_gym {
 
-void RafkoBackpropWeightRegOperation::refresh_weight_derivatives(){
+void RafkoBackpropWeightRegOperation::refresh_weight_derivatives() {
   m_relevantIndexValues.clear();
-  rafko_net::SynapseIterator<>::iterate(m_featureGroup.relevant_neurons(),
-  [this](std::uint32_t neuron_index){
-    rafko_net::SynapseIterator<>::iterate(m_network.neuron_array(neuron_index).input_weights(),
-    [this](std::uint32_t weight_index){
-      m_relevantIndexValues.push_back(weight_index);
-      if(m_featureGroup.feature() == rafko_net::neuron_group_feature_l1_regularization){
-        m_eachWeightDerivative[weight_index] = 1.0;
-      }else if(m_featureGroup.feature() == rafko_net::neuron_group_feature_l2_regularization){
-        m_eachWeightDerivative[weight_index] = 2.0 * m_network.weight_table(weight_index);
-      }
-    });
-  });
+  rafko_net::SynapseIterator<>::iterate(
+      m_featureGroup.relevant_neurons(), [this](std::uint32_t neuron_index) {
+        rafko_net::SynapseIterator<>::iterate(
+            m_network.neuron_array(neuron_index).input_weights(),
+            [this](std::uint32_t weight_index) {
+              m_relevantIndexValues.push_back(weight_index);
+              if (m_featureGroup.feature() ==
+                  rafko_net::neuron_group_feature_l1_regularization) {
+                m_eachWeightDerivative[weight_index] = 1.0;
+              } else if (m_featureGroup.feature() ==
+                         rafko_net::neuron_group_feature_l2_regularization) {
+                m_eachWeightDerivative[weight_index] =
+                    2.0 * m_network.weight_table(weight_index);
+              }
+            });
+      });
 }
 
 } /* namespace rafko_gym */

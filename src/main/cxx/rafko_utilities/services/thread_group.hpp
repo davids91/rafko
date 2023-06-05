@@ -19,42 +19,44 @@
 #define THREAD_GROUP_H
 
 #include "rafko_global.hpp"
+#include <atomic>
+#include <cassert>
+#include <condition_variable>
 #include <functional>
-#include <vector>
-#include <thread>
 #include <mutex>
 #include <numeric>
-#include <atomic>
-#include <condition_variable>
-#include <cassert>
+#include <thread>
+#include <vector>
 
-namespace rafko_utilities{
+namespace rafko_utilities {
 
 /**
- * @brief    This class provides a number of worker threads to be executed in paralell for the functionality
- *          defined in the constructor of the template object. The class itself is not thread safe! Use a mutex
- *          to run the same instance from multiple threads.
+ * @brief    This class provides a number of worker threads to be executed in
+ * paralell for the functionality defined in the constructor of the template
+ * object. The class itself is not thread safe! Use a mutex to run the same
+ * instance from multiple threads.
  */
-class RAFKO_EXPORT ThreadGroup{
+class RAFKO_EXPORT ThreadGroup {
 public:
   ThreadGroup(std::uint32_t number_of_threads);
   ~ThreadGroup();
 
   /**
-   * @brief     Executes the profided function in all of the handled threads with the index of the executing thread provided to it
+   * @brief     Executes the profided function in all of the handled threads
+   * with the index of the executing thread provided to it
    */
-  void start_and_block(const std::function<void(std::uint32_t)>& function) const;
+  void
+  start_and_block(const std::function<void(std::uint32_t)> &function) const;
 
   /**
    * @brief     Returns the number of worker threads handled in this group
    */
-  std::uint32_t get_number_of_threads() const{
-    return m_threads.size();
-  }
+  std::uint32_t get_number_of_threads() const { return m_threads.size(); }
 
 private:
-  enum state_t{Idle, Start, End};
-  mutable const std::function<void(std::uint32_t)>* m_workerFunction; /* gets the thread index it is inside */
+  enum state_t { Idle, Start, End };
+  mutable const std::function<void(std::uint32_t)>
+      *m_workerFunction; /* gets the thread index it is inside */
   mutable std::size_t m_threadsReady = 0;
   mutable std::atomic<state_t> m_state = {Idle};
   mutable std::mutex m_functionMutex;

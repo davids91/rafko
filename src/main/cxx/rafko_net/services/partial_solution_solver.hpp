@@ -25,77 +25,89 @@
 #include "rafko_protocol/rafko_net.pb.h"
 #include "rafko_protocol/solution.pb.h"
 
-#include "rafko_utilities/models/data_pool.hpp"
-#include "rafko_utilities/models/data_ringbuffer.hpp"
 #include "rafko_net/models/transfer_function.hpp"
 #include "rafko_net/services/synapse_iterator.hpp"
+#include "rafko_utilities/models/data_pool.hpp"
+#include "rafko_utilities/models/data_ringbuffer.hpp"
 
 namespace rafko_net {
 
-class RAFKO_EXPORT PartialSolutionSolver{
+class RAFKO_EXPORT PartialSolutionSolver {
 
 public:
-  PartialSolutionSolver(const PartialSolution& partial_solution, const rafko_mainframe::RafkoSettings& settings)
-  :  m_partialSolution(partial_solution)
-  ,  m_internal_weight_iterator(m_partialSolution.weight_indices())
-  ,  m_input_iterator(m_partialSolution.input_data())
-  ,  m_transfer_function(settings)
-  { }
+  PartialSolutionSolver(const PartialSolution &partial_solution,
+                        const rafko_mainframe::RafkoSettings &settings)
+      : m_partialSolution(partial_solution),
+        m_internal_weight_iterator(m_partialSolution.weight_indices()),
+        m_input_iterator(m_partialSolution.input_data()),
+        m_transfer_function(settings) {}
 
   /**
-   * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference;
-   *             uses the common internal data pool for storing intermediate calculations
+   * @brief      Solves the partial solution in the given argument and loads the
+   * result into a provided output reference; uses the common internal data pool
+   * for storing intermediate calculations
    *
    * @param      input_data           The reference to collect input data from
    * @param      output_neuron_data   The reference to transfer function output
    */
-   void solve(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer<>& output_neuron_data) const{
-     std::vector<double>& used_buffer = m_commonDataPool.reserve_buffer(get_required_tmp_data_size());
-     solve_internal(input_data, output_neuron_data, used_buffer);
-     m_commonDataPool.release_buffer(used_buffer);
-   }
-
-   /**
-    * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference;
-    *             uses the provided data pool for storing intermediate calculations
-    *
-    * @param      input_data           The reference to collect input data from
-    * @param      output_neuron_data   The reference to transfer function output
-    * @param      used_data_pool       The reference to a datapool the partial solver may use for intermediate calculations
-    */
-   void solve(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer<>& output_neuron_data, rafko_utilities::DataPool<double>& used_data_pool) const{
-     std::vector<double>& used_buffer = used_data_pool.reserve_buffer(get_required_tmp_data_size());
-     solve_internal(input_data, output_neuron_data, used_buffer);
-     used_data_pool.release_buffer(used_buffer);
-   }
-
-   /**
-    * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference
-    *             and uses the provided vector for storing intermediate calculations. It shall resize the provided temp_data
-    *             to fit buffer needs.
-    *
-    * @param      input_data           The reference to collect input data from
-    * @param      output_neuron_data   The reference to transfer function output
-    * @param      temp_data            The reference a vector allocated to keep the required collected inputs
-    */
-   void solve(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer<>& output_neuron_data, std::vector<double>& temp_data) const{
-     temp_data.resize(get_required_tmp_data_size());
-     solve_internal(input_data, output_neuron_data, temp_data);
-   }
-
-   /**
-    * @brief      Provides the number of vector elements needed to solve the stored partial solution to
-    *             store the temporary data for the calculations
-    *
-    * @return     True if detail is valid, False otherwise.
-    */
-   std::uint32_t get_required_tmp_data_size() const{
-     return m_input_iterator.size();
-   }
+  void solve(const std::vector<double> &input_data,
+             rafko_utilities::DataRingbuffer<> &output_neuron_data) const {
+    std::vector<double> &used_buffer =
+        m_commonDataPool.reserve_buffer(get_required_tmp_data_size());
+    solve_internal(input_data, output_neuron_data, used_buffer);
+    m_commonDataPool.release_buffer(used_buffer);
+  }
 
   /**
-   * @brief      Determines if given Solution Detail is valid. Due to performance reasons
-   *             this function isn't used while solving a RafkoNet
+   * @brief      Solves the partial solution in the given argument and loads the
+   * result into a provided output reference; uses the provided data pool for
+   * storing intermediate calculations
+   *
+   * @param      input_data           The reference to collect input data from
+   * @param      output_neuron_data   The reference to transfer function output
+   * @param      used_data_pool       The reference to a datapool the partial
+   * solver may use for intermediate calculations
+   */
+  void solve(const std::vector<double> &input_data,
+             rafko_utilities::DataRingbuffer<> &output_neuron_data,
+             rafko_utilities::DataPool<double> &used_data_pool) const {
+    std::vector<double> &used_buffer =
+        used_data_pool.reserve_buffer(get_required_tmp_data_size());
+    solve_internal(input_data, output_neuron_data, used_buffer);
+    used_data_pool.release_buffer(used_buffer);
+  }
+
+  /**
+   * @brief      Solves the partial solution in the given argument and loads the
+   * result into a provided output reference and uses the provided vector for
+   * storing intermediate calculations. It shall resize the provided temp_data
+   *             to fit buffer needs.
+   *
+   * @param      input_data           The reference to collect input data from
+   * @param      output_neuron_data   The reference to transfer function output
+   * @param      temp_data            The reference a vector allocated to keep
+   * the required collected inputs
+   */
+  void solve(const std::vector<double> &input_data,
+             rafko_utilities::DataRingbuffer<> &output_neuron_data,
+             std::vector<double> &temp_data) const {
+    temp_data.resize(get_required_tmp_data_size());
+    solve_internal(input_data, output_neuron_data, temp_data);
+  }
+
+  /**
+   * @brief      Provides the number of vector elements needed to solve the
+   * stored partial solution to store the temporary data for the calculations
+   *
+   * @return     True if detail is valid, False otherwise.
+   */
+  std::uint32_t get_required_tmp_data_size() const {
+    return m_input_iterator.size();
+  }
+
+  /**
+   * @brief      Determines if given Solution Detail is valid. Due to
+   * performance reasons this function isn't used while solving a RafkoNet
    *
    * @return     True if detail is valid, False otherwise.
    */
@@ -103,22 +115,26 @@ public:
 
 private:
   static rafko_utilities::DataPool<double> m_commonDataPool;
-  const PartialSolution& m_partialSolution;
+  const PartialSolution &m_partialSolution;
   SynapseIterator<> m_internal_weight_iterator;
   SynapseIterator<InputSynapseInterval> m_input_iterator;
   TransferFunction m_transfer_function;
 
   /**
-   * @brief      Solves the partial solution in the given argument and loads the result into a provided output reference
-   *             and uses the provided vector for storing intermediate calculations. temp_data needs to be appropriately sized
-   *             to ensure that there is enough elements in it to collect all required partial solution input data
+   * @brief      Solves the partial solution in the given argument and loads the
+   * result into a provided output reference and uses the provided vector for
+   * storing intermediate calculations. temp_data needs to be appropriately
+   * sized to ensure that there is enough elements in it to collect all required
+   * partial solution input data
    *
    * @param      input_data           The reference to collect input data from
    * @param      output_neuron_data   The reference to transfer function output
-   * @param      temp_data            The reference a vector allocated to keep the required collected inputs
+   * @param      temp_data            The reference a vector allocated to keep
+   * the required collected inputs
    */
-  void solve_internal(const std::vector<double>& input_data, rafko_utilities::DataRingbuffer<>& output_neuron_data, std::vector<double>& temp_data) const;
-
+  void solve_internal(const std::vector<double> &input_data,
+                      rafko_utilities::DataRingbuffer<> &output_neuron_data,
+                      std::vector<double> &temp_data) const;
 };
 
 } /* namespace rafko_net */

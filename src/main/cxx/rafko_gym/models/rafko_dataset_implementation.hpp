@@ -20,24 +20,25 @@
 
 #include "rafko_global.hpp"
 
-#include <vector>
 #include <math.h>
+#include <vector>
 
-#include "rafko_protocol/training.pb.h"
 #include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
+#include "rafko_protocol/training.pb.h"
 
-namespace rafko_gym{
+namespace rafko_gym {
 
 /**
  * @brief      A wrapper class to store @DataSetPackages in a friendly format.
- *             It is possible to have more input samples, than label samples; In those cases
- *             the extra inputs are to be used to initialize the network before training.
- *             The data set consists of labels and inputs. Not every label has an input assigned to it,
- *             as there might be some additional inputs used to "prefill" a network, setting it up to be
- *             evaluated by the labels. It helps setting up an initial state for the training.
- *             The Dataset is built up of multiple sequences, each input and label in the sequence
- *             is of the same size and dimension. Each input and label can be of any size, albeit they must have
+ *             It is possible to have more input samples, than label samples; In
+ * those cases the extra inputs are to be used to initialize the network before
+ * training. The data set consists of labels and inputs. Not every label has an
+ * input assigned to it, as there might be some additional inputs used to
+ * "prefill" a network, setting it up to be evaluated by the labels. It helps
+ * setting up an initial state for the training. The Dataset is built up of
+ * multiple sequences, each input and label in the sequence is of the same size
+ * and dimension. Each input and label can be of any size, albeit they must have
  *             the same size or every sample.
  *             ================================================
  *             Example of the structure:
@@ -55,18 +56,19 @@ namespace rafko_gym{
  *             - Inputs: [][][][][][]
  *             - Labels:     [][][][]
  *             ================================================
- *             Despite the above structure, for eligibility of paralellism, the inputs and labels are in a separate,
- *             contigous array.
+ *             Despite the above structure, for eligibility of paralellism, the
+ * inputs and labels are in a separate, contigous array.
  */
-class RAFKO_EXPORT RafkoDatasetImplementation : public RafkoDataSet{
+class RAFKO_EXPORT RafkoDatasetImplementation : public RafkoDataSet {
 public:
-  explicit RafkoDatasetImplementation(const rafko_gym::DataSetPackage& samples)
-  : m_sequenceSize(std::max(1u,samples.sequence_size()))
-  , m_inputSamples(samples.inputs_size() / samples.input_size())
-  , m_labelSamples(samples.labels_size() / samples.feature_size())
-  , m_prefillSequences( static_cast<std::uint32_t>((m_inputSamples.size() - m_labelSamples.size())) / (m_labelSamples.size() / m_sequenceSize) )
-  {
-    RFASSERT(0 == (m_labelSamples.size()%m_sequenceSize));
+  explicit RafkoDatasetImplementation(const rafko_gym::DataSetPackage &samples)
+      : m_sequenceSize(std::max(1u, samples.sequence_size())),
+        m_inputSamples(samples.inputs_size() / samples.input_size()),
+        m_labelSamples(samples.labels_size() / samples.feature_size()),
+        m_prefillSequences(static_cast<std::uint32_t>((m_inputSamples.size() -
+                                                       m_labelSamples.size())) /
+                           (m_labelSamples.size() / m_sequenceSize)) {
+    RFASSERT(0 == (m_labelSamples.size() % m_sequenceSize));
     RFASSERT(0 < samples.input_size());
     RFASSERT(0 < samples.feature_size());
     RFASSERT(0 < samples.sequence_size());
@@ -75,62 +77,70 @@ public:
     fill(samples, m_inputSamples, m_labelSamples);
   }
 
-  RafkoDatasetImplementation(std::vector<FeatureVector>&& input_samples, std::vector<FeatureVector>&& label_samples, std::uint32_t sequence_size = 1u)
-  : m_sequenceSize(std::max(1u,sequence_size))
-  , m_inputSamples(std::move(input_samples))
-  , m_labelSamples(std::move(label_samples))
-  , m_prefillSequences(static_cast<std::uint32_t>((m_inputSamples.size() - m_labelSamples.size()) / (m_labelSamples.size() / m_sequenceSize)))
-  {
-    RFASSERT(0 == (m_labelSamples.size()%m_sequenceSize));
+  RafkoDatasetImplementation(std::vector<FeatureVector> &&input_samples,
+                             std::vector<FeatureVector> &&label_samples,
+                             std::uint32_t sequence_size = 1u)
+      : m_sequenceSize(std::max(1u, sequence_size)),
+        m_inputSamples(std::move(input_samples)),
+        m_labelSamples(std::move(label_samples)),
+        m_prefillSequences(static_cast<std::uint32_t>(
+            (m_inputSamples.size() - m_labelSamples.size()) /
+            (m_labelSamples.size() / m_sequenceSize))) {
+    RFASSERT(0 == (m_labelSamples.size() % m_sequenceSize));
     RFASSERT(0 < m_inputSamples.size());
     RFASSERT(m_inputSamples.size() == m_labelSamples.size());
   }
 
-  const FeatureVector& get_input_sample(std::uint32_t raw_input_index) const override{
-    RFASSERT_LOG("Input sample {} / {}", raw_input_index, m_inputSamples.size());
+  const FeatureVector &
+  get_input_sample(std::uint32_t raw_input_index) const override {
+    RFASSERT_LOG("Input sample {} / {}", raw_input_index,
+                 m_inputSamples.size());
     RFASSERT(m_inputSamples.size() > raw_input_index);
     return m_inputSamples[raw_input_index];
   }
 
-  constexpr const std::vector<FeatureVector>& get_input_samples() const override{
+  constexpr const std::vector<FeatureVector> &
+  get_input_samples() const override {
     return m_inputSamples;
   }
 
-  const FeatureVector& get_label_sample(std::uint32_t raw_label_index) const override{
-    RFASSERT_LOG("label_sample sample {} / {}", raw_label_index, m_labelSamples.size());
+  const FeatureVector &
+  get_label_sample(std::uint32_t raw_label_index) const override {
+    RFASSERT_LOG("label_sample sample {} / {}", raw_label_index,
+                 m_labelSamples.size());
     RFASSERT(m_labelSamples.size() > raw_label_index);
     return m_labelSamples[raw_label_index];
   }
 
-  const std::vector<FeatureVector>& get_label_samples() const override{
+  const std::vector<FeatureVector> &get_label_samples() const override {
     return m_labelSamples;
   }
 
-  std::uint32_t get_feature_size() const override{
+  std::uint32_t get_feature_size() const override {
     return m_labelSamples[0].size();
   }
 
-  std::uint32_t get_input_size() const override{
+  std::uint32_t get_input_size() const override {
     return m_inputSamples[0].size();
   }
 
-  std::uint32_t get_number_of_input_samples() const override{
+  std::uint32_t get_number_of_input_samples() const override {
     return m_inputSamples.size();
   }
 
-  std::uint32_t get_number_of_label_samples() const override{
+  std::uint32_t get_number_of_label_samples() const override {
     return m_labelSamples.size();
   }
 
-  std::uint32_t get_number_of_sequences() const override{
+  std::uint32_t get_number_of_sequences() const override {
     return (get_number_of_label_samples() / m_sequenceSize);
   }
 
-  constexpr std::uint32_t get_sequence_size() const override{
+  constexpr std::uint32_t get_sequence_size() const override {
     return m_sequenceSize;
   }
 
-  constexpr std::uint32_t get_prefill_inputs_number() const override{
+  constexpr std::uint32_t get_prefill_inputs_number() const override {
     return m_prefillSequences;
   }
 
@@ -138,32 +148,42 @@ public:
    * @brief      Converts the @rafko_gym::DataSetPackage message to vectors
    *
    * @param[in]     samples           The data set to parse
-   * @param         input_samples     The vector to push the input sample data into
-   * @param         label_samples     The vector to push the label sample data into
+   * @param         input_samples     The vector to push the input sample data
+   * into
+   * @param         label_samples     The vector to push the label sample data
+   * into
    */
-  static void fill(
-    const DataSetPackage& samples, std::vector<FeatureVector>& input_samples, std::vector<FeatureVector>& label_samples
-  );
+  static void fill(const DataSetPackage &samples,
+                   std::vector<FeatureVector> &input_samples,
+                   std::vector<FeatureVector> &label_samples);
 
   /**
-   * @brief      Converts the  given vectors to @rafko_gym::DataSetPackage message
+   * @brief      Converts the  given vectors to @rafko_gym::DataSetPackage
+   * message
    *
    * @param[in]     samples                     The data set to parse
-   * @param         input_samples               The vector to get the input sample data from
-   * @param         label_samples               The vector to get the label sample data from
-   * @param[in]     sequence_size               The size of the sequences contained in the vector
-   * @param[in]     possible_sequence_count     An optional parameter storing the potential number of sequences the Set should hold at maximum.
+   * @param         input_samples               The vector to get the input
+   * sample data from
+   * @param         label_samples               The vector to get the label
+   * sample data from
+   * @param[in]     sequence_size               The size of the sequences
+   * contained in the vector
+   * @param[in]     possible_sequence_count     An optional parameter storing
+   * the potential number of sequences the Set should hold at maximum.
    */
-  static DataSetPackage generate_from(
-    const std::vector<FeatureVector>& input_samples, const std::vector<FeatureVector>& label_samples,
-    std::uint32_t sequence_size = 1u, std::uint32_t possible_sequence_count = 0u
-  );
+  static DataSetPackage
+  generate_from(const std::vector<FeatureVector> &input_samples,
+                const std::vector<FeatureVector> &label_samples,
+                std::uint32_t sequence_size = 1u,
+                std::uint32_t possible_sequence_count = 0u);
 
 private:
   const std::uint32_t m_sequenceSize;
   std::vector<FeatureVector> m_inputSamples;
   std::vector<FeatureVector> m_labelSamples;
-  const std::uint32_t m_prefillSequences; /* Number of input sequences used only to create an initial state for the Neural network */
+  const std::uint32_t
+      m_prefillSequences; /* Number of input sequences used only to create an
+                             initial state for the Neural network */
 };
 
 } /* namespace rafko_gym */

@@ -20,68 +20,49 @@
 
 #include "rafko_global.hpp"
 
-#include <vector>
 #include <algorithm>
 #include <cassert>
+#include <vector>
 
-namespace rafko_utilities{
+namespace rafko_utilities {
 
-/** 
- * @brief     A lightweight class representing a read-only part of a vector-like container,  
- *            using iterators to simulate the interface of it.
+/**
+ * @brief     A lightweight class representing a read-only part of a vector-like
+ * container, using iterators to simulate the interface of it.
  */
 template <typename Iterator = std::vector<double>::const_iterator>
-class RAFKO_EXPORT ConstVectorSubrange{
+class RAFKO_EXPORT ConstVectorSubrange {
 public:
   using T = typename Iterator::value_type;
 
-  ConstVectorSubrange(const std::vector<T>& data)
-  : m_start(data.begin())
-  , m_rangeSize(data.size())
-  {
-  }
+  ConstVectorSubrange(const std::vector<T> &data)
+      : m_start(data.begin()), m_rangeSize(data.size()) {}
 
   constexpr ConstVectorSubrange(Iterator start, std::size_t size)
-  : m_start(start)
-  , m_rangeSize(size)
-  {
-  }
+      : m_start(start), m_rangeSize(size) {}
 
   constexpr ConstVectorSubrange(Iterator begin, Iterator end)
-  : m_start(begin)
-  , m_rangeSize(std::distance(m_start, end))
-  {
-  }
+      : m_start(begin), m_rangeSize(std::distance(m_start, end)) {}
 
-  template<class U>
-  bool operator==(const U& other) const{
+  template <class U> bool operator==(const U &other) const {
     std::uint32_t i = 0;
-    return std::all_of(begin(), end(),[&i, &other](const T& item){ return item == other[i++]; });
+    return std::all_of(begin(), end(), [&i, &other](const T &item) {
+      return item == other[i++];
+    });
   }
 
-  const T& operator[](std::size_t index) const{
+  const T &operator[](std::size_t index) const {
     assert(index < m_rangeSize);
     return *std::next(m_start, index);
   }
-  constexpr const T& front() const{
-    return *begin();
-  }
-  constexpr const T& back() const{
-    return *std::next(end(), -1);
-  }
-  constexpr std::size_t size() const{
-    return m_rangeSize;
-  }
-  constexpr Iterator begin() const{
-    return m_start;
-  }
-  constexpr Iterator end() const{
-    return std::next(m_start, m_rangeSize);
-  }
+  constexpr const T &front() const { return *begin(); }
+  constexpr const T &back() const { return *std::next(end(), -1); }
+  constexpr std::size_t size() const { return m_rangeSize; }
+  constexpr Iterator begin() const { return m_start; }
+  constexpr Iterator end() const { return std::next(m_start, m_rangeSize); }
 
-  template <typename V = std::vector<T>>
-  constexpr V acquire(){
-    return { begin(), end() };
+  template <typename V = std::vector<T>> constexpr V acquire() {
+    return {begin(), end()};
   }
 
 private:
@@ -92,4 +73,4 @@ private:
 
 } /* namespace rafko_utilities */
 
-#endif/* CONST_VECTOR_SUBRANGE_H */
+#endif /* CONST_VECTOR_SUBRANGE_H */

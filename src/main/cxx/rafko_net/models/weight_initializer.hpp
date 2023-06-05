@@ -18,7 +18,6 @@
 #ifndef WEIGHT_INITIALIZER_H
 #define WEIGHT_INITIALIZER_H
 
-
 #include "rafko_global.hpp"
 
 #include <math.h>
@@ -27,34 +26,38 @@
 
 namespace rafko_net {
 
-class RAFKO_EXPORT WeightInitializer{
+class RAFKO_EXPORT WeightInitializer {
 public:
   /**
    * @brief      Constructs the object.
    */
-  constexpr WeightInitializer(const rafko_mainframe::RafkoSettings& settings) noexcept
-  : m_settings(settings)
-  { };
+  constexpr WeightInitializer(
+      const rafko_mainframe::RafkoSettings &settings) noexcept
+      : m_settings(settings){};
 
   /**
-   * @brief      Calculate a weight which fits the Neuron the most based on the configuration parameters
-   *             The basis of the number is the transfer function given in the function argument
+   * @brief      Calculate a weight which fits the Neuron the most based on the
+   * configuration parameters The basis of the number is the transfer function
+   * given in the function argument
    *
    * @param[in]  used_transfer_function  The used transfer function
    *
    * @return     The Calculated weight
    */
-  virtual double next_weight_for(Transfer_functions used_transfer_function) const = 0;
+  virtual double
+  next_weight_for(Transfer_functions used_transfer_function) const = 0;
 
   /**
-   * @brief      Calculate a number which fits the Neuron the most based on the configuration parameters
+   * @brief      Calculate a number which fits the Neuron the most based on the
+   * configuration parameters
    *
    * @return     The Calculated Memory ratio
    */
   virtual double next_memory_filter() const = 0;
 
   /**
-   * @brief      Calculate a bias which fits the Neuron the most based on the configuration parameters
+   * @brief      Calculate a bias which fits the Neuron the most based on the
+   * configuration parameters
    *
    * @return     The Calculated Bias value
    */
@@ -66,33 +69,36 @@ public:
    * @param[in]  expected_input_number             The exponent input number
    * @param[in]  expected_input_maximum_value     The exponent input maximum
    */
-  virtual void set(std::uint32_t expected_input_number, double expected_input_maximum_value){
+  virtual void set(std::uint32_t expected_input_number,
+                   double expected_input_maximum_value) {
     m_expectedInputNumber = std::max(1u, expected_input_number);
-    if( /* Primitive check if the given number causes overflow or not */
-      (std::numeric_limits<double>::max() > (expected_input_number * std::abs(expected_input_maximum_value)))
-    ){
+    if (/* Primitive check if the given number causes overflow or not */
+        (std::numeric_limits<double>::max() >
+         (expected_input_number * std::abs(expected_input_maximum_value)))) {
       m_expectedInputMaximumValue = expected_input_maximum_value;
-    }else if((0.0) == expected_input_maximum_value){
+    } else if ((0.0) == expected_input_maximum_value) {
       m_expectedInputMaximumValue = std::numeric_limits<double>::epsilon();
-    }else{ /* Overflow! Use maximum value */
-      m_expectedInputMaximumValue = std::numeric_limits<double>::max() / expected_input_number;
+    } else { /* Overflow! Use maximum value */
+      m_expectedInputMaximumValue =
+          std::numeric_limits<double>::max() / expected_input_number;
     }
   }
 
   /**
-   * @brief      Calculate a weight which fits the Neuron the most based on the configuration parameters
-   *             The basis of the number is the TransferFunction::transfer_function_identity
+   * @brief      Calculate a weight which fits the Neuron the most based on the
+   * configuration parameters The basis of the number is the
+   * TransferFunction::transfer_function_identity
    *
    * @return     The Calculated Weight value
    */
-  double next_weight() const{
+  double next_weight() const {
     return next_weight_for(transfer_function_identity);
   }
 
   virtual ~WeightInitializer() = default;
 
 protected:
-  const rafko_mainframe::RafkoSettings& m_settings;
+  const rafko_mainframe::RafkoSettings &m_settings;
 
   /**
    * Number of estimated @Neuron inputs expected
@@ -105,14 +111,15 @@ protected:
   double m_expectedInputMaximumValue = std::numeric_limits<double>::epsilon();
 
   /**
-   * @brief      Limits the given weight into the limits used in the Neural Network
+   * @brief      Limits the given weight into the limits used in the Neural
+   * Network
    *
    * @param[in]  weight  The weight
    *
    * @return     Limited value
    */
-  constexpr double limit_weight(double weight) const{
-    return std::min((1.0),std::max(-(1.0),weight));
+  constexpr double limit_weight(double weight) const {
+    return std::min((1.0), std::max(-(1.0), weight));
   }
 };
 

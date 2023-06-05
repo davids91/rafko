@@ -1,7 +1,7 @@
 
 #include "rafko_global.hpp"
 
-int main(){
+int main() {
   /* ___SOON___ */
   return 0;
 }

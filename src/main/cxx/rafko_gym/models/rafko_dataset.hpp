@@ -20,16 +20,17 @@
 
 #include "rafko_global.hpp"
 
-#if(RAFKO_USES_OPENCL)
+#if (RAFKO_USES_OPENCL)
 #include <CL/opencl.hpp>
-#endif/*(RAFKO_USES_OPENCL)*/
+#endif /*(RAFKO_USES_OPENCL)*/
 
 namespace RAFKO_EXPORT rafko_gym {
 
 /**
- * @brief      A class representing a data set supporting objective evaluations with input and label data
+ * @brief      A class representing a data set supporting objective evaluations
+ * with input and label data
  */
-class RAFKO_EXPORT RafkoDataSet{
+class RAFKO_EXPORT RafkoDataSet {
 public:
   using FeatureVector = std::vector<double>;
 
@@ -40,14 +41,15 @@ public:
    *
    * @return     The input sample.
    */
-  virtual const FeatureVector& get_input_sample(std::uint32_t raw_input_index) const = 0;
+  virtual const FeatureVector &
+  get_input_sample(std::uint32_t raw_input_index) const = 0;
 
   /**
    * @brief      Gets an input sample from the set
    *
    * @return     A const reference of the input sample.
    */
-  virtual const std::vector<FeatureVector>& get_input_samples() const = 0;
+  virtual const std::vector<FeatureVector> &get_input_samples() const = 0;
 
   /**
    * @brief      Gets a label sample from the set
@@ -56,17 +58,19 @@ public:
    *
    * @return     The label sample.
    */
-  virtual const FeatureVector& get_label_sample(std::uint32_t raw_label_index) const = 0;
+  virtual const FeatureVector &
+  get_label_sample(std::uint32_t raw_label_index) const = 0;
 
   /**
    * @brief      Gets a label sample from the set
    *
    * @return     A const reference of the label samples array
    */
-  virtual const std::vector<FeatureVector>& get_label_samples() const = 0;
+  virtual const std::vector<FeatureVector> &get_label_samples() const = 0;
 
   /**
-   * @brief      Gets the number of floating point values the evaluation accepts to produce the label values
+   * @brief      Gets the number of floating point values the evaluation accepts
+   * to produce the label values
    *
    * @return     The size of one input inside the data set
    */
@@ -75,7 +79,8 @@ public:
   /**
    * @brief      Gets the number of values present in the output
    *
-   * @return     The feature array size(usually the number of output neurons inside the network).
+   * @return     The feature array size(usually the number of output neurons
+   * inside the network).
    */
   virtual std::uint32_t get_feature_size() const = 0;
 
@@ -94,9 +99,10 @@ public:
   virtual std::uint32_t get_number_of_label_samples() const = 0;
 
   /**
-   * @brief      Gets the number of sequences stored in the object. One sequence contains
-   *             a number of input and label sample arrays. There might be more input arrays,
-   *             than label arrays in one sequences. The difference is given by @get_prefill_inputs_number
+   * @brief      Gets the number of sequences stored in the object. One sequence
+   * contains a number of input and label sample arrays. There might be more
+   * input arrays, than label arrays in one sequences. The difference is given
+   * by @get_prefill_inputs_number
    *
    * @return     The number of sequences.
    */
@@ -110,67 +116,87 @@ public:
   virtual std::uint32_t get_sequence_size() const = 0;
 
   /**
-   * @brief      Gets the number of inputs to be used as initializing the network during a training run
+   * @brief      Gets the number of inputs to be used as initializing the
+   * network during a training run
    *
-   * @return     The number of inputs to be used for network initialization during training
+   * @return     The number of inputs to be used for network initialization
+   * during training
    */
   virtual std::uint32_t get_prefill_inputs_number() const = 0;
 
   /**
    * @brief     Tells the number of input values in one sequence, which might be
-   *            different from @get_sequence_size, because of the number of prefill inputs
+   *            different from @get_sequence_size, because of the number of
+   * prefill inputs
    *
    * @return    the number of input values one sequence contains
    */
-  std::uint32_t get_inputs_in_one_sequence() const{
+  std::uint32_t get_inputs_in_one_sequence() const {
     return get_prefill_inputs_number() + get_sequence_size();
   }
 
   virtual ~RafkoDataSet() = default;
 
-  #if(RAFKO_USES_OPENCL)
+#if (RAFKO_USES_OPENCL)
   /**
    * @brief     Upload inputs to the provided buffer
    *
-   * @param       opencl_queue                  The OpenCL queue to start the buffer oprations on
-   * @param       buffer                        The buffer to upload the information to
-   * @param       buffer_start_byte_offset      The offset pointing to the beginning of the area the sequences are uploaded to
-   * @param[in]   sequence_start_index          The index of the first sequence in the data set to upload the inputs from
-   * @param[in]   buffer_sequence_start_index   Start index of a sequence to start uploading inputs from in the global buffer
-   * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
+   * @param       opencl_queue                  The OpenCL queue to start the
+   * buffer oprations on
+   * @param       buffer                        The buffer to upload the
+   * information to
+   * @param       buffer_start_byte_offset      The offset pointing to the
+   * beginning of the area the sequences are uploaded to
+   * @param[in]   sequence_start_index          The index of the first sequence
+   * in the data set to upload the inputs from
+   * @param[in]   buffer_sequence_start_index   Start index of a sequence to
+   * start uploading inputs from in the global buffer
+   * @param[in]   sequences_to_upload           The number of sequences to
+   * upload the inputs from
    *
    * @return      A vector of events to wait for, signaling operation completion
    */
-  std::vector<cl::Event> upload_inputs_to_buffer(
-    cl::CommandQueue opencl_queue, cl::Buffer buffer, std::uint32_t buffer_start_byte_offset,
-    std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
-    std::uint32_t sequences_to_upload
-  ) const;
+  std::vector<cl::Event>
+  upload_inputs_to_buffer(cl::CommandQueue opencl_queue, cl::Buffer buffer,
+                          std::uint32_t buffer_start_byte_offset,
+                          std::uint32_t sequence_start_index,
+                          std::uint32_t buffer_sequence_start_index,
+                          std::uint32_t sequences_to_upload) const;
 
   /**
-   * @brief     Upload labels to the error phase to be able to evaluate agent output
+   * @brief     Upload labels to the error phase to be able to evaluate agent
+   * output
    *
-   * @param       opencl_queue                  The OpenCL queue to start the buffer oprations on
-   * @param       buffer                        The buffer to upload the information to
-   * @param       buffer_start_byte_offset      The offset pointing to the beginning of the area the sequences are uploaded to
-   * @param[in]   sequence_start_index          The index of the first sequence in the data set to upload the inputs from
-   * @param[in]   buffer_sequence_start_index   Start index of a sequence to start uploading inputs from in the global buffer
-   * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
-   * @param[in]   start_index_inside_sequence   Start index inside sequence for sequence truncation
-   * @param[in]   sequence_truncation           Number of labels to evaluate per sequence (sequence truncation size)
+   * @param       opencl_queue                  The OpenCL queue to start the
+   * buffer oprations on
+   * @param       buffer                        The buffer to upload the
+   * information to
+   * @param       buffer_start_byte_offset      The offset pointing to the
+   * beginning of the area the sequences are uploaded to
+   * @param[in]   sequence_start_index          The index of the first sequence
+   * in the data set to upload the inputs from
+   * @param[in]   buffer_sequence_start_index   Start index of a sequence to
+   * start uploading inputs from in the global buffer
+   * @param[in]   sequences_to_upload           The number of sequences to
+   * upload the inputs from
+   * @param[in]   start_index_inside_sequence   Start index inside sequence for
+   * sequence truncation
+   * @param[in]   sequence_truncation           Number of labels to evaluate per
+   * sequence (sequence truncation size)
    *
    * @return      A vector of events to wait for, signaling operation completion
    */
-  std::vector<cl::Event> upload_labels_to_buffer(
-    cl::CommandQueue opencl_queue, cl::Buffer buffer, std::uint32_t buffer_start_byte_offset,
-    std::uint32_t sequence_start_index, std::uint32_t buffer_sequence_start_index,
-    std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence,
-    std::uint32_t sequence_truncation
-  ) const;
-  #endif/*(RAFKO_USES_OPENCL)*/
-
+  std::vector<cl::Event>
+  upload_labels_to_buffer(cl::CommandQueue opencl_queue, cl::Buffer buffer,
+                          std::uint32_t buffer_start_byte_offset,
+                          std::uint32_t sequence_start_index,
+                          std::uint32_t buffer_sequence_start_index,
+                          std::uint32_t sequences_to_upload,
+                          std::uint32_t start_index_inside_sequence,
+                          std::uint32_t sequence_truncation) const;
+#endif /*(RAFKO_USES_OPENCL)*/
 };
 
-} /* namespace rafko_gym */
+} // namespace RAFKO_EXPORT rafko_gym
 
 #endif /* RAFKO_ENVIRONMENT_H */

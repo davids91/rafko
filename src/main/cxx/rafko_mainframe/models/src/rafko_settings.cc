@@ -17,22 +17,22 @@
 
 #include "rafko_mainframe/models/rafko_settings.hpp"
 
+namespace rafko_mainframe {
 
-namespace rafko_mainframe{
-
-double RafkoSettings::get_learning_rate(std::uint32_t iteration) const{
-  if((0 == m_learningRateWithDecay.size())||(iteration < std::get<std::uint32_t>(m_learningRateWithDecay[0])))
+double RafkoSettings::get_learning_rate(std::uint32_t iteration) const {
+  if ((0 == m_learningRateWithDecay.size()) ||
+      (iteration < std::get<std::uint32_t>(m_learningRateWithDecay[0])))
     return m_hypers.learning_rate();
-  if(iteration >= std::get<std::uint32_t>(m_learningRateWithDecay.back()))
+  if (iteration >= std::get<std::uint32_t>(m_learningRateWithDecay.back()))
     return std::get<double>(m_learningRateWithDecay.back());
   std::uint32_t decay_index = 0;
-  if(iteration >= m_learningRateDecayIterationCache)
+  if (iteration >= m_learningRateDecayIterationCache)
     decay_index = m_learningRateDecayIndexCache;
 
-  while(
-    (decay_index < (m_learningRateWithDecay.size()-1u))
-    &&(iteration >= std::get<std::uint32_t>(m_learningRateWithDecay[decay_index]))
-  )++decay_index;
+  while ((decay_index < (m_learningRateWithDecay.size() - 1u)) &&
+         (iteration >=
+          std::get<std::uint32_t>(m_learningRateWithDecay[decay_index])))
+    ++decay_index;
 
   --decay_index;
 
@@ -42,4 +42,4 @@ double RafkoSettings::get_learning_rate(std::uint32_t iteration) const{
   return std::get<double>(m_learningRateWithDecay[decay_index]);
 }
 
-} /* rafko_mainframe */
+} // namespace rafko_mainframe

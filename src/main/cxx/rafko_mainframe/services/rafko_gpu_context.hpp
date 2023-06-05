@@ -20,73 +20,79 @@
 
 #include "rafko_global.hpp"
 
+#include <CL/opencl.hpp>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <vector>
-#include <functional>
-#include <CL/opencl.hpp>
 
-#include "rafko_net/services/solution_solver.hpp"
+#include "rafko_gym/models/rafko_agent.hpp"
 #include "rafko_gym/models/rafko_dataset.hpp"
 #include "rafko_gym/models/rafko_objective.hpp"
-#include "rafko_gym/models/rafko_agent.hpp"
 #include "rafko_gym/services/updater_factory.hpp"
+#include "rafko_net/services/solution_solver.hpp"
 
-#include "rafko_mainframe/services/rafko_gpu_phase.hpp"
 #include "rafko_mainframe/services/rafko_context.hpp"
+#include "rafko_mainframe/services/rafko_gpu_phase.hpp"
 
 namespace rafko_mainframe {
 
-class RAFKO_EXPORT RafkoGPUContext : public RafkoContext{
+class RAFKO_EXPORT RafkoGPUContext : public RafkoContext {
 public:
-  RafkoGPUContext(
-    cl::Context&& context, cl::Device device,
-    rafko_net::RafkoNet& neural_network,
-    std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {},
-    std::shared_ptr<rafko_gym::RafkoObjective> objective = {}
-  );
+  RafkoGPUContext(cl::Context &&context, cl::Device device,
+                  rafko_net::RafkoNet &neural_network,
+                  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {},
+                  std::shared_ptr<rafko_gym::RafkoObjective> objective = {});
 
   /* +++ Methods taken from @RafkoContext +++ */
-  void set_data_set(std::shared_ptr<rafko_gym::RafkoDataSet> environment) override;
-  void set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override;
+  void
+  set_data_set(std::shared_ptr<rafko_gym::RafkoDataSet> environment) override;
+  void
+  set_objective(std::shared_ptr<rafko_gym::RafkoObjective> objective) override;
   void set_weight_updater(rafko_gym::Weight_updaters updater) override;
-  void set_network_weight(std::uint32_t weight_index, double weight_value) override;
-  void set_network_weights(const std::vector<double>& weights) override;
-  void apply_weight_update(const std::vector<double>& weight_delta) override;
+  void set_network_weight(std::uint32_t weight_index,
+                          double weight_value) override;
+  void set_network_weights(const std::vector<double> &weights) override;
+  void apply_weight_update(const std::vector<double> &weight_delta) override;
   double full_evaluation(bool force_gpu_upload = false) override;
-  double stochastic_evaluation(bool to_seed = false, std::uint32_t seed_value = 0u, bool force_gpu_upload = false) override;
-  void solve_data_set(std::vector<std::vector<double>>& output, bool isolated = true) override;
-  void refresh_solution_weights() override{
+  double stochastic_evaluation(bool to_seed = false,
+                               std::uint32_t seed_value = 0u,
+                               bool force_gpu_upload = false) override;
+  void solve_data_set(std::vector<std::vector<double>> &output,
+                      bool isolated = true) override;
+  void refresh_solution_weights() override {
     RFASSERT_LOG("Refreshing Solution weights in CPU context..");
     m_solverFactory.refresh_actual_solution_weights();
     upload_weight_table_to_device();
   }
 
-  rafko_utilities::ConstVectorSubrange<> solve(
-    const std::vector<double>& input,
-    bool reset_neuron_data = false, std::uint32_t thread_index = 0
-  ) override;
+  rafko_utilities::ConstVectorSubrange<>
+  solve(const std::vector<double> &input, bool reset_neuron_data = false,
+        std::uint32_t thread_index = 0) override;
 
-  rafko_mainframe::RafkoSettings& expose_settings() override{
-    m_lastRanEvaluation = not_eval_run; /* in case some training parameters changed buffers might need to be refreshed */
+  rafko_mainframe::RafkoSettings &expose_settings() override {
+    m_lastRanEvaluation =
+        not_eval_run; /* in case some training parameters changed buffers might
+                         need to be refreshed */
     return *m_settings;
   }
 
-  rafko_net::RafkoNet& expose_network() override{
-    return m_network;
-  }
+  rafko_net::RafkoNet &expose_network() override { return m_network; }
   /* --- Methods taken from @RafkoContext --- */
 
   ~RafkoGPUContext() = default;
 
 private:
-  rafko_net::RafkoNet& m_network;
+  rafko_net::RafkoNet &m_network;
   rafko_net::SolutionSolver::Factory m_solverFactory;
   std::shared_ptr<rafko_net::SolutionSolver> m_agent;
   std::shared_ptr<rafko_gym::RafkoDataSet> m_dataSet;
   std::shared_ptr<rafko_gym::RafkoObjective> m_objective;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
-  std::vector<std::vector<double>> m_neuronOutputsToEvaluate; /* for each feature array inside each sequence inside each thread in one evaluation iteration */
+  std::vector<std::vector<double>>
+      m_neuronOutputsToEvaluate; /* for each feature array inside each sequence
+                                    inside each thread in one evaluation
+                                    iteration */
   rafko_utilities::ThreadGroup m_executionThreads;
 
   cl::Context m_openclContext;
@@ -98,19 +104,23 @@ private:
   RafkoGPUPhase m_errorPhase;
   bool m_lastRandomEvalWasSeeded = false;
   std::uint32_t m_lastUsedSeed = -1;
-  /* Somebody tell me what is the least propable value of a random seed one can use,
-   * so I could initialize this poor fella with it?!
+  /* Somebody tell me what is the least propable value of a random seed one can
+   * use, so I could initialize this poor fella with it?!
    */
 
   std::uint32_t m_numOutputsInOneSequence;
   std::uint32_t m_evalStartInSequence;
-  /*!Note: Because the GPU implementation at least 2 memory slots are needed to run,
-   * because of the spike function: previous value of the actual Neuron is always in the previous buffer slot
+  /*!Note: Because the GPU implementation at least 2 memory slots are needed to
+   * run, because of the spike function: previous value of the actual Neuron is
+   * always in the previous buffer slot
    */
 
- enum{
-   nothing_yet, not_eval_run, full_eval_run, random_eval_run
- }m_lastRanEvaluation = nothing_yet;
+  enum {
+    nothing_yet,
+    not_eval_run,
+    full_eval_run,
+    random_eval_run
+  } m_lastRanEvaluation = nothing_yet;
 
   /**
    * @brief   Uploads the weights from @network to the buffer on the GPU
@@ -118,43 +128,57 @@ private:
   void upload_weight_table_to_device();
 
   /**
-   * @brief   Uploads the weights from @network to the buffer on the GPU for the given weight index
+   * @brief   Uploads the weights from @network to the buffer on the GPU for the
+   * given weight index
    *
    * @param[in]     weight_index    the index of the weight to upload
    */
   void upload_weight_to_device(std::uint32_t weight_index);
 
   /**
-   * @brief     sets the paramterers of the objective based on the data set, re-generates its kernels and uploads them to GPU
+   * @brief     sets the paramterers of the objective based on the data set,
+   * re-generates its kernels and uploads them to GPU
    */
   void refresh_objective();
 
   /**
-   * @brief     Upload inputs to the solution phase to be able to run the agent kernel code on the inputs
+   * @brief     Upload inputs to the solution phase to be able to run the agent
+   * kernel code on the inputs
    *
-   * @param[in]   sequences_to_upload           The number of sequences to upload the inputs from
-   * @param[in]   start_index_inside_sequence   Start index of a feature vector inside every sequence to start uploading inputs from
-   *                                            Index 0 starts from the first feature vector assigned for each sequence
-   *                                            In case the Network has more memory, than the data set label pairs: index 0 starts at zero still.
-   *                                            In that case, the evaluation doesn't start form 0, as label and prefill values take up less space than what is assigned for one sequence
-   * @param[in]   sequence_truncation           Number of feature vectors to upload per sequence
-   * @param[in]   data_handler                  The funciton accepting the CL Buffer, byte offset, and data size(bytes == output neurons only!) for each feature for one sequence
+   * @param[in]   sequences_to_upload           The number of sequences to
+   * upload the inputs from
+   * @param[in]   start_index_inside_sequence   Start index of a feature vector
+   * inside every sequence to start uploading inputs from Index 0 starts from
+   * the first feature vector assigned for each sequence In case the Network has
+   * more memory, than the data set label pairs: index 0 starts at zero still.
+   *                                            In that case, the evaluation
+   * doesn't start form 0, as label and prefill values take up less space than
+   * what is assigned for one sequence
+   * @param[in]   sequence_truncation           Number of feature vectors to
+   * upload per sequence
+   * @param[in]   data_handler                  The funciton accepting the CL
+   * Buffer, byte offset, and data size(bytes == output neurons only!) for each
+   * feature for one sequence
    */
   void upload_agent_output(
-    std::uint32_t sequences_to_upload, std::uint32_t start_index_inside_sequence, std::uint32_t sequence_truncation,
-    std::function<void(cl::Buffer, std::uint32_t, std::uint32_t)> data_handler
-  );
+      std::uint32_t sequences_to_upload,
+      std::uint32_t start_index_inside_sequence,
+      std::uint32_t sequence_truncation,
+      std::function<void(cl::Buffer, std::uint32_t, std::uint32_t)>
+          data_handler);
 
   /**
-   * @brief     Process raw error value by adding the performance feature related errors
-   *            and dividing the result by the number of evaluated labels
+   * @brief     Process raw error value by adding the performance feature
+   * related errors and dividing the result by the number of evaluated labels
    *
    * @param[in]   raw_error           The raw error from the evaluation
-   * @param[in]   labels_evaluated    The number fo labels which resulted in the raw error
+   * @param[in]   labels_evaluated    The number fo labels which resulted in the
+   * raw error
    *
    * @return    The processed error
    */
-  [[nodiscard]] double error_post_process(double raw_error, std::uint32_t labels_evaluated);
+  [[nodiscard]] double error_post_process(double raw_error,
+                                          std::uint32_t labels_evaluated);
 };
 
 } /* namespace rafko_mainframe */

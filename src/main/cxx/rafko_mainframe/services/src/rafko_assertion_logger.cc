@@ -17,41 +17,46 @@
 
 #include "rafko_mainframe/services/rafko_assertion_logger.hpp"
 
-#if(RAFKO_USES_ASSERTLOGS)
+#if (RAFKO_USES_ASSERTLOGS)
 
-#include <filesystem>
 #include <chrono>
 #include <date/date.h>
+#include <filesystem>
 
 #include "spdlog/sinks/basic_file_sink.h"
 
-namespace rafko_mainframe{
+namespace rafko_mainframe {
 
 std::weak_ptr<spdlog::logger> RafkoAssertionLogger::m_currentScope;
 std::string RafkoAssertionLogger::m_currentScopeName;
 std::mutex RafkoAssertionLogger::m_scopeMutex;
 bool RafkoAssertionLogger::m_keepLog = false;
 
-std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name){
-  auto today = date::year_month_day{date::floor<date::days>(std::chrono::system_clock::now())};
+std::shared_ptr<spdlog::logger>
+RafkoAssertionLogger::set_scope(std::string name) {
+  auto today = date::year_month_day{
+      date::floor<date::days>(std::chrono::system_clock::now())};
   auto current_time = date::make_time(
-    std::chrono::system_clock::now() - date::floor<date::days>(std::chrono::system_clock::now())
-  );
-  std::string scope_name = (
-    name + "_" + (std::stringstream() << today).str() + "_" + (std::stringstream() << current_time).str()
-  );
+      std::chrono::system_clock::now() -
+      date::floor<date::days>(std::chrono::system_clock::now()));
+  std::string scope_name = (name + "_" + (std::stringstream() << today).str() +
+                            "_" + (std::stringstream() << current_time).str());
   spdlog::file_event_handlers handlers;
   handlers.after_close = [](spdlog::filename_t filename) {
-    if(!m_keepLog) std::filesystem::remove(filename);
+    if (!m_keepLog)
+      std::filesystem::remove(filename);
   };
 
-  auto logger = spdlog::basic_logger_mt( scope_name, std::string(logs_folder) + "/" + scope_name + ".log", false, handlers);
+  auto logger = spdlog::basic_logger_mt(
+      scope_name, std::string(logs_folder) + "/" + scope_name + ".log", false,
+      handlers);
   logger->set_pattern("[%H:%M:%S|%u][%^%L%$][thread %t] %v");
   logger->set_level(spdlog::level::trace);
   logger->flush_on(spdlog::level::err);
-  /*!Note: no need to call spdlog::register_logger(logger);, because access is only through the pointer anyway */
+  /*!Note: no need to call spdlog::register_logger(logger);, because access is
+   * only through the pointer anyway */
 
-  if(auto scope = m_currentScope.lock()){
+  if (auto scope = m_currentScope.lock()) {
     scope->info("Scope snatched by " + scope_name + "..");
     spdlog::drop(m_currentScopeName);
   }
@@ -65,11 +70,15 @@ std::shared_ptr<spdlog::logger> RafkoAssertionLogger::set_scope(std::string name
   return logger;
 }
 
-void RafkoAssertionLogger::rafko_assert(bool condition, std::string file_name, std::uint32_t line_number){
-  if(!condition){
+void RafkoAssertionLogger::rafko_assert(bool condition, std::string file_name,
+                                        std::uint32_t line_number) {
+  if (!condition) {
     m_keepLog = true;
-    if(auto scope = m_currentScope.lock()){ /* no need to use mutex here, since the underlying logger is thread-safe */
-      scope->error("Assertion failure in file {}; line {}!", file_name, line_number);
+    if (auto scope =
+            m_currentScope.lock()) { /* no need to use mutex here, since the
+                                        underlying logger is thread-safe */
+      scope->error("Assertion failure in file {}; line {}!", file_name,
+                   line_number);
       scope->flush();
     }
     spdlog::shutdown();
@@ -77,6 +86,6 @@ void RafkoAssertionLogger::rafko_assert(bool condition, std::string file_name, s
   assert(condition);
 }
 
-} /* rafko_mainframe */
+} // namespace rafko_mainframe
 
-#endif/*(RAFKO_USES_ASSERTLOGS)*/
+#endif /*(RAFKO_USES_ASSERTLOGS)*/

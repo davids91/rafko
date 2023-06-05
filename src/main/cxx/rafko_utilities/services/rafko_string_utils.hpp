@@ -20,13 +20,14 @@
 
 #include "rafko_global.hpp"
 
-#include <string>
 #include <regex>
+#include <string>
 
-namespace rafko_utilities{
+namespace rafko_utilities {
 
 /**
- * @brief      Replaces regex inside the source string with the substitution until there are no more matches
+ * @brief      Replaces regex inside the source string with the substitution
+ * until there are no more matches
  *
  * @param[in]  input_text         the text to replace the regex in
  * @param[in]  regex_to_replace   the regex to replace in the input string
@@ -34,12 +35,13 @@ namespace rafko_utilities{
  *
  * @return    The resulting string of the replaces
  */
-std::string replace_all_in_string(
-  std::string input_text, std::regex regex_to_replace, std::string substitute
-);
+std::string replace_all_in_string(std::string input_text,
+                                  std::regex regex_to_replace,
+                                  std::string substitute);
 
 /**
- * @brief      Replaces regex inside the source string with the substitution until there are no more matches
+ * @brief      Replaces regex inside the source string with the substitution
+ * until there are no more matches
  *
  * @param[in]  characters_to_escape   a list of characters to escape
  * @param[in]  s                      the string to escape the characters in
@@ -50,4 +52,4 @@ std::string escape_string(std::string characters_to_escape, std::string s);
 
 } /* namespace rafko_utilities */
 
-#endif/* RAFKO_STRING_UTILS_H */
+#endif /* RAFKO_STRING_UTILS_H */

@@ -23,128 +23,160 @@
 #include <vector>
 
 #include "rafko_protocol/training.pb.h"
-#if(RAFKO_USES_OPENCL)
+#if (RAFKO_USES_OPENCL)
 #include "rafko_mainframe/models/rafko_gpu_strategy.hpp"
-#endif/*(RAFKO_USES_OPENCL)*/
+#endif /*(RAFKO_USES_OPENCL)*/
 #include "rafko_gym/models/rafko_dataset.hpp"
 
-namespace rafko_gym{
+namespace rafko_gym {
 
 /**
- * @brief      This class implements an evaluation interface based on a cost function and and environment
+ * @brief      This class implements an evaluation interface based on a cost
+ * function and and environment
  */
 class RAFKO_EXPORT RafkoObjective
-#if(RAFKO_USES_OPENCL)
-: public rafko_mainframe::RafkoGPUStrategy
-#endif/*(RAFKO_USES_OPENCL)*/
+#if (RAFKO_USES_OPENCL)
+    : public rafko_mainframe::RafkoGPUStrategy
+#endif /*(RAFKO_USES_OPENCL)*/
 {
 public:
   virtual ~RafkoObjective() = default;
 
   /**
    * @brief     Provides the impleemnted cost function type
-   * 
-   * @return    The enumeration represents the cost being implemented this class.
+   *
+   * @return    The enumeration represents the cost being implemented this
+   * class.
    */
   virtual Cost_functions get_cost_type() const = 0;
 
   /**
-   * @brief      Sets the approximated value for an observed value and provides the calculated fitness.
-   *             assumes that the sequence size of the @environment is 1
+   * @brief      Sets the approximated value for an observed value and provides
+   * the calculated fitness. assumes that the sequence size of the @environment
+   * is 1
    *
-   * @param[in]  environment                  The environment to evaluate the provided Neuron data on
+   * @param[in]  environment                  The environment to evaluate the
+   * provided Neuron data on
    * @param[in]  sample_index             The sample index inside the data set
    * @param[in]  neuron_data              The neuron data to evaluate
    * @return     The resulting error
    */
-  virtual double set_feature_for_label(
-    const rafko_gym::RafkoDataSet& environment, std::uint32_t sample_index,
-    const std::vector<double>& neuron_data
-  ) const = 0;
+  virtual double
+  set_feature_for_label(const rafko_gym::RafkoDataSet &environment,
+                        std::uint32_t sample_index,
+                        const std::vector<double> &neuron_data) const = 0;
 
   /**
    * @brief      Same as @set_feature_for_label but in bulk
    *
-   * @param[in]  environment                  The environment to evaluate the provided Neuron data on
+   * @param[in]  environment                  The environment to evaluate the
+   * provided Neuron data on
    * @param[in]  neuron_data              The neuron data
-   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  raw_start_index          The raw start index inside the data set labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to
+   * start evaluation from
+   * @param[in]  raw_start_index          The raw start index inside the data
+   * set labels; Meaning the index inside the labels array, which contains the
+   * samples(each with possible multiple labels in sequential order)
    * @param[in]  labels_to_evaluate       The labels to evaluate
    * @return     The resulting error
    */
-  virtual double set_features_for_labels(
-     const rafko_gym::RafkoDataSet& environment, const std::vector<std::vector<double>>& neuron_data,
-    std::uint32_t neuron_buffer_index, std::uint32_t raw_start_index, std::uint32_t labels_to_evaluate
-  )const = 0;
+  virtual double
+  set_features_for_labels(const rafko_gym::RafkoDataSet &environment,
+                          const std::vector<std::vector<double>> &neuron_data,
+                          std::uint32_t neuron_buffer_index,
+                          std::uint32_t raw_start_index,
+                          std::uint32_t labels_to_evaluate) const = 0;
 
   /**
    * @brief      Provides the fitness value
    *
-   * @param[in]  environment                  The environment to evaluate the provided Neuron data on
-   * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
-   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  sequence_start_index     The raw start index inside the data set labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  environment                  The environment to evaluate the
+   * provided Neuron data on
+   * @param[in]  neuron_data              The neuron data containing every
+   * output data for the @sequences_to_evaluate
+   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to
+   * start evaluation from
+   * @param[in]  sequence_start_index     The raw start index inside the data
+   * set labels; Meaning the index inside the labels array, which contains the
+   * samples(each with possible multiple labels in sequential order)
    * @param[in]  sequences_to_evaluate    The labels to evaluate
-   * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
+   * @param[in]  start_index_in_sequence  The starting index inside each
+   * sequence to update the labels
    * @param[in]  sequence_truncation      The sequence truncation
    * @return     The resulting error
    */
   virtual double set_features_for_sequences(
-    const rafko_gym::RafkoDataSet& environment, const std::vector<std::vector<double>>& neuron_data,
-    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
-    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation
-  )const = 0;
+      const rafko_gym::RafkoDataSet &environment,
+      const std::vector<std::vector<double>> &neuron_data,
+      std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index,
+      std::uint32_t sequences_to_evaluate,
+      std::uint32_t start_index_in_sequence,
+      std::uint32_t sequence_truncation) const = 0;
 
   /**
    * @brief      Same as @set_feature_for_label but in bulk
    *
-   * @param[in]  environment                  The environment to evaluate the provided Neuron data on
-   * @param[in]  neuron_data              The neuron data containing every output data for the @sequences_to_evaluate
-   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to start evaluation from
-   * @param[in]  sequence_start_index     The raw start index inside the data set labels; Meaning the index inside the labels array, which contains the samples(each with possible multiple labels in sequential order)
+   * @param[in]  environment                  The environment to evaluate the
+   * provided Neuron data on
+   * @param[in]  neuron_data              The neuron data containing every
+   * output data for the @sequences_to_evaluate
+   * @param[in]  neuron_buffer_index      The index of the outer neuron bufer to
+   * start evaluation from
+   * @param[in]  sequence_start_index     The raw start index inside the data
+   * set labels; Meaning the index inside the labels array, which contains the
+   * samples(each with possible multiple labels in sequential order)
    * @param[in]  sequences_to_evaluate    The labels to evaluate
-   * @param[in]  start_index_in_sequence  The starting index inside each sequence to update the labels
+   * @param[in]  start_index_in_sequence  The starting index inside each
+   * sequence to update the labels
    * @param[in]  sequence_truncation      The sequence truncation
    * @return     The resulting error
    */
   virtual double set_features_for_sequences(
-    const rafko_gym::RafkoDataSet& environment, const std::vector<std::vector<double>>& neuron_data,
-    std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index, std::uint32_t sequences_to_evaluate,
-    std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation, std::vector<double>& tmp_data
-  )const = 0;
+      const rafko_gym::RafkoDataSet &environment,
+      const std::vector<std::vector<double>> &neuron_data,
+      std::uint32_t neuron_buffer_index, std::uint32_t sequence_start_index,
+      std::uint32_t sequences_to_evaluate,
+      std::uint32_t start_index_in_sequence, std::uint32_t sequence_truncation,
+      std::vector<double> &tmp_data) const = 0;
 
   /**
-   * @brief      Calculates the derivative for one number-pair inside the label-data pair
+   * @brief      Calculates the derivative for one number-pair inside the
+   * label-data pair
    *
    * @param[in]  label_value      The label value
    * @param[in]  feature_value    The data to comapre to the label value
    * @param[in]  feature_d        The derivative of the of the feature value
-   * @param[in]  sample_number    The number of sample values the objective is evaluated on at once
+   * @param[in]  sample_number    The number of sample values the objective is
+   * evaluated on at once
    *
    * @return     The distance between the two given arguments
    */
-  virtual double get_derivative(
-    double label_value, double feature_value,
-    double feature_d, double sample_number
-  ) const = 0;
+  virtual double get_derivative(double label_value, double feature_value,
+                                double feature_d,
+                                double sample_number) const = 0;
 
-  #if(RAFKO_USES_OPENCL)
+#if (RAFKO_USES_OPENCL)
   /**
-   * @brief   Updates GPU relevant parameters deciding the size of the buffer and the global dimensions to solve the objective in
+   * @brief   Updates GPU relevant parameters deciding the size of the buffer
+   * and the global dimensions to solve the objective in
    *
    * @param[in]   pairs_to_evaluate
    */
-  virtual void set_gpu_parameters(std::uint32_t pairs_to_evaluate, std::uint32_t feature_size) = 0;
+  virtual void set_gpu_parameters(std::uint32_t pairs_to_evaluate,
+                                  std::uint32_t feature_size) = 0;
 
   /* +++ Methods forwarding from rafko_mainframe::RafkoGPUStrategy +++ */
   virtual cl::Program::Sources get_step_sources() const override = 0;
   virtual std::vector<std::string> get_step_names() const override = 0;
-  virtual std::vector<rafko_mainframe::RafkoNBufShape> get_input_shapes() const override = 0;
-  virtual std::vector<rafko_mainframe::RafkoNBufShape> get_output_shapes() const override = 0;
-  virtual std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override = 0;
+  virtual std::vector<rafko_mainframe::RafkoNBufShape>
+  get_input_shapes() const override = 0;
+  virtual std::vector<rafko_mainframe::RafkoNBufShape>
+  get_output_shapes() const override = 0;
+  virtual std::tuple<cl::NDRange, cl::NDRange, cl::NDRange>
+  get_solution_space() const override = 0;
   /* --- Methods forwarding from rafko_mainframe::RafkoGPUStrategy --- */
 
-  #endif/*(RAFKO_USES_OPENCL)*/
+#endif /*(RAFKO_USES_OPENCL)*/
 };
 
 } /* namespace rafko_gym */

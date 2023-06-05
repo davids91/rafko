@@ -22,57 +22,68 @@
 
 #include <math.h>
 
-namespace rafko_gym{
+namespace rafko_gym {
 
 /**
- * @brief      Error function handling and utilities for Squared Error: C0 = ((y-y')^2)/2
+ * @brief      Error function handling and utilities for Squared Error: C0 =
+ * ((y-y')^2)/2
  */
-class RAFKO_EXPORT CostFunctionSquaredError : public CostFunction{
+class RAFKO_EXPORT CostFunctionSquaredError : public CostFunction {
 public:
-  CostFunctionSquaredError(const rafko_mainframe::RafkoSettings& settings)
-  : CostFunction(cost_function_squared_error, settings)
-  { };
+  CostFunctionSquaredError(const rafko_mainframe::RafkoSettings &settings)
+      : CostFunction(cost_function_squared_error, settings){};
   ~CostFunctionSquaredError() = default;
 
-  #if(RAFKO_USES_OPENCL)
+#if (RAFKO_USES_OPENCL)
   /**
-   * @brief      Provides the kernel function for the derivative of the cost function
+   * @brief      Provides the kernel function for the derivative of the cost
+   * function
    *
    * @param[in]  label_value      The label value
    * @param[in]  feature_value    The data to comapre to the label value
    * @param[in]  feature_d        The derivative of the of the feature value
    *
-   * @return     The source for implementing the kernel of the derivative of the cost function
+   * @return     The source for implementing the kernel of the derivative of the
+   * cost function
    */
-  static std::string derivative_kernel_source(std::string label_value, std::string feature_value, std::string feature_d){
-    return "(-(" + label_value + " - " + feature_value + ") * " + feature_d + ")";
+  static std::string derivative_kernel_source(std::string label_value,
+                                              std::string feature_value,
+                                              std::string feature_d) {
+    return "(-(" + label_value + " - " + feature_value + ") * " + feature_d +
+           ")";
   }
-  #endif/*(RAFKO_USES_OPENCL)*/
+#endif /*(RAFKO_USES_OPENCL)*/
 
 protected:
-  [[nodiscard]] constexpr double error_post_process(double error_value, std::uint32_t /*sample_number*/) const override{
+  [[nodiscard]] constexpr double
+  error_post_process(double error_value,
+                     std::uint32_t /*sample_number*/) const override {
     return error_value / 2.0;
   }
 
-  double get_cell_error(double label_value, double feature_value) const override{
-    return std::pow((label_value - feature_value),2.0);
+  double get_cell_error(double label_value,
+                        double feature_value) const override {
+    return std::pow((label_value - feature_value), 2.0);
   }
 
-  constexpr double get_derivative(
-    double label_value, double feature_value, double feature_d, double /*sample_number*/
-  ) const override{
+  constexpr double get_derivative(double label_value, double feature_value,
+                                  double feature_d, double /*sample_number*/
+  ) const override {
     return -(label_value - feature_value) * feature_d;
   }
 
-  #if(RAFKO_USES_OPENCL)
-  std::string get_operation_kernel_source(std::string label_value, std::string feature_value) const override{
+#if (RAFKO_USES_OPENCL)
+  std::string
+  get_operation_kernel_source(std::string label_value,
+                              std::string feature_value) const override {
     return "pow((" + label_value + " - " + feature_value + "), 2.0)";
   }
 
-  std::string get_post_process_kernel_source(std::string error_value) const override{
+  std::string
+  get_post_process_kernel_source(std::string error_value) const override {
     return "((" + error_value + ") / 2.0 )";
   }
-  #endif/*(RAFKO_USES_OPENCL)*/
+#endif /*(RAFKO_USES_OPENCL)*/
 };
 
 } /* namespace rafko_gym */
