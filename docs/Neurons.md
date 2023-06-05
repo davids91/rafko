@@ -70,14 +70,3 @@ Each instruction for Network inference and error back-propagation with thier res
 | Weight regularization   | weight_index_start  | count_weights       |                         | operation_index     | feature_index                     |
 
 \*weight_descriptor, dependency_descriptor either contains the used index, or a special value meaning: not used
-
-TODO:
-- Implement the same system in Solution Builder
-- try to optimize? a bit might be enough
-- =========================================================================================================
-- Create ticket for: Eliminate Network Input Operation by making Neuron Input more complex; Additional ticket to investigate bias for the same thing
-- Create ticket for: Format code all the way through LSP
-- Create ticket: Include Kernel source files through CMAKE 
-- Create ticket: Make Autodiff operation, spike_fn, transfer_fn, input_fn kernel enums based on the proto files
-- Create ticket: Upload the RafkoSettings instance to the GPU instead of burning it into the kernel
-- Create ticket: Extend strategy with Weight regularization and Solution operation features

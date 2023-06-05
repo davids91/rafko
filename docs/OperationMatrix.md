@@ -44,3 +44,8 @@ required synchronisation points (between rows).
 |---|-----------------|-----------------|-----------------|-----------------|-----------------|
 
 Each operation contains a given number of bytes, but to simplify the handling of operations, despite potential different operation data(olike index values) sizes, all shall have uniform sizes constraining to the tables in Neurons.md forward or back-propagation sections. 
+
+## Operation matrix exclusively for forward propagation
+
+For forward propagation only, the Neural instruction table can be more specific, each row containing the neurons whom can be executed in parallell.
+Apart from the Neuron index ( to know where the result of the operations will be saved to ) for each Neuron the input and weight information is required.
