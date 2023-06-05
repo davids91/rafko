@@ -142,20 +142,6 @@ public:
    */
   virtual std::string get_post_process_kernel_source(std::string error_value) const = 0;
 
-  /**
-   * @brief      Provides the kernel function for the derivative of the objective
-   *
-   * @param[in]  label_value      The label value
-   * @param[in]  feature_value    The data to comapre to the label value
-   * @param[in]  feature_d        The derivative of the of the feature value
-   * @param[in]  sample_number    The number of sample values the objective is evaluated on at once
-   *
-   * @return     The source for implementing the kernel of the derivative of the cost function
-   */
-  virtual std::string get_derivative_kernel_source(
-    std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
-  ) const = 0;
-
   /* +++ Functions taken from rafko_mainframe::RafkoGPUStrategy */
   cl::Program::Sources get_step_sources() const override;
   std::vector<std::string> get_step_names() const override;
@@ -171,8 +157,24 @@ public:
   std::tuple<cl::NDRange,cl::NDRange,cl::NDRange> get_solution_space() const override{
     return std::make_tuple(cl::NullRange,cl::NDRange(m_pairsToEvaluate),cl::NullRange);
   }
-  #endif/*(RAFKO_USES_OPENCL)*/
 
+  /**
+   * @brief     Generates GPU kernel enumerations
+   *
+   * @return    An enumerator to be ised in the GPU kernel
+   */
+  static std::string get_kernel_enums(){
+    return R"(
+      typedef enum rafko_cost_function_e{
+        cost_function_unknown = 0,
+        cost_function_squared_error,          /* ( (expected-calculated)^2 ) */
+        cost_function_mse,                    /* ( 0.5*(expected-calculated)^2 ) / dataset_size */
+        cost_function_cross_entropy,          /* ( calculated*ln(expected) ) */
+        cost_function_binary_cross_entropy,   /* ( calculated*ln(expected) + (1-calculated) * ln(1-expected) ) */
+      }rafko_cost_function_t __attribute__ ((aligned));
+    )";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
 
 protected:
   const rafko_mainframe::RafkoSettings& settings;

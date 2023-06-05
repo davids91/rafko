@@ -122,14 +122,14 @@ public:
   ) const override{
     RFASSERT(static_cast<bool>(m_neededInputDependency));
     RFASSERT(m_neededInputDependency->are_dependencies_registered());
-    return ( operations_value_array + "[==op_index==] = "
+    return ( operations_value_array + std::to_string(get_operation_index())
       + m_transferFunction.get_kernel_function_for(
-        get_transfer_function(), operations_value_array + "[==dependency_op_index==]"
+        get_transfer_function(), operations_value_array + std::to_string(m_neededInputDependency->get_operation_index())
       )
     ) + ";";
   }
 
-/**
+  /**
    * @brief     Generates OpenCL Kernel code for the operation for forward propagation
    * 
    * @param   network_input_array           The name of the arry containing the Inputs for the Neural network
@@ -152,32 +152,6 @@ public:
         operations_derivative_array + "[==dependency_op_index==]"
       )
     ) + ";";
-  }
-
-  std::string derivative_kernel_operation(
-    std::string /*network_input_array*/, std::string /*label_array*/, std::string /*weight_array*/,
-    std::string operations_value_array, std::string operations_derivative_array,
-    std::string /*operations_array_size*/
-  ) const override{
-    RFASSERT(are_dependencies_registered());
-    RFASSERT(static_cast<bool>(m_neededInputDependency));
-    return (
-      operations_derivative_array + "[==op_index==] = "
-      + m_transferFunction.get_kernel_function_for_d(
-        get_transfer_function(),
-        operations_value_array + "[==dependency_op_index==]",
-        operations_derivative_array + "[==dependency_op_index==]"
-      )
-    ) + ";";
-  }
-  
-  void substitute_index_values_in_kernels(std::string& kernel_source) const override { 
-    kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==op_index=="), std::to_string(get_operation_index())
-    );
-    kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==dependency_op_index=="), std::to_string(m_neededInputDependency->get_operation_index())
-    );
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 

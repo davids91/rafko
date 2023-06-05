@@ -96,11 +96,23 @@ public:
     m_pairsToEvaluate = pairs_to_evaluate;
   }
 
-  std::string get_derivative_kernel_source(
-    std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number
-  ) const override{
-    return m_costFunction->get_derivative_kernel_source(label_value, feature_value, feature_d, sample_number);
-  }
+
+  /**
+   * @brief      Provides the kernel function for the derivative of all of the cost functions
+   *
+   * @param[in]  label_value        The label value
+   * @param[in]  feature_value      The data to comapre to the label value
+   * @param[in]  feature_d          The derivative of the of the feature value
+   * @param[in]  sample_number      The number of sample values the objective is evaluated on at once
+   * @param[in]  target             The variable to store the result of the instructions in
+   * @param[in]  behavior_index     The value corresponding to the cost function (@get_kernel_enum in rafko_gym::CostFunction)
+   *
+   * @return     The source for implementing the kernel of the derivative of the cost function
+   */
+  static std::string generic_derivative_kernel_source(
+    std::string label_value, std::string feature_value, std::string feature_d, std::string sample_number,
+    std::string target, std::string behavior_index
+  );
 
   cl::Program::Sources get_step_sources() const override{
     return m_costFunction->get_step_sources();

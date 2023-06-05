@@ -136,21 +136,6 @@ public:
    */
   virtual void set_gpu_parameters(std::uint32_t pairs_to_evaluate, std::uint32_t feature_size) = 0;
 
-  /**
-   * @brief      Provides the kernel function for the derivative of the objective
-   *
-   * @param[in]  label_value      The label value
-   * @param[in]  feature_value    The data to comapre to the label value
-   * @param[in]  feature_d        The derivative of the of the feature value
-   * @param[in]  sample_number    The number of sample values the objective is evaluated on at once
-   *
-   * @return    The source implementing the derivative of the objective
-   */
-  virtual std::string get_derivative_kernel_source(
-    std::string label_value, std::string feature_value,
-    std::string feature_d, std::string sample_number
-  ) const = 0;
-
   /* +++ Methods forwarding from rafko_mainframe::RafkoGPUStrategy +++ */
   virtual cl::Program::Sources get_step_sources() const override = 0;
   virtual std::vector<std::string> get_step_names() const override = 0;

@@ -18,6 +18,7 @@
 #ifndef RAFKO_BACKPROP_OBJECTIVE_OPERATION_H
 #define RAFKO_BACKPROP_OBJECTIVE_OPERATION_H
 
+#include "rafko_cost.hpp"
 #include "rafko_global.hpp"
 
 #include <vector>
@@ -125,44 +126,13 @@ public:
    */
   static std::string generic_derivative_kernel_operation(
     std::string label_array, std::string operations_value_array, std::string operations_derivative_array,
-    std::string sample_number, const RafkoObjective& objective
+    std::string behavior_index, std::string sample_number
   ){
-    return (
-      operations_derivative_array + "[==op_index==] = "
-      + objective.get_derivative_kernel_source(
-        label_array + "[==label_index==]",
-        operations_value_array + "[==dependency_op_index==]",
-        operations_derivative_array + "[==dependency_op_index==]",
-        sample_number
-      ) + ";"
-    );
-  }
-
-  std::string derivative_kernel_operation(
-    std::string /*network_input_array*/, std::string label_array, std::string /*weight_array*/,
-    std::string operations_value_array, std::string operations_derivative_array,
-    std::string /*operations_array_size*/
-  ) const override{
-    RFASSERT(static_cast<bool>(m_featureDependency));
-    return (
-      operations_derivative_array + "[==op_index==] = "
-      + m_objective.get_derivative_kernel_source(
-        label_array + "[==label_index==]",
-        operations_value_array + "[==dependency_op_index==]",
-        operations_derivative_array + "[==dependency_op_index==]",
-        std::to_string(m_sampleNumber)
-      ) + ";"
-    );
-  }
-  void substitute_index_values_in_kernels(std::string& kernel_source) const override { 
-    kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==op_index=="), std::to_string(get_operation_index())
-    );
-    kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==label_index=="), std::to_string(m_outputIndex)
-    );
-    kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==dependency_op_index=="), std::to_string(m_featureDependency->get_operation_index())
+    return RafkoCost::generic_derivative_kernel_source(
+      label_array + "[==label_index==]", operations_value_array + "[==dependency_op_index==]",
+      operations_derivative_array + "[==dependency_op_index==]",
+      sample_number, operations_derivative_array + "[==op_index==]",
+      behavior_index 
     );
   }
   #endif/*(RAFKO_USES_OPENCL)*/

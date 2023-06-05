@@ -134,14 +134,6 @@ public:
   static std::string generic_derivative_kernel_operation(
     std::string weight_array, std::string operations_value_array, std::string operations_derivative_array, std::string behavior_index
   );
-
-  std::string derivative_kernel_operation(
-    std::string network_input_array, std::string label_array, std::string weight_array,
-    std::string operations_value_array, std::string operations_derivative_array,
-    std::string operations_array_size
-  ) const override;
-
-  void substitute_index_values_in_kernels(std::string& kernel_source) const override;
   #endif/*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>> get_own_dependencies() override{

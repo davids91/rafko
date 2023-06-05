@@ -57,8 +57,10 @@ void RafkoGPUPhase::set_strategy(std::shared_ptr<RafkoGPUStrategy> strategy){
   }
   if(0 < build_log.length()){    
     RFASSERT_LOG("OpenCL kernel compilation successful! Log: {}", build_log);
-  }else RFASSERT_LOG("OpenCL kernel compilation successful!");
-
+  }else{
+    RFASSERT_LOG("OpenCL kernel compilation successful!");
+  }
+  
   /* Set buffers, kernel arguments and functors */
   std::uint32_t step_index = 0;
   for(const std::string& step_name : names){

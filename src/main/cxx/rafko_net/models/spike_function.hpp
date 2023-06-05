@@ -201,7 +201,7 @@ public:
   /**
    * @brief     Generates GPU kernel enumerations
    *
-   * @return    AN enumerator to be ised in the GPU kernel
+   * @return    An enumerator to be ised in the GPU kernel
    */
   static std::string get_kernel_enums(){
     return R"(

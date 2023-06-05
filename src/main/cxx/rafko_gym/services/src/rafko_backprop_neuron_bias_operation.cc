@@ -115,6 +115,12 @@ std::string RafkoBackpropNeuronBiasOperation::value_kernel_operation(
   );
   kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_value_array=="), operations_value_array);  
   kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==weight_array=="), weight_array);
+  kernel_source = rafko_utilities::replace_all_in_string(
+    kernel_source, std::regex("==dependency_descriptor=="),
+    std::to_string(get_dependency_descriptor())
+  );    
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_index=="), std::to_string(get_operation_index()));
+  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==this_op_weight_index=="), std::to_string(m_weightIndex));
   return kernel_source;
 }
 
@@ -141,46 +147,6 @@ std::string RafkoBackpropNeuronBiasOperation::generic_derivative_kernel_operatio
   kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_derivative_array=="), operations_derivative_array);
   return kernel_source;
 }
-
-std::string RafkoBackpropNeuronBiasOperation::derivative_kernel_operation(
-  std::string /*network_input_array*/, std::string /*label_array*/, std::string weight_array,
-  std::string operations_value_array, std::string operations_derivative_array,
-  std::string /*operations_array_size*/
-) const {
-  RFASSERT(are_dependencies_registered());
-  std::string kernel_source = R"(
-    if(==dependency_descriptor== != 0xFFFFFFFFu){
-      ==op_derivative_array==[==op_index==] = ==input_fnc==;
-    }else{
-       ==op_derivative_array==[==op_index==] = ((d_w_index == ==this_op_weight_index==)?(1.0):(0.0));
-    }
-  )";
-  kernel_source = rafko_utilities::replace_all_in_string(
-    kernel_source, std::regex("==input_fnc=="), 
-    rafko_net::InputFunction::derivative_kernel_for(
-      m_network.neuron_array(m_neuronIndex).input_function(),
-      weight_array + "[==this_op_weight_index]", "((d_w_index == ==this_op_weight_index==)?(1.0):(0.0))",
-      "==op_value_array==[==dependency_descriptor==]", "==op_derivative_array==[==dependency_descriptor==]"
-    )
-  );
-  kernel_source = rafko_utilities::replace_all_in_string(
-    kernel_source, std::regex("==op_value_array=="), operations_value_array
-  );
-  kernel_source = rafko_utilities::replace_all_in_string(
-    kernel_source, std::regex("==op_derivative_array=="), operations_derivative_array
-  );
-  return kernel_source;
-}
-
-void RafkoBackpropNeuronBiasOperation::substitute_index_values_in_kernels(std::string& kernel_source) const{ 
-  kernel_source = rafko_utilities::replace_all_in_string(
-    kernel_source, std::regex("==dependency_descriptor=="),
-    std::to_string(get_dependency_descriptor())
-  );    
-  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==op_index=="), std::to_string(get_operation_index()));
-  kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==this_op_weight_index=="), std::to_string(m_weightIndex));
-}
-
 #endif/*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_gym */

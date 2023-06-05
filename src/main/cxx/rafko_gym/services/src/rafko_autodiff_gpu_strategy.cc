@@ -181,22 +181,21 @@ std::vector<std::uint32_t> AutoDiffGPUStrategy::generate_propagation_instruction
             }
           );
         } break;        
-        case ad_operation_objective_d: 
+        case ad_operation_objective_d: {
           RFASSERT(1u == operation->get_own_dependencies().size());
+          auto upcasted_operation_ptr = std::static_pointer_cast<RafkoBackpropObjectiveOperation>(operation);
           result.insert(
             result.end(),
             {
               ad_operation_objective_d,
-              std::static_pointer_cast<RafkoBackpropObjectiveOperation>(operation)->get_label_index(),
-              std::static_pointer_cast<RafkoBackpropObjectiveOperation>(operation)->get_sample_number(),
+              upcasted_operation_ptr->get_label_index(),
+              upcasted_operation_ptr->get_sample_number(),
               operation->get_own_dependencies()[0]->get_operation_index(), 
               operation->get_operation_index(), 
-              static_cast<std::uint32_t>(
-                std::static_pointer_cast<RafkoBackpropObjectiveOperation>(operation)->get_cost_type()
-              )
+              static_cast<std::uint32_t>(upcasted_operation_ptr->get_cost_type())
             }
           );
-          break;
+        } break;
         case ad_operation_neuron_spike_d: 
           RFASSERT(1u == operation->get_own_dependencies().size());
           result.insert(
@@ -273,8 +272,7 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
 std::string AutoDiffGPUStrategy::generate_derivative_kernels(
   std::string network_input_array, std::string label_array, std::string weight_array,
   std::string operations_value_array, std::string operations_derivative_array,
-  std::string operations_array_size, 
-  const rafko_mainframe::RafkoSettings& settings, const RafkoObjective& objective
+  std::string operations_array_size, const rafko_mainframe::RafkoSettings& settings
 ){
   std::string kernel_source = "switch(network_instructions[0]){";
   kernel_source += "case ad_operation_network_input_d:{" + RafkoBackpropNetworkInputOperation::generic_derivative_kernel_operation(
@@ -290,7 +288,7 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
   ) + "}break;";
   kernel_source += "case ad_operation_objective_d:{" + RafkoBackpropObjectiveOperation::generic_derivative_kernel_operation(
     label_array, operations_value_array, operations_derivative_array,
-    "==number_of_sequences=="/*sample_number*/, objective
+    "network_instructions[5]"/*behavior_index*/, "==number_of_sequences=="/*sample_number*/
   ) + "}break;";
   kernel_source += "case ad_operation_neuron_spike_d:{" + RafkoBackpropSpikeFnOperation::generic_derivative_kernel_operation(
     weight_array, operations_value_array, operations_derivative_array, operations_array_size,
@@ -321,15 +319,14 @@ void AutoDiffGPUStrategy::substitute_index_values_in_kernels(std::string& kernel
   kernel_source = rafko_utilities::replace_all_in_string(kernel_source, std::regex("==dependency_descriptor=="), "network_instructions[3]");
 }
 
-void AutoDiffGPUStrategy::build(
-  const std::vector<OperationsType>& operations, std::uint32_t weight_relevant_operation_count, const RafkoObjective& objective
-){
+void AutoDiffGPUStrategy::build(const std::vector<OperationsType>& operations, std::uint32_t weight_relevant_operation_count){
   std::string source_base =
     rafko_utilities::atomic_double_add_function
     + rafko_utilities::atomic_double_average_function
     + rafko_net::InputFunction::get_kernel_enums()
     + rafko_net::TransferFunction::get_kernel_enums()
     + rafko_net::SpikeFunction::get_kernel_enums()
+    + CostFunction::get_kernel_enums()
     + RafkoBackpropagationOperation::get_kernel_enums()
     + rafko_utilities::random_function + R"(
 
@@ -401,7 +398,7 @@ void AutoDiffGPUStrategy::build(
           int current_instruction_entry_start = current_instruction_index + 1 + ((local_operation_index + get_local_id(0)) * ==one_neural_instruction_entry_size==);
           __constant unsigned int* network_instructions = &network_instruction_table[current_instruction_entry_start];
 
-          ==value_command_list_parsers== 
+          ==value_command_list_parsers==
 
           local_operation_index += get_local_size(0);
         }
@@ -506,6 +503,26 @@ void AutoDiffGPUStrategy::build(
       }/*for(every relevant sequence index)*/
     }/*kernel*/
   )";
+
+  RFASSERT_LOG("Starting to split operations into workers..");
+  m_neuralPropagationInstructions = generate_propagation_instructions(operations);
+  source_base = rafko_utilities::replace_all_in_string(
+    source_base, std::regex("==value_command_list_parsers=="), 
+    generate_value_kernels(
+      "network_inputs", "network_weights",
+      "operations_value_array", "operation_count",
+      m_settings
+    )
+  );
+  source_base = rafko_utilities::replace_all_in_string(
+    source_base, std::regex("==derivative_command_list_parsers=="),
+    generate_derivative_kernels(
+      "network_inputs", "labels", "network_weights",
+      "operations_value_array", "operations_d_array",
+      "operation_count", m_settings
+    )    
+  );
+
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==network_memory_size=="),
     std::to_string(m_network.memory_size())
@@ -559,25 +576,6 @@ void AutoDiffGPUStrategy::build(
   }
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==operation_locals=="), operation_locals
-  );
-
-  RFASSERT_LOG("Starting to split operations into workers..");
-  m_neuralPropagationInstructions = generate_propagation_instructions(operations);
-  source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==value_command_list_parsers=="), 
-    generate_value_kernels(
-      "network_inputs", "network_weights",
-      "operations_value_array", "operation_count",
-      m_settings
-    )
-  );
-  source_base = rafko_utilities::replace_all_in_string(
-    source_base, std::regex("==derivative_command_list_parsers=="),
-    generate_derivative_kernels(
-      "network_inputs", "labels", "network_weights",
-      "operations_value_array", "operations_d_array",
-      "operation_count", m_settings, objective
-    )    
   );
   source_base = rafko_utilities::replace_all_in_string(
     source_base, std::regex("==network_instruction_count=="), std::to_string(m_neuralPropagationInstructions.size())

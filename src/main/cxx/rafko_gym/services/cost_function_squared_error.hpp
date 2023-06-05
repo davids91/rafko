@@ -34,6 +34,21 @@ public:
   { };
   ~CostFunctionSquaredError() = default;
 
+  #if(RAFKO_USES_OPENCL)
+  /**
+   * @brief      Provides the kernel function for the derivative of the cost function
+   *
+   * @param[in]  label_value      The label value
+   * @param[in]  feature_value    The data to comapre to the label value
+   * @param[in]  feature_d        The derivative of the of the feature value
+   *
+   * @return     The source for implementing the kernel of the derivative of the cost function
+   */
+  static std::string derivative_kernel_source(std::string label_value, std::string feature_value, std::string feature_d){
+    return "(-(" + label_value + " - " + feature_value + ") * " + feature_d + ")";
+  }
+  #endif/*(RAFKO_USES_OPENCL)*/
+
 protected:
   [[nodiscard]] constexpr double error_post_process(double error_value, std::uint32_t /*sample_number*/) const override{
     return error_value / 2.0;
@@ -56,12 +71,6 @@ protected:
 
   std::string get_post_process_kernel_source(std::string error_value) const override{
     return "((" + error_value + ") / 2.0 )";
-  }
-
-  std::string get_derivative_kernel_source(
-    std::string label_value, std::string feature_value, std::string feature_d, std::string
-  ) const override{
-    return "(-(" + label_value + " - " + feature_value + ") * " + feature_d + ")";
   }
   #endif/*(RAFKO_USES_OPENCL)*/
 };
