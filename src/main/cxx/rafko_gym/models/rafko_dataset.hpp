@@ -20,6 +20,7 @@
 
 #include "rafko_global.hpp"
 
+#include <vector>
 #if (RAFKO_USES_OPENCL)
 #include <CL/opencl.hpp>
 #endif /*(RAFKO_USES_OPENCL)*/

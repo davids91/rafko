@@ -21,4 +21,7 @@
 #include "rafko_config.hpp"
 #include "rafko_export.hpp"
 
+#include <stdint.h>
+#include <cstdint>
+
 #endif /* defined RAFKO_GLOBAL_H */

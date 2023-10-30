@@ -42,7 +42,7 @@ void CostFunction::get_feature_errors(
 
   const std::uint32_t labels_to_do_in_a_thread =
       1u + static_cast<std::uint32_t>(labels_to_evaluate /
-                                      settings.get_sqrt_of_solve_threads());
+                                      m_settings.get_sqrt_of_solve_threads());
   m_outerThreads.start_and_block(
       std::bind(&CostFunction::feature_errors_thread, this, std::ref(labels),
                 std::ref(neuron_data), std::ref(errors_for_labels), label_start,

@@ -130,7 +130,7 @@ class ConsoleJumper : public rafko_gym::RafQEnvironment {
 public:
   ConsoleJumper(std::uint32_t width = 80, std::uint32_t sight = 5)
       : rafko_gym::RafQEnvironment((1u + sight), 1, {100, 100}, {0, 7}),
-        m_consoleWidth(width), m_sight(sight),
+        m_consoleWidth(std::min(width,120u)), m_sight(sight),
         m_level(
             generate_level(m_consoleWidth, m_sight, m_lastTeleportPosition)),
         m_statesBuffer(m_level.size(), std::vector<double>(m_sight)),
@@ -368,11 +368,10 @@ TEST_CASE("Testing if RafQTrainer works as expected with a simple board game "
   constexpr const std::uint32_t policy_action_size = 1;
   constexpr const std::uint32_t policy_sight = 7;
   constexpr const std::uint32_t policy_q_set_size = 500;
-
   google::protobuf::Arena
       arena; /* so the network and trainer would be on the same Arena */
   std::shared_ptr<ConsoleJumper> test_game = std::make_shared<ConsoleJumper>(
-      (rafko_test::get_console_width() / 2), policy_sight);
+      (std::max(60u, rafko_test::get_console_width()) / 2), policy_sight);
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<
       rafko_mainframe::RafkoSettings>(
       rafko_mainframe::RafkoSettings()

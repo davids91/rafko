@@ -157,6 +157,7 @@ void RafkoCost::accumulate_error_sum(std::vector<double> &source,
   target += local_error;
 }
 
+#if (RAFKO_USES_OPENCL)
 std::string RafkoCost::generic_derivative_kernel_source(
     std::string label_value, std::string feature_value, std::string feature_d,
     std::string sample_number, std::string target, std::string behavior_index) {
@@ -190,5 +191,6 @@ std::string RafkoCost::generic_derivative_kernel_source(
           label_value, feature_value, feature_d, sample_number));
   return kernel_source;
 }
+#endif /*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_gym */

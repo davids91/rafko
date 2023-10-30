@@ -54,20 +54,19 @@ public:
       std::shared_ptr<rafko_mainframe::RafkoSettings> settings = {},
       std::uint32_t stochastic_evaluation_loops = 1u)
       : rafko_mainframe::RafkoAutonomousEntity(settings),
-        training_contexts(contexts), test_context(test_context),
-        weight_filter(
-            training_contexts[0]->expose_network().weight_table_size(), 1.0),
-        used_weight_filter(weight_filter),
-        weight_exclude_chance_filter(
-            training_contexts[0]->expose_network().weight_table_size(), 0.0),
-        stochastic_evaluation_loops(stochastic_evaluation_loops),
-        execution_threads(
-            std::min(training_contexts.size(),
+        m_training_contexts(contexts), m_test_context(test_context),
+        m_weight_filter(
+            m_training_contexts[0]->expose_network().weight_table_size(), 1.0),
+        m_used_weight_filter(m_weight_filter),
+        m_weight_exclude_chance_filter(
+            m_training_contexts[0]->expose_network().weight_table_size(), 0.0),
+        m_stochastic_evaluation_loops(stochastic_evaluation_loops),
+        m_execution_threads(
+            std::min(m_training_contexts.size(),
                      static_cast<std::size_t>(
                          m_settings->get_max_processing_threads()))),
         m_tmpDataPool(
-            2u, training_contexts[0]->expose_network().weight_table_size()) {}
-
+            2u, m_training_contexts[0]->expose_network().weight_table_size()) {}
   RafkoNumericOptimizer(const RafkoNumericOptimizer &other) =
       delete; /* Copy constructor */
   RafkoNumericOptimizer(RafkoNumericOptimizer &&other) =
@@ -123,7 +122,7 @@ public:
   /**
    * @brief      Discards the gradient fragment collected in the past
    */
-  void discard_fragment() { gradient_fragment = NetworkWeightVectorDelta(); }
+  void discard_fragment() { m_gradient_fragment = NetworkWeightVectorDelta(); }
 
   /**
    * @brief      Adds the given values to the stored fragment.
@@ -139,7 +138,7 @@ public:
    *
    * @return     The fragment.
    */
-  const NetworkWeightVectorDelta get_fragment() { return gradient_fragment; }
+  const NetworkWeightVectorDelta get_fragment() { return m_gradient_fragment; }
 
   /**
    * @brief      Helper function to get the collected weight gradient fragment
@@ -147,7 +146,7 @@ public:
    * @return     Constant reference to the current weight gradients array
    */
   constexpr const NetworkWeightVectorDelta &get_weight_gradient() const {
-    return gradient_fragment;
+    return m_gradient_fragment;
   }
 
   /**
@@ -158,10 +157,10 @@ public:
    * @param[in]   filter    the filter to set for the whole weight array
    */
   void set_weight_filter(std::vector<double> &&filter) {
-    RFASSERT_LOG("Weight filter size: {} vs. {}", weight_filter.size(),
+    RFASSERT_LOG("Weight filter size: {} vs. {}", m_weight_filter.size(),
                  filter.size());
-    RFASSERT(filter.size() == weight_filter.size());
-    weight_filter = filter;
+    RFASSERT(filter.size() == m_weight_filter.size());
+    m_weight_filter = filter;
   }
 
   /**
@@ -173,8 +172,8 @@ public:
    * @param[in]   filter          the filter to set for the whole weight array
    */
   void modify_weight_filter(std::uint32_t weight_index, double filter) {
-    RFASSERT(weight_index < weight_filter.size());
-    weight_filter[weight_index] = filter;
+    RFASSERT(weight_index < m_weight_filter.size());
+    m_weight_filter[weight_index] = filter;
   }
 
   /**
@@ -184,7 +183,7 @@ public:
    * @param[in]   filter    the filter to set for the whole weight filter array
    */
   void set_weight_filter(double filter) {
-    std::fill(weight_filter.begin(), weight_filter.end(), filter);
+    std::fill(m_weight_filter.begin(), m_weight_filter.end(), filter);
   }
 
   /**
@@ -196,11 +195,11 @@ public:
    * @param[in]   filter    the filter to set for the whole weight array
    */
   void set_weight_exclude_chance_filter(std::vector<double> &&filter) {
-    RFASSERT(filter.size() == weight_exclude_chance_filter.size());
-    weight_exclude_chance_filter = filter;
+    RFASSERT(filter.size() == m_weight_exclude_chance_filter.size());
+    m_weight_exclude_chance_filter = filter;
     m_excludeChanceSum =
-        std::accumulate(weight_exclude_chance_filter.begin(),
-                        weight_exclude_chance_filter.end(), 0.0);
+        std::accumulate(m_weight_exclude_chance_filter.begin(),
+                        m_weight_exclude_chance_filter.end(), 0.0);
   }
 
   /**
@@ -211,10 +210,10 @@ public:
    * @param[in]   filter    the filter to set for the whole weight array
    */
   void set_weight_exclude_chance_filter(double filter) {
-    std::fill(weight_exclude_chance_filter.begin(),
-              weight_exclude_chance_filter.end(), filter);
+    std::fill(m_weight_exclude_chance_filter.begin(),
+              m_weight_exclude_chance_filter.end(), filter);
     m_excludeChanceSum =
-        filter * static_cast<double>(weight_exclude_chance_filter.size());
+        filter * static_cast<double>(m_weight_exclude_chance_filter.size());
   }
 
   /**
@@ -228,18 +227,18 @@ public:
    */
   void modify_weight_exclude_chance_filter(std::uint32_t weight_index,
                                            double filter) {
-    RFASSERT(weight_index < weight_exclude_chance_filter.size());
-    weight_exclude_chance_filter[weight_index] = filter;
+    RFASSERT(weight_index < m_weight_exclude_chance_filter.size());
+    m_weight_exclude_chance_filter[weight_index] = filter;
     m_excludeChanceSum =
-        std::accumulate(weight_exclude_chance_filter.begin(),
-                        weight_exclude_chance_filter.end(), 0.0);
+        std::accumulate(m_weight_exclude_chance_filter.begin(),
+                        m_weight_exclude_chance_filter.end(), 0.0);
   }
 
   /**
    * @brief      Evaluates the network in the given environment fully
    */
   void full_evaluation() {
-    double fitness = training_contexts[0]->full_evaluation();
+    double fitness = m_training_contexts[0]->full_evaluation();
     if (m_minTestError > fitness) {
       m_minTestError = fitness;
       m_minTestErrorWasAtIteration = m_iteration;
@@ -265,7 +264,7 @@ public:
                Training_strategy::
                    training_strategy_stop_if_training_error_zero) &&
            ((0.0) == -m_minTestError)) ||
-          ((training_contexts[0] && test_context) &&
+          ((m_training_contexts[0] && m_test_context) &&
            ((m_settings->get_training_strategy(
                 Training_strategy::training_strategy_early_stopping)) &&
             (m_lastTrainingError >
@@ -278,14 +277,14 @@ public:
   void reset_epoch() { m_iteration = 1; }
 
 private:
-  std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> training_contexts;
-  std::shared_ptr<rafko_mainframe::RafkoContext> test_context;
-  std::vector<double> weight_filter;
-  std::vector<double> used_weight_filter;
-  std::vector<double> weight_exclude_chance_filter;
-  NetworkWeightVectorDelta gradient_fragment;
-  std::uint32_t stochastic_evaluation_loops;
-  rafko_utilities::ThreadGroup execution_threads;
+  std::vector<std::shared_ptr<rafko_mainframe::RafkoContext>> m_training_contexts;
+  std::shared_ptr<rafko_mainframe::RafkoContext> m_test_context;
+  std::vector<double> m_weight_filter;
+  std::vector<double> m_used_weight_filter;
+  std::vector<double> m_weight_exclude_chance_filter;
+  NetworkWeightVectorDelta m_gradient_fragment;
+  std::uint32_t m_stochastic_evaluation_loops;
+  rafko_utilities::ThreadGroup m_execution_threads;
 
   std::mutex m_networkMutex;
   std::uint32_t m_iteration = 1u;
@@ -308,10 +307,10 @@ private:
    */
   double stochastic_evaluation(rafko_mainframe::RafkoContext &context) {
     double fitness = (0.0);
-    for (std::uint32_t i = 0; i < stochastic_evaluation_loops; ++i)
+    for (std::uint32_t i = 0; i < m_stochastic_evaluation_loops; ++i)
       fitness += context.stochastic_evaluation(m_iteration);
     double result_fitness =
-        fitness / static_cast<double>(stochastic_evaluation_loops);
+        fitness / static_cast<double>(m_stochastic_evaluation_loops);
     m_errorEstimation = (m_errorEstimation + -result_fitness) / (2.0);
     return result_fitness;
   }

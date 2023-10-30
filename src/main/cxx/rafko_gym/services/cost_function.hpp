@@ -55,7 +55,7 @@ public:
                const rafko_mainframe::RafkoSettings &settings,
                std::uint32_t inner_thread_count = 0u,
                std::uint32_t outer_thread_count = 0u)
-      : settings(settings), m_theFunction(the_function),
+      : m_settings(settings), m_theFunction(the_function),
         m_outerThreads((0 < outer_thread_count)
                            ? outer_thread_count
                            : settings.get_sqrt_of_solve_threads()),
@@ -201,8 +201,8 @@ public:
 #endif /*(RAFKO_USES_OPENCL)*/
 
 protected:
-  const rafko_mainframe::RafkoSettings &settings;
-  std::vector<std::thread> process_threads;
+  const rafko_mainframe::RafkoSettings &m_settings;
+  std::vector<std::thread> m_process_threads;
 
   /**
    * @brief      The post-processing function to be provided by the implementer

@@ -1,4 +1,7 @@
-find_package(Protobuf REQUIRED)
+find_package(Protobuf REQUIRED CONFIG)
+if(NOT Protobuf_LIBRARIES)
+  set(Protobuf_LIBRARIES "protobuf::libprotobuf")
+endif()
 
 add_library(rafko_protocol OBJECT)
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/gen/rafko_protocol)
@@ -33,6 +36,7 @@ set(PROTO_SOURCES
   training.proto
   ${DEEP_LEARNING_SERVICE_PROTOS}
 )
+
 target_link_libraries(rafko_protocol PUBLIC ${Protobuf_LIBRARIES} ${GRPC_LIBRARIES})
 protobuf_generate(
   TARGET
