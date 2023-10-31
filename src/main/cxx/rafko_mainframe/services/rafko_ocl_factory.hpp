@@ -62,6 +62,9 @@ public:
   RafkoOCLFactory &select_device(cl_device_type type = CL_DEVICE_TYPE_GPU,
                                  std::uint32_t device_index = 0u) {
     RFASSERT_LOG("Selected device[{}]..", device_index);
+    m_devices.clear();
+    [[maybe_unused]] cl_int query_result = m_platforms[m_selectedPlatform].getDevices(type, &m_devices);
+    RFASSERT_LOG("OpenCL Query result: {}", query_result);
     m_platforms[m_selectedPlatform].getDevices(type, &m_devices);
     RFASSERT(device_index < m_devices.size());
     RFASSERT_LOG("Device: {} --> OCL {}",

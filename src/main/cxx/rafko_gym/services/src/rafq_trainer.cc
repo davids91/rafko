@@ -123,6 +123,8 @@ void RafQTrainer::iterate(
   progress_callback(0, 0);
   if (0 < max_discovery_length) {
     bool terminal = false;
+    if (!m_environment->current_state().m_resultState.has_value())
+      m_environment->reset();
     RFASSERT(m_environment->current_state().m_resultState.has_value());
     RafQEnvironment::StateTransition current_state =
         m_environment->current_state();
