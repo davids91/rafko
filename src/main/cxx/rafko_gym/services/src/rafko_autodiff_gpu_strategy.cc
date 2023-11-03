@@ -216,7 +216,7 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
         result.insert(
             result.end(),
             {ad_operation_neuron_input_d,
-             upcasted_operation_ptr->get_weight_descriptor(),
+             upcasted_operation_ptr->m_weightIndex,
              upcasted_operation_ptr->get_own_dependencies_past_included()[0]
                  ->get_operation_index(),
              upcasted_operation_ptr->get_own_dependencies_past_included()[1]
@@ -299,7 +299,8 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
   kernel_source +=
       "case ad_operation_neuron_input_d:{" +
       RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
-          weight_array, operations_value_array, operations_array_size,
+          network_input_array, weight_array, operations_value_array,
+          operations_array_size,
           "(network_instructions[5] & 0x00FFu)" /*behavior_index*/
           ) +
       "}break;";
@@ -348,7 +349,7 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
   kernel_source +=
       "case ad_operation_neuron_input_d:{" +
       RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
-          weight_array, operations_value_array, operations_derivative_array,
+          network_input_array, weight_array, operations_value_array, operations_derivative_array,
           operations_array_size, "network_instructions[5]" /*behavior_index*/
           ) +
       "}break;";
