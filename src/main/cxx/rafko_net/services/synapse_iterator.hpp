@@ -330,7 +330,7 @@ public:
   }
 
   template <typename InputSynapseInterval>
-  std::uint32_t reach_past_loops(std::uint32_t nth_element) {
+  std::uint32_t reach_past_loops(std::uint32_t nth_element) const{
     RFASSERT(0u < size());
     std::uint32_t result_reach;
     std::uint32_t previous_last_reached_index = 0;

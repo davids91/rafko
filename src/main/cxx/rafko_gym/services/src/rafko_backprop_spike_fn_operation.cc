@@ -124,42 +124,6 @@ std::string RafkoBackpropSpikeFnOperation::generic_value_kernel_operation(
   return kernel_source;
 }
 
-std::string RafkoBackpropSpikeFnOperation::value_kernel_operation(
-    std::string /*network_input_array*/, std::string weight_array,
-    std::string operations_value_array,
-    std::string operations_array_size) const {
-  RFASSERT(are_dependencies_registered());
-  RFASSERT(static_cast<bool>(m_presentValueDependency));
-  std::string kernel_source = R"(
-    if(0 < available_memory_slots){
-      past_value = ==op_value_array==[(long int)(==op_index==) - (long int)(==op_array_size==)];
-    }else{
-      past_value = 0.0;
-    }
-    ==op_value_array==[==op_index==] = ==spike_kernel==;
-  )";
-
-  kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==spike_kernel=="),
-      rafko_net::SpikeFunction::get_kernel_function_for(
-          get_spike_function(), weight_array + "[==this_op_weight_index==]",
-          "past_value", "==op_value_array==[==dependency_op_index==]"));
-  kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==op_value_array=="), operations_value_array);
-  kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==op_array_size=="), operations_array_size);
-  kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==op_index=="),
-      std::to_string(get_operation_index()));
-  kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==dependency_op_index=="),
-      std::to_string(m_presentValueDependency->get_operation_index()));
-  kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==this_op_weight_index=="),
-      std::to_string(get_weight_index()));
-  return kernel_source;
-}
-
 std::string RafkoBackpropSpikeFnOperation::generic_derivative_kernel_operation(
     std::string weight_array, std::string operations_value_array,
     std::string operations_derivative_array, std::string operations_array_size,

@@ -107,15 +107,6 @@ public:
 #if (RAFKO_USES_OPENCL)
   std::string local_declaration_operation() const override { return ""; }
 
-  std::string value_kernel_operation(std::string /*network_input_array*/,
-                                     std::string /*weight_array*/,
-                                     std::string /*operations_value_array*/,
-                                     std::string /*operations_array_size*/
-  ) const override { /*!Note: Value is not being calculated, because they are
-                        not of use (as of now.. ) */
-    return "";
-  }
-
   /**
    * @brief     Generates OpenCL Kernel code for the operation for backward
    * propagation

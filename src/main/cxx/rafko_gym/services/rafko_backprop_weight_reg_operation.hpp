@@ -91,15 +91,6 @@ public:
   std::string local_declaration_operation() const override {
     return rafko_net::RafkoNetworkFeature::get_kernel_locals();
   }
-
-  std::string value_kernel_operation(std::string /*network_input_array*/,
-                                     std::string /*weight_array*/,
-                                     std::string /*operations_value_array*/,
-                                     std::string /*operations_array_size*/
-  ) const override {
-    /*!Note: No actual value is calculated for weight regularization */
-    return "";
-  }
 #endif /*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>>

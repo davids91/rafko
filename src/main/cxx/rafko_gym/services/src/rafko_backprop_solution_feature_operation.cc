@@ -92,33 +92,5 @@ RafkoBackPropSolutionFeatureOperation::upload_dependencies_to_operations() {
       {dependency_parameters,
        [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>>) {}}};
 }
-#if (RAFKO_USES_OPENCL)
-std::string RafkoBackPropSolutionFeatureOperation::value_kernel_operation(
-    std::string /*network_input_array*/, std::string /*weight_array*/,
-    std::string operations_value_array, std::string /*operations_array_size*/
-) const {
-  std::vector<std::uint32_t> actual_operation_values_for_neurons;
-  rafko_net::SynapseIterator<>::iterate(
-      m_featureGroup.relevant_neurons(),
-      [this, &actual_operation_values_for_neurons](std::uint32_t index) {
-        rafko_utilities::SubscriptDictionary &dictionary =
-            *m_neuronIndexDictionary;
-        if (dictionary.find(index) != dictionary.end())
-          actual_operation_values_for_neurons.push_back(dictionary[index]);
-        else
-          actual_operation_values_for_neurons.push_back(index);
-      });
-  RFASSERT(rafko_net::NeuronInfo::is_feature_relevant_to_solution(
-      m_featureGroup.feature()));
-  return rafko_net::RafkoNetworkFeature::generate_kernel_code(
-      m_settings, m_featureGroup.feature(), actual_operation_values_for_neurons,
-      "" /*input_array*/,
-      "" /*input_array_start*/, /*!Note: solution relevant features don't use
-                                   any inputs as of now, please re-check */
-      operations_value_array /*output_array*/, "0" /*output_start_index*/,
-      false /*declare_locals*/
-  );
-}
-#endif /*(RAFKO_USES_OPENCL)*/
 
 } /* namespace rafko_gym */

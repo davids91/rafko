@@ -113,25 +113,6 @@ public:
             "[==this_op_weight_index==];\n");
   }
 
-  std::string value_kernel_operation(std::string network_input_array,
-                                     std::string weight_array,
-                                     std::string operations_value_array,
-                                     std::string /*operations_array_size*/
-  ) const override {
-    std::string kernel_source = generic_value_kernel_operation(
-        network_input_array, weight_array, operations_value_array);
-    kernel_source = rafko_utilities::replace_all_in_string(
-        kernel_source, std::regex("==network_input_index=="),
-        std::to_string(m_inputIndex));
-    kernel_source = rafko_utilities::replace_all_in_string(
-        kernel_source, std::regex("==this_op_weight_index=="),
-        std::to_string(m_weightIndex));
-    kernel_source = rafko_utilities::replace_all_in_string(
-        kernel_source, std::regex("==op_index=="),
-        std::to_string(get_operation_index()));
-    return kernel_source;
-  }
-
   /**
    * @brief     Generates OpenCL Kernel code for the operation for backward
    * propagation

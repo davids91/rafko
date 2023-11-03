@@ -72,12 +72,6 @@ public:
     return rafko_net::RafkoNetworkFeature::get_kernel_locals();
   }
 
-  std::string value_kernel_operation(std::string network_input_array,
-                                     std::string /*weight_array*/,
-                                     std::string operations_value_array,
-                                     std::string /*operations_array_size*/
-  ) const override;
-
   bool is_multi_worker() const override { return true; }
 #endif /*(RAFKO_USES_OPENCL)*/
 

@@ -108,27 +108,6 @@ public:
   virtual std::string local_declaration_operation() const = 0;
 
   /**
-   * @brief   Provides the kernel code for this operation in the forward
-   * propagation of the neural network
-   *
-   * @param   network_input_array       The name of the arry containing the
-   * Inputs for the Neural network
-   * @param   weight_array              The name of the array contining the
-   * Neural network weights
-   * @param   operations_value_array    The name of the array containing the
-   * operation values for forward propagation
-   * @param   operations_array_size     The size of the array contining the
-   * operation values for forward propagation
-   *
-   * @return  OpenCL Kernel code, without the index values substituted
-   */
-  virtual std::string
-  value_kernel_operation(std::string network_input_array,
-                         std::string weight_array,
-                         std::string operations_value_array,
-                         std::string operations_array_size) const = 0;
-
-  /**
    * @brief   Tells if the generated kernel code is using local groups in the
    * execution, so the provided logic
    *

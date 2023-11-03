@@ -10,6 +10,8 @@ Rafko Style Guide
     - namespace names: `have_underscore_between_words`
     - entity names(classes, protobuf messages): `AreDoneWithCamelCase`
     - class member variables: `m_prePendedAndCamelCase`
+    - static variables: `s_sameAsMembersButPrependedWithS`
+    - class member functions: `start_with_lowercase_and_are_camelcase`
     - local variable names: `are_like_namespaces`
     - enumerations:
       - enumeration names: `Start_with_uppercase_but_theres_underscore`

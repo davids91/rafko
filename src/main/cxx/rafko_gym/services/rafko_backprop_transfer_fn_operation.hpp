@@ -119,22 +119,6 @@ public:
         operations_value_array + "[==dependency_op_index==]");
   }
 
-  std::string value_kernel_operation(std::string /*network_input_array*/,
-                                     std::string /*weight_array*/,
-                                     std::string operations_value_array,
-                                     std::string /*operations_array_size*/
-  ) const override {
-    RFASSERT(static_cast<bool>(m_neededInputDependency));
-    RFASSERT(m_neededInputDependency->are_dependencies_registered());
-    return (operations_value_array + std::to_string(get_operation_index()) +
-            m_transferFunction.get_kernel_function_for(
-                get_transfer_function(),
-                operations_value_array +
-                    std::to_string(
-                        m_neededInputDependency->get_operation_index()))) +
-           ";";
-  }
-
   /**
    * @brief     Generates OpenCL Kernel code for the operation for forward
    * propagation
