@@ -43,7 +43,7 @@
 namespace rafko_gym_test {
 
 TEST_CASE("Testing if autodiff optimizer converges networks",
-          "[optimizer][small][manual]") {
+          "[optimizer][small][CPU][manual]") {
   return; /*!Note: This testcase is for fallback only, in case the next one does
              not work properly */
   double learning_rate = 0.0001;
@@ -100,6 +100,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks",
                          data_set->get_input_samples().end()},
                         {data_set->get_label_samples().begin(),
                          data_set->get_label_samples().end()});
+    reference_solver_factory.refresh_actual_solution_weights();
     std::shared_ptr<rafko_net::SolutionSolver> reference_solver =
         reference_solver_factory.build();
     for (std::int32_t weight_index = 0;
@@ -131,7 +132,7 @@ TEST_CASE("Testing if autodiff optimizer converges networks",
 
 TEST_CASE("Testing if autodiff optimizer converges networks with the iteration "
           "interface",
-          "[optimizer][small]") {
+          "[optimizer][small][CPU]") {
   return; /*!Note: This testcase is for fallback only, in case the next one does
              not work properly */
   google::protobuf::Arena arena;
@@ -190,11 +191,12 @@ TEST_CASE("Testing if autodiff optimizer converges networks with the iteration "
   std::chrono::steady_clock::time_point start;
   rafko_net::SolutionSolver::Factory reference_solver_factory(network,
                                                               settings);
+  std::shared_ptr<rafko_net::SolutionSolver> reference_solver =
+      reference_solver_factory.build();
   while ((std::abs(actual_value[1][0] - data_set->get_label_sample(0u)[0]) +
           std::abs(actual_value[0][0] - data_set->get_label_sample(1u)[0])) >
          (2.0 * settings->get_learning_rate())) {
-    std::shared_ptr<rafko_net::SolutionSolver> reference_solver =
-        reference_solver_factory.build();
+    reference_solver_factory.refresh_actual_solution_weights();
     start = std::chrono::steady_clock::now();
     optimizer.iterate(*data_set);
     auto current_duration =

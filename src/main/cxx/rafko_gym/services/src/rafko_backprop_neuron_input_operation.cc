@@ -17,6 +17,7 @@
 #include "rafko_gym/services/rafko_backprop_neuron_input_operation.hpp"
 
 #include "rafko_utilities/services/rafko_string_utils.hpp"
+#include <optional>
 
 namespace {
 const auto &s_isNeuronInputFromNetworkInput =
@@ -40,7 +41,7 @@ RafkoBackpropNeuronInputOperation::RafkoBackpropNeuronInputOperation(
           s_isNeuronInputFromNetworkInput(m_inputsIterator[m_neuronInputIndex])
               ? std::optional<std::uint32_t>(
                     s_convertToArrayIndex(m_inputsIterator[m_neuronInputIndex]))
-              : std::optional<std::uint32_t>()),
+              : std::nullopt),
       m_inputPastIndex(
           m_inputsIterator.reach_past_loops<rafko_net::InputSynapseInterval>(
               m_neuronInputIndex)),
@@ -83,7 +84,7 @@ RafkoBackpropNeuronInputOperation::upload_dependencies_to_operations() {
       {dependency_parameters,
        [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
                   dependencies) {
-         [[maybe_unused]] std::uint32_t f_x_dependecy_count = 0u;
+         std::uint32_t f_x_dependecy_count = 0u;
          if (!m_network_input_index.has_value()) {
            f_x_dependecy_count = 1u;
            RFASSERT(1 <= dependencies.size());
@@ -144,7 +145,7 @@ RafkoBackpropNeuronInputOperation::get_own_dependencies_past_included() {
     dependencies.push_back(m_neuronInputDependency);
   if (m_neuronBiasDependency)
     dependencies.push_back(m_neuronBiasDependency);
-  RFASSERT(2u == dependencies.size() || !are_dependencies_registered());
+  RFASSERT(1u <= dependencies.size() || !are_dependencies_registered());
   return dependencies;
 }
 
@@ -155,7 +156,7 @@ void RafkoBackpropNeuronInputOperation::calculate_value(
   /* calculate f(x) part */
   double weighted_input;
   if (m_network_input_index.has_value()) { /* f(x) comes from network input */
-    RFASSERT(0u == m_inputPastIndex);      /* Input should'nt be in the past  */
+    RFASSERT(0u == m_inputPastIndex);      /* Input shouldn't be in the past  */
     weighted_input = network_input[m_network_input_index.value()] *
                      m_network.weight_table(m_weightIndex);
     RFASSERT_LOG("operation[{}]: Neuron[{}] Input[{}] f_x = input[{}]({}) * "
@@ -219,8 +220,7 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
   double f_x_derivative;
   if (m_network_input_index.has_value()) {
     RFASSERT(0u == m_inputPastIndex);
-    f_x_value = network_input[m_network_input_index.value()] *
-                m_network.weight_table(m_weightIndex);
+    f_x_value = get_value(0u/*past_index*/);
     f_x_derivative = ((d_w_index == m_weightIndex)
                           ? (network_input[m_network_input_index.value()])
                           : (0.0));
@@ -367,7 +367,7 @@ RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
     u_x_value = ==op_value_array==[==u_x_op_index==];
     u_x_derivative = ==op_derivative_array==[==u_x_op_index==];
     if(==past_index== == 0xFFu){ // past index at maximum means the input arrives from the network inputs
-      f_x_value = ==network_input_array==[==f_x_op_index==] * ==weight_array==[==wight_index==];
+      f_x_value = ==op_value_array==[==op_index==];
       if(d_w_index == ==this_op_weight_index==){
         f_x_derivative = ==network_input_array==[==f_x_op_index==];
       }else{
@@ -378,9 +378,9 @@ RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
         f_x_value = ==op_value_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)];
         f_x_derivative = (
           ==op_derivative_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)]
-          * ==weight_array==[==wight_index==]
+          * ==weight_array==[==weight_index==]
        );
-        if(==wight_index== == d_w_index){
+        if(==weight_index== == d_w_index){
           f_x_derivative += f_x_value;
         }
       }else{

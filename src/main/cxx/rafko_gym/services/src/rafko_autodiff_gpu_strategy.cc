@@ -210,16 +210,15 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
         auto upcasted_operation_ptr =
             std::static_pointer_cast<RafkoBackpropNeuronInputOperation>(
                 operation);
-        RFASSERT(2u ==
+        RFASSERT(1u <=
                  upcasted_operation_ptr->get_own_dependencies_past_included()
                      .size());
         result.insert(
             result.end(),
-            {ad_operation_neuron_input_d,
-             upcasted_operation_ptr->m_weightIndex,
-             upcasted_operation_ptr->get_own_dependencies_past_included()[0]
-                 ->get_operation_index(),
-             upcasted_operation_ptr->get_own_dependencies_past_included()[1]
+            {ad_operation_neuron_input_d, upcasted_operation_ptr->m_weightIndex,
+             upcasted_operation_ptr->get_f_x_dependency_index(),
+             upcasted_operation_ptr->get_own_dependencies_past_included()
+                 .back()
                  ->get_operation_index(),
              operation->get_operation_index(),
              ((upcasted_operation_ptr->get_input_function() & 0x00FFu) |
@@ -349,8 +348,9 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
   kernel_source +=
       "case ad_operation_neuron_input_d:{" +
       RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
-          network_input_array, weight_array, operations_value_array, operations_derivative_array,
-          operations_array_size, "network_instructions[5]" /*behavior_index*/
+          network_input_array, weight_array, operations_value_array,
+          operations_derivative_array, operations_array_size,
+          "network_instructions[5]" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
@@ -406,7 +406,7 @@ void AutoDiffGPUStrategy::substitute_index_values_in_kernels(
       "network_instructions[3]");
 
   kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==weight_descriptor=="),
+      kernel_source, std::regex("==weight_index=="),
       "network_instructions[1]");
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==dependency_descriptor=="),
