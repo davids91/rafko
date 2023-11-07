@@ -176,19 +176,6 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
       const std::shared_ptr<RafkoBackpropagationOperation> &operation =
           operations[operation_index];
       switch (operation->get_type()) {
-      case ad_operation_network_input_d:
-        RFASSERT(0u == operation->get_own_dependencies().size());
-        result.insert(
-            result.end(),
-            {ad_operation_network_input_d,
-             std::static_pointer_cast<RafkoBackpropNetworkInputOperation>(
-                 operation)
-                 ->get_weight_index(),
-             std::static_pointer_cast<RafkoBackpropNetworkInputOperation>(
-                 operation)
-                 ->get_input_index(),
-             0u, operation->get_operation_index(), 0u});
-        break;
       case ad_operation_neuron_bias_d:
         result.insert(
             result.end(),
@@ -284,11 +271,6 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
     const rafko_mainframe::RafkoSettings &settings) {
   std::string kernel_source = "switch(network_instructions[0]){";
   kernel_source +=
-      "case ad_operation_network_input_d:{" +
-      RafkoBackpropNetworkInputOperation::generic_value_kernel_operation(
-          network_input_array, weight_array, operations_value_array) +
-      "}break;";
-  kernel_source +=
       "case ad_operation_neuron_bias_d:{" +
       RafkoBackpropNeuronBiasOperation::generic_value_kernel_operation(
           weight_array, operations_value_array,
@@ -333,11 +315,6 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
     std::string operations_derivative_array, std::string operations_array_size,
     const rafko_mainframe::RafkoSettings &settings) {
   std::string kernel_source = "switch(network_instructions[0]){";
-  kernel_source +=
-      "case ad_operation_network_input_d:{" +
-      RafkoBackpropNetworkInputOperation::generic_derivative_kernel_operation(
-          network_input_array, operations_derivative_array) +
-      "}break;";
   kernel_source +=
       "case ad_operation_neuron_bias_d:{" +
       RafkoBackpropNeuronBiasOperation::generic_derivative_kernel_operation(

@@ -30,7 +30,6 @@
 #include "rafko_net/services/synapse_iterator.hpp"
 #include "rafko_protocol/rafko_net.pb.h"
 
-#include "rafko_gym/services/rafko_backprop_network_input_operation.hpp"
 #include "rafko_gym/services/rafko_backpropagation_operation.hpp"
 
 namespace rafko_gym {
