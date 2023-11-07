@@ -134,6 +134,8 @@ public:
 
   /**
    * @brief     Downloads the activation value of a single neuron from the GPU.
+   *            Sequence index and data set reference is required because the
+   *            data layout inside the GPU is partly defined by them.
    *            The GPU has the whole environment stored in its buffers; So data
    * is available from when an iteration last calculated it. Because of this:
    *            !!WARNING!! Neuron data may not be up-to-date
@@ -141,8 +143,7 @@ public:
    * @param[in]   sequence_index    The sequence index to take the value from
    * @param[in]   past_index        The past index to take the value from
    * @param[in]   neuron_index      The relevant neuron index
-   * @param[in]   data_set                The data set the network is evaluated
-   * on
+   * @param[in]   data_set          The data set the network is evaluated on
    */
   double get_neuron_data(std::uint32_t sequence_index, std::uint32_t past_index,
                          std::uint32_t neuron_index,

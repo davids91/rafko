@@ -130,7 +130,6 @@ public:
         ad_operation_neuron_transfer_d,
         ad_operation_neuron_input_d,
         ad_operation_neuron_bias_d,
-        ad_operation_network_input_d,
       }autodiff_operations_t __attribute__ ((aligned));
     )";
   }

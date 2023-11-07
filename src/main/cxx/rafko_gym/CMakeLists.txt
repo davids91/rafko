@@ -51,7 +51,6 @@ set(GYM_HEADER_SERVICES
   services/rafko_backpropagation_operation.hpp
   services/rafko_backprop_solution_feature_operation.hpp
   services/rafko_backprop_weight_reg_operation.hpp
-  services/rafko_backprop_network_input_operation.hpp
   services/rafko_backprop_neuron_bias_operation.hpp
   services/rafko_backprop_neuron_input_operation.hpp
   services/rafko_backprop_transfer_fn_operation.hpp

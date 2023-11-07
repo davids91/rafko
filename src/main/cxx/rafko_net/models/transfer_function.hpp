@@ -137,35 +137,35 @@ public:
    * @brief     Generates GPU kernel code for the provided parameters and all
    * transfer functions
    *
-   * @param[in]   operation_index   The variable containing a value from
+   * @param[in]   transfer_function_index   The variable containing a value from
    * @get_kernel_enums
-   * @param[in]   target            The target on which the transfer function
-   * result is stored in
-   * @param[in]   value             The value on which the transfer function is
-   * called upon
+   * @param[in]   target  The target on which the transfer function result is
+   * stored in
+   * @param[in]   value   The value on which the transfer function is called
+   * upon
    *
    * @return    The generated Kernel code containing all transfer functions,
-   * selected by @operation_index
+   * selected by @transfer_function_index
    */
   static std::string
   get_all_kernel_value_functions(const rafko_mainframe::RafkoSettings &settings,
-                                 std::string operation_index,
+                                 std::string transfer_function_index,
                                  std::string target, std::string value);
 
   /**
    * @brief     Generates GPU kernel derivative function code for all transfer
    * functions
    *
-   * @param[in]   operation_index   The variable containing a value from
+   * @param[in]   transfer_function_index   The variable containing a value from
    * @get_kernel_enums
    *
    * @return    The generated Kernel code containing the derivative of all
-   * transfer functions, selected by @operation_index
+   * transfer functions, selected by @transfer_function_index
    */
   static std::string get_all_kernel_derivative_functions(
       const rafko_mainframe::RafkoSettings &settings,
-      std::string operation_index, std::string target, std::string value,
-      std::string derivative);
+      std::string transfer_function_index, std::string target,
+      std::string value, std::string derivative);
 
   /**
    * @brief     Gives back the identifier for the given function in the kernel

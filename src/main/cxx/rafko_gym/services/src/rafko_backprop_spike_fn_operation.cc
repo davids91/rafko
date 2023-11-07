@@ -28,11 +28,11 @@ void RafkoBackpropSpikeFnOperation::calculate_value(
       get_spike_function(), m_network.weight_table(get_weight_index()),
       m_presentValueDependency->get_value(0u /*past_index*/), past_value));
   RFASSERT_LOG("operation[{}]: Neuron[{}] Spike(present:{}(op[{}]),past:{}, "
-               "weight:{}) = {} (calculated with {})",
+               "weight[{}]:{}) = {} (calculated with {})",
                get_operation_index(), m_neuronIndex,
                m_presentValueDependency->get_value(0u /*past_index*/),
                m_presentValueDependency->get_operation_index(), past_value,
-               m_network.weight_table(get_weight_index()),
+               get_weight_index(), m_network.weight_table(get_weight_index()),
                get_value(0u /*past_index*/),
                Spike_functions_Name(get_spike_function()));
   set_value_processed();
@@ -51,11 +51,10 @@ void RafkoBackpropSpikeFnOperation::calculate_derivative(
         d_w_index,
         rafko_net::SpikeFunction::get_derivative_for_w(
             get_spike_function(), m_network.weight_table(get_weight_index()),
-            m_presentValueDependency->get_value(0u /*past_index*/),
-            m_presentValueDependency->get_derivative(0u /*past_index*/,
-                                                     d_w_index),
             get_value(1u /*past_index*/),
-            get_derivative(1u /*past_index*/, d_w_index)));
+            get_derivative(1u /*past_index*/, d_w_index),
+            m_presentValueDependency->get_value(0u /*past_index*/),
+            m_presentValueDependency->get_derivative(0u /*past_index*/, d_w_index)));
     RFASSERT_LOG(
         "derivative operation[{}](w[{}]): Neuron[{}] Spike_d for {} = "
         "{}_d({}(w[{}]),{}(op[{}]), {}(op_d), {}(past_value), "
@@ -74,9 +73,9 @@ void RafkoBackpropSpikeFnOperation::calculate_derivative(
         d_w_index,
         rafko_net::SpikeFunction::get_derivative_not_for_w(
             get_spike_function(), m_network.weight_table(get_weight_index()),
+            get_derivative(1u /*past_index*/, d_w_index),
             m_presentValueDependency->get_derivative(0u /*past_index*/,
-                                                     d_w_index),
-            get_derivative(1u /*past_index*/, d_w_index)));
+                                                     d_w_index)));
     RFASSERT_LOG(
         "derivative operation[{}](w[{}]): Neuron[{}] Spike_d for {} = "
         "{}_d'({}(w[{}]), {}(op_d[{}]), {}(past_derivative))",

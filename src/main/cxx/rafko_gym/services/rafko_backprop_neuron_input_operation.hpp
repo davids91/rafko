@@ -21,6 +21,7 @@
 #include "rafko_global.hpp"
 
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -29,7 +30,6 @@
 #include "rafko_net/services/synapse_iterator.hpp"
 #include "rafko_protocol/rafko_net.pb.h"
 
-#include "rafko_gym/services/rafko_backprop_network_input_operation.hpp"
 #include "rafko_gym/services/rafko_backpropagation_operation.hpp"
 
 namespace rafko_gym {
@@ -48,15 +48,20 @@ public:
                                     std::uint32_t neuron_input_index);
   ~RafkoBackpropNeuronInputOperation() = default;
 
-  std::uint32_t get_weight_descriptor() const {
-    if (m_isNetworkInput) {
-      return 0xFFFFFFFFu;
-    } else {
-      return m_weightIndex;
+  std::uint32_t get_f_x_dependency_index() const {
+    if (m_network_input_index.has_value()) {
+      return m_network_input_index.value();
     }
+    RFASSERT(static_cast<bool>(m_neuronDataDependency));
+    return m_neuronDataDependency->get_operation_index();
   }
 
-  std::uint32_t get_input_past_index() const { return m_inputPastIndex; }
+  std::uint32_t get_input_past_index() const {
+    if (m_network_input_index.has_value()) {
+      return 0xFFu;
+    }
+    return m_inputPastIndex;
+  }
 
   rafko_net::Input_functions get_input_function() const {
     return m_network.neuron_array(m_neuronIndex).input_function();
@@ -87,6 +92,8 @@ public:
    * @brief     Generates OpenCL Kernel code for the operation for forward
    * propagation
    *
+   * @param   network_input_array           The name of the array containing the
+   * network input values for forward propagation
    * @param   weight_array                  The name of the array contining the
    * Neural network weights
    * @param   operations_value_array        The name of the array containing the
@@ -99,19 +106,16 @@ public:
    * @return    Raw Kernel code for the forward propagation of this operation
    */
   static std::string generic_value_kernel_operation(
-      std::string weight_array, std::string operations_value_array,
-      std::string operations_array_size, std::string behavior_index);
-
-  std::string
-  value_kernel_operation(std::string network_input_array,
-                         std::string weight_array,
-                         std::string operations_value_array,
-                         std::string operations_array_size) const override;
+      std::string network_input_array, std::string weight_array,
+      std::string operations_value_array, std::string operations_array_size,
+      std::string behavior_index);
 
   /**
    * @brief     Generates OpenCL Kernel code for the operation for backward
    * propagation
    *
+   * @param   network_input_array           The name of the array containing the
+   * network input values for forward propagation
    * @param   weight_array                  The name of the array contining the
    * Neural network weights
    * @param   operations_value_array        The name of the array containing the
@@ -126,7 +130,8 @@ public:
    * @return    Raw Kernel code for the forward propagation of this operation
    */
   static std::string generic_derivative_kernel_operation(
-      std::string weight_array, std::string operations_value_array,
+      std::string network_input_array, std::string weight_array,
+      std::string operations_value_array,
       std::string operations_derivative_array,
       std::string operations_array_size, std::string behavior_index);
 #endif /*(RAFKO_USES_OPENCL)*/
@@ -135,16 +140,22 @@ public:
   get_own_dependencies() override;
 
 private:
+  using InputSynapse =
+      rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>;
+  using ArraySynapse =
+      rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval>;
   const std::uint32_t m_neuronIndex;
   const std::uint32_t m_neuronInputIndex;
-  rafko_net::SynapseIterator<rafko_net::InputSynapseInterval> m_inputsIterator;
-  rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval> m_weightsIterator;
+  const InputSynapse m_inputsIterator;
+  const ArraySynapse m_weightsIterator;
 
-  const bool m_isNetworkInput;
+  const std::optional<std::uint32_t> m_network_input_index;
   const std::uint32_t m_inputPastIndex;
+
+public:
   const std::uint32_t m_weightIndex;
 
-  std::shared_ptr<RafkoBackpropagationOperation> m_networkInputDependency;
+private:
   std::shared_ptr<RafkoBackpropagationOperation> m_neuronDataDependency;
   std::shared_ptr<RafkoBackpropagationOperation> m_neuronInputDependency;
   std::shared_ptr<RafkoBackpropagationOperation> m_neuronBiasDependency;

@@ -25,7 +25,6 @@ The Structure of a @Neuron inside a @PartialSolution is the same, despite multip
 
 | Step Desicription       | Input Global Buffer | Input Global Buffer | Input Global Buffer | Input Global Buffer | Behavior Index                    |
 |-------------------------|---------------------|---------------------|---------------------|---------------------|-----------------------------------|
-| Network input           | weight_index        | input_index         |                     | operation_index     |                                   |
 | Neuron Bias             | weight_index        | is_there_dependency | dependency_index    | operation_index     | input_function_index(optional)    |
 | Neuron input            | weight_index        | dependency_index    | dependency_index    | operation_index     | input_function_index + past_index |
 | Objective operation     |                     |                     |                     |                     |                                   |
@@ -45,7 +44,6 @@ Note: Since for One Neurons might have multiple Bias values, the information mus
 
 | Step Desicription                    | Input Global Buffer | Input Global Buffer       | Input Global Buffer | Input Global Buffer | Behavior Index                    |
 |--------------------------------------|---------------------|---------------------------|---------------------|---------------------|-----------------------------------|
-| Derivative of Network input          | weight_index        | input_index               |                     | operation_index     |                                   |
 | Derivative of Bias(es)               | weight_index        | is_there_dependency       | dependency_index    | operation_index     | input_function_index(optional)    |
 | Derivative of Neuron input           | weight_index        | dependency_index          | dependency_index    | operation_index     | input_function_index + past_index |
 | Derivative of Objective operation    | label_index         | sample_number             | dependency_index    | operation_index     | cost_function_index               |
@@ -60,7 +58,6 @@ Each instruction for Network inference and error back-propagation with thier res
 
 | Step Desicription       | Input Global Buffer | Input Global Buffer | Input Global Buffer     | Input Global Buffer | Behavior Index                    |
 |-------------------------|---------------------|---------------------|-------------------------|---------------------|-----------------------------------|
-| Network input           | weight_index        | input_index         |                         | operation_index     |                                   |
 | Neuron Bias             | weight_index        |                     | dependency_descriptor*  | operation_index     | input_function_index(optional)    |
 | Neuron input            | weight_descriptor*  | dependency_index    | dependency_index        | operation_index     | input_function_index + past_index |
 | Objective operation     | label_index         | sample_number       | dependency_index        | operation_index     | cost_function_index               |

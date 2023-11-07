@@ -65,18 +65,18 @@ public:
    *
    * @param[in]   function          The function to apply
    * @param[in]   parameter         The parameter of the spike function
-   * @param[in]   new_data          The latest data as input to the spike
-   * function
-   * @param[in]   new_data_d        The derivative of the latest data
    * @param[in]   previous_data     The previously stored state of the Spike
    * function
    * @param[in]   previous_data_d   The derivative of the previously stored
    * state
+   * @param[in]   new_data          The latest data as input to the spike
+   * function
+   * @param[in]   new_data_d        The derivative of the latest data
    */
   static double get_derivative_for_w(Spike_functions function, double parameter,
-                                     double new_data, double new_data_d,
                                      double previous_data,
-                                     double previous_data_d);
+                                     double previous_data_d, double new_data,
+                                     double new_data_d);
 
   /**
    * @brief      Calculates the derivative of the spike function
@@ -85,13 +85,14 @@ public:
    *
    * @param[in]   function          The function to apply
    * @param[in]   parameter         The parameter of the spike function
-   * @param[in]   new_data_d        The derivative of the latest data
    * @param[in]   previous_data_d   The derivative of the previously stored
+   * @param[in]   new_data_d        The derivative of the latest data
    * state
    */
   static double get_derivative_not_for_w(Spike_functions function,
-                                         double parameter, double new_data_d,
-                                         double previous_data_d);
+                                         double parameter,
+                                         double previous_data_d,
+                                         double new_data_d);
 
 #if (RAFKO_USES_OPENCL)
   /**
@@ -116,7 +117,7 @@ public:
    * @brief     Generates GPU code for the provided spike function and
    * parameters
    *
-   * @param[in]   operation_index   The variable containing a value from
+   * @param[in]   spike_fn_index   The variable containing a value from
    * @get_kernel_enums
    * @param[in]   target            The target on which to store the results
    * @param[in]   parameter         The value of the input weight for the spike
@@ -129,7 +130,7 @@ public:
    * @return    The generated Kernel code merging the parameters through the
    * given input function
    */
-  static std::string get_all_kernel_value_functions(std::string operation_index,
+  static std::string get_all_kernel_value_functions(std::string spike_fn_index,
                                                     std::string target,
                                                     std::string parameter,
                                                     std::string previous_data,
@@ -140,7 +141,7 @@ public:
    * case the derivative base weight index matches the one used in the spike
    * function
    *
-   * @param[in]   operation_index   The variable containing a value from
+   * @param[in]   spike_fn_index   The variable containing a value from
    * @get_kernel_enums
    * @param[in]   target            The target on which to store the results
    * @param[in]   parameter         The value of the input weight for the spike
@@ -154,10 +155,10 @@ public:
    * @param[in]   new_data_d        The derivative of the latest data
    *
    * @return    The generated Kernel code containing all of the Spike functions,
-   * the one being executed selected by @operation_index
+   * the one being executed selected by @spike_fn_index
    */
   static std::string get_all_kernel_derivative_functions_for_w(
-      std::string operation_index, std::string target, std::string parameter,
+      std::string spike_fn_index, std::string target, std::string parameter,
       std::string previous_data, std::string previous_data_d,
       std::string new_data, std::string new_data_d);
 
@@ -166,7 +167,7 @@ public:
    * case the derivative base weight index doesn't match the one used in the
    * spike function
    *
-   * @param[in]   operation_index   The variable containing a value from
+   * @param[in]   spike_fn_index   The variable containing a value from
    * @get_kernel_enums
    * @param[in]   target            The target on which to store the results
    * @param[in]   parameter         The value of the input weight for the spike
@@ -178,10 +179,10 @@ public:
    * @param[in]   new_data_d        The derivative of the latest data
    *
    * @return    The generated Kernel code containing all of the Spike functions,
-   * the one being executed selected by @operation_index
+   * the one being executed selected by @spike_fn_index
    */
   static std::string get_all_kernel_derivative_functions_not_for_w(
-      std::string operation_index, std::string target, std::string parameter,
+      std::string spike_fn_index, std::string target, std::string parameter,
       std::string previous_data_d, std::string new_data_d);
 
   /**

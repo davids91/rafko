@@ -19,7 +19,6 @@
 #include <deque>
 #include <limits>
 
-#include "rafko_gym/services/rafko_backprop_network_input_operation.hpp"
 #include "rafko_gym/services/rafko_backprop_neuron_bias_operation.hpp"
 #include "rafko_gym/services/rafko_backprop_neuron_input_operation.hpp"
 #include "rafko_gym/services/rafko_backprop_objective_operation.hpp"
@@ -457,18 +456,6 @@ RafkoAutodiffOptimizer::push_dependency(
         std::make_shared<RafkoBackpropNeuronBiasOperation>(
             m_data, m_network, m_operations.size(), std::get<1>(arguments)[0],
             std::get<1>(arguments)[1]));
-  case ad_operation_network_input_d:
-    RFASSERT(3u == std::get<1>(arguments).size());
-    RFASSERT_LOG(
-        "operation[{}]: {} for Input[{}] weight_index[{}] (Neuron[{}])",
-        m_operations.size(), Autodiff_operations_Name(std::get<0>(arguments)),
-        std::get<1>(arguments)[0], std::get<1>(arguments)[1],
-        std::get<1>(arguments)[2]);
-    return m_operations.emplace_back(
-        std::make_shared<RafkoBackpropNetworkInputOperation>(
-            m_data, m_network, m_operations.size(), std::get<1>(arguments)[0],
-            std::get<1>(arguments)[1]));
-    break;
   case ad_operation_objective_d: /* Objective operations are placed manually to
                                     the beginning of the vector */
   case ad_operation_unknown:
