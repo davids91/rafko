@@ -88,7 +88,7 @@ InputFunction::get_all_kernel_value_functions(std::string operation_index,
 }
 
 std::string InputFunction::get_all_kernel_derivative_functions(
-    std::string operation_index, std::string target, std::string a,
+    std::string input_function_index, std::string target, std::string a,
     std::string a_dw, std::string b, std::string b_dw) {
   std::string code = R"(
     switch(==op==){
@@ -106,7 +106,7 @@ std::string InputFunction::get_all_kernel_derivative_functions(
   code = rafko_utilities::replace_all_in_string(code, std::regex("==b_dw=="),
                                                 b_dw);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="),
-                                                operation_index);
+                                                input_function_index);
   return code;
 }
 

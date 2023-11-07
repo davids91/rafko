@@ -184,8 +184,9 @@ TransferFunction::get_kernel_function_for_d(Transfer_functions function,
 }
 
 std::string TransferFunction::get_all_kernel_value_functions(
-    const rafko_mainframe::RafkoSettings &settings, std::string operation_index,
-    std::string target, std::string value) {
+    const rafko_mainframe::RafkoSettings &settings,
+    std::string transfer_function_index, std::string target,
+    std::string value) {
   std::string code = R"(
     switch(==op==){
       case transfer_function_identity:
@@ -220,7 +221,7 @@ std::string TransferFunction::get_all_kernel_value_functions(
   code = rafko_utilities::replace_all_in_string(code, std::regex("==value=="),
                                                 value);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="),
-                                                operation_index);
+                                                transfer_function_index);
   code = rafko_utilities::replace_all_in_string(
       code, std::regex("==alpha=="), std::to_string(settings.get_alpha()));
   code = rafko_utilities::replace_all_in_string(
@@ -229,8 +230,9 @@ std::string TransferFunction::get_all_kernel_value_functions(
 }
 
 std::string TransferFunction::get_all_kernel_derivative_functions(
-    const rafko_mainframe::RafkoSettings &settings, std::string operation_index,
-    std::string target, std::string value, std::string derivative) {
+    const rafko_mainframe::RafkoSettings &settings,
+    std::string transfer_function_index, std::string target, std::string value,
+    std::string derivative) {
   std::string code = R"(
     switch(==op==){
       case transfer_function_identity:
@@ -263,7 +265,7 @@ std::string TransferFunction::get_all_kernel_derivative_functions(
   code = rafko_utilities::replace_all_in_string(
       code, std::regex("==derivative=="), derivative);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="),
-                                                operation_index);
+                                                transfer_function_index);
   code = rafko_utilities::replace_all_in_string(
       code, std::regex("==alpha=="), std::to_string(settings.get_alpha()));
   code = rafko_utilities::replace_all_in_string(

@@ -48,10 +48,10 @@ double SpikeFunction::get_value(Spike_functions function, double parameter,
 double SpikeFunction::get_derivative_for_w(/* means: x = w; new_data = g(x);
                                               previous_data = f(x) */
                                            Spike_functions function,
-                                           double parameter, double new_data,
-                                           double new_data_d,
+                                           double parameter,
                                            double previous_data,
-                                           double previous_data_d) {
+                                           double previous_data_d,
+                                           double new_data, double new_data_d) {
   switch (function) {
   case spike_function_none:   /* S(x,w,f(x),g(x)) = g(x) */
     return new_data_d;        /* S'(x,w,f(x),g(x)) = g'(x) */
@@ -77,8 +77,8 @@ double SpikeFunction::get_derivative_not_for_w(/* means: x = w; new_data = g(x);
                                                   previous_data = f(x) */
                                                Spike_functions function,
                                                double parameter,
-                                               double new_data_d,
-                                               double previous_data_d) {
+                                               double previous_data_d,
+                                               double new_data_d) {
   switch (function) {
   case spike_function_none: /* S(x,w,f(x),g(x)) = g(x) */
     return new_data_d;
@@ -137,7 +137,7 @@ std::string SpikeFunction::get_kernel_function_for(Spike_functions function,
 }
 
 std::string SpikeFunction::get_all_kernel_value_functions(
-    std::string operation_index, std::string target, std::string parameter,
+    std::string spike_fn_index, std::string target, std::string parameter,
     std::string previous_data, std::string new_data) {
   std::string code = R"(
     switch(==op==){
@@ -164,12 +164,12 @@ std::string SpikeFunction::get_all_kernel_value_functions(
   code = rafko_utilities::replace_all_in_string(
       code, std::regex("==previous_data=="), previous_data);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="),
-                                                operation_index);
+                                                spike_fn_index);
   return code;
 }
 
 std::string SpikeFunction::get_all_kernel_derivative_functions_for_w(
-    std::string operation_index, std::string target, std::string parameter,
+    std::string spike_fn_index, std::string target, std::string parameter,
     std::string previous_data, std::string previous_data_d,
     std::string new_data, std::string new_data_d) {
   std::string code = R"(
@@ -207,12 +207,12 @@ std::string SpikeFunction::get_all_kernel_derivative_functions_for_w(
   code = rafko_utilities::replace_all_in_string(
       code, std::regex("==previous_data_d=="), previous_data_d);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="),
-                                                operation_index);
+                                                spike_fn_index);
   return code;
 }
 
 std::string SpikeFunction::get_all_kernel_derivative_functions_not_for_w(
-    std::string operation_index, std::string target, std::string parameter,
+    std::string spike_fn_index, std::string target, std::string parameter,
     std::string previous_data_d, std::string new_data_d) {
   std::string code = R"(
     switch(==op==){
@@ -241,7 +241,7 @@ std::string SpikeFunction::get_all_kernel_derivative_functions_not_for_w(
   code = rafko_utilities::replace_all_in_string(
       code, std::regex("==new_data_d=="), new_data_d);
   code = rafko_utilities::replace_all_in_string(code, std::regex("==op=="),
-                                                operation_index);
+                                                spike_fn_index);
   return code;
 }
 

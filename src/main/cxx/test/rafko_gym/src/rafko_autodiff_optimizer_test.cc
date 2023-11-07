@@ -752,9 +752,9 @@ TEST_CASE(
 
 TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
           "optimizer",
-          "[optimizer][GPU][small]") {
-  return; /*!Note: This testcase is for fallback only, in case the next one does
-             not work properly */
+          "[optimizer][GPU][small][!benchmark]") {
+  /*!Note: This testcase is for fallback only, in case the next one does
+               not work properly */
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<
       rafko_mainframe::RafkoSettings>(
@@ -884,9 +884,9 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
 
 TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
           "optimizer",
-          "[optimizer][CPU][small]") {
-  /* return; /*!Note: This testcase is for fallback only, in case the next one
-     does not work properly */
+          "[optimizer][CPU][small][!benchmark]") {
+  /*!Note: This testcase is for fallback only, in case the next one
+      does not work properly */
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<
       rafko_mainframe::RafkoSettings>(
@@ -954,8 +954,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
       std::make_shared<rafko_gym::RafkoCost>(
           *settings, rafko_gym::cost_function_squared_error);
 
-  rafko_gym::RafkoAutodiffOptimizer optimizer(settings,
-                                                               network);
+  rafko_gym::RafkoAutodiffOptimizer optimizer(settings, network);
   optimizer.build(data_set, objective);
   optimizer.set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
@@ -998,9 +997,12 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
               << actual_value[1][0] << ";   "
               << data_set->get_label_sample(1u)[0] << " --?--> "
               << actual_value[0][0] << " | avg duration: " << avg_duration
-              << "ms "
-              << " | weight_sum: " << weight_sum
-              << " | iteration: " << iteration << "     \r";
+              << "ms 
+                 "              << " |
+        weight_sum : " << weight_sum
+                     << " | iteration: "
+                     << iteration
+                     << "     \r";
     ++iteration;
   }
   std::cout << "\nTarget reached in " << iteration << " iterations!    "
