@@ -404,10 +404,6 @@ void AutoDiffGPUStrategy::substitute_index_values_in_kernels(
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==dependency_op_index=="),
       "network_instructions[3]");
-
-  kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==weight_index=="),
-      "network_instructions[1]");
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==dependency_descriptor=="),
       "network_instructions[3]");

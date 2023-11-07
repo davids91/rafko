@@ -202,6 +202,16 @@ public:
   }
 
   /**
+   * @brief     Provides the activation value of a single neuron
+   *
+   * @param[in]   past_index        The past index to take the value from
+   * @param[in]   neuron_index      The relevant neuron index
+   */
+  double get_neuron_data(std::uint32_t past_index, std::uint32_t neuron_index) {
+    return get_neuron_operation(neuron_index)->get_value(past_index);
+  }
+
+  /**
    * @brief     Calcualtes the average gradient for one weight from the last
    * iteration
    *

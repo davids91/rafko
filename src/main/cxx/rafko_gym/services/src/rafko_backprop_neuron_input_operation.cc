@@ -221,7 +221,7 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
   if (m_network_input_index.has_value()) {
     RFASSERT(0u == m_inputPastIndex);
     f_x_value = get_value(0u/*past_index*/);
-    f_x_derivative = ((d_w_index == m_weightIndex)
+    f_x_derivative = ((m_weightIndex == d_w_index)
                           ? (network_input[m_network_input_index.value()])
                           : (0.0));
     RFASSERT_LOG("derivative_operation[{}](w[{}]): Neuron[{}] Input[{}]_d f_x "
@@ -319,19 +319,17 @@ std::string RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
     std::string operations_value_array, std::string operations_array_size,
     std::string behavior_index) {
   std::string operations = R"(
-    /* calculate the next value (u(x)) */
+    // calculate the next value (u(x))
     u_x_value = ==op_value_array==[==u_x_op_index==];
-    /* Calculate the weighted input(f(x)) */
+
+    // Calculate the weighted input(f(x))
     if(==past_index== == 0xFFu){ // past index at maximum means the input arrives from the network inputs
-        f_x_value = (
-          ==neuron_input_array==[(long int)(==f_x_op_index==) - (long int)(==op_value_array_size== * ==past_index==) ]
-          * ==weight_array==[==weight_index==]
-        );
+        f_x_value = ==neuron_input_array==[==f_x_op_index==] * ==weight_array==[==this_op_weight_index==];
     }else{
       if(==past_index== <= available_memory_slots){ // This is always true in case of Network inputs
           f_x_value = (
             ==f_x_value_array==[(long int)(==f_x_op_index==) - (long int)(==op_value_array_size== * ==past_index==) ]
-            * ==weight_array==[==weight_index==]
+            * ==weight_array==[==this_op_weight_index==]
           );
       }else{
         f_x_value = 0.0;
@@ -378,9 +376,9 @@ RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
         f_x_value = ==op_value_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)];
         f_x_derivative = (
           ==op_derivative_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)]
-          * ==weight_array==[==weight_index==]
-       );
-        if(==weight_index== == d_w_index){
+          * ==weight_array==[==this_op_weight_index==]
+        );
+        if(==this_op_weight_index== == d_w_index){
           f_x_derivative += f_x_value;
         }
       }else{
@@ -388,6 +386,7 @@ RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
         f_x_derivative = 0.0;
       }
     }
+
     ==input_kernel==
   )";
 
