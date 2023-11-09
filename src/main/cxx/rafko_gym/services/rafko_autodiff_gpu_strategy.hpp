@@ -98,7 +98,7 @@ public:
   void build(const std::vector<OperationsType> &operations,
              std::uint32_t weight_relevant_operation_count);
 
-  static inline const std::uint32_t s_oneNeuralInstructionEntrySize = 6;
+  static inline const std::uint32_t s_oneNeuralInstructionEntrySize = 7;
   const std::vector<std::uint32_t> &get_propagation_instructions() const {
     return m_neuralPropagationInstructions;
   }
@@ -122,7 +122,7 @@ private:
    * @return    An array to upload to GPU: the instruction index values
    * representing the Neural network and parsed by the provided phase
    */
-  [[nodiscard]] static std::vector<std::uint32_t>
+  [[nodiscard]] std::vector<std::uint32_t>
   generate_propagation_instructions(
       const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
           &operations);
@@ -139,7 +139,7 @@ private:
    * in paralell and the row ordering is ascending(i.e.: the last row depends on
    * the previous rows)
    */
-  [[nodiscard]] static std::vector<std::vector<std::uint32_t>>
+  [[nodiscard]] std::vector<std::vector<std::uint32_t>>
   generate_operation_paralell_matrix(
       const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
           &operations);

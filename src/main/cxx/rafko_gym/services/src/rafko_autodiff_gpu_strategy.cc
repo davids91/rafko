@@ -37,8 +37,9 @@ AutoDiffGPUStrategy::get_input_shapes() const {
   const std::size_t neural_propagation_instructions_size =
       (m_neuralPropagationInstructions.size() + 1u) /
       (sizeof(double) / sizeof(std::uint32_t));
-  /*!Note: size + 1 is divided by the size ratio to make sure that there are
-   * anough elements in the array */
+  /*!Note: in the (size + 1)/sizeof(double) ratio, the +1 makes sure that there
+   * are enough elements in the array, and the size is not smaller due to the
+   * integer division */
   RFASSERT_LOG(
       "Autodiff strategy Input shape: (weights: {} + inputs: {} + Labels: {} + "
       "sequence start: + sequence truncation: {} + d_w_index: {} + Neural "
@@ -102,7 +103,9 @@ AutoDiffGPUStrategy::generate_operation_paralell_matrix(
   using DepthMarker = std::unique_ptr<std::atomic<std::uint32_t>>;
 
   const std::uint32_t number_of_threads =
-      8; /* Educated guess based on the average available CPU cores */
+      m_settings.get_max_solve_threads() *
+      m_settings.get_max_processing_threads(); /* Educated guess based on the
+                                                  average available CPU cores */
   rafko_utilities::ThreadGroup process_threads(number_of_threads);
   std::vector<DepthMarker> operations_depth;
 
@@ -187,7 +190,7 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
              std::static_pointer_cast<RafkoBackpropNeuronBiasOperation>(
                  operation)
                  ->get_dependency_descriptor(),
-             operation->get_operation_index(),
+             0u, operation->get_operation_index(),
              static_cast<std::uint32_t>(
                  std::static_pointer_cast<RafkoBackpropNeuronBiasOperation>(
                      operation)
@@ -207,6 +210,7 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
              upcasted_operation_ptr->get_own_dependencies_past_included()
                  .back()
                  ->get_operation_index(),
+             upcasted_operation_ptr->get_data_count(),
              operation->get_operation_index(),
              ((upcasted_operation_ptr->get_input_function() & 0x00FFu) |
               ((upcasted_operation_ptr->get_input_past_index() << 8) &
@@ -222,7 +226,7 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
             {ad_operation_objective_d,
              upcasted_operation_ptr->get_label_index(),
              upcasted_operation_ptr->get_sample_number(),
-             operation->get_own_dependencies()[0]->get_operation_index(),
+             operation->get_own_dependencies()[0]->get_operation_index(), 0u,
              operation->get_operation_index(),
              static_cast<std::uint32_t>(
                  upcasted_operation_ptr->get_cost_type())});
@@ -235,7 +239,7 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
              std::static_pointer_cast<RafkoBackpropSpikeFnOperation>(operation)
                  ->get_weight_index(),
              0u, operation->get_own_dependencies()[0]->get_operation_index(),
-             operation->get_operation_index(),
+             0u, operation->get_operation_index(),
              static_cast<std::uint32_t>(
                  std::static_pointer_cast<RafkoBackpropSpikeFnOperation>(
                      operation)
@@ -246,7 +250,7 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
         result.insert(
             result.end(),
             {ad_operation_neuron_transfer_d, 0u, 0u,
-             operation->get_own_dependencies()[0]->get_operation_index(),
+             operation->get_own_dependencies()[0]->get_operation_index(), 0u,
              operation->get_operation_index(),
              static_cast<std::uint32_t>(
                  std::static_pointer_cast<RafkoBackpropTransferFnOperation>(
@@ -274,7 +278,7 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
       "case ad_operation_neuron_bias_d:{" +
       RafkoBackpropNeuronBiasOperation::generic_value_kernel_operation(
           weight_array, operations_value_array,
-          "network_instructions[5]" /*behavior_index*/
+          "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
@@ -282,7 +286,7 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
       RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
           network_input_array, weight_array, operations_value_array,
           operations_array_size,
-          "(network_instructions[5] & 0x00FFu)" /*behavior_index*/
+          "(==behavior_data== & 0x00FFu)" /*behavior_index*/
           ) +
       "}break;";
 
@@ -292,13 +296,13 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
       "case ad_operation_neuron_spike_d:{" +
       RafkoBackpropSpikeFnOperation::generic_value_kernel_operation(
           weight_array, operations_value_array, operations_array_size,
-          "network_instructions[5]" /*behavior_index*/
+          "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
       "case ad_operation_neuron_transfer_d:{" +
       RafkoBackpropTransferFnOperation::generic_value_kernel_operation(
-          operations_value_array, "network_instructions[5]" /*behavior_index*/,
+          operations_value_array, "==behavior_data==" /*behavior_index*/,
           settings) +
       "}break;";
   kernel_source += "}";
@@ -319,7 +323,7 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
       "case ad_operation_neuron_bias_d:{" +
       RafkoBackpropNeuronBiasOperation::generic_derivative_kernel_operation(
           weight_array, operations_value_array, operations_derivative_array,
-          "network_instructions[5]" /*behavior_index*/
+          "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
@@ -327,14 +331,14 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
       RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
           network_input_array, weight_array, operations_value_array,
           operations_derivative_array, operations_array_size,
-          "network_instructions[5]" /*behavior_index*/
+          "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
       "case ad_operation_objective_d:{" +
       RafkoBackpropObjectiveOperation::generic_derivative_kernel_operation(
           label_array, operations_value_array, operations_derivative_array,
-          "network_instructions[5]" /*behavior_index*/,
+          "==behavior_data==" /*behavior_index*/,
           "==number_of_sequences==" /*sample_number*/
           ) +
       "}break;";
@@ -342,14 +346,14 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
       "case ad_operation_neuron_spike_d:{" +
       RafkoBackpropSpikeFnOperation::generic_derivative_kernel_operation(
           weight_array, operations_value_array, operations_derivative_array,
-          operations_array_size, "network_instructions[5]" /*behavior_index*/
+          operations_array_size, "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
       "case ad_operation_neuron_transfer_d:{" +
       RafkoBackpropTransferFnOperation::generic_derivative_kernel_operation(
           operations_value_array, operations_derivative_array,
-          "network_instructions[5]" /*behavior_index*/, settings) +
+          "==behavior_data==" /*behavior_index*/, settings) +
       "}break;";
   kernel_source += "}";
 
@@ -368,10 +372,10 @@ void AutoDiffGPUStrategy::substitute_index_values_in_kernels(
       kernel_source, std::regex("==this_op_weight_index=="),
       "network_instructions[1]");
   kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==op_index=="), "network_instructions[4]");
+      kernel_source, std::regex("==op_index=="), "network_instructions[5]");
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==past_index=="),
-      "((network_instructions[5] & 0xFF00u) >> 8)");
+      "((==behavior_data== & 0xFF00u) >> 8)");
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==f_x_op_index=="), "network_instructions[2]");
   kernel_source = rafko_utilities::replace_all_in_string(
@@ -384,6 +388,9 @@ void AutoDiffGPUStrategy::substitute_index_values_in_kernels(
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==dependency_descriptor=="),
       "network_instructions[3]");
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==behavior_data=="),
+      "network_instructions[6]");
 }
 
 void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,

@@ -23,17 +23,19 @@ The Structure of a @Neuron inside a @PartialSolution is the same, despite multip
 
 ## Forward propagation Neuron-by-Neuron
 
-| Step Desicription       | Input Global Buffer | Input Global Buffer | Input Global Buffer | Input Global Buffer | Behavior Index                    |
-|-------------------------|---------------------|---------------------|---------------------|---------------------|-----------------------------------|
-| Neuron Bias             | weight_index        | is_there_dependency | dependency_index    | operation_index     | input_function_index(optional)    |
-| Neuron input            | weight_index        | dependency_index    | dependency_index    | operation_index     | input_function_index + past_index |
-| Objective operation     |                     |                     |                     |                     |                                   |
-| Solution operation      | neuron_index_start  |                     | count_neurons       |                     |                                   |
-| Spike Function          | weight_index        |                     | dependency_index    | operation_index     | spike_function_index              |
-| Transfer function       |                     |                     | dependency_index    | operation_index     | transfer_function_index           |
-| Weight regularization   |                     |                     |                     |                     |                                   |
+Below is a summary of the propagation steps, each column contains either required data for propagation or placeholders to help in data serialization.
 
-Each step collects some information from its input buffers and stores the result in a target buffer; Where the operations are based on the Structure of the Neuron (e.g.: what kind of transfer function or spike function to use); and the result is stored depending on the action. The actions set_buffer_past, input_function_past means that the current operations second input if targeting values from the past, and in these cases behavior index signals the prior number of runs the operation is targeting. This is to ensure that the Neuron can read from it's memory safely.
+| Step Desicription       | Weight data         | Dependency data     | Dependency data     | Dependency data     | Backprop op index   | Behavior data                     |
+|-------------------------|---------------------|---------------------|---------------------|---------------------|---------------------|-----------------------------------|
+| Neuron Bias             | weight_index        | is_there_dependency | dependency_index    |                     | operation_index     | input_function_index(optional)    |
+| Neuron input            | weight_index        | dependency_index    | dependency_index    | input_count         | operation_index     | input_function_index + past_index |
+| Objective operation     |                     |                     |                     |                     |                     |                                   |
+| Solution operation      |                     | neuron_index_start  |                     | neuron_count        |                     |                                   |
+| Spike Function          | weight_index        |                     | dependency_index    |                     | operation_index     | spike_function_index              |
+| Transfer function       |                     |                     | dependency_index    |                     | operation_index     | transfer_function_index           |
+| Weight regularization   |                     |                     |                     |                     |                     |                                   |
+
+Each step collects some information from its input buffers and stores the result in a target buffer; The operations are based on the Structure of the Neuron (e.g.: what kind of transfer function or spike function to use); and the result is stored depending on the action.
 
 In case input function is taking its input from the past, the information is arriving through a combined bitstring which contains both the input function index ( lower half ) and the past index ( upper half ); so both the number of input functions and the number of memory slots are maximized to 15.
 
@@ -42,15 +44,15 @@ Note: Since for One Neurons might have multiple Bias values, the information mus
 
 ## Back-propagation Operation-by-Operation
 
-| Step Desicription                    | Input Global Buffer | Input Global Buffer       | Input Global Buffer | Input Global Buffer | Behavior Index                    |
-|--------------------------------------|---------------------|---------------------------|---------------------|---------------------|-----------------------------------|
-| Derivative of Bias(es)               | weight_index        | is_there_dependency       | dependency_index    | operation_index     | input_function_index(optional)    |
-| Derivative of Neuron input           | weight_index        | dependency_index          | dependency_index    | operation_index     | input_function_index + past_index |
-| Derivative of Objective operation    | label_index         | sample_number             | dependency_index    | operation_index     | cost_function_index               |
-| Derivative of Solution operation     |                     |                           |                     |                     |                                   |
-| Derivative of Spike Function         | weight_index        |                           | dependency_index    | operation_index     | spike_function_index              |
-| Derivative of Transfer function      |                     |                           | dependency_index    | operation_index     | transfer_function_index           |
-| Derivative of Weight regularization  | weight_index_start  | count_weights             |                     | operation_index     | feature_index                     |
+| Step Desicription             | Weight data         | Dependency data           | Dependency data     | Dependency data     |  Backprop op index  | Behavior data                     |
+|-------------------------------|---------------------|---------------------------|---------------------|---------------------|---------------------|-----------------------------------|
+| d/dw of Bias(es)              | weight_index        | is_there_dependency       | dependency_index    |                     | operation_index     | input_function_index(optional)    |
+| d/dw of Neuron input          | weight_index        | dependency_index          | dependency_index    |                     | operation_index     | input_function_index + past_index |
+| d/dw of Objective operation   | label_index         | sample_number             | dependency_index    |                     | operation_index     | cost_function_index               |
+| d/dw of Solution operation    |                     |                           |                     |                     |                     |                                   |
+| d/dw of Spike Function        | weight_index        |                           | dependency_index    |                     | operation_index     | spike_function_index              |
+| d/dw of Transfer function     |                     |                           | dependency_index    |                     | operation_index     | transfer_function_index           |
+| d/dw of Weight regularization | weight_index_start  |                           |                     | count_weights       | operation_index     | feature_index                     |
 
 ## Consolidated Instruction table
 

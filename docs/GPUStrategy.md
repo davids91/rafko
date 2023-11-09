@@ -26,7 +26,7 @@ The framework is accepting `n*out` number of calculated features(network outputs
   - A single number representing the overall error of the inputs, calculated from the per-feature error vector also being provided by the Error calculation step.
 
 ### Back-propagation:
-Based on the calculated features, errors and the structure of the network, in the backwards pass of the network the gradients are calculated; Whom are used to update the network weights. In the current framework however, to let the networks have wild:tm: architectures( not always differentiable directly ), updating the weights is based on gradient approximation from errors instead of numerical gradients. Therefore the Back-propagation step is not currently supported in this framework; Maybe in the future, based on auto-diff.
+Based on the calculated features, errors and the structure of the network, in the backwards pass of the network the gradients are calculated;
 
 -  **Inputs:**
   - `n*in` number of floating point numbers mapped to a 1 dimensional array where `in` is the number of **inputs the network accepts**.

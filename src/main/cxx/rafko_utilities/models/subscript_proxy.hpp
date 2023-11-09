@@ -32,8 +32,8 @@ template <typename Proxee = std::vector<double>>
 class RAFKO_EXPORT SubscriptProxy {
 public:
   SubscriptProxy(Proxee &object,
-                 std::shared_ptr<SubscriptDictionary> dictionart = {})
-      : m_object(&object), m_dictionary(dictionart) {}
+                 std::shared_ptr<SubscriptDictionary> dictionary = {})
+      : m_object(&object), m_dictionary(dictionary) {}
 
   void update(Proxee &new_object) { m_object = &new_object; }
 

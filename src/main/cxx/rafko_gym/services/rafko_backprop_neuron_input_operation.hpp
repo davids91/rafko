@@ -56,6 +56,15 @@ public:
     return m_neuronDataDependency->get_operation_index();
   }
 
+  /**
+   * @brief   Returns the count of data points this operation requires in the
+   * backproagation buffer. This might represent spike or transfer function
+   * outputs, bias values etc..
+   *
+   * @retrun  Number of floating point numbers this operation represents
+   */
+  std::uint32_t get_data_count() const { return 1u; }
+
   std::uint32_t get_input_past_index() const {
     if (m_network_input_index.has_value()) {
       return 0xFFu;

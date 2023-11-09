@@ -66,6 +66,7 @@ target_sources(rafko_gym
   models/src/rafq_set.cc
   models/src/rafko_dataset.cc
   models/src/rafko_dataset_implementation.cc
+  models/src/rafko_backpropagation_data.cc
   services/src/cost_function.cc
   services/src/rafq_trainer.cc
   services/src/rafko_backpropagation_operation.cc
