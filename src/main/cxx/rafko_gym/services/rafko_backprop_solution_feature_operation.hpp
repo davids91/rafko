@@ -51,10 +51,10 @@ public:
       std::uint32_t operation_index,
       const rafko_mainframe::RafkoSettings &settings,
       const rafko_net::FeatureGroup &feature_group,
+      rafko_utilities::SubscriptProxy<>::AssociationVector
+          neuronSpikeToOperationIndex,
       std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>
-          &execution_threads,
-      std::shared_ptr<rafko_utilities::SubscriptDictionary>
-          neuron_index_dictionary);
+          &execution_threads);
   ~RafkoBackPropSolutionFeatureOperation() = default;
 
   DependencyRequest upload_dependencies_to_operations() override;
@@ -88,10 +88,6 @@ private:
       &m_executionThreads;
   rafko_net::RafkoNetworkFeature m_featureExecutor;
   std::vector<std::uint32_t> m_relevantIndexValues;
-#if (RAFKO_USES_OPENCL)
-  std::shared_ptr<rafko_utilities::SubscriptDictionary> m_neuronIndexDictionary;
-#endif /*(RAFKO_USES_OPENCL)*/
-
   std::vector<double> m_dummyVector;
 };
 

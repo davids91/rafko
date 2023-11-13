@@ -25,22 +25,16 @@ RafkoBackPropSolutionFeatureOperation::RafkoBackPropSolutionFeatureOperation(
     std::uint32_t operation_index,
     const rafko_mainframe::RafkoSettings &settings,
     const rafko_net::FeatureGroup &feature_group,
+    rafko_utilities::SubscriptProxy<>::AssociationVector
+        neuronSpikeToOperationIndex,
     std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>
-        &execution_threads,
-    std::shared_ptr<rafko_utilities::SubscriptDictionary>
-        neuron_index_dictionary)
+        &execution_threads)
     : RafkoBackpropagationOperation(data, network, operation_index,
                                     ad_operation_network_feature),
       m_settings(settings), m_featureGroup(feature_group),
-      m_networkDataProxy(m_dummyVector, neuron_index_dictionary),
+      m_networkDataProxy(m_dummyVector, neuronSpikeToOperationIndex),
       m_executionThreads(execution_threads),
-      m_featureExecutor(m_executionThreads)
-#if (RAFKO_USES_OPENCL)
-      ,
-      m_neuronIndexDictionary(neuron_index_dictionary)
-#endif /*(RAFKO_USES_OPENCL)*/
-
-{
+      m_featureExecutor(m_executionThreads) {
 #if (RAFKO_USES_OPENCL)
   /* Calculate relevant index values */
   switch (m_featureGroup.feature()) {

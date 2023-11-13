@@ -56,7 +56,8 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(
   RFASSERT(m_spikeSolvesFeatureMap.empty());
   std::uint32_t weight_relevant_operation_count;
   m_operations.clear();
-  m_neuronSpikeToOperationMap->clear();
+  m_neuronIndexToSpikeOperationIndex = std::vector<std::uint32_t>(
+      m_network.neuron_array_size(), s_NeuronNotYetAssigned);
   m_data.reset();
   if (m_trainingEvaluator) {
     m_trainingEvaluator->set_data_set(data_set);
@@ -152,7 +153,8 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(
             std::make_shared<RafkoBackPropSolutionFeatureOperation>(
                 m_data, m_network, m_operations.size(), *m_settings,
                 m_network.neuron_group_features(found_feature->second),
-                m_executionThreads, m_neuronSpikeToOperationMap);
+                m_neuronIndexToSpikeOperationIndex,
+                m_executionThreads);
         m_operations.push_back(feature_operation);
         RFASSERT_LOG(
             "operation[{}]:  {} for feature_group[{}], triggered by Neuron[{}]",
@@ -202,14 +204,11 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(
     neuron_subsets.erase(neuron_subsets.begin());
   } /*while(subsets remain)*/
 
-  RFASSERT_LOG("Spike map:");
-#if (RAFKO_USES_ASSERTLOGS)
-  for (const auto &[neuron_index, operation_index] :
-       *m_neuronSpikeToOperationMap) {
-    RFASSERT_LOG("Neuron[{}] --> Operation[{}]", neuron_index, operation_index);
-  }
-#endif /*(RAFKO_USES_ASSERTLOGS)*/
-  RFASSERT_LOG("============================");
+  RFASSERT(0 == std::count(m_neuronIndexToSpikeOperationIndex.begin(),
+                           m_neuronIndexToSpikeOperationIndex.end(),
+                           s_NeuronNotYetAssigned));
+  RFASSERT_LOGV(m_neuronIndexToSpikeOperationIndex,
+                "Spike Operation index for each Neuron:");
   return weight_relevant_operation_count;
 }
 
@@ -381,8 +380,11 @@ RafkoAutodiffOptimizer::place_spike_to_operations(
         m_operations.size() - 1u, neuron_index,
         Autodiff_operations_Name(ad_operation_neuron_spike_d));
   }
-  m_neuronSpikeToOperationMap->insert(
-      {neuron_index, (m_operations.size() - 1u)});
+  RFASSERT_LOG("operation[{}]:  Neuron[{}] connection is stored (vec size: {})",
+               m_operations.size() - 1u, neuron_index,
+               m_neuronIndexToSpikeOperationIndex.size());
+  RFASSERT(neuron_index < m_neuronIndexToSpikeOperationIndex.size());
+  m_neuronIndexToSpikeOperationIndex[neuron_index] = (m_operations.size() - 1u);
 
   /* Insert provided dependencies */
   for (RafkoBackpropagationOperation::Dependency &dep : dependencies) {
@@ -393,17 +395,18 @@ RafkoAutodiffOptimizer::place_spike_to_operations(
 
 std::shared_ptr<RafkoBackpropagationOperation>
 RafkoAutodiffOptimizer::find_or_queue_spike(std::uint32_t neuron_index) {
-  { /* find the Spoike index in the already placed Neuron spikes */
-    auto found_element = m_neuronSpikeToOperationMap->find(neuron_index);
-    if (found_element != m_neuronSpikeToOperationMap->end())
-      return m_operations[found_element->second];
+
+  /* find the Spike index in the already placed Neuron spikes */
+  RFASSERT(neuron_index < m_neuronIndexToSpikeOperationIndex.size());
+  if (m_neuronIndexToSpikeOperationIndex[neuron_index] !=
+      s_NeuronNotYetAssigned) {
+    return m_operations[m_neuronIndexToSpikeOperationIndex[neuron_index]];
   }
 
-  { /* find the Spike index in the not yet placed Neuron spikes */
-    auto found_element = m_unplacedSpikes.find(neuron_index);
-    if (found_element != m_unplacedSpikes.end())
-      return found_element->second;
-  }
+  /* find the Spike index in the not yet placed Neuron spikes */
+  auto found_element = m_unplacedSpikes.find(neuron_index);
+  if (found_element != m_unplacedSpikes.end())
+    return found_element->second;
 
   /* Neuron index was not found, so add it to the unplaced spikes */
   auto insertion = m_unplacedSpikes.insert(

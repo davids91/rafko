@@ -61,8 +61,7 @@ public:
       : rafko_mainframe::RafkoAutonomousEntity(settings), m_network(network),
         m_data(network), m_weightUpdater(UpdaterFactory::build_weight_updater(
                              m_network, weight_updater_default, *m_settings)),
-        m_neuronSpikeToOperationMap(
-            std::make_shared<rafko_utilities::SubscriptDictionary>()),
+        m_neuronIndexToSpikeOperationIndex(m_network.neuron_array_size()),
         m_executionThreads(), m_trainingEvaluator(training_evaluator),
         m_testEvaluator(test_evaluator),
         m_tmpAvgD(m_network.weight_table_size()) {
@@ -272,8 +271,8 @@ protected:
   rafko_net::RafkoNet &m_network;
   RafkoBackpropagationData m_data;
   std::shared_ptr<rafko_gym::RafkoWeightUpdater> m_weightUpdater;
-  std::shared_ptr<rafko_utilities::SubscriptDictionary>
-      m_neuronSpikeToOperationMap;
+  static constexpr std::uint32_t s_NeuronNotYetAssigned = static_cast<std::uint32_t>(-1);
+  std::vector<std::uint32_t> m_neuronIndexToSpikeOperationIndex;
   std::unordered_map<std::uint32_t,
                      std::shared_ptr<RafkoBackpropSpikeFnOperation>>
       m_unplacedSpikes;
@@ -302,9 +301,8 @@ protected:
    * @return    the operation index
    */
   std::uint32_t get_operation_index(std::uint32_t neuron_index) const {
-    auto found_element = m_neuronSpikeToOperationMap->find(neuron_index);
-    RFASSERT(found_element != m_neuronSpikeToOperationMap->end());
-    return found_element->second;
+    RFASSERT(neuron_index < m_neuronIndexToSpikeOperationIndex.size());
+    return m_neuronIndexToSpikeOperationIndex[neuron_index];
   }
 
   /**

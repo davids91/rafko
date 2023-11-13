@@ -294,6 +294,26 @@ public:
     return result_index;
   }
 
+  /**
+   * @brief     Provides the index value the given interval would start at if
+   * the interval sizes were considered expanded(not compressed into (start,
+   * size) pairs, rather each index separately)
+   *
+   * @param     interval_index    The index of the interval to query
+   *
+   * @return  the index to the first element inside the interval given by
+   * @interval_index, when operator[] is used
+   */
+  std::uint32_t interval_starts_at(std::uint32_t interval_index) const {
+    RFASSERT(static_cast<std::int32_t>(interval_index) <
+             m_synapseInterval.size());
+    std::uint32_t index = 0;
+    for (std::uint32_t syn_iter = 0u; syn_iter < interval_index; ++syn_iter) {
+      index += m_synapseInterval[syn_iter].interval_size();
+    }
+    return index;
+  }
+
   std::uint32_t interval_size_of(std::uint32_t nth_element) {
     RFASSERT(0u < size());
     std::uint32_t result_size;
@@ -330,7 +350,7 @@ public:
   }
 
   template <typename InputSynapseInterval>
-  std::uint32_t reach_past_loops(std::uint32_t nth_element) const{
+  std::uint32_t reach_past_loops(std::uint32_t nth_element) const {
     RFASSERT(0u < size());
     std::uint32_t result_reach;
     std::uint32_t previous_last_reached_index = 0;
