@@ -71,7 +71,7 @@ public:
    * @return  A list of Dependency parameters this operation needs along with a
    * function to call when the dependencies are construted
    */
-  virtual DependencyRequest upload_dependencies_to_operations() = 0;
+  virtual DependencyRequest request_dependencies() = 0;
 
   /**
    * @brief     Calculates the forward propagation value for this operation

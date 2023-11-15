@@ -55,6 +55,7 @@ if(MAKE_TESTS)
     rafko_gym/src/cost_function_mse_test.cc
     rafko_gym/src/cost_function_cross_entropy_test.cc
     rafko_gym/src/cost_function_binary_cross_entropy_test.cc
+    rafko_gym/src/rafko_backprop_neuron_input_operation_test.cc
     rafko_mainframe/src/rafko_settings_test.cc
     rafko_mainframe/src/rafko_cpu_context_test.cc
     rafko_gym/src/rafko_numeric_optimizer_test.cc

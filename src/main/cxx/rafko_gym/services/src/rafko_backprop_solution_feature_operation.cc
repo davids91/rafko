@@ -72,7 +72,7 @@ void RafkoBackPropSolutionFeatureOperation::calculate_value(
 }
 
 RafkoBackpropagationOperation::DependencyRequest
-RafkoBackPropSolutionFeatureOperation::upload_dependencies_to_operations() {
+RafkoBackPropSolutionFeatureOperation::request_dependencies() {
   RafkoBackpropagationOperation::DependencyParameters dependency_parameters;
   rafko_net::SynapseIterator<>::iterate(
       m_featureGroup.relevant_neurons(),

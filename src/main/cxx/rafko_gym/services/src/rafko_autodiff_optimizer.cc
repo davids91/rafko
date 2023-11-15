@@ -184,7 +184,7 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(
           RFASSERT_LOG("Registering dependencies for operation[{}]...",
                        done_index);
           RafkoBackpropagationOperation::DependencyRequest request =
-              m_operations[done_index]->upload_dependencies_to_operations();
+              m_operations[done_index]->request_dependencies();
           if (request.has_value()) {
             auto &[parameters, dependency_register] = request.value();
             std::vector<std::shared_ptr<RafkoBackpropagationOperation>>

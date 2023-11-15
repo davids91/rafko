@@ -205,7 +205,7 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
                      .size());
         result.insert(
             result.end(),
-            {ad_operation_neuron_input_d, upcasted_operation_ptr->m_weightIndex,
+            {ad_operation_neuron_input_d, upcasted_operation_ptr->m_startingWeightIndex,
              upcasted_operation_ptr->get_f_x_dependency_index(),
              upcasted_operation_ptr->get_own_dependencies_past_included()
                  .back()

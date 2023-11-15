@@ -57,7 +57,7 @@ public:
           &execution_threads);
   ~RafkoBackPropSolutionFeatureOperation() = default;
 
-  DependencyRequest upload_dependencies_to_operations() override;
+  DependencyRequest request_dependencies() override;
 
   void calculate_value(const std::vector<double> & /*network_input*/) override;
   void calculate_derivative(std::uint32_t /*d_w_index*/,

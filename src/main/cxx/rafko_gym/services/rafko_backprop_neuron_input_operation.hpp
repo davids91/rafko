@@ -35,26 +35,59 @@
 namespace rafko_gym {
 
 /**
- * @brief
- *
+ * @brief A backpropagastion operation to calculate value and derivative for
+ * part of a Neuron input. One operation contains multiple inputs either from
+ * the Newtork input or from other (neuron spike) operations. Since Neuron
+ * inputs consist of both weight and input synapses, one operation need to
+ * consider both aspects. Because of this: one operation can span the number of
+ * inputs inside both synapses. Meaning if either synapse would be out of bounds
+ * with the next input, a new Input operation need to be created as a
+ * dependency. This may require that Input operations may not start at the
+ * beginning of each synapse so the boundaries need be stored accordingly.
+ * Even the first inputs of a Neuron are unaligned, as the first weight of
+ * the Neuron is for the spike function, and not the inputs.
  */
 class RAFKO_EXPORT RafkoBackpropNeuronInputOperation
     : public RafkoBackpropagationOperation {
-public:
+  /*!Note: as is in the constructor: input synapse index, weight synapse index,
+   * start in input synapse, start in weight synapse */
+  struct SynapseSpan {
+    const std::uint32_t m_inputSynapseIndex;
+    const std::uint32_t m_weightSynapseIndex;
+    const std::uint32_t m_startInInputSynapse;
+    const std::uint32_t m_startInWeightSynapse;
+    const std::uint32_t __workaround_m_isBias = false;
+  };
+  struct ConstructKit {
+    const std::uint32_t m_inputCount;
+    const std::uint32_t m_startingInputIndex;
+    const std::uint32_t m_startingWeightIndex;
+    const std::optional<std::uint32_t> m_inputPastIndex = std::nullopt;
+    const std::optional<SynapseSpan> m_nextSpan = std::nullopt;
+  };
+
   RafkoBackpropNeuronInputOperation(RafkoBackpropagationData &data,
                                     const rafko_net::RafkoNet &network,
                                     std::uint32_t operation_index,
                                     std::uint32_t neuron_index,
-                                    std::uint32_t neuron_input_index);
+                                    ConstructKit kit);
+
+public:
+  RafkoBackpropNeuronInputOperation(
+      RafkoBackpropagationData &data, const rafko_net::RafkoNet &network,
+      std::uint32_t operation_index, std::uint32_t neuron_index,
+      std::uint32_t input_synapse_index = 0u,
+      std::uint32_t weight_synapse_index = 0u,
+      std::uint32_t start_inside_input_synapse = 0u,
+      std::uint32_t start_inside_weight_synapse = 1u);
+  /*!Note: Spike weight preceeds the inputs, so +1 offset is needed for the
+   * default weight synapse start */
+
   ~RafkoBackpropNeuronInputOperation() = default;
 
-  std::uint32_t get_f_x_dependency_index() const {
-    if (m_network_input_index.has_value()) {
-      return m_network_input_index.value();
-    }
-    RFASSERT(static_cast<bool>(m_neuronDataDependency));
-    return m_neuronDataDependency->get_operation_index();
-  }
+  std::uint32_t get_f_x_dependency_index() const { return 0; }
+
+  std::uint32_t get_u_x_dependency_index() const { return 0; }
 
   /**
    * @brief   Returns the count of data points this operation requires in the
@@ -66,10 +99,10 @@ public:
   std::uint32_t get_data_count() const { return 1u; }
 
   std::uint32_t get_input_past_index() const {
-    if (m_network_input_index.has_value()) {
+    if (!m_inputPastIndex.has_value()) {
       return 0xFFu;
     }
-    return m_inputPastIndex;
+    return m_inputPastIndex.value();
   }
 
   rafko_net::Input_functions get_input_function() const {
@@ -87,7 +120,7 @@ public:
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
   get_own_dependencies_past_included();
 
-  DependencyRequest upload_dependencies_to_operations() override;
+  DependencyRequest request_dependencies() override;
 
   void calculate_value(const std::vector<double> &network_input) override;
   void calculate_derivative(std::uint32_t d_w_index,
@@ -148,26 +181,25 @@ public:
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
   get_own_dependencies() override;
 
-private:
-  using InputSynapse =
-      rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>;
-  using ArraySynapse =
-      rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval>;
   const std::uint32_t m_neuronIndex;
-  const std::uint32_t m_neuronInputIndex;
-  const InputSynapse m_inputsIterator;
-  const ArraySynapse m_weightsIterator;
-
-  const std::optional<std::uint32_t> m_network_input_index;
-  const std::uint32_t m_inputPastIndex;
+  const std::optional<std::uint32_t> m_inputPastIndex;
+  const std::uint32_t m_startingInputIndex;
+  const std::uint32_t m_inputCount;
+  const std::optional<SynapseSpan> m_nextOperation;
 
 public:
-  const std::uint32_t m_weightIndex;
+  const std::uint32_t m_startingWeightIndex;
 
 private:
-  std::shared_ptr<RafkoBackpropagationOperation> m_neuronDataDependency;
-  std::shared_ptr<RafkoBackpropagationOperation> m_neuronInputDependency;
-  std::shared_ptr<RafkoBackpropagationOperation> m_neuronBiasDependency;
+  std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
+      m_neuronDataDependencies;
+  std::shared_ptr<RafkoBackpropagationOperation> m_nextInputDependency;
+
+  static ConstructKit calculate_current_operation_index_values(
+      const rafko_net::RafkoNet &network, std::uint32_t neuron_index,
+      std::uint32_t input_synapse_index, std::uint32_t weight_synapse_index,
+      std::uint32_t start_inside_input_synapse,
+      std::uint32_t start_inside_weight_synapse);
 };
 
 } /* namespace rafko_gym */
