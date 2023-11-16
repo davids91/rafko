@@ -153,8 +153,7 @@ std::uint32_t RafkoAutodiffOptimizer::build_without_data(
             std::make_shared<RafkoBackPropSolutionFeatureOperation>(
                 m_data, m_network, m_operations.size(), *m_settings,
                 m_network.neuron_group_features(found_feature->second),
-                m_neuronIndexToSpikeOperationIndex,
-                m_executionThreads);
+                m_neuronIndexToSpikeOperationIndex, m_executionThreads);
         m_operations.push_back(feature_operation);
         RFASSERT_LOG(
             "operation[{}]:  {} for feature_group[{}], triggered by Neuron[{}]",
@@ -429,32 +428,58 @@ RafkoAutodiffOptimizer::push_dependency(
     return find_or_queue_spike(std::get<1>(arguments)[0]);
   case ad_operation_neuron_transfer_d:
     RFASSERT(1u == std::get<1>(arguments).size());
-    RFASSERT_LOG("operation[{}]: {} for Neuron[{}]", m_operations.size(),
+    RFASSERT_LOG("Created operation[{}]: {} for Neuron[{}]",
+                 m_operations.size(),
                  Autodiff_operations_Name(std::get<0>(arguments)),
                  std::get<1>(arguments)[0]);
     return m_operations.emplace_back(
         std::make_shared<RafkoBackpropTransferFnOperation>(
             m_data, m_network, m_operations.size(), std::get<1>(arguments)[0],
             *m_settings));
-  case ad_operation_neuron_input_d:
-    RFASSERT(2u == std::get<1>(arguments).size());
-    RFASSERT_LOG("Created operation[{}]: {} for Neuron[{}] input[{}]",
-                 m_operations.size(),
-                 Autodiff_operations_Name(std::get<0>(arguments)),
-                 std::get<1>(arguments)[0], std::get<1>(arguments)[1]);
-    return m_operations.emplace_back(
-        std::make_shared<RafkoBackpropNeuronInputOperation>(
-            m_data, m_network, m_operations.size(), std::get<1>(arguments)[0],
-            std::get<1>(arguments)[1]));
+  case ad_operation_neuron_input_d: {
+    RFASSERT((5u == std::get<1>(arguments).size()) ||
+             (1u == std::get<1>(arguments).size()));
+    if (5u == std::get<1>(arguments).size()) {
+      std::shared_ptr<RafkoBackpropNeuronInputOperation> op =
+          std::make_shared<RafkoBackpropNeuronInputOperation>(
+              m_data, m_network, m_operations.size(), std::get<1>(arguments)[0],
+              std::get<1>(arguments)[1], std::get<1>(arguments)[2],
+              std::get<1>(arguments)[3], std::get<1>(arguments)[4]);
+      RFASSERT_LOG("Created operation[{}]: {} for Neuron[{}] inputs[{} -+> {}]",
+                   m_operations.size(),
+                   Autodiff_operations_Name(std::get<0>(arguments)),
+                   std::get<1>(arguments)[0], op->m_startingInputIndex,
+                   op->m_inputCount);
+      return m_operations.emplace_back(op);
+    } else if (1u == std::get<1>(arguments).size()) {
+      std::shared_ptr<RafkoBackpropNeuronInputOperation> op =
+          std::make_shared<RafkoBackpropNeuronInputOperation>(
+              m_data, m_network, m_operations.size(),
+              std::get<1>(arguments)[0]);
+      RFASSERT_LOG("Created operation[{}]: {} for Neuron[{}] inputs[{} -+> {}]",
+                   m_operations.size(),
+                   Autodiff_operations_Name(std::get<0>(arguments)),
+                   std::get<1>(arguments)[0], op->m_startingInputIndex,
+                   op->m_inputCount);
+      return m_operations.emplace_back(op);
+    } else {
+      throw std::runtime_error(
+          "Error! " + Autodiff_operations_Name(std::get<0>(arguments)) +
+          " was requested, but incorrect number of arguments provided! "
+          "Expected 1 or 5; Got: " +
+          std::to_string(std::get<1>(arguments).size()));
+    }
+  }
   case ad_operation_neuron_bias_d:
     RFASSERT(2u == std::get<1>(arguments).size());
-    RFASSERT_LOG(
-        "operation[{}]: {} for Neuron[{}] weight_input[{}] ( weight[{}] ) ",
-        m_operations.size(), Autodiff_operations_Name(std::get<0>(arguments)),
-        std::get<1>(arguments)[0], std::get<1>(arguments)[1],
-        rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval>(
-            m_network.neuron_array(std::get<1>(arguments)[0])
-                .input_weights())[std::get<1>(arguments)[1]]);
+    RFASSERT_LOG("Created operation[{}]: {} for Neuron[{}] weight_input[{}] ( "
+                 "weight[{}] ) ",
+                 m_operations.size(),
+                 Autodiff_operations_Name(std::get<0>(arguments)),
+                 std::get<1>(arguments)[0], std::get<1>(arguments)[1],
+                 rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval>(
+                     m_network.neuron_array(std::get<1>(arguments)[0])
+                         .input_weights())[std::get<1>(arguments)[1]]);
     return m_operations.emplace_back(
         std::make_shared<RafkoBackpropNeuronBiasOperation>(
             m_data, m_network, m_operations.size(), std::get<1>(arguments)[0],

@@ -73,6 +73,8 @@ class RAFKO_EXPORT RafkoBackpropNeuronInputOperation
                                     ConstructKit kit);
 
 public:
+  using DependencyPointer = std::shared_ptr<RafkoBackpropagationOperation>;
+
   RafkoBackpropNeuronInputOperation(
       RafkoBackpropagationData &data, const rafko_net::RafkoNet &network,
       std::uint32_t operation_index, std::uint32_t neuron_index,
@@ -85,18 +87,12 @@ public:
 
   ~RafkoBackpropNeuronInputOperation() = default;
 
-  std::uint32_t get_f_x_dependency_index() const { return 0; }
-
-  std::uint32_t get_u_x_dependency_index() const { return 0; }
-
-  /**
-   * @brief   Returns the count of data points this operation requires in the
-   * backproagation buffer. This might represent spike or transfer function
-   * outputs, bias values etc..
-   *
-   * @retrun  Number of floating point numbers this operation represents
-   */
-  std::uint32_t get_data_count() const { return 1u; }
+  std::uint32_t get_u_x_dependency_index() const {
+    if (static_cast<bool>(m_nextInputDependency)) {
+      return m_nextInputDependency->get_operation_index();
+    }
+    return 0u; /* No dependency needed ( this should not happen as of now ) */
+  }
 
   std::uint32_t get_input_past_index() const {
     if (!m_inputPastIndex.has_value()) {
@@ -117,8 +113,7 @@ public:
    *
    * @return    list of all stored dependency pointers
    */
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
-  get_own_dependencies_past_included();
+  std::vector<DependencyPointer> get_own_dependencies_past_included();
 
   DependencyRequest request_dependencies() override;
 
@@ -178,23 +173,40 @@ public:
       std::string operations_array_size, std::string behavior_index);
 #endif /*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
-  get_own_dependencies() override;
+  std::vector<DependencyPointer> get_own_dependencies() override;
 
   const std::uint32_t m_neuronIndex;
   const std::optional<std::uint32_t> m_inputPastIndex;
-  const std::uint32_t m_startingInputIndex;
-  const std::uint32_t m_inputCount;
   const std::optional<SynapseSpan> m_nextOperation;
 
 public:
+  const std::uint32_t m_startingInputIndex;
   const std::uint32_t m_startingWeightIndex;
+  const std::uint32_t m_inputCount;
 
 private:
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
-      m_neuronDataDependencies;
-  std::shared_ptr<RafkoBackpropagationOperation> m_nextInputDependency;
+  std::vector<DependencyPointer> m_neuronDataDependencies;
+  DependencyPointer m_nextInputDependency;
 
+  /**
+   * @brief     Calcualtes the index values for each Input and Weight synapse
+   * this operation and its dependent needs
+   *
+   * @param   network       The network to base the calculations upon
+   * @param   neuron_index  The index of the Neuron inside the network the
+   * current operation depends on
+   * @param   input_synapse_index   The index of the interval inside the input
+   * part of the synapse
+   * @param   weight_synapse_index  The index of the interval inside the input
+   * part of the synapse
+   * @param   start_inside_input_synapse  The index of the input inside the
+   * relevant input interval
+   * @param   start_inside_weight_synapse   The index of the input inside the
+   * relevant weight interval
+   *
+   * @return The construction kit needed to build this dependency and the input
+   * parameters of the next dependency
+   */
   static ConstructKit calculate_current_operation_index_values(
       const rafko_net::RafkoNet &network, std::uint32_t neuron_index,
       std::uint32_t input_synapse_index, std::uint32_t weight_synapse_index,

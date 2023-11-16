@@ -43,9 +43,9 @@
 namespace rafko_gym_test {
 
 TEST_CASE("Testing if autodiff optimizer converges networks",
-          "[optimizer][small][CPU][manual]") {
-  return; /*!Note: This testcase is for fallback only, in case the next one does
-             not work properly */
+          "[optimizer][small][CPU][manual][!benchmark]") {
+  /*!Note: This testcase is for fallback only, in case the next one does not
+   * work properly */
   double learning_rate = 0.0001;
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings =

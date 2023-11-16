@@ -55,8 +55,7 @@ public:
   }
 
   DependencyRequest request_dependencies() override {
-    return {{{{ad_operation_neuron_input_d,
-               {m_neuronIndex, 0u /*neuron_input_index*/}}},
+    return {{{{ad_operation_neuron_input_d, {m_neuronIndex}}},
              [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
                         dependencies) {
                RFASSERT(1 == dependencies.size());
