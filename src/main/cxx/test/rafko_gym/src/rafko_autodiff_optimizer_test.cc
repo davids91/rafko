@@ -42,11 +42,11 @@
 
 namespace rafko_gym_test {
 
-TEST_CASE("Testing if autodiff optimizer converges networks",
+TEST_CASE("Testing autodiff optimizer manually",
           "[optimizer][small][CPU][manual][!benchmark]") {
   /*!Note: This testcase is for fallback only, in case the next one does not
    * work properly */
-  double learning_rate = 0.0001;
+  double learning_rate = 0.001;
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings =
       std::make_shared<rafko_mainframe::RafkoSettings>(
@@ -130,16 +130,15 @@ TEST_CASE("Testing if autodiff optimizer converges networks",
             << std::endl;
 }
 
-TEST_CASE("Testing if autodiff optimizer converges networks with the iteration "
-          "interface",
-          "[optimizer][small][CPU]") {
-  return; /*!Note: This testcase is for fallback only, in case the next one does
+TEST_CASE("Testing autodiff optimizer with the iteration interface",
+          "[optimizer][small][CPU][!benchmark]") {
+  /*!Note: This testcase is for fallback only, in case the next one does
              not work properly */
   google::protobuf::Arena arena;
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<
       rafko_mainframe::RafkoSettings>(
       rafko_mainframe::RafkoSettings()
-          .set_learning_rate(0.0001)
+          .set_learning_rate(0.001)
           .set_minibatch_size(64)
           .set_memory_truncation(2)
           .set_droput_probability(0.2)
