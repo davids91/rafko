@@ -271,7 +271,7 @@ TEST_CASE("Testing if autodiff GPU optimizer executes a single Neuron "
                {{rafko_net::transfer_function_identity}})
            .create_layers({1});
 
-  /* set weights to 1. except the bias */
+  /* set weights to 1. except the biases */
   for (double &w : *network.mutable_weight_table()) {
     w = 1.0;
   }
@@ -340,7 +340,7 @@ TEST_CASE("Testing if autodiff GPU optimizer executes multiple Neurons "
                 {rafko_net::transfer_function_identity}})
            .create_layers({1, 1});
 
-  /* set weights to 1. except the bias */
+  /* set weights to 1.0 except the biases */
   for (double &w : *network.mutable_weight_table()) {
     w = 1.0;
   }
@@ -408,7 +408,7 @@ TEST_CASE("Testing if autodiff GPU optimizer executes a single Neuron "
                {{rafko_net::transfer_function_identity}})
            .create_layers({1});
 
-  /* set weights to 1. except the bias */
+  /* set weights to 1.0 except the bias */
   for (double &w : *network.mutable_weight_table()) {
     w = 1.0;
   }
@@ -475,7 +475,7 @@ TEST_CASE("Testing if autodiff GPU optimizer executes a single Neuron "
                {{rafko_net::transfer_function_swish}})
            .create_layers({1});
 
-  /* set weights to 1. except the bias */
+  /* set weights to 1.0 */
   for (double &w : *network.mutable_weight_table()) {
     w = 1.0;
   }
@@ -548,13 +548,83 @@ TEST_CASE("Testing if autodiff GPU optimizer executes multiple Neurons "
                 {rafko_net::transfer_function_identity}})
            .create_layers({1, 1});
 
-  /* set weights to 1. except the bias */
+  /* set weights to 1.0 */
   for (double &w : *network.mutable_weight_table()) {
     w = 1.0;
   }
 
   /* set spike weight to 0.5 */
   network.set_weight_table(0, 0.5);
+
+  std::shared_ptr<rafko_gym::RafkoDatasetImplementation> data_set =
+      std::make_shared<rafko_gym::RafkoDatasetImplementation>(
+          std::vector<std::vector<double>>{{0.666, 0.666}, {0.666, 0.666}},
+          std::vector<std::vector<double>>{{10.0}, {20.0}}, 2 /*sequence_size*/
+      );
+
+  std::shared_ptr<rafko_gym::RafkoObjective> objective =
+      std::make_shared<rafko_gym::RafkoCost>(
+          *settings, rafko_gym::cost_function_squared_error);
+
+  std::unique_ptr<rafko_gym::RafkoAutodiffGPUOptimizer> optimizerGPU =
+      (rafko_mainframe::RafkoOCLFactory()
+           .select_platform()
+           .select_device()
+           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network));
+  optimizerGPU->build(data_set, objective);
+  optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
+  std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
+  std::shared_ptr<rafko_net::SolutionSolver> reference_solver =
+      rafko_net::SolutionSolver::Factory(network, settings).build();
+  optimizerGPU->iterate(*data_set);
+  actual_value[1][0] = optimizerGPU->get_neuron_data(
+      0u /*sequence_index*/, 1u /*past_index*/, 1u /*neuron_index*/, *data_set);
+  actual_value[0][0] = optimizerGPU->get_neuron_data(
+      0u /*sequence_index*/, 0u /*past_index*/, 1u /*neuron_index*/, *data_set);
+  CHECK(reference_solver->solve(data_set->get_input_sample(0u), true, 0u)[0] ==
+        Catch::Approx(actual_value[1][0]).epsilon(0.0000000001));
+  REQUIRE(
+      reference_solver->solve(data_set->get_input_sample(1u), false, 0u)[0] ==
+      Catch::Approx(actual_value[0][0]).epsilon(0.0000000001));
+}
+
+TEST_CASE("Testing if autodiff GPU optimizer executes 3 layer of Neurons "
+          "correctly multiple times with 2 inputs and a bias",
+          "[optimizer][GPU][small][solve][memory]") {
+  google::protobuf::Arena arena;
+  std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<
+      rafko_mainframe::RafkoSettings>(
+      rafko_mainframe::RafkoSettings()
+          .set_learning_rate(0.0001)
+          .set_minibatch_size(64)
+          .set_memory_truncation(2)
+          .set_training_strategy(
+              rafko_gym::Training_strategy::
+                  training_strategy_stop_if_training_error_zero,
+              true)
+          .set_training_strategy(
+              rafko_gym::Training_strategy::training_strategy_early_stopping,
+              false)
+          .set_learning_rate_decay({{1000u, 0.8}})
+          .set_arena_ptr(&arena)
+          .set_max_solve_threads(2)
+          .set_max_processing_threads(4));
+
+  rafko_net::RafkoNet &network =
+      *rafko_net::RafkoNetBuilder(*settings)
+           .input_size(2)
+           .expected_input_range(1.0)
+           .set_neuron_input_function(0u, 0u, rafko_net::input_function_add)
+           .allowed_transfer_functions_by_layer(
+               {{rafko_net::transfer_function_identity},
+                {rafko_net::transfer_function_identity},
+                {rafko_net::transfer_function_identity}})
+           .create_layers({1, 3, 1});
+
+  /* set weights to 1.0 */
+  for (double &w : *network.mutable_weight_table()) {
+    w = 1.0;
+  }
 
   std::shared_ptr<rafko_gym::RafkoDatasetImplementation> data_set =
       std::make_shared<rafko_gym::RafkoDatasetImplementation>(
@@ -699,13 +769,10 @@ TEST_CASE(
                {{rafko_net::transfer_function_identity}})
            .create_layers({1});
 
-  /* set weights to 1. except the bias */
+  /* set weights to 1.0 */
   for (double &w : *network.mutable_weight_table()) {
     w = 1.0;
   }
-
-  // set bias to 0 and the test passes! WHY
-  // network.set_weight_table(3, 0);
 
   /* set spike weight to 0.5 */
   network.set_weight_table(0, 0.5);

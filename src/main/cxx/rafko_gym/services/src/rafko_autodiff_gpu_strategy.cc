@@ -47,7 +47,8 @@ AutoDiffGPUStrategy::get_input_shapes() const {
   RFASSERT_LOG(
       "Autodiff strategy Input shape: (weights: {} + inputs: {} + Labels: {} + "
       "sequence start: + sequence truncation: {} + d_w_index: {} + Neural "
-      "propagation instructions: {})",
+      "propagation instructions: {} + Neuron index to Spike operation index "
+      "mapping: {})",
       /* Weights */ (static_cast<std::uint32_t>(m_network.weight_table_size())),
       /* Inputs */
       (m_dataSet->get_number_of_sequences() *
@@ -56,6 +57,7 @@ AutoDiffGPUStrategy::get_input_shapes() const {
       (m_dataSet->get_number_of_sequences() * m_dataSet->get_sequence_size() *
        m_network.output_neuron_number()),
       /* Neuron index to Spike operation map + propagation instructions */
+      byte_size_for_vector(m_neuronIndexToSpikeOperationIndex),
       byte_size_for_vector(m_neuralPropagationInstructions),
       /*!Note: both vectors have a base type different, than double! Because of
        *the (possible) size difference Indexing has to be checked carefully, and
@@ -71,7 +73,8 @@ AutoDiffGPUStrategy::get_input_shapes() const {
       /* Labels */
       (m_dataSet->get_number_of_sequences() * m_dataSet->get_sequence_size() *
        m_network.output_neuron_number()),
-      /* Neural_propagation_instructions */
+      /* Neuron index to Spike operation map + propagation instructions */
+      byte_size_for_vector(m_neuronIndexToSpikeOperationIndex),
       byte_size_for_vector(m_neuralPropagationInstructions),
       /* Sequence_start_index */ 1u, /* Sequence_truncation */ 1u,
       /* d_w_index */ 1u}};
@@ -394,12 +397,17 @@ void AutoDiffGPUStrategy::substitute_index_values_in_kernels(
       kernel_source, std::regex("==dependency_descriptor=="),
       "network_instructions[3]");
   kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==inputs_count=="), "network_instructions[4]");
+  kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==behavior_data=="),
       "network_instructions[6]");
 }
 
 void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
                                 std::uint32_t weight_relevant_operation_count) {
+  RFASSERT(
+      m_network.neuron_array_size() ==
+      static_cast<std::int32_t>(m_neuronIndexToSpikeOperationIndex.size()));
   std::string source_base = rafko_utilities::atomic_double_add_function +
                             rafko_utilities::atomic_double_average_function +
                             rafko_net::InputFunction::get_kernel_enums() +
@@ -411,15 +419,18 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
 
     __constant bool evaluate_network = true;
     /*!Note: The only purpose of the autodiff operations is to train the network
-     * so evaluation is always true in this context; Simply solving the network
-     * is not strictly topic of it.
+     * so evaluation is always true in this context; "Simple network inference
+     * is not strictly on topic.
      */
+     void execute_input_function(int input_function_index, __global double* target, double lhs, double rhs){
+       ==input_function_generic_kernel==
+     }
 
     void execute_derivative_workers(
       int d_w_index, int available_memory_slots, int weight_table_size, bool save_to_output,
       __constant double* network_inputs, __constant double* labels, __constant double* network_weights,
-      __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array, 
-      __constant unsigned int* network_instruction_table
+      __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array,
+      __constant unsigned int* network_instruction_table, __constant unsigned int* neuron_index_to_spike_op_map
     ){
       __global static double triggered_derivative_operations = 0.0;
       if(0 == get_global_id(0))
@@ -461,10 +472,9 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
     }/*execute_derivative_workers()*/
 
     void execute_value_workers(
-      int available_memory_slots, int weight_table_size,
-      __constant double* network_inputs, __constant double* network_weights,
-      __global double* operations_value_array, 
-      __constant unsigned int* network_instruction_table
+      int available_memory_slots, int weight_table_size, __constant double* network_inputs,
+      __constant double* network_weights, __global double* operations_value_array, 
+      __constant unsigned int* network_instruction_table, __constant unsigned int* neuron_index_to_spike_op_map
     ){
       ==operation_locals==
       const int operation_count = ==operation_count==;
@@ -491,31 +501,34 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
       __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
       __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){
+      const long int neuron_index_to_spike_op_map_start_index = input_sizes[0] + input_sizes[1] + input_sizes[2];
+      const long int network_instruction_table_start_index = neuron_index_to_spike_op_map_start_index + input_sizes[3];
+      const long int meta_start_index = network_instruction_table_start_index + input_sizes[4];
+
       const int number_of_sequences = ==number_of_sequences==;
       const int minibatch_size = ==minibatch_size==;
       const int network_memory_size = ==network_memory_size==;
       const int sequence_inputs_count = ==prefill_num== + ==sequence_size==;
       const int sequence_labels_count = ==sequence_size==;
+      const int raw_sequence_truncation = inputs[meta_start_index + 1];
+      const int sequence_truncation = (raw_sequence_truncation == 0)?(sequence_labels_count):(max(1, raw_sequence_truncation));
       const int neuron_count = ==neuron_count==;
       const int operation_count = ==operation_count==;
       const int sequences_in_work_groups = (minibatch_size / get_num_groups(0)) + 1;
-      const int d_w_index = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2] + input_sizes[3] + input_sizes[4] + input_sizes[5]];
+      const int d_w_index = inputs[meta_start_index + 2];
       const int weight_table_size = input_sizes[0];
       const bool calculate_value = (0 == d_w_index);
       uint local_seed = (uint)(inputs[min(get_global_id(0), (size_t)(input_sizes[0]))] * 100000.0);
       __local int sequence_start;
-      __local int sequence_truncation;
       __local int sequences_in_this_group;
       if(0 == get_local_id(0)){
         /* Sequence starts from the given input, with some safeguards, and each group gets their own sequence based on their id */
-        sequence_start = (int)(inputs[input_sizes[0] + input_sizes[1] + input_sizes[2] + input_sizes[3]]);
+        sequence_start = (int)(inputs[meta_start_index]);
         sequence_start = max( 0, min(sequence_start, (number_of_sequences - minibatch_size)) );
         sequence_start = sequence_start + (get_group_id(0) * sequences_in_work_groups);
         sequences_in_this_group = min( sequences_in_work_groups, (number_of_sequences - sequence_start) );
 
         /* In case there is no sequence truncation, all of the sequence elements will be considered when calculating the derivative */
-        sequence_truncation = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2] + input_sizes[3] + input_sizes[4]];
-        sequence_truncation = (sequence_truncation == 0)?(sequence_labels_count):(max(1, sequence_truncation));
       }
       barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -533,7 +546,8 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
             execute_value_workers(
               available_memory_slots, weight_table_size, &inputs[network_inputs_start_index]/*network_inputs*/,
               &inputs[0]/*network_weights*/, &outputs[network_values_start_index]/*operation_values*/,
-              (__constant unsigned int*)&inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]]/*network_instruction_table*/
+              (__constant unsigned int*)&inputs[network_instruction_table_start_index]/*network_instruction_table*/,
+              (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */
             );
           }
           ++network_ran_count;
@@ -550,7 +564,8 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
             execute_value_workers(
               available_memory_slots, weight_table_size, &inputs[network_inputs_start_index]/*network_inputs*/,
               &inputs[0]/*network_weights*/,&outputs[network_values_start_index]/*operation_values*/,
-              (__constant unsigned int*)&inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]]/*network_instruction_table*/
+              (__constant unsigned int*)&inputs[network_instruction_table_start_index]/*network_instruction_table*/,
+              (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */
             );
           }
           /*Note: The available memory slots differ for derivatives becuase of the prefill,
@@ -568,7 +583,8 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
             &outputs[network_values_start_index]/*operation_values*/,
             &outputs[network_derivatives_start_index]/*operation_derivatives*/,
             &outputs[output_sizes[0] + output_sizes[1]]/*d_w_array*/,
-            (__constant unsigned int*)&inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]]/*network_instruction_table*/
+            (__constant unsigned int*)&inputs[network_instruction_table_start_index]/*network_instruction_table*/,
+            (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */
           );
           ++network_ran_count;
           available_memory_slots = min(network_ran_count, network_memory_size);
@@ -598,6 +614,10 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
                                   "operations_d_array", "operation_count",
                                   m_settings));
 
+  source_base = rafko_utilities::replace_all_in_string(
+      source_base, std::regex("==input_function_generic_kernel=="),
+      rafko_net::InputFunction::get_all_kernel_value_functions(
+          "input_function_index", "*target", "lhs", "rhs"));
   source_base = rafko_utilities::replace_all_in_string(
       source_base, std::regex("==network_memory_size=="),
       std::to_string(m_network.memory_size()));

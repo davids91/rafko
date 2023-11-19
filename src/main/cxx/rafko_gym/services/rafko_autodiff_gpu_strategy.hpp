@@ -46,10 +46,13 @@ class AutoDiffGPUStrategy : public rafko_mainframe::RafkoGPUStrategy {
   using OperationsType = std::shared_ptr<RafkoBackpropagationOperation>;
 
 public:
-  AutoDiffGPUStrategy(const rafko_mainframe::RafkoSettings &settings,
-                      rafko_net::RafkoNet &network,
-                      std::shared_ptr<RafkoDataSet> data_set = {})
-      : m_settings(settings), m_network(network) {
+  AutoDiffGPUStrategy(
+      const rafko_mainframe::RafkoSettings &settings,
+      rafko_net::RafkoNet &network,
+      const std::vector<std::uint32_t> &neuron_index_to_spike_op_map,
+      std::shared_ptr<RafkoDataSet> data_set = {})
+      : m_settings(settings), m_network(network),
+        m_neuronIndexToSpikeOperationIndex(neuron_index_to_spike_op_map) {
     if (data_set)
       set_data_set(data_set);
   }
@@ -112,6 +115,7 @@ private:
   std::uint32_t m_numberOfOperations;
   std::uint32_t m_maximumLocalWorkers;
   std::vector<std::uint32_t> m_neuralPropagationInstructions;
+  const std::vector<std::uint32_t> &m_neuronIndexToSpikeOperationIndex;
 
   /**
    * @brief     Generates the instruction set to infer the Neural network on the
@@ -122,8 +126,7 @@ private:
    * @return    An array to upload to GPU: the instruction index values
    * representing the Neural network and parsed by the provided phase
    */
-  [[nodiscard]] std::vector<std::uint32_t>
-  generate_propagation_instructions(
+  [[nodiscard]] std::vector<std::uint32_t> generate_propagation_instructions(
       const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
           &operations);
 
