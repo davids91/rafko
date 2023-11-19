@@ -29,17 +29,21 @@
 #include "spike_function.hpp"
 #include "transfer_function.hpp"
 
+namespace {
+template <typename T>
+std::size_t byte_size_for_vector(const std::vector<T> &vector) {
+  return (vector.size() + 1u) / (sizeof(double) / sizeof(T));
+  /*!Note: in the (size + 1)/sizeof(double) ratio, the +1 makes sure that there
+   * are enough elements in the array, and the size is not smaller due to the
+   * integer division */
+}
+} // namespace
+
 namespace rafko_gym {
 
 std::vector<rafko_mainframe::RafkoNBufShape>
 AutoDiffGPUStrategy::get_input_shapes() const {
   RFASSERT(static_cast<bool>(m_dataSet));
-  const std::size_t neural_propagation_instructions_size =
-      (m_neuralPropagationInstructions.size() + 1u) /
-      (sizeof(double) / sizeof(std::uint32_t));
-  /*!Note: in the (size + 1)/sizeof(double) ratio, the +1 makes sure that there
-   * are enough elements in the array, and the size is not smaller due to the
-   * integer division */
   RFASSERT_LOG(
       "Autodiff strategy Input shape: (weights: {} + inputs: {} + Labels: {} + "
       "sequence start: + sequence truncation: {} + d_w_index: {} + Neural "
@@ -51,11 +55,11 @@ AutoDiffGPUStrategy::get_input_shapes() const {
       /* Labels */
       (m_dataSet->get_number_of_sequences() * m_dataSet->get_sequence_size() *
        m_network.output_neuron_number()),
-      /* Neural_propagation_instructions */
-      neural_propagation_instructions_size,
-      /*!Note: m_neuralPropagationInstructions has element type std::uint32_t,
-       *not double! Because of the size difference Indexing has to be checked
-       *carefully, and documented explicitly to help checking by-byte alignment!
+      /* Neuron index to Spike operation map + propagation instructions */
+      byte_size_for_vector(m_neuralPropagationInstructions),
+      /*!Note: both vectors have a base type different, than double! Because of
+       *the (possible) size difference Indexing has to be checked carefully, and
+       *documented explicitly to help checking by-byte alignment!
        **/
       /* Sequence_start_index */ 1u, /* Sequence_truncation */ 1u,
       /* d_w_index */ 1u);
@@ -68,7 +72,7 @@ AutoDiffGPUStrategy::get_input_shapes() const {
       (m_dataSet->get_number_of_sequences() * m_dataSet->get_sequence_size() *
        m_network.output_neuron_number()),
       /* Neural_propagation_instructions */
-      neural_propagation_instructions_size,
+      byte_size_for_vector(m_neuralPropagationInstructions),
       /* Sequence_start_index */ 1u, /* Sequence_truncation */ 1u,
       /* d_w_index */ 1u}};
 }
@@ -205,7 +209,8 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
                      .size());
         result.insert(
             result.end(),
-            {ad_operation_neuron_input_d, upcasted_operation_ptr->m_startingWeightIndex,
+            {ad_operation_neuron_input_d,
+             upcasted_operation_ptr->m_startingWeightIndex,
              upcasted_operation_ptr->m_startingInputIndex,
              upcasted_operation_ptr->get_own_dependencies_past_included()
                  .back()

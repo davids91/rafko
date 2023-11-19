@@ -292,8 +292,7 @@ TEST_CASE("Testing if autodiff GPU optimizer executes a single Neuron "
       (rafko_mainframe::RafkoOCLFactory()
            .select_platform()
            .select_device()
-           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network,
-                                                        data_set));
+           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network));
   optimizerGPU->build(data_set, objective);
   optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<double> actual_value{0.0};
@@ -363,8 +362,7 @@ TEST_CASE("Testing if autodiff GPU optimizer executes multiple Neurons "
       (rafko_mainframe::RafkoOCLFactory()
            .select_platform()
            .select_device()
-           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network,
-                                                        data_set));
+           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network));
   optimizerGPU->build(data_set, objective);
   optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<double> actual_value{0.0};
@@ -431,8 +429,7 @@ TEST_CASE("Testing if autodiff GPU optimizer executes a single Neuron "
       (rafko_mainframe::RafkoOCLFactory()
            .select_platform()
            .select_device()
-           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network,
-                                                        data_set));
+           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network));
   optimizerGPU->build(data_set, objective);
   optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<double> actual_value{0.0};
@@ -500,8 +497,7 @@ TEST_CASE("Testing if autodiff GPU optimizer executes a single Neuron "
       (rafko_mainframe::RafkoOCLFactory()
            .select_platform()
            .select_device()
-           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network,
-                                                        data_set));
+           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network));
   optimizerGPU->build(data_set, objective);
   optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
@@ -574,8 +570,7 @@ TEST_CASE("Testing if autodiff GPU optimizer executes multiple Neurons "
       (rafko_mainframe::RafkoOCLFactory()
            .select_platform()
            .select_device()
-           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network,
-                                                        data_set));
+           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network));
   optimizerGPU->build(data_set, objective);
   optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
@@ -652,8 +647,7 @@ TEST_CASE(
       (rafko_mainframe::RafkoOCLFactory()
            .select_platform()
            .select_device()
-           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network,
-                                                        data_set));
+           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network));
   optimizerGPU->build(data_set, objective);
   optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
@@ -730,8 +724,7 @@ TEST_CASE(
       (rafko_mainframe::RafkoOCLFactory()
            .select_platform()
            .select_device()
-           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network,
-                                                        data_set));
+           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network));
   optimizerGPU->build(data_set, objective);
   optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
@@ -825,8 +818,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
       (rafko_mainframe::RafkoOCLFactory()
            .select_platform()
            .select_device()
-           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network,
-                                                        data_set));
+           .build<rafko_gym::RafkoAutodiffGPUOptimizer>(settings, network));
   optimizerGPU->build(data_set, objective);
   optimizerGPU->set_weight_updater(rafko_gym::weight_updater_amsgrad);
   std::vector<std::vector<double>> actual_value(2, std::vector<double>(2, 0.0));
