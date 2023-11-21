@@ -516,15 +516,11 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
       RFASSERT(static_cast<bool>(dependency));
       RFASSERT((0u < *m_inputPastIndex) || (dependency->is_processed()));
       double f_x_value = dependency->get_value(*m_inputPastIndex);
-      double f_x_derivative;
+      double f_x_derivative =
+          dependency->get_derivative(*m_inputPastIndex, d_w_index) *
+          m_network.weight_table(d_w_index);
       if (input_weight_index == d_w_index) {
-        f_x_derivative =
-            (dependency->get_derivative(*m_inputPastIndex, d_w_index) *
-             m_network.weight_table(input_weight_index));
         f_x_derivative += f_x_value;
-      } else {
-        f_x_derivative =
-            dependency->get_derivative(*m_inputPastIndex, d_w_index);
       }
 
       if (0 == input_index) {
@@ -535,10 +531,11 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
                      get_operation_index(), d_w_index, m_neuronIndex,
                      input_index);
       } else {
-        collected_value = f_x_value;
+        collected_value = rafko_net::InputFunction::collect(
+            get_input_function(), f_x_value, collected_value);
         collected_derivative = rafko_net::InputFunction::get_derivative(
-            get_input_function(), f_x_value, f_x_derivative, collected_value,
-            collected_derivative);
+            get_input_function(), collected_value, collected_derivative,
+            f_x_value, f_x_derivative);
       }
 
       RFASSERT_LOG(
@@ -572,9 +569,11 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
                      get_operation_index(), d_w_index, m_neuronIndex,
                      input_index);
       } else {
-        collected_value = rafko_net::InputFunction::get_derivative(
-            get_input_function(), f_x_value, f_x_derivative, collected_value,
-            collected_derivative);
+        collected_value = rafko_net::InputFunction::collect(
+            get_input_function(), f_x_value, collected_value);
+        collected_derivative = rafko_net::InputFunction::get_derivative(
+            get_input_function(), collected_value, collected_derivative,
+            f_x_value, f_x_derivative);
       }
 
       RFASSERT_LOG(
@@ -597,13 +596,12 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
     u_x_value = m_nextInputDependency->get_value(0u /*past_index*/);
     u_x_derivative =
         m_nextInputDependency->get_derivative(0u /*past_index*/, d_w_index);
-    RFASSERT_LOG("derivative_operation[{}](w[{}]): Neuron[{}] Input_d u_x "
-                 "= op[{}]({}); u_x_d = d_op[{}]({}) (next {})",
-                 get_operation_index(), d_w_index, m_neuronIndex,
-                 m_nextInputDependency->get_operation_index(), u_x_value,
-                 m_nextInputDependency->get_operation_index(), u_x_derivative,
-                 (m_nextOperation->__workaround_m_isBias) ? "bias"
-                                                          : "neuron_input");
+    RFASSERT_LOG(
+        "derivative_operation[{}](w[{}]): Neuron[{}] Input_d u_x  = op[{}] = "
+        "{}; u_x_d = {} (next {})",
+        get_operation_index(), d_w_index, m_neuronIndex,
+        m_nextInputDependency->get_operation_index(), u_x_value, u_x_derivative,
+        (m_nextOperation->__workaround_m_isBias) ? "bias" : "neuron_input");
   }
 
   /* calculate the derivative */
@@ -623,10 +621,12 @@ void RafkoBackpropNeuronInputOperation::calculate_derivative(
 std::string
 RafkoBackpropNeuronInputOperation::local_declaration_operation() const {
   return R"(
-    /* Neuron input operation locals */
+    // Neuron input operation locals
+    double current_f_x_value;
+    double current_f_x_derivative;
     double f_x_value;
-    double u_x_value;
     double f_x_derivative;
+    double u_x_value;
     double u_x_derivative;
   )";
 }
@@ -635,54 +635,63 @@ std::string RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
     std::string network_input_array, std::string weight_array,
     std::string operations_value_array, std::string operations_array_size,
     std::string behavior_index) {
-  std::string operations = R"(
-    for(int input_index = 0; input_index < ==inputs_count==; ++input_index){
-      // Calculate the weighted input(f(x))
-      if(==past_index== == 0xFFu){ // past index at maximum means the input arrives from the network inputs
-          f_x_value = (
-            ==neuron_input_array==[==f_x_op_index== + input_index] 
-            * ==weight_array==[==this_op_weight_index== + input_index]
-          );
-      }else{
-        if(==past_index== <= available_memory_slots){
-          const long int neuron_operation_index = neuron_index_to_spike_op_map[==f_x_op_index== + input_index];
-          const long int past_correction = ==op_value_array_size== * ==past_index==;
-          f_x_value = ==op_value_array==[neuron_operation_index - past_correction]
-            * ==weight_array==[==this_op_weight_index== + input_index];
+  std::string kernel_source = R"(
+    // Calculate the weighted input(f(x))
+    if(==past_index== == 0xFFu){ // past index at maximum means the input arrives from the network inputs
+      for(int input_index = 0; input_index < ==inputs_count==; ++input_index){
+        f_x_value = (
+          ==network_input_array==[==f_x_op_index== + input_index]
+          * ==weight_array==[==this_op_weight_index== + input_index]
+        );
+        if(0u == input_index){
+          ==op_value_array==[==op_index==] = f_x_value;
         }else{
-          f_x_value = 0.0;
+          ==op_value_array==[==op_index==] = execute_input_function(
+            ==input_function_index==,f_x_value, ==op_value_array==[==op_index==]
+          );
         }
       }
-      if(0u == input_index){
-        ==op_value_array==[==op_index==] = f_x_value;
+    }else{
+      if(==past_index== <= available_memory_slots){
+        for(int input_index = 0; input_index < ==inputs_count==; ++input_index){
+          const long int operation_index = neuron_index_to_spike_op_map[==f_x_op_index== + input_index];
+          const long int past_correction = ==op_value_array_size== * ==past_index==;
+          f_x_value = (==op_value_array==[operation_index - past_correction]
+            * ==weight_array==[==this_op_weight_index== + input_index]);
+          if(0u == input_index){
+            ==op_value_array==[==op_index==] = f_x_value;
+          }else{
+            ==op_value_array==[==op_index==] = execute_input_function(
+              ==input_function_index==, f_x_value, ==op_value_array==[==op_index==]
+            );
+          }
+        }
       }else{
-        execute_input_function(
-          ==input_function_index==, &==op_value_array==[==op_index==],
-          f_x_value, ==op_value_array==[==op_index==]
-        );
+        f_x_value = 0.0;
       }
     }
 
     //Collect u_x_value from the next dependency
     u_x_value = ==op_value_array==[==u_x_op_index==];
-    execute_input_function(
-      ==input_function_index==, &==op_value_array==[==op_index==], 
-      u_x_value, ==op_value_array==[==op_index==]
+    ==op_value_array==[==op_index==] = execute_input_function(
+      ==input_function_index==, u_x_value, ==op_value_array==[==op_index==]
     );
   )";
 
   /* Replacing the tokens with actual kernel string values */
-  operations = rafko_utilities::replace_all_in_string(
-      operations, std::regex("==input_function_index=="), behavior_index);
-  operations = rafko_utilities::replace_all_in_string(
-      operations, std::regex("==neuron_input_array=="), network_input_array);
-  operations = rafko_utilities::replace_all_in_string(
-      operations, std::regex("==weight_array=="), weight_array);
-  operations = rafko_utilities::replace_all_in_string(
-      operations, std::regex("==op_value_array=="), operations_value_array);
-  operations = rafko_utilities::replace_all_in_string(
-      operations, std::regex("==op_value_array_size=="), operations_array_size);
-  return operations;
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==input_function_index=="), behavior_index);
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==network_input_array=="),
+      network_input_array);
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==weight_array=="), weight_array);
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==op_value_array=="), operations_value_array);
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==op_value_array_size=="),
+      operations_array_size);
+  return kernel_source;
 }
 
 std::string
@@ -691,39 +700,64 @@ RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
     std::string operations_value_array, std::string operations_derivative_array,
     std::string operations_array_size, std::string behavior_index) {
   std::string kernel_source = R"(
-    u_x_value = ==op_value_array==[==u_x_op_index==];
-    u_x_derivative = ==op_derivative_array==[==u_x_op_index==];
     if(==past_index== == 0xFFu){ // past index at maximum means the input arrives from the network inputs
-      f_x_value = ==op_value_array==[==op_index==];
-      if(d_w_index == ==this_op_weight_index==){
-        f_x_derivative = ==network_input_array==[==f_x_op_index==];
-      }else{
-        f_x_derivative = 0.0;
-      }
-    }else{ // otherwise input source is internal neuron data
-      if(==past_index== <= available_memory_slots){
-        f_x_value = ==op_value_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)];
-        f_x_derivative = (
-          ==op_derivative_array==[(long int)(==f_x_op_index==) - (long int)(==op_array_size== * ==past_index==)]
-          * ==weight_array==[==this_op_weight_index==]
-        );
-        if(==this_op_weight_index== == d_w_index){
-          f_x_derivative += f_x_value;
+      for(int input_index = 0; input_index < ==inputs_count==; ++input_index){
+        const long int weight_index = ==this_op_weight_index== + input_index;
+        const long int dependency_index = ==f_x_op_index== + input_index;
+        current_f_x_value = ==network_input_array==[dependency_index] * ==weight_array==[weight_index];
+        if(weight_index == d_w_index){
+          current_f_x_derivative = ==network_input_array==[dependency_index];
+        }else{
+          current_f_x_derivative = 0.0;
         }
-      }else{
-        f_x_value = 0.0;
-        f_x_derivative = 0.0;
+        if(0u == input_index){
+          f_x_value = current_f_x_value;
+          f_x_derivative = current_f_x_derivative;
+        }else{
+          f_x_value = execute_input_function(==input_function_index==, f_x_value, current_f_x_value);
+          f_x_derivative = execute_input_function_derivative(
+            ==input_function_index==, f_x_value, f_x_derivative, current_f_x_value, current_f_x_derivative
+          );
+        }
+      }
+    }else if(==past_index== <= available_memory_slots){ 
+      for(int input_index = 0; input_index < ==inputs_count==; ++input_index){
+        const long int weight_index = ==this_op_weight_index== + input_index;
+        const long int past_correction = ==op_array_size== * ==past_index==;
+        const long int dependency_index = (
+          neuron_index_to_spike_op_map[==f_x_op_index== + input_index] - past_correction
+        );
+
+        current_f_x_value = ==op_value_array==[dependency_index];
+        current_f_x_derivative = ==op_derivative_array==[dependency_index] * ==weight_array==[weight_index];
+        if(weight_index == d_w_index){
+          current_f_x_derivative += current_f_x_value;
+        }
+
+        if(0u == input_index){
+          f_x_value = current_f_x_value;
+          f_x_derivative = current_f_x_derivative;
+        }else{
+          f_x_value = execute_input_function(==input_function_index==, f_x_value, current_f_x_value);
+          f_x_derivative = execute_input_function_derivative(
+            ==input_function_index==, f_x_value, f_x_derivative, current_f_x_value, current_f_x_derivative
+          );
+        }
       }
     }
 
-    ==input_kernel==
+    // Collect u_x derivative and value
+    u_x_value = ==op_value_array==[==u_x_op_index==];
+    u_x_derivative = ==op_derivative_array==[==u_x_op_index==];
+
+    // Collect overall derivative for this function
+    ==op_derivative_array==[==op_index==] = execute_input_function_derivative(
+      ==input_function_index==, f_x_value, f_x_derivative, u_x_value, u_x_derivative
+    );
   )";
 
   kernel_source = rafko_utilities::replace_all_in_string(
-      kernel_source, std::regex("==input_kernel=="),
-      rafko_net::InputFunction::get_all_kernel_derivative_functions(
-          behavior_index, "==op_derivative_array==[==op_index==]", "f_x_value",
-          "f_x_derivative", "u_x_value", "u_x_derivative"));
+      kernel_source, std::regex("==input_function_index=="), behavior_index);
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==network_input_array=="),
       network_input_array);

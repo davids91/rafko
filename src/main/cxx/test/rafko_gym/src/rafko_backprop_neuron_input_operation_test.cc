@@ -17,6 +17,8 @@
 
 #include <set>
 
+#include <google/protobuf/repeated_field.h>
+
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
@@ -527,6 +529,8 @@ TEST_CASE("Testing if Neuron input dependencies are generating correct "
   rafko_net::RafkoNet network;
   rafko_net::Neuron example_neuron;
   *network.add_neuron_array() = example_neuron;
+  for (std::uint32_t i = 0u; i < synapse_size; ++i)
+    network.add_neuron_array();
   rafko_net::Neuron &neuron = *network.mutable_neuron_array(0u);
 
   neuron.add_input_indices();
@@ -565,6 +569,8 @@ TEST_CASE(
   rafko_net::RafkoNet network;
   rafko_net::Neuron example_neuron;
   *network.add_neuron_array() = example_neuron;
+  for (std::uint32_t i = 0u; i < synapse_size; ++i)
+    network.add_neuron_array();
   rafko_net::Neuron &neuron = *network.mutable_neuron_array(0u);
 
   neuron.add_input_indices();
@@ -626,6 +632,8 @@ TEST_CASE(
   rafko_net::RafkoNet network;
   rafko_net::Neuron example_neuron;
   *network.add_neuron_array() = example_neuron;
+  for (std::uint32_t i = 0u; i < synapse_size; ++i)
+    network.add_neuron_array();
   rafko_net::Neuron &neuron = *network.mutable_neuron_array(0u);
 
   neuron.add_input_indices();
@@ -687,6 +695,8 @@ TEST_CASE(
   rafko_net::RafkoNet network;
   rafko_net::Neuron example_neuron;
   *network.add_neuron_array() = example_neuron;
+  for (std::uint32_t i = 0u; i < synapse_size; ++i)
+    network.add_neuron_array();
   rafko_net::Neuron &neuron = *network.mutable_neuron_array(0u);
 
   neuron.add_input_indices();
@@ -741,6 +751,8 @@ TEST_CASE(
   rafko_net::RafkoNet network;
   rafko_net::Neuron example_neuron;
   *network.add_neuron_array() = example_neuron;
+  for (std::uint32_t i = 0u; i < synapse_size; ++i)
+    network.add_neuron_array();
   rafko_net::Neuron &neuron = *network.mutable_neuron_array(0u);
 
   neuron.add_input_indices();
