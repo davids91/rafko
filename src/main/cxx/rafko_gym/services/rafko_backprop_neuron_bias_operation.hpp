@@ -73,7 +73,7 @@ public:
     return rafko_net::Input_functions::input_function_unknown;
   }
 
-  DependencyRequest upload_dependencies_to_operations() override {
+  DependencyRequest request_dependencies() override {
     if (m_neuronWeightIndex <
         (m_weightsIterator.cached_size() -
          1u)) { /* more biases are present with the Neuron */

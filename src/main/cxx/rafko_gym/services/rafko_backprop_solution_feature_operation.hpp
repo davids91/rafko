@@ -51,13 +51,13 @@ public:
       std::uint32_t operation_index,
       const rafko_mainframe::RafkoSettings &settings,
       const rafko_net::FeatureGroup &feature_group,
+      rafko_utilities::SubscriptProxy<>::AssociationVector
+          neuronSpikeToOperationIndex,
       std::vector<std::unique_ptr<rafko_utilities::ThreadGroup>>
-          &execution_threads,
-      std::shared_ptr<rafko_utilities::SubscriptDictionary>
-          neuron_index_dictionary);
+          &execution_threads);
   ~RafkoBackPropSolutionFeatureOperation() = default;
 
-  DependencyRequest upload_dependencies_to_operations() override;
+  DependencyRequest request_dependencies() override;
 
   void calculate_value(const std::vector<double> & /*network_input*/) override;
   void calculate_derivative(std::uint32_t /*d_w_index*/,
@@ -71,8 +71,6 @@ public:
   std::string local_declaration_operation() const override {
     return rafko_net::RafkoNetworkFeature::get_kernel_locals();
   }
-
-  bool is_multi_worker() const override { return true; }
 #endif /*(RAFKO_USES_OPENCL)*/
 
   std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
@@ -88,10 +86,6 @@ private:
       &m_executionThreads;
   rafko_net::RafkoNetworkFeature m_featureExecutor;
   std::vector<std::uint32_t> m_relevantIndexValues;
-#if (RAFKO_USES_OPENCL)
-  std::shared_ptr<rafko_utilities::SubscriptDictionary> m_neuronIndexDictionary;
-#endif /*(RAFKO_USES_OPENCL)*/
-
   std::vector<double> m_dummyVector;
 };
 

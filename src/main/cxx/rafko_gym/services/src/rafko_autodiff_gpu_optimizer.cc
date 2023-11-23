@@ -28,9 +28,16 @@ void RafkoAutodiffGPUOptimizer::build(
                                  data_set->get_number_of_sequences());
   if (m_trainingEvaluator)
     m_trainingEvaluator->set_data_set(data_set);
-  m_strategy->set_data_set(data_set);
-  m_strategy->build(m_operations, build_without_data(data_set, objective));
-  m_gpuPhase.set_strategy(m_strategy);
+
+  const std::uint32_t derivative_relevant_operation_count =
+      build_without_data(data_set, objective);
+
+  AutoDiffGPUStrategy strategy(*m_settings, m_network,
+                               m_neuronIndexToSpikeOperationIndex, data_set);
+  strategy.build(m_operations, derivative_relevant_operation_count);
+
+  m_gpuPhase.set_strategy(
+      std::make_shared<AutoDiffGPUStrategy>(std::move(strategy)));
   sync_data_set_on_GPU(*data_set);
   upload_network();
   m_built = true;
@@ -47,18 +54,6 @@ void RafkoAutodiffGPUOptimizer::upload_weight_table() {
 }
 
 void RafkoAutodiffGPUOptimizer::upload_network() {
-  const std::vector<std::uint32_t> &propagation_instructions =
-      m_strategy->get_propagation_instructions();
-  const std::uint32_t propagation_instructions_byte_size =
-      (sizeof(std::uint32_t) * propagation_instructions.size());
-  const std::uint32_t weight_table_byte_size =
-      sizeof(double) * m_strategy->get_input_shapes()[0][0];
-  const std::uint32_t inputs_byte_size =
-      sizeof(double) * m_strategy->get_input_shapes()[0][1];
-  const std::uint32_t labels_byte_size =
-      sizeof(double) * m_strategy->get_input_shapes()[0][2];
-  const std::uint32_t byte_offset =
-      (weight_table_byte_size + inputs_byte_size + labels_byte_size);
   /*!Note: byte_ofset is aligned to sizeof(double), because it is based on the
    *previous entries in front of it in the input buffer. Since
    *enqueueWriteBuffer acepts byte size it is fine to use sizeof(std::uint32_t)
@@ -67,12 +62,45 @@ void RafkoAutodiffGPUOptimizer::upload_network() {
    * The only requirement here is that propagation_instructions_byte_size needs
    *to be bigger or equal to the actual data to be accessed
    **/
+  const std::vector<std::uint32_t> &propagation_instructions =
+      static_cast<const AutoDiffGPUStrategy &>(m_gpuPhase.expose_strategy())
+          .get_propagation_instructions();
+
+  const std::uint32_t weight_table_byte_size =
+      sizeof(double) * m_gpuPhase.expose_strategy().get_input_shapes()[0][0];
+  const std::uint32_t inputs_byte_size =
+      sizeof(double) * m_gpuPhase.expose_strategy().get_input_shapes()[0][1];
+  const std::uint32_t labels_byte_size =
+      sizeof(double) * m_gpuPhase.expose_strategy().get_input_shapes()[0][2];
+
+  const std::uint32_t neuron_map_byte_offset =
+      (weight_table_byte_size + inputs_byte_size + labels_byte_size);
+  const std::uint32_t neuron_map_byte_size =
+      (sizeof(std::uint32_t) * m_neuronIndexToSpikeOperationIndex.size());
+  RFASSERT_LOG("Uploading neuron to spike operation map(offset: {}, byte size: "
+               "{} bytes) to device..",
+               neuron_map_byte_offset, neuron_map_byte_size);
+  [[maybe_unused]] cl_int return_value = m_openclQueue.enqueueWriteBuffer(
+      m_gpuPhase.get_input_buffer(), CL_TRUE /*blocking*/,
+      neuron_map_byte_offset, neuron_map_byte_size,
+      m_neuronIndexToSpikeOperationIndex.data());
+  RFASSERT(return_value == CL_SUCCESS);
+
+  const std::uint32_t neuron_map_size =
+      sizeof(double) * m_gpuPhase.expose_strategy().get_input_shapes()[0][3];
+  const std::uint32_t propagation_blob_byte_offset =
+      (weight_table_byte_size + inputs_byte_size + labels_byte_size +
+       neuron_map_size);
+  const std::uint32_t propagation_instructions_byte_size =
+      (sizeof(std::uint32_t) * propagation_instructions.size());
+
   RFASSERT_LOG("Uploading network propagation table(offset: {}, size: {} "
                "bytes) to device..",
-               byte_offset, propagation_instructions.size());
-  cl_int return_value = m_openclQueue.enqueueWriteBuffer(
-      m_gpuPhase.get_input_buffer(), CL_TRUE /*blocking*/, byte_offset,
-      propagation_instructions_byte_size, propagation_instructions.data());
+               propagation_blob_byte_offset, propagation_instructions.size());
+  return_value = m_openclQueue.enqueueWriteBuffer(
+      m_gpuPhase.get_input_buffer(), CL_TRUE /*blocking*/,
+      propagation_blob_byte_offset, propagation_instructions_byte_size,
+      propagation_instructions.data());
   RFASSERT(return_value == CL_SUCCESS);
 }
 
@@ -131,9 +159,12 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet &data_set,
   /* Reset GPU Derivatives and triggered derivative operation count */
   cl::Event reset_event;
   const std::uint32_t output_buffer_byte_size =
-      m_strategy->get_output_buffer_byte_size<double>();
+      m_gpuPhase.expose_strategy().get_output_buffer_byte_size<double>();
   const std::uint32_t weight_derivatives_byte_size =
-      m_strategy->get_output_shapes().back().get_byte_size<double>();
+      m_gpuPhase.expose_strategy()
+          .get_output_shapes()
+          .back()
+          .get_byte_size<double>();
   cl_int return_value = m_openclQueue.enqueueFillBuffer<double>(
       m_gpuPhase.get_output_buffer(), (0.0) /* the data(pattern) value */,
       (output_buffer_byte_size - weight_derivatives_byte_size) /*offset*/,
@@ -153,7 +184,7 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet &data_set,
                       m_settings
                           ->get_minibatch_size())))) /*the data(pattern) value*/
       ,
-      (m_strategy->get_input_buffer_byte_size<double>() -
+      (m_gpuPhase.expose_strategy().get_input_buffer_byte_size<double>() -
        (sizeof(double) * 3)), /*offset*/
       sizeof(double) /*size*/, NULL /*events to wait for*/,
       &sequence_start_index_event);
@@ -164,7 +195,7 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet &data_set,
       m_gpuPhase.get_input_buffer(),
       static_cast<double>(
           m_settings->get_memory_truncation()) /*the data(pattern) value*/,
-      (m_strategy->get_input_buffer_byte_size<double>() -
+      (m_gpuPhase.expose_strategy().get_input_buffer_byte_size<double>() -
        (sizeof(double) * 2)), /*offset*/
       sizeof(double) /*size*/, NULL /*events to wait for*/, &truncation_event);
   RFASSERT(return_value == CL_SUCCESS);
@@ -186,7 +217,7 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet &data_set,
     return_value = m_openclQueue.enqueueFillBuffer<double>(
         m_gpuPhase.get_input_buffer(),
         static_cast<double>(d_w_index) /*the data(pattern) value*/,
-        (m_strategy->get_input_buffer_byte_size<double>() -
+        (m_gpuPhase.expose_strategy().get_input_buffer_byte_size<double>() -
          sizeof(double)) /*offset*/,
         sizeof(double) /*size*/, NULL /*events to wait for*/, &d_w_index_event);
     RFASSERT(return_value == CL_SUCCESS);
@@ -265,7 +296,10 @@ RafkoAutodiffGPUOptimizer::get_avg_gradient(std::uint32_t d_w_index) const {
   m_gpuPhase.load_output(
       &d_w_index_gradient /*target*/, 1 /*size*/,
       (/* End of the buffer - number of weights + weight_index */
-       m_strategy->get_output_shapes().back().get_number_of_elements() -
+       m_gpuPhase.expose_strategy()
+           .get_output_shapes()
+           .back()
+           .get_number_of_elements() -
        m_network.weight_table_size() + d_w_index) /*offset*/
   );
   return d_w_index_gradient;

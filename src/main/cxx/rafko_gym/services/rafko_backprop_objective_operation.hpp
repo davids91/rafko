@@ -56,7 +56,7 @@ public:
 
   ~RafkoBackpropObjectiveOperation() = default;
 
-  DependencyRequest upload_dependencies_to_operations() override {
+  DependencyRequest request_dependencies() override {
     return {{{{ad_operation_neuron_spike_d,
                {(m_network.neuron_array_size() -
                  m_network.output_neuron_number() + m_outputIndex)}}},

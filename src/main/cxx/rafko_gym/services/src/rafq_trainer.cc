@@ -78,7 +78,7 @@ RafQTrainer::RafQTrainer(
                       .select_platform()
                       .select_device()
                       .build<RafkoAutodiffGPUOptimizer>(
-                          settings, *m_volatileNetwork, m_qSet, m_context))
+                          settings, *m_volatileNetwork, m_context))
 #else
       ,
       m_context(std::make_shared<rafko_mainframe::RafkoCPUContext>(

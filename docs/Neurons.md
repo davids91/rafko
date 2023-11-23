@@ -23,12 +23,12 @@ The Structure of a @Neuron inside a @PartialSolution is the same, despite multip
 
 ## Forward propagation Neuron-by-Neuron
 
-| Step Desicription       | Input Global Buffer | Input Global Buffer | Input Global Buffer | Input Global Buffer | Behavior Index                    |
+| Step Desicription       | Weight Data         | Dependency Data     | Dependency Data     | Operation index     | Behavior Index                    |
 |-------------------------|---------------------|---------------------|---------------------|---------------------|-----------------------------------|
 | Neuron Bias             | weight_index        | is_there_dependency | dependency_index    | operation_index     | input_function_index(optional)    |
 | Neuron input            | weight_index        | dependency_index    | dependency_index    | operation_index     | input_function_index + past_index |
 | Objective operation     |                     |                     |                     |                     |                                   |
-| Solution operation      | neuron_index_start  |                     | count_neurons       |                     |                                   |
+| Solution operation      |                     | neuron_index_start  | count_neurons       |                     |                                   |
 | Spike Function          | weight_index        |                     | dependency_index    | operation_index     | spike_function_index              |
 | Transfer function       |                     |                     | dependency_index    | operation_index     | transfer_function_index           |
 | Weight regularization   |                     |                     |                     |                     |                                   |
@@ -42,7 +42,7 @@ Note: Since for One Neurons might have multiple Bias values, the information mus
 
 ## Back-propagation Operation-by-Operation
 
-| Step Desicription                    | Input Global Buffer | Input Global Buffer       | Input Global Buffer | Input Global Buffer | Behavior Index                    |
+| Step Desicription                    | Weight Data         | Dependency Data           | Dependency Data     | Operation index     | Behavior Index                    |
 |--------------------------------------|---------------------|---------------------------|---------------------|---------------------|-----------------------------------|
 | Derivative of Bias(es)               | weight_index        | is_there_dependency       | dependency_index    | operation_index     | input_function_index(optional)    |
 | Derivative of Neuron input           | weight_index        | dependency_index          | dependency_index    | operation_index     | input_function_index + past_index |

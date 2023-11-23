@@ -5,7 +5,7 @@ many of these operations should run in paralell. The GPU Phase which also receiv
 
 ## Operation Matrix structure in theory
 
-As the name implies, the operation matrix is a 2 dimensional construct in whcih the rows represent one batch of oeprations that can be executed in paralell. Columns of the structure might vary. One element in such a matrix should provide data
+As the name implies, the operation matrix is a 2 dimensional construct in which the rows represent one batch of oeprations that can be executed in paralell. Columns of the structure might vary. One element in such a matrix should provide data
 corresponding to the tables in Neurons.md forward or back-propagation sections. 
 As each row can be executed in parallel, each item in a row might depend on items in previous rows, 
 a synchronisation point is required between rows.
@@ -43,9 +43,10 @@ required synchronisation points (between rows).
 | 5 |     Operation   |     Operation   |     Operation   |     Operation   |     Operation   |
 |---|-----------------|-----------------|-----------------|-----------------|-----------------|
 
-Each operation contains a given number of bytes, but to simplify the handling of operations, despite potential different operation data(olike index values) sizes, all shall have uniform sizes constraining to the tables in Neurons.md forward or back-propagation sections. 
+Each operation contains a given number of bytes, but to simplify the handling of operations, despite potential different operation data(like index values) sizes, all shall have uniform sizes constraining to the tables in Neurons.md forward or back-propagation sections. 
 
 ## Operation matrix exclusively for forward propagation
 
-For forward propagation only, the Neural instruction table can be more specific, each row containing the neurons whom can be executed in parallell.
+For forward propagation only, the Neural instruction table can be more specific, each row containing the neurons who can be executed in parallell.
 Apart from the Neuron index ( to know where the result of the operations will be saved to ) for each Neuron the input and weight information is required.
+((TBD))

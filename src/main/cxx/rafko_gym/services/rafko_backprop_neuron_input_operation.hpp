@@ -35,33 +35,21 @@
 namespace rafko_gym {
 
 /**
- * @brief
- *
+ * @brief A backpropagation operation to calculate value and derivative for
+ * part of a Neuron input. One operation contains a single input either from
+ * the Newtork input or from other (neuron spike) operations.
  */
 class RAFKO_EXPORT RafkoBackpropNeuronInputOperation
     : public RafkoBackpropagationOperation {
 public:
+  using DependencyPointer = std::shared_ptr<RafkoBackpropagationOperation>;
+
   RafkoBackpropNeuronInputOperation(RafkoBackpropagationData &data,
                                     const rafko_net::RafkoNet &network,
                                     std::uint32_t operation_index,
                                     std::uint32_t neuron_index,
                                     std::uint32_t neuron_input_index);
   ~RafkoBackpropNeuronInputOperation() = default;
-
-  std::uint32_t get_f_x_dependency_index() const {
-    if (m_network_input_index.has_value()) {
-      return m_network_input_index.value();
-    }
-    RFASSERT(static_cast<bool>(m_neuronDataDependency));
-    return m_neuronDataDependency->get_operation_index();
-  }
-
-  std::uint32_t get_input_past_index() const {
-    if (m_network_input_index.has_value()) {
-      return 0xFFu;
-    }
-    return m_inputPastIndex;
-  }
 
   rafko_net::Input_functions get_input_function() const {
     return m_network.neuron_array(m_neuronIndex).input_function();
@@ -75,10 +63,9 @@ public:
    *
    * @return    list of all stored dependency pointers
    */
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
-  get_own_dependencies_past_included();
+  std::vector<DependencyPointer> get_own_dependencies_past_included();
 
-  DependencyRequest upload_dependencies_to_operations() override;
+  DependencyRequest request_dependencies() override;
 
   void calculate_value(const std::vector<double> &network_input) override;
   void calculate_derivative(std::uint32_t d_w_index,
@@ -86,6 +73,27 @@ public:
                             const std::vector<double> &label_data) override;
 
 #if (RAFKO_USES_OPENCL)
+
+  std::uint32_t get_f_x_dependency_index() const {
+    if (m_inputPastIndex.has_value()) {
+      RFASSERT(static_cast<bool>(m_neuronDataDependency));
+      return m_neuronDataDependency->get_operation_index();
+    }
+    return m_inputIndex;
+  }
+
+  std::uint32_t get_u_x_dependency_index() const {
+    RFASSERT(static_cast<bool>(m_nextDependency));
+    return m_nextDependency->get_operation_index();
+  }
+
+  std::uint32_t get_input_past_index() const {
+    if (!m_inputPastIndex.has_value()) {
+      return 0xFFu;
+    }
+    return m_inputPastIndex.value();
+  }
+
   std::string local_declaration_operation() const override;
 
   /**
@@ -136,29 +144,23 @@ public:
       std::string operations_array_size, std::string behavior_index);
 #endif /*(RAFKO_USES_OPENCL)*/
 
-  std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
-  get_own_dependencies() override;
+  std::vector<DependencyPointer> get_own_dependencies() override;
 
-private:
-  using InputSynapse =
-      rafko_net::SynapseIterator<rafko_net::InputSynapseInterval>;
-  using ArraySynapse =
-      rafko_net::SynapseIterator<rafko_net::IndexSynapseInterval>;
+  using InputSynapseInterval = rafko_net::InputSynapseInterval;
   const std::uint32_t m_neuronIndex;
-  const std::uint32_t m_neuronInputIndex;
-  const InputSynapse m_inputsIterator;
-  const ArraySynapse m_weightsIterator;
-
-  const std::optional<std::uint32_t> m_network_input_index;
-  const std::uint32_t m_inputPastIndex;
+  const std::uint32_t m_neuronInputIndex; /* Inside the Neuron input synapse */
+  const rafko_net::SynapseIterator<InputSynapseInterval> m_inputsIterator;
+  const rafko_net::SynapseIterator<> m_weightsIterator;
+  const std::optional<std::uint32_t> m_inputPastIndex;
 
 public:
+  const std::uint32_t m_inputIndex; /* Network input or input Neuron data */
   const std::uint32_t m_weightIndex;
 
 private:
-  std::shared_ptr<RafkoBackpropagationOperation> m_neuronDataDependency;
-  std::shared_ptr<RafkoBackpropagationOperation> m_neuronInputDependency;
-  std::shared_ptr<RafkoBackpropagationOperation> m_neuronBiasDependency;
+  DependencyPointer m_neuronDataDependency;
+  DependencyPointer m_nextDependency;
+  bool m_isNextDepBias;
 };
 
 } /* namespace rafko_gym */

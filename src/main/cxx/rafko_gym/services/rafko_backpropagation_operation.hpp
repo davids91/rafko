@@ -44,7 +44,6 @@ namespace rafko_gym {
  * the chance to upload the operation dependencies into the vector when
  * prompted.
  */
-class RafkoBackpropagationOperation;
 class RAFKO_EXPORT RafkoBackpropagationOperation {
 public:
   using Dependency = std::shared_ptr<RafkoBackpropagationOperation>;
@@ -59,9 +58,7 @@ public:
   RafkoBackpropagationOperation(RafkoBackpropagationData &data,
                                 const rafko_net::RafkoNet &network,
                                 std::uint32_t operation_index,
-                                Autodiff_operations type)
-      : m_data(data), m_network(network), m_operationIndex(operation_index),
-        m_type(type) {}
+                                Autodiff_operations type);
 
   virtual ~RafkoBackpropagationOperation() = default;
 
@@ -73,7 +70,7 @@ public:
    * @return  A list of Dependency parameters this operation needs along with a
    * function to call when the dependencies are construted
    */
-  virtual DependencyRequest upload_dependencies_to_operations() = 0;
+  virtual DependencyRequest request_dependencies() = 0;
 
   /**
    * @brief     Calculates the forward propagation value for this operation
@@ -108,13 +105,11 @@ public:
   virtual std::string local_declaration_operation() const = 0;
 
   /**
-   * @brief   Tells if the generated kernel code is using local groups in the
-   * execution, so the provided logic
+   * @brief   Tells the requested size of the local group for the generated kernel code 
    *
-   * @return  True, if the generated OpenCL Kernel code makes use of local
-   * workers ( get_local_id )
+   * @return  The number of threads the generated kernel code uses
    */
-  virtual bool is_multi_worker() const { return false; }
+  virtual std::uint32_t optimal_thread_count() const { return 1u; }
 
   /**
    * @brief     Generates GPU kernel enumerations
@@ -146,10 +141,7 @@ public:
    * @return    The derivative value of the current operation
    */
   double get_derivative(std::uint32_t past_index,
-                        std::uint32_t d_w_index) const {
-    return m_data.get_derivative(past_index, get_operation_index(), d_w_index);
-  }
-
+                        std::uint32_t d_w_index) const;
   /**
    * @brief   Provides the forward propagated value for the given past index
    *
@@ -158,9 +150,7 @@ public:
    *
    * @return    The value of the current propagation
    */
-  double get_value(std::uint32_t past_index) const {
-    return m_data.get_value(past_index, get_operation_index());
-  }
+  double get_value(std::uint32_t past_index) const;
 
   /**
    * @brief     Returns with whether or not the required dependencies of the
@@ -301,18 +291,14 @@ protected:
    * @brief   d_w_index     The index of the weight the derivative is based in
    * @brief   value         The value to set
    */
-  void set_derivative(std::uint32_t d_w_index, double value) {
-    m_data.set_derivative(get_operation_index(), d_w_index, value);
-  }
+  void set_derivative(std::uint32_t d_w_index, double value);
 
   /**
    * @brief   Sets the current forward propagated value of this operation
    *
    * @brief   value         The value to set
    */
-  void set_value(double value) {
-    m_data.set_value(get_operation_index(), value);
-  }
+  void set_value(double value);
 
 private:
   const Autodiff_operations m_type;

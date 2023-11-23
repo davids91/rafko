@@ -73,7 +73,7 @@ public:
 
   bool operation_index_finalised() override { return m_operationIndexFinal; }
 
-  DependencyRequest upload_dependencies_to_operations() override {
+  DependencyRequest request_dependencies() override {
     return {{{{ad_operation_neuron_transfer_d, {m_neuronIndex}}},
              [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
                         dependencies) {

@@ -12,6 +12,7 @@ Rafko Style Guide
     - class member variables: `m_prePendedAndCamelCase`
     - static variables: `s_sameAsMembersButPrependedWithS`
     - class member functions: `start_with_lowercase_and_are_camelcase`
+    - anonymous namespace functions: `just_like_class_member_functions`
     - local variable names: `are_like_namespaces`
     - enumerations:
       - enumeration names: `Start_with_uppercase_but_theres_underscore`

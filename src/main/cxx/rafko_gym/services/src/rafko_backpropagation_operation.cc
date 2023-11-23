@@ -22,6 +22,12 @@
 
 namespace rafko_gym {
 
+RafkoBackpropagationOperation::RafkoBackpropagationOperation(
+    RafkoBackpropagationData &data, const rafko_net::RafkoNet &network,
+    std::uint32_t operation_index, Autodiff_operations type)
+    : m_data(data), m_network(network), m_operationIndex(operation_index),
+      m_type(type) {}
+
 std::uint32_t RafkoBackpropagationOperation::get_max_dependency_index() {
   RFASSERT(are_dependencies_registered());
   std::vector<Dependency> dependencies = get_dependencies();
@@ -36,6 +42,26 @@ std::uint32_t RafkoBackpropagationOperation::get_max_dependency_index() {
     return std::numeric_limits<std::uint32_t>::max();
   else
     return (*found_element)->get_operation_index();
+}
+
+double
+RafkoBackpropagationOperation::get_derivative(std::uint32_t past_index,
+                                              std::uint32_t d_w_index) const {
+  return m_data.get_derivative(past_index, get_operation_index(), d_w_index);
+}
+
+double
+RafkoBackpropagationOperation::get_value(std::uint32_t past_index) const {
+  return m_data.get_value(past_index, get_operation_index());
+}
+
+void RafkoBackpropagationOperation::set_derivative(std::uint32_t d_w_index,
+                                                   double value) {
+  m_data.set_derivative(get_operation_index(), d_w_index, value);
+}
+
+void RafkoBackpropagationOperation::set_value(double value) {
+  m_data.set_value(get_operation_index(), value);
 }
 
 } /* namespace rafko_gym */

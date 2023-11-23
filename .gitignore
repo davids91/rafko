@@ -1,4 +1,5 @@
 lib/*
+docs/*.html
 *.sublime-project
 *.sublime-workspace
 *.todo

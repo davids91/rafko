@@ -27,13 +27,19 @@
 
 namespace rafko_utilities {
 
-using SubscriptDictionary = std::unordered_map<std::size_t, std::size_t>;
 template <typename Proxee = std::vector<double>>
 class RAFKO_EXPORT SubscriptProxy {
 public:
+  using SubscriptDictionary = std::unordered_map<std::size_t, std::size_t>;
+  using AssociationVector = std::vector<std::uint32_t>;
+
+  SubscriptProxy(Proxee &object, AssociationVector associations)
+      : m_object(&object), m_dictionary(std::make_shared<SubscriptDictionary>(
+                               convert(associations))) {}
+
   SubscriptProxy(Proxee &object,
-                 std::shared_ptr<SubscriptDictionary> dictionart = {})
-      : m_object(&object), m_dictionary(dictionart) {}
+                 std::shared_ptr<SubscriptDictionary> dictionary = {})
+      : m_object(&object), m_dictionary(dictionary) {}
 
   void update(Proxee &new_object) { m_object = &new_object; }
 
@@ -54,6 +60,14 @@ public:
 private:
   Proxee *m_object;
   std::shared_ptr<SubscriptDictionary> m_dictionary;
+
+  static SubscriptDictionary convert(AssociationVector vec) {
+    SubscriptDictionary result;
+    for (std::uint32_t i = 0; i < vec.size(); ++i) {
+      result.insert({i, vec[i]});
+    }
+    return result;
+  }
 };
 
 } /* namespace rafko_utilities */
