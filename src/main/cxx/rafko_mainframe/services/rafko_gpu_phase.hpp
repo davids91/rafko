@@ -47,9 +47,18 @@ public:
   /**
    * @brief      Implements a GPU Strategy phase provided in the argument
    *
-   * @param      strategy the strategy parts to implenet in this phase
+   * @param      strategy the strategy parts to implement in this phase
    */
   void set_strategy(std::shared_ptr<RafkoGPUStrategy> strategy);
+
+  /**
+   * @brief      Provides the enclosed GPU Strategy 
+   *
+   * @return      The shared pointer to the GPU strategy currently wrapped by this Phase
+   */
+  const RafkoGPUStrategy& expose_strategy() const{
+    return *m_strategy;
+  }
 
   /**
    * @brief      Executes the implemented strategy phase

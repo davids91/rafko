@@ -46,7 +46,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   )
 
   add_library(rafko STATIC)
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
   set_target_properties(rafko PROPERTIES LINKER_LANGUAGE CXX)
 
   if(USE_OPENCL)

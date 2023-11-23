@@ -55,7 +55,7 @@ public:
   }
   ~RafkoBackpropWeightRegOperation() = default;
 
-  DependencyRequest upload_dependencies_to_operations() override {
+  DependencyRequest request_dependencies() override {
     set_registered();
     return {};
   }

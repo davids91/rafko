@@ -29,20 +29,26 @@
 #include "spike_function.hpp"
 #include "transfer_function.hpp"
 
+namespace {
+template <typename T>
+std::size_t byte_size_for_vector(const std::vector<T> &vector) {
+  return (vector.size() + 1u) / (sizeof(double) / sizeof(T));
+  /*!Note: in the (size + 1)/sizeof(double) ratio, the +1 makes sure that there
+   * are enough elements in the array, and the size is not smaller due to the
+   * integer division */
+}
+} // namespace
+
 namespace rafko_gym {
 
 std::vector<rafko_mainframe::RafkoNBufShape>
 AutoDiffGPUStrategy::get_input_shapes() const {
   RFASSERT(static_cast<bool>(m_dataSet));
-  const std::size_t neural_propagation_instructions_size =
-      (m_neuralPropagationInstructions.size() + 1u) /
-      (sizeof(double) / sizeof(std::uint32_t));
-  /*!Note: size + 1 is divided by the size ratio to make sure that there are
-   * anough elements in the array */
   RFASSERT_LOG(
       "Autodiff strategy Input shape: (weights: {} + inputs: {} + Labels: {} + "
       "sequence start: + sequence truncation: {} + d_w_index: {} + Neural "
-      "propagation instructions: {})",
+      "propagation instructions: {} + Neuron index to Spike operation index "
+      "mapping: {})",
       /* Weights */ (static_cast<std::uint32_t>(m_network.weight_table_size())),
       /* Inputs */
       (m_dataSet->get_number_of_sequences() *
@@ -50,11 +56,12 @@ AutoDiffGPUStrategy::get_input_shapes() const {
       /* Labels */
       (m_dataSet->get_number_of_sequences() * m_dataSet->get_sequence_size() *
        m_network.output_neuron_number()),
-      /* Neural_propagation_instructions */
-      neural_propagation_instructions_size,
-      /*!Note: m_neuralPropagationInstructions has element type std::uint32_t,
-       *not double! Because of the size difference Indexing has to be checked
-       *carefully, and documented explicitly to help checking by-byte alignment!
+      /* Neuron index to Spike operation map + propagation instructions */
+      byte_size_for_vector(m_neuronIndexToSpikeOperationIndex),
+      byte_size_for_vector(m_neuralPropagationInstructions),
+      /*!Note: both vectors have a base type different, than double! Because of
+       *the (possible) size difference Indexing has to be checked carefully, and
+       *documented explicitly to help checking by-byte alignment!
        **/
       /* Sequence_start_index */ 1u, /* Sequence_truncation */ 1u,
       /* d_w_index */ 1u);
@@ -66,8 +73,9 @@ AutoDiffGPUStrategy::get_input_shapes() const {
       /* Labels */
       (m_dataSet->get_number_of_sequences() * m_dataSet->get_sequence_size() *
        m_network.output_neuron_number()),
-      /* Neural_propagation_instructions */
-      neural_propagation_instructions_size,
+      /* Neuron index to Spike operation map + propagation instructions */
+      byte_size_for_vector(m_neuronIndexToSpikeOperationIndex),
+      byte_size_for_vector(m_neuralPropagationInstructions),
       /* Sequence_start_index */ 1u, /* Sequence_truncation */ 1u,
       /* d_w_index */ 1u}};
 }
@@ -95,6 +103,21 @@ AutoDiffGPUStrategy::get_output_shapes() const {
       static_cast<std::uint32_t>(m_network.weight_table_size())}};
 }
 
+std::tuple<cl::NDRange, cl::NDRange, cl::NDRange>
+AutoDiffGPUStrategy::get_solution_space() const {
+  RFASSERT(m_built);
+  RFASSERT(static_cast<bool>(m_dataSet));
+  std::size_t global_range = (std::min(m_settings.get_minibatch_size(),
+                                       m_dataSet->get_number_of_sequences()) *
+                              m_maximumLocalWorkers);
+  RFASSERT_LOG("Autodiff strategy global solution space: min({}, {}) * {} = {}",
+               m_settings.get_minibatch_size(),
+               m_dataSet->get_number_of_sequences(), m_maximumLocalWorkers,
+               global_range);
+  return {cl::NullRange /*offset*/, cl::NDRange(global_range) /*global*/,
+          cl::NDRange(m_maximumLocalWorkers) /*local*/};
+}
+
 std::vector<std::vector<std::uint32_t>>
 AutoDiffGPUStrategy::generate_operation_paralell_matrix(
     const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
@@ -102,7 +125,9 @@ AutoDiffGPUStrategy::generate_operation_paralell_matrix(
   using DepthMarker = std::unique_ptr<std::atomic<std::uint32_t>>;
 
   const std::uint32_t number_of_threads =
-      8; /* Educated guess based on the average available CPU cores */
+      m_settings.get_max_solve_threads() *
+      m_settings.get_max_processing_threads(); /* Educated guess based on the
+                                                  average available CPU cores */
   rafko_utilities::ThreadGroup process_threads(number_of_threads);
   std::vector<DepthMarker> operations_depth;
 
@@ -204,9 +229,7 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
             result.end(),
             {ad_operation_neuron_input_d, upcasted_operation_ptr->m_weightIndex,
              upcasted_operation_ptr->get_f_x_dependency_index(),
-             upcasted_operation_ptr->get_own_dependencies_past_included()
-                 .back()
-                 ->get_operation_index(),
+             upcasted_operation_ptr->get_u_x_dependency_index(),
              operation->get_operation_index(),
              ((upcasted_operation_ptr->get_input_function() & 0x00FFu) |
               ((upcasted_operation_ptr->get_input_past_index() << 8) &
@@ -274,7 +297,7 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
       "case ad_operation_neuron_bias_d:{" +
       RafkoBackpropNeuronBiasOperation::generic_value_kernel_operation(
           weight_array, operations_value_array,
-          "network_instructions[5]" /*behavior_index*/
+          "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
@@ -282,7 +305,7 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
       RafkoBackpropNeuronInputOperation::generic_value_kernel_operation(
           network_input_array, weight_array, operations_value_array,
           operations_array_size,
-          "(network_instructions[5] & 0x00FFu)" /*behavior_index*/
+          "(==behavior_data== & 0x00FFu)" /*behavior_index*/
           ) +
       "}break;";
 
@@ -292,13 +315,13 @@ std::string AutoDiffGPUStrategy::generate_value_kernels(
       "case ad_operation_neuron_spike_d:{" +
       RafkoBackpropSpikeFnOperation::generic_value_kernel_operation(
           weight_array, operations_value_array, operations_array_size,
-          "network_instructions[5]" /*behavior_index*/
+          "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
       "case ad_operation_neuron_transfer_d:{" +
       RafkoBackpropTransferFnOperation::generic_value_kernel_operation(
-          operations_value_array, "network_instructions[5]" /*behavior_index*/,
+          operations_value_array, "==behavior_data==" /*behavior_index*/,
           settings) +
       "}break;";
   kernel_source += "}";
@@ -319,7 +342,7 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
       "case ad_operation_neuron_bias_d:{" +
       RafkoBackpropNeuronBiasOperation::generic_derivative_kernel_operation(
           weight_array, operations_value_array, operations_derivative_array,
-          "network_instructions[5]" /*behavior_index*/
+          "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
@@ -327,14 +350,14 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
       RafkoBackpropNeuronInputOperation::generic_derivative_kernel_operation(
           network_input_array, weight_array, operations_value_array,
           operations_derivative_array, operations_array_size,
-          "network_instructions[5]" /*behavior_index*/
+          "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
       "case ad_operation_objective_d:{" +
       RafkoBackpropObjectiveOperation::generic_derivative_kernel_operation(
           label_array, operations_value_array, operations_derivative_array,
-          "network_instructions[5]" /*behavior_index*/,
+          "==behavior_data==" /*behavior_index*/,
           "==number_of_sequences==" /*sample_number*/
           ) +
       "}break;";
@@ -342,14 +365,14 @@ std::string AutoDiffGPUStrategy::generate_derivative_kernels(
       "case ad_operation_neuron_spike_d:{" +
       RafkoBackpropSpikeFnOperation::generic_derivative_kernel_operation(
           weight_array, operations_value_array, operations_derivative_array,
-          operations_array_size, "network_instructions[5]" /*behavior_index*/
+          operations_array_size, "==behavior_data==" /*behavior_index*/
           ) +
       "}break;";
   kernel_source +=
       "case ad_operation_neuron_transfer_d:{" +
       RafkoBackpropTransferFnOperation::generic_derivative_kernel_operation(
           operations_value_array, operations_derivative_array,
-          "network_instructions[5]" /*behavior_index*/, settings) +
+          "==behavior_data==" /*behavior_index*/, settings) +
       "}break;";
   kernel_source += "}";
 
@@ -371,7 +394,7 @@ void AutoDiffGPUStrategy::substitute_index_values_in_kernels(
       kernel_source, std::regex("==op_index=="), "network_instructions[4]");
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==past_index=="),
-      "((network_instructions[5] & 0xFF00u) >> 8)");
+      "((==behavior_data== & 0xFF00u) >> 8)");
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==f_x_op_index=="), "network_instructions[2]");
   kernel_source = rafko_utilities::replace_all_in_string(
@@ -384,30 +407,37 @@ void AutoDiffGPUStrategy::substitute_index_values_in_kernels(
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==dependency_descriptor=="),
       "network_instructions[3]");
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==behavior_data=="),
+      "network_instructions[5]");
 }
 
 void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
                                 std::uint32_t weight_relevant_operation_count) {
-  std::string source_base = rafko_utilities::atomic_double_add_function +
-                            rafko_utilities::atomic_double_average_function +
-                            rafko_net::InputFunction::get_kernel_enums() +
-                            rafko_net::TransferFunction::get_kernel_enums() +
-                            rafko_net::SpikeFunction::get_kernel_enums() +
-                            CostFunction::get_kernel_enums() +
-                            RafkoBackpropagationOperation::get_kernel_enums() +
-                            rafko_utilities::random_function + R"(
+  RFASSERT(
+      m_network.neuron_array_size() ==
+      static_cast<std::int32_t>(m_neuronIndexToSpikeOperationIndex.size()));
+  std::string kernel_source =
+      rafko_utilities::atomic_double_add_function +
+      rafko_utilities::atomic_double_average_function +
+      rafko_net::InputFunction::get_kernel_enums() +
+      rafko_net::TransferFunction::get_kernel_enums() +
+      rafko_net::SpikeFunction::get_kernel_enums() +
+      CostFunction::get_kernel_enums() +
+      RafkoBackpropagationOperation::get_kernel_enums() +
+      rafko_utilities::random_function + R"(
 
     __constant bool evaluate_network = true;
     /*!Note: The only purpose of the autodiff operations is to train the network
-     * so evaluation is always true in this context; Simply solving the network
-     * is not strictly topic of it.
+     * so evaluation is always true in this context; "Simple" network inference
+     * is not strictly on topic.
      */
 
     void execute_derivative_workers(
       int d_w_index, int available_memory_slots, int weight_table_size, bool save_to_output,
       __constant double* network_inputs, __constant double* labels, __constant double* network_weights,
-      __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array, 
-      __constant unsigned int* network_instruction_table
+      __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array,
+      __constant unsigned int* network_instruction_table, __constant unsigned int* neuron_index_to_spike_op_map
     ){
       __global static double triggered_derivative_operations = 0.0;
       if(0 == get_global_id(0))
@@ -449,10 +479,9 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
     }/*execute_derivative_workers()*/
 
     void execute_value_workers(
-      int available_memory_slots, int weight_table_size,
-      __constant double* network_inputs, __constant double* network_weights,
-      __global double* operations_value_array, 
-      __constant unsigned int* network_instruction_table
+      int available_memory_slots, int weight_table_size, __constant double* network_inputs,
+      __constant double* network_weights, __global double* operations_value_array, 
+      __constant unsigned int* network_instruction_table, __constant unsigned int* neuron_index_to_spike_op_map
     ){
       ==operation_locals==
       const int operation_count = ==operation_count==;
@@ -479,31 +508,34 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
       __constant double* inputs, __constant int* input_sizes, int input_sizes_size,
       __global double* outputs, __constant int* output_sizes, int output_sizes_size
     ){
+      const long int neuron_index_to_spike_op_map_start_index = input_sizes[0] + input_sizes[1] + input_sizes[2];
+      const long int network_instruction_table_start_index = neuron_index_to_spike_op_map_start_index + input_sizes[3];
+      const long int meta_start_index = network_instruction_table_start_index + input_sizes[4];
+
       const int number_of_sequences = ==number_of_sequences==;
       const int minibatch_size = ==minibatch_size==;
       const int network_memory_size = ==network_memory_size==;
       const int sequence_inputs_count = ==prefill_num== + ==sequence_size==;
       const int sequence_labels_count = ==sequence_size==;
+      const int raw_sequence_truncation = inputs[meta_start_index + 1];
+      const int sequence_truncation = (raw_sequence_truncation == 0)?(sequence_labels_count):(max(1, raw_sequence_truncation));
       const int neuron_count = ==neuron_count==;
       const int operation_count = ==operation_count==;
       const int sequences_in_work_groups = (minibatch_size / get_num_groups(0)) + 1;
-      const int d_w_index = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2] + input_sizes[3] + input_sizes[4] + input_sizes[5]];
+      const int d_w_index = inputs[meta_start_index + 2];
       const int weight_table_size = input_sizes[0];
       const bool calculate_value = (0 == d_w_index);
       uint local_seed = (uint)(inputs[min(get_global_id(0), (size_t)(input_sizes[0]))] * 100000.0);
       __local int sequence_start;
-      __local int sequence_truncation;
       __local int sequences_in_this_group;
       if(0 == get_local_id(0)){
         /* Sequence starts from the given input, with some safeguards, and each group gets their own sequence based on their id */
-        sequence_start = (int)(inputs[input_sizes[0] + input_sizes[1] + input_sizes[2] + input_sizes[3]]);
+        sequence_start = (int)(inputs[meta_start_index]);
         sequence_start = max( 0, min(sequence_start, (number_of_sequences - minibatch_size)) );
         sequence_start = sequence_start + (get_group_id(0) * sequences_in_work_groups);
         sequences_in_this_group = min( sequences_in_work_groups, (number_of_sequences - sequence_start) );
 
         /* In case there is no sequence truncation, all of the sequence elements will be considered when calculating the derivative */
-        sequence_truncation = inputs[input_sizes[0] + input_sizes[1] + input_sizes[2] + input_sizes[3] + input_sizes[4]];
-        sequence_truncation = (sequence_truncation == 0)?(sequence_labels_count):(max(1, sequence_truncation));
       }
       barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -521,7 +553,8 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
             execute_value_workers(
               available_memory_slots, weight_table_size, &inputs[network_inputs_start_index]/*network_inputs*/,
               &inputs[0]/*network_weights*/, &outputs[network_values_start_index]/*operation_values*/,
-              (__constant unsigned int*)&inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]]/*network_instruction_table*/
+              (__constant unsigned int*)&inputs[network_instruction_table_start_index]/*network_instruction_table*/,
+              (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */
             );
           }
           ++network_ran_count;
@@ -538,7 +571,8 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
             execute_value_workers(
               available_memory_slots, weight_table_size, &inputs[network_inputs_start_index]/*network_inputs*/,
               &inputs[0]/*network_weights*/,&outputs[network_values_start_index]/*operation_values*/,
-              (__constant unsigned int*)&inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]]/*network_instruction_table*/
+              (__constant unsigned int*)&inputs[network_instruction_table_start_index]/*network_instruction_table*/,
+              (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */
             );
           }
           /*Note: The available memory slots differ for derivatives becuase of the prefill,
@@ -556,7 +590,8 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
             &outputs[network_values_start_index]/*operation_values*/,
             &outputs[network_derivatives_start_index]/*operation_derivatives*/,
             &outputs[output_sizes[0] + output_sizes[1]]/*d_w_array*/,
-            (__constant unsigned int*)&inputs[input_sizes[0] + input_sizes[1] + input_sizes[2]]/*network_instruction_table*/
+            (__constant unsigned int*)&inputs[network_instruction_table_start_index]/*network_instruction_table*/,
+            (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */
           );
           ++network_ran_count;
           available_memory_slots = min(network_ran_count, network_memory_size);
@@ -574,42 +609,41 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
   RFASSERT_LOG("Starting to split operations into workers..");
   m_neuralPropagationInstructions =
       generate_propagation_instructions(operations);
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==value_command_list_parsers=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==value_command_list_parsers=="),
       generate_value_kernels("network_inputs", "network_weights",
                              "operations_value_array", "operation_count",
                              m_settings));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==derivative_command_list_parsers=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==derivative_command_list_parsers=="),
       generate_derivative_kernels("network_inputs", "labels", "network_weights",
                                   "operations_value_array",
                                   "operations_d_array", "operation_count",
                                   m_settings));
-
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==network_memory_size=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==network_memory_size=="),
       std::to_string(m_network.memory_size()));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==operation_count=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==operation_count=="),
       std::to_string(operations.size()));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==neuron_count=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==neuron_count=="),
       std::to_string(m_network.neuron_array_size()));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==sequence_size=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==sequence_size=="),
       std::to_string(m_dataSet->get_sequence_size()));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==prefill_num=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==prefill_num=="),
       std::to_string(m_dataSet->get_prefill_inputs_number()));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==number_of_sequences=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==number_of_sequences=="),
       std::to_string(m_dataSet->get_number_of_sequences()));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==minibatch_size=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==minibatch_size=="),
       std::to_string(std::min(m_settings.get_minibatch_size(),
                               m_dataSet->get_number_of_sequences())));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==weight_relevant_operation_count=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==weight_relevant_operation_count=="),
       std::to_string(weight_relevant_operation_count));
 
   std::string operation_locals;
@@ -635,30 +669,31 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
       declared_operations.insert(operation_type);
     }
   }
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==operation_locals=="), operation_locals);
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==network_instruction_count=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==operation_locals=="), operation_locals);
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==network_instruction_count=="),
       std::to_string(m_neuralPropagationInstructions.size()));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==one_neural_instruction_entry_size=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==one_neural_instruction_entry_size=="),
       std::to_string(s_oneNeuralInstructionEntrySize));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==one_input_size=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==one_input_size=="),
       std::to_string(m_dataSet->get_input_size()));
-  source_base = rafko_utilities::replace_all_in_string(
-      source_base, std::regex("==one_label_size=="),
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==one_label_size=="),
       std::to_string(m_dataSet->get_feature_size()));
   std::vector<std::vector<std::uint32_t>> operations_matrix =
       generate_operation_paralell_matrix(operations);
   std::uint32_t avg_row_size = 0u;
-  for (const std::vector<std::uint32_t> &row : operations_matrix)
+  for (const std::vector<std::uint32_t> &row : operations_matrix) {
     avg_row_size += row.size();
+  }
   avg_row_size = static_cast<std::uint32_t>(
       std::ceil(static_cast<double>(avg_row_size) /
                 static_cast<double>(operations_matrix.size())));
   m_maximumLocalWorkers = avg_row_size;
-  m_builtSource = source_base;
+  m_builtSource = kernel_source;
   m_numberOfOperations = operations.size();
   m_built = true;
   RFASSERT_LOG("Build finished! One Local Group size: {}; \n Optimizer kernel "

@@ -42,15 +42,13 @@ public:
   RafkoAutodiffGPUOptimizer(
       cl::Context &&context, cl::Device device,
       std::shared_ptr<rafko_mainframe::RafkoSettings> settings,
-      rafko_net::RafkoNet &network, std::shared_ptr<RafkoDataSet> data_set = {},
+      rafko_net::RafkoNet &network,
       std::shared_ptr<rafko_mainframe::RafkoContext> training_evaluator = {},
       std::shared_ptr<rafko_mainframe::RafkoContext> test_evaluator = {})
       : RafkoAutodiffOptimizer(settings, network, training_evaluator,
                                test_evaluator),
         m_openclContext(context), m_openclDevice(device),
         m_openclQueue(m_openclContext, m_openclDevice),
-        m_strategy(std::make_shared<AutoDiffGPUStrategy>(*m_settings, m_network,
-                                                         data_set)),
         m_gpuPhase(
             m_openclContext, m_openclDevice, m_openclQueue,
             std::make_shared<rafko_mainframe::RafkoDummyGPUStrategyPhase>(
@@ -153,7 +151,6 @@ private:
   cl::Context m_openclContext;
   cl::Device m_openclDevice;
   cl::CommandQueue m_openclQueue;
-  std::shared_ptr<AutoDiffGPUStrategy> m_strategy;
   rafko_mainframe::RafkoGPUPhase m_gpuPhase;
 };
 

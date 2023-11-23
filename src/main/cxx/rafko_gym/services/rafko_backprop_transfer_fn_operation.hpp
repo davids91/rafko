@@ -54,7 +54,7 @@ public:
     return m_network.neuron_array(m_neuronIndex).transfer_function();
   }
 
-  DependencyRequest upload_dependencies_to_operations() override {
+  DependencyRequest request_dependencies() override {
     return {{{{ad_operation_neuron_input_d,
                {m_neuronIndex, 0u /*neuron_input_index*/}}},
              [this](std::vector<std::shared_ptr<RafkoBackpropagationOperation>>

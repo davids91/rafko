@@ -46,10 +46,13 @@ class AutoDiffGPUStrategy : public rafko_mainframe::RafkoGPUStrategy {
   using OperationsType = std::shared_ptr<RafkoBackpropagationOperation>;
 
 public:
-  AutoDiffGPUStrategy(const rafko_mainframe::RafkoSettings &settings,
-                      rafko_net::RafkoNet &network,
-                      std::shared_ptr<RafkoDataSet> data_set = {})
-      : m_settings(settings), m_network(network) {
+  AutoDiffGPUStrategy(
+      const rafko_mainframe::RafkoSettings &settings,
+      rafko_net::RafkoNet &network,
+      const std::vector<std::uint32_t> &neuron_index_to_spike_op_map,
+      std::shared_ptr<RafkoDataSet> data_set = {})
+      : m_settings(settings), m_network(network),
+        m_neuronIndexToSpikeOperationIndex(neuron_index_to_spike_op_map) {
     if (data_set)
       set_data_set(data_set);
   }
@@ -76,15 +79,7 @@ public:
   get_output_shapes() const override;
 
   std::tuple<cl::NDRange, cl::NDRange, cl::NDRange>
-  get_solution_space() const override {
-    RFASSERT(static_cast<bool>(m_dataSet));
-    std::size_t global_range = (std::min(m_settings.get_minibatch_size(),
-                                         m_dataSet->get_number_of_sequences()) *
-                                m_maximumLocalWorkers);
-    RFASSERT_LOG("Autodiff strategy global solution space: {}", global_range);
-    return {cl::NullRange /*offset*/, cl::NDRange(global_range) /*global*/,
-            cl::NDRange(m_maximumLocalWorkers) /*local*/};
-  }
+  get_solution_space() const override;
 
   /**
    * @brief     Constructs the strategy based on the provided parameters
@@ -112,6 +107,7 @@ private:
   std::uint32_t m_numberOfOperations;
   std::uint32_t m_maximumLocalWorkers;
   std::vector<std::uint32_t> m_neuralPropagationInstructions;
+  const std::vector<std::uint32_t> &m_neuronIndexToSpikeOperationIndex;
 
   /**
    * @brief     Generates the instruction set to infer the Neural network on the
@@ -122,8 +118,7 @@ private:
    * @return    An array to upload to GPU: the instruction index values
    * representing the Neural network and parsed by the provided phase
    */
-  [[nodiscard]] static std::vector<std::uint32_t>
-  generate_propagation_instructions(
+  [[nodiscard]] std::vector<std::uint32_t> generate_propagation_instructions(
       const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
           &operations);
 
@@ -139,7 +134,7 @@ private:
    * in paralell and the row ordering is ascending(i.e.: the last row depends on
    * the previous rows)
    */
-  [[nodiscard]] static std::vector<std::vector<std::uint32_t>>
+  [[nodiscard]] std::vector<std::vector<std::uint32_t>>
   generate_operation_paralell_matrix(
       const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
           &operations);

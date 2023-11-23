@@ -89,7 +89,7 @@ public:
    *
    * @return    The number of Bytes the whole input buffer occupies
    */
-  template <typename T> std::uint32_t get_input_buffer_byte_size() {
+  template <typename T> std::uint32_t get_input_buffer_byte_size() const {
     std::vector<RafkoNBufShape> input_shapes = get_input_shapes();
     return std::accumulate(input_shapes.begin(), input_shapes.end(), 0.0,
                            [](const double &sum, const RafkoNBufShape &object) {
@@ -103,7 +103,7 @@ public:
    *
    * @return    The number of Bytes the whole output buffer occupies
    */
-  template <typename T> std::uint32_t get_output_buffer_byte_size() {
+  template <typename T> std::uint32_t get_output_buffer_byte_size() const {
     std::vector<RafkoNBufShape> output_shapes = get_output_shapes();
     return std::accumulate(output_shapes.begin(), output_shapes.end(), 0.0,
                            [](const double &sum, const RafkoNBufShape &object) {

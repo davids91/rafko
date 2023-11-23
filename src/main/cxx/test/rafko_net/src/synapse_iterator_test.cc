@@ -25,6 +25,25 @@
 
 namespace rafko_net_test {
 
+TEST_CASE("Testing Interval start index inside a synapse",
+          "[synapse-iteration]") {
+  rafko_net::Neuron neuron = rafko_net::Neuron();
+  rafko_net::IndexSynapseInterval temp_synapse_interval;
+  std::vector<std::vector<std::uint32_t>> synapse_indexes = {
+      {50, 10}, {60, 30}, {20, 70}}; /* {{range},{start,length},{range}..} */
+
+  for (std::uint32_t i = 0; i < synapse_indexes.size(); ++i) {
+    temp_synapse_interval.set_starts(synapse_indexes[i][0]);
+    temp_synapse_interval.set_interval_size(synapse_indexes[i][1]);
+    *neuron.add_input_weights() = temp_synapse_interval;
+  }
+
+  rafko_net::SynapseIterator<> iter(neuron.input_weights());
+  REQUIRE(iter.interval_starts_at(0) == 0);
+  REQUIRE(iter.interval_starts_at(1) == 10);
+  REQUIRE(iter.interval_starts_at(2) == 40);
+}
+
 /*###############################################################################################
  * Testing synapse iteration
  * - Creating an artificial synapse pair, and testing if the indexes follow the
