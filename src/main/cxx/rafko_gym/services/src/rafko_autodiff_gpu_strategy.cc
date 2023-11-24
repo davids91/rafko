@@ -437,7 +437,8 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
       int d_w_index, int available_memory_slots, int weight_table_size, bool save_to_output,
       __constant double* network_inputs, __constant double* labels, __constant double* network_weights,
       __global double* operations_value_array, __global double* operations_d_array, __global double* d_w_array,
-      __constant unsigned int* network_instruction_table, __constant unsigned int* neuron_index_to_spike_op_map
+      __constant unsigned int* network_instruction_table, __constant unsigned int* neuron_index_to_spike_op_map,
+      __local double* local_derivative_sum
     ){
       __global static double triggered_derivative_operations = 0.0;
       if(0 == get_global_id(0))
@@ -464,12 +465,20 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
 
       barrier(CLK_GLOBAL_MEM_FENCE);
       if(save_to_output){
-        #pragma unroll
-        for(int operation_index = 0; operation_index < ==weight_relevant_operation_count==; ++operation_index){
-          AtomicAdd(&d_w_array[d_w_index], operations_d_array[operation_index]);
-        }
         if(0 == get_local_id(0))
+          *local_derivative_sum = 0.0;
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        int operation_index = get_local_id(0);
+        while(operation_index < ==weight_relevant_operation_count==){
+          *local_derivative_sum += operations_d_array[operation_index];
+          operation_index += get_local_size(0);
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
+        if(0 == get_local_id(0)){
+          AtomicAdd(&d_w_array[d_w_index], *local_derivative_sum);
           AtomicAdd(&triggered_derivative_operations, ==weight_relevant_operation_count==);
+        }
       }
       barrier(CLK_GLOBAL_MEM_FENCE);
 
@@ -528,6 +537,7 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
       uint local_seed = (uint)(inputs[min(get_global_id(0), (size_t)(input_sizes[0]))] * 100000.0);
       __local int sequence_start;
       __local int sequences_in_this_group;
+      __local double local_derivative_sum;
       if(0 == get_local_id(0)){
         /* Sequence starts from the given input, with some safeguards, and each group gets their own sequence based on their id */
         sequence_start = (int)(inputs[meta_start_index]);
@@ -591,7 +601,8 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
             &outputs[network_derivatives_start_index]/*operation_derivatives*/,
             &outputs[output_sizes[0] + output_sizes[1]]/*d_w_array*/,
             (__constant unsigned int*)&inputs[network_instruction_table_start_index]/*network_instruction_table*/,
-            (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */
+            (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */,
+            &local_derivative_sum
           );
           ++network_ran_count;
           available_memory_slots = min(network_ran_count, network_memory_size);
