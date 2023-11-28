@@ -1077,7 +1077,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<
       rafko_mainframe::RafkoSettings>(
       rafko_mainframe::RafkoSettings()
-          .set_learning_rate(0.1)
+          .set_learning_rate(0.01)
           .set_minibatch_size(64)
           .set_memory_truncation(2)
           .set_droput_probability(0.2)
@@ -1160,7 +1160,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
     start = std::chrono::steady_clock::now();
     optimizerGPU->iterate(*data_set);
     auto current_duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now() - start)
             .count();
     if (0.0 == avg_duration)
@@ -1190,7 +1190,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
               << actual_value[1][0] << ";   "
               << data_set->get_label_sample(1u)[0] << " -?-> "
               << actual_value[0][0] << " | avg duration: " << avg_duration
-              << "ms "
+              << "ns "
               << " | weight_sum: " << weight_sum
               << " | iteration: " << iteration << "     \r";
     ++iteration;
