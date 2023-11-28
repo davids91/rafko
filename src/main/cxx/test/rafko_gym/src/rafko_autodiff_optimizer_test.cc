@@ -1160,7 +1160,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
     start = std::chrono::steady_clock::now();
     optimizerGPU->iterate(*data_set);
     auto current_duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now() - start)
             .count();
     if (0.0 == avg_duration)
@@ -1190,7 +1190,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
               << actual_value[1][0] << ";   "
               << data_set->get_label_sample(1u)[0] << " -?-> "
               << actual_value[0][0] << " | avg duration: " << avg_duration
-              << "ms "
+              << "ns "
               << " | weight_sum: " << weight_sum
               << " | iteration: " << iteration << "     \r";
     ++iteration;

@@ -506,17 +506,17 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
       const unsigned int network_instruction_count = ==network_instruction_count==;
       int current_instruction_index = 0;
 
-      if(0 == get_global_id(0)){ //reset current operation derivatives
-        int operation_index = get_local_id(0);
-        while(operation_index < operation_count){
-          operations_d_array[operation_index] = 0.0;
-          operation_index += get_local_size(0);
-        }
+      //reset current operation derivatives
+      int operation_index = get_local_id(0);
+      while(operation_index < operation_count){
+        operations_d_array[operation_index] = 0.0;
+        operation_index += get_local_size(0);
       }
+      barrier(CLK_GLOBAL_MEM_FENCE);
 
       while(current_instruction_index < network_instruction_count){
         int operations_to_do_now = network_instruction_table[current_instruction_index];
-        int local_operation_index = 0; 
+        int local_operation_index = 0;
         while((local_operation_index + get_local_id(0)) < operations_to_do_now){
           int current_instruction_entry_start = (
             current_instruction_index + 1
@@ -602,6 +602,7 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
       const int operation_count = ==operation_count==;
       const int sequences_in_work_groups = (minibatch_size / get_num_groups(0)) + 1;
       const int d_w_threads_count = ==d_w_threads_count==;
+      const int one_d_w_thread_buffer_size = number_of_sequences * labels_in_sequence * operation_count;
 
       uint local_seed = (uint)(inputs[min(get_global_id(0), (size_t)(input_sizes[0]))] * 100000.0);
       __local int sequence_start;
@@ -621,11 +622,6 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
       int network_inputs_start_index = weight_table_size + sequence_start * ==one_input_size==;
       int network_labels_start_index = weight_table_size + input_sizes[1]/*network_inputs*/ + sequence_start * ==one_label_size==;
       int network_values_start_index = sequence_start * sequence_inputs_count * operation_count;
-      int network_derivatives_start_index = (
-        output_sizes[0] // operations_value_array size
-        + number_of_sequences * labels_in_sequence * operation_count * get_global_id(1) // offset based on d_w_index
-        + sequence_start * labels_in_sequence * operation_count // offset based on sequence index
-      );
 
       if(0 == get_global_id(0)){ //reset d_w_array
         int weight_index = get_global_id(1);
@@ -640,6 +636,10 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
       barrier(CLK_GLOBAL_MEM_FENCE);
 
       for(int sequence_index = sequence_start; sequence_index < (sequence_start + sequences_in_this_group); ++sequence_index){
+        int network_derivatives_start_index = (
+          output_sizes[0] // operations_value_array size
+          + sequence_index * labels_in_sequence * operation_count // offset based on sequence index
+        );
         int network_ran_count = 0;
         int available_memory_slots = 0;
         #pragma unroll
@@ -655,9 +655,7 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
           network_inputs_start_index += ==one_input_size==;
           network_values_start_index += operation_count;
         }/*for(prefill of the sequence)*/
-        uint sequence_truncation_start = get_random_number(
-          max(1, (labels_in_sequence - sequence_truncation)), &local_seed
-        );
+
         #pragma unroll
         for(int label_index = 0; label_index < ==sequence_size==; ++label_index){
           execute_value_workers(
@@ -666,9 +664,27 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
             (__constant unsigned int*)&inputs[network_instruction_table_start_index]/*network_instruction_table*/,
             (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */
           );
-          /*Note: The available memory slots differ for derivatives becuase of the prefill,
-           * and handling it is an open question: should the values be available despite that the derivatives aren't?
-           */
+          ++network_ran_count;
+          available_memory_slots = min(network_ran_count, network_memory_size);
+          if(label_index < labels_in_sequence-1){
+            network_inputs_start_index += ==one_input_size==;
+            network_labels_start_index += ==one_label_size==;
+            network_values_start_index += operation_count;
+          }
+        }/*for(every label inside the sequence)*/
+
+        network_ran_count -= ==sequence_size==;
+        available_memory_slots = min(network_ran_count, network_memory_size);
+        network_inputs_start_index -= ==one_input_size== * (==sequence_size== - 1);
+        network_labels_start_index -= ==one_label_size== * (==sequence_size== - 1);
+        network_values_start_index -= operation_count * (==sequence_size== - 1);
+
+        uint sequence_truncation_start = get_random_number(
+          max(1, (labels_in_sequence - sequence_truncation)), &local_seed
+        );
+
+        #pragma unroll
+        for(int label_index = 0; label_index < ==sequence_size==; ++label_index){
           int d_w_index = get_global_id(1);
           while(d_w_index < weight_table_size){
             execute_derivative_workers(
@@ -681,10 +697,10 @@ void AutoDiffGPUStrategy::build(const std::vector<OperationsType> &operations,
               &inputs[network_labels_start_index]/*labels*/,
               &inputs[0]/*network_weights*/,
               &outputs[network_values_start_index]/*operations_value_array*/,
-              &outputs[network_derivatives_start_index]/*operations_d_array*/,
+              &outputs[network_derivatives_start_index + one_d_w_thread_buffer_size * get_global_id(1)]/*operations_d_array*/,
               &outputs[output_sizes[0] + output_sizes[1]]/*d_w_array*/,
               (__constant unsigned int*)&inputs[network_instruction_table_start_index]/*network_instruction_table*/,
-              (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/* neuron_index_to_spike_op_map */,
+              (__constant unsigned int*)&inputs[neuron_index_to_spike_op_map_start_index]/*neuron_index_to_spike_op_map*/,
               &local_derivative_sum[get_global_id(1)]/*tmp value to store weight derivatives sum*/
             );
             d_w_index += get_global_size(1);
