@@ -47,15 +47,10 @@ class AutoDiffGPUStrategy : public rafko_mainframe::RafkoGPUStrategy {
 
 public:
   AutoDiffGPUStrategy(
-      const rafko_mainframe::RafkoSettings &settings,
+      const cl::Device &device, const rafko_mainframe::RafkoSettings &settings,
       rafko_net::RafkoNet &network,
       const std::vector<std::uint32_t> &neuron_index_to_spike_op_map,
-      std::shared_ptr<RafkoDataSet> data_set = {})
-      : m_settings(settings), m_network(network),
-        m_neuronIndexToSpikeOperationIndex(neuron_index_to_spike_op_map) {
-    if (data_set)
-      set_data_set(data_set);
-  }
+      std::shared_ptr<RafkoDataSet> data_set = {});
 
   void set_data_set(std::shared_ptr<RafkoDataSet> environment) {
     m_dataSet = environment;
@@ -108,6 +103,8 @@ private:
   std::uint32_t m_maximumLocalWorkers;
   std::vector<std::uint32_t> m_neuralPropagationInstructions;
   const std::vector<std::uint32_t> &m_neuronIndexToSpikeOperationIndex;
+  const std::uint32_t m_maxWorkItemSize;
+  const std::uint32_t m_maxAllocatableBytes;
 
   /**
    * @brief     Generates the instruction set to infer the Neural network on the
@@ -138,6 +135,14 @@ private:
   generate_operation_paralell_matrix(
       const std::vector<std::shared_ptr<RafkoBackpropagationOperation>>
           &operations);
+
+  /**
+   * @brief     Calculates  based on the device CL_DEVICE_MAX_MEM_ALLOC_SIZE;
+   * Since each thread requires a buffer to use. Takes into consideration the
+   * CL_DEVICE_MAX_WORK_ITEM_SIZES restriction as well.
+   * @return    The global dimension[1] to use for GPU operations for d_w_index
+   */
+  std::size_t get_d_w_threads_count() const;
 
   /**
    * @brief     Generates Kernel code to parse the Neural instruction

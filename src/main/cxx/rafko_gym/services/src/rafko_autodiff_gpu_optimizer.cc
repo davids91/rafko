@@ -32,7 +32,7 @@ void RafkoAutodiffGPUOptimizer::build(
   const std::uint32_t derivative_relevant_operation_count =
       build_without_data(data_set, objective);
 
-  AutoDiffGPUStrategy strategy(*m_settings, m_network,
+  AutoDiffGPUStrategy strategy(m_openclDevice, *m_settings, m_network,
                                m_neuronIndexToSpikeOperationIndex, data_set);
   strategy.build(m_operations, derivative_relevant_operation_count);
 
@@ -156,38 +156,20 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet &data_set,
     sync_data_set_on_GPU(data_set);
   }
 
-  /* Reset GPU Derivatives and triggered derivative operation count */
-  cl::Event reset_event;
-  const std::uint32_t output_buffer_byte_size =
-      m_gpuPhase.expose_strategy().get_output_buffer_byte_size<double>();
-  const std::uint32_t weight_derivatives_byte_size =
-      m_gpuPhase.expose_strategy()
-          .get_output_shapes()
-          .back()
-          .get_byte_size<double>();
-  cl_int return_value = m_openclQueue.enqueueFillBuffer<double>(
-      m_gpuPhase.get_output_buffer(), (0.0) /* the data(pattern) value */,
-      (output_buffer_byte_size - weight_derivatives_byte_size) /*offset*/,
-      (weight_derivatives_byte_size) /*size*/, NULL /*events to wait for*/,
-      &reset_event);
-  RFASSERT(return_value == CL_SUCCESS);
-
   cl::Event sequence_start_index_event;
-  return_value = m_openclQueue.enqueueFillBuffer<double>(
-      m_gpuPhase.get_input_buffer(),
-      static_cast<double>(
-          rand() %
-          (std::max(
-              1,
-              static_cast<std::int32_t>(data_set.get_number_of_sequences()) -
-                  static_cast<std::int32_t>(
-                      m_settings
-                          ->get_minibatch_size())))) /*the data(pattern) value*/
-      ,
-      (m_gpuPhase.expose_strategy().get_input_buffer_byte_size<double>() -
-       (sizeof(double) * 3)), /*offset*/
-      sizeof(double) /*size*/, NULL /*events to wait for*/,
-      &sequence_start_index_event);
+  const std::uint32_t sequences_start =
+      rand() %
+      (std::max(
+          1, static_cast<std::int32_t>(data_set.get_number_of_sequences()) -
+                 static_cast<std::int32_t>(m_settings->get_minibatch_size())));
+  [[maybe_unused]] cl_int return_value =
+      m_openclQueue.enqueueFillBuffer<double>(
+          m_gpuPhase.get_input_buffer(),
+          static_cast<double>(sequences_start) /*the data(pattern) value*/,
+          (m_gpuPhase.expose_strategy().get_input_buffer_byte_size<double>() -
+           (sizeof(double) * 2)), /*offset*/
+          sizeof(double) /*size*/, NULL /*events to wait for*/,
+          &sequence_start_index_event);
   RFASSERT(return_value == CL_SUCCESS);
 
   cl::Event truncation_event;
@@ -196,38 +178,19 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet &data_set,
       static_cast<double>(
           m_settings->get_memory_truncation()) /*the data(pattern) value*/,
       (m_gpuPhase.expose_strategy().get_input_buffer_byte_size<double>() -
-       (sizeof(double) * 2)), /*offset*/
+       (sizeof(double) * 1)), /*offset*/
       sizeof(double) /*size*/, NULL /*events to wait for*/, &truncation_event);
   RFASSERT(return_value == CL_SUCCESS);
 
   /* Wait for preparing operations to finish before starting derivative
    * calculation */
-  return_value = reset_event.wait();
-  RFASSERT(return_value == CL_SUCCESS);
-
   return_value = truncation_event.wait();
   RFASSERT(return_value == CL_SUCCESS);
 
   std::thread tmp_reset_thread(
       [this]() { std::fill(m_tmpAvgD.begin(), m_tmpAvgD.end(), 0.0); });
+  m_gpuPhase();
 
-  for (std::int32_t d_w_index = 0; d_w_index < m_network.weight_table_size();
-       ++d_w_index) {
-    cl::Event d_w_index_event;
-    return_value = m_openclQueue.enqueueFillBuffer<double>(
-        m_gpuPhase.get_input_buffer(),
-        static_cast<double>(d_w_index) /*the data(pattern) value*/,
-        (m_gpuPhase.expose_strategy().get_input_buffer_byte_size<double>() -
-         sizeof(double)) /*offset*/,
-        sizeof(double) /*size*/, NULL /*events to wait for*/, &d_w_index_event);
-    RFASSERT(return_value == CL_SUCCESS);
-    return_value = d_w_index_event.wait();
-    RFASSERT(return_value == CL_SUCCESS);
-
-    m_gpuPhase();
-  }
-
-  tmp_reset_thread.join();
   RFASSERT_LOG("sequence count: {}", data_set.get_number_of_sequences());
   RFASSERT_LOG("inputs in one sequence: {}",
                data_set.get_inputs_in_one_sequence());
@@ -242,14 +205,11 @@ void RafkoAutodiffGPUOptimizer::iterate(const RafkoDataSet &data_set,
        (data_set.get_number_of_sequences() * data_set.get_sequence_size() *
         m_operations.size())) /*offset*/
   );
-
-  m_gpuPhase.load_output(
-      m_tmpAvgD.data() /*target*/, m_tmpAvgD.size() /*size*/,
-      (/* operation values + operation derivatives size */
-       (data_set.get_number_of_sequences() *
-        data_set.get_inputs_in_one_sequence() * m_operations.size()) +
-       (data_set.get_number_of_sequences() * data_set.get_sequence_size() *
-        m_operations.size())) /*offset*/
+  tmp_reset_thread.join();
+  auto output_shape = m_gpuPhase.expose_strategy().get_output_shapes().back();
+  m_gpuPhase.load_output(m_tmpAvgD.data() /*target*/, m_tmpAvgD.size() /*size*/,
+                         /* operation values + operation derivatives size */
+                         (output_shape[0] + output_shape[1]) /*offset*/
   );
 
   if (static_cast<std::int32_t>(m_tmpAvgD.size()) >

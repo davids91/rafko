@@ -1077,7 +1077,7 @@ TEST_CASE("Testing if autodiff GPU optimizer converges networks with the GPU "
   std::shared_ptr<rafko_mainframe::RafkoSettings> settings = std::make_shared<
       rafko_mainframe::RafkoSettings>(
       rafko_mainframe::RafkoSettings()
-          .set_learning_rate(0.1)
+          .set_learning_rate(0.01)
           .set_minibatch_size(64)
           .set_memory_truncation(2)
           .set_droput_probability(0.2)
