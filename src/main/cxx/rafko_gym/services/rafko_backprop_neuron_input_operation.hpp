@@ -83,11 +83,13 @@ public:
   }
 
   std::uint32_t get_u_x_dependency_index() const {
-    RFASSERT(static_cast<bool>(m_nextDependency));
-    return m_nextDependency->get_operation_index();
+    if (m_nextDependency) {
+      return m_nextDependency->get_operation_index();
+    }
+    return 0xFFFFFFFFu;
   }
 
-  std::uint32_t get_input_past_index() const {
+  std::uint8_t get_input_past_index() const {
     if (!m_inputPastIndex.has_value()) {
       return 0xFFu;
     }
@@ -151,16 +153,14 @@ public:
   const std::uint32_t m_neuronInputIndex; /* Inside the Neuron input synapse */
   const rafko_net::SynapseIterator<InputSynapseInterval> m_inputsIterator;
   const rafko_net::SynapseIterator<> m_weightsIterator;
-  const std::optional<std::uint32_t> m_inputPastIndex;
-
-public:
+  const std::optional<bool> m_isNextDepBias; /* If there is a next dependency */
+  const std::optional<std::uint8_t> m_inputPastIndex;
   const std::uint32_t m_inputIndex; /* Network input or input Neuron data */
   const std::uint32_t m_weightIndex;
 
 private:
   DependencyPointer m_neuronDataDependency;
   DependencyPointer m_nextDependency;
-  bool m_isNextDepBias;
 };
 
 } /* namespace rafko_gym */

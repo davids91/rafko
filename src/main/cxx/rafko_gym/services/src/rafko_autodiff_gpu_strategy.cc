@@ -283,9 +283,6 @@ AutoDiffGPUStrategy::generate_propagation_instructions(
         auto upcasted_operation_ptr =
             std::static_pointer_cast<RafkoBackpropNeuronInputOperation>(
                 operation);
-        RFASSERT(1u <=
-                 upcasted_operation_ptr->get_own_dependencies_past_included()
-                     .size());
         result.insert(
             result.end(),
             {ad_operation_neuron_input_d, upcasted_operation_ptr->m_weightIndex,

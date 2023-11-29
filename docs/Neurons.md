@@ -37,7 +37,7 @@ Each step collects some information from its input buffers and stores the result
 
 In case input function is taking its input from the past, the information is arriving through a combined bitstring which contains both the input function index ( lower half ) and the past index ( upper half ); so both the number of input functions and the number of memory slots are maximized to 15.
 
-Note: Since for One Neurons might have multiple Bias values, the information must be stored within the table should there be additional bias dependency for the exact operator. Should this be the case, dependency_index and input function index is relevant.
+Note: Since one Neuron might have multiple Bias values, the information must be stored within the table should there be additional bias dependency for the exact operator. Should this be the case, dependency_index and input function index is relevant.
 
 
 ## Back-propagation Operation-by-Operation
