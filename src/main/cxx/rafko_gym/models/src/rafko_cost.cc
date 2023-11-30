@@ -167,6 +167,7 @@ std::string RafkoCost::generic_derivative_kernel_source(
       case cost_function_mse:{==target== = ==cost_function_mse==; }break;
       case cost_function_cross_entropy:{==target== = ==cost_function_cross_entropy==; }break;
       case cost_function_binary_cross_entropy:{==target== = ==cost_function_binary_cross_entropy==; }break;
+      case cost_function_kl_divergence:{==target== = ==cost_function_kl_divergence==; }break;
     }
   )";
   kernel_source = rafko_utilities::replace_all_in_string(
@@ -187,7 +188,11 @@ std::string RafkoCost::generic_derivative_kernel_source(
           label_value, feature_value, feature_d, sample_number));
   kernel_source = rafko_utilities::replace_all_in_string(
       kernel_source, std::regex("==cost_function_binary_cross_entropy=="),
-      CostFunctionBinaryCrossEntropy::get_derivative_kernel_source(
+      CostFunctionBinaryCrossEntropy::derivative_kernel_source(
+          label_value, feature_value, feature_d, sample_number));
+  kernel_source = rafko_utilities::replace_all_in_string(
+      kernel_source, std::regex("==cost_function_kl_divergence=="),
+      CostFunctionKLDivergence::derivative_kernel_source(
           label_value, feature_value, feature_d, sample_number));
   return kernel_source;
 }

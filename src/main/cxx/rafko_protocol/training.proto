@@ -32,6 +32,7 @@ enum Cost_functions{
   cost_function_mse = 2;                    /* ( 0.5*(expected-calculated)^2 ) / dataset_size */
   cost_function_cross_entropy = 3;          /* ( calculated*ln(expected) ) */
   cost_function_binary_cross_entropy = 4;   /* ( calculated*ln(expected) + (1-calculated) * ln(1-expected) ) */
+  cost_function_kl_divergence = 5;          /* ( calculated*ln(expected/calculated) */
 }
 
 /** @brief      Describes the available weight updaters implemented in the framework

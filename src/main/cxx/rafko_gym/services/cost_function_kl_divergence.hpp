@@ -15,8 +15,8 @@
  *    <https://github.com/davids91/rafko/blob/master/LICENSE>
  */
 
-#ifndef COST_FUNCTION_CROSS_ENTROPY_H
-#define COST_FUNCTION_CROSS_ENTROPY_H
+#ifndef COST_FUNCTION_KL_DIVERGENCE_H
+#define COST_FUNCTION_KL_DIVERGENCE_H
 
 #include "rafko_gym/services/cost_function.hpp"
 
@@ -25,15 +25,14 @@
 namespace rafko_gym {
 
 /**
- * @brief      Error function handling and utilities for Cross Entropy
- *             as described in
- * https://datascience.stackexchange.com/questions/9302/the-cross-entropy-error-function-in-neural-networks
+ * @brief      Error function handling and utilities for KL Divergence as
+ * decribed in https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
  */
-class RAFKO_EXPORT CostFunctionCrossEntropy : public CostFunction {
+class RAFKO_EXPORT CostFunctionKLDivergence : public CostFunction {
 public:
-  CostFunctionCrossEntropy(const rafko_mainframe::RafkoSettings &settings)
-      : CostFunction(cost_function_cross_entropy, settings){};
-  ~CostFunctionCrossEntropy() = default;
+  CostFunctionKLDivergence(const rafko_mainframe::RafkoSettings &settings)
+      : CostFunction(cost_function_kl_divergence, settings){};
+  ~CostFunctionKLDivergence() = default;
 
 #if (RAFKO_USES_OPENCL)
   /**
@@ -52,9 +51,9 @@ public:
   static std::string derivative_kernel_source(std::string label_value,
                                               std::string feature_value,
                                               std::string feature_d,
-                                              std::string sample_number) {
-    return "- (" + label_value + " * " + feature_d + ") / (" + sample_number +
-           " * " + feature_value + ")";
+                                              std::string /*sample_number*/) {
+    return "(" + feature_d + " * (log(max(0.0000000000000001, (" + label_value +
+           " / " + feature_value + "))) + 1))";
   }
 #endif /*(RAFKO_USES_OPENCL)*/
 
@@ -67,22 +66,24 @@ protected:
 
   constexpr double get_cell_error(double label_value,
                                   double feature_value) const override {
-    return (label_value *
-            std::log(std::max(0.0000000000000001, feature_value)));
+    return (label_value * std::log(std::max(0.0000000000000001,
+                                            (feature_value / label_value))));
   }
 
   constexpr double get_derivative(double label_value, double feature_value,
                                   double feature_d,
-                                  double sample_number) const override {
-    return -(label_value * feature_d) / (sample_number * feature_value);
+                                  double /*sample_number*/) const override {
+    return feature_d * (std::log(std::max(0.0000000000000001,
+                                          (feature_value / label_value))) +
+                        1.0);
   }
 
 #if (RAFKO_USES_OPENCL)
   std::string
   get_operation_kernel_source(std::string label_value,
                               std::string feature_value) const override {
-    return "( " + label_value + " * log(max(0.0000000000000001," +
-           feature_value + ")) )";
+    return "( " + label_value + " * log(max(0.0000000000000001, (" +
+           label_value + " / " + feature_value + ") )) )";
   }
 
   std::string
@@ -94,4 +95,4 @@ protected:
 };
 
 } /* namespace rafko_gym */
-#endif /* COST_FUNCTION_CROSS_ENTROPY_H */
+#endif /* COST_FUNCTION_KL_DIVERGENCE_H */

@@ -27,6 +27,7 @@
 
 #include "rafko_gym/services/cost_function_binary_cross_entropy.hpp"
 #include "rafko_gym/services/cost_function_cross_entropy.hpp"
+#include "rafko_gym/services/cost_function_kl_divergence.hpp"
 #include "rafko_gym/services/cost_function_mse.hpp"
 #include "rafko_gym/services/cost_function_squared_error.hpp"
 
@@ -55,6 +56,8 @@ public:
       return std::make_unique<CostFunctionCrossEntropy>(settings);
     case cost_function_binary_cross_entropy:
       return std::make_unique<CostFunctionBinaryCrossEntropy>(settings);
+    case cost_function_kl_divergence:
+      return std::make_unique<CostFunctionKLDivergence>(settings);
     default:
       throw std::runtime_error("Unknown cost function requested from builder!");
     }

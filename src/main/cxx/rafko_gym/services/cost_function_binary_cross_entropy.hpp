@@ -49,7 +49,7 @@ public:
    * @return     The source for implementing the kernel of the derivative of the
    * cost function
    */
-  static std::string get_derivative_kernel_source(std::string label_value,
+  static std::string derivative_kernel_source(std::string label_value,
                                                   std::string feature_value,
                                                   std::string feature_d,
                                                   std::string sample_number) {

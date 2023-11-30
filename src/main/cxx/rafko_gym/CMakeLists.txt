@@ -23,6 +23,7 @@ set(GYM_INTERFACE_SERVICES
   services/cost_function_mse.hpp
   services/cost_function_cross_entropy.hpp
   services/cost_function_binary_cross_entropy.hpp
+  services/cost_function_kl_divergence.hpp
   services/weight_updater_adam.hpp
   services/weight_updater_amsgrad.hpp
   services/weight_updater_momentum.hpp

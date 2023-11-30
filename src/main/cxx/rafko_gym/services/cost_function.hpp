@@ -195,6 +195,7 @@ public:
         cost_function_mse,                    /* ( 0.5*(expected-calculated)^2 ) / dataset_size */
         cost_function_cross_entropy,          /* ( calculated*ln(expected) ) */
         cost_function_binary_cross_entropy,   /* ( calculated*ln(expected) + (1-calculated) * ln(1-expected) ) */
+        cost_function_kl_divergence,          /* ( calculated*ln(expected/calculated) */
       }rafko_cost_function_t __attribute__ ((aligned));
     )";
   }
